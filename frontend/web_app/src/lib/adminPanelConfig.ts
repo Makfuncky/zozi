@@ -1,0 +1,414 @@
+import type { ComponentType } from "react";
+import {
+  BadgePercent,
+  BarChart3,
+  BookOpen,
+  CheckSquare,
+  ClipboardList,
+  CreditCard,
+  Crown,
+  DollarSign,
+  FileDown,
+  FileText,
+  Globe2,
+  LayoutDashboard,
+  Lock,
+  Mail,
+  Megaphone,
+  MessageSquare,
+  Newspaper,
+  Package,
+  QrCode,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  ShoppingCart,
+  Store,
+  Tags,
+  TrendingUp,
+  Truck,
+  Users,
+  Video,
+  Phone,
+} from "@/lib/icons";
+import { hasAdminPermission, isAdminStaffRole } from "@shared/adminPermissions";
+
+type IconComponent = ComponentType<{ className?: string }>;
+
+export interface AdminNavGroup {
+  key: string;
+  label: string;
+}
+
+export interface AdminNavItem {
+  key: string;
+  group: string;
+  name: string;
+  href: string;
+  desc: string;
+  icon: IconComponent;
+  dashboardFeatured?: boolean;
+  /** When true this item only exists as a deep-link target; it is not shown in the sidebar nav. */
+  hideFromNav?: boolean;
+  requiredPermission?: string;
+  allowedRoles?: readonly string[];
+}
+
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+  { key: "overview", label: "Overview" },
+  { key: "commerce", label: "Commerce" },
+  { key: "operations", label: "Operations" },
+  { key: "growth", label: "Growth" },
+  { key: "governance", label: "Governance" },
+];
+
+export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
+  {
+    key: "dashboard",
+    group: "overview",
+    name: "Dashboard",
+    href: "/admin/dashboard",
+    desc: "Overview and operational hubs",
+    icon: LayoutDashboard,
+  },
+  {
+    key: "analytics",
+    group: "overview",
+    name: "Command Center",
+    href: "/admin/command-center",
+    desc: "CEO Dashboard, treasury, trends, workforce, market intel and system health",
+    icon: BarChart3,
+    dashboardFeatured: true,
+    requiredPermission: "analytics.view",
+  },
+  {
+    key: "headlines",
+    group: "overview",
+    name: "Headlines",
+    href: "/admin/command-center/headlines",
+    desc: "Executive news, market radar and curated headlines",
+    icon: Newspaper,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "orders",
+    group: "commerce",
+    name: "Orders",
+    href: "/admin/orders",
+    desc: "Order management and bulk status changes",
+    icon: ShoppingCart,
+    dashboardFeatured: true,
+    requiredPermission: "orders.manage",
+  },
+  {
+    key: "products",
+    group: "commerce",
+    name: "Products",
+    href: "/admin/products",
+    desc: "Catalog moderation and merchandising",
+    icon: Package,
+    dashboardFeatured: true,
+    requiredPermission: "products.manage",
+  },
+  {
+    key: "categories",
+    group: "commerce",
+    name: "Categories",
+    href: "/admin/categories",
+    desc: "Product taxonomy and category tree",
+    icon: Tags,
+    dashboardFeatured: false,
+    requiredPermission: "products.manage",
+  },
+  {
+    key: "users",
+    group: "commerce",
+    name: "Users",
+    href: "/admin/users",
+    desc: "Customer and account controls",
+    icon: Users,
+    dashboardFeatured: true,
+    requiredPermission: "users.read",
+  },
+  {
+    key: "suppliers",
+    group: "commerce",
+    name: "Suppliers",
+    href: "/admin/suppliers",
+    desc: "Supplier onboarding and verification",
+    icon: Store,
+    dashboardFeatured: true,
+    requiredPermission: "moderation.suppliers",
+  },
+  {
+    key: "disputes",
+    group: "commerce",
+    name: "Disputes",
+    href: "/admin/resolution?section=disputes",
+    desc: "Supplier dispute arbitration workspace",
+    icon: ShieldAlert,
+    dashboardFeatured: true,
+    requiredPermission: "moderation.suppliers",
+  },
+  {
+    key: "returns",
+    group: "commerce",
+    name: "Returns",
+    href: "/admin/orders?section=returns",
+    desc: "Return approvals and refund outcomes",
+    icon: RefreshCw,
+    requiredPermission: "orders.manage",
+    hideFromNav: true,
+  },
+  {
+    key: "inventory-alerts",
+    group: "commerce",
+    name: "Inventory Alerts",
+    href: "/admin/inventory-alerts",
+    desc: "Low stock, out-of-stock and inventory threshold monitoring",
+    icon: ClipboardList,
+    requiredPermission: "products.manage",
+  },
+  {
+    key: "promotions",
+    group: "commerce",
+    name: "Promotions",
+    href: "/admin/promotions",
+    desc: "Banners, coupons, and flash-sale campaigns",
+    icon: Megaphone,
+    requiredPermission: "coupons.manage",
+  },
+  {
+    key: "logistics",
+    group: "operations",
+    name: "Logistics",
+    href: "/admin/logistics",
+    desc: "Shipment allocation, delivery, and partner governance",
+    icon: Truck,
+    dashboardFeatured: true,
+    requiredPermission: "orders.manage",
+  },
+  {
+    key: "invoices",
+    group: "operations",
+    name: "Invoices",
+    href: "/admin/invoices",
+    desc: "Supply-chain invoice review and export",
+    icon: FileText,
+    requiredPermission: "audit.read",
+  },
+
+  {
+    key: "payments",
+    group: "operations",
+    name: "Payments",
+    href: "/admin/payments",
+    desc: "Stripe and Tap runtime switching",
+    icon: CreditCard,
+    allowedRoles: ["admin"],
+  },
+
+  {
+    key: "finance",
+    group: "operations",
+    name: "Finance",
+    href: "/admin/finance",
+    desc: "Cash management and reconciliation",
+    icon: TrendingUp,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "commission",
+    group: "operations",
+    name: "Commission",
+    href: "/admin/commission",
+    desc: "Supplier and product-level commission rates",
+    icon: BadgePercent,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "accounting",
+    group: "operations",
+    name: "Accounting",
+    href: "/admin/finance?section=trial-balance",
+    desc: "Trial balance, P&L, balance sheet, cash flow, period close & forecasts (in Finance hub)",
+    icon: BookOpen,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "countries",
+    group: "operations",
+    name: "Countries",
+    href: "/admin/countries",
+    desc: "Universal country control plane drafts and publishing",
+    icon: Globe2,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "barcode",
+    group: "operations",
+    name: "Barcode / QR",
+    href: "/admin/orders?section=barcode",
+    desc: "Shipment scan and status update tool",
+    icon: QrCode,
+    requiredPermission: "orders.manage",
+    hideFromNav: true,
+  },
+  {
+    key: "product-verification",
+    group: "operations",
+    name: "Verifications",
+    href: "/admin/products?section=verification",
+    desc: "Product spec and listing verification",
+    icon: CheckSquare,
+    requiredPermission: "products.manage",
+    hideFromNav: true,
+  },
+  {
+    key: "email",
+    group: "growth",
+    name: "Email",
+    href: "/admin/email",
+    desc: "Campaigns, templates, provider, suppressions",
+    icon: Mail,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+    hideFromNav: true,
+  },
+  {
+    key: "exports",
+    group: "growth",
+    name: "Exports",
+    href: "/admin/dashboard?tab=exports",
+    desc: "Background CSV and payout transfer exports",
+    icon: FileDown,
+    requiredPermission: "audit.read",
+    hideFromNav: true,
+  },
+
+  {
+    key: "organization",
+    group: "governance",
+    name: "Organization",
+    href: "/admin/organization",
+    desc: "Unified staff, HCM, roles, permissions & hierarchy management",
+    icon: Users,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "resolution-center",
+    group: "governance",
+    name: "Resolution Center",
+    href: "/admin/resolution",
+    desc: "Unified moderation, tickets, disputes & arbitration workflows",
+    icon: ShieldCheck,
+    dashboardFeatured: true,
+    requiredPermission: "tickets.manage",
+  },
+  {
+    key: "audit-logs",
+    group: "governance",
+    name: "Audit Log",
+    href: "/admin/audit-logs",
+    desc: "Security, moderation, and admin activity",
+    icon: ClipboardList,
+    dashboardFeatured: true,
+    requiredPermission: "audit.read",
+  },
+  {
+    key: "insights",
+    group: "governance",
+    name: "Insights",
+    href: "/admin/dashboard?tab=insights",
+    desc: "Customer behavior and platform signals",
+    icon: TrendingUp,
+    requiredPermission: "analytics.view",
+    hideFromNav: true,
+  },
+  {
+    key: "communication",
+    group: "governance",
+    name: "Communication",
+    href: "/admin/communication",
+    desc: "Unified Email, Chat and Video communication hub",
+    icon: MessageSquare,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+  },
+  {
+    key: "chat",
+    group: "governance",
+    name: "Chat",
+    href: "/admin/chat",
+    desc: "Employee chat, entity threads, and B2B messaging",
+    icon: MessageSquare,
+    allowedRoles: ["admin"],
+    hideFromNav: true,
+  },
+  {
+    key: "video",
+    group: "governance",
+    name: "Video",
+    href: "/admin/video",
+    desc: "Secure video conferencing and boardrooms",
+    icon: Video,
+    allowedRoles: ["admin"],
+    hideFromNav: true,
+  },
+];
+
+export const ADMIN_NAV_SECTIONS = ADMIN_NAV_GROUPS.map((group) => ({
+  ...group,
+  items: ADMIN_NAV_ITEMS.filter((item) => item.group === group.key && !item.hideFromNav),
+})).filter((group) => group.items.length > 0);
+
+export const ADMIN_DASHBOARD_FEATURED_ITEMS = ADMIN_NAV_ITEMS.filter((item) => item.dashboardFeatured);
+
+export const ADMIN_LEGACY_DASHBOARD_REDIRECTS: Record<string, string> = {
+  analytics: "/admin/command-center",
+  users: "/admin/users",
+  suppliers: "/admin/suppliers",
+  orders: "/admin/orders",
+  products: "/admin/products",
+  audit: "/admin/audit-logs",
+  coupons: "/admin/promotions?section=coupons",
+  "flash-sales": "/admin/promotions?section=flash-sales",
+  banner: "/admin/promotions?section=banners",
+  "logistics-partners": "/admin/logistics?section=partners",
+  logistics: "/admin/logistics",
+  finance: "/admin/finance",
+  countries: "/admin/countries",
+  staff: "/admin/organization?section=staff",
+  moderation: "/admin/resolution?section=moderation",
+  tickets: "/admin/resolution?section=tickets",
+  payouts: "/admin/finance?section=payouts",
+  "supplier-documents": "/admin/suppliers?section=documents",
+  disputes: "/admin/resolution?section=disputes",
+  hierarchy: "/admin/organization?section=hierarchy",
+  employees: "/admin/organization?section=employees",
+  permissions: "/admin/organization?section=permissions",
+  headlines: "/admin/command-center/headlines",
+  returns: "/admin/orders?section=returns",
+  barcode: "/admin/orders?section=barcode",
+  "product-verification": "/admin/products?section=verification",
+  compare: "/admin/suppliers?section=compare",
+  "inventory-alerts": "/admin/inventory-alerts",
+  treasury: "/admin/finance?section=treasury",
+};
+
+export function canAccessAdminNavItem(item: AdminNavItem, role: string | null | undefined): boolean {
+  if (!isAdminStaffRole(role)) {
+    return false;
+  }
+  if (item.allowedRoles && item.allowedRoles.length > 0) {
+    return item.allowedRoles.includes(role);
+  }
+  if (item.requiredPermission) {
+    return hasAdminPermission(role, item.requiredPermission);
+  }
+  return true;
+}

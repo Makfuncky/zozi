@@ -1,0 +1,38 @@
+import { expect, test, type Page } from "@playwright/test";
+import path from "path";
+
+const IMAGE_DIR = path.resolve(__dirname, "../../../image");
+
+async function loginSupplier(page: Page) {
+  const loginRes = await page.request.post("http://localhost:8000/auth/login", {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    form: { username: "supplier@zozi.com", password: "supplier123" },
+  });
+  const loginData = await loginRes.json();
+  const token = loginData.access_token;
+  await page.goto("/supplier/products/add", { waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.context().addCookies([{ name: "access_token", value: token, url: "http://localhost:3000" }]);
+  await page.evaluate((t) => { localStorage.setItem("access_token", t); localStorage.setItem("zozi_has_session", "1"); }, token);
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 60_000 });
+  await page.waitForSelector("text=Choose Photo", { timeout: 15_000 });
+}
+
+test("debug4 - separate pattern", async ({ page }) => {
+  await loginSupplier(page);
+  
+  // Use SEPARATE pattern: click first, then wait for filechooser
+  const filePath = path.join(IMAGE_DIR, "image_04.jpg");
+  await page.locator("label").filter({ hasText: "Choose Photo" }).click();
+  console.log("Label clicked");
+  const fileChooser = await page.waitForEvent("filechooser", { timeout: 10_000 }).catch(() => null);
+  console.log("FileChooser caught:", !!fileChooser);
+  if (fileChooser) {
+    await fileChooser.setFiles(filePath);
+    console.log("setFiles done");
+  }
+  
+  await page.waitForTimeout(5000);
+  const canvas = page.locator("canvas").first();
+  console.log("Canvas visible:", await canvas.isVisible().catch(() => "error"));
+  console.log("URL:", page.url());
+});

@@ -1,0 +1,28 @@
+# Override file for local development
+# This file extends docker-compose.yml with development-specific settings
+
+services:
+  backend:
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=True
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level info
+
+  frontend:
+    working_dir: /app/web_app
+    volumes:
+      - ./frontend:/app
+      - /app/web_app/node_modules
+      - /app/web_app/.next
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  db:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

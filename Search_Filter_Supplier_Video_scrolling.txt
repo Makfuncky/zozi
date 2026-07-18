@@ -1,0 +1,1641 @@
+# 🚀 Advanced E-Commerce Features Implementation Guide
+
+Based on your Amazon comparison and innovative ideas, here's a complete implementation pipeline for all three features.
+
+---
+
+## 📊 FEATURE 1: ADVANCED FILTER SYSTEM (Amazon-Style Faceted Search)
+
+### **Architecture Overview**
+```
+Frontend (React/Next.js)
+    ↓
+API Gateway (FastAPI)
+    ↓
+Search Service (Elasticsearch/OpenSearch)
+    ↓
+Filter Aggregation Engine
+    ↓
+Database (PostgreSQL)
+```
+
+### **Step-by-Step Implementation**
+
+#### **Phase 1: Database Schema Enhancement**
+
+```sql
+-- 1. Add filterable attributes to products table
+ALTER TABLE products ADD COLUMN filter_attributes JSONB;
+ALTER TABLE products ADD COLUMN search_vector tsvector;
+
+-- 2. Create filter metadata table
+CREATE TABLE product_filter_metadata (
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER REFERENCES categories(id),
+    filter_name VARCHAR(100),
+    filter_type VARCHAR(50), -- 'range', 'multi_select', 'single_select', 'boolean'
+    display_order INTEGER,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 3. Create filter options table
+CREATE TABLE product_filter_options (
+    id SERIAL PRIMARY KEY,
+    filter_metadata_id INTEGER REFERENCES product_filter_metadata(id),
+    option_value VARCHAR(255),
+    option_display_name VARCHAR(255),
+    product_count INTEGER DEFAULT 0,
+    sort_order INTEGER
+);
+
+-- 4. Create GIN indexes for JSONB filtering
+CREATE INDEX idx_products_filter_attributes ON products USING GIN(filter_attributes);
+CREATE INDEX idx_products_search_vector ON products USING GIN(search_vector);
+```
+
+#### **Phase 2: Backend Filter Engine**
+
+```python
+# backend/services/advanced_filter_service.py
+
+from typing import Dict, List, Any, Optional
+from sqlalchemy import func, and_, or_
+from sqlalchemy.orm import Session
+import json
+
+class AdvancedFilterService:
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def get_available_filters(self, category_id: int, search_query: str = None) -> Dict[str, Any]:
+        """
+        Get all available filters with counts for a category
+        """
+        base_query = self.db.query(Product).filter(
+            Product.category_id == category_id,
+            Product.is_active == True
+        )
+        
+        if search_query:
+            base_query = base_query.filter(
+                Product.search_vector.match(search_query, postgresql_regconfig='english')
+            )
+        
+        filters = {
+            'price_range': self._get_price_range_stats(base_query),
+            'brands': self._get_brands_with_counts(base_query),
+            'ratings': self._get_rating_distribution(base_query),
+            'attributes': self._get_dynamic_attributes(base_query, category_id),
+            'availability': self._get_availability_stats(base_query),
+            'shipping': self._get_shipping_options(base_query)
+        }
+        
+        return filters
+    
+    def apply_filters(self, query, filters: Dict[str, Any]) -> Query:
+        """
+        Apply multiple filters to a query
+        """
+        # Price range
+        if 'min_price' in filters:
+            query = query.filter(Product.price >= filters['min_price'])
+        if 'max_price' in filters:
+            query = query.filter(Product.price <= filters['max_price'])
+        
+        # Brand filter
+        if 'brands' in filters and filters['brands']:
+            query = query.filter(Product.brand.in_(filters['brands']))
+        
+        # Rating filter
+        if 'min_rating' in filters:
+            query = query.filter(Product.average_rating >= filters['min_rating'])
+        
+        # Dynamic attributes (JSONB)
+        if 'attributes' in filters:
+            for attr_key, attr_values in filters['attributes'].items():
+                if attr_values:
+                    query = query.filter(
+                        Product.filter_attributes.has_key(attr_key)
+                    )
+                    query = query.filter(
+                        Product.filter_attributes[attr_key].cast(String).in_(attr_values)
+                    )
+        
+        # Availability
+        if 'in_stock' in filters and filters['in_stock']:
+            query = query.filter(Product.stock_quantity > 0)
+        
+        return query
+    
+    def _get_price_range_stats(self, query) -> Dict[str, float]:
+        result = query.with_entities(
+            func.min(Product.price),
+            func.max(Product.price),
+            func.avg(Product.price)
+        ).first()
+        
+        return {
+            'min': float(result[0]) if result[0] else 0,
+            'max': float(result[1]) if result[1] else 0,
+            'avg': float(result[2]) if result[2] else 0
+        }
+    
+    def _get_brands_with_counts(self, query) -> List[Dict[str, Any]]:
+        return query.with_entities(
+            Product.brand,
+            func.count(Product.id).label('count')
+        ).group_by(Product.brand).order_by(func.count(Product.id).desc()).all()
+    
+    def _get_dynamic_attributes(self, query, category_id: int) -> List[Dict[str, Any]]:
+        # Get filter metadata for category
+        metadata = self.db.query(ProductFilterMetadata).filter(
+            ProductFilterMetadata.category_id == category_id,
+            ProductFilterMetadata.is_active == True
+        ).all()
+        
+        filters_with_counts = []
+        for meta in metadata:
+            options = self.db.query(ProductFilterOption).filter(
+                ProductFilterOption.filter_metadata_id == meta.id
+            ).order_by(ProductFilterOption.sort_order).all()
+            
+            filters_with_counts.append({
+                'id': meta.id,
+                'name': meta.filter_name,
+                'type': meta.filter_type,
+                'options': [
+                    {
+                        'value': opt.option_value,
+                        'display': opt.option_display_name,
+                        'count': opt.product_count
+                    }
+                    for opt in options
+                ]
+            })
+        
+        return filters_with_counts
+```
+
+#### **Phase 3: API Endpoints**
+
+```python
+# backend/routers/search.py
+
+from fastapi import APIRouter, Query, HTTPException
+from typing import Optional, List
+from pydantic import BaseModel
+
+router = APIRouter()
+
+class FilterRequest(BaseModel):
+    category_id: Optional[int] = None
+    search_query: Optional[str] = None
+    min_price: Optional[float] = None
+    max_price: Optional[float] = None
+    brands: Optional[List[str]] = []
+    min_rating: Optional[float] = None
+    attributes: Optional[Dict[str, List[str]]] = {}
+    in_stock: Optional[bool] = None
+    sort_by: str = "relevance"  # relevance, price_asc, price_desc, rating, newest
+    page: int = 1
+    page_size: int = 20
+
+@router.get("/search/filters")
+async def get_available_filters(
+    category_id: int = Query(...),
+    search_query: Optional[str] = Query(None)
+):
+    """
+    Get all available filters with product counts
+    """
+    filter_service = AdvancedFilterService(db)
+    filters = filter_service.get_available_filters(category_id, search_query)
+    return {"filters": filters}
+
+@router.post("/search/advanced")
+async def advanced_search(filters: FilterRequest):
+    """
+    Advanced search with multiple filters
+    """
+    filter_service = AdvancedFilterService(db)
+    
+    # Base query
+    query = db.query(Product).filter(Product.is_active == True)
+    
+    # Apply category filter
+    if filters.category_id:
+        query = query.filter(Product.category_id == filters.category_id)
+    
+    # Apply text search
+    if filters.search_query:
+        query = query.filter(
+            Product.search_vector.match(filters.search_query, postgresql_regconfig='english')
+        )
+    
+    # Apply all filters
+    query = filter_service.apply_filters(query, filters.dict())
+    
+    # Apply sorting
+    if filters.sort_by == "price_asc":
+        query = query.order_by(Product.price.asc())
+    elif filters.sort_by == "price_desc":
+        query = query.order_by(Product.price.desc())
+    elif filters.sort_by == "rating":
+        query = query.order_by(Product.average_rating.desc())
+    elif filters.sort_by == "newest":
+        query = query.order_by(Product.created_at.desc())
+    
+    # Pagination
+    total = query.count()
+    products = query.offset((filters.page - 1) * filters.page_size).limit(filters.page_size).all()
+    
+    return {
+        "products": products,
+        "total": total,
+        "page": filters.page,
+        "page_size": filters.page_size,
+        "total_pages": (total + filters.page_size - 1) // filters.page_size
+    }
+```
+
+#### **Phase 4: Frontend Filter Component**
+
+```typescript
+// frontend/components/AdvancedFilter.tsx
+
+import React, { useState, useEffect } from 'react';
+
+interface FilterState {
+  minPrice: number;
+  maxPrice: number;
+  brands: string[];
+  minRating: number;
+  attributes: Record<string, string[]>;
+  inStock: boolean;
+}
+
+export const AdvancedFilter: React.FC<{
+  categoryId: number;
+  onFilterChange: (filters: FilterState) => void;
+}> = ({ categoryId, onFilterChange }) => {
+  const [filters, setFilters] = useState<FilterState>({
+    minPrice: 0,
+    maxPrice: 10000,
+    brands: [],
+    minRating: 0,
+    attributes: {},
+    inStock: false
+  });
+  
+  const [availableFilters, setAvailableFilters] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAvailableFilters();
+  }, [categoryId]);
+
+  const fetchAvailableFilters = async () => {
+    setLoading(true);
+    const response = await fetch(`/api/search/filters?category_id=${categoryId}`);
+    const data = await response.json();
+    setAvailableFilters(data.filters);
+    
+    // Initialize price range
+    if (data.filters.price_range) {
+      setFilters(prev => ({
+        ...prev,
+        minPrice: data.filters.price_range.min,
+        maxPrice: data.filters.price_range.max
+      }));
+    }
+    setLoading(false);
+  };
+
+  const handlePriceChange = (min: number, max: number) => {
+    const newFilters = { ...filters, minPrice: min, maxPrice: max };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const handleBrandToggle = (brand: string) => {
+    const newBrands = filters.brands.includes(brand)
+      ? filters.brands.filter(b => b !== brand)
+      : [...filters.brands, brand];
+    
+    const newFilters = { ...filters, brands: newBrands };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const handleAttributeChange = (attrKey: string, value: string) => {
+    const currentValues = filters.attributes[attrKey] || [];
+    const newValues = currentValues.includes(value)
+      ? currentValues.filter(v => v !== value)
+      : [...currentValues, value];
+    
+    const newAttributes = { ...filters.attributes, [attrKey]: newValues };
+    const newFilters = { ...filters, attributes: newAttributes };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  if (loading) return <div>Loading filters...</div>;
+
+  return (
+    <div className="space-y-6">
+      {/* Price Range Slider */}
+      {availableFilters?.price_range && (
+        <div className="filter-section">
+          <h3 className="font-semibold mb-3">Price Range</h3>
+          <input
+            type="range"
+            min={availableFilters.price_range.min}
+            max={availableFilters.price_range.max}
+            value={filters.maxPrice}
+            onChange={(e) => handlePriceChange(filters.minPrice, parseInt(e.target.value))}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>${filters.minPrice}</span>
+            <span>${filters.maxPrice}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Brand Filter */}
+      {availableFilters?.brands && (
+        <div className="filter-section">
+          <h3 className="font-semibold mb-3">Brands</h3>
+          <div className="space-y-2">
+            {availableFilters.brands.map((brand: any) => (
+              <label key={brand.brand} className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={filters.brands.includes(brand.brand)}
+                  onChange={() => handleBrandToggle(brand.brand)}
+                  className="mr-2"
+                />
+                <span>{brand.brand}</span>
+                <span className="ml-auto text-gray-500 text-sm">({brand.count})</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Rating Filter */}
+      <div className="filter-section">
+        <h3 className="font-semibold mb-3">Minimum Rating</h3>
+        {[4, 3, 2, 1].map((rating) => (
+          <label key={rating} className="flex items-center mb-2">
+            <input
+              type="radio"
+              name="rating"
+              checked={filters.minRating === rating}
+              onChange={() => {
+                const newFilters = { ...filters, minRating: rating };
+                setFilters(newFilters);
+                onFilterChange(newFilters);
+              }}
+              className="mr-2"
+            />
+            <span>{'★'.repeat(rating)} & Up</span>
+          </label>
+        ))}
+      </div>
+
+      {/* Dynamic Attributes */}
+      {availableFilters?.attributes?.map((attr: any) => (
+        <div key={attr.id} className="filter-section">
+          <h3 className="font-semibold mb-3">{attr.name}</h3>
+          <div className="space-y-2">
+            {attr.options.map((option: any) => (
+              <label key={option.value} className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={(filters.attributes[attr.name] || []).includes(option.value)}
+                  onChange={() => handleAttributeChange(attr.name, option.value)}
+                  className="mr-2"
+                />
+                <span>{option.display}</span>
+                <span className="ml-auto text-gray-500 text-sm">({option.count})</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* In Stock Filter */}
+      <div className="filter-section">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={filters.inStock}
+            onChange={(e) => {
+              const newFilters = { ...filters, inStock: e.target.checked };
+              setFilters(newFilters);
+              onFilterChange(newFilters);
+            }}
+            className="mr-2"
+          />
+          <span>In Stock Only</span>
+        </label>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 🔍 FEATURE 2: ADVANCED SEARCH SYSTEM (Google-Style)
+
+### **Architecture Overview**
+```
+User Query
+    ↓
+Query Parser & NLP Engine
+    ↓
+Intent Classification (Product/Brand/Category)
+    ↓
+Query Expansion & Synonyms
+    ↓
+Elasticsearch/OpenSearch
+    ↓
+Relevance Ranking (AI-powered)
+    ↓
+Results with Facets
+```
+
+### **Step-by-Step Implementation**
+
+#### **Phase 1: Elasticsearch Integration**
+
+```python
+# backend/services/search_engine.py
+
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search, Q
+import re
+from typing import List, Dict, Any
+
+class AdvancedSearchEngine:
+    def __init__(self):
+        self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+        self.index_name = 'products'
+    
+    def parse_query(self, query: str) -> Dict[str, Any]:
+        """
+        Parse natural language query into structured filters
+        Examples:
+        - "juicer under $100" -> {term: "juicer", max_price: 100}
+        - "red dress size M" -> {term: "dress", color: "red", size: "M"}
+        - "laptop with 16GB RAM" -> {term: "laptop", ram: "16GB"}
+        """
+        parsed = {
+            'term': query,
+            'filters': {}
+        }
+        
+        # Price extraction
+        price_match = re.search(r'under \$?(\d+)|below \$?(\d+)|less than \$?(\d+)', query, re.IGNORECASE)
+        if price_match:
+            price = price_match.group(1) or price_match.group(2) or price_match.group(3)
+            parsed['filters']['max_price'] = int(price)
+            parsed['term'] = re.sub(r'under \$?\d+|below \$?\d+|less than \$?\d+', '', query, flags=re.IGNORECASE).strip()
+        
+        # Rating extraction
+        rating_match = re.search(r'(\d)\+? stars?|(\d)\+? rating', query, re.IGNORECASE)
+        if rating_match:
+            rating = rating_match.group(1) or rating_match.group(2)
+            parsed['filters']['min_rating'] = int(rating)
+        
+        # Brand extraction (common brands)
+        brands = ['samsung', 'apple', 'sony', 'lg', 'nike', 'adidas']
+        for brand in brands:
+            if brand in query.lower():
+                parsed['filters']['brand'] = brand.capitalize()
+                parsed['term'] = query.replace(brand, '', flags=re.IGNORECASE).strip()
+        
+        return parsed
+    
+    def expand_query(self, query: str) -> List[str]:
+        """
+        Expand query with synonyms and related terms
+        """
+        synonyms = {
+            'juicer': ['blender', 'mixer', 'extractor'],
+            'laptop': ['notebook', 'computer', 'pc'],
+            'dress': ['gown', 'outfit', 'clothing'],
+            'shoes': ['footwear', 'sneakers', 'boots']
+        }
+        
+        expanded = [query]
+        words = query.lower().split()
+        
+        for word in words:
+            if word in synonyms:
+                for synonym in synonyms[word]:
+                    expanded_query = query.lower().replace(word, synonym)
+                    expanded.append(expanded_query)
+        
+        return list(set(expanded))
+    
+    def search(self, query: str, filters: Dict[str, Any] = None, page: int = 1, page_size: int = 20) -> Dict[str, Any]:
+        """
+        Advanced search with multiple strategies
+        """
+        parsed = self.parse_query(query)
+        expanded_queries = self.expand_query(parsed['term'])
+        
+        # Build search body
+        search_body = {
+            "query": {
+                "bool": {
+                    "should": [],
+                    "filter": []
+                }
+            },
+            "aggs": {
+                "brands": {
+                    "terms": {"field": "brand.keyword", "size": 20}
+                },
+                "price_ranges": {
+                    "range": {
+                        "field": "price",
+                        "ranges": [
+                            {"to": 50},
+                            {"from": 50, "to": 100},
+                            {"from": 100, "to": 500},
+                            {"from": 500}
+                        ]
+                    }
+                },
+                "avg_rating": {
+                    "avg": {"field": "average_rating"}
+                }
+            },
+            "from": (page - 1) * page_size,
+            "size": page_size,
+            "highlight": {
+                "fields": {
+                    "name": {},
+                    "description": {},
+                    "tags": {}
+                }
+            }
+        }
+        
+        # Add main query with boosting
+        for i, exp_query in enumerate(expanded_queries):
+            boost = 3 - (i * 0.5)  # Decrease boost for later expansions
+            search_body["query"]["bool"]["should"].append({
+                "multi_match": {
+                    "query": exp_query,
+                    "fields": [
+                        "name^3",
+                        "description^2",
+                        "tags",
+                        "brand^2",
+                        "category"
+                    ],
+                    "fuzziness": "AUTO",
+                    "boost": boost
+                }
+            })
+        
+        # Apply filters
+        if filters:
+            if 'min_price' in filters:
+                search_body["query"]["bool"]["filter"].append({
+                    "range": {"price": {"gte": filters['min_price']}}
+                })
+            if 'max_price' in filters:
+                search_body["query"]["bool"]["filter"].append({
+                    "range": {"price": {"lte": filters['max_price']}}
+                })
+            if 'min_rating' in filters:
+                search_body["query"]["bool"]["filter"].append({
+                    "range": {"average_rating": {"gte": filters['min_rating']}}
+                })
+            if 'brands' in filters and filters['brands']:
+                search_body["query"]["bool"]["filter"].append({
+                    "terms": {"brand.keyword": filters['brands']}
+                })
+        
+        # Execute search
+        response = self.es.search(index=self.index_name, body=search_body)
+        
+        return {
+            "hits": response['hits']['hits'],
+            "total": response['hits']['total']['value'],
+            "aggregations": response['aggregations'],
+            "took": response['took']
+        }
+    
+    def autocomplete(self, query: str, size: int = 10) -> List[str]:
+        """
+        Search autocomplete suggestions
+        """
+        response = self.es.search(
+            index=self.index_name,
+            body={
+                "suggest": {
+                    "product-suggest": {
+                        "prefix": query,
+                        "completion": {
+                            "field": "suggest",
+                            "size": size,
+                            "skip_duplicates": True
+                        }
+                    }
+                }
+            }
+        )
+        
+        suggestions = response['suggest']['product-suggest'][0]['options']
+        return [s['text'] for s in suggestions]
+```
+
+#### **Phase 2: AI-Powered Query Understanding**
+
+```python
+# backend/services/ai_search_service.py
+
+import spacy
+from typing import Dict, Any, List
+
+class AISearchService:
+    def __init__(self):
+        self.nlp = spacy.load("en_core_web_sm")
+        # Load product catalog for entity recognition
+        self.product_entities = self._load_product_entities()
+    
+    def _load_product_entities(self) -> Dict[str, List[str]]:
+        """
+        Load product catalog for NER
+        """
+        return {
+            'brands': ['Samsung', 'Apple', 'Sony', 'LG', 'Nike', 'Adidas'],
+            'categories': ['Electronics', 'Clothing', 'Home', 'Sports'],
+            'attributes': ['color', 'size', 'material', 'weight']
+        }
+    
+    def extract_intent(self, query: str) -> Dict[str, Any]:
+        """
+        Extract search intent using NLP
+        """
+        doc = self.nlp(query)
+        
+        intent = {
+            'primary_intent': 'product_search',
+            'entities': {
+                'brands': [],
+                'categories': [],
+                'attributes': {},
+                'price_range': None,
+                'rating': None
+            },
+            'modifiers': [],
+            'sentiment': 'neutral'
+        }
+        
+        # Extract entities
+        for ent in doc.ents:
+            if ent.label_ == 'PRODUCT':
+                # Check if it's a brand
+                if ent.text in self.product_entities['brands']:
+                    intent['entities']['brands'].append(ent.text)
+                else:
+                    intent['entities']['categories'].append(ent.text)
+            
+            elif ent.label_ == 'MONEY':
+                intent['entities']['price_range'] = ent.text
+            
+            elif ent.label_ == 'CARDINAL':
+                # Could be rating or quantity
+                if 'star' in query.lower() or 'rating' in query.lower():
+                    intent['entities']['rating'] = int(ent.text)
+        
+        # Extract attributes
+        for token in doc:
+            if token.pos_ == 'ADJ':
+                intent['modifiers'].append(token.lemma_)
+            elif token.pos_ == 'NOUN' and token.lemma_ in self.product_entities['attributes']:
+                # Look for value after attribute
+                if token.i + 1 < len(doc):
+                    intent['entities']['attributes'][token.lemma_] = doc[token.i + 1].text
+        
+        # Detect intent type
+        if 'compare' in query.lower() or 'vs' in query.lower():
+            intent['primary_intent'] = 'compare_products'
+        elif 'best' in query.lower() or 'top' in query.lower():
+            intent['primary_intent'] = 'recommendation'
+        elif 'review' in query.lower() or 'rating' in query.lower():
+            intent['primary_intent'] = 'reviews'
+        
+        return intent
+    
+    def generate_search_query(self, intent: Dict[str, Any]) -> str:
+        """
+        Generate optimized search query from intent
+        """
+        query_parts = []
+        
+        # Add categories
+        if intent['entities']['categories']:
+            query_parts.extend(intent['entities']['categories'])
+        
+        # Add brands
+        if intent['entities']['brands']:
+            query_parts.extend(intent['entities']['brands'])
+        
+        # Add modifiers
+        if intent['modifiers']:
+            query_parts.extend(intent['modifiers'])
+        
+        return ' '.join(query_parts)
+```
+
+#### **Phase 3: Search API with AI**
+
+```python
+# backend/routers/ai_search.py
+
+from fastapi import APIRouter, Query, HTTPException
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+
+router = APIRouter()
+
+class SearchRequest(BaseModel):
+    query: str
+    category_id: Optional[int] = None
+    page: int = 1
+    page_size: int = 20
+    filters: Optional[Dict[str, Any]] = None
+
+@router.post("/ai/search")
+async def ai_powered_search(request: SearchRequest):
+    """
+    AI-powered search with natural language understanding
+    """
+    ai_service = AISearchService()
+    search_engine = AdvancedSearchEngine()
+    
+    # Extract intent
+    intent = ai_service.extract_intent(request.query)
+    
+    # Generate optimized query
+    optimized_query = ai_service.generate_search_query(intent)
+    
+    # Merge intent filters with request filters
+    combined_filters = request.filters or {}
+    if intent['entities']['price_range']:
+        # Parse price range
+        pass
+    if intent['entities']['rating']:
+        combined_filters['min_rating'] = intent['entities']['rating']
+    if intent['entities']['brands']:
+        combined_filters['brands'] = intent['entities']['brands']
+    
+    # Execute search
+    results = search_engine.search(
+        query=optimized_query,
+        filters=combined_filters,
+        page=request.page,
+        page_size=request.page_size
+    )
+    
+    # Apply intent-specific ranking
+    if intent['primary_intent'] == 'recommendation':
+        results['hits'] = sorted(results['hits'], key=lambda x: x['_source'].get('average_rating', 0), reverse=True)
+    elif intent['primary_intent'] == 'compare_products':
+        # Ensure diverse results for comparison
+        pass
+    
+    return {
+        "results": results,
+        "intent": intent,
+        "optimized_query": optimized_query,
+        "suggestions": search_engine.autocomplete(request.query)
+    }
+
+@router.get("/search/autocomplete")
+async def search_autocomplete(q: str = Query(..., min_length=2)):
+    """
+    Real-time search autocomplete
+    """
+    search_engine = AdvancedSearchEngine()
+    suggestions = search_engine.autocomplete(q)
+    return {"suggestions": suggestions}
+
+@router.get("/search/trending")
+async def get_trending_searches(category_id: Optional[int] = None):
+    """
+    Get trending searches (from Redis/analytics)
+    """
+    # Implementation depends on your analytics setup
+    return {"trending": ["laptop", "wireless earbuds", "running shoes"]}
+```
+
+---
+
+## 🎬 FEATURE 3: VIDEO RECOMMENDATIONS SIDEBAR
+
+### **PROS & CONS ANALYSIS**
+
+#### ✅ **PROS:**
+1. **Higher Engagement**: Video content increases time-on-site by 2-3x
+2. **Better Conversion**: Products with video have 80% higher conversion rates
+3. **Mobile-First**: Perfect for mobile scrolling behavior
+4. **SEO Benefits**: Video content improves search rankings
+5. **Emotional Connection**: Video builds trust faster than text/images
+6. **Reduced Returns**: Customers understand products better
+
+#### ❌ **CONS:**
+1. **Bandwidth Costs**: Video streaming increases server costs significantly
+2. **Page Load Speed**: Can slow down page load if not optimized
+3. **Content Creation**: Requires suppliers to create video content (barrier to entry)
+4. **Storage**: Video files require significant storage (100x more than images)
+5. **Mobile Data**: Users on limited data plans may avoid video-heavy pages
+6. **Accessibility**: Requires captions for accessibility compliance
+
+### **MY RECOMMENDATION: ✅ YES, BUT WITH CONDITIONS**
+
+**Implement this feature IF:**
+1. You use **lazy loading** and **CDN** for videos
+2. Videos are **short** (15-30s max)
+3. You implement **auto-play muted** (user can enable sound)
+4. You provide **fallback images** for slow connections
+5. You allow users to **disable video** in settings
+
+---
+
+### **Step-by-Step Implementation Pipeline**
+
+#### **Phase 1: Database Schema for Videos**
+
+```sql
+-- 1. Product videos table
+CREATE TABLE product_videos (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    video_url VARCHAR(500) NOT NULL,
+    thumbnail_url VARCHAR(500),
+    duration INTEGER, -- in seconds
+    video_type VARCHAR(50), -- 'product_demo', 'unboxing', 'review', 'lifestyle'
+    title VARCHAR(255),
+    description TEXT,
+    views_count INTEGER DEFAULT 0,
+    is_featured BOOLEAN DEFAULT false,
+    upload_status VARCHAR(50) DEFAULT 'pending', -- pending, processing, ready, failed
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. Video analytics table
+CREATE TABLE video_analytics (
+    id SERIAL PRIMARY KEY,
+    video_id INTEGER REFERENCES product_videos(id),
+    user_id INTEGER REFERENCES users(id),
+    event_type VARCHAR(50), -- view, complete, pause, skip
+    watch_duration INTEGER, -- seconds watched
+    device_type VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 3. Create indexes
+CREATE INDEX idx_product_videos_product_id ON product_videos(product_id);
+CREATE INDEX idx_product_videos_featured ON product_videos(is_featured) WHERE is_featured = true;
+CREATE INDEX idx_video_analytics_video_id ON video_analytics(video_id);
+
+-- 4. Add video count to products
+ALTER TABLE products ADD COLUMN video_count INTEGER DEFAULT 0;
+```
+
+#### **Phase 2: Video Processing Service**
+
+```python
+# backend/services/video_service.py
+
+import boto3
+from botocore.client import Config
+from typing import Optional, Dict, Any
+import ffmpeg
+import os
+
+class VideoProcessingService:
+    def __init__(self):
+        self.s3_client = boto3.client('s3')
+        self.bucket_name = 'zozi-product-videos'
+        self.cf_distribution = 'YOUR_CLOUDFRONT_ID'
+    
+    def upload_video(self, video_file, product_id: int, video_type: str) -> Dict[str, Any]:
+        """
+        Upload video to S3 and trigger processing
+        """
+        # Generate unique filename
+        file_extension = os.path.splitext(video_file.filename)[1]
+        video_key = f"products/{product_id}/original_{uuid.uuid4()}{file_extension}"
+        
+        # Upload to S3
+        self.s3_client.upload_fileobj(
+            video_file,
+            self.bucket_name,
+            video_key,
+            ExtraArgs={
+                'ContentType': video_file.content_type,
+                'ACL': 'private'
+            }
+        )
+        
+        # Create video record
+        video_record = {
+            'product_id': product_id,
+            'video_url': f"https://{self.cf_distribution}.cloudfront.net/{video_key}",
+            'video_type': video_type,
+            'upload_status': 'processing'
+        }
+        
+        # Trigger background processing
+        from celery import Celery
+        celery_app = Celery('video_processor')
+        celery_app.send_task('process_video', args=[video_record['id'], video_key])
+        
+        return video_record
+    
+    def generate_thumbnails(self, video_path: str, output_path: str) -> List[str]:
+        """
+        Generate multiple thumbnails from video
+        """
+        thumbnails = []
+        
+        # Generate thumbnail at 10%, 50%, 90% of video
+        for percentage in [10, 50, 90]:
+            thumb_path = f"{output_path}_{percentage}.jpg"
+            (
+                ffmpeg
+                .input(video_path, ss=f"{percentage}%")
+                .output(thumb_path, vframes=1, qscale=2)
+                .run(capture_stdout=True, capture_stderr=True)
+            )
+            thumbnails.append(thumb_path)
+        
+        return thumbnails
+    
+    def optimize_video(self, input_path: str, output_path: str, max_duration: int = 30):
+        """
+        Optimize video for web:
+        - Compress to H.264
+        - Limit duration to 30s
+        - Reduce resolution to 720p max
+        - Optimize for mobile
+        """
+        (
+            ffmpeg
+            .input(input_path)
+            .filter('trim', duration=max_duration)
+            .filter('scale', "min(1280,iw)", "min(720,ih)", force_original_aspect_ratio='decrease')
+            .output(
+                output_path,
+                vcodec='libx264',
+                acodec='aac',
+                preset='medium',
+                crf=23,
+                movflags='faststart',
+                pix_fmt='yuv420p'
+            )
+            .run(capture_stdout=True, capture_stderr=True)
+        )
+    
+    def get_video_recommendations(self, product_id: int, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        Get video recommendations for sidebar
+        Strategy:
+        1. Videos from same product
+        2. Videos from same category
+        3. Videos from similar products (based on tags/attributes)
+        """
+        db = SessionLocal()
+        
+        # Get current product
+        product = db.query(Product).filter(Product.id == product_id).first()
+        
+        # Query for recommendations
+        recommendations = db.query(ProductVideos).join(Product).filter(
+            or_(
+                Product.category_id == product.category_id,
+                Product.tags.overlap(product.tags),
+                Product.brand == product.brand
+            ),
+            ProductVideos.id != product_id,
+            ProductVideos.upload_status == 'ready',
+            ProductVideos.is_featured == True
+        ).order_by(
+            ProductVideos.views_count.desc(),
+            ProductVideos.created_at.desc()
+        ).limit(limit).all()
+        
+        return [self._video_to_dict(v) for v in recommendations]
+    
+    def _video_to_dict(self, video: ProductVideos) -> Dict[str, Any]:
+        return {
+            'id': video.id,
+            'product_id': video.product_id,
+            'video_url': video.video_url,
+            'thumbnail_url': video.thumbnail_url,
+            'duration': video.duration,
+            'video_type': video.video_type,
+            'title': video.title,
+            'views_count': video.views_count,
+            'product_name': video.product.name if video.product else None,
+            'product_price': video.product.price if video.product else None
+        }
+```
+
+#### **Phase 3: Video API Endpoints**
+
+```python
+# backend/routers/videos.py
+
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
+from typing import Optional, List
+from pydantic import BaseModel
+
+router = APIRouter()
+
+class VideoCreateRequest(BaseModel):
+    product_id: int
+    video_type: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+@router.post("/videos/upload")
+async def upload_video(
+    video: UploadFile = File(...),
+    product_id: int = Form(...),
+    video_type: str = Form(...),
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None)
+):
+    """
+    Upload product video (for suppliers)
+    """
+    # Validate file type
+    if not video.content_type.startswith('video/'):
+        raise HTTPException(status_code=400, detail="File must be a video")
+    
+    # Validate file size (max 100MB)
+    video.file.seek(0, 2)  # Seek to end
+    file_size = video.file.tell()
+    video.file.seek(0)  # Seek back to start
+    
+    if file_size > 100 * 1024 * 1024:  # 100MB
+        raise HTTPException(status_code=400, detail="Video size must be less than 100MB")
+    
+    video_service = VideoProcessingService()
+    video_record = video_service.upload_video(video, product_id, video_type)
+    
+    return {
+        "message": "Video uploaded successfully",
+        "video_id": video_record['id'],
+        "status": "processing"
+    }
+
+@router.get("/products/{product_id}/videos")
+async def get_product_videos(product_id: int):
+    """
+    Get all videos for a product
+    """
+    db = SessionLocal()
+    videos = db.query(ProductVideos).filter(
+        ProductVideos.product_id == product_id,
+        ProductVideos.upload_status == 'ready'
+    ).order_by(ProductVideos.is_featured.desc(), ProductVideos.created_at.desc()).all()
+    
+    return {
+        "videos": [video_service._video_to_dict(v) for v in videos]
+    }
+
+@router.get("/videos/recommendations/{product_id}")
+async def get_video_recommendations(product_id: int, limit: int = 5):
+    """
+    Get video recommendations for sidebar
+    """
+    video_service = VideoProcessingService()
+    recommendations = video_service.get_video_recommendations(product_id, limit)
+    
+    return {
+        "recommendations": recommendations
+    }
+
+@router.post("/videos/{video_id}/track")
+async def track_video_event(
+    video_id: int,
+    event_type: str,
+    watch_duration: Optional[int] = None,
+    user_id: Optional[int] = None
+):
+    """
+    Track video analytics (view, pause, complete, etc.)
+    """
+    db = SessionLocal()
+    
+    analytics = VideoAnalytics(
+        video_id=video_id,
+        user_id=user_id,
+        event_type=event_type,
+        watch_duration=watch_duration
+    )
+    
+    db.add(analytics)
+    
+    # Update view count
+    if event_type == 'view':
+        db.query(ProductVideos).filter(ProductVideos.id == video_id).update(
+            {"views_count": ProductVideos.views_count + 1}
+        )
+    
+    db.commit()
+    
+    return {"status": "tracked"}
+```
+
+#### **Phase 4: Frontend Video Sidebar Component**
+
+```typescript
+// frontend/components/VideoRecommendationSidebar.tsx
+
+import React, { useState, useEffect, useRef } from 'react';
+
+interface Video {
+  id: number;
+  product_id: number;
+  video_url: string;
+  thumbnail_url: string;
+  duration: number;
+  video_type: string;
+  title: string;
+  views_count: number;
+  product_name: string;
+  product_price: number;
+}
+
+export const VideoRecommendationSidebar: React.FC<{
+  productId: number;
+  position?: 'right' | 'left';
+}> = ({ productId, position = 'right' }) => {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userEnabled, setUserEnabled] = useState(true);
+  const videoRefs = useRef<{[key: number]: HTMLVideoElement}>({});
+
+  useEffect(() => {
+    if (userEnabled) {
+      fetchVideos();
+    }
+  }, [productId, userEnabled]);
+
+  const fetchVideos = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/videos/recommendations/${productId}?limit=5`);
+      const data = await response.json();
+      setVideos(data.recommendations);
+    } catch (error) {
+      console.error('Failed to fetch videos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVideoView = (videoId: number) => {
+    // Track view event
+    fetch('/api/videos/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        video_id: videoId,
+        event_type: 'view',
+        watch_duration: 0
+      })
+    });
+  };
+
+  const handleVideoPlay = (videoId: number) => {
+    // Pause other videos
+    Object.entries(videoRefs.current).forEach(([id, video]) => {
+      if (parseInt(id) !== videoId && !video.paused) {
+        video.pause();
+      }
+    });
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (!userEnabled) {
+    return (
+      <div className={`video-sidebar ${position}`}>
+        <div className="p-4 text-center">
+          <p className="text-gray-600 mb-2">Video recommendations disabled</p>
+          <button
+            onClick={() => setUserEnabled(true)}
+            className="text-blue-600 hover:underline"
+          >
+            Enable videos
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className={`video-sidebar ${position} w-80 bg-gray-50 border-l border-gray-200`}>
+        <div className="p-4">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-200 h-48 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (videos.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={`video-sidebar ${position} w-80 bg-gray-50 border-l border-gray-200 overflow-y-auto`}>
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold text-lg">You May Also Like</h3>
+          <button
+            onClick={() => setUserEnabled(false)}
+            className="text-gray-400 hover:text-gray-600"
+            title="Disable videos"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {videos.map((video) => (
+            <div key={video.id} className="video-card bg-white rounded-lg shadow overflow-hidden">
+              {/* Video Player */}
+              <div className="relative aspect-video">
+                <video
+                  ref={(el) => { if (el) videoRefs.current[video.id] = el; }}
+                  src={video.video_url}
+                  poster={video.thumbnail_url}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  onPlay={() => handleVideoPlay(video.id)}
+                  onLoadedMetadata={() => handleVideoView(video.id)}
+                  controls={false}
+                  onClick={(e) => {
+                    const video = e.currentTarget;
+                    if (video.paused) {
+                      video.play();
+                      video.controls = true;
+                    } else {
+                      video.pause();
+                    }
+                  }}
+                />
+                
+                {/* Duration Badge */}
+                <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                  {formatDuration(video.duration)}
+                </div>
+
+                {/* Play Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-30 transition-all cursor-pointer">
+                  <div className="w-12 h-12 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                    ▶
+                  </div>
+                </div>
+              </div>
+
+              {/* Video Info */}
+              <div className="p-3">
+                <h4 className="font-medium text-sm line-clamp-2 mb-1">
+                  {video.title || video.product_name}
+                </h4>
+                
+                <div className="flex justify-between items-center text-xs text-gray-600">
+                  <span>{video.views_count.toLocaleString()} views</span>
+                  <span className="capitalize">{video.video_type}</span>
+                </div>
+
+                {/* Product Price */}
+                {video.product_price && (
+                  <div className="mt-2 font-semibold text-blue-600">
+                    ${video.product_price.toFixed(2)}
+                  </div>
+                )}
+
+                {/* Quick Actions */}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => window.location.href = `/products/${video.product_id}`}
+                    className="flex-1 bg-blue-600 text-white text-xs py-2 rounded hover:bg-blue-700 transition"
+                  >
+                    View Product
+                  </button>
+                  <button
+                    onClick={() => {/* Add to cart logic */}}
+                    className="flex-1 bg-gray-100 text-gray-700 text-xs py-2 rounded hover:bg-gray-200 transition"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+#### **Phase 5: Integration with Product Page**
+
+```typescript
+// frontend/pages/product/[id].tsx
+
+import { VideoRecommendationSidebar } from '@/components/VideoRecommendationSidebar';
+
+export default function ProductPage({ product }) {
+  return (
+    <div className="flex">
+      {/* Main Content */}
+      <div className="flex-1">
+        {/* Product Details */}
+        <ProductDetails product={product} />
+        
+        {/* Advanced Filters */}
+        <AdvancedFilter 
+          categoryId={product.category_id}
+          onFilterChange={handleFilterChange}
+        />
+      </div>
+
+      {/* Video Sidebar */}
+      <VideoRecommendationSidebar 
+        productId={product.id}
+        position="right"
+      />
+    </div>
+  );
+}
+```
+
+---
+
+## 📋 COMPLETE IMPLEMENTATION CHECKLIST
+
+### **Week 1-2: Advanced Filters**
+- [ ] Create database schema for filter metadata
+- [ ] Build filter service with aggregation logic
+- [ ] Create API endpoints for filters
+- [ ] Build frontend filter component
+- [ ] Test with real product data
+- [ ] Optimize database indexes
+
+### **Week 3-4: Advanced Search**
+- [ ] Set up Elasticsearch/OpenSearch cluster
+- [ ] Create product index with mappings
+- [ ] Implement query parser and NLP service
+- [ ] Build search autocomplete
+- [ ] Create AI-powered search API
+- [ ] Integrate with frontend search bar
+- [ ] Add search analytics tracking
+
+### **Week 5-6: Video System**
+- [ ] Set up S3 bucket and CloudFront CDN
+- [ ] Create video processing service (FFmpeg)
+- [ ] Build video upload API
+- [ ] Implement background video processing (Celery)
+- [ ] Create video recommendation algorithm
+- [ ] Build video sidebar component
+- [ ] Add video analytics tracking
+- [ ] Optimize for mobile and lazy loading
+
+### **Week 7: Integration & Testing**
+- [ ] Integrate all three features on product pages
+- [ ] Performance testing (page load speed)
+- [ ] Mobile responsiveness testing
+- [ ] A/B testing setup
+- [ ] User feedback collection
+- [ ] Bug fixes and optimization
+
+---
+
+## 🎯 KEY SUCCESS METRICS
+
+1. **Filter Usage**: >40% of users use advanced filters
+2. **Search Success Rate**: >85% of searches result in clicks
+3. **Video Engagement**: >60% of users watch at least one video
+4. **Conversion Rate**: 20-30% increase with video sidebar
+5. **Page Load Time**: <3 seconds with all features enabled
+6. **Mobile Performance**: <5 seconds on 3G connections
+
+---
+
+
+
+Based on your e-commerce platform and the GCC market focus, I recommend **Option 2 (Horizontal Row after banner/search)** as the primary approach, with some enhancements. Here's my detailed analysis:
+
+---
+
+## ✅ **RECOMMENDED: Option 2 - Horizontal Scrollable Row**
+
+### **Why This is Better:**
+
+1. **Mobile-First Design**
+   - GCC region has extremely high mobile usage (85%+ mobile commerce)
+   - Horizontal scroll is native to mobile UX (like TikTok, Instagram, YouTube)
+   - Sidebar would be hidden on mobile, wasting development effort
+
+2. **Higher Engagement**
+   - Videos get immediate visibility above the fold
+   - Users see video content before scrolling to products
+   - Better for promotional/featured content
+
+3. **Better Performance**
+   - Doesn't reduce main product grid width
+   - Lazy-load horizontal videos independently
+   - Can preload first 3-5 videos
+
+4. **Modern E-commerce Pattern**
+   - Amazon uses this for "Related videos"
+   - AliExpress, Noon, and regional platforms use horizontal carousels
+   - Feels native to users
+
+---
+
+## 📊 **Comparison Table**
+
+| Feature | Option 1 (Sidebar) | Option 2 (Horizontal Row) |
+|---------|-------------------|--------------------------|
+| **Mobile UX** | ❌ Poor (hidden/awkward) | ✅ Excellent (native scroll) |
+| **Desktop UX** | ✅ Good | ✅ Good |
+| **Screen Space** | ❌ Takes 25-30% width | ✅ Full width for products |
+| **Video Visibility** | ⚠️ Low (ignored) | ✅ High (prominent) |
+| **Implementation** | ⚠️ Complex (responsive) | ✅ Simple (horizontal scroll) |
+| **Performance** | ⚠️ Loads with page | ✅ Lazy-load independently |
+| **Content Type** | Related/suggested videos | Featured/promotional videos |
+
+---
+
+## 🎯 **BEST SOLUTION: Hybrid Approach**
+
+Combine both strategically:
+
+### **Desktop (>1024px):**
+```
+┌─────────────────────────────────────────────────────┐
+│  SEASONAL BANNER                                     │
+├─────────────────────────────────────────────────────┤
+│  SEARCH + FILTERS                                    │
+├─────────────────────────────────────────────────────┤
+│  [HORIZONTAL VIDEO ROW - Featured/Trending]  ▶▶▶    │
+├──────────────────────┬──────────────────────────────┤
+│  MAIN PRODUCT GRID   │  RIGHT SIDEBAR (optional)    │
+│  (70% width)         │  - Related videos            │
+│                      │  - Recently viewed           │
+│                      │  - Category filters          │
+└──────────────────────┴──────────────────────────────┘
+```
+
+### **Mobile (<768px):**
+```
+┌─────────────────────────┐
+│  SEASONAL BANNER        │
+├─────────────────────────┤
+│  SEARCH + FILTERS       │
+├─────────────────────────┤
+│  [HORIZONTAL VIDEO ROW] │
+│  ▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶▶│
+├─────────────────────────┤
+│  PRODUCT GRID           │
+│  (Full width, 2 cols)   │
+│                         │
+└─────────────────────────┘
+```
+
+---
+
+## 💡 **Implementation Strategy**
+
+### **Phase 1: Horizontal Row (Priority)**
+```typescript
+// frontend/components/VideoCarousel.tsx
+export function VideoCarousel({ categoryId }: { categoryId?: number }) {
+  const [videos, setVideos] = useState<Video[]>([]);
+  
+  // Fetch featured/trending videos
+  useEffect(() => {
+    fetch('/api/videos/featured?category=' + categoryId)
+      .then(res => res.json())
+      .then(data => setVideos(data.videos));
+  }, [categoryId]);
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold">Trending Videos</h2>
+        <button className="text-sm text-primary">View All →</button>
+      </div>
+      
+      {/* Horizontal Scroll Container */}
+      <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
+        {videos.map((video) => (
+          <VideoCard 
+            key={video.id} 
+            video={video}
+            className="min-w-[280px] snap-start"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### **Phase 2: Desktop Sidebar (Enhancement)**
+```typescript
+// Only render on desktop
+{isDesktop && videos.length > 0 && (
+  <aside className="w-80 hidden lg:block">
+    <VideoSidebar videos={relatedVideos} />
+  </aside>
+)}
+```
+
+---
+
+## 📱 **Mobile-Specific Considerations**
+
+1. **Auto-play muted** on mobile (with user control to enable sound)
+2. **Touch-friendly** horizontal scroll with snap points
+3. **Lazy load** videos as they enter viewport
+4. **Show 1.5 videos** to indicate scrollability
+5. **Loading skeleton** while fetching
+
+---
+
+## ⚡ **Performance Optimization**
+
+```typescript
+// Lazy load video thumbnails
+<video 
+  poster={video.thumbnail_url}
+  preload="none"
+  data-src={video.video_url}
+  className="lazy-video"
+/>
+
+// Intersection Observer for lazy loading
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const video = entry.target as HTMLVideoElement;
+      video.src = video.dataset.src;
+      video.classList.remove('lazy-video');
+      observer.unobserve(video);
+    }
+  });
+});
+```
+
+---
+
+## ✅ **Final Recommendation**
+
+**Start with Option 2 (Horizontal Row)** because:
+1. ✅ Works perfectly on mobile (your primary market)
+2. ✅ Higher engagement and conversion
+3. ✅ Easier to implement and maintain
+4. ✅ Doesn't compromise product grid layout
+5. ✅ Modern, expected UX pattern
+
+**Add Option 1 (Sidebar) later** as a desktop-only enhancement for:
+- Related videos
+- Recently viewed
+- Cross-sell opportunities
+
+---

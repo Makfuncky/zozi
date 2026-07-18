@@ -1,0 +1,8 @@
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="640" rx="48" fill="#F3EFE7"/>
+  <rect x="64" y="64" width="512" height="512" rx="36" fill="#E1D8C8"/>
+  <path d="M171 430L264.4 324.15C276.297 310.67 297.189 309.91 310.034 322.493L379.862 390.893C392.187 402.967 411.877 402.499 423.614 389.853L469 341" stroke="#8A7B67" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="248" cy="230" r="42" fill="#8A7B67"/>
+  <path d="M224 515H416" stroke="#8A7B67" stroke-width="20" stroke-linecap="round"/>
+  <text x="320" y="556" text-anchor="middle" fill="#6C5F4D" font-family="Verdana, Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="10">ZOZI</text>
+</svg>

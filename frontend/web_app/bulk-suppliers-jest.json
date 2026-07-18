@@ -1,0 +1,6 @@
+﻿{
+  "status": "recovered-placeholder",
+  "description": "Original bulk-suppliers Jest output file was null-corrupted and not found in local history.",
+  "recoveredAt": "2026-04-21",
+  "nextAction": "Re-run the bulk supplier Jest workflow to regenerate this artifact."
+}
