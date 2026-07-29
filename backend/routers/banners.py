@@ -9,6 +9,7 @@ from controllers.banner_controller import (
     BannerUpdate,
     create_banner as create_banner_controller,
     delete_banner as delete_banner_controller,
+    get_banner_by_id,
     get_banners,
     get_banners_page,
     update_banner as update_banner_controller,
@@ -28,18 +29,26 @@ def _admin_context(admin: User) -> dict:
         "role": getattr(admin, "role", None),
     }
 
+
 @router.get("", response_model=list[dict])
 def list_banners(request: Request, position: Optional[str] = Query(None), db: Session = Depends(get_db)):
     country = getattr(request.state, "country_code", None)
     return get_banners(db, banner_type=position, active_only=True, country_code=country)
 
+
 @router.get("/all", response_model=dict)
 def list_all_banners(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     return get_banners_page(db, active_only=False)
 
+
+@router.get("/{banner_id}", response_model=dict)
+def read_banner(banner_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return get_banner_by_id(banner_id, db)
+
+
 @router.post("", response_model=dict, status_code=201)
 def create_banner(payload: BannerCreate, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
-    return create_banner_controller(payload, getattr(admin, "id"), _admin_context(admin), db)
+    return create_banner_controller(payload, admin.id, _admin_context(admin), db)
 
 
 @router.put("/{banner_id}", response_model=dict)
@@ -55,6 +64,7 @@ async def upload_image(
     db: Session = Depends(get_db),
 ):
     return await upload_banner_image(banner_id, file, _admin_context(admin), db)
+
 
 @router.delete("/{banner_id}")
 def delete_banner(banner_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
