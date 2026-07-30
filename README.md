@@ -61,28 +61,6 @@ The batch file will automatically:
 - ✅ Start both backend and frontend servers
 - ✅ Provide test account credentials
 
-## 🔑 Test Accounts
-
-After running the application, use these accounts to explore different features:
-
-### 👑 Administrator
-- **Email**: `admin@zozi.com`
-- **Password**: `admin123`
-- **Dashboard**: `http://localhost:3000/admin/dashboard`
-- **Features**: User management, supplier approval, product moderation, analytics
-
-### 🏪 Supplier
-- **Email**: `supplier@zozi.com`
-- **Password**: `supplier123`
-- **Dashboard**: `http://localhost:3000/supplier/dashboard`
-- **Features**: Product upload, inventory management, sales reports, payouts
-
-### 🛒 Customer
-- **Email**: `customer@zozi.com`
-- **Password**: `customer123`
-- **Dashboard**: `http://localhost:3000`
-- **Features**: Browse products, add to cart/wishlist, checkout, order tracking
-
 ## 📱 Application URLs
 
 - **🏠 Main Website**: `http://localhost:3000`
