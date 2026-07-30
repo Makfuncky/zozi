@@ -70,21 +70,43 @@ else:
         "pool_timeout": settings.db_connect_timeout,
     }
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args=connect_args,
-    poolclass=poolclass,
-    echo=getattr(settings, "debug", False),
+search_path = None
+if _IS_POSTGRES:
+    search_path = os.getenv("DB_SEARCH_PATH", "public,analytics,audit,commerce,communication,configuration,core,country,customer,finance,hr,logistics,media,security,supplier,treasury")
+
+_SCHEMA_TRANSLATE_MAP = None
+if _IS_SQLITE:
+    _SCHEMA_TRANSLATE_MAP = {
+        "core": None,
+        "commerce": None,
+        "supplier": None,
+        "customer": None,
+        "logistics": None,
+        "finance": None,
+        "treasury": None,
+        "hr": None,
+        "country": None,
+        "media": None,
+        "ai": None,
+        "communication": None,
+        "audit": None,
+        "security": None,
+        "analytics": None,
+        "configuration": None,
+    }
+
+_engine_kwargs = {
+    "connect_args": connect_args,
+    "poolclass": poolclass,
+    "echo": getattr(settings, "debug", False),
     **_pool_kwargs,
-)
+}
+if _SCHEMA_TRANSLATE_MAP is not None:
+    _engine_kwargs["execution_options"] = {"schema_translate_map": _SCHEMA_TRANSLATE_MAP}
+
+engine = create_engine(DATABASE_URL, **_engine_kwargs)
 
 if _IS_SQLITE:
-    # Performance + concurrency tuning applied to every connection. SQLite in
-    # the default DELETE/ROLLBACK journal mode serializes writers and raises
-    # "database is locked" under concurrent FastAPI threadpool traffic. WAL lets
-    # readers proceed while a writer is active; busy_timeout makes contending
-    # transactions wait instead of erroring; a larger page cache + mmap cut
-    # physical IO on the RLS-heavy read path.
     @event.listens_for(engine, "connect")
     def _sqlite_perf_pragmas(dbapi_conn, _record):
         cur = dbapi_conn.cursor()

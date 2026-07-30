@@ -8,7 +8,7 @@ const PORT = process.env.PW_PORT || 8081;
 const BASE = `http://localhost:${PORT}/`;
 const OUT_DIR = path.resolve(process.cwd(), 'playwright-out');
 
-const TABS = ['Home', 'Products', 'Cart', 'Orders', 'Profile'];
+const TABS = ['Shop', 'Cart', 'Account', 'Sign In'];
 
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });

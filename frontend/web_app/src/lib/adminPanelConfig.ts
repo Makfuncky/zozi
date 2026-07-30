@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import {
+  Activity,
   BadgePercent,
   BarChart3,
   BookOpen,
@@ -30,6 +31,7 @@ import {
   Users,
   Video,
   Phone,
+  Sparkles,
 } from "@/lib/icons";
 import { hasAdminPermission, isAdminStaffRole } from "@shared/adminPermissions";
 
@@ -290,6 +292,16 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
 
   {
+    key: "hr-dashboard",
+    group: "governance",
+    name: "HR Dashboard",
+    href: "/admin/hr",
+    desc: "Onboarding pipeline, performance health, and activity feed",
+    icon: BarChart3,
+    dashboardFeatured: true,
+    allowedRoles: ["admin"],
+  },
+  {
     key: "organization",
     group: "governance",
     name: "Organization",
@@ -359,6 +371,33 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     allowedRoles: ["admin"],
     hideFromNav: true,
   },
+  {
+    key: "ess",
+    group: "governance",
+    name: "Employee Self-Service",
+    href: "/admin/ess",
+    desc: "Profile, leave, payslips, attendance, OKRs and org chart",
+    icon: Sparkles,
+    allowedRoles: ["admin", "country_head", "country_manager", "country_staff"],
+  },
+  {
+    key: "payroll-pipeline",
+    group: "governance",
+    name: "Payroll Pipeline",
+    href: "/admin/payroll",
+    desc: "Payroll maker-checker workflow and disbursement pipeline",
+    icon: DollarSign,
+    allowedRoles: ["admin", "country_head"],
+  },
+  {
+    key: "background-jobs",
+    group: "operations",
+    name: "Background Jobs",
+    href: "/admin/payouts/background-jobs",
+    desc: "Auto-payout scheduler status, history, start/stop controls",
+    icon: Activity,
+    allowedRoles: ["admin"],
+  },
 ];
 
 export const ADMIN_NAV_SECTIONS = ADMIN_NAV_GROUPS.map((group) => ({
@@ -398,6 +437,8 @@ export const ADMIN_LEGACY_DASHBOARD_REDIRECTS: Record<string, string> = {
   compare: "/admin/suppliers?section=compare",
   "inventory-alerts": "/admin/inventory-alerts",
   treasury: "/admin/finance?section=treasury",
+  ess: "/admin/ess",
+  "payroll-pipeline": "/admin/payroll",
 };
 
 export function canAccessAdminNavItem(item: AdminNavItem, role: string | null | undefined): boolean {

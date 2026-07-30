@@ -11,8 +11,7 @@ class MediaAsset(Base):
     __tablename__ = "media_assets"
     __table_args__ = (
         Index("ix_media_assets_entity", "entity_type", "entity_id"),
-        Index("ix_media_assets_variant", "entity_id", "variant"),
-    )
+        Index("ix_media_assets_variant", "entity_id", "variant"), {"schema": "media"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), nullable=False, index=True)

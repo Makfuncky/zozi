@@ -22,6 +22,7 @@ from models import (
 )
 from db.schemas import Product as ProductSchema, ProductCreate
 from controllers.audit_controller import audit_log, AuditAction
+from utils.cache import cache_or_compute, cache_get_json, cache_set_json
 
 logger = logging.getLogger(__name__)
 
@@ -287,7 +288,7 @@ def _get_active_flash_sales(
     )
     if sale_id is not None:
         query = query.filter(FlashSale.id == sale_id)
-    return query.order_by(FlashSale.discount_pct.desc(), FlashSale.ends_at.asc()).all()
+    return query.order_by(FlashSale.discount_pct.desc(), FlashSale.ends_at.asc()).limit(100).all()
 
 
 def _apply_live_offer_metadata(product: Product, flash_sale: Optional[FlashSale]) -> Product:
@@ -373,9 +374,9 @@ def _is_product_restricted_for_country(
     return any(str(r).strip().lower() == slug for r in restricted)
 
 
-def get_products(
+def _list_products_cached(
     db: Session,
-    response: Optional[Response],
+    resolved_country: Optional[str],
     q: Optional[str] = None,
     category: Optional[str] = None,
     subcategory: Optional[str] = None,
@@ -401,44 +402,10 @@ def get_products(
     country_code: Optional[str] = None,
     has_video: bool = False,
     attributes: Optional[str] = None,
-) -> List[Product]:
-    resolved_country = country_code or region
-    cache_key = _build_product_cache_key(
-        "list",
-        {
-            "q": q,
-            "category": category,
-            "subcategory": subcategory,
-            "brand": brand,
-            "brands": brands,
-            "color": color,
-            "region": region,
-            "supplier": supplier,
-            "min_price": min_price,
-            "max_price": max_price,
-            "min_rating": min_rating,
-            "max_rating": max_rating,
-            "new_arrivals": new_arrivals,
-            "best_sellers": best_sellers,
-            "trending": trending,
-            "in_stock": in_stock,
-            "min_discount": min_discount,
-            "deals": deals,
-            "sort": sort,
-            "sale_id": sale_id,
-            "limit": limit,
-            "offset": offset,
-            "country_code": country_code,
-            "has_video": has_video,
-            "attributes": attributes,
-        },
-    )
-    cached_payload = _cache_get_json(cache_key)
-
-    # Always hide deleted and inactive products.
-    # Treat is_approved=NULL as approved (legacy rows without explicit approval).
-    # Treat is_active=NULL as active (same reason).
-    query = db.query(Product).filter(
+) -> tuple[list[dict[str, Any]], int]:
+    query = db.query(Product).options(
+        selectinload(Product.variants),
+    ).filter(
         Product.is_deleted == False,           # noqa: E712
         Product.is_active.isnot(False),        # NULL → active
         Product.is_approved.isnot(False),      # NULL → approved
@@ -459,10 +426,7 @@ def get_products(
 
     if sale_id is not None:
         if not sale_product_ids and global_flash_sale is None:
-            if response is not None:
-                response.headers["X-Total-Count"] = "0"
-                response.headers["Cache-Control"] = _PUBLIC_PRODUCTS_CACHE_CONTROL
-            return []
+            return [], 0
         if global_flash_sale is None:
             query = query.filter(Product.id.in_(sale_product_ids))
 
@@ -549,7 +513,6 @@ def get_products(
         # so restricting by stored compare_price would wrongly exclude flash-sale-only items.
         _skip_discount_filter = deals and global_flash_sale is not None
         if not _skip_discount_filter:
-            # Only products with a compare_price set and a real discount >= min_discount %
             factor = 1.0 - min_discount / 100.0
             query = query.filter(
                 Product.compare_price.isnot(None),
@@ -572,7 +535,6 @@ def get_products(
     elif sort == "bestseller":
         query = query.order_by(Product.sales_count.desc())
     elif sort == "discount":
-        # Products with a compare_price first (deepest discount = largest gap)
         query = query.order_by(
             Product.compare_price.desc().nullslast(),
             Product.price.asc(),
@@ -580,15 +542,12 @@ def get_products(
 
     products = query.offset(offset).limit(limit).all()
     total = query.count()
-    if response is not None:
-        response.headers["X-Total-Count"] = str(total)
-        response.headers["Cache-Control"] = _PUBLIC_PRODUCTS_CACHE_CONTROL
     hydrated_products = [
         _apply_live_offer_metadata(product, active_sales_by_product.get(product.id) or global_flash_sale)
         for product in products
     ]
     serialized_products = _serialize_products(hydrated_products)
-    
+
     if resolved_country:
         from services.logistics_partner_pricing import normalize_country_code
         code = normalize_country_code(resolved_country)
@@ -613,13 +572,113 @@ def get_products(
 
         filtered_products = [prod for prod in serialized_products if not _is_restricted(prod.get("category", ""))]
         serialized_products = filtered_products
-    
-    _cache_set_json(
-        cache_key,
-        {"items": serialized_products, "total": total},
-        _PRODUCT_LIST_CACHE_TTL,
+
+    return serialized_products, total
+
+
+def get_products(
+    db: Session,
+    response: Optional[Response],
+    q: Optional[str] = None,
+    category: Optional[str] = None,
+    subcategory: Optional[str] = None,
+    brand: Optional[str] = None,
+    brands: Optional[str] = None,
+    color: Optional[str] = None,
+    region: Optional[str] = None,
+    supplier: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    min_rating: Optional[float] = None,
+    max_rating: Optional[float] = None,
+    new_arrivals: bool = False,
+    best_sellers: bool = False,
+    trending: bool = False,
+    in_stock: bool = False,
+    min_discount: Optional[int] = None,
+    deals: bool = False,
+    sort: Optional[str] = None,
+    sale_id: Optional[int] = None,
+    limit: int = 24,
+    offset: int = 0,
+    country_code: Optional[str] = None,
+    has_video: bool = False,
+    attributes: Optional[str] = None,
+) -> List[Product]:
+    resolved_country = country_code or region
+
+    cache_payload = {
+        "q": q,
+        "category": category,
+        "subcategory": subcategory,
+        "brand": brand,
+        "brands": brands,
+        "color": color,
+        "region": region,
+        "supplier": supplier,
+        "min_price": min_price,
+        "max_price": max_price,
+        "min_rating": min_rating,
+        "max_rating": max_rating,
+        "new_arrivals": new_arrivals,
+        "best_sellers": best_sellers,
+        "trending": trending,
+        "in_stock": in_stock,
+        "min_discount": min_discount,
+        "deals": deals,
+        "sort": sort,
+        "sale_id": sale_id,
+        "limit": limit,
+        "offset": offset,
+        "country_code": country_code,
+        "has_video": has_video,
+        "attributes": attributes,
+    }
+    cache_key = build_versioned_cache_key("products:listing", "list", cache_payload)
+
+    def _compute() -> tuple[list[dict[str, Any]], int]:
+        return _list_products_cached(
+            db=db,
+            resolved_country=resolved_country,
+            q=q,
+            category=category,
+            subcategory=subcategory,
+            brand=brand,
+            brands=brands,
+            color=color,
+            region=region,
+            supplier=supplier,
+            min_price=min_price,
+            max_price=max_price,
+            min_rating=min_rating,
+            max_rating=max_rating,
+            new_arrivals=new_arrivals,
+            best_sellers=best_sellers,
+            trending=trending,
+            in_stock=in_stock,
+            min_discount=min_discount,
+            deals=deals,
+            sort=sort,
+            sale_id=sale_id,
+            limit=limit,
+            offset=offset,
+            country_code=country_code,
+            has_video=has_video,
+            attributes=attributes,
+        )
+
+    serialized_products, total = cache_or_compute(
+        key=cache_key,
+        compute=_compute,
+        ttl=300,
+        namespace="products:listing",
     )
-    return serialized_products
+
+    if response is not None:
+        response.headers["X-Total-Count"] = str(total)
+        response.headers["Cache-Control"] = _PUBLIC_PRODUCTS_CACHE_CONTROL
+
+    return cast(List[Product], serialized_products)
 
 
 def create_product(product: ProductCreate, db: Session) -> Product:
@@ -878,22 +937,17 @@ def create_supplier_product_with_upload(
     db: Session,
 ) -> Product:
     from utils.file_validation import validate_upload_image
-    from utils.config import settings as _settings
+    from services.storage import storage as _storage
 
     MAX_SIZE = 10 * 1024 * 1024  # 10 MB
     content = file.file.read()
     if len(content) > MAX_SIZE:
         raise HTTPException(status_code=413, detail="Image file exceeds 10MB limit")
 
-    # Validate extension + magic bytes (rejects extension spoofing / path traversal)
     validated_ext = validate_upload_image(content, file.filename or "upload")
     safe_filename = f"{uuid.uuid4().hex}{validated_ext}"
-    upload_dir = _settings.upload_dir
-    os.makedirs(upload_dir, exist_ok=True)
-    # os.path.basename ensures no directory components can slip through
-    file_path = os.path.join(upload_dir, os.path.basename(safe_filename))
-    with open(file_path, "wb") as buffer:
-        buffer.write(content)
+    key = f"products/{safe_filename}"
+    url = _storage.save(key, content, content_type=file.content_type)
 
     product = Product(
         name=html.escape(name.strip()) if name else name,
@@ -901,7 +955,7 @@ def create_supplier_product_with_upload(
         price=price,
         category=category,
         color=color,
-        image_url=f"{upload_dir}/{safe_filename}",
+        image_url=url,
         stock=stock,
         supplier_id=current_user["id"],
     )

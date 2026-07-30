@@ -13,6 +13,7 @@ __all__ = [
 
 class LogisticsPartner(Base):
     __tablename__ = "logistics_partners"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False)
@@ -58,6 +59,7 @@ class LogisticsPartner(Base):
 
 class LogisticsPartnerProfile(Base):
     __tablename__ = "logistics_partner_profiles"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False, unique=True)
     tax_id = Column(String, nullable=True)
@@ -77,6 +79,7 @@ class LogisticsPartnerProfile(Base):
 
 class LogisticsPartnerServiceArea(Base):
     __tablename__ = "logistics_partner_service_areas"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     country_code = Column(String(10), nullable=False)
@@ -108,6 +111,7 @@ class LogisticsPartnerServiceArea(Base):
 
 class LogisticsPricingProfile(Base):
     __tablename__ = "logistics_pricing_profiles"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     service_area_id = Column(Integer, ForeignKey("logistics_partner_service_areas.id"), nullable=False)
@@ -136,6 +140,7 @@ class LogisticsPricingProfile(Base):
 
 class LogisticsVehicleRule(Base):
     __tablename__ = "logistics_vehicle_rules"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     service_area_id = Column(Integer, ForeignKey("logistics_partner_service_areas.id"), nullable=False)
@@ -159,6 +164,7 @@ class LogisticsVehicleRule(Base):
 
 class LogisticsCategoryPricingRule(Base):
     __tablename__ = "logistics_category_pricing_rules"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     service_area_id = Column(Integer, ForeignKey("logistics_partner_service_areas.id"), nullable=True)
@@ -181,8 +187,7 @@ class LogisticsCategoryPricingRule(Base):
 class Shipment(Base):
     __tablename__ = "shipments"
     __table_args__ = (
-        Index("ix_shipments_order_id", "order_id"),
-    )
+        Index("ix_shipments_order_id", "order_id"), {"schema": "logistics"})
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -225,8 +230,7 @@ class ShipmentEvent(Base):
     __tablename__ = "shipment_events"
     __table_args__ = (
         Index("ix_shipment_events_shipment_id", "shipment_id"),
-        Index("ix_shipment_events_order_id", "order_id"),
-    )
+        Index("ix_shipment_events_order_id", "order_id"), {"schema": "logistics"})
     id = Column(Integer, primary_key=True, index=True)
     shipment_id = Column(Integer, ForeignKey("shipments.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)

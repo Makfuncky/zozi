@@ -97,7 +97,7 @@ export function FormInput({
       className={cn(
         "w-full px-3 py-2 bg-surface-2 border border-border rounded-lg",
         "text-text placeholder:text-text-faint",
-        "focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent",
+        "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
         error && "border-danger",
         className
       )}
@@ -124,7 +124,7 @@ export function FormSelect({
       className={cn(
         "w-full px-3 py-2 bg-surface-2 border border-border rounded-lg",
         "text-text placeholder:text-text-faint",
-        "focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent",
+        "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
         error && "border-danger",
         className
       )}
@@ -151,7 +151,7 @@ export function FormTextarea({
       className={cn(
         "w-full px-3 py-2 bg-surface-2 border border-border rounded-lg",
         "text-text placeholder:text-text-faint resize-y",
-        "focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent",
+        "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
         error && "border-danger",
         className
       )}

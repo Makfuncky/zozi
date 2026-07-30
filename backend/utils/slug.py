@@ -1,6 +1,7 @@
 """Slug generation helpers."""
 from __future__ import annotations
 
+import hashlib
 import re
 import unicodedata
 
@@ -17,3 +18,10 @@ def generate_slug(text: str, max_length: int = 80) -> str:
     if len(slug) > max_length:
         slug = slug[:max_length].rstrip("-")
     return slug or "item"
+
+
+def generate_slug_hash(text: str) -> str:
+    """Generate a short deterministic hash for slug uniqueness checks."""
+    base = generate_slug(text)
+    digest = hashlib.sha256(base.encode("utf-8")).hexdigest()
+    return digest[:12]

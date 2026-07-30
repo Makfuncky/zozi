@@ -16,6 +16,7 @@ function quote(value: string) {
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: ["**/__tests__/**/*.spec.ts", "**/e2e/**/*.spec.ts"],
   fullyParallel: false,
   workers: 1,
   timeout: 30_000,

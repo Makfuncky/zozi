@@ -72,7 +72,6 @@ COUNTRY_AWARE_TABLES: dict[str, str] = {
     "news_articles": "country_code",
     "offices": "country_code",
     "supplier_profiles": "country_code",
-    "products": "country_code",
     "flash_sales": "country_code",
     "logistics_partners": "country_code",
     "payouts": "country_code",
@@ -413,15 +412,18 @@ def generate_rls_policy_sql(schema: str = "public") -> str:
 def install_rls_policies(engine: Engine, schema: str = "public") -> None:
     """Enable RLS and apply policies on every country-aware Postgres table."""
     from sqlalchemy import text
+    from sqlalchemy.sql import quoted_name
 
+    safe_schema = quoted_name(schema, False)
     policy_sql = generate_rls_policy_sql(schema=schema)
 
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
         for table_name in COUNTRY_AWARE_TABLES.keys():
+            safe_table = quoted_name(table_name, False)
             conn.execute(
-                text(f"ALTER TABLE {schema}.{table_name} ENABLE ROW LEVEL SECURITY;")
+                text(f"ALTER TABLE {safe_schema}.{safe_table} ENABLE ROW LEVEL SECURITY;")
             )
-            conn.execute(text(f"ALTER TABLE {schema}.{table_name} FORCE ROW LEVEL SECURITY;"))
+            conn.execute(text(f"ALTER TABLE {safe_schema}.{safe_table} FORCE ROW LEVEL SECURITY;"))
 
         conn.execute(text(policy_sql))
 

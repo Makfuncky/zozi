@@ -121,7 +121,7 @@ function CertCard({ cert }: { cert: { title: string; issuer?: string; year?: num
       {cert.image_url ? (
         <Image src={resolveImage(cert.image_url)} alt={cert.title} width={40} height={40} className="rounded object-contain" />
       ) : (
-        <Shield className="w-9 h-9 text-brand shrink-0" />
+        <Shield className="w-9 h-9 text-primary shrink-0" />
       )}
       <div>
         <p className="text-sm font-semibold text-text">{cert.title}</p>
@@ -142,7 +142,7 @@ function ReviewCard({
   return (
     <div className="group rounded-2xl border border-border bg-surface p-4 transition-all hover:border-primary/20 hover:shadow-md hover:shadow-primary/5">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary/20 via-accent/10 to-brand/15 text-sm font-bold text-primary">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 via-accent/10 to-primary/15 text-sm font-bold text-primary">
           {initials}
         </div>
         <div className="min-w-0 flex-1">
@@ -479,7 +479,7 @@ export default function SupplierAboutPage() {
       {/* ─── 2. PROFILE IDENTITY CARD ────────────────────────────────────── */}
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className={`${hasBanner ? "-mt-10 sm:-mt-14" : "mt-4"} overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl shadow-black/10`}>
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/[0.04] via-transparent to-brand/[0.03]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-primary/[0.03]" />
 
           <div className="relative px-5 pt-4 pb-5 sm:px-8 sm:pt-5 sm:pb-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -495,7 +495,7 @@ export default function SupplierAboutPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-primary/25 via-surface to-brand/20 text-3xl font-extrabold text-primary sm:text-4xl">
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/25 via-surface to-primary/20 text-3xl font-extrabold text-primary sm:text-4xl">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -546,7 +546,7 @@ export default function SupplierAboutPage() {
               <div className="flex shrink-0 flex-wrap gap-2">
                 <Link
                   href={`/chatbot?supplier=${supplier.id}`}
-                  className="flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand/25 transition-all hover:bg-brand/90 hover:shadow-lg hover:shadow-brand/35"
+                  className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/35"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Chat
@@ -579,7 +579,7 @@ export default function SupplierAboutPage() {
           {credScore > 0 && (
             <div className="h-1 w-full bg-surface-2">
               <div
-                className="h-full bg-linear-to-r from-primary via-brand to-accent transition-all duration-700"
+                className="h-full bg-gradient-to-r from-primary via-primary to-accent transition-all duration-700"
                 style={{ width: `${credScore}%` }}
               />
             </div>
@@ -661,7 +661,7 @@ export default function SupplierAboutPage() {
                     </div>
                     <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-linear-to-r from-primary via-brand to-accent"
+                        className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent"
                         style={{ width: `${credScore}%` }}
                       />
                     </div>
@@ -725,7 +725,7 @@ export default function SupplierAboutPage() {
               )}
 
               {/* Chat CTA */}
-              <div className="overflow-hidden rounded-2xl border border-primary/20 bg-linear-to-br from-primary/8 via-surface to-accent/8 p-4">
+              <div className="overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/8 via-surface to-accent/8 p-4">
                 <div className="mb-3 flex items-start gap-3">
                   <div className="shrink-0 rounded-xl bg-primary/10 p-2 text-primary">
                     <MessageSquare className="w-5 h-5" />
@@ -748,8 +748,8 @@ export default function SupplierAboutPage() {
             {/* ── Right: Brand Story + quick-nav ── */}
             <div className="space-y-5">
               <section className="overflow-hidden rounded-2xl border border-border bg-surface">
-                <div className="border-b border-border bg-linear-to-br from-brand/10 via-transparent to-accent/8 px-5 py-5">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-brand/80">Brand Story</p>
+                <div className="border-b border-border bg-gradient-to-br from-primary/10 via-transparent to-accent/8 px-5 py-5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary/80">Brand Story</p>
                   <h2 className="mt-2 text-[1.7rem] font-extrabold text-text">About {displayName}</h2>
                   {narrative.intro ? (
                     <p className="mt-2.5 text-sm leading-7 text-text-muted sm:text-base">{narrative.intro}</p>
@@ -773,7 +773,7 @@ export default function SupplierAboutPage() {
                         <ul className="grid gap-2.5 sm:grid-cols-2">
                           {narrative.bulletPoints.map((point, i) => (
                             <li key={i} className="flex items-start gap-3 rounded-xl border border-border bg-background/60 px-3.5 py-3 text-sm leading-6 text-text-muted">
-                              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                               <span>{point}</span>
                             </li>
                           ))}
@@ -825,9 +825,9 @@ export default function SupplierAboutPage() {
                 {hasVideo && (
                   <button
                     onClick={() => handleTabChange("video")}
-                    className="group flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 text-left transition-all hover:border-brand/30 hover:shadow-md hover:shadow-brand/6"
+                    className="group flex items-center gap-3 rounded-2xl border border-border bg-surface p-4 text-left transition-all hover:border-primary/30 hover:shadow-md hover:shadow-primary/6"
                   >
-                    <div className="rounded-xl bg-brand/10 p-2.5 text-brand transition-colors group-hover:bg-brand/18">
+                    <div className="rounded-xl bg-primary/10 p-2.5 text-primary transition-colors group-hover:bg-primary/18">
                       <Video className="h-5 w-5" />
                     </div>
                     <div>
@@ -916,7 +916,7 @@ export default function SupplierAboutPage() {
         {activeTab === "reviews" && (
           <div>
             <div className="mb-6 overflow-hidden rounded-2xl border border-border bg-surface">
-              <div className="border-b border-border bg-linear-to-r from-warning/12 via-transparent to-brand/10 px-5 py-5 sm:px-6">
+              <div className="border-b border-border bg-gradient-to-r from-warning/12 via-transparent to-primary/10 px-5 py-5 sm:px-6">
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-text-faint">Customer Reviews</p>
                 <h2 className="mt-2 text-[1.7rem] font-extrabold text-text">What customers say about {displayName}</h2>
                 <p className="mt-1.5 text-sm text-text-muted">
@@ -947,7 +947,7 @@ export default function SupplierAboutPage() {
                   </p>
                   <p className="mt-1.5 text-sm text-text-muted">{badgeInfo.emoji} {badgeInfo.label}</p>
                   <div className="mt-2.5 h-1.5 rounded-full bg-surface overflow-hidden">
-                    <div className="h-full rounded-full bg-linear-to-r from-primary to-brand" style={{ width: `${credScore}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary" style={{ width: `${credScore}%` }} />
                   </div>
                 </div>
 
@@ -987,7 +987,7 @@ export default function SupplierAboutPage() {
         {activeTab === "video" && hasVideo && (
           <div>
             <div className="mb-5">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand">Brand Video</p>
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Brand Video</p>
               <h2 className="text-xl font-bold text-text">{displayName} — Official Video</h2>
             </div>
 
@@ -998,9 +998,9 @@ export default function SupplierAboutPage() {
                     onClick={() => { setVideoOpen(true); setVideoLoading(true); }}
                     className="group relative flex aspect-video w-full items-center justify-center overflow-hidden bg-surface-2"
                   >
-                    <div className="absolute inset-0 bg-linear-to-br from-brand/20 via-transparent to-accent/15" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-accent/15" />
                     <div className="relative z-10 flex flex-col items-center gap-4">
-                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand/90 shadow-2xl shadow-brand/40 transition-all group-hover:scale-110 group-hover:shadow-brand/60">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/90 shadow-2xl shadow-primary/40 transition-all group-hover:scale-110 group-hover:shadow-primary/60">
                         <Play className="h-8 w-8 text-white ml-1" />
                       </div>
                       <span className="rounded-full border border-white/20 bg-black/35 px-4 py-1.5 text-sm font-semibold text-white backdrop-blur-sm">

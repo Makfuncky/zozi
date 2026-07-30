@@ -1,2 +1,2 @@
-﻿open('chat_system.py','w').write('test')
+open('chat_system.py','w').write('test')
 

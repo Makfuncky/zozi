@@ -33,11 +33,10 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const body = new URLSearchParams({ username, password });
       const res = await apiFetch("/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
       const data = await parseJsonResponse(res);
       if (!res.ok) {

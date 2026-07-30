@@ -25,8 +25,12 @@ import { UserRealtimeBridge } from "@/components/UserRealtimeBridge";
 import * as SecureStore from "expo-secure-store";
 import { CountryProvider, useCountry } from "@/lib/countryContext";
 
-// Disable LogBox entirely to avoid React module resolution issues on Windows
-LogBox.ignoreAllLogs(true);
+// Disable LogBox warnings in production only
+if (__DEV__) {
+  LogBox.ignoreAllLogs(false);
+} else {
+  LogBox.ignoreAllLogs(true);
+}
 
 type NotificationsModule = {
   getPermissionsAsync: () => Promise<{ status: string }>;

@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/ui/Button";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag,
@@ -21,7 +21,10 @@ import {
   LayoutDashboard,
   Bell,
   ChevronDown,
+  Search
 } from "@/lib/icons";
+import HeaderSearchBar from "./HeaderSearchBar";
+import MobileSearchOverlay from "./MobileSearchOverlay";
 import { useAuth } from "@/lib/useAuth";
 import { useCartStore } from "@/lib/cartStore";
 import { useWishlistStore } from "@/lib/wishlistStore";
@@ -34,6 +37,7 @@ import { apiFetch } from "@/lib/api";
 import type { TranslationKey } from "@/lib/i18n";
 import { useAuthModalStore } from "@/lib/authModalStore";
 import { LANGUAGE_OPTIONS, type Locale } from "@shared/localization";
+import type { SupplierPublicSummary } from "@/lib/types";
 
 type PublicCountryOption = {
   code: string;
@@ -92,7 +96,7 @@ const LocaleToggle = React.memo(function LocaleToggle() {
   const { isLoggedIn } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const activeLanguage = LANGUAGE_OPTIONS.find((language) => language.code === locale) ?? LANGUAGE_OPTIONS[0];
+  const activeLanguage = LANGUAGE_OPTIONS.find((language: any) => language.code === locale) ?? LANGUAGE_OPTIONS[0];
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -132,7 +136,7 @@ const LocaleToggle = React.memo(function LocaleToggle() {
             exit={{ opacity: 0, y: -6 }}
             className="glass-dropdown absolute right-0 z-[999] mt-2 min-w-44 rounded-2xl p-1"
           >
-            {LANGUAGE_OPTIONS.map((language) => {
+            {LANGUAGE_OPTIONS.map((language: any) => {
               const selected = language.code === locale;
               return (
                 <button
@@ -317,6 +321,8 @@ const menuItemClass =
 
 export default function Header() {
   const { user, isLoggedIn, logout } = useAuth();
+  const router = useRouter();
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const cartCount = useCartStore((s) => s.getItemCount());
   const wishlistCount = useWishlistStore((s) => s.ids.length);
   const pathname = usePathname();
@@ -326,6 +332,76 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const mobileImageInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    apiFetch("/search/visual", {
+      method: "POST",
+      body: formData,
+    })
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        sessionStorage.setItem("zozi_visual_search", JSON.stringify({
+          products: data.similarProducts || [],
+          timestamp: Date.now(),
+        }));
+        router.push("/products?visualSearch=1");
+      })
+      .catch(() => {
+        // Fallback: just navigate to products page
+        router.push("/products");
+      })
+      .finally(() => {
+        // Reset the input so the same file can be selected again
+        e.target.value = "";
+      });
+  }, [router]);
+
+  // Mobile image search handler (uses the same upload logic)
+  const handleMobileImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    apiFetch("/search/visual", {
+      method: "POST",
+      body: formData,
+    })
+      .then((r) => r.ok ? r.json() : Promise.reject())
+      .then((data) => {
+        sessionStorage.setItem("zozi_visual_search", JSON.stringify({
+          products: data.similarProducts || [],
+          timestamp: Date.now(),
+        }));
+        setMobileSearchOpen(false);
+        router.push("/products?visualSearch=1");
+      })
+      .catch(() => {
+        setMobileSearchOpen(false);
+        router.push("/products");
+      })
+      .finally(() => {
+        e.target.value = "";
+      });
+  }, [router]);
+  
+  // ── Header search state (URL-driven for persistence) ──────────────────
+  const [headerSearch, setHeaderSearch] = useState(searchParams?.get("q") || searchParams?.get("search") || "");
+  const [headerCategory, setHeaderCategory] = useState(searchParams?.get("category") || "all");
+  const [headerMinPrice, setHeaderMinPrice] = useState(searchParams?.get("minPrice") || "");
+  const [headerMaxPrice, setHeaderMaxPrice] = useState(searchParams?.get("maxPrice") || "");
+  const [headerMinRating, setHeaderMinRating] = useState(searchParams?.get("minRating") || "");
+  const [headerSort, setHeaderSort] = useState(searchParams?.get("sort") || "default");
+  const [headerSupplier, setHeaderSupplier] = useState(searchParams?.get("supplier") || "");
+  const [supplierSuggestions, setSupplierSuggestions] = useState<SupplierPublicSummary[]>([]);
+  const headerImageInputRef = useRef<HTMLInputElement>(null);
+  
+  // ──
   const unreadNotifs = useNotificationStore((state) => state.unreadCount);
   const currency = useCurrencyStore((s) => s.currency);
   const selectedCountry = useCurrencyStore((s) => s.selectedCountry);
@@ -353,6 +429,75 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Fetch supplier suggestions for the header search bar
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch("/products/suppliers")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((names: string[]) => {
+        if (cancelled) return;
+        // Convert supplier names to SupplierPublicSummary-like objects for the dropdown
+        const suggestions: SupplierPublicSummary[] = names.map((name, i) => ({
+          id: i + 1,
+          username: name.toLowerCase().replace(/\s+/g, "_"),
+          slug: name.toLowerCase().replace(/\s+/g, "-"),
+          business_name: name,
+          logo_url: null,
+          bio: null,
+          city: null,
+          country: null,
+          badge_level: "none",
+          is_verified: false,
+          verification_status: "pending",
+          product_count: 0,
+          total_reviews: 0,
+          avg_rating: 0,
+          credibility_score: 0,
+          total_sales: 0,
+          member_since: new Date().toISOString(),
+        }));
+        setSupplierSuggestions(suggestions);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // ── Auto-navigate on filter change (debounced) ─────────────────────
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isOnProductsPage = useMemo(() => pathname === "/products", [pathname]);
+
+  useEffect(() => {
+    // Don't auto-navigate if already on the products page — it syncs its own URL params
+    if (isOnProductsPage) return;
+    // Don't navigate if nothing is set (still in default state)
+    const hasAnyFilter = headerSearch.trim() ||
+      (headerCategory && headerCategory !== "all") ||
+      headerMinPrice || headerMaxPrice || headerMinRating ||
+      (headerSort && headerSort !== "default") || headerSupplier;
+    if (!hasAnyFilter) return;
+
+    if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    navTimerRef.current = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (headerSearch.trim()) params.set("q", headerSearch.trim());
+      if (headerCategory && headerCategory !== "all") params.set("category", headerCategory);
+      if (headerMinPrice) params.set("minPrice", headerMinPrice);
+      if (headerMaxPrice) params.set("maxPrice", headerMaxPrice);
+      if (headerMinRating) params.set("minRating", headerMinRating);
+      if (headerSort && headerSort !== "default") params.set("sort", headerSort);
+      if (headerSupplier) params.set("supplier", headerSupplier);
+      const qs = params.toString();
+      router.push(`/products${qs ? `?${qs}` : ""}`);
+    }, 400);
+
+    return () => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current);
+    };
+  }, [
+    headerSearch, headerCategory, headerMinPrice, headerMaxPrice,
+    headerMinRating, headerSort, headerSupplier, isOnProductsPage, router,
+  ]);
+
   // Hide the main nav menu on auth/login pages (sign-in, admin login, callback, etc.)
   const hideNav = isMinimalHeaderRoute(pathname);
   const currencySourceLabel = countryLocked && selectedCountry
@@ -369,21 +514,59 @@ export default function Header() {
   return (
     <>
       <header
-        className={`sticky top-0 z-100 transition-all duration-300 border-b border-(--color-glass-border) backdrop-blur-xl ${
+        className={`sticky top-0 z-100 transition-all duration-300 border-b border-glass-border backdrop-blur-xl ${
           scrolled
-            ? "bg-(--color-glass-hi) shadow-lg shadow-black/10"
-            : "bg-(--color-glass-panel) shadow-sm shadow-black/5"
+            ? "bg-glass-hi shadow-lg shadow-black/10"
+            : "bg-glass-panel shadow-sm shadow-black/5"
         }`}
         style={{ backgroundColor: "var(--color-glass-panel)", backdropFilter: "blur(14px) saturate(130%)" }}
       >
         <div className="max-w-11xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between gap-4 h-14">
+          <div className="flex items-center justify-between gap-3 h-14">
             {/* Logo */}
             <Link href="/" className="flex items-center shrink-0" aria-label="Go to home">
               <Logo size="sm" />
             </Link>
 
+            {/* Global search bar (desktop) - Enhanced with all filters */}
+            {!hideNav && !isPanelRoute(pathname) && (
+              <div className="hidden md:flex flex-1 max-w-5xl mx-auto">
+                <HeaderSearchBar
+                  search={headerSearch}
+                  onSetSearch={setHeaderSearch}
+                  category={headerCategory}
+                  onSetCategory={setHeaderCategory}
+                  minPrice={headerMinPrice}
+                  maxPrice={headerMaxPrice}
+                  onSetMinPrice={setHeaderMinPrice}
+                  onSetMaxPrice={setHeaderMaxPrice}
+                  minRating={headerMinRating}
+                  onSetMinRating={setHeaderMinRating}
+                  sort={headerSort}
+                  onSetSort={setHeaderSort}
+                  supplier={headerSupplier}
+                  onSetSupplier={setHeaderSupplier}
+                  onImageSearch={() => headerImageInputRef.current?.click()}
+                  supplierSuggestions={supplierSuggestions}
+                />
+                <input
+                  ref={headerImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </div>
+            )}
 
+            {/* Hidden file input for mobile image search */}
+            <input
+              ref={mobileImageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleMobileImageUpload}
+            />
 
             {/* Right actions */}
             <div className="flex items-center gap-1 sm:gap-2">
@@ -572,7 +755,7 @@ export default function Header() {
                           <Link
                             href="/help"
                             onClick={() => setUserOpen(false)}
-                            className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium ${menuItemClass}`}
+                            className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium ${menuItemClass}`}
                           >
                             <ClipboardList className="w-4 h-4 text-primary opacity-70" />
                             {tr("help")}
@@ -594,11 +777,22 @@ export default function Header() {
                 </AnimatePresence>
               </div>
 
+              {/* Mobile search trigger — visible on small screens only */}
+              {!hideNav && (
+                <button
+                  onClick={() => setMobileSearchOpen(true)}
+                  className={`rounded-xl p-2 transition-colors md:hidden ${interactiveMutedClass}`}
+                  aria-label="Open mobile search"
+                >
+                  <Search className="w-5 h-5" />
+                </button>
+              )}
+
               {/* Mobile menu toggle */}
               {!hideNav && (
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className={`rounded-xl p-2 transition-colors sm:hidden ${interactiveMutedClass}`}
+                  className={`rounded-xl p-2 transition-colors md:hidden ${interactiveMutedClass}`}
                   aria-label={menuOpen ? "Close menu" : "Open menu"}
                 >
                   {menuOpen ? (
@@ -749,6 +943,27 @@ export default function Header() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Mobile Search Overlay */}
+      <MobileSearchOverlay
+        open={mobileSearchOpen}
+        onClose={() => setMobileSearchOpen(false)}
+        search={headerSearch}
+        onSetSearch={setHeaderSearch}
+        category={headerCategory}
+        onSetCategory={setHeaderCategory}
+        minPrice={headerMinPrice}
+        maxPrice={headerMaxPrice}
+        onSetMinPrice={setHeaderMinPrice}
+        onSetMaxPrice={setHeaderMaxPrice}
+        minRating={headerMinRating}
+        onSetMinRating={setHeaderMinRating}
+        sort={headerSort}
+        onSetSort={setHeaderSort}
+        supplier={headerSupplier}
+        onSetSupplier={setHeaderSupplier}
+        onImageSearch={() => mobileImageInputRef.current?.click()}
+      />
     </>
   );
 }

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import time
 import uuid
@@ -91,6 +92,12 @@ def blacklist_token(jti: str, ttl_seconds: int) -> None:
         except Exception:
             pass
 
+    app_env = os.environ.get("APP_ENV", "").lower()
+    if app_env == "production":
+        logger.error("Redis unavailable for token blacklist in production - token revocation may fail")
+        raise RuntimeError("Redis unavailable - cannot blacklist token")
+    
+    logger.warning("Redis unavailable - falling back to in-memory token blacklist (not shared across workers)")
     _memory_blacklist[jti] = time.monotonic() + ttl_seconds
     _prune_memory_blacklist()
 
@@ -299,6 +306,14 @@ def validate_password_complexity(password: str) -> None:
             detail="Password must be at least 8 characters with at least one uppercase letter, "
             "one lowercase letter, one digit, and one special character",
         )
+    if len(password) > 72:
+        import warnings
+        warnings.warn(
+            "Passwords longer than 72 characters are truncated to 72 characters by bcrypt. "
+            "The user should be informed that only the first 72 characters will be used.",
+            UserWarning,
+            stacklevel=2,
+        )
 
 
 def _decode_and_validate(token: str, token_type: str) -> dict[str, Any]:
@@ -341,6 +356,21 @@ def decode_token(token: str) -> dict[str, Any]:
 hash_password = get_password_hash
 
 
+def require_permission(permission: str, user: dict | None) -> None:
+    """Check if user has the required permission. Raises HTTPException(403) if not."""
+    from fastapi import HTTPException, status
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    user_permissions = user.get("permissions", []) or []
+    if permission not in user_permissions:
+        role = user.get("role", "")
+        if role not in ("admin", "super_admin"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission '{permission}' required"
+            )
+
+
 __all__ = [
     "ACCESS_TOKEN_EXPIRE_MINUTES",
     "REFRESH_TOKEN_EXPIRE_DAYS",
@@ -360,6 +390,7 @@ __all__ = [
     "is_account_locked",
     "is_token_blacklisted",
     "record_failed_login",
+    "require_permission",
     "verify_password",
     "verify_refresh_token",
     "verify_token",

@@ -27,10 +27,10 @@ class NotificationPriority(str, Enum):
 
 class NotificationEngine:
     """Multi-channel notification system with templates and scheduling."""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
+
     def send(
         self,
         user_id: int,
@@ -57,7 +57,9 @@ class NotificationEngine:
         self.db.add(notification)
         self.db.commit()
         self.db.refresh(notification)
-        
+
+        _enqueue_notification_delivery(notification.id, user_id, channel, title, message)
+
         return {
             "notification_id": notification.id,
             "status": "queued",
@@ -137,3 +139,56 @@ class NotificationEngine:
 
 def get_notification_engine(db: Session) -> NotificationEngine:
     return NotificationEngine(db)
+
+
+def _enqueue_notification_delivery(
+    notification_id: int,
+    user_id: int,
+    channel: NotificationChannel,
+    title: str,
+    message: str,
+) -> None:
+    """Enqueue a background job to deliver a notification via its channel."""
+    try:
+        from utils.background_jobs import enqueue_job, JobKind
+
+        def _deliver() -> dict:
+            from db.database import SessionLocal
+            from models import User
+
+            db = SessionLocal()
+            try:
+                user = db.query(User).filter(User.id == user_id).first()
+                if not user:
+                    return {"status": "skipped", "reason": "user_not_found"}
+
+                if channel == NotificationChannel.EMAIL and user.email:
+                    from utils.email_service import send_email, get_email_sender_address
+                    from_addr = get_email_sender_address("notification")
+                    send_email(
+                        to=user.email,
+                        subject=title,
+                        html=f"<p>{message}</p>",
+                        purpose="notification",
+                        from_address=from_addr,
+                    )
+                elif channel == NotificationChannel.IN_APP:
+                    pass
+
+                from models.communication import Notification as NotificationModel
+                db.query(NotificationModel).filter(
+                    NotificationModel.id == notification_id
+                ).update({"status": "delivered"})
+                db.commit()
+                return {"status": "delivered", "notification_id": notification_id}
+            finally:
+                db.close()
+
+        enqueue_job(
+            kind=JobKind.NOTIFICATION,
+            func=_deliver,
+            metadata={"notification_id": notification_id, "channel": channel.value},
+        )
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).debug("Failed to enqueue notification delivery: %s", exc)

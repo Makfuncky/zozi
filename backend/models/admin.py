@@ -30,8 +30,7 @@ class AdminAnalyticsSnapshot(Base):
     __table_args__ = (
         UniqueConstraint("snapshot_key", name="uq_admin_analytics_snapshots_key"),
         Index("ix_admin_analytics_snapshots_group_computed", "snapshot_group", "computed_at"),
-        Index("ix_admin_analytics_snapshots_expires", "expires_at"),
-    )
+        Index("ix_admin_analytics_snapshots_expires", "expires_at"), {"schema": "audit"})
     id = Column(Integer, primary_key=True, index=True)
     snapshot_key = Column(String(120), nullable=False, index=True)
     snapshot_group = Column(String(80), nullable=False, index=True)
@@ -44,6 +43,7 @@ class AdminAnalyticsSnapshot(Base):
 
 class RolePermissionSetting(Base):
     __tablename__ = "role_permission_settings"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     role = Column(String, nullable=False)
     permissions_json = Column(JSON, nullable=True)
@@ -53,6 +53,7 @@ class RolePermissionSetting(Base):
 
 class SystemAlert(Base):
     __tablename__ = "system_alerts"
+    __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
     alert_type = Column(String, nullable=False)
     severity = Column(String, default="info")
@@ -67,6 +68,7 @@ class SystemAlert(Base):
 
 class AdminChangeAuditLog(Base):
     __tablename__ = "admin_change_audit_logs"
+    __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     action = Column(String, nullable=False)
@@ -83,6 +85,7 @@ class AdminChangeAuditLog(Base):
 
 class AdminActivityLog(Base):
     __tablename__ = "admin_activity_logs"
+    __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     action = Column(String, nullable=False)
@@ -94,6 +97,7 @@ class AdminActivityLog(Base):
 
 class SystemSetting(Base):
     __tablename__ = "system_settings"
+    __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String, unique=True, nullable=False)
     value = Column(Text, nullable=True)
@@ -106,6 +110,7 @@ class SystemSetting(Base):
 
 class APIKey(Base):
     __tablename__ = "api_keys"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     key_hash = Column(String, nullable=False)
@@ -119,6 +124,7 @@ class APIKey(Base):
 
 class BadgeBillingRecord(Base):
     __tablename__ = "badge_billing_records"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -148,6 +154,7 @@ class BadgeBillingRecord(Base):
 
 class BadgeTransaction(Base):
     __tablename__ = "badge_transactions"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
@@ -159,6 +166,7 @@ class BadgeTransaction(Base):
 
 class BadgeTier(Base):
     __tablename__ = "badge_tiers"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     min_points = Column(Integer, nullable=False)
@@ -169,6 +177,7 @@ class BadgeTier(Base):
 
 class CommissionBadgeTier(Base):
     __tablename__ = "commission_badge_tiers"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     badge_level = Column(String(50), unique=True, nullable=False)
@@ -189,6 +198,7 @@ class CommissionBadgeTier(Base):
 
 class CommissionGlobalConfig(Base):
     __tablename__ = "commission_global_configs"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     default_rate = Column(Numeric(5, 4), default=Decimal("0.1500"))
     low_value_threshold = Column(Numeric(10, 2), default=Decimal("5.00"))
@@ -204,6 +214,7 @@ class CommissionGlobalConfig(Base):
 
 class TicketReply(Base):
     __tablename__ = "ticket_replies"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(Integer, ForeignKey("support_tickets.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -214,6 +225,7 @@ class TicketReply(Base):
 
 class CouponUsage(Base):
     __tablename__ = "coupon_usage"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     coupon_id = Column(Integer, ForeignKey("coupons.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -229,6 +241,7 @@ class CouponUsage(Base):
 
 class PaymentProviderConfig(Base):
     __tablename__ = "payment_provider_configs"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     provider_name = Column(String, nullable=False)
     config = Column(JSON, nullable=True)
@@ -241,6 +254,7 @@ class PaymentProviderConfig(Base):
 
 class EmailProviderConfig(Base):
     __tablename__ = "email_provider_configs"
+    __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -269,6 +283,7 @@ class EmailProviderConfig(Base):
 
 class ShippingCarrier(Base):
     __tablename__ = "shipping_carriers"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False)
@@ -281,6 +296,7 @@ class ShippingCarrier(Base):
 
 class ShippingZone(Base):
     __tablename__ = "shipping_zones"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False)
@@ -293,6 +309,7 @@ class ShippingZone(Base):
 
 class FinanceBankAccount(Base):
     __tablename__ = "finance_bank_accounts"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     account_name = Column(String, nullable=True)
     account_number = Column(String, nullable=False)
@@ -318,6 +335,7 @@ class FinanceBankAccount(Base):
 
 class PromotionEngineConfig(Base):
     __tablename__ = "promotion_engine_configs"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True, index=True)
     engine_enabled = Column(Boolean, default=False)
@@ -349,6 +367,7 @@ class PromotionEngineConfig(Base):
 
 class PromotionLedgerEntry(Base):
     __tablename__ = "promotion_ledger_entries"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     promotion_id = Column(Integer, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -360,6 +379,7 @@ class PromotionLedgerEntry(Base):
 
 class PromotionOrderTier(Base):
     __tablename__ = "promotion_order_tiers"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     promotion_id = Column(Integer, nullable=True)
     tier_name = Column(String, nullable=True)
@@ -380,6 +400,7 @@ class PromotionOrderTier(Base):
 
 class LogisticsCODRemittanceReceipt(Base):
     __tablename__ = "logistics_cod_remittance_receipts"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=True)
     shipment_id = Column(Integer, ForeignKey("shipments.id"), nullable=True)
@@ -400,6 +421,7 @@ class LogisticsCODRemittanceReceipt(Base):
 
 class LogisticsPartnerBankAccount(Base):
     __tablename__ = "logistics_partner_bank_accounts"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     account_number = Column(String, nullable=True)
@@ -427,6 +449,7 @@ class LogisticsPartnerBankAccount(Base):
 
 class LogisticsPartnerDocument(Base):
     __tablename__ = "logistics_partner_documents"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     doc_type = Column(String, nullable=False)
@@ -440,6 +463,7 @@ class LogisticsPartnerDocument(Base):
 
 class LogisticsSettlement(Base):
     __tablename__ = "logistics_settlements"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -464,6 +488,7 @@ class LogisticsSettlement(Base):
 
 class ShipmentConfirmation(Base):
     __tablename__ = "shipment_confirmations"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     shipment_id = Column(Integer, ForeignKey("shipments.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -500,8 +525,7 @@ class ChatbotQueryEvent(Base):
         Index("ix_chatbot_events_clicked_product_id", "clicked_product_id"),
         Index("ix_chatbot_events_created_at", "created_at"),
         Index("ix_chatbot_events_normalized_query", "normalized_query"),
-        Index("ix_chatbot_events_session_id", "session_id"),
-    )
+        Index("ix_chatbot_events_session_id", "session_id"), {"schema": "audit"})
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -524,6 +548,7 @@ class ChatbotQueryEvent(Base):
 
 class PushNotificationToken(Base):
     __tablename__ = "push_notification_tokens"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     token = Column(String, nullable=False)
@@ -534,6 +559,7 @@ class PushNotificationToken(Base):
 
 class ProductVerification(Base):
     __tablename__ = "product_verifications"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     status = Column(String, default="pending")
@@ -554,6 +580,7 @@ class ProductVerification(Base):
 
 class SupplierBankAccount(Base):
     __tablename__ = "supplier_bank_accounts"
+    __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     account_number = Column(String, nullable=True)
@@ -581,6 +608,7 @@ class SupplierBankAccount(Base):
 
 class ProcessedWebhookEvent(Base):
     __tablename__ = "processed_webhook_events"
+    __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
     processor = Column(String, nullable=False)
     event_id = Column(String, nullable=False)
@@ -602,6 +630,7 @@ def _populate_processed_webhook_payload_hash(mapper, connection, target):
 
 class NormalizedWebhookEvent(Base):
     __tablename__ = "normalized_webhook_events"
+    __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
     provider_code = Column(String, nullable=False, index=True)
     gateway_event_id = Column(String, nullable=False)
@@ -626,6 +655,7 @@ class NormalizedWebhookEvent(Base):
 
 class EmployeeExpense(Base):
     __tablename__ = "employee_expenses"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False, index=True)
     expense_type = Column(String(50), nullable=False)
@@ -644,6 +674,7 @@ class EmployeeExpense(Base):
 
 class SupplierDispute(Base):
     __tablename__ = "supplier_disputes"
+    __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -672,6 +703,7 @@ class SupplierDispute(Base):
 
 class SupplierCountryCommission(Base):
     __tablename__ = "supplier_country_commissions"
+    __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     country_code = Column(String(10), nullable=False)
@@ -684,6 +716,7 @@ class SupplierCountryCommission(Base):
 
 class RetentionJobRun(Base):
     __tablename__ = "retention_job_runs"
+    __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     job_type = Column(String(50), nullable=True)
     target_table = Column(String(100), nullable=True)

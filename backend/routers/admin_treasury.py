@@ -47,6 +47,26 @@ def require_treasury_access(current_user: dict = Depends(get_current_user)) -> d
 
 # ── Dashboard / Metrics ────────────────────────────────────────────────
 
+@router.get("/")
+def admin_treasury_root(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_treasury_access),
+):
+    """Treasury root — summary stats (bare /admin/treasury)."""
+    total_entries = db.query(JournalEntry).count() or 0
+    total_accounts = db.query(Account).count() or 0
+    total_cash = db.execute(
+        select(func.coalesce(func.sum(AccountBalance.balance), 0))
+    ).scalar() or Decimal("0")
+    return {
+        "total_entries": total_entries,
+        "total_accounts": total_accounts,
+        "total_cash": float(total_cash),
+        "metrics_available_at": "/admin/treasury/metrics",
+        "ledger_available_at": "/admin/treasury/ledger",
+    }
+
+
 @router.get("/metrics")
 def admin_treasury_metrics(
     db: Session = Depends(get_db),
@@ -487,28 +507,41 @@ def consolidated_treasury_ledger(
 def consolidated_trial_balance(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
 ):
-    accounts = db.query(Account).filter(Account.is_active == True).order_by(Account.code).all()
-    return [
-        {
-            "id": a.id,
-            "code": a.code,
-            "name": a.name,
-            "normal_side": a.normal_side,
-            "total_debits": float(db.query(func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == "debit").scalar() or 0),
-            "total_credits": float(db.query(func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == "credit").scalar() or 0),
-        }
-        for a in accounts
-    ]
+    query = db.query(Account).filter(Account.is_active == True)
+    total = query.count()
+    accounts = query.order_by(Account.code).offset((page - 1) * page_size).limit(page_size).all()
+    return {
+        "data": [
+            {
+                "id": a.id,
+                "code": a.code,
+                "name": a.name,
+                "normal_side": a.normal_side,
+                "total_debits": float(db.query(func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == "debit").scalar() or 0),
+                "total_credits": float(db.query(func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == "credit").scalar() or 0),
+            }
+            for a in accounts
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.get("/consolidated/cash-position")
 def consolidated_cash_position(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
 ):
-    accounts = db.query(TreasuryAccount).filter(TreasuryAccount.is_active == True).all()
-    total = sum(float(a.balance or 0) for a in accounts)
+    query = db.query(TreasuryAccount).filter(TreasuryAccount.is_active == True)
+    total = query.count()
+    accounts = query.offset((page - 1) * page_size).limit(page_size).all()
+    total_balance = float(db.query(func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {
         "accounts": [
             {
@@ -519,7 +552,10 @@ def consolidated_cash_position(
             }
             for a in accounts
         ],
-        "total_balance": total,
+        "total_balance": total_balance,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
     }
 
 

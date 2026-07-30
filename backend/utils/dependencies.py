@@ -1,13 +1,17 @@
 """FastAPI auth dependencies: resolve the current user from the bearer token."""
 from __future__ import annotations
 
+import logging
+from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from db.models import User
+from models import User
 from utils.auth import decode_token
+
+logger = logging.getLogger(__name__)
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -36,7 +40,8 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     payload = decode_token(credentials.credentials)
-    return _load_user(payload.get("sub"), db)
+    user = _load_user(payload.get("sub"), db)
+    return user
 
 
 def get_current_user_optional(
@@ -47,13 +52,18 @@ def get_current_user_optional(
         return None
     try:
         payload = decode_token(credentials.credentials)
-        return _load_user(payload.get("sub"), db)
+        user = _load_user(payload.get("sub"), db)
+        return user
     except HTTPException:
+        return None
+    except Exception:
+        logger.exception("Unexpected error in get_current_user_optional")
         return None
 
 
 def _require_role(user: User, *roles: str) -> User:
-    if user.role not in roles:
+    role = user.role if hasattr(user, "role") else None
+    if role not in roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
     return user
 

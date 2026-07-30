@@ -1,6 +1,12 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, field_validator
 from typing import Optional, List
 from datetime import datetime
+import re
+
+PASSWORD_COMPLEXITY_RE = re.compile(
+    r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;':\",./<>?]).{8,}$"
+)
+
 
 class ProductBase(BaseModel):
     name: str
@@ -60,6 +66,8 @@ class UserCreate(UserBase):
             raise ValueError('Password must contain at least one uppercase letter')
         if not any(char.islower() for char in v):
             raise ValueError('Password must contain at least one lowercase letter')
+        if not any(char in '!@#$%^&*()_+-=[]{}|;:\'",./<>?' for char in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 class User(UserBase):
@@ -139,6 +147,8 @@ class ChangePasswordRequest(BaseModel):
             raise ValueError('Password must contain at least one uppercase letter')
         if not any(char.islower() for char in v):
             raise ValueError('Password must contain at least one lowercase letter')
+        if not any(char in '!@#$%^&*()_+-=[]{}|;:\'",./<>?' for char in v):
+            raise ValueError('Password must contain at least one special character')
         return v
 
 

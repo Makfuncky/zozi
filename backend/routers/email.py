@@ -433,3 +433,49 @@ async def track_open(email_id: str = Query(...), user_id: int = Query(None)):
         pass
     return Response(content=_TRANSPARENT_GIF, media_type="image/gif")
 
+
+class InternalEmailPayload(BaseModel):
+    to: List[int]
+    subject: str
+    body: str
+    cc: Optional[List[int]] = None
+    attachment_ids: Optional[List[int]] = None
+
+
+class ExternalEmailPayload(BaseModel):
+    to: str
+    subject: str
+    body: str
+    template_id: Optional[str] = None
+
+
+@router.post("/internal", response_model=dict)
+def send_internal_email(
+    payload: InternalEmailPayload,
+    current_user: AdminUser = None,
+    db: Session = Depends(get_db),
+):
+    """Send an internal email and store it in the employee inbox."""
+    gateway = EmailGateway(db)
+    sender_id = current_user.get("id") if isinstance(current_user, dict) else None
+    return gateway.send_internal_email(
+        to_user_ids=payload.to,
+        subject=payload.subject,
+        body=payload.body,
+        sender_id=sender_id or 0,
+    )
+
+
+@router.get("/inbox")
+def get_my_inbox(
+    folder: str = Query("inbox"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    current_user: AdminUser = None,
+    db: Session = Depends(get_db),
+):
+    """Get internal emails for the current admin/staff user."""
+    from services.employee_communication_service import get_inbox
+    employee_id = current_user.get("id") if isinstance(current_user, dict) else 0
+    return get_inbox(db, employee_id=employee_id, folder=folder, limit=limit, offset=offset)
+

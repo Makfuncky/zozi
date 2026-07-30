@@ -1,5 +1,6 @@
-﻿import logging
+import logging
 import secrets
+import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
@@ -8,6 +9,8 @@ from sqlalchemy.orm import Session
 
 from models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMember, GroupChatMessage
 from models import User
+from models.employee_models import ChatAttachment
+from services.storage import storage as _storage
 
 logger = logging.getLogger("zozi.chat")
 
@@ -253,6 +256,125 @@ class ChatSystem:
             ]
         return []
 
+    async def send_message_with_files(
+        self,
+        chat_id: str,
+        sender_id: int,
+        content: str,
+        files: list,
+    ) -> dict:
+        """Send a message with file attachments.
+        Saves uploaded files to disk and creates ChatAttachment records.
+        """
+        import os
+        from datetime import datetime, timezone
+
+        # Resolve chat type — numeric IDs are entity/thread chats
+        if chat_id.isdigit():
+            chat_type = "entity"
+        else:
+            chat_type = chat_id.split("_")[0] if "_" in chat_id else "dm"
+
+        now = datetime.now(timezone.utc)
+        message_type = "text" if not files else "file"
+
+        if chat_type == "entity":
+            from models.core import EntityChatThread, EntityChatMessage
+            thread = self.db.query(EntityChatThread).filter(
+                EntityChatThread.id == int(chat_id)
+            ).first()
+            if not thread:
+                raise ValueError(f"Entity chat {chat_id} not found")
+            msg = EntityChatMessage(
+                thread_id=thread.id,
+                sender_id=sender_id,
+                message=content or f"{len(files)} file(s)",
+            )
+        elif chat_type == "dm" or chat_type == "direct":
+            from models.core import DirectChatRoom, DirectChatMessage
+            room = self.db.query(DirectChatRoom).filter(
+                DirectChatRoom.chat_id == chat_id,
+                DirectChatRoom.is_active == True,
+            ).first()
+            if not room:
+                raise ValueError(f"Direct chat {chat_id} not found")
+            msg = DirectChatMessage(
+                room_id=room.id,
+                sender_id=sender_id,
+                message=content or f"{len(files)} file(s)",
+                message_type=message_type,
+            )
+        elif chat_type == "group":
+            from models.core import GroupChatRoom, GroupChatMessage
+            room = self.db.query(GroupChatRoom).filter(
+                GroupChatRoom.chat_id == chat_id,
+                GroupChatRoom.is_active == True,
+            ).first()
+            if not room:
+                raise ValueError(f"Group chat {chat_id} not found")
+            msg = GroupChatMessage(
+                room_id=room.id,
+                sender_id=sender_id,
+                message=content or f"{len(files)} file(s)",
+                message_type=message_type,
+            )
+
+        self.db.add(msg)
+        self.db.flush()
+
+        # Save files and create ChatAttachment records
+        attachment_data = []
+        for f in files:
+            content_bytes = await f.read()
+            key = f"chat/{msg.id}/{uuid.uuid4().hex}_{f.filename or 'untitled'}"
+            url = _storage.save(key, content_bytes, content_type=f.content_type)
+
+            # Determine attachment type from mime
+            mime = f.content_type or "application/octet-stream"
+            if mime.startswith("image/"):
+                att_type = "image"
+            elif mime.startswith("video/"):
+                att_type = "video"
+            elif mime == "application/pdf":
+                att_type = "document"
+            else:
+                att_type = "file"
+
+            attachment = ChatAttachment(
+                message_id=msg.id,
+                message_type=message_type,
+                attachment_type=att_type,
+                file_url=url,
+                file_name=f.filename or "untitled",
+                file_size_bytes=len(content_bytes),
+                mime_type=mime,
+                created_at=now,
+            )
+            self.db.add(attachment)
+            self.db.flush()
+
+            attachment_data.append({
+                "id": attachment.id,
+                "type": att_type,
+                "file_name": attachment.file_name,
+                "file_size": attachment.file_size_bytes,
+                "file_url": attachment.file_url,
+                "mime_type": attachment.mime_type,
+            })
+
+        self.db.commit()
+        self.db.refresh(msg)
+
+        return {
+            "id": msg.id,
+            "chat_id": chat_id,
+            "sender_id": sender_id,
+            "content": content,
+            "message_type": message_type,
+            "created_at": msg.created_at.isoformat(),
+            "attachments": attachment_data,
+        }
+
     def mark_read(
         self,
         chat_id: str,
@@ -327,34 +449,64 @@ class ChatSystem:
             "created_at": thread.created_at.isoformat(),
         }
 
-    def get_thread_messages(self, thread_id: int, limit: int = 100) -> list:
+    def get_thread_messages(self, thread_id: int, limit: int = 50, cursor: Optional[int] = None) -> dict:
+        """Get thread messages with cursor-based pagination.
+
+        Returns:
+            {
+                "messages": [...],
+                "has_more": bool,
+                "next_cursor": int | None,
+            }
+        """
         from models.core import EntityChatThread, EntityChatMessage
         from models import User
         thread = self.db.query(EntityChatThread).filter(
             EntityChatThread.id == thread_id
         ).first()
         if not thread:
-            return []
+            return {"messages": [], "has_more": False, "next_cursor": None}
 
-        messages = (
+        query = (
             self.db.query(EntityChatMessage, User.full_name)
             .join(User, EntityChatMessage.sender_id == User.id)
             .filter(EntityChatMessage.thread_id == thread.id)
-            .order_by(EntityChatMessage.created_at.desc())
-            .limit(limit)
+        )
+
+        # Cursor: fetch messages with ID < cursor (messages before the cursor)
+        if cursor is not None:
+            query = query.filter(EntityChatMessage.id < cursor)
+
+        # Fetch limit + 1 to determine has_more
+        rows = (
+            query
+            .order_by(EntityChatMessage.created_at.desc(), EntityChatMessage.id.desc())
+            .limit(limit + 1)
             .all()
         )
 
-        return [
+        has_more = len(rows) > limit
+        if has_more:
+            rows = rows[:limit]
+
+        messages = [
             {
                 "id": m.EntityChatMessage.id,
                 "sender_id": m.EntityChatMessage.sender_id,
                 "sender_name": m.full_name or f"User {m.EntityChatMessage.sender_id}",
-                "message": m.EntityChatMessage.message,
+                "body": m.EntityChatMessage.message,
                 "created_at": m.EntityChatMessage.created_at.isoformat(),
             }
-            for m in reversed(messages)
+            for m in reversed(rows)
         ]
+
+        next_cursor = rows[0].EntityChatMessage.id if rows else None
+
+        return {
+            "messages": messages,
+            "has_more": has_more,
+            "next_cursor": next_cursor,
+        }
 
     def list_threads(self) -> list:
         from models.core import EntityChatThread, EntityChatMessage

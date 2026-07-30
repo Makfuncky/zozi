@@ -266,12 +266,12 @@ export async function verifyPayment(sessionId: string): Promise<PaymentResult> {
  * Handle deep link callback from payment providers
  */
 export function handlePaymentCallback(url: string): PaymentResult | null {
-  const { path } = Linking.parse(url);
+  const { path, queryParams } = Linking.parse(url);
   
   if (path?.startsWith("/payment/callback")) {
-    const transactionId = queryParam("transaction_id") as string;
-    const status = queryParam("status") as string;
-    const error = queryParam("error") as string;
+    const transactionId = queryParams?.["transaction_id"] as string;
+    const status = queryParams?.["status"] as string;
+    const error = queryParams?.["error"] as string;
 
     return {
       success: status === "success" || status === "completed",
@@ -282,10 +282,4 @@ export function handlePaymentCallback(url: string): PaymentResult | null {
   }
   
   return null;
-}
-
-// Helper to get query params
-function queryParam(key: string): string | null {
-  const url = Linking.parse(window?.location?.href || "");
-  return url.queryParams?.[key] as string | null;
 }

@@ -7,7 +7,11 @@ import AdminLayout from "@/components/AdminLayout";
 import { PanelContent, PanelLoadingState, PanelTabs } from "@/components/PanelPage";
 import { useAuth } from "@/lib/useAuth";
 import { isAdminStaffRole } from "@shared/adminPermissions";
-import LogisticsPartnersPanel from "./LogisticsPartnersPanel";
+import dynamic from "next/dynamic";
+
+const LogisticsPartnersPanel = dynamic(() => import("./_components/LogisticsPartnersPanel"), {
+  loading: () => <PanelLoadingState count={3} blockClassName="h-24 rounded-xl bg-surface-2 animate-pulse" />
+});
 
 const SECTIONS = [
   { key: "partners", label: "Coverage & Routes", icon: Network },

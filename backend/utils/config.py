@@ -2,9 +2,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+logger = logging.getLogger(__name__)
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,12 +37,12 @@ class Settings:
         "refresh_token_expire_days": 7,
         "refresh_token_cookie_name": "refresh_token",
         "refresh_cookie_samesite": "lax",
-        "cors_origins": "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:8000,http://192.168.100.33:3001,http://192.168.100.33:3002,http://localhost:19006,http://localhost:19000,http://127.0.0.1:19006,http://127.0.0.1:19000,http://10.0.2.2:19006,http://10.0.2.2:19000",
-        "database_url": os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR}/zozi.db"),
-        "db_pool_size": int(os.getenv("DB_POOL_SIZE", "50")),
-        "db_max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "100")),
-        "db_pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "3600")),
-        "db_connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "30")),
+        "cors_origins": "http://localhost:3000,http://127.0.0.1:3000",
+        "database_url": os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'zozi.db')}"),
+        "db_pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
+        "db_max_overflow": int(os.getenv("DB_MAX_OVERFLOW", "30")),
+        "db_pool_recycle": int(os.getenv("DB_POOL_RECYCLE", "1800")),
+        "db_connect_timeout": int(os.getenv("DB_CONNECT_TIMEOUT", "10")),
         "db_statement_timeout": int(os.getenv("DB_STATEMENT_TIMEOUT", "60000")),
         "stripe_secret_key": "",
         "stripe_publishable_key": "",
@@ -126,6 +131,11 @@ class Settings:
         "hsts_enabled": True,
         "cookie_secure": True,
         "rate_limit_enabled": True,
+        "country_ai_enabled": str(os.getenv("COUNTRY_AI_ENABLED", "true")).lower() in {"1", "true", "yes", "on"},
+        "country_ai_ollama_model": os.getenv("COUNTRY_AI_OLLAMA_MODEL", "llama3.1"),
+        "country_ai_cache_ttl_seconds": int(os.getenv("COUNTRY_AI_CACHE_TTL_SECONDS", "86400")),
+        "country_ai_web_search_enabled": str(os.getenv("COUNTRY_AI_WEB_SEARCH_ENABLED", "true")).lower() in {"1", "true", "yes", "on"},
+        "country_ai_max_concurrent_jobs": int(os.getenv("COUNTRY_AI_MAX_CONCURRENT_JOBS", "5")),
     }
 
     _BOOL_KEYS = {
@@ -150,6 +160,8 @@ class Settings:
         "cookie_secure",
         "rate_limit_enabled",
         "presigned_uploads_enabled",
+        "country_ai_enabled",
+        "country_ai_web_search_enabled",
     }
     _INT_KEYS = {
         "access_token_expire_minutes",
@@ -170,6 +182,9 @@ class Settings:
         "db_connect_timeout",
         "db_statement_timeout",
         "s3_presign_ttl_seconds",
+        "country_ai_cache_ttl_seconds",
+        "country_ai_max_concurrent_jobs",
+        "finance_ai_timeout",
     }
     _FLOAT_KEYS = {"vat_rate", "zozi_commission_rate"}
 
@@ -186,17 +201,9 @@ class Settings:
         app_env = str(self._resolve("app_env")).strip().lower()
         secret_key = str(self._resolve("secret_key") or "").strip()
         if not secret_key:
-            if app_env == "production":
-                raise ValueError("SECRET_KEY must be set to a strong random value in production")
-            import secrets
-            generated = secrets.token_urlsafe(32)
-            object.__getattribute__(self, "_overrides")["secret_key"] = generated
-            import warnings
-            warnings.warn(
-                f"SECRET_KEY not set; generated ephemeral key for {app_env} environment. "
-                "Set SECRET_KEY in .env for persistent sessions.",
-                UserWarning,
-                stacklevel=2
+            raise ValueError(
+                "SECRET_KEY must be set to a strong random value. "
+                "Every restart with an ephemeral key invalidates all existing JWT tokens."
             )
 
         cookie_secure = self._resolve("cookie_secure")
@@ -248,28 +255,7 @@ class Settings:
                 raise ValueError("DB_POOL_SIZE must be between 1 and 100")
 
     def __getattribute__(self, name: str) -> Any:
-        if name.startswith("__") or name in {
-            "_overrides",
-            "_DEFAULTS",
-            "_BOOL_KEYS",
-            "_INT_KEYS",
-            "_FLOAT_KEYS",
-            "_normalize",
-            "_env_value",
-            "_coerce",
-            "_raw_value",
-            "_resolve_local_field_encryption_key",
-            "_load_field_encryption_key_from_vault",
-            "_load_field_encryption_key_from_aws_ssm",
-            "_resolve_field_encryption_key",
-            "_resolve",
-            "_field_encryption_key_cache",
-            "__dict__",
-            "__class__",
-            "__getattr__",
-            "__setattr__",
-            "__getattribute__",
-        }:
+        if name.startswith("_"):
             return object.__getattribute__(self, name)
 
         overrides = object.__getattribute__(self, "_overrides")
@@ -484,12 +470,20 @@ class Settings:
         return ""
 
     def __getattr__(self, name: str) -> Any:
+        key = self._normalize(name)
+        if key in self._DEFAULTS:
+            logger.warning(
+                "Accessing undefined setting '%s' — returning default value. "
+                "This setting may not exist.", name
+            )
         return self._resolve(name)
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        object.__getattribute__(self, "_overrides")[self._normalize(name)] = value
-        if self._normalize(name).startswith("field_encryption_key") or self._normalize(name) == "encryption_key":
-            object.__setattr__(self, "_field_encryption_key_cache", None)
+def __setattr__(self, name: str, value: Any) -> None:
+    key = self._normalize(name)
+    overrides = object.__getattribute__(self, "_overrides")
+    overrides[key] = value
+    if key.startswith("field_encryption_key") or key == "encryption_key":
+        object.__setattr__(self, "_field_encryption_key_cache", None)
 
 
 settings = Settings()

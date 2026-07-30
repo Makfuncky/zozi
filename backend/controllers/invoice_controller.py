@@ -105,7 +105,12 @@ def list_invoices(
 
 
 def get_invoice(invoice_id: int, current_user: dict, db: Session) -> dict:
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    inv = (
+        db.query(Invoice)
+        .options(selectinload(Invoice.supplier), selectinload(Invoice.items))
+        .filter(Invoice.id == invoice_id)
+        .first()
+    )
     if not inv:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
@@ -133,7 +138,12 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
     if not order_id:
         raise HTTPException(status_code=422, detail="order_id is required")
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = (
+        db.query(Order)
+        .options(selectinload(Order.items).selectinload(OrderItem.product))
+        .filter(Order.id == order_id)
+        .first()
+    )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 

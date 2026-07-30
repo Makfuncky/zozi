@@ -13,10 +13,12 @@ from utils.slug import generate_slug
 router = APIRouter()
 
 
-@router.get("/", response_model=list[CategoryOut])
+@router.get("/")
 async def list_categories(
     active_only: bool = Query(True),
     parent_id: Optional[int] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     query = db.query(Category)
@@ -24,7 +26,9 @@ async def list_categories(
         query = query.filter(Category.is_active == True)
     if parent_id is not None:
         query = query.filter(Category.parent_id == parent_id)
-    return query.order_by(Category.sort_order, Category.name).all()
+    total = query.count()
+    items = query.order_by(Category.sort_order, Category.name).offset((page - 1) * page_size).limit(page_size).all()
+    return {"data": items, "total": total, "page": page, "page_size": page_size}
 
 
 @router.get("/{category_ref}", response_model=CategoryOut)
@@ -84,24 +88,33 @@ async def update_category(
     return cat
 
 
-@router.get("/admin/flat", response_model=list[dict])
+@router.get("/admin/flat")
 async def list_categories_flat(
     _admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
 ):
     """Return all active categories with id, slug, name, parent_id, commission_rate for admin commission config."""
-    rows = db.query(Category).filter(Category.is_active == True).order_by(Category.sort_order, Category.name).all()  # noqa: E712
-    return [
-        {
-            "id": c.id,
-            "slug": c.slug,
-            "name": c.name,
-            "parent_id": c.parent_id,
-            "commission_rate": float(c.commission_rate) if c.commission_rate is not None else None,
-            "sort_order": c.sort_order,
-        }
-        for c in rows
-    ]
+    query = db.query(Category).filter(Category.is_active == True)
+    total = query.count()
+    rows = query.order_by(Category.sort_order, Category.name).offset((page - 1) * page_size).limit(page_size).all()
+    return {
+        "data": [
+            {
+                "id": c.id,
+                "slug": c.slug,
+                "name": c.name,
+                "parent_id": c.parent_id,
+                "commission_rate": float(c.commission_rate) if c.commission_rate is not None else None,
+                "sort_order": c.sort_order,
+            }
+            for c in rows
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.delete("/{category_id}", response_model=MessageResponse)

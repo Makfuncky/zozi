@@ -1,0 +1,38 @@
+{
+  "name": "zozi",
+  "version": "1.0.0",
+  "description": "**Shop Smart, Live Luxe** - A premium marketplace connecting customers with trusted suppliers in the GCC region.",
+  "private": true,
+  "scripts": {
+    "dev": "npm run start:backend & npm run start:web",
+    "start:backend": "cd backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000",
+    "start:web": "cd frontend/web_app && npm run dev",
+    "start:mobile": "cd frontend/mobile_app && npm run dev",
+    "test": "npm run test:backend && npm run test:web",
+    "test:backend": "cd backend && python -m pytest tests/ -v",
+    "test:web": "cd frontend/web_app && npm test",
+    "test:e2e": "cd frontend/web_app && npm run test:e2e",
+    "build": "npm run build:web",
+    "build:web": "cd frontend/web_app && npm run build",
+    "build:shared": "cd frontend/shared && npm run build",
+    "lint": "cd frontend/web_app && npm run lint",
+    "db:migrate": "cd backend && alembic upgrade head",
+    "db:reset": "cd backend && python -c \"from db.database import reset_tables; reset_tables()\"",
+    "seed": "cd backend && python -m seed_all"
+  },
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Makfuncky/zozi.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Makfuncky/zozi/issues"
+  },
+  "homepage": "https://github.com/Makfuncky/zozi#readme"
+}

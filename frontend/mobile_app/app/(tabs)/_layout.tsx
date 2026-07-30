@@ -260,7 +260,7 @@ export default function TabsLayout() {
           ),
           headerTitleAlign: 'center',
         }}
-        screenListeners={{ tabPress: () => Haptics.selectionAsync().catch(() => {}) }}
+        screenListeners={{}}
       >
       <Tabs.Screen
         name='products/index'

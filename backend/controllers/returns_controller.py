@@ -59,14 +59,21 @@ def _order_items(order: Order, db: Session) -> list[OrderItem]:
 
 
 def _order_return_window_days(order: Order, db: Session) -> int:
+    items = _order_items(order, db)
+    product_ids = [item.product_id for item in items if item.product_id]
+    products = (
+        {cast(int, p.id): p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()}
+        if product_ids
+        else {}
+    )
     return max(
         (
             _normalized_return_window_days(
                 getattr(item.product, "return_window_days", None)
                 if item.product is not None
-                else db.query(Product.return_window_days).filter(Product.id == item.product_id).scalar()
+                else getattr(products.get(item.product_id), "return_window_days", None)
             )
-            for item in _order_items(order, db)
+            for item in items
         ),
         default=10,
     )

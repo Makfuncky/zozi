@@ -15,10 +15,17 @@ from routers.auth import get_current_user
 router = APIRouter()
 
 
+def _user_id(user: object) -> int:
+    if hasattr(user, "id"):
+        return int(getattr(user, "id") or 0)
+    if isinstance(user, dict):
+        return int(user.get("id") or 0)
+    return 0
+
+
 class PushTokenRegister(BaseModel):
     token: str
-    platform: str = "expo"  # expo | fcm | apns
-    device_name: Optional[str] = None
+    device_type: Optional[str] = None
 
 
 @router.post("/register")
@@ -28,7 +35,7 @@ def register_push_token(
     current_user: dict = Depends(get_current_user),
 ):
     """Register or refresh a push notification token for the current user."""
-    user_id = current_user["id"]
+    user_id = _user_id(current_user)
 
     existing = (
         db.query(PushNotificationToken)
@@ -40,9 +47,7 @@ def register_push_token(
     )
 
     if existing:
-        existing.is_active = True
-        existing.platform = payload.platform
-        existing.device_name = payload.device_name
+        existing.device_type = payload.device_type
         existing.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.commit()
         return {"status": "updated"}
@@ -50,9 +55,7 @@ def register_push_token(
     record = PushNotificationToken(
         user_id=user_id,
         token=payload.token,
-        platform=payload.platform,
-        device_name=payload.device_name,
-        is_active=True,
+        device_type=payload.device_type,
     )
     db.add(record)
     db.commit()
@@ -66,7 +69,7 @@ def unregister_push_token(
     current_user: dict = Depends(get_current_user),
 ):
     """Deactivate a push token (e.g. on logout or permission withdrawal)."""
-    user_id = current_user["id"]
+    user_id = _user_id(current_user)
     record = (
         db.query(PushNotificationToken)
         .filter(
@@ -76,7 +79,7 @@ def unregister_push_token(
         .first()
     )
     if record:
-        record.is_active = False
+        db.delete(record)
         db.commit()
     return {"status": "unregistered"}
 
@@ -87,21 +90,19 @@ def list_push_tokens(
     current_user: dict = Depends(get_current_user),
 ):
     """List all active push tokens for the current user (for debugging)."""
+    user_id = _user_id(current_user)
     tokens = (
         db.query(PushNotificationToken)
         .filter(
-            PushNotificationToken.user_id == current_user["id"],
-            PushNotificationToken.is_active == True,
+            PushNotificationToken.user_id == user_id,
         )
         .all()
     )
     return [
         {
             "id": t.id,
-            "platform": t.platform,
-            "device_name": t.device_name,
+            "device_type": t.device_type,
             "created_at": t.created_at,
         }
         for t in tokens
     ]
-

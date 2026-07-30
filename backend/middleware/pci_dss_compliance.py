@@ -99,22 +99,23 @@ class PCIDSSCompliance:
 class PCIDSSMiddleware(BaseHTTPMiddleware):
     """Middleware for PCI-DSS compliance enforcement."""
 
+    _pcidss = PCIDSSCompliance()
+
     async def dispatch(self, request: Request, call_next):
         if request.method == "OPTIONS":
             response = await call_next(request)
             return response
 
         from utils.config import settings
-        app_env = os.environ.get("APP_ENV", "").lower()
+        app_env = str(getattr(settings, "app_env", "development")).lower()
         
         if app_env in ("test", "development"):
             response = await call_next(request)
             return response
 
-        pcidss = PCIDSSCompliance()
         username = getattr(request.state, "username", None)
         user_role = getattr(request.state, "role", None)
-        pcidss.audit_log(
+        self._pcidss.audit_log(
             "API_REQUEST",
             user_id=getattr(request.state, "user_id", None),
             details={
@@ -125,7 +126,8 @@ class PCIDSSMiddleware(BaseHTTPMiddleware):
             }
         )
 
-        if not request.url.scheme == "https":
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+        if scheme != "https":
             raise HTTPException(status_code=403, detail="HTTPS required for PCI compliance")
 
         response = await call_next(request)

@@ -45,7 +45,7 @@ jest.mock("@/lib/backgroundJobs", () => ({
   trackBackgroundJob: jest.fn(),
 }));
 
-import FinanceTab from "@/app/admin/dashboard/tabs/FinanceTab";
+import FinanceTab from "@/app/admin/dashboard/_tabs/FinanceTab";
 
 function okJson(data: unknown) {
   return {
@@ -91,6 +91,8 @@ describe("Admin finance COD verification", () => {
 
     mockApiFetch.mockImplementation(async (path: string, options?: RequestInit) => {
       if (path === "/finance/admin/summary") return okJson({ total_revenue: 1000, total_supplier_payable: 600, total_logistics_payable: 120, pending_cod_remittances: 120, unreconciled_bank_txns: 1, net_zozi_revenue: 280 });
+      if (path === "/finance/dashboard/metrics") return okJson({ total_revenue: 1000, total_expenses: 400, net_profit: 600 });
+      if (path === "/finance/cash-position") return okJson({ balance: 50000, currency: "AED" });
       if (path === "/admin/orders?limit=500") return okJson([]);
       if (path === "/finance/admin/ledger?limit=200") return okJson(ledgerRows);
       if (path === "/finance/admin/supplier-settlements?limit=200") return okJson(supplierSettlements);

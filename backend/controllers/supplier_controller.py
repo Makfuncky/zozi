@@ -31,7 +31,7 @@ from services import ai_service
 from services.finance_transfer_service import build_transfer_reference
 from services.logistics_partner_pricing import normalize_country_code
 from controllers.audit_controller import audit_log, AuditAction
-from controllers.cache_utils import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from controllers.products_controller import _bump_product_cache_version
 from utils.background_jobs import enqueue_job
 from utils.order_tracking import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
@@ -1157,7 +1157,12 @@ def get_supplier_label_payload(order_id: int, current_user: dict, db: Session) -
     if not order_has_supplier_products:
         raise HTTPException(status_code=404, detail="Order not found or no products from this supplier")
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = (
+        db.query(Order)
+        .options(selectinload(Order.items).selectinload(OrderItem.product))
+        .filter(Order.id == order_id)
+        .first()
+    )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -1574,46 +1579,42 @@ async def process_product_image(
       }
     """
     from services import image_ai_service
+    from services.storage import storage as _storage
 
     raw = image.file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty image file")
 
     uid = current_user["id"]
-    os.makedirs("uploads", exist_ok=True)
 
-    # â”€â”€ Step 1: background removal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # ── Step 1: background removal ──────────────────────────────────────────────
     original_bytes = raw
     bg_removed_bytes = image_ai_service.remove_background(raw)
     bg_was_removed = bg_removed_bytes != original_bytes
 
-    bg_filename = f"supplier_{uid}_bg_{uuid.uuid4().hex[:8]}.jpg"
-    bg_path = f"uploads/{bg_filename}"
-    with open(bg_path, "wb") as fh:
-        fh.write(bg_removed_bytes)
+    bg_key = f"supplier_{uid}_bg_{uuid.uuid4().hex[:8]}.jpg"
+    bg_url = _storage.save(bg_key, bg_removed_bytes, content_type="image/jpeg")
 
-    # â”€â”€ Step 2: multi-angle generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    angle_paths: list = []
+    # ── Step 2: multi-angle generation ───────────────────────────────────────────
+    angle_urls: list = []
     angles_notice: Optional[str] = None
     if generate_angles:
         try:
             angle_list = image_ai_service.generate_angles(original_bytes)
             for i, angle_bytes in enumerate(angle_list):
-                fname = f"supplier_{uid}_angle{i}_{uuid.uuid4().hex[:8]}.jpg"
-                fpath = f"uploads/{fname}"
-                with open(fpath, "wb") as fh:
-                    fh.write(angle_bytes)
-                angle_paths.append(fpath)
-            if not angle_paths:
+                angle_key = f"supplier_{uid}_angle{i}_{uuid.uuid4().hex[:8]}.jpg"
+                angle_url = _storage.save(angle_key, angle_bytes, content_type="image/jpeg")
+                angle_urls.append(angle_url)
+            if not angle_urls:
                 angles_notice = "Real AI angle generation is unavailable right now. Background removal was applied, but no new product views were produced."
         except Exception as exc:
             logger.warning("Angle generation failed: %s", exc)
             angles_notice = "Real AI angle generation failed for this image. Background removal was applied, but no new product views were produced."
 
     return {
-        "bg_removed_url": bg_path,
-        "angle_urls": angle_paths,
-        "angles_generated": len(angle_paths),
+        "bg_removed_url": bg_url,
+        "angle_urls": angle_urls,
+        "angles_generated": len(angle_urls),
         "bg_removed": bg_was_removed,
         "angles_notice": angles_notice,
     }
@@ -2984,6 +2985,8 @@ async def bulk_upload_products(
             if isinstance(u, str) and (u.startswith(("http://", "https://")) or u.startswith("uploads/"))
         ]
 
+        from services.storage import storage as _storage
+
         # Extra image files uploaded with naming convention p{idx}_e{i}.ext
         for extra_i in range(19):
             for ext_try in [".jpg", ".jpeg", ".png", ".webp", ".mp4", ".webm"]:
@@ -2991,13 +2994,10 @@ async def bulk_upload_products(
                 entry = upload_map.get(ekey)
                 if entry:
                     try:
-                        os.makedirs("uploads", exist_ok=True)
                         saved_ext = str(entry["ext"])
                         efname = f"{uuid.uuid4().hex}{saved_ext}"
-                        epath = f"uploads/{efname}"
-                        with open(epath, "wb") as ef:
-                            ef.write(entry["content"])
-                        extra_url_list.append(epath)
+                        extra_url = _storage.save(efname, entry["content"])
+                        extra_url_list.append(extra_url)
                     except Exception as exc:
                         logger.warning("Failed to save extra image %s: %s", ekey, exc)
                     break  # found this slot, move to next index
@@ -3008,13 +3008,9 @@ async def bulk_upload_products(
             if not video_entry:
                 continue
             try:
-                os.makedirs("uploads", exist_ok=True)
                 saved_ext = str(video_entry["ext"])
                 video_filename = f"{uuid.uuid4().hex}{saved_ext}"
-                video_path = f"uploads/{video_filename}"
-                with open(video_path, "wb") as video_file:
-                    video_file.write(video_entry["content"])
-                video_url_value = video_path
+                video_url_value = _storage.save(video_filename, video_entry["content"])
             except Exception as exc:
                 logger.warning("Failed to save product video %s: %s", video_key, exc)
             break
@@ -3028,13 +3024,9 @@ async def bulk_upload_products(
                 if not media_entry:
                     continue
                 try:
-                    os.makedirs("uploads", exist_ok=True)
                     saved_ext = str(media_entry["ext"])
                     variant_filename = f"{uuid.uuid4().hex}{saved_ext}"
-                    variant_path = f"uploads/{variant_filename}"
-                    with open(variant_path, "wb") as variant_file:
-                        variant_file.write(media_entry["content"])
-                    variant_payload["media_url"] = variant_path
+                    variant_payload["media_url"] = _storage.save(variant_filename, media_entry["content"])
                 except Exception as exc:
                     logger.warning("Failed to save variant media %s: %s", media_key, exc)
                 break
@@ -3083,12 +3075,8 @@ async def bulk_upload_products(
                 ext = ".jpg"
                 if matched_image_key:
                     ext = str(upload_map[matched_image_key]["ext"])
-                os.makedirs("uploads", exist_ok=True)
                 filename = f"{uuid.uuid4().hex}{ext}"
-                file_path = f"uploads/{filename}"
-                with open(file_path, "wb") as f:
-                    f.write(img_bytes)
-                image_url = file_path
+                image_url = _storage.save(filename, img_bytes)
             except Exception as exc:
                 logger.warning("Failed to save image for %r: %s", name, exc)
         # Fall back to web URL if no file image was saved
@@ -4082,25 +4070,24 @@ async def upload_verification_documents(
         except Exception:
             existing_docs = {}
 
+    from services.storage import storage as _storage
+
     saved = {}
     for file, doc_type in zip(files, doc_types):
         if doc_type not in _VALID_DOC_TYPES:
             continue
         content = await file.read()
-        # Accept image files for docs (pdf would need separate handling)
         try:
             ext = validate_upload_image(content, file.filename or "doc")
         except Exception:
-            # Fallback: allow PDFs by extension check
             fname_lower = (file.filename or "").lower()
             if not fname_lower.endswith(".pdf"):
                 continue
             ext = ".pdf"
         filename = f"doc_{current_user['id']}_{doc_type}_{uuid.uuid4().hex[:6]}{ext}"
-        save_path = os.path.join(_settings.upload_dir, filename)
-        with open(save_path, "wb") as fh:
-            fh.write(content)
-        saved[doc_type] = f"/uploads/{filename}"
+        key = f"supplier_documents/{filename}"
+        mime_type = file.content_type or "application/octet-stream"
+        saved[doc_type] = _storage.save(key, content, content_type=mime_type)
 
     existing_docs.update(saved)
     profile.verified_documents = json.dumps(existing_docs)

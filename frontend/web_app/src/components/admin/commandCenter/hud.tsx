@@ -450,7 +450,7 @@ export function AlertRow({ alert, onOpen }: {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-[10px] font-bold text-text group-hover:text-brand">{alert.title}</span>
+          <span className="truncate text-[10px] font-bold text-text group-hover:text-primary">{alert.title}</span>
           {alert.country_code && <span className="rounded bg-surface-2/60 px-1 py-[1px] text-[7px] font-bold font-mono uppercase text-text-faint">{alert.country_code}</span>}
         </div>
         {alert.message && <p className="mt-[1px] line-clamp-1 text-[9px] text-text-muted">{alert.message}</p>}
@@ -477,7 +477,7 @@ export function FraudRow({ fa, onOpen }: {
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-[9px] font-bold font-mono"
         style={{ background: `${pc}12`, color: pc, border: `1px solid ${pc}15` }}>{score}</span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[10px] font-bold text-text group-hover:text-brand">Risk #{fa.id}</p>
+        <p className="truncate text-[10px] font-bold text-text group-hover:text-primary">Risk #{fa.id}</p>
         <p className="truncate text-[8px] text-text-muted font-mono">{(fa.triggered_rules ?? []).slice(0, 2).join(" · ") || "—"}</p>
       </div>
       <span className="shrink-0 text-[7px] font-bold font-mono uppercase tracking-wider" style={{ color: pc }}>{fa.priority ?? "low"}</span>
@@ -499,7 +499,7 @@ export function RankRow({ rank, label, primary, secondary, accent = "cyan", load
       style={{ borderLeft: `1.5px solid ${c}30` }}>
       <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded text-[8px] font-bold font-mono"
         style={{ background: `${c}12`, color: c }}>{rank}</span>
-      <span className="min-w-0 flex-1 truncate text-[10px] font-medium text-text group-hover:text-brand">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-[10px] font-medium text-text group-hover:text-primary">{label}</span>
       {primary && <span className="shrink-0 text-[9px] font-bold font-mono tabular-nums" style={{ color: c }}>{primary}</span>}
       {secondary && <span className="shrink-0 text-[8px] text-text-muted font-mono">{secondary}</span>}
     </div>

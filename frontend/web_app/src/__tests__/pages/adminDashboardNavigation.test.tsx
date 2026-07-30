@@ -72,7 +72,7 @@ jest.mock("@/components/TranslatedText", () => ({
   default: ({ text }: { text: string }) => <>{text}</>,
 }));
 
-jest.mock("@/app/admin/dashboard/tabs/InsightsTab", () => ({ __esModule: true, default: () => <div>Insights tab</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/InsightsTab", () => ({ __esModule: true, default: () => <div>Insights tab</div> }));
 
 jest.mock("framer-motion", () => ({
   motion: {
@@ -161,13 +161,13 @@ describe("Admin dashboard navigation", () => {
 
   it.each([
     ["finance", "/admin/finance"],
-    ["staff", "/admin/staff"],
-    ["moderation", "/admin/moderation"],
-    ["tickets", "/admin/tickets"],
+    ["staff", "/admin/organization?section=staff"],
+    ["moderation", "/admin/resolution?section=moderation"],
+    ["tickets", "/admin/resolution?section=tickets"],
     ["payouts", "/admin/finance?section=payouts"],
     ["supplier-documents", "/admin/suppliers?section=documents"],
     ["logistics", "/admin/logistics"],
-    ["hierarchy", "/admin/staff?section=permissions"],
+    ["hierarchy", "/admin/organization?section=hierarchy"],
     ["compare", "/admin/suppliers?section=compare"],
     ["coupons", "/admin/promotions?section=coupons"],
     ["flash-sales", "/admin/promotions?section=flash-sales"],

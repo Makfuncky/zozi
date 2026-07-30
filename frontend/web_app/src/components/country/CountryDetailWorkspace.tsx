@@ -22,8 +22,10 @@ import {
   FileText,
   Calendar,
   Lock,
+  BookOpen,
 } from "@/lib/icons";
 import { useCountryAccess } from "@/hooks/useCountryAccess";
+import CountryResearchPanel from "./CountryResearchPanel";
 
 export type ConfigTab =
   | "overview"
@@ -42,7 +44,8 @@ export type ConfigTab =
   | "staff"
   | "promotions"
   | "localization"
-  | "versions";
+  | "versions"
+  | "research";
 
 export const CONFIG_TABS: Array<{ key: ConfigTab; label: string; icon: ComponentType<{ className?: string }> }> = [
   { key: "overview", label: "Overview", icon: Globe },
@@ -62,11 +65,13 @@ export const CONFIG_TABS: Array<{ key: ConfigTab; label: string; icon: Component
   { key: "promotions", label: "Promotions", icon: Tag },
   { key: "localization", label: "Localization", icon: Globe2 },
   { key: "versions", label: "Version History", icon: History },
+  { key: "research", label: "Research", icon: BookOpen },
 ];
 
 interface CountryDetailWorkspaceProps {
   activeTab: ConfigTab;
   onTabChange: (tab: ConfigTab) => void;
+  countryCode?: string;
 }
 
 export function useVisibleTabs(): ConfigTab[] {
@@ -77,6 +82,7 @@ export function useVisibleTabs(): ConfigTab[] {
 export default function CountryDetailWorkspace({
   activeTab,
   onTabChange,
+  countryCode,
 }: CountryDetailWorkspaceProps) {
   const visibleTabs = useVisibleTabs();
 
@@ -109,13 +115,17 @@ export default function CountryDetailWorkspace({
         </nav>
       </div>
 
-      {/* Tab Content Placeholder */}
+      {/* Tab Content */}
       <div className="min-h-[400px]">
-        <div className="text-center py-8 text-text-muted">
-          <Lock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Tab content for "{activeTab}" will be rendered here.</p>
-          <p className="text-xs mt-1">This is a placeholder for the detailed tab implementation.</p>
-        </div>
+        {activeTab === "research" && countryCode ? (
+          <CountryResearchPanel countryCode={countryCode} />
+        ) : (
+          <div className="text-center py-8 text-text-muted">
+            <Lock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Tab content for "{activeTab}" will be rendered here.</p>
+            <p className="text-xs mt-1">This is a placeholder for the detailed tab implementation.</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { Alert, Platform } from "react-native";
 import { logger, setLogLevel } from "@/lib/logger";
 import { logFrontendError } from "@shared/errorLogging";
+import { reportErrorToBackend } from "@/lib/errorReporter";
 
 export class GlobalErrorHandler {
   private static instance: GlobalErrorHandler;
@@ -25,7 +26,8 @@ export class GlobalErrorHandler {
       this.previousHandler = errorUtils.getGlobalHandler?.();
 
       errorUtils.setGlobalHandler((error: any, isFatal?: boolean) => {
-        logFrontendError(error, "mobile-global-error", { isFatal });
+        const entry = logFrontendError(error, "mobile-global-error", { isFatal });
+        reportErrorToBackend(entry);
         logger.error("[GlobalErrorHandler] Mobile uncaught error:", error, { isFatal });
 
         if (Platform.OS !== "web") {
@@ -42,13 +44,15 @@ export class GlobalErrorHandler {
   }
 
   reportError(error: Error, context?: Record<string, any>) {
-    logFrontendError(error, "mobile-manual-report", context);
+    const entry = logFrontendError(error, "mobile-manual-report", context);
+    reportErrorToBackend(entry);
     logger.error("[Manual Error Report]", { error, context });
   }
 
   reportIssue(message: string, level: "info" | "warning" | "error" = "info", context?: Record<string, any>) {
     if (level === "error") {
-      logFrontendError(message, "mobile-issue", context);
+      const entry = logFrontendError(message, "mobile-issue", context);
+      reportErrorToBackend(entry);
     }
     if (level === "error") logger.error(`[${level.toUpperCase()}] ${message}`, context);
     else if (level === "warning") logger.warn(`[${level.toUpperCase()}] ${message}`, context);

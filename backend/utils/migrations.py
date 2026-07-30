@@ -29,7 +29,8 @@ def check_schema_drift() -> bool:
     
     script = ScriptDirectory.from_config(cfg)
     
-    from db.database import Base, engine
+    from db.base import Base
+    from db.database import engine
     from sqlalchemy import inspect
     
     inspector = inspect(engine)
@@ -37,4 +38,3 @@ def check_schema_drift() -> bool:
     db_tables = set(inspector.get_table_names())
     
     return metadata_tables != db_tables
-

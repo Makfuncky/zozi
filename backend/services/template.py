@@ -1,2 +1,2 @@
-﻿from string import Template
+from string import Template
 

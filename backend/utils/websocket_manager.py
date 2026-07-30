@@ -1,9 +1,19 @@
-"""WebSocket Manager for Real-Time Updates."""
+"""WebSocket Manager for Real-Time Updates.
+
+Also exposes `broadcast_activity_event`, a sync → async bridge so that
+sync code (e.g. `log_activity`) can fire-and-forget WebSocket broadcasts
+without depending on the router layer.
+"""
 from __future__ import annotations
+
+import asyncio
 import json
+import logging
 from typing import Dict, List, Set
 from fastapi import WebSocket
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 
 class WebSocketManager:
@@ -57,4 +67,42 @@ class WebSocketManager:
 
 
 manager = WebSocketManager()
+ws_manager = manager
+
+
+ACTIVITY_ROOM = "activity:hr"
+BACKGROUND_JOBS_ROOM = "admin:background-jobs"
+
+
+def _broadcast_to_room(room: str, event_data: dict) -> None:
+    """Fire-and-forget broadcast a message to a WebSocket room.
+
+    Called from sync code. Schedules the async broadcast on the running
+    event loop if one exists; silently no-ops when no loop is available
+    (e.g. in tests or CLI).
+    """
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.run_coroutine_threadsafe(
+                manager.broadcast_to_room(room, event_data),
+                loop,
+            )
+    except RuntimeError:
+        pass
+
+
+def broadcast_activity_event(event_data: dict) -> None:
+    """Fire-and-forget broadcast an activity event to the HR activity room."""
+    _broadcast_to_room(ACTIVITY_ROOM, event_data)
+
+
+def broadcast_background_job_update(event_data: dict) -> None:
+    """Fire-and-forget broadcast a background-job status update to the admin
+    dashboard room so connected UIs update in real-time after a sweep.
+
+    Called from sync code (e.g. ``auto_payout_scheduler._update_after_sweep``)
+    after each sweep completes.
+    """
+    _broadcast_to_room(BACKGROUND_JOBS_ROOM, event_data)
 

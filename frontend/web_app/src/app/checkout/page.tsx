@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ShoppingCart, Trash2, Plus, Minus, MapPin, CreditCard, Truck, Shield, Plug, ArrowLeft, CheckCircle2, Wallet } from "@/lib/icons";
+import { ShoppingCart, Trash2, Plus, Minus, MapPin, CreditCard, Truck, Shield, Plug, ArrowLeft, CheckCircle2, Wallet, ChevronDown, ChevronRight } from "@/lib/icons";
 import Image from "next/image";
 import { resolveImage } from "@/lib/utils";
 import { useCartStore, CartItem } from "@/lib/cartStore";
@@ -64,6 +64,82 @@ interface PaymentOption {
   selection: PaymentSelection;
 }
 
+// ── Shipping Breakdown Component ──────────────────────────────────────────────
+
+function ShippingBreakdown({
+  breakdown,
+  partnerName,
+  formatPrice,
+}: {
+  breakdown: Record<string, unknown>;
+  partnerName?: string | null;
+  formatPrice: (amount: number) => string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const rows: { label: string; value: number; key: string; indent?: boolean }[] = [];
+
+  const getNum = (k: string): number => Number(breakdown[k] ?? 0);
+  const showRow = (label: string, key: string, indent = false) => {
+    const v = getNum(key);
+    if (v > 0) rows.push({ label, value: v, key, indent });
+  };
+
+  showRow("Base fee", "base_fee");
+  showRow("Pickup fee", "pickup_fee", true);
+  showRow("Drop-off fee", "dropoff_fee", true);
+  showRow("Weight fee", "weight_fee", true);
+  showRow("Distance fee", "distance_fee", true);
+  showRow("Handling fee", "handling_fee", true);
+  showRow("Fuel surcharge", "surcharge_amount", true);
+
+  const discount = getNum("weight_discount_amount");
+  if (discount > 0) rows.push({ label: "Volume discount", value: -discount, key: "weight_discount_amount", indent: true });
+
+  const total = getNum("shipping_amount");
+
+  if (rows.length === 0 && !partnerName) return null;
+
+  return (
+    <div className="mt-1">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1 text-[10px] text-text-faint hover:text-text transition-colors"
+      >
+        {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        {expanded ? "Hide" : "Show"} delivery breakdown
+        {partnerName && <span className="text-primary">· {partnerName}</span>}
+      </button>
+
+      {expanded && rows.length > 0 && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          className="mt-1.5 space-y-1 rounded-lg bg-surface-1 p-2"
+        >
+          {rows.map((row) => (
+            <div
+              key={row.key}
+              className={`flex justify-between text-[10px] ${row.indent ? "ml-3" : ""}`}
+            >
+              <span className="text-text-faint">{row.label}</span>
+              <span className={row.value < 0 ? "text-success font-medium" : "font-medium text-text"}>
+                {row.value < 0 ? `\u2212${formatPrice(Math.abs(row.value))}` : formatPrice(row.value)}
+              </span>
+            </div>
+          ))}
+          <div className="flex justify-between text-[11px] font-bold text-text pt-1 border-t border-border">
+            <span>Total delivery</span>
+            <span>{total === 0 ? <span className="text-success">Free</span> : formatPrice(total)}</span>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+
 function resolveInitiation(selection: PaymentSelection): { route: string; isGeneric: boolean; isBuiltInReturn: "stripe" | "tap" | "paytabs" | null } {
   if (selection.type === "cod") return { route: "", isGeneric: false, isBuiltInReturn: null };
   const g = selection.gateway;
@@ -95,7 +171,13 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [config, setConfig] = useState<{ vat_rate: number; shipping_flat_rate: number; free_shipping_threshold: number } | null>(null);
-  const [shipping, setShipping] = useState<{ shipping_amount: number; estimated_delivery_min?: number | null; estimated_delivery_max?: number | null } | null>(null);
+  const [shipping, setShipping] = useState<{
+    shipping_amount: number;
+    estimated_delivery_min?: number | null;
+    estimated_delivery_max?: number | null;
+    pricing_breakdown?: Record<string, unknown> | null;
+    partner_name?: string | null;
+  } | null>(null);
   const [shippingLoading, setShippingLoading] = useState(false);
   const [methods, setMethods] = useState<PaymentMethodsResponse | null>(null);
   const [methodsLoading, setMethodsLoading] = useState(true);
@@ -125,6 +207,44 @@ export default function CheckoutPage() {
       .then((data) => { if (data) setConfig(data); })
       .catch(() => {});
   }, []);
+
+  // Separate effect: fetch user profile and saved addresses to pre-fill the checkout form
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let cancelled = false;
+
+    apiFetch("/users/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((profile: any) => {
+        if (cancelled || !profile) return;
+        setForm((prev) => ({
+          ...prev,
+          full_name: prev.full_name || profile.full_name || "",
+          customer_phone: prev.customer_phone || profile.phone || "",
+        }));
+      })
+      .catch(() => {});
+
+    apiFetch("/addresses")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((addresses: any) => {
+        if (cancelled || !Array.isArray(addresses) || addresses.length === 0) return;
+        const defaultAddr = addresses.find((a: any) => a.is_default) || addresses[0];
+        if (!defaultAddr) return;
+        setForm((prev) => ({
+          ...prev,
+          street: prev.street || defaultAddr.address_line1 || "",
+          city: prev.city || defaultAddr.city || "",
+          zip: prev.zip || defaultAddr.postal_code || "",
+          country: prev.country || defaultAddr.country || "",
+          full_name: prev.full_name || defaultAddr.full_name || "",
+          customer_phone: prev.customer_phone || defaultAddr.phone || "",
+        }));
+      })
+      .catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
 
   // Fetch the dynamic, admin-managed payment method list (plug-and-play gateways).
   // Pass the shopper's selected country so the backend returns country-scoped
@@ -604,10 +724,24 @@ export default function CheckoutPage() {
                 <div className="border-t border-border mt-3 pt-2 space-y-1.5 text-xs">
                   <div className="flex justify-between"><span className="text-text-faint">{getItemCount()} items</span><span>{formatPrice(subtotal)}</span></div>
                   <div className="flex justify-between"><span className="text-text-faint">VAT ({(vatRate * 100).toFixed(0)}%)</span><span>{formatPrice(vatAmount)}</span></div>
-                  <div className="flex justify-between">
-                    <span className="text-text-faint">Delivery</span>
+
+                  {/* Delivery line (always visible) */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-text-faint flex items-center gap-1">
+                      <Truck className="w-3 h-3" /> Delivery
+                    </span>
                     <span>{shippingLoading ? "..." : shippingAmount === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(shippingAmount)}</span>
                   </div>
+
+                  {/* Collapsible pricing breakdown */}
+                  {shipping?.pricing_breakdown && (
+                    <ShippingBreakdown
+                      breakdown={shipping.pricing_breakdown}
+                      partnerName={shipping.partner_name}
+                      formatPrice={formatPrice}
+                    />
+                  )}
+
                   {discountAmount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-{formatPrice(discountAmount)}</span></div>}
                   <div className="border-t border-border pt-1.5 mt-1.5">
                     <div className="flex justify-between font-bold text-sm"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>

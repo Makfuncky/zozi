@@ -13,15 +13,16 @@ services:
     networks:
       - monitoring
 
-  # Promtail - Log shipping agent
+# Promtail - Log shipping agent
   promtail:
     image: grafana/promtail:latest
     container_name: zozi-promtail
     volumes:
-      - ./loki-config.yaml:/etc/loki/promtail-config.yaml
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    command: -config.file=/etc/loki/promtail-config.yaml
+      - ./frontend-logs:/var/log/frontend:ro
+    command: -config.file=/etc/promtail/config.yml
     networks:
       - monitoring
 
@@ -33,7 +34,26 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+
+  # Alertmanager - Alert routing and notification
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: zozi-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/config.yml
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
     networks:
       - monitoring
 
@@ -45,9 +65,11 @@ services:
       - "3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
     networks:
       - monitoring
 
@@ -64,11 +86,61 @@ services:
     networks:
       - monitoring
 
+  # Sentry - Self-hosted error tracking
+  sentry:
+    image: getsentry/sentry:latest
+    container_name: zozi-sentry
+    ports:
+      - "9000:9000"
+    environment:
+      - SENTRY_SECRET_KEY=sentry-secret-key-change-in-production
+      - SENTRY_POSTGRES_HOST=sentry-db
+      - SENTRY_POSTGRES_PORT=5432
+      - SENTRY_DB_NAME=sentry
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=sentry-password
+      - REDIS_URL=redis://sentry-redis:6379/0
+      - SENTRY_EMAIL_HOST=smtp
+      - SENTRY_EMAIL_PORT=25
+      - SENTRY_EMAIL_HOST_USER=
+      - SENTRY_EMAIL_HOST_PASSWORD=
+      - SENTRY_EMAIL_FROM=noreply@zozi.com
+      - SENTRY_URL_PREFIX=http://localhost:9000
+      - SENTRY_REGION=us
+      - SENTRY_PROJECT_NAME=zozi-platform
+    depends_on:
+      - sentry-db
+      - sentry-redis
+    volumes:
+      - sentry_data:/var/lib/sentry
+    networks:
+      - monitoring
+
+  sentry-db:
+    image: postgres:15-alpine
+    container_name: zozi-sentry-db
+    environment:
+      - POSTGRES_DB=sentry
+      - POSTGRES_USER=sentry
+      - POSTGRES_PASSWORD=sentry-password
+    volumes:
+      - sentry_db_data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+
+  sentry-redis:
+    image: redis:7-alpine
+    container_name: zozi-sentry-redis
+    networks:
+      - monitoring
+
 volumes:
   loki_data:
   prometheus_data:
   grafana_data:
   tempo_data:
+  sentry_data:
+  sentry_db_data:
 
 networks:
   monitoring:

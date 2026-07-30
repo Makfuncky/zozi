@@ -10,6 +10,7 @@ __all__ = ["OnboardingPipeline", "OnboardingStep", "DocumentVerification", "OCRR
 
 class OnboardingPipeline(Base):
     __tablename__ = "onboarding_pipelines"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     pipeline_type = Column(String, nullable=False)
@@ -25,6 +26,7 @@ class OnboardingPipeline(Base):
 
 class OnboardingStep(Base):
     __tablename__ = "onboarding_steps"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     pipeline_id = Column(Integer, ForeignKey("onboarding_pipelines.id"), nullable=False)
     step_name = Column(String, nullable=False)
@@ -37,6 +39,7 @@ class OnboardingStep(Base):
 
 class DocumentVerification(Base):
     __tablename__ = "document_verifications"
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     pipeline_id = Column(Integer, ForeignKey("onboarding_pipelines.id"), nullable=False)
     document_type = Column(String, nullable=False)
@@ -50,6 +53,7 @@ class DocumentVerification(Base):
 
 class OCRResult(Base):
     __tablename__ = "ocr_results"
+    __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
     document_verification_id = Column(Integer, ForeignKey("document_verifications.id"), nullable=False, unique=True)
     extracted_text = Column(Text, nullable=True)
@@ -61,6 +65,7 @@ class OCRResult(Base):
 
 class KYCVerification(Base):
     __tablename__ = "kyc_verifications"
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     status = Column(String, default="pending")

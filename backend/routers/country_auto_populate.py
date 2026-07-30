@@ -2,7 +2,6 @@
 
 Wires the heuristic engine and external data fetchers to database persistence.
 """
-
 from __future__ import annotations
 
 import json
@@ -20,11 +19,20 @@ from services.country_auto_populate import auto_populate_country
 
 logger = logging.getLogger(__name__)
 
+
+def _user_role(user: object) -> str:
+    if hasattr(user, "role"):
+        return str(getattr(user, "role") or "")
+    if isinstance(user, dict):
+        return str(user.get("role") or "")
+    return ""
+
+
 router = APIRouter(tags=["country-auto-populate"])
 
 
 @router.post("/auto-populate")
-def auto_populate(
+async def auto_populate(
     search_term: str = Query(..., min_length=2, description="Country name or ISO code"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
@@ -34,11 +42,11 @@ def auto_populate(
     Returns the full suggested payload the frontend Ghost Row can render.
     Data is NOT persisted — admin must call POST /admin/countries/{code}/save to commit.
     """
-    if current_user.get("role", "").lower() not in ("admin", "superadmin"):
+    if _user_role(current_user).lower() not in ("admin", "superadmin"):
         raise HTTPException(status_code=403, detail="Admin access required")
 
     try:
-        result = auto_populate_country(search_term)
+        result = await auto_populate_country(search_term)
         if not result or result.get("status") == "error":
             raise HTTPException(status_code=404, detail=result.get("error", "Country not found"))
 
@@ -67,7 +75,7 @@ def save_country_from_suggestion(
     Accepts the full payload from POST /admin/countries/auto-populate
     and writes it into CountryConfig + related tables.
     """
-    if current_user.get("role", "").lower() not in ("admin", "superadmin"):
+    if _user_role(current_user).lower() not in ("admin", "superadmin"):
         raise HTTPException(status_code=403, detail="Admin access required")
 
     existing = db.query(CountryConfig).filter(CountryConfig.code == country_code.upper()).first()
@@ -141,4 +149,3 @@ def save_country_from_suggestion(
         "country_name": config.name,
         "cities_added": len(suggested_cities),
     }
-

@@ -1,16 +1,291 @@
 {
-  "apiVersion": 1,
-  "providers": [
-    {
-      "name": "ZOZI System Health",
-      "orgId": 1,
-      "folder": "",
-      "type": "file",
-      "disableDeletion": false,
-      "editable": true,
-      "options": {
-        "path": "/etc/grafana/provisioning/dashboards"
+  "dashboard": {
+    "id": null,
+    "uid": "zoisystemhealth",
+    "title": "ZOZI System Health",
+    "tags": ["zozi", "ecommerce"],
+    "timezone": "utc",
+    "panelTargetTimezone": "utc",
+    "schemaVersion": 37,
+    "version": 2,
+    "refresh": "30s",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "env",
+          "type": "constant",
+          "query": "production",
+          "current": {
+            "text": "production",
+            "value": "production"
+          }
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Error Rate (Sentry)",
+        "type": "stat",
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "source": "Sentry"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 10},
+                {"color": "red", "value": 50}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Request Rate",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 6,
+          "y": 0
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "API Latency (p95)",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 18,
+          "y": 0
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) * 1000",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 800},
+                {"color": "red", "value": 1500}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Database Query Duration (p95)",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m])) * 1000",
+            "legendFormat": "{{query_type}}",
+            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 100},
+                {"color": "red", "value": 500}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Error Logs (Loki)",
+        "type": "table",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (level, error_type) (count_over_time({job=\"zozi-backend\", level=\"error\"} [1h]))",
+            "legendFormat": "{{level}} {{error_type}}",
+            "datasource": {"type": "loki", "uid": "${DS_LOKI}"}
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "DB Connection Pool",
+        "type": "gauge",
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 0,
+          "y": 16
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "db_connections",
+            "legendFormat": "{{instance}}",
+            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "HTTP Status Code Distribution",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 6,
+          "y": 16
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{status}}",
+            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Sentry Error Events",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 22
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "source": "Sentry"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Frontend Error Rate (Loki)",
+        "type": "timeseries",
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 22
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (source, level) (count_over_time({job=\"zozi-frontend\", level=\"error\"} [1h]))",
+            "legendFormat": "{{source}}",
+            "datasource": {"type": "loki", "uid": "${DS_LOKI}"}
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Backend 5xx Error Rate",
+        "type": "stat",
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 0,
+          "y": 30
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m])",
+            "legendFormat": "5xx rate",
+            "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"}
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 0.01},
+                {"color": "red", "value": 0.05}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "Error Categories (Loki)",
+        "type": "piechart",
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 6,
+          "y": 30
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum by (error_type) (count_over_time({job=\"zozi-backend\", level=\"error\"} [1h]))",
+            "legendFormat": "{{error_type}}",
+            "datasource": {"type": "loki", "uid": "${DS_LOKI}"}
+          }
+        ]
       }
-    }
-  ]
+    ],
+    "links": []
+  },
+  "overwrite": true
 }

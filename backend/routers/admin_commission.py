@@ -1,5 +1,5 @@
 """Admin commission router."""
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from db.database import get_db
 from models import CommissionCategoryRate, CommissionBadgeTier, CommissionGlobalConfig, User
@@ -34,12 +34,15 @@ def _build_badge_tier(payload: CommissionBadgeTierCreate, country_code: str) -> 
     )
 
 
-@router.get("/{country_code}/rates", response_model=list[CommissionCategoryRateOut])
-def list_rates(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db)):
+@router.get("/{country_code}/rates")
+def list_rates(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        return db.query(CommissionCategoryRate).filter(CommissionCategoryRate.country_code == country_code.upper()).all()
+        q = db.query(CommissionCategoryRate).filter(CommissionCategoryRate.country_code == country_code.upper())
+        total = q.count()
+        rows = q.offset((page - 1) * page_size).limit(page_size).all()
+        return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
 
@@ -73,12 +76,15 @@ def update_rate(country_code: str = Path(..., description="ISO country code"), r
     return r
 
 
-@router.get("/{country_code}/badge-tiers", response_model=list[CommissionBadgeTierOut])
-def list_badge_tiers(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db)):
+@router.get("/{country_code}/badge-tiers")
+def list_badge_tiers(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        return db.query(CommissionBadgeTier).filter(CommissionBadgeTier.country_code == country_code.upper()).all()
+        q = db.query(CommissionBadgeTier).filter(CommissionBadgeTier.country_code == country_code.upper())
+        total = q.count()
+        rows = q.offset((page - 1) * page_size).limit(page_size).all()
+        return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
 

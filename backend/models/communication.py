@@ -16,8 +16,7 @@ class Notification(Base):
     __table_args__ = (
         Index("ix_notifications_user_id", "user_id"),
         Index("ix_notifications_is_read", "is_read"),
-        Index("ix_notifications_user_read", "user_id", "is_read"),
-    )
+        Index("ix_notifications_user_read", "user_id", "is_read"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -40,6 +39,7 @@ class Notification(Base):
 
 class TicketMessage(Base):
     __tablename__ = "ticket_messages"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(Integer, ForeignKey("support_tickets.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -53,6 +53,7 @@ class TicketMessage(Base):
 
 class Announcement(Base):
     __tablename__ = "announcements"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
@@ -65,6 +66,7 @@ class Announcement(Base):
 
 class FAQ(Base):
     __tablename__ = "faqs"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
@@ -77,6 +79,7 @@ class FAQ(Base):
 
 class HelpCategory(Base):
     __tablename__ = "help_categories"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -97,12 +100,12 @@ class ProxyChannel(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     __table_args__ = (
-        Index("idx_proxy_entity", "entity_type", "entity_id"),
-    )
+        Index("idx_proxy_entity", "entity_type", "entity_id"), {"schema": "communication"})
 
 
 class ProxySession(Base):
     __tablename__ = "proxy_sessions"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey("proxy_channels.id"), nullable=False)
     participant_one_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -118,6 +121,7 @@ class ProxySession(Base):
 
 class ProxyMessage(Base):
     __tablename__ = "proxy_messages"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("proxy_sessions.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -134,6 +138,7 @@ class ProxyMessage(Base):
 
 class ProxyCallLog(Base):
     __tablename__ = "proxy_call_logs"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey("proxy_channels.id"), nullable=False)
     caller_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -157,8 +162,7 @@ ProxySession.messages = relationship("ProxyMessage", back_populates="session", c
 class EmployeeCommunicationThread(Base):
     __tablename__ = "employee_communication_threads"
     __table_args__ = (
-        Index("ix_emp_comm_entity", "entity_type", "entity_id"),
-    )
+        Index("ix_emp_comm_entity", "entity_type", "entity_id"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True)
@@ -176,8 +180,7 @@ class ExternalContactMasking(Base):
     __tablename__ = "external_contact_masking"
     __table_args__ = (
         UniqueConstraint("user_id", "external_contact_type", "external_contact_id", name="uq_masking_contact"),
-        Index("ix_masking_user", "user_id"),
-    )
+        Index("ix_masking_user", "user_id"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -195,8 +198,7 @@ class CommunicationAuditTrail(Base):
     __tablename__ = "communication_audit_trail"
     __table_args__ = (
         Index("ix_comm_entity", "entity_type", "entity_id"),
-        Index("ix_comm_user", "user_id", "created_at"),
-    )
+        Index("ix_comm_user", "user_id", "created_at"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     entity_type = Column(String(50), nullable=False)
@@ -214,8 +216,7 @@ class CommunicationAuditTrail(Base):
 class InternalChannel(Base):
     __tablename__ = "internal_channels"
     __table_args__ = (
-        Index("ix_internal_channel_entity", "entity_type", "entity_id"),
-    )
+        Index("ix_internal_channel_entity", "entity_type", "entity_id"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True)
@@ -233,8 +234,7 @@ class InternalChannel(Base):
 class InternalChannelMember(Base):
     __tablename__ = "internal_channel_members"
     __table_args__ = (
-        UniqueConstraint("channel_id", "user_id", name="uq_channel_member"),
-    )
+        UniqueConstraint("channel_id", "user_id", name="uq_channel_member"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey("internal_channels.id"), nullable=False)
@@ -250,8 +250,7 @@ class InternalMessage(Base):
     __tablename__ = "internal_messages"
     __table_args__ = (
         Index("ix_internal_msg_channel", "channel_id"),
-        Index("ix_internal_msg_user", "user_id"),
-    )
+        Index("ix_internal_msg_user", "user_id"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey("internal_channels.id"), nullable=False)

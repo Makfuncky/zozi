@@ -1195,7 +1195,7 @@ export default function LogisticsPartnerProfilePage() {
 
                   <div className="rounded-2xl border border-border bg-surface p-4">
                     <h2 className="text-base font-bold text-text">Public Card Preview</h2>
-                    <div className="mt-4 rounded-xl border border-border bg-linear-to-br from-surface-2 to-primary/5 p-3">
+                    <div className="mt-4 rounded-xl border border-border bg-gradient-to-br from-surface-2 to-primary/5 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-base font-bold text-text">{profile.name || "Logistics partner name"}</p>

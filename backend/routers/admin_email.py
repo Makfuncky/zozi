@@ -13,7 +13,7 @@ from utils.rls_interceptor import set_rls_context, clear_rls_context
 router = APIRouter()
 
 
-@router.get("/", response_model=list[EmailCampaignOut])
+@router.get("/campaigns", response_model=list[EmailCampaignOut])
 def list_all_campaigns(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     """List all email campaigns across all countries (consolidated view)."""
     return db.query(EmailCampaign).order_by(EmailCampaign.created_at.desc()).limit(200).all()
@@ -37,12 +37,15 @@ def admin_email_metrics(_: User = Depends(require_admin), db: Session = Depends(
     }
 
 
-@router.get("/campaigns/{country_code}", response_model=list[EmailCampaignOut])
-def list_campaigns(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db)):
+@router.get("/campaigns/{country_code}")
+def list_campaigns(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        return db.query(EmailCampaign).filter(EmailCampaign.country_code == country_code.upper()).order_by(EmailCampaign.created_at.desc()).all()
+        q = db.query(EmailCampaign).filter(EmailCampaign.country_code == country_code.upper())
+        total = q.count()
+        rows = q.order_by(EmailCampaign.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
 

@@ -18,12 +18,12 @@ export const addressFormatService = {
    * Get address format configuration for a country
    */
   getAddressFormat: async (countryCode: string): Promise<AddressFormatConfig | null> => {
-    const response = await apiFetch(`/api/v1/admin/address-format/${countryCode}`);
+    const response = await apiFetch(`/admin/countries/${countryCode}/localization`);
     if (!response.ok) return null;
     const data = await parseJsonResponse(response);
     return {
       countryCode,
-      formatJson: data.format_json || {
+      formatJson: data.address_format || {
         fields: ["street", "city", "state", "postal_code", "country"],
         fieldLabels: {},
         requiredFields: ["street", "city", "country"],

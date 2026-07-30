@@ -202,3 +202,105 @@ def check_permission(
     result = svc.check_user_permission(user_id, permission_slug, db, country_code=country_code)
     return {"granted": result}
 
+
+# ══════════════════════════════════════════════════════════════════
+#  3-Layer Effective Permission Resolver Endpoints
+# ══════════════════════════════════════════════════════════════════
+
+
+from services.effective_permissions import (
+    get_effective_permissions as resolve_effective_perms,
+    check_permission as resolve_check_perm,
+    request_permission_change,
+    approve_permission_change,
+    invalidate_permission_cache,
+    HR_PERMISSION_MAP,
+    COUNTRY_ROLE_PERMISSION_MAP,
+    MAKER_CHECKER_PERMISSIONS,
+)
+
+
+@router.get("/effective/{user_id}")
+def effective_permissions(
+    user_id: int,
+    country_code: str = Query(..., min_length=2, max_length=10),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get the merged 3-layer effective permissions for a user in a country."""
+    perms = resolve_effective_perms(user_id, country_code, db)
+    return {
+        "user_id": user_id,
+        "country_code": country_code,
+        "permissions": perms,
+        "count": len(perms),
+    }
+
+
+@router.get("/check-effective/{user_id}/{permission_slug}")
+def check_effective_permission(
+    user_id: int,
+    permission_slug: str,
+    country_code: str = Query(..., min_length=2, max_length=10),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Check a specific permission against the effective 3-layer resolver."""
+    granted = resolve_check_perm(user_id, permission_slug, country_code, db)
+    return {
+        "user_id": user_id,
+        "permission": permission_slug,
+        "country_code": country_code,
+        "granted": granted,
+    }
+
+
+@router.get("/catalog")
+def permission_catalog(
+    current_user: dict = Depends(get_current_user),
+):
+    """Return the full HR permission catalog and country role definitions."""
+    require_admin(current_user)
+    return {
+        "permission_catalog": HR_PERMISSION_MAP,
+        "country_roles": {role: sorted(perms) for role, perms in COUNTRY_ROLE_PERMISSION_MAP.items()},
+        "maker_checker_permissions": sorted(MAKER_CHECKER_PERMISSIONS),
+    }
+
+
+@router.post("/maker-checker/request")
+def maker_checker_request(
+    target_user_id: int = Query(...),
+    permission_slug: str = Query(...),
+    action: str = Query(..., pattern="^(grant|revoke)$"),
+    country_code: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Request a permission change (goes through Maker-Checker if sensitive)."""
+    requester_id = int(current_user.get("id", 0))
+    return request_permission_change(requester_id, target_user_id, permission_slug, action, country_code, db)
+
+
+@router.post("/maker-checker/approve/{request_id}")
+def maker_checker_approve(
+    request_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Approve a pending permission change (Maker-Checker)."""
+    approver_id = int(current_user.get("id", 0))
+    return approve_permission_change(approver_id, request_id, db)
+
+
+@router.post("/invalidate-cache/{user_id}")
+def invalidate_cache(
+    user_id: int,
+    country_code: Optional[str] = Query(None),
+    current_user: dict = Depends(get_current_user),
+):
+    """Invalidate the Redis permission cache for a user."""
+    require_admin(current_user)
+    invalidate_permission_cache(user_id, country_code)
+    return {"message": f"Cache invalidated for user {user_id}"}
+

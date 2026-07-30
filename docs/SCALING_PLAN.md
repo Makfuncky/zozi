@@ -322,7 +322,7 @@ python -m alembic upgrade head  # safe to run — no-op on dev DB
           Users ─────────▶│     CDN     │◀── media (images/videos)
                           │ (R2/CF/CFront)
                           └──────┬──────┘
-                                  │ (static reads only)
+                                 │ (static reads only)
                           ┌──────▼──────┐        ┌──────────────┐
  API requests ──────────▶│ Load Balancer│──────▶│ API workers  │ (lean, no ML)
                           └──────────────┘        │  N replicas  │
@@ -333,13 +333,13 @@ python -m alembic upgrade head  # safe to run — no-op on dev DB
                           │    Redis    │            │  PgBouncer   │
                           │ broker+cache│            └──────┬───────┘
                           └──────┬──────┘                   │
-                                  │ pull job          ┌──────▼───────┐
+                                 │ pull job          ┌──────▼───────┐
                           ┌──────▼──────┐            │  Postgres    │
-                          │ ML/bulk     │───SQL─────▶│  primary     │
+                          │ ML/bulk     │───SQL────▶│  primary      │
                           │ workers     │            │  + read replica(s)
                           │ (high RAM)  │            └──────────────┘
                           └─────────────┘
-                                  │ presigned PUT / write
+                                 │ presigned PUT / write
                           ┌──────▼──────┐
                           │ Object store│ (S3 / R2)
                           └─────────────┘

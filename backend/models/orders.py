@@ -16,8 +16,7 @@ class Order(Base):
     __table_args__ = (
         Index("ix_orders_user_id", "user_id"),
         Index("ix_orders_customer_id", "customer_id"),
-        Index("ix_orders_status", "status"),
-    )
+        Index("ix_orders_status", "status"), {"schema": "commerce"})
     id = Column(Integer, primary_key=True, index=True)
     order_number = Column(String, unique=True, index=True)
     customer_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -74,8 +73,7 @@ class OrderItem(Base):
     __tablename__ = "order_items"
     __table_args__ = (
         Index("ix_order_items_order_id", "order_id"),
-        Index("ix_order_items_product_id", "product_id"),
-    )
+        Index("ix_order_items_product_id", "product_id"), {"schema": "commerce"})
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -98,6 +96,7 @@ class OrderItem(Base):
 
 class OrderLogisticsAllocation(Base):
     __tablename__ = "order_logistics_allocations"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -132,6 +131,7 @@ class OrderLogisticsAllocation(Base):
 
 class ReturnRequest(Base):
     __tablename__ = "return_requests"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     order_item_id = Column(Integer, nullable=True)

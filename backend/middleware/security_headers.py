@@ -4,6 +4,8 @@ Enhanced Security Headers Middleware for Zozi Platform
 Implements comprehensive HTTP security headers with defense-in-depth
 """
 
+import logging
+import os
 from typing import Dict, Optional
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -13,6 +15,8 @@ import hashlib
 
 from utils.config import settings
 from utils.ip_utils import get_request_ip
+
+logger = logging.getLogger(__name__)
 
 ZOZI_SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -30,7 +34,21 @@ CSP_POLICY = (
     "style-src 'self' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; "
-    "connect-src 'self' http://localhost:3000 http://localhost:8000 ws: wss: https://api.stripe.com https://api.tap.company; "
+    "connect-src 'self' https://api.stripe.com https://api.tap.company; "
+    "frame-src https://js.stripe.com; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "report-uri /csp-report; "
+)
+
+CSP_POLICY_DEV = (
+    "default-src 'self'; "
+    "script-src 'self' https://js.stripe.com; "
+    "style-src 'self' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: blob: https:; "
+    "connect-src 'self' http://localhost:3000 http://localhost:8000 ws://localhost:3000 wss://localhost:3000 https://api.stripe.com https://api.tap.company; "
     "frame-src https://js.stripe.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
@@ -74,7 +92,24 @@ class EnhancedSecurityHeadersMiddleware(BaseHTTPMiddleware):
                 response.headers[header_name] = header_value
 
         if "Content-Security-Policy" not in response.headers:
-            response.headers["Content-Security-Policy"] = CSP_POLICY
+            if str(getattr(settings, "app_env", "development")).lower() == "production":
+                frontend_url = str(getattr(settings, "frontend_url", "")).rstrip("/")
+                ws_origin = ""
+                if frontend_url:
+                    ws_protocol = "wss" if frontend_url.startswith("https") else "ws"
+                    ws_host = frontend_url.split("://", 1)[-1] if "://" in frontend_url else frontend_url
+                    ws_origin = f" {ws_protocol}://{ws_host}"
+                else:
+                    logger.warning(
+                        "frontend_url is empty in production — WebSocket connections will be blocked by CSP"
+                    )
+                csp = CSP_POLICY.replace(
+                    "connect-src 'self' https://api.stripe.com https://api.tap.company;",
+                    f"connect-src 'self' https://api.stripe.com https://api.tap.company{ws_origin};",
+                )
+            else:
+                csp = CSP_POLICY_DEV
+            response.headers["Content-Security-Policy"] = csp
 
         if self.enable_hsts and "Strict-Transport-Security" not in response.headers:
             response.headers["Strict-Transport-Security"] = (

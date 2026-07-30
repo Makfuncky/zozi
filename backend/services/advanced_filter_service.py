@@ -5,7 +5,7 @@ import hashlib
 import json
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import func, and_, or_, case
+from sqlalchemy import func, and_, or_, case, cast, String
 from sqlalchemy.orm import Session
 
 from models import Product, Category, ProductVideo, ProductFilterMetadata, ProductFilterOption
@@ -55,7 +55,7 @@ class AdvancedFilterService:
                     Product.description.ilike(like),
                     Product.category.ilike(like),
                     Product.brand.ilike(like),
-                    Product.tags.astext.ilike(like),
+                    cast(Product.tags, String).ilike(like),
                 )
             )
 
@@ -97,7 +97,7 @@ class AdvancedFilterService:
                     Product.description.ilike(like),
                     Product.category.ilike(like),
                     Product.brand.ilike(like),
-                    Product.tags.astext.ilike(like),
+                    cast(Product.tags, String).ilike(like),
                 )
             )
 
@@ -149,7 +149,7 @@ class AdvancedFilterService:
                     query = query.filter(
                         and_(
                             Product.filter_attributes.has_key(attr_key),
-                            Product.filter_attributes[attr_key].astext.in_([str(v) for v in attr_values]),
+                            cast(Product.filter_attributes[attr_key], String).in_([str(v) for v in attr_values]),
                         )
                     )
 

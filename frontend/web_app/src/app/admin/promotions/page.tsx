@@ -10,10 +10,20 @@ import { isAdminStaffRole } from "@shared/adminPermissions";
 import { useAdminCountry } from "@/lib/useAdminCountry";
 import { apiFetch, parseJsonResponse } from "@/lib/api";
 
-import BannersPanel from "./BannersPanel";
-import CouponsPanel from "./CouponsPanel";
-import FlashSalesPanel from "./FlashSalesPanel";
-import PromotionBuilderPanel from "./PromotionBuilderPanel";
+import dynamic from "next/dynamic";
+
+const BannersPanel = dynamic(() => import("./_components/BannersPanel"), {
+  loading: () => <PanelLoadingState count={2} blockClassName="h-32 rounded-xl bg-surface-2 animate-pulse" />
+});
+const CouponsPanel = dynamic(() => import("./_components/CouponsPanel"), {
+  loading: () => <PanelLoadingState count={2} blockClassName="h-32 rounded-xl bg-surface-2 animate-pulse" />
+});
+const FlashSalesPanel = dynamic(() => import("./_components/FlashSalesPanel"), {
+  loading: () => <PanelLoadingState count={2} blockClassName="h-32 rounded-xl bg-surface-2 animate-pulse" />
+});
+const PromotionBuilderPanel = dynamic(() => import("./_components/PromotionBuilderPanel"), {
+  loading: () => <PanelLoadingState count={3} blockClassName="h-24 rounded-xl bg-surface-2 animate-pulse" />
+});
 
 const SECTIONS = [
   { key: "builder", label: "Promotion Builder", icon: Settings2 },

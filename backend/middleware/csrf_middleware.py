@@ -47,13 +47,20 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         if any(request.url.path.startswith(w) for w in WEBHOOK_PATHS):
             return await call_next(request)
 
-        app_env = os.environ.get("APP_ENV", "development").lower()
-        if app_env in ("test", "development"):
+        app_env = str(getattr(settings, "app_env", "development")).lower()
+        csrf_disabled = os.environ.get("CSRF_DISABLED", "").lower() in {"1", "true", "yes"}
+        if csrf_disabled:
             logger.warning(
-                f"CSRF bypass in {app_env} mode for {request.method} {request.url.path}. "
-                "This should NEVER happen in production."
+                f"CSRF protection is DISABLED via CSRF_DISABLED env var. "
+                "This should NEVER be enabled in production."
             )
             return await call_next(request)
+
+        if app_env in ("test", "development"):
+            logger.warning(
+                f"CSRF validation in {app_env} mode for {request.method} {request.url.path}. "
+                "Consider setting CSRF_DISABLED=true in test environment if needed."
+            )
 
         client_token = request.headers.get(CSRF_HEADER_NAME)
 
@@ -80,7 +87,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         if not self._is_csrf_cookie_set(request):
-            is_production = os.environ.get("APP_ENV") == "production"
+            is_production = str(getattr(settings, "app_env", "development")).lower() == "production"
             response.set_cookie(
                 key=CSRF_COOKIE_NAME,
                 value=client_token,

@@ -14,13 +14,15 @@ router = APIRouter()
 
 
 @router.get("/categories/{country_code}")
-def list_categories(country_code: str = Path(..., description="ISO country code"), include_deleted: bool = False, _: User = Depends(require_admin), db: Session = Depends(get_db)):
+def list_categories(country_code: str = Path(..., description="ISO country code"), include_deleted: bool = False, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), _: User = Depends(require_admin), db: Session = Depends(get_db)):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         q = db.query(Category).filter(Category.country_code == country_code.upper())
         if not include_deleted: q = q.filter(Category.is_active == True)
-        return q.order_by(Category.sort_order).all()
+        total = q.count()
+        rows = q.order_by(Category.sort_order).offset((page - 1) * page_size).limit(page_size).all()
+        return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
 

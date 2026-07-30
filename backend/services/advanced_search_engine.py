@@ -4,15 +4,20 @@ import re
 from difflib import SequenceMatcher, get_close_matches
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text, case
 from sqlalchemy.orm import Session
 
 from models import Product
+
+# Hard limits to prevent OOM under heavy traffic.
+_MAX_PAGE_SIZE = 100
+_MAX_FUZZY_PRODUCTS = 5000
 
 
 class AdvancedSearchEngine:
     def __init__(self, db: Session):
         self.db = db
+        self._is_postgres = self.db.bind.dialect.name == "postgresql"
 
     def parse_query(self, query: str) -> Dict[str, Any]:
         parsed: Dict[str, Any] = {
@@ -58,7 +63,7 @@ class AdvancedSearchEngine:
         rating_match = re.search(r"(\d)\+\s*star", q_lower)
         if rating_match:
             parsed["min_rating"] = int(rating_match.group(1))
-            query = re.sub(rating_match.pattern, "", query, flags=re.IGNORECASE)
+            query = re.sub(r"(\d)\+\s*star", "", query, flags=re.IGNORECASE)
 
         brands = ["nike", "adidas", "apple", "samsung", "sony", "lg", "hp", "dell", "canon", "nikon"]
         found_brands = [b.capitalize() for b in brands if b in q_lower]
@@ -74,16 +79,16 @@ class AdvancedSearchEngine:
         if "in stock" in q_lower or "available" in q_lower:
             query = re.sub(r"\b(in\s+stock|available)\b", "", query, flags=re.IGNORECASE)
 
-        if "new" in q_lower or "newest" in q_lower:
+        if re.search(r"\bnew(est)?\b", q_lower):
             parsed["sort"] = "newest"
             query = re.sub(r"\bnew(est)?\b", "", query, flags=re.IGNORECASE)
-        elif "top" in q_lower or "rated" in q_lower or "reviewed" in q_lower:
+        elif re.search(r"\b(top|rated|reviewed)\b", q_lower):
             parsed["sort"] = "rating"
             query = re.sub(r"\b(top|rated|reviewed)\b", "", query, flags=re.IGNORECASE)
-        elif "cheap" in q_lower or "cheapest" in q_lower or "low" in q_lower:
+        elif re.search(r"\b(cheap\w*|low(\s*price)?)\b", q_lower):
             parsed["sort"] = "price_asc"
             query = re.sub(r"\b(cheapest|cheap|low\s*price)\b", "", query, flags=re.IGNORECASE)
-        elif "expensive" in q_lower or "expensive" in q_lower:
+        elif re.search(r"\bexpensive\b", q_lower):
             parsed["sort"] = "price_desc"
             query = re.sub(r"\b(expens|high\s*end)\b", "", query, flags=re.IGNORECASE)
 
@@ -117,6 +122,37 @@ class AdvancedSearchEngine:
 
         return list(set(expanded))
 
+    def _apply_text_search(self, db_query, search_term: str):
+        if not search_term:
+            return db_query
+
+        like_pattern = f"%{search_term}%"
+
+        if self._is_postgres:
+            tsquery = func.plainto_tsquery("english", search_term)
+            tsvector = func.to_tsvector("english", Product.name + " " + func.coalesce(Product.description, ""))
+            db_query = db_query.filter(
+                or_(
+                    tsvector.op("@@")(tsquery),
+                    Product.name.ilike(like_pattern),
+                    Product.description.ilike(like_pattern),
+                    Product.category.ilike(like_pattern),
+                    Product.brand.ilike(like_pattern),
+                    Product.tags.ilike(like_pattern),
+                )
+            )
+        else:
+            db_query = db_query.filter(
+                or_(
+                    Product.name.ilike(like_pattern),
+                    Product.description.ilike(like_pattern),
+                    Product.category.ilike(like_pattern),
+                    Product.brand.ilike(like_pattern),
+                    Product.tags.ilike(like_pattern),
+                )
+            )
+        return db_query
+
     def search(
         self,
         query: str,
@@ -125,6 +161,9 @@ class AdvancedSearchEngine:
         offset: int = 0,
         sort_by: str = "relevance",
     ) -> Dict[str, Any]:
+        limit = min(limit, _MAX_PAGE_SIZE)
+        offset = max(offset, 0)
+
         parsed = self.parse_query(query)
         all_filters = {**(filters or {}), **parsed}
 
@@ -154,18 +193,7 @@ class AdvancedSearchEngine:
         if all_filters.get("has_video"):
             db_query = db_query.filter(Product.video_count > 0)
 
-        search_term = all_filters.get("q")
-        if search_term:
-            like_pattern = f"%{search_term}%"
-            db_query = db_query.filter(
-                or_(
-                    Product.name.ilike(like_pattern),
-                    Product.description.ilike(like_pattern),
-                    Product.category.ilike(like_pattern),
-                    Product.brand.ilike(like_pattern),
-                    Product.tags.ilike(like_pattern),
-                )
-            )
+        db_query = self._apply_text_search(db_query, all_filters.get("q"))
 
         total = db_query.count()
 
@@ -247,12 +275,12 @@ class AdvancedSearchEngine:
 
     def _build_word_graph(self) -> Dict[str, List[str]]:
         word_graph: Dict[str, List[str]] = {}
-        
+
         products = self.db.query(Product.name, Product.description, Product.brand).filter(
             Product.is_active == True,
             Product.is_deleted == False
         ).limit(1000).all()
-        
+
         for product in products:
             text = f"{(product[0] or '')} {(product[1] or '')} {(product[2] or '')}".lower()
             words = re.findall(r'\b[a-z]{2,}\b', text)
@@ -262,32 +290,32 @@ class AdvancedSearchEngine:
                 for other_word in words[i+1:i+4]:
                     if other_word != word and other_word not in word_graph.get(word, []):
                         word_graph[word].append(other_word)
-        
+
         return word_graph
 
     def get_word_predictions(self, query: str, limit: int = 5) -> List[str]:
         if not query or len(query) < 2:
             return []
-        
+
         words = query.lower().split()
         last_word = words[-1] if words else ""
-        
+
         if not last_word:
             return []
-        
+
         suggestions = []
-        
+
         if len(last_word) >= 2:
             prefix_matches = self._prefix_suggestions(last_word, limit * 3)
             suggestions.extend(prefix_matches)
-        
+
         word_graph = self._build_word_graph()
         for word in words[:-1]:
             if word in word_graph:
                 for related in word_graph[word][:limit]:
                     if related not in suggestions and related != last_word:
                         suggestions.append(related)
-        
+
         if len(words) >= 2:
             prev_word = words[-2]
             product_names = self._get_product_names()
@@ -298,7 +326,7 @@ class AdvancedSearchEngine:
                         next_word = prod_words[i + 1]
                         if next_word not in suggestions and next_word.startswith(last_word[:2]):
                             suggestions.append(next_word)
-        
+
         if not suggestions:
             product_names = self._get_product_names()
             for prod_name in product_names[:100]:
@@ -308,7 +336,7 @@ class AdvancedSearchEngine:
                         suggestions.append(pw)
                         if len(suggestions) >= limit:
                             break
-        
+
         suggestions = list(dict.fromkeys(suggestions))[:limit]
         return suggestions
 
@@ -325,7 +353,7 @@ class AdvancedSearchEngine:
             Product.is_active == True,
             Product.is_deleted == False
         ).limit(1000).all()
-        
+
         for (name,) in products:
             if name:
                 words = re.findall(r'\b[a-z]+', name.lower())
@@ -337,35 +365,41 @@ class AdvancedSearchEngine:
         return suggestions
 
     def fuzzy_search(self, query: str, limit: int = 20, cutoff: float = 0.6) -> Dict[str, Any]:
+        limit = min(limit, _MAX_PAGE_SIZE)
         parsed = self.parse_query(query)
-        
+
         db_query = self.db.query(Product).filter(
             Product.is_deleted == False,
             Product.is_active == True,
             Product.is_approved == True,
             Product.stock > 0,
         )
-        
+
         if parsed.get("min_price") is not None:
             db_query = db_query.filter(Product.price >= float(parsed["min_price"]))
         if parsed.get("max_price") is not None:
             db_query = db_query.filter(Product.price <= float(parsed["max_price"]))
         if parsed.get("min_rating") is not None:
             db_query = db_query.filter(Product.rating >= float(parsed["min_rating"]))
-        
-        all_products = db_query.all()
+
+        # Use DB-level search first to narrow results, then fuzzy-score in-memory
+        search_term = parsed.get("q")
+        if search_term:
+            db_query = self._apply_text_search(db_query, search_term)
+
+        all_products = db_query.limit(_MAX_FUZZY_PRODUCTS).all()
         total = len(all_products)
-        
+
         query_words = query.lower().split()
         scored_products = []
-        
+
         for product in all_products:
             product_text = f"{(product.name or '')} {(product.brand or '')} {(product.category or '')}".lower()
             product_words = product_text.split()
-            
+
             max_word_similarity = 0.0
             matched_words = 0
-            
+
             for qw in query_words:
                 word_scores = [SequenceMatcher(None, qw, pw).ratio() for pw in product_words]
                 if word_scores:
@@ -373,20 +407,20 @@ class AdvancedSearchEngine:
                     max_word_similarity = max(max_word_similarity, best_score)
                     if best_score >= cutoff:
                         matched_words += 1
-            
+
             overall_similarity = max_word_similarity
-            
+
             if len(query_words) > 0:
                 word_coverage = matched_words / len(query_words)
                 overall_similarity = 0.7 * overall_similarity + 0.3 * word_coverage
-            
+
             if overall_similarity >= cutoff - 0.1:
                 scored_products.append((overall_similarity, product))
-        
+
         scored_products.sort(key=lambda x: (-x[0], -(x[1].rating or 0), -(x[1].sales_count or 0)))
-        
+
         top_products = scored_products[:limit]
-        
+
         return {
             "products": [self._serialize_product(p) for s, p in top_products],
             "total": total,

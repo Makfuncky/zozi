@@ -1,6 +1,8 @@
 import json
 import logging
+import os
 import re
+import warnings
 from decimal import Decimal
 from typing import Any, Callable
 
@@ -39,6 +41,19 @@ logger = logging.getLogger(__name__)
 DEMO_PICKUP_TRACKING_NUMBER = "TRACK-DEMO-PICKUP-READY-001"
 DEMO_PICKUP_EVENT_NOTE = "Demo pickup-ready reset"
 DEMO_SUPPLIER_SLUG = "zozi-supplier-demo"
+
+
+def _seed_password(env_key: str) -> str:
+    value = os.getenv(env_key)
+    if not value:
+        default = "DevSeed123!"
+        warnings.warn(
+            f"Seed password environment variable {env_key} is not set. "
+            f"Using default dev password '{default}'. "
+            "Set it before running seed in production."
+        )
+        return default
+    return value
 
 
 def _ensure_demo_user(
@@ -541,7 +556,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="admin@zozi.com",
             username="admin",
-            password="admin123",
+            password=_seed_password("SEED_ADMIN_PASSWORD"),
             role="admin",
             log_label="admin",
         )
@@ -549,7 +564,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="supplier@zozi.com",
             username="supplier",
-            password="supplier123",
+            password=_seed_password("SEED_SUPPLIER_PASSWORD"),
             role="supplier",
             log_label="supplier",
         )
@@ -557,7 +572,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="customer@zozi.com",
             username="customer",
-            password="customer123",
+            password=_seed_password("SEED_CUSTOMER_PASSWORD"),
             role="customer",
             log_label="customer",
         )
@@ -565,8 +580,8 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="logistics@zozi.com",
             username="logistics",
-            password="logistics123",
-            role="logistics_partner",
+            password=_seed_password("SEED_LOGISTICS_PASSWORD"),
+            role="logistics",
             log_label="logistics partner",
         )
 
@@ -574,7 +589,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="admin@test.com",
             username="admin_test",
-            password="admin123",
+            password=_seed_password("SEED_ADMIN_PASSWORD"),
             role="admin",
             log_label="test admin",
         )
@@ -582,7 +597,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="supplier@test.com",
             username="supplier_test",
-            password="supplier123",
+            password=_seed_password("SEED_SUPPLIER_PASSWORD"),
             role="supplier",
             log_label="test supplier",
         )
@@ -590,7 +605,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             db,
             email="customer@test.com",
             username="customer_test",
-            password="customer123",
+            password=_seed_password("SEED_CUSTOMER_PASSWORD"),
             role="customer",
             log_label="test customer",
         )
@@ -1196,7 +1211,7 @@ def _seed_employee_data(db: Session) -> None:
             db,
             email="admin@zozi.com",
             username="admin",
-            password="admin123",
+            password=_seed_password("SEED_ADMIN_PASSWORD"),
             role="admin",
             log_label="admin"
         )
@@ -1218,7 +1233,7 @@ def _seed_employee_data(db: Session) -> None:
         user = User(
             email=f"employee{i}@zozi.com",
             username=f"employee{i}",
-            hashed_password=get_password_hash("password123"),
+            hashed_password=get_password_hash(_seed_password("SEED_EMPLOYEE_PASSWORD")),
             role="employee",
             full_name=f"Employee {i}",
             country_code=country.code,

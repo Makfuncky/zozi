@@ -10,7 +10,7 @@ export default function NotFound() {
     <div className="relative min-h-screen flex items-center justify-center bg-surface-base px-4 overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-brand/5 blur-3xl" />
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
       </div>
 
@@ -28,7 +28,7 @@ export default function NotFound() {
             transition={{ delay: 0.1, duration: 0.4 }}
             className="mb-6"
           >
-            <span className="text-7xl sm:text-8xl font-bold text-brand/20 select-none">404</span>
+            <span className="text-7xl sm:text-8xl font-bold text-primary/20 select-none">404</span>
           </motion.div>
 
           <h1 className="text-xl sm:text-2xl font-bold text-text mb-2">Page Not Found</h1>
@@ -66,7 +66,7 @@ export default function NotFound() {
                 <button
                   key={item.href}
                   onClick={() => router.push(item.href)}
-                  className="text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-brand hover:border-brand/40 transition-colors"
+                  className="text-[11px] px-3 py-1.5 rounded-lg border border-border text-text-muted hover:text-primary hover:border-primary/40 transition-colors"
                 >
                   {item.label}
                 </button>

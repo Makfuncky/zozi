@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from controllers.auth_controller import get_current_user
 from controllers.products_controller import (
+    _bump_product_cache_version,
     get_product as get_product_controller,
     get_product_by_barcode as get_product_by_barcode_controller,
     get_products as get_products_controller,
@@ -178,6 +179,7 @@ async def create_product(
     db.add(product)
     db.commit()
     db.refresh(product)
+    _bump_product_cache_version()
     return product
 
 
@@ -228,6 +230,7 @@ async def update_product(
         product.slug = _unique_slug(str(payload["name"]), db)
     db.commit()
     db.refresh(product)
+    _bump_product_cache_version()
     return product
 
 
@@ -245,5 +248,6 @@ async def delete_product(
     product.is_active = False
     product.is_deleted = True
     db.commit()
+    _bump_product_cache_version()
     return {"message": "Product deactivated"}
 

@@ -9,15 +9,19 @@ from utils.dependencies import get_current_user, require_admin
 router = APIRouter()
 
 @router.get("/me", response_model=UserOut)
-def get_profile(current_user: User = Depends(get_current_user)):
-    return current_user
+def get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(User).filter(User.id == current_user.get("id")).first()
+
 
 @router.put("/me", response_model=UserOut)
-def update_profile(payload: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def update_profile(payload: UserUpdate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == current_user.get("id")).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     for k, v in payload.model_dump(exclude_unset=True).items():
-        setattr(current_user, k, v)
-    db.commit(); db.refresh(current_user)
-    return current_user
+        setattr(user, k, v)
+    db.commit(); db.refresh(user)
+    return user
 
 @router.get("", response_model=list[UserOut])
 def list_users(skip: int = 0, limit: int = 50, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):

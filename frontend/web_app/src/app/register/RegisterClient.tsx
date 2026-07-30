@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, User, Mail, Lock, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, User, Mail, Lock, CheckCircle2, Loader2 } from "@/lib/icons";
 import { apiFetch, getErrorMessage, parseJsonResponse } from "@/lib/api";
 import { useToastStore } from "@/lib/toastStore";
 
@@ -129,10 +129,14 @@ function CustomerRegisterPage() {
                   value={form.password}
                   onChange={(e) => update({ password: e.target.value })}
                   required
+                  minLength={8}
                   placeholder="••••••••"
                   className="theme-input w-full rounded-xl border py-3 pl-10 pr-4 text-sm placeholder:text-text-faint focus:border-primary focus:outline-none"
                 />
               </div>
+              <p className="mt-1 text-[10px] text-text-faint">
+                Min. 8 chars, with uppercase, lowercase, number &amp; special character.
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-text-muted">Confirm</label>

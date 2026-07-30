@@ -29,7 +29,7 @@ jest.mock("@/lib/useAuth", () => ({
   useAuth: () => currentAuthState,
 }));
 
-import ExportsPanel from "@/app/admin/dashboard/ExportsPanel";
+import ExportsPanel from "@/app/admin/dashboard/_components/ExportsPanel";
 
 function okJson(data: unknown) {
   return {

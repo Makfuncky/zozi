@@ -49,6 +49,7 @@ export {
   ChevronRight,
   ChevronUp,
   ClipboardList,
+  Contact2,
   Clock,
   Clock3,
   Code,
@@ -128,6 +129,8 @@ export {
   PenLine,
   Pencil,
   Percent,
+  Pin,
+  BellOff,
   Phone,
   PieChart,
   Play,
@@ -193,6 +196,13 @@ export {
   X,
   XCircle,
   Zap,
+  Smile,
+  Flag,
+  Reply,
+  Paperclip,
+  Pause,
+  MoreHorizontal,
+  Radio,
 } from "lucide-react";
 
 /**

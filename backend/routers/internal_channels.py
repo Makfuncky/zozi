@@ -19,6 +19,8 @@ def create_channel(
     created_by: Optional[int] = Body(None, embed=True),
     country_code: Optional[str] = Body(None, embed=True),
     allowed_roles: Optional[List[str]] = Body(None, embed=True),
+    entity_type: Optional[str] = Body(None, embed=True),
+    entity_id: Optional[int] = Body(None, embed=True),
     db: Session = Depends(get_db),
 ):
     service = get_internal_communication_service(db)
@@ -29,6 +31,8 @@ def create_channel(
         created_by=created_by,
         country_code=country_code,
         allowed_roles=allowed_roles,
+        entity_type=entity_type,
+        entity_id=entity_id,
     )
 
 
@@ -74,11 +78,11 @@ def send_message(
     sender_id: int = Body(..., embed=True),
     content: str = Body(..., embed=True),
     message_type: str = Body("text", embed=True),
-    is_encrypted: bool = Body(False, embed=True),
+    is_masked: bool = Body(True, embed=True),
     db: Session = Depends(get_db),
 ):
     service = get_internal_communication_service(db)
-    return service.send_message(channel_id, sender_id, content, message_type, is_encrypted)
+    return service.send_message(channel_id, sender_id, content, message_type, is_masked)
 
 
 @router.get("/channels/{channel_id}/messages")

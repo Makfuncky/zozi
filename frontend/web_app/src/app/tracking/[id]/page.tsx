@@ -360,7 +360,7 @@ export default function SharedTrackingPage({ params }: PageProps) {
               <h2 className="text-sm font-bold text-text">Live Route Map</h2>
               {mapPoints.length && mapBounds ? (
                 <>
-                  <div className="relative mt-3 h-52 overflow-hidden rounded-2xl border border-border bg-linear-to-br from-sky-100 via-cyan-50 to-white">
+                  <div className="relative mt-3 h-52 overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-sky-100 via-cyan-50 to-white">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.18),transparent_55%)]" />
                     {mapPoints.map((point) => {
                       const left = 8 + ((point.longitude - mapBounds.minLng) / mapBounds.lngSpan) * 84;

@@ -351,7 +351,7 @@ async def get_carriers(current_user: dict, db: Session) -> list[dict]:
     carriers = db.query(ShippingCarrier).filter(
         (ShippingCarrier.supplier_id.is_(None)) | (ShippingCarrier.supplier_id == supplier_id),
         ShippingCarrier.is_active.is_(True),
-    ).order_by(ShippingCarrier.supplier_id.nullsfirst(), ShippingCarrier.name).all()
+    ).order_by(ShippingCarrier.supplier_id.nullsfirst(), ShippingCarrier.name).limit(100).all()
     return [_serialize_carrier(c) for c in carriers]
 
 
@@ -401,7 +401,7 @@ async def get_shipping_zones(current_user: dict, db: Session) -> list[dict]:
     supplier_id = _require_supplier(current_user)
     zones = db.query(ShippingZone).filter(
         ShippingZone.supplier_id == supplier_id,
-    ).order_by(ShippingZone.name).all()
+    ).order_by(ShippingZone.name).limit(100).all()
     return [_serialize_zone(z) for z in zones]
 
 
@@ -487,7 +487,7 @@ async def delete_shipping_zone(zone_id: int, current_user: dict, db: Session) ->
 
 # ── orders to fulfil ──────────────────────────────────────────────────────────
 
-async def get_orders_to_fulfil(current_user: dict, db: Session) -> list[dict]:
+async def get_orders_to_fulfil(current_user: dict, db: Session, limit: int = 200, offset: int = 0) -> list[dict]:
     """Return orders containing this supplier's products that still need to be shipped."""
     supplier_id = _require_supplier(current_user)
 
@@ -515,11 +515,19 @@ async def get_orders_to_fulfil(current_user: dict, db: Session) -> list[dict]:
         ).distinct().all()
     ]
 
-    orders = db.query(Order).filter(
-        Order.id.in_(order_ids_with_supplier_items),
-        Order.id.notin_(already_shipped_order_ids),
-        Order.status.in_(["confirmed", "paid", "processing"]),
-    ).order_by(Order.created_at).all()
+    orders = (
+        db.query(Order)
+        .options(selectinload(Order.items).selectinload(OrderItem.product))
+        .filter(
+            Order.id.in_(order_ids_with_supplier_items),
+            Order.id.notin_(already_shipped_order_ids),
+            Order.status.in_(["confirmed", "paid", "processing"]),
+        )
+        .order_by(Order.created_at)
+        .offset(max(0, offset))
+        .limit(min(max(1, limit), 200))
+        .all()
+    )
 
     result = []
     for order in orders:
@@ -698,17 +706,37 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 async def get_active_shipments(current_user: dict, db: Session) -> list[dict]:
     """Return all non-delivered active shipments for this supplier."""
     supplier_id = _require_supplier(current_user)
-    shipments = db.query(Shipment).filter(
-        Shipment.supplier_id == supplier_id,
-        Shipment.status.notin_(["delivered", "returned"]),
-    ).order_by(Shipment.shipped_at.desc()).all()
+    shipments = (
+        db.query(Shipment)
+        .options(
+            selectinload(Shipment.order),
+            selectinload(Shipment.carrier),
+            selectinload(Shipment.assigned_partner),
+        )
+        .filter(
+            Shipment.supplier_id == supplier_id,
+            Shipment.status.notin_(["delivered", "returned"]),
+        )
+        .order_by(Shipment.shipped_at.desc())
+        .limit(200)
+        .all()
+    )
     return [_serialize_shipment(s) for s in shipments]
 
 
 async def get_shipment_history(current_user: dict, db: Session, page: int = 1, per_page: int = 30) -> dict:
     """Return paginated fulfilment history for this supplier."""
     supplier_id = _require_supplier(current_user)
-    q = db.query(Shipment).filter(Shipment.supplier_id == supplier_id).order_by(Shipment.created_at.desc())
+    q = (
+        db.query(Shipment)
+        .options(
+            selectinload(Shipment.order),
+            selectinload(Shipment.carrier),
+            selectinload(Shipment.assigned_partner),
+        )
+        .filter(Shipment.supplier_id == supplier_id)
+        .order_by(Shipment.created_at.desc())
+    )
     total = q.count()
     items = q.offset((page - 1) * per_page).limit(per_page).all()
     return {
@@ -721,10 +749,19 @@ async def get_shipment_history(current_user: dict, db: Session, page: int = 1, p
 
 async def get_shipment_events(shipment_id: int, current_user: dict, db: Session) -> list[dict]:
     supplier_id = _require_supplier(current_user)
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id,
-        Shipment.supplier_id == supplier_id,
-    ).first()
+    shipment = (
+        db.query(Shipment)
+        .options(
+            selectinload(Shipment.order),
+            selectinload(Shipment.carrier),
+            selectinload(Shipment.assigned_partner),
+        )
+        .filter(
+            Shipment.id == shipment_id,
+            Shipment.supplier_id == supplier_id,
+        )
+        .first()
+    )
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
@@ -736,10 +773,19 @@ async def get_shipment_events(shipment_id: int, current_user: dict, db: Session)
 
 async def scan_shipment_event(shipment_id: int, data: dict, current_user: dict, db: Session) -> dict:
     supplier_id = _require_supplier(current_user)
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id,
-        Shipment.supplier_id == supplier_id,
-    ).first()
+    shipment = (
+        db.query(Shipment)
+        .options(
+            selectinload(Shipment.order),
+            selectinload(Shipment.carrier),
+            selectinload(Shipment.assigned_partner),
+        )
+        .filter(
+            Shipment.id == shipment_id,
+            Shipment.supplier_id == supplier_id,
+        )
+        .first()
+    )
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
@@ -845,10 +891,19 @@ async def scan_shipment_event(shipment_id: int, data: dict, current_user: dict, 
 async def update_shipment_status(shipment_id: int, data: dict, current_user: dict, db: Session) -> dict:
     """Update supplier-controlled shipment packaging metadata."""
     supplier_id = _require_supplier(current_user)
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id,
-        Shipment.supplier_id == supplier_id,
-    ).first()
+    shipment = (
+        db.query(Shipment)
+        .options(
+            selectinload(Shipment.order),
+            selectinload(Shipment.carrier),
+            selectinload(Shipment.assigned_partner),
+        )
+        .filter(
+            Shipment.id == shipment_id,
+            Shipment.supplier_id == supplier_id,
+        )
+        .first()
+    )
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 

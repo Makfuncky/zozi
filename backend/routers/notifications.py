@@ -6,9 +6,23 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from controllers.auth_controller import get_current_user
-from services.notification_engine import get_notification_engine
+from services.notification_engine import get_notification_engine, NotificationChannel, NotificationPriority
 
 router = APIRouter()
+
+
+def _parse_channel(value: str) -> NotificationChannel:
+    try:
+        return NotificationChannel(value)
+    except ValueError:
+        return NotificationChannel.IN_APP
+
+
+def _parse_priority(value: str) -> NotificationPriority:
+    try:
+        return NotificationPriority(value)
+    except ValueError:
+        return NotificationPriority.MEDIUM
 
 
 @router.post("/send")
@@ -22,7 +36,7 @@ def send_notification(
     db: Session = Depends(get_db),
 ):
     engine = get_notification_engine(db)
-    return engine.send(user_id, title, message, channel, priority)
+    return engine.send(user_id, title, message, _parse_channel(channel), _parse_priority(priority))
 
 
 @router.post("/bulk")
@@ -36,7 +50,7 @@ def send_bulk_notifications(
     db: Session = Depends(get_db),
 ):
     engine = get_notification_engine(db)
-    return engine.send_bulk(user_ids, title, message, channel, priority)
+    return engine.send_bulk(user_ids, title, message, _parse_channel(channel), _parse_priority(priority))
 
 
 @router.get("")

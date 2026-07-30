@@ -111,12 +111,10 @@ def sync_cart(
 @router.put("/items/{product_id}")
 def update_cart_item(product_id: int, body: CartItemUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     quantity = body.quantity
-    # Try looking up by cart item id first, fall back to product_id
     item = db.query(CartItem).filter(CartItem.id == product_id, CartItem.user_id == current_user.id).first()
     if not item:
         item = db.query(CartItem).filter(CartItem.product_id == product_id, CartItem.user_id == current_user.id).first()
     if not item:
-        # Auto-create if product exists
         product = db.query(Product).filter(Product.id == product_id, Product.is_active == True).first()
         if not product: raise HTTPException(404, "Product not found")
         if quantity > 0:
@@ -132,7 +130,6 @@ def update_cart_item(product_id: int, body: CartItemUpdate, current_user: User =
     return {"message": "Updated"}
 @router.delete("/items/{product_id}")
 def remove_from_cart(product_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Try by cart item id first, fall back to product_id
     item = db.query(CartItem).filter(CartItem.id == product_id, CartItem.user_id == current_user.id).first()
     if not item:
         item = db.query(CartItem).filter(CartItem.product_id == product_id, CartItem.user_id == current_user.id).first()

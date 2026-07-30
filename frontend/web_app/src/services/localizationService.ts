@@ -47,30 +47,13 @@ export const localizationService = {
   ): string => {
     const formatter = new Intl.NumberFormat(locale);
     const formatted = formatter.format(num);
-    
+
     if (numberFormat === "eastern" && locale.startsWith("ar")) {
       // Convert Western Arabic numerals to Eastern Arabic numerals
       const easternDigits = "٠١٢٣٤٥٦٧٨٩";
       return formatted.replace(/\d/g, (d) => easternDigits[parseInt(d, 10)] || d);
     }
-    
-    return formatted;
-  },
 
-  /**
-   * Get address format for a country
-   */
-  getAddressFormat: async (countryCode: string): Promise<AddressFormat | null> => {
-    const response = await apiFetch(`/api/v1/admin/address-format/${countryCode}`);
-    if (!response.ok) return null;
-    const data = await parseJsonResponse(response);
-    return {
-      countryCode,
-      formatJson: data.format_json || {
-        fields: ["street", "city", "state", "postal_code", "country"],
-        fieldLabels: {},
-        requiredFields: ["street", "city", "country"],
-      },
-    };
+    return formatted;
   },
 };

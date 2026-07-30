@@ -29,13 +29,15 @@ from __future__ import annotations
 
 import gc
 import io
+import json
 import logging
 import os
 import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional
 
 import numpy as np
 from PIL import Image
@@ -172,6 +174,91 @@ PRESET_ALIASES = {
     "marketing": "marketing_variants",
     "cloth_lite": "lite_variants",
 }
+
+# Visual-regression metrics for auto-strategy selection.
+_METRICS_PATH = Path(__file__).resolve().parent.parent / "provider_test" / "visual_regression" / "metrics.json"
+_STRATEGY_NAME_MAP = {
+    "br_06 Precision Geo": "precision_geometry",
+    "br_08 Production": "birefnet_production",
+    "br_11 Ultimate Gap": "ultimate_gaps",
+    "br_12 Marketing": "marketing_variants",
+    "br_13 Lite Variant": "lite_variants",
+}
+_SSIM_WEIGHT = 0.50
+_PSNR_WEIGHT = 0.25
+_IOU_WEIGHT = 0.25
+_PSNR_MAX_DB = 50.0
+
+
+def _load_category_scores():
+    """Return per-category weighted scores from visual-regression metrics."""
+    scores: Dict[str, Dict[str, float]] = {}
+    try:
+        if not _METRICS_PATH.exists():
+            logger.warning("bg_svc: metrics.json not found at %s", _METRICS_PATH)
+            return scores
+        raw = _METRICS_PATH.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        for entry in data:
+            strategy_label = entry.get("strategy", "")
+            category = entry.get("category", "")
+            internal = _STRATEGY_NAME_MAP.get(strategy_label)
+            if not internal:
+                continue
+            cat_key = category.lower()
+            if "beauty" in cat_key:
+                cat_key = "beauty"
+            elif "electronics" in cat_key:
+                cat_key = "electronics"
+            elif "clothing" in cat_key:
+                cat_key = "clothing"
+            else:
+                continue
+            ssim = max(0.0, min(1.0, entry.get("ssim", 0.0)))
+            psnr = max(0.0, min(1.0, entry.get("psnr_rgb_db", 0.0) / _PSNR_MAX_DB))
+            iou = max(0.0, min(1.0, entry.get("edge_band_iou", 0.0)))
+            score = _SSIM_WEIGHT * ssim + _PSNR_WEIGHT * psnr + _IOU_WEIGHT * iou
+            scores.setdefault(cat_key, {})[internal] = score
+        logger.info("bg_svc: loaded category scores from %s", _METRICS_PATH)
+    except Exception as exc:
+        logger.warning("bg_svc: failed to load metrics.json (%s); using defaults", exc)
+    return scores
+
+
+def _get_category_recommendations() -> Dict[str, Dict[str, object]]:
+    """Return per-category recommendations with scores and raw metrics details."""
+    scores = _load_category_scores()
+    raw_metrics = []
+    try:
+        if _METRICS_PATH.exists():
+            raw_metrics = json.loads(_METRICS_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+    recommendations: Dict[str, Dict[str, object]] = {}
+    for category, cat_scores in scores.items():
+        best_strategy = max(cat_scores, key=cat_scores.get) if cat_scores else "clean_commercial"
+        best_score = cat_scores.get(best_strategy, 0.0)
+        strategy_metrics: Dict[str, object] = {}
+        for entry in raw_metrics:
+            entry_category = entry.get("category", "")
+            entry_strategy = _STRATEGY_NAME_MAP.get(entry.get("strategy", ""), "")
+            if entry_category.lower() == category and entry_strategy == best_strategy:
+                strategy_metrics = {
+                    "ssim": round(entry.get("ssim", 0.0), 4),
+                    "psnr_rgb_db": round(entry.get("psnr_rgb_db", 0.0), 2),
+                    "edge_band_iou": round(entry.get("edge_band_iou", 0.0), 4),
+                    "timing_s": round(entry.get("timing_s", 0.0), 3),
+                    "coverage_pct": round(entry.get("diff_pct_rgb", 0.0), 2),
+                }
+                break
+        recommendations[category] = {
+            "recommended_strategy": best_strategy,
+            "score": round(best_score, 4),
+            "metrics": strategy_metrics,
+            "all_scores": {s: round(sc, 4) for s, sc in cat_scores.items()},
+        }
+    return recommendations
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -458,7 +545,7 @@ def _generate_alpha(model_priority: List[str], data: bytes, orig_size) -> Option
                 alpha = np.array(out_img.split()[-1]).astype(np.float32) / 255.0
                 logger.info("bg_svc: '%s' succeeded", model_name)
                 return alpha
-            except MemoryError as exc:
+            except MemoryError:
                 logger.error("bg_svc: %s OOM; disabling", model_name)
                 _SessionManager.disable(model_name)
             except Exception as exc:
@@ -829,17 +916,126 @@ def _compose_rgba(input_np: np.ndarray, alpha: np.ndarray) -> bytes:
 
 
 # ═════════════════════════════════════════════════════════════════════════
-# Auto strategy selection
+# Category detection for auto-select
+# ═════════════════════════════════════════════════════════════════════════
+#
+# Category detection uses lightweight color/edge heuristics. The actual
+# strategy selection is driven by per-category weighted scores loaded from
+# the visual-regression metrics (SSIM / PSNR / edge-band IoU).
+
+def _detect_category(input_np: np.ndarray) -> str:
+    """Analyze image content to detect product category using lightweight
+    color/edge heuristics. Returns 'clothing', 'electronics', 'beauty', or
+    'unknown'.
+
+    Uses only OpenCV operations (no ML/rembg) so it adds <10ms overhead.
+    """
+    if not _HAS_CV2:
+        return "unknown"
+
+    h, w = input_np.shape[:2]
+    gray = cv2.cvtColor(input_np, cv2.COLOR_RGB2GRAY)
+
+    # ── Color stats ──
+    mean_rgb = input_np.mean(axis=(0, 1))
+    std_rgb = input_np.std(axis=(0, 1)).mean()
+    brightness = float(mean_rgb.mean())
+
+    # Warmth: ratio of pixels where R > B
+    warm_mask = input_np[:, :, 0].astype(float) > input_np[:, :, 2].astype(float)
+    warmth_ratio = float(np.mean(warm_mask))
+
+    # ── Edge density ──
+    edges = cv2.Canny(gray, 30, 100)
+    edge_density = float(np.mean(edges > 0))
+
+    # ── Score each category ──
+    scores = {}
+
+    # Clothing: high color variance + high edge density + moderate warmth
+    clothing_score = std_rgb * 0.4 + edge_density * 200 + warmth_ratio * 30
+    if std_rgb >= 55 and edge_density >= 0.02:
+        clothing_score += 20
+    scores["clothing"] = clothing_score
+
+    # Electronics: low color variance + low-mid brightness + low edge density
+    electronics_score = (100 - std_rgb) * 0.2 + (150 - brightness) * 0.2 + (1 - edge_density) * 50
+    if std_rgb < 55 and brightness < 150:
+        electronics_score += 20
+    scores["electronics"] = electronics_score
+
+    # Beauty: moderate color variance + bright + low-mid edge density
+    beauty_score = std_rgb * 0.2 + brightness * 0.15 + (1 - edge_density) * 30 + warmth_ratio * 20
+    if 80 < brightness < 200 and std_rgb > 30 and edge_density < 0.07:
+        beauty_score += 25
+    scores["beauty"] = beauty_score
+
+    # Debug log
+    logger.debug(
+        "bg_svc: category scores clothing=%.1f electronics=%.1f beauty=%.1f "
+        "(bright=%.0f std=%.0f edge=%.3f warmth=%.2f)",
+        scores["clothing"], scores["electronics"], scores["beauty"],
+        brightness, std_rgb, edge_density, warmth_ratio,
+    )
+
+    best = max(scores, key=scores.get)
+    sorted_scores = sorted(scores.values(), reverse=True)
+    if len(sorted_scores) >= 2 and sorted_scores[0] - sorted_scores[1] < 5:
+        return "unknown"
+
+    return best
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# Auto strategy selection (metrics-driven)
 # ═════════════════════════════════════════════════════════════════════════
 
 def _select_auto(input_np: np.ndarray) -> str:
+    """Auto-select the best bg removal strategy using per-category weighted
+    scores from the visual-regression metrics (SSIM, PSNR, edge-band IoU).
+
+    Falls back to the legacy category->strategy map when the metrics file is
+    unavailable or the detected category has no coverage data.
+    """
     if _low_on_ram():
         return "lite_variants"
-    gray = cv2.cvtColor(input_np, cv2.COLOR_RGB2GRAY) if _HAS_CV2 else input_np.mean(axis=2)
-    texture = float(np.var(gray)) if not _HAS_CV2 else float(np.var(cv2.Laplacian(gray, cv2.CV_64F)))
-    if texture > 150:
-        return "ultimate_gaps"   # wood / textured background
-    return "clean_commercial"
+
+    if not _HAS_CV2:
+        return "ultimate_gaps"
+
+    category = _detect_category(input_np)
+    scores = _load_category_scores()
+
+    # 1. Try exact category match from metrics
+    cat_scores = scores.get(category, {})
+    if cat_scores:
+        best = max(cat_scores, key=cat_scores.get)
+        logger.info(
+            "bg_svc: auto-selected '%s' for category '%s' (scores: %s)",
+            best, category, cat_scores,
+        )
+        return best
+
+    # 2. Fallback: best all-around strategy across all known categories
+    all_scores: Dict[str, float] = {}
+    for cat_data in scores.values():
+        for strat, sc in cat_data.items():
+            all_scores[strat] = all_scores.get(strat, 0.0) + sc
+    if all_scores:
+        best = max(all_scores, key=all_scores.get)
+        logger.info(
+            "bg_svc: auto-selected '%s' as all-around fallback (scores: %s)",
+            best, all_scores,
+        )
+        return best
+
+    # 3. Last resort: legacy mapping
+    legacy = {
+        "clothing": "clean_commercial",
+        "electronics": "precision_geometry",
+        "beauty": "precision_geometry",
+    }
+    return legacy.get(category, "ultimate_gaps")
 
 
 # ═════════════════════════════════════════════════════════════════════════

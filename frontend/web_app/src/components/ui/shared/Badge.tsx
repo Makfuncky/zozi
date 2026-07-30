@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export type BadgeVariant = 
@@ -45,9 +46,10 @@ export function Badge({ variant = "default", className, children, icon }: BadgeP
 export interface StatusBadgeProps {
   status: string;
   className?: string;
+  children?: React.ReactNode;
 }
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+export function StatusBadge({ status, className, children }: StatusBadgeProps) {
   const getStatusVariant = (status: string): BadgeVariant => {
     const statusLower = status.toLowerCase();
     if (statusLower === "active" || statusLower === "enabled" || statusLower === "completed") {
@@ -67,7 +69,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 
   return (
     <Badge variant={getStatusVariant(status)} className={cn("font-semibold backdrop-blur", className)}>
-      {status}
+      {children ?? status}
     </Badge>
   );
 }

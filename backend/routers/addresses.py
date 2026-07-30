@@ -58,11 +58,13 @@ def _get_user_address(address_id: int, user_id: int, db: Session) -> Address:
 
 
 @router.get("")
-def list_addresses(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_addresses(limit: int = 100, offset: int = 0, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     rows = (
         db.query(Address)
         .filter(Address.user_id == int(current_user["id"]))
         .order_by(Address.is_default.desc(), Address.created_at.asc())
+        .offset(max(0, offset))
+        .limit(min(max(1, limit), 100))
         .all()
     )
     return [_serialize_address(row) for row in rows]

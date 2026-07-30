@@ -1,4 +1,5 @@
 import logging
+import secrets
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
@@ -10,8 +11,16 @@ from models.communication import (
     InternalChannelMember,
     InternalMessage,
 )
+from models.employee_models import EmailFolder, InternalEmail
 
 logger = logging.getLogger("zozi.internal_comm")
+
+
+@dataclass
+class ChannelMember:
+    user_id: int
+    role: str = "member"
+    joined_at: datetime = field(default_factory=datetime.utcnow)
 
 
 class InternalCommunicationService:
@@ -26,32 +35,41 @@ class InternalCommunicationService:
         created_by: Optional[int] = None,
         country_code: Optional[str] = None,
         allowed_roles: Optional[List[str]] = None,
+        entity_type: Optional[str] = None,
+        entity_id: Optional[int] = None,
     ) -> dict:
+        channel_id = secrets.token_urlsafe(16)
         channel = InternalChannel(
+            channel_id=channel_id,
             name=name,
             description=description,
+            entity_type=entity_type or "global",
+            entity_id=entity_id or 0,
             is_public=is_public,
-            created_by=created_by or 0,
+            created_by=created_by,
             country_code=country_code,
             allowed_roles=allowed_roles or [],
         )
         self.db.add(channel)
+        self.db.flush()
+
+        if created_by:
+            member = InternalChannelMember(
+                channel_id=channel.id,
+                user_id=created_by,
+                role="admin",
+            )
+            self.db.add(member)
         self.db.commit()
         self.db.refresh(channel)
-
-        member = InternalChannelMember(
-            channel_id=channel.id,
-            user_id=created_by or 0,
-            role="admin",
-        )
-        self.db.add(member)
-        self.db.commit()
 
         return {
             "id": channel.id,
             "channel_id": channel.channel_id,
             "name": channel.name,
             "description": channel.description,
+            "entity_type": channel.entity_type,
+            "entity_id": channel.entity_id,
             "is_public": channel.is_public,
             "created_by": channel.created_by,
             "country_code": channel.country_code,
@@ -83,10 +101,17 @@ class InternalCommunicationService:
     def list_channels(
         self, user_id: int, country_code: Optional[str] = None
     ) -> List[dict]:
-        channels = self.db.query(InternalChannel).all()
+        channels = (
+            self.db.query(InternalChannel)
+            .filter(InternalChannel.is_active == True)
+            .order_by(InternalChannel.created_at.desc())
+            .all()
+        )
         result = []
 
         for channel in channels:
+            if country_code and channel.country_code and channel.country_code != country_code:
+                continue
             member = (
                 self.db.query(InternalChannelMember)
                 .filter(
@@ -181,7 +206,7 @@ class InternalCommunicationService:
         sender_id: int,
         content: str,
         message_type: str = "text",
-        is_encrypted: bool = False,
+        is_masked: bool = True,
     ) -> dict:
         channel = (
             self.db.query(InternalChannel)
@@ -204,10 +229,10 @@ class InternalCommunicationService:
 
         message = InternalMessage(
             channel_id=channel.id,
-            sender_id=sender_id,
+            user_id=sender_id,
             message=content,
             message_type=message_type,
-            is_encrypted=is_encrypted,
+            is_masked=is_masked,
         )
         self.db.add(message)
         self.db.commit()
@@ -219,7 +244,7 @@ class InternalCommunicationService:
             "sender_id": sender_id,
             "content": content,
             "message_type": message_type,
-            "is_encrypted": is_encrypted,
+            "is_masked": is_masked,
             "created_at": message.created_at.isoformat(),
         }
 
@@ -246,10 +271,10 @@ class InternalCommunicationService:
         return [
             {
                 "id": m.id,
-                "sender_id": m.sender_id,
+                "sender_id": m.user_id,
                 "content": m.message,
                 "message_type": m.message_type,
-                "is_encrypted": m.is_encrypted,
+                "is_masked": m.is_masked,
                 "created_at": m.created_at.isoformat(),
             }
             for m in reversed(messages)

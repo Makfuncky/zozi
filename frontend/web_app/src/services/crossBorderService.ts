@@ -29,7 +29,7 @@ export const crossBorderService = {
    * Get customer's cross-border shopping history
    */
   getCustomerSession: async (customerId: number): Promise<CrossBorderSession | null> => {
-    const response = await apiFetch(`/api/v1/cross-border/session/${customerId}`);
+    const response = await apiFetch(`/cross-border/session/${customerId}`);
     if (!response.ok) return null;
     return parseJsonResponse(response);
   },
@@ -43,7 +43,7 @@ export const crossBorderService = {
     amount: number
   ): Promise<CurrencyConversion | null> => {
     const response = await apiFetch(
-      `/api/v1/cross-border/convert?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`
+      `/cross-border/convert?from=${fromCurrency}&to=${toCurrency}&amount=${amount}`
     );
     if (!response.ok) return null;
     return parseJsonResponse(response);
@@ -59,8 +59,8 @@ export const crossBorderService = {
   ): Promise<{ taxAmount: number; taxRate: number; taxName: string } | null> => {
     const params = new URLSearchParams({ country_code: countryCode, amount: String(amount) });
     if (categoryId) params.append("category_id", String(categoryId));
-    
-    const response = await apiFetch(`/api/v1/tax/calculate?${params.toString()}`);
+
+    const response = await apiFetch(`/cross-border/tax/calculate?${params.toString()}`);
     if (!response.ok) return null;
     return parseJsonResponse(response);
   },

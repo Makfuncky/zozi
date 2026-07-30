@@ -63,4 +63,36 @@ class NotificationService:
             },
             priority=priority
         )
+    
+    def send_fulfillment_issues_notification(
+        self,
+        user_id: int,
+        order_id: int,
+        payment_id: int,
+        issues: list[str]
+    ) -> dict:
+        """Send notification about fulfillment issues."""
+        return self.send_notification(
+            user_id=user_id,
+            title="Order Fulfillment Issue",
+            message=f"Order #{order_id} has fulfillment issues: {'; '.join(issues)}",
+            type="fulfillment_issue",
+            priority="high"
+        )
+    
+    def send_fulfillment_success_notification(
+        self,
+        user_id: int,
+        order_id: int,
+        payment_id: int,
+        amount: float
+    ) -> dict:
+        """Send notification about successful fulfillment."""
+        return self.send_notification(
+            user_id=user_id,
+            title="Order Confirmed",
+            message=f"Your order #{order_id} for ${amount} has been confirmed and is being processed.",
+            type="fulfillment_success",
+            priority="medium"
+        )
 

@@ -189,7 +189,7 @@ export default function LogisticsPartnersDiscoveryPage() {
                   href={`/logistics-partners/${partner.id}`}
                   className="group overflow-hidden rounded-3xl border border-border bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5"
                 >
-                  <div className="relative h-28 overflow-hidden bg-linear-to-r from-primary/10 via-accent/10 to-brand/10">
+                  <div className="relative h-28 overflow-hidden bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.20),_transparent_45%)]" />
                     <img src={logo} alt={partner.name} className="absolute bottom-4 left-4 h-16 w-16 rounded-2xl border border-white/60 bg-white object-cover shadow-lg" />
                   </div>

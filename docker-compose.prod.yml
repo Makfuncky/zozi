@@ -1,68 +1,34 @@
 services:
-  # PostgreSQL Database
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - zozimarketplace
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-
-  # PgBouncer — connection pooling between app and Postgres
   pgbouncer:
-    image: bitnami/pgbouncer:latest
+    image: edoburu/pgbouncer:latest
     environment:
-      POSTGRESQL_HOST: db
-      POSTGRESQL_PORT: "5432"
-      POSTGRESQL_USERNAME: ${POSTGRES_USER}
-      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRESQL_DATABASE: ${POSTGRES_DB}
-      PGBOUNCER_POOL_MODE: transaction
-      PGBOUNCER_MAX_CLIENT_CONN: "200"
-      PGBOUNCER_DEFAULT_POOL_SIZE: "25"
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - MAX_CLIENT_CONN=200
+      - DEFAULT_POOL_SIZE=20
+      - POOL_MODE=transaction
+      - SERVER_RESET_QUERY=DISCARD ALL
+      - AUTH_TYPE=scram-sha-256
     ports:
-      - "6432:6432"
-    depends_on:
-      - db
+      - "6432:5432"
     networks:
-      - zozimarketplace
+      - zozi_net
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    networks:
-      - zozimarketplace
-
-  # Backend API — lean workers (no ML models loaded)
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
     environment:
       - APP_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
-      - DB_USE_PGBOUNCER=true
-      - DB_POOL_SIZE=5
-      - DB_MAX_OVERFLOW=10
-      - DB_POOL_RECYCLE=1800
       - REDIS_URL=redis://redis:6379
       - SECRET_KEY=${SECRET_KEY}
-      - FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - TAP_SECRET_KEY=${TAP_SECRET_KEY}
-      - TAP_WEBHOOK_SECRET=${TAP_WEBHOOK_SECRET}
-      - CORS_ORIGINS=${CORS_ORIGINS}
-      - SENTRY_DSN=${SENTRY_DSN}
-      - HSTS_ENABLED=true
-      - COOKIE_SECURE=true
       - STORAGE_BACKEND=s3
       - S3_BUCKET=${S3_BUCKET}
       - S3_REGION=${S3_REGION}
@@ -70,92 +36,77 @@ services:
       - S3_CDN_BASE=${S3_CDN_BASE}
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
       - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
-      - S3_CLOUDFRONT_DISTRIBUTION_ID=${S3_CLOUDFRONT_DISTRIBUTION_ID:-}
-      - BACKUP_ENABLED=true
-      - EMAIL_SCHEDULER_ENABLED=true
-    depends_on:
-      - pgbouncer
-      - redis
+      - DB_POOL_SIZE=10
+      - DB_MAX_OVERFLOW=10
+      - DB_POOL_RECYCLE=600
+      - DB_CONNECT_TIMEOUT=5
+      - BACKGROUND_JOBS_ENABLED=1
+      - ML_WORKERS=2
+      - SENTRY_DSN=${SENTRY_DSN}
     deploy:
-      replicas: 2
+      replicas: 3
       resources:
         limits:
-          memory: 1G
+          cpus: "2"
+          memory: "2G"
         reservations:
-          memory: 512M
+          cpus: "1"
+          memory: "1G"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+    depends_on:
+      pgbouncer:
+        condition: service_started
     networks:
-      - zozimarketplace
+      - zozi_net
+    restart: unless-stopped
 
-  # Heavy-task worker — runs ML inference, bulk CSV import in a separate process
-  worker:
+  ml_worker:
     build:
       context: ./backend
-      dockerfile: Dockerfile.worker
+      dockerfile: Dockerfile.prod
+    command: python -m utils.ml_worker
     environment:
       - APP_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
-      - DB_USE_PGBOUNCER=true
       - REDIS_URL=redis://redis:6379
-      - SECRET_KEY=${SECRET_KEY}
       - STORAGE_BACKEND=s3
       - S3_BUCKET=${S3_BUCKET}
-      - S3_REGION=${S3_REGION}
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
-      - S3_CDN_BASE=${S3_CDN_BASE}
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
       - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
-      - S3_CLOUDFRONT_DISTRIBUTION_ID=${S3_CLOUDFRONT_DISTRIBUTION_ID:-}
-    depends_on:
-      - pgbouncer
-      - redis
+      - BG_MAX_CONCURRENT=2
+      - BG_MAX_SESSION_CACHE=2
     deploy:
       replicas: 1
       resources:
         limits:
-          memory: 4G
+          cpus: "4"
+          memory: "4G"
         reservations:
-          memory: 2G
+          cpus: "2"
+          memory: "2G"
     networks:
-      - zozimarketplace
+      - zozi_net
+    restart: unless-stopped
 
-  # Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: web_app/Dockerfile
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-    depends_on:
-      - backend
-    networks:
-      - zozimarketplace
-
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
+  redis:
+    image: redis:7-alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:6379:6379"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - frontend
-      - backend
+      - redis_data:/data
     networks:
-      - zozimarketplace
+      - zozi_net
+    restart: unless-stopped
+
+networks:
+  zozi_net:
+    driver: bridge
 
 volumes:
   postgres_data:
   redis_data:
-
-networks:
-  zozimarketplace:
-    driver: bridge

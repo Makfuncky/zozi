@@ -551,7 +551,7 @@ class BulkSupplierLifecycleBody(BaseModel):
             raise ValueError(f"Cannot process more than {MAX_BULK_ITEMS} items at once")
         return v
 
-@router.post("/suppliers/bulk")
+@router.post("/suppliers/v1/bulk")
 def bulk_manage_supplier_lifecycle(
     body: BulkSupplierLifecycleBody,
     db: Session = Depends(get_db),
@@ -583,9 +583,25 @@ def analytics(
     return get_analytics(db)
 
 
+@router.get("/{country_code}/dashboard")
+def admin_country_dashboard(
+    country_code: str,
+    db: Session = Depends(get_db),
+    current_admin: dict = Depends(get_current_admin),
+):
+    """Country-scoped admin dashboard stats.
+
+    Returns summary numbers for the given country (or global if country is
+    unknown) so the admin UI can render the top-row stat cards.
+    """
+    require_permission("analytics.view", current_admin)
+    from utils.analytics_service import get_country_dashboard_stats
+    return get_country_dashboard_stats(db, country_code=country_code.upper())
+
+
 # ── Supplier Comparison ────────────────────────────────────────────────────────
 
-@router.get("/suppliers/comparison", response_model=ListPage[dict])
+@router.get("/suppliers/v1/comparison", response_model=ListPage[dict])
 def supplier_comparison(
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=500),
@@ -1287,11 +1303,13 @@ def get_user_approval_chain(
 
 @router.get("/payouts/pending")
 def get_pending_payouts_route(
+    limit: int = 200,
+    offset: int = 0,
     db: Session = Depends(get_db),
     current_admin: dict = Depends(get_current_admin),
 ):
     require_permission("payouts.verify", current_admin)
-    return list_pending_payouts(db)
+    return list_pending_payouts(db, limit=limit, offset=offset)
 
 @router.post("/payouts/{payout_id}/verify")
 def verify_payout_route(
@@ -1436,7 +1454,7 @@ def admin_logistics_overview(
 
 # ── Admin Supplier Documents ────────────────────────────────────────────────────
 
-@router.get("/suppliers/documents", response_model=ListPage[dict])
+@router.get("/suppliers/v1/documents", response_model=ListPage[dict])
 def admin_supplier_documents(
     supplier_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
@@ -1459,7 +1477,7 @@ def admin_supplier_documents(
         offset=(page - 1) * page_size,
     )
 
-@router.put("/suppliers/documents/{doc_id}/review")
+@router.put("/suppliers/v1/documents/{doc_id}/review")
 def admin_review_document(
     doc_id: int,
     data: dict,
@@ -1567,7 +1585,7 @@ def analytics_chatbot(
 
 # -- All Suppliers --------------------------------------------------------------
 
-@router.get("/suppliers/all")
+@router.get("/suppliers/v1/all")
 def list_all_suppliers(
     page: int = Query(1, ge=1),
     page_size: Optional[int] = Query(None, ge=1, le=200),
@@ -1883,11 +1901,13 @@ def admin_rotate_encryption_key(
 @router.get("/bank-accounts/pending")
 def admin_list_pending_bank_accounts(
     kind: str = Query(..., description="supplier or logistics_partner"),
+    limit: int = 200,
+    offset: int = 0,
     current_admin: dict = Depends(get_current_admin),
     db: Session = Depends(get_db),
 ):
     """List pending bank accounts for admin verification."""
-    return list_pending_bank_accounts(kind, db, current_admin)
+    return list_pending_bank_accounts(kind, db, current_admin, limit=limit, offset=offset)
 
 @router.post("/bank-accounts/{account_id}/approve")
 def admin_approve_bank_account(
@@ -1983,5 +2003,92 @@ def get_country_audit_trail(
         record_id=record_id,
         limit=limit
     )
+
+
+# ── Data Reset (Demo / Dev) ────────────────────────────────────────────────────
+
+@router.get("/reset", status_code=200)
+def admin_reset_demo_data(
+    db: Session = Depends(get_db),
+    current_admin: dict = Depends(get_current_admin),
+):
+    """
+    Clear all non-essential seed data — orders, products, reviews, communication
+    data, coupons, and non-admin users — so the demo environment can be reset
+    from the UI without SSH or terminal access.
+
+    Admin user accounts (role=admin) are preserved.
+    """
+    require_admin(current_admin)
+
+    app_env = getattr(settings, "APP_ENV", None)
+    if not app_env or app_env not in ("development", "dev", "test"):
+        raise HTTPException(
+            status_code=400,
+            detail="Reset is only available in development/test environments",
+        )
+
+    from datetime import datetime, timezone
+    from sqlalchemy import text
+
+    # Tables ordered with children first to respect FK constraints
+    tables_to_clear = [
+        "entity_chat_messages",
+        "entity_chat_threads",
+        "group_chat_messages",
+        "group_chat_members",
+        "group_chat_rooms",
+        "direct_chat_messages",
+        "direct_chat_rooms",
+        "internal_emails",
+        "email_folders",
+        "order_items",
+        "orders",
+        "reviews",
+        "order_logistics_allocations",
+        "shipments",
+        "wishlist_items",
+        "cart_items",
+        "coupon_usages",
+        "coupons",
+        "promotion_ledger_entries",
+        "promotion_order_tiers",
+        "product_variants",
+        "products",
+        "categories",
+        "audit_logs",
+        "notifications",
+    ]
+    deleted_counts: dict[str, int] = {}
+    for table in tables_to_clear:
+        try:
+            result = db.execute(text(f"DELETE FROM {table}"))
+            deleted_counts[table] = result.rowcount or 0
+        except Exception:
+            # Table may not exist in this schema version
+            deleted_counts[table] = -1
+
+    # Delete all non-admin users (preserve admin accounts)
+    non_admin_count = db.execute(
+        text("DELETE FROM users WHERE role != 'admin'")
+    ).rowcount or 0
+    deleted_counts["users_(non_admin)"] = non_admin_count
+
+    # Reset auto-increment sequences where possible
+    try:
+        db.execute(text("DELETE FROM sqlite_sequence"))
+    except Exception:
+        pass
+
+    db.commit()
+
+    total = sum(v for v in deleted_counts.values() if v >= 0)
+    return {
+        "detail": "Demo data reset complete",
+        "tables_cleared": len(tables_to_clear) + 1,
+        "total_rows_deleted": total,
+        "counts": deleted_counts,
+        "note": "Admin accounts preserved. Run seed_all.py to re-seed.",
+    }
 
 

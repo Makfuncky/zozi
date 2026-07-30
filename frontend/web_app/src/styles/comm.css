@@ -1,0 +1,292 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   comm.css — Structural & motion CSS for the Communication workspace
+   No hardcoded colors — theming comes from token classes on the elements.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --comm-rail-w: 264px;
+  --comm-rail-w-collapsed: 64px;
+  --comm-ctx-w: 336px;
+  --comm-bar-h: 56px;
+  --comm-dock-h: 36px;
+}
+
+/* ── Font display utility ───────────────────────────────────────────────── */
+
+.font-display {
+  font-family: var(--font-display, ui-sans-serif);
+  letter-spacing: -0.01em;
+}
+
+/* ── Five-zone grid ────────────────────────────────────────────────────── */
+
+.comm-shell {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: var(--comm-rail-w) minmax(0, 1fr) var(--comm-ctx-w);
+  grid-template-rows: var(--comm-bar-h) 1fr var(--comm-dock-h);
+  grid-template-areas:
+    "bar   bar   bar"
+    "rail  stage ctx"
+    "dock  dock  dock";
+  height: calc(100dvh - var(--app-chrome, 0px));
+  transition: grid-template-columns 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.comm-shell[data-rail="collapsed"] {
+  grid-template-columns: var(--comm-rail-w-collapsed) minmax(0, 1fr) var(--comm-ctx-w);
+}
+.comm-shell[data-ctx="closed"] {
+  grid-template-columns: var(--comm-rail-w) minmax(0, 1fr) 0px;
+}
+.comm-shell[data-rail="collapsed"][data-ctx="closed"] {
+  grid-template-columns: var(--comm-rail-w-collapsed) minmax(0, 1fr) 0px;
+}
+
+.comm-bar    { grid-area: bar; z-index: 10; }
+.comm-rail   { grid-area: rail; overflow-y: auto; overflow-x: hidden; z-index: 5; }
+.comm-stage  { grid-area: stage; display: flex; flex-direction: column; min-width: 0; z-index: 1; }
+.comm-context { grid-area: ctx; overflow-y: auto; z-index: 5; }
+.comm-dock   { grid-area: dock; z-index: 10; }
+
+/* ── Ambient whisper layer ──────────────────────────────────────────────── */
+
+.comm-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background:
+    radial-gradient(40% 50% at 80% -10%, color-mix(in srgb, currentColor 6%, transparent), transparent 70%),
+    radial-gradient(currentColor 0.6px, transparent 0.6px) 0 0 / 22px 22px;
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 60%);
+  mask-image: linear-gradient(180deg, #000, transparent 60%);
+  animation: comm-drift 24s ease-in-out infinite alternate;
+}
+@keyframes comm-drift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, 40px 30px; }
+}
+
+/* ── Rail rows ──────────────────────────────────────────────────────────── */
+
+.comm-row {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+.comm-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 3px;
+  background: currentColor;
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.comm-row[data-active="true"]::before { transform: scaleY(1); }
+.comm-row:hover { background: var(--surface-2, rgba(128,128,128,0.06)); }
+.comm-row .quick {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.comm-row:hover .quick,
+.comm-row:focus-within .quick { opacity: 1; }
+
+/* ── Unread badge pop ──────────────────────────────────────────────────── */
+
+.comm-unread-badge {
+  animation: comm-pop 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes comm-pop {
+  0%   { transform: scale(0.6); }
+  100% { transform: scale(1); }
+}
+
+/* ── Rail row hover lift ────────────────────────────────────────────────── */
+
+.comm-row {
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.12s ease;
+}
+.comm-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.comm-row[data-active="true"]:hover {
+  transform: none;
+}
+
+/* ── Density-based row spacing ──────────────────────────────────────────── */
+
+.comm-density-compact .comm-row { padding-top: 6px; padding-bottom: 6px; }
+.comm-density-compact .comm-row .text-[13px] { font-size: 12px; }
+.comm-density-normal .comm-row { padding-top: 8px; padding-bottom: 8px; }
+.comm-density-expanded .comm-row { padding-top: 12px; padding-bottom: 12px; }
+.comm-density-expanded .comm-row .text-[13px] { font-size: 14px; }
+
+/* ── Rail icon strip ────────────────────────────────────────────────────── */
+
+.comm-icon-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0;
+}
+.comm-icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.comm-icon-item:hover { background: var(--surface-2, rgba(128,128,128,0.08)); }
+.comm-icon-item[data-active="true"] {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: var(--primary, #6AE022);
+}
+
+/* ── Composer dock ──────────────────────────────────────────────────────── */
+
+.composer-box {
+  transition: min-height 0.2s ease, box-shadow 0.2s ease;
+  min-height: 48px;
+}
+.composer-box:focus-within {
+  min-height: 96px;
+}
+.composer-box[data-dragover="true"] {
+  outline: 2px dashed currentColor;
+  outline-offset: -6px;
+}
+
+/* ── Presence pulse ─────────────────────────────────────────────────────── */
+
+.dot-online { position: relative; }
+.dot-online::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  opacity: 0.6;
+  animation: comm-pulse 2s ease-out infinite;
+}
+@keyframes comm-pulse {
+  0%   { transform: scale(0.6); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* ── Message enter animation ───────────────────────────────────────────── */
+
+.msg-enter {
+  animation: comm-rise 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes comm-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Stage morph (cross-fade) ──────────────────────────────────────────── */
+
+.stage-fade {
+  animation: comm-fade 0.18s ease-out both;
+}
+@keyframes comm-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Typing dots ────────────────────────────────────────────────────────── */
+
+.typing-dots { display: inline-flex; gap: 3px; align-items: center; }
+.typing-dots span {
+  width: 5px; height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: comm-bounce 1.2s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.12s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.24s; }
+@keyframes comm-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Send lifecycle ticks ───────────────────────────────────────────────── */
+
+.tick-clock { opacity: 0.5; }
+.tick-sent  { opacity: 0.7; }
+.tick-read  { opacity: 1; }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .comm-shell {
+    grid-template-columns: var(--comm-rail-w-collapsed) minmax(0, 1fr) 0px;
+  }
+  .comm-context {
+    position: fixed;
+    right: 0;
+    top: var(--comm-bar-h);
+    bottom: var(--comm-dock-h);
+    width: min(360px, 86vw);
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    z-index: 40;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  }
+  .comm-shell[data-ctx="open"] .comm-context { transform: none; }
+}
+
+@media (max-width: 640px) {
+  .comm-shell {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "bar"
+      "stage"
+      "dock";
+  }
+  .comm-rail {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 70vh;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 45;
+    border-top-left-radius: 18px;
+    border-top-right-radius: 18px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  }
+  .comm-shell[data-rail="sheet"] .comm-rail { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comm-ambient,
+  .dot-online::after,
+  .msg-enter,
+  .stage-fade,
+  .typing-dots span {
+    animation: none !important;
+  }
+  .comm-shell,
+  .comm-context,
+  .comm-rail,
+  .composer-box {
+    transition: none !important;
+  }
+}

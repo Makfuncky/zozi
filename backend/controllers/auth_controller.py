@@ -26,6 +26,7 @@ from models import (
     User,
     UserDevice,
     UserBrowsingHistory,
+    UserLoginHistory,
     PasswordResetToken,
     EmailVerificationToken,
     SupplierProfile,
@@ -42,7 +43,7 @@ from db.schemas import (
     ReferralShareRequest,
 )
 from db.database import get_db
-from controllers.cache_utils import cache_get_json, cache_set_json
+from utils.cache import cache_get_json, cache_set_json, cache_delete
 from utils.auth import (
     verify_password,
     get_password_hash,
@@ -525,6 +526,7 @@ def _issue_auth_tokens(response: Response, user: User, request: Request | None =
             details={"role": _user_role(user), "method": method},
         )
         _record_device_fingerprint(request, _user_id(user), cast(Session, request.state.db))
+        _record_login_history(cast(Session, request.state.db), user, request=request, method=method)
 
     return {
         "access_token": access_token,
@@ -550,15 +552,34 @@ def _log_login_success(db: Session, user: User, request: Request | None = None, 
 
 
 def _persist_last_login(db: Session, user: User) -> None:
-    from sqlalchemy import text
     try:
-        db.execute(
-            text("UPDATE users SET last_login = :now WHERE id = :uid"),
-            {"now": datetime.now(timezone.utc).replace(tzinfo=None), "uid": user.id},
-        )
+        user.last_login = datetime.now(timezone.utc)
         db.commit()
     except Exception as exc:
         logger.warning("Failed to update last_login for %s: %s", _user_username(user), exc)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
+def _record_login_history(db: Session, user: User, request: Request | None = None, method: str = "password") -> None:
+    """Write a UserLoginHistory record for a successful login."""
+    try:
+        ip = get_request_ip(request) if request else None
+        ua = (request.headers.get("user-agent") or "")[:500] if request else None
+        history = UserLoginHistory(
+            user_id=user.id,
+            ip_address=ip or "unknown",
+            user_agent=ua,
+            timestamp=datetime.now(timezone.utc),
+            success=True,
+            country_code=user.country_code,
+        )
+        db.add(history)
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to record login history for %s: %s", _user_username(user), exc)
         try:
             db.rollback()
         except Exception:
@@ -582,6 +603,7 @@ def _create_tokens_response(response: Response, user: User, db: Session, request
     _persist_last_login(db, user)
     _log_login_success(db, user, request=request, method=method)
     _record_device_fingerprint(request, _user_id(user), db)
+    _record_login_history(db, user, request=request, method=method)
 
     return {
         "access_token": access_token,
@@ -1616,6 +1638,7 @@ def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User
 
     db.commit()
     db.refresh(user)
+    cache_delete(f"auth:user:{_user_id(user)}")
     audit_log(
         db=db,
         action=AuditAction.PROFILE_UPDATED,
@@ -1631,25 +1654,24 @@ def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User
 
 async def upload_avatar(file: UploadFile, current_user: dict, db: Session) -> dict:
     from utils.file_validation import validate_upload_image
+    from services.storage import storage as _storage
 
     contents = await file.read()
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     if len(contents) > max_bytes:
         raise HTTPException(status_code=413, detail=f"File exceeds {settings.max_upload_size_mb} MB limit.")
 
-    # Validates extension AND magic bytes — rejects disguised non-image files
     ext = validate_upload_image(contents, file.filename or "avatar")
 
     filename = f"avatar_{current_user['id']}{ext}"
-    os.makedirs(settings.upload_dir, exist_ok=True)
-    filepath = os.path.join(settings.upload_dir, filename)
-    with open(filepath, "wb") as f:
-        f.write(contents)
+    key = f"avatars/{filename}"
+    mime_type = file.content_type or "image/jpeg"
+    url = _storage.save(key, contents, content_type=mime_type)
 
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    setattr(user, "profile_image", f"/uploads/{filename}")
+    setattr(user, "profile_image", url)
     db.commit()
     return {"profile_image": _user_profile_image(user)}
 

@@ -31,6 +31,20 @@ export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const [config, setConfig] = useState<{ vat_rate: number; shipping_flat_rate: number; free_shipping_threshold: number } | null>(null);
 
+  // ── Shipping quote state ────────────────────────────────────────────────────
+  const [showShippingForm, setShowShippingForm] = useState(false);
+  const [shipCountry, setShipCountry] = useState("");
+  const [shipCity, setShipCity] = useState("");
+  const [shipQuote, setShipQuote] = useState<{
+    shipping_amount: number;
+    currency: string;
+    partner_name?: string | null;
+    estimated_delivery_min?: number | null;
+    estimated_delivery_max?: number | null;
+    source?: string;
+  } | null>(null);
+  const [shipLoading, setShipLoading] = useState(false);
+
   const locale = useLocaleStore((s) => s.locale);
   const isRtl = isRtlLocale(locale);
   const formatPrice = useCurrencyStore((s) => s.format);
@@ -50,6 +64,40 @@ export default function CartPage() {
   const shippingAmount = freeShippingThreshold > 0 && subtotal >= freeShippingThreshold ? 0 : shippingFlat;
   const vatAmount = useMemo(() => Number((subtotal * vatRate).toFixed(2)), [subtotal, vatRate]);
   const total = useMemo(() => Number((subtotal + vatAmount + shippingAmount).toFixed(2)), [subtotal, vatAmount, shippingAmount]);
+
+  const handleCalculateShipping = async () => {
+    if (!shipCountry.trim() || items.length === 0) return;
+    setShipLoading(true);
+    setShipQuote(null);
+    try {
+      const res = await apiFetch("/cart/shipping-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          country: shipCountry.trim().toUpperCase(),
+          city: shipCity.trim(),
+          subtotal,
+          items: items.map((i) => ({
+            product_id: Number(i.id),
+            quantity: i.quantity,
+            selected_size: i.selected_size || "",
+            selected_color: i.selected_color || "",
+          })),
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setShipQuote(data);
+      } else {
+        const err = await res.json().catch(() => ({ detail: "Could not get shipping quote" }));
+        addToast(err.detail || "Could not get shipping quote", "error");
+      }
+    } catch {
+      addToast("Network error getting shipping quote", "error");
+    } finally {
+      setShipLoading(false);
+    }
+  };
 
   const handleCheckout = () => {
     if (items.length === 0) { addToast("Your cart is empty", "error"); return; }
@@ -120,16 +168,103 @@ export default function CartPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-text-faint">{getItemCount()} items</span><span>{formatPrice(subtotal)}</span></div>
                 <div className="flex justify-between"><span className="text-text-faint">VAT ({(vatRate * 100).toFixed(0)}%)</span><span>{formatPrice(vatAmount)}</span></div>
-                <div className="flex justify-between">
-                  <span className="text-text-faint flex items-center gap-1"><Truck className="w-3.5 h-3.5" /> Estimated Delivery</span>
+
+                {/* Flat-rate shipping (always shown) */}
+                <div className="flex justify-between items-center">
+                  <span className="text-text-faint flex items-center gap-1">
+                    <Truck className="w-3.5 h-3.5" /> Delivery
+                  </span>
                   <span>{shippingAmount === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(shippingAmount)}</span>
                 </div>
-                {freeShippingThreshold > 0 && (
+
+                {/* Live quote result — shown as preview when calculated */}
+                {shipQuote && (
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-2.5 space-y-1 mt-1">
+                    <p className="text-[10px] font-semibold text-primary flex items-center gap-1">
+                      <Truck className="w-3 h-3" /> Live Quote Preview
+                    </p>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-text-faint">Shipping cost</span>
+                      <span className="font-semibold text-text">
+                        {shipQuote.shipping_amount === 0 ? <span className="text-success font-semibold">Free</span> : formatPrice(shipQuote.shipping_amount)}
+                      </span>
+                    </div>
+                    {shipQuote.partner_name && (
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-text-faint">Provider</span>
+                        <span className="font-medium text-text">{shipQuote.partner_name}</span>
+                      </div>
+                    )}
+                    {(shipQuote.estimated_delivery_min || shipQuote.estimated_delivery_max) && (
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-text-faint">Est. Arrival</span>
+                        <span className="font-medium text-text">
+                          {shipQuote.estimated_delivery_min ?? "?"}–{shipQuote.estimated_delivery_max ?? "?"} days
+                        </span>
+                      </div>
+                    )}
+                    <p className="text-[9px] text-text-faint pt-0.5">Final cost calculated at checkout.</p>
+                  </div>
+                )}
+
+                {freeShippingThreshold > 0 && !shipQuote && (
                   <p className="text-[10px] text-text-faint">Free shipping on orders over {formatPrice(freeShippingThreshold)}</p>
                 )}
+
                 <div className="border-t border-border pt-2 mt-2">
                   <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
                 </div>
+              </div>
+
+              {/* Collapsible shipping calculator */}
+              <div className="mt-3 border-t border-border pt-3">
+                <button
+                  onClick={() => setShowShippingForm(!showShippingForm)}
+                  className="flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-text transition-colors"
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  {showShippingForm ? "Hide" : "Calculate Shipping"}
+                </button>
+
+                {showShippingForm && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    className="mt-3 space-y-2"
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="mb-1 block text-[10px] font-semibold text-text-faint">Country</label>
+                        <input
+                          value={shipCountry}
+                          onChange={(e) => setShipCountry(e.target.value)}
+                          placeholder="AE, OM, PK..."
+                          className="theme-input w-full rounded-lg border px-2.5 py-1.5 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[10px] font-semibold text-text-faint">City</label>
+                        <input
+                          value={shipCity}
+                          onChange={(e) => setShipCity(e.target.value)}
+                          placeholder="Muscat, Dubai..."
+                          className="theme-input w-full rounded-lg border px-2.5 py-1.5 text-xs"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleCalculateShipping}
+                      disabled={shipLoading || !shipCountry.trim() || items.length === 0}
+                      className="theme-btn-primary w-full rounded-lg py-1.5 text-[11px] font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    >
+                      {shipLoading ? (
+                        <><span className="animate-spin rounded-full h-3 w-3 border-b-2 border-white inline-block" /> Calculating...</>
+                      ) : (
+                        <><Truck className="w-3 h-3" /> Get Quote</>
+                      )}
+                    </button>
+                  </motion.div>
+                )}
               </div>
             </div>
             <button onClick={handleCheckout} className="theme-btn-primary rounded-xl w-full py-3 text-sm font-bold" disabled={items.length === 0}>{items.length === 0 ? "Cart is empty" : "Proceed to Checkout"}</button>

@@ -49,6 +49,8 @@ __all__ = [
 class AIUploadJob(Base):
     __tablename__ = "ai_upload_jobs"
 
+    __table_args__ = ({"schema": "ai"},)
+
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     status = Column(String(20), default="pending", nullable=False, index=True)
@@ -70,6 +72,8 @@ class AIUploadJob(Base):
 
 class AIStagingProduct(Base):
     __tablename__ = "ai_staging_products"
+
+    __table_args__ = ({"schema": "ai"},)
 
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(Integer, ForeignKey("ai_upload_jobs.id"), nullable=False, index=True)
@@ -105,6 +109,8 @@ class AIStagingProduct(Base):
 class AIStagingVariant(Base):
     __tablename__ = "ai_staging_variants"
 
+    __table_args__ = ({"schema": "ai"},)
+
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(Integer, ForeignKey("ai_upload_jobs.id"), nullable=False, index=True)
     staging_product_id = Column(Integer, ForeignKey("ai_staging_products.id"), nullable=False, index=True)
@@ -131,6 +137,8 @@ class AIStagingVariant(Base):
 
 class AIGenerationLog(Base):
     __tablename__ = "ai_generation_logs"
+
+    __table_args__ = ({"schema": "ai"},)
 
     id = Column(Integer, primary_key=True, index=True)
     job_id = Column(Integer, ForeignKey("ai_upload_jobs.id"), nullable=False, index=True)

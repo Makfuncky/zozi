@@ -35,12 +35,24 @@ class StorageBackend(abc.ABC):
         """Persist ``data`` under ``key`` and return the public URL."""
 
     @abc.abstractmethod
+    def read(self, key: str) -> bytes:
+        """Retrieve the bytes stored under ``key``."""
+
+    @abc.abstractmethod
     def url(self, key: str) -> str:
         """Return a publicly reachable URL for ``key``."""
 
     @abc.abstractmethod
     def delete(self, key: str) -> None:
         """Delete the object identified by ``key`` (no-op if missing)."""
+
+    def list(self, prefix: str = "") -> list[str]:
+        """Return storage keys whose names start with ``prefix``.
+
+        The default implementation returns an empty list; backends that
+        support enumeration override it.
+        """
+        return []
 
     def presign_put(self, key: str, content_type: Optional[str] = None, ttl: Optional[int] = None) -> Optional[str]:
         """Return a presigned PUT URL the client can upload to directly.
@@ -79,6 +91,10 @@ class LocalStorage(StorageBackend):
             fh.write(data)
         return self.url(key)
 
+    def read(self, key: str) -> bytes:
+        with open(self._path(key), "rb") as fh:
+            return fh.read()
+
     def url(self, key: str) -> str:
         safe_key = key.lstrip("/").replace("\\", "/")
         return f"/uploads/{safe_key}"
@@ -89,6 +105,21 @@ class LocalStorage(StorageBackend):
             os.remove(path)
         except FileNotFoundError:
             pass
+
+    def list(self, prefix: str = "") -> list[str]:
+        safe_prefix = prefix.lstrip("/").replace("\\", "/")
+        base = self.base_dir
+        results: list[str] = []
+        if not os.path.isdir(base):
+            return results
+        for root, _, files in os.walk(base):
+            for name in files:
+                full = os.path.join(root, name)
+                rel = os.path.relpath(full, base).replace("\\", "/")
+                if safe_prefix and not rel.startswith(safe_prefix):
+                    continue
+                results.append(rel)
+        return results
 
 
 class S3Storage(StorageBackend):
@@ -137,6 +168,10 @@ class S3Storage(StorageBackend):
         self.client.put_object(Bucket=self.bucket, Key=key, Body=data, **extra)
         return self.url(key)
 
+    def read(self, key: str) -> bytes:
+        resp = self.client.get_object(Bucket=self.bucket, Key=key.lstrip("/"))
+        return resp["Body"].read()
+
     def url(self, key: str) -> str:
         safe_key = key.lstrip("/")
         if self.cdn_base:
@@ -145,6 +180,17 @@ class S3Storage(StorageBackend):
 
     def delete(self, key: str) -> None:
         self.client.delete_object(Bucket=self.bucket, Key=key.lstrip("/"))
+
+    def list(self, prefix: str = "") -> list[str]:
+        if not self.bucket:
+            return []
+        safe_prefix = prefix.lstrip("/")
+        keys: list[str] = []
+        paginator = self.client.get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=self.bucket, Prefix=safe_prefix):
+            for obj in page.get("Contents", []):
+                keys.append(obj["Key"])
+        return keys
 
     def presign_put(self, key: str, content_type: Optional[str] = None, ttl: Optional[int] = None) -> Optional[str]:
         if not (self.bucket and self.access_key and self.secret_key):

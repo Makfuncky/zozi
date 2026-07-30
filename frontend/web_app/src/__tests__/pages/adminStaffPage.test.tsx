@@ -78,6 +78,7 @@ function okJson(data: unknown) {
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, prefetch: jest.fn() }),
   useSearchParams: () => ({ get: (key: string) => (key === "section" ? mockSection : null) }),
+  usePathname: () => "/admin/staff",
 }));
 
 jest.mock("@/lib/useAuth", () => ({
@@ -112,7 +113,7 @@ jest.mock("@/components/AdminLayout", () => ({
   default: ({ children, title }: any) => <div data-testid="admin-layout">{title ? <h1>{title}</h1> : null}{children}</div>,
 }));
 
-jest.mock("@/app/admin/dashboard/tabs/HierarchyTab", () => ({
+jest.mock("@/app/admin/dashboard/_tabs/HierarchyTab", () => ({
   __esModule: true,
   default: () => <div>Hierarchy permissions</div>,
 }));

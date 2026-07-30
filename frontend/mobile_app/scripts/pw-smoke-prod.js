@@ -2,10 +2,10 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { chromium } = require('C:/Users/user/AppData/Local/Temp/pwtest/node_modules/playwright');
+const { chromium } = require('@playwright/test');
 
 const ROOT = path.resolve(__dirname, '..', 'web-dist');
-const PORT = 8090;
+const PORT = process.env.PW_PORT || 8090;
 const OUT_DIR = path.resolve(__dirname, '..', 'playwright-out');
 const BASE = `http://localhost:${PORT}/`;
 
@@ -35,7 +35,7 @@ const TABS = ['Shop', 'Cart', 'Sign In'];
 const ROUTES = [
   '/login', '/edit-profile', '/orders', '/wishlist', '/notifications', '/offers',
   '/products', '/products/1', '/cart', '/checkout', '/flash-sales', '/coupons',
-  '/profile', '/settings', '/addresses', '/returns',
+  '/profile', '/settings', '/returns',
 ];
 
 server.listen(PORT, async () => {

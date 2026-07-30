@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
-from db.database import Base
+from db.base import Base
 from utils.datetime_utils import utcnow as _utcnow
 
 
@@ -13,8 +13,7 @@ class MediaAsset(Base):
     __table_args__ = (
         Index("ix_media_assets_tier_path", "country_code", "supplier_id", "product_id"),
         Index("ix_media_assets_entity", "entity_type", "entity_id"),
-        Index("ix_media_assets_variant", "entity_id", "variant"),
-    )
+        Index("ix_media_assets_variant", "entity_id", "variant"), {"schema": "media"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), nullable=False, index=True)

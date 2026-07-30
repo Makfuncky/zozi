@@ -14,7 +14,7 @@ jest.mock("@/lib/currencyStore", () => ({
     }),
 }));
 
-import PromotionBuilderPanel from "@/app/admin/promotions/PromotionBuilderPanel";
+import PromotionBuilderPanel from "@/app/admin/promotions/_components/PromotionBuilderPanel";
 
 function okJson(data: unknown) {
   return {

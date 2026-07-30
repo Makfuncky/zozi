@@ -18,9 +18,9 @@ REM ============================================================================
 REM START BACKEND (FastAPI on port 8000)
 REM ============================================================================
 echo [1/3] Starting Backend (FastAPI on port 8000)...
-if not exist "%PROJECT_ROOT%backend\.venv\Scripts\python.exe" (
-    echo [ERROR] Virtual environment not found at backend\.venv
-    echo Please ensure .venv exists in the backend folder.
+if not exist "%PROJECT_ROOT%backend\venv\Scripts\python.exe" (
+    echo [ERROR] Virtual environment not found at backend\venv
+    echo Please ensure venv exists in the backend folder.
     pause
     exit /b 1
 )
@@ -32,7 +32,7 @@ for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr /C:":8000 " ^| findstr
 timeout /t 2 /nobreak >nul
 
 REM Start backend using run_server.py (handles SO_REUSEADDR, port 8000)
-start "ZOZI Backend (port 8000)" cmd /k "cd /d "%PROJECT_ROOT%backend" && .venv\Scripts\python.exe run_server.py"
+start "ZOZI Backend (port 8000)" cmd /k "cd /d "%PROJECT_ROOT%backend" & venv\Scripts\python.exe run_server.py"
 echo [SUCCESS] Backend terminal opened on port 8000.
 echo.
 
@@ -112,11 +112,9 @@ echo   API Docs (Swagger):   http://127.0.0.1:8000/docs
 echo   Mobile App (Expo):    http://localhost:19006  (or scan QR in terminal)
 echo.
 echo ============================================================================
-echo   TEST ACCOUNTS
+echo   TEST ACCOUNTS — see scripts/testing/loadtests/README.md for credentials
+echo   (Credentials are seeded by db/seed.py on first startup)
 echo ============================================================================
-echo   ADMIN:    admin@zozi.com    / admin123
-echo   SUPPLIER: supplier@zozi.com / supplier123
-echo   CUSTOMER: customer@zozi.com / customer123
 echo.
 echo ============================================================================
 echo   INSTRUCTIONS

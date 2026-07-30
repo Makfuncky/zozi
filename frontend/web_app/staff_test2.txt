@@ -1,0 +1,11 @@
+PASS src/__tests__/pages/adminStaffPage.test.tsx
+  Admin staff page
+    ΓêÜ loads the enterprise staff directory and opens the profile view (850 ms)
+    ΓêÜ opens the bulk update modal from grid selection and submits updates (780 ms)
+    ΓêÜ filters the grid by role and status using the enterprise toolbar controls (222 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        7.238 s
+Ran all test suites matching /adminStaffPage.test/i.

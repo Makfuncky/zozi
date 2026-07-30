@@ -158,7 +158,7 @@ function BannerCarousel({
                 className={`mt-3 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary disabled:opacity-50 ${
                   current.btn_bg_color
                     ? ""
-                    : "theme-btn-primary shadow-lg shadow-brand/25 hover:shadow-brand/40"
+                    : "theme-btn-primary shadow-lg shadow-primary/25 hover:shadow-primary/40"
                 }`}
                 style={
                   current.btn_bg_color

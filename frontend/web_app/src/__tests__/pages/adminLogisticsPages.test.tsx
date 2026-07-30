@@ -40,7 +40,7 @@ jest.mock("framer-motion", () => ({
 
 import AdminInvoicesPage from "@/app/admin/invoices/page";
 import AdminLogisticsPage from "@/app/admin/logistics/page";
-import AdminLogisticsPartnersPage from "@/app/admin/logistics/LogisticsPartnersPanel";
+import AdminLogisticsPartnersPage from "@/app/admin/logistics/_components/LogisticsPartnersPanel";
 import AdminProductVerificationPage from "@/app/admin/product-verification/page";
 import AdminReturnsPage from "@/app/admin/returns/page";
 

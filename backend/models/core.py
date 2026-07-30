@@ -20,6 +20,7 @@ __all__ = [
 
 class Address(Base):
     __tablename__ = "addresses"
+    __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     label = Column(String, nullable=True)
@@ -39,6 +40,7 @@ class Address(Base):
 
 class Cart(Base):
     __tablename__ = "carts"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
@@ -49,6 +51,7 @@ class Cart(Base):
 
 class CartItem(Base):
     __tablename__ = "cart_items"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -64,6 +67,7 @@ class CartItem(Base):
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
+    __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     action = Column(String, nullable=False)
     entity_type = Column(String, nullable=False)
@@ -78,6 +82,7 @@ class AuditLog(Base):
 
 class SupportTicket(Base):
     __tablename__ = "support_tickets"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     subject = Column(String, nullable=False)
@@ -93,6 +98,7 @@ class SupportTicket(Base):
 
 class SupportTicketReply(Base):
     __tablename__ = "support_ticket_replies"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(Integer, ForeignKey("support_tickets.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -105,6 +111,7 @@ class SupportTicketReply(Base):
 
 class TicketAttachment(Base):
     __tablename__ = "ticket_attachments"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     ticket_reply_id = Column(Integer, ForeignKey("support_ticket_replies.id"), nullable=True)
     ticket_id = Column(Integer, ForeignKey("support_tickets.id"), nullable=True)
@@ -117,6 +124,7 @@ class TicketAttachment(Base):
 
 class CityDistanceMatrix(Base):
     __tablename__ = "city_distance_matrix"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     origin_country_code = Column(String(10), nullable=False)
     origin_city_name = Column(String, nullable=False)
@@ -131,6 +139,7 @@ class CityDistanceMatrix(Base):
 
 class ExecutiveNews(Base):
     __tablename__ = "executive_news"
+    __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     summary = Column(Text, nullable=True)
@@ -147,6 +156,7 @@ class ExecutiveNews(Base):
 
 class UserBrowsingHistory(Base):
     __tablename__ = "user_browsing_history"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
@@ -162,7 +172,7 @@ class SystemHealthEvent(Base):
     severity = Column(String(20), default="info")
     message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    __table_args__ = (Index("ix_health_events_metric_time", "metric_name", "created_at"),)
+    __table_args__ = (Index("ix_health_events_metric_time", "metric_name", "created_at"), {"schema": "customer"})
 
 
 class UserSession(Base):
@@ -176,11 +186,12 @@ class UserSession(Base):
     last_activity = Column(DateTime, default=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(10), nullable=True, index=True)
-    __table_args__ = (Index("ix_user_sessions_user_active", "user_id", "is_active"),)
+    __table_args__ = (Index("ix_user_sessions_user_active", "user_id", "is_active"), {"schema": "customer"})
 
 
 class CommandCenterView(Base):
     __tablename__ = "command_center_views"
+    __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     view_name = Column(String(100), nullable=False)
@@ -192,6 +203,7 @@ class CommandCenterView(Base):
 
 class NewsSource(Base):
     __tablename__ = "news_sources"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     url = Column(String(500), nullable=False)
@@ -204,7 +216,7 @@ class NewsSource(Base):
 
 class NewsArticle(Base):
     __tablename__ = "news_articles"
-    __table_args__ = (Index("ix_news_articles_published", "published_at"),)
+    __table_args__ = (Index("ix_news_articles_published", "published_at"), {"schema": "customer"})
 
     id = Column(Integer, primary_key=True, index=True)
     source_id = Column(Integer, ForeignKey("news_sources.id"), nullable=True)
@@ -225,6 +237,7 @@ class NewsArticle(Base):
 
 class InternalNotice(Base):
     __tablename__ = "internal_notices"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
@@ -237,6 +250,7 @@ class InternalNotice(Base):
 
 class PredictiveSimulation(Base):
     __tablename__ = "predictive_simulations"
+    __table_args__ = ({"schema": "ai"},)
     id = Column(Integer, primary_key=True, index=True)
     simulation_type = Column(String(50), nullable=False)
     parameters_json = Column(Text, nullable=False)
@@ -246,6 +260,7 @@ class PredictiveSimulation(Base):
 
 class AlertEscalationRule(Base):
     __tablename__ = "alert_escalation_rules"
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     alert_type = Column(String(50), nullable=False)
     severity = Column(String(20), default="medium")
@@ -265,11 +280,12 @@ class EntityChatThread(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("EntityChatMessage", back_populates="thread", cascade="all, delete-orphan")
-    __table_args__ = (Index("idx_entity_thread", "entity_type", "entity_id"),)
+    __table_args__ = (Index("idx_entity_thread", "entity_type", "entity_id"), {"schema": "customer"})
 
 
 class EntityChatMessage(Base):
     __tablename__ = "entity_chat_messages"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     thread_id = Column(Integer, ForeignKey("entity_chat_threads.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -285,8 +301,7 @@ class VideoRoom(Base):
     __tablename__ = "video_rooms"
     __table_args__ = (
         Index("ix_video_room_status", "status"),
-        Index("ix_video_room_created", "created_at"),
-    )
+        Index("ix_video_room_created", "created_at"), {"schema": "customer"})
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(String(64), unique=True, nullable=False, index=True)
     room_uuid = Column(String(32), unique=True, nullable=True)
@@ -311,8 +326,7 @@ class VideoRoom(Base):
 class VideoRoomParticipant(Base):
     __tablename__ = "video_room_participants"
     __table_args__ = (
-        UniqueConstraint("room_id", "user_id", name="uq_video_participant"),
-    )
+        UniqueConstraint("room_id", "user_id", name="uq_video_participant"), {"schema": "customer"})
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("video_rooms.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -325,6 +339,7 @@ class VideoRoomParticipant(Base):
 
 class VideoRoomRecording(Base):
     __tablename__ = "video_room_recordings"
+    __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("video_rooms.id"), nullable=False)
     started_by = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -349,11 +364,12 @@ class DirectChatRoom(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("DirectChatMessage", back_populates="room", cascade="all, delete-orphan")
-    __table_args__ = (UniqueConstraint("participant_one", "participant_two", name="uq_direct_chat_pair"),)
+    __table_args__ = (UniqueConstraint("participant_one", "participant_two", name="uq_direct_chat_pair"), {"schema": "customer"})
 
 
 class DirectChatMessage(Base):
     __tablename__ = "direct_chat_messages"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("direct_chat_rooms.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -367,6 +383,7 @@ class DirectChatMessage(Base):
 
 class GroupChatRoom(Base):
     __tablename__ = "group_chat_rooms"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(String(64), unique=True, nullable=False, index=True)
     name = Column(String(200), nullable=False)
@@ -382,7 +399,7 @@ class GroupChatRoom(Base):
 
 class GroupChatMember(Base):
     __tablename__ = "group_chat_members"
-    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_group_member"),)
+    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_group_member"), {"schema": "customer"})
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("group_chat_rooms.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -394,6 +411,7 @@ class GroupChatMember(Base):
 
 class GroupChatMessage(Base):
     __tablename__ = "group_chat_messages"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("group_chat_rooms.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -410,8 +428,7 @@ class ShiftHandoverSession(Base):
     __table_args__ = (
         Index("ix_handover_outgoing", "outgoing_employee_id"),
         Index("ix_handover_incoming", "incoming_employee_id"),
-        Index("ix_handover_status", "status"),
-    )
+        Index("ix_handover_status", "status"), {"schema": "customer"})
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True)
     outgoing_employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
@@ -427,6 +444,7 @@ class ShiftHandoverSession(Base):
 
 class ShiftHandoverTask(Base):
     __tablename__ = "shift_handover_tasks"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("shift_handover_sessions.id"), nullable=False)
     description = Column(Text, nullable=False)
@@ -439,6 +457,7 @@ class ShiftHandoverTask(Base):
 
 class EscalationSLARule(Base):
     __tablename__ = "escalation_sla_rules"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True)
     priority = Column(String(20), nullable=False)
@@ -453,8 +472,7 @@ class EscalationSLALog(Base):
     __tablename__ = "escalation_sla_logs"
     __table_args__ = (
         Index("ix_escalation_message", "message_id"),
-        Index("ix_escalation_status", "status"),
-    )
+        Index("ix_escalation_status", "status"), {"schema": "customer"})
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, nullable=False)
     message_type = Column(String(30), nullable=False)

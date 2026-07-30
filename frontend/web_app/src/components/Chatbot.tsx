@@ -63,8 +63,8 @@ function ChatMessageBubble({
       <div
         className={`max-w-[85%] rounded-[20px] border px-3 py-2.5 text-xs ${
           message.isBot
-            ? "border-primary/40 bg-linear-to-br from-primary/28 via-primary/18 to-primary/8 text-text backdrop-blur-md shadow-glow-primary"
-            : "border-accent/50 bg-linear-to-br from-accent/32 via-accent/20 to-accent/10 text-text backdrop-blur-md shadow-glow-accent"
+            ? "border-primary/40 bg-gradient-to-br from-primary/28 via-primary/18 to-primary/8 text-text backdrop-blur-md shadow-glow-primary"
+            : "border-accent/50 bg-gradient-to-br from-accent/32 via-accent/20 to-accent/10 text-text backdrop-blur-md shadow-glow-accent"
         }`}
       >
         <p className="leading-5">{displayText}</p>

@@ -12,8 +12,7 @@ class SupplierProfile(Base):
     __tablename__ = "supplier_profiles"
     __table_args__ = (
         CheckConstraint("verification_status IN ('pending', 'documents_submitted', 'under_review', 'approved', 'rejected')", name="chk_supplier_verification_status_valid"),
-        CheckConstraint("business_type IN ('retailer', 'wholesaler', 'manufacturer', 'distributor', 'service_provider', 'individual')", name="chk_supplier_business_type_valid"),
-    )
+        CheckConstraint("business_type IN ('retailer', 'wholesaler', 'manufacturer', 'distributor', 'service_provider', 'individual')", name="chk_supplier_business_type_valid"), {"schema": "supplier"})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     business_name = Column(String, nullable=False, default="")
@@ -59,6 +58,7 @@ class SupplierProfile(Base):
 
 class SupplierDocument(Base):
     __tablename__ = "supplier_documents"
+    __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("supplier_profiles.id"), nullable=False)
     doc_type = Column(String, nullable=False)
@@ -84,6 +84,7 @@ SupplierProfile.documents = relationship("SupplierDocument", back_populates="sup
 
 class SupplierNotificationPreference(Base):
     __tablename__ = "supplier_notification_preferences"
+    __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("supplier_profiles.id"), nullable=False)
     notify_new_order = Column(Boolean, default=True)

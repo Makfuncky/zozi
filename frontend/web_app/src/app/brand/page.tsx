@@ -55,7 +55,7 @@ function AnimatedShowcase({ run }: { run: number }) {
     >
       {/* Background glow ring */}
       <motion.div
-        className="absolute w-105 h-105 rounded-full bg-linear-to-br from-success/20 via-transparent to-yellow-300/10 blur-[80px]"
+        className="absolute w-105 h-105 rounded-full bg-gradient-to-br from-success/20 via-transparent to-yellow-300/10 blur-[80px]"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 1.2, ease: "easeOut", delay: 0.0 }}
@@ -245,7 +245,7 @@ export default function BrandPage() {
       className={`relative flex flex-col items-center justify-center min-h-screen overflow-hidden transition-colors duration-500 ${
         bg === "dark"
           ? "bg-slate-950"
-          : "bg-linear-to-br from-slate-50 via-white to-slate-100"
+          : "bg-gradient-to-br from-slate-50 via-white to-slate-100"
       }`}
     >
       {/* Floating particles */}

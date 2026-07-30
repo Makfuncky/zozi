@@ -1,7 +1,7 @@
 """Coupon routes with compatibility for recovered request and response contracts."""
 from decimal import Decimal, InvalidOperation
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -114,8 +114,10 @@ def validate_coupon(
 
 
 @router.get("")
-def list_coupons(_: dict = Depends(_require_admin), db: Session = Depends(get_db)):
-    return db.query(Coupon).all()
+def list_coupons(_: dict = Depends(_require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
+    total = db.query(Coupon).count()
+    coupons = db.query(Coupon).offset((page - 1) * page_size).limit(page_size).all()
+    return {"data": coupons, "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

@@ -2,6 +2,7 @@
 Enterprise Email Gateway
 Features: Role-Based Aliases, DLP, PII Redaction, Legal Templating
 """
+import uuid
 import logging
 import re
 import hashlib
@@ -10,6 +11,10 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
+from models import User
+from models.communication import Notification
+from models.employee_models import InternalEmail, EmailFolder, Employee
+from models.fraud import DLPViolation
 from utils.email_service import send_email, get_email_sender_address, build_email_open_tracking_url
 
 
@@ -84,30 +89,78 @@ class EmailGateway:
         self.dlp_scanner = DLPScanner()
         self.alias_manager = RoleBasedAliasManager(db)
     
-    def send_internal_email(self, to_user_ids: List[int], subject: str, 
-                            body: str, sender_id: int) -> dict:
-        from models import User
+    def send_internal_email(self, to_user_ids: List[int], subject: str,
+                            body: str, sender_id: int, in_reply_to: Optional[int] = None) -> dict:
         users = self.db.query(User).filter(User.id.in_(to_user_ids)).all()
-        emails = [u.email for u in users if u.email]
-        
-        sent_count = 0
-        for email in emails:
-            try:
-                send_email(email, subject, body, purpose="internal", from_address=get_email_sender_address("internal"))
-                sent_count += 1
-            except Exception as e:
-                logger.error(f"Failed to send internal email to {email}: {e}")
-        
+        now = datetime.now(timezone.utc)
+        thread_id = str(uuid.uuid4())
+
+        # If replying to an existing email, inherit its thread_id
+        if in_reply_to:
+            parent = self.db.query(InternalEmail).filter(InternalEmail.id == in_reply_to).first()
+            if parent:
+                thread_id = parent.thread_id
+
+        recipients_json = [{"user_id": uid, "type": "to"} for uid in to_user_ids]
+        body_html = f"<p>{body.replace(chr(10), '</p><p>')}</p>" if body else ""
+        email = InternalEmail(
+            sender_id=sender_id,
+            subject=subject,
+            body_html=body_html,
+            body_text=body,
+            recipients=recipients_json,
+            thread_id=thread_id,
+            in_reply_to=in_reply_to,
+            is_external=False,
+            country_code=getattr(getattr(users[0], "employee_profile", None), "country_code", None) if users else None,
+            created_at=now,
+        )
+        self.db.add(email)
+        self.db.flush()
+
+        for u in users:
+            emp = None
+            if hasattr(u, "employee_profile") and u.employee_profile is not None:
+                emp = u.employee_profile
+                if isinstance(emp, list):
+                    emp = emp[0] if emp else None
+            if not emp:
+                emp = self.db.query(Employee).filter(Employee.user_id == u.id).first()
+            if not emp:
+                continue
+            folder = (
+                self.db.query(EmailFolder)
+                .filter(EmailFolder.employee_id == emp.id, EmailFolder.name == "inbox")
+                .first()
+            )
+            if not folder:
+                folder = EmailFolder(employee_id=emp.id, name="inbox", folder_type="inbox", is_system=True)
+                self.db.add(folder)
+                self.db.flush()
+            email.folder_id = folder.id
+
+        self.db.commit()
+        self.db.refresh(email)
+
+        try:
+            from services.employee_communication_service import _log_comm_event
+            _log_comm_event(self.db, sender_id, to_user_ids[0] if to_user_ids else None, "email_sent", "internal_email", email.id)
+        except Exception as exc:
+            logger.debug("Activity log skipped: %s", exc)
+
+        _enqueue_email_delivery(email.id, body_html, subject)
+
         return {
-            "email_id": f"email_{datetime.now(timezone.utc).timestamp()}",
+            "email_id": email.id,
+            "thread_id": email.thread_id,
             "to": to_user_ids,
             "subject": subject,
             "body": body,
             "sender_id": sender_id,
-            "sent_at": datetime.now(timezone.utc).isoformat(),
-            "status": "sent" if sent_count == len(emails) else "partial",
-            "delivered_count": sent_count,
-            "total_count": len(emails),
+            "sent_at": email.created_at.isoformat(),
+            "status": "sent",
+            "delivered_count": len(users),
+            "total_count": len(to_user_ids),
         }
     
     def send_external_email(self, to_email: str, subject: str, body: str,
@@ -116,6 +169,7 @@ class EmailGateway:
         
         if not dlp_result["is_safe"]:
             logger.warning(f"DLP blocked email to {to_email}. Findings: {dlp_result['findings']}")
+            self._log_dlp_violation(sender_id, to_email, dlp_result, subject)
             return {
                 "email_id": f"blocked_{datetime.now(timezone.utc).timestamp()}",
                 "to": to_email,
@@ -174,6 +228,24 @@ class EmailGateway:
             {"id": "welcome", "name": "Welcome Email", "type": "onboarding"},
             {"id": "notification", "name": "System Notification", "type": "notification"}
         ]
+
+    def _log_dlp_violation(self, sender_id: int, recipient: str, dlp_result: dict, subject: str) -> None:
+        try:
+            sender_id_val = sender_id if sender_id and self.db.query(User).filter(User.id == sender_id).first() else None
+            violation = DLPViolation(
+                violation_type="email_dlp",
+                severity=dlp_result.get("risk_level", "medium"),
+                sender_id=sender_id_val,
+                recipient_email=recipient,
+                detected_content=subject,
+                action_taken="blocked",
+                status="pending",
+            )
+            self.db.add(violation)
+            self.db.commit()
+        except Exception as exc:
+            logger.warning("Failed to log DLP violation: %s", exc)
+            self.db.rollback()
     
     def send_bulk_email(self, to_emails: List[str], subject: str, body: str,
                         sender_id: int, template_id: Optional[str] = None) -> dict:
@@ -182,6 +254,7 @@ class EmailGateway:
         
         if not dlp_result["is_safe"]:
             logger.warning(f"Bulk email blocked. Findings: {dlp_result['findings']}")
+            self._log_dlp_violation(sender_id, ",".join(to_emails[:5]), dlp_result, subject)
             return {
                 "status": "blocked",
                 "reason": "DLP violation detected",
@@ -254,3 +327,52 @@ class EmailGateway:
 
 def get_email_gateway(db: Session) -> EmailGateway:
     return EmailGateway(db)
+
+
+def _enqueue_email_delivery(email_id: int, body_html: str, subject: str) -> None:
+    """Enqueue a background job to deliver an internal email via SMTP."""
+    try:
+        from utils.background_jobs import enqueue_job, JobKind
+
+        def _deliver() -> dict:
+            from db.database import SessionLocal
+            from models.employee_models import InternalEmail
+            from utils.email_service import send_email, get_email_sender_address
+
+            db = SessionLocal()
+            try:
+                email = db.query(InternalEmail).filter(InternalEmail.id == email_id).first()
+                if not email:
+                    return {"status": "skipped", "reason": "email_not_found"}
+
+                from models import User
+                recipients = email.recipients or []
+                if isinstance(recipients, str):
+                    import json
+                    recipients = json.loads(recipients)
+
+                for entry in recipients:
+                    to_user_id = entry.get("user_id")
+                    if not to_user_id:
+                        continue
+                    user = db.query(User).filter(User.id == to_user_id).first()
+                    if user and user.email:
+                        from_addr = get_email_sender_address("notification")
+                        send_email(
+                            to=user.email,
+                            subject=subject,
+                            html=body_html,
+                            purpose="notification",
+                            from_address=from_addr,
+                        )
+                return {"status": "delivered", "email_id": email_id}
+            finally:
+                db.close()
+
+        enqueue_job(
+            kind=JobKind.EMAIL,
+            func=_deliver,
+            metadata={"email_id": email_id, "subject": subject},
+        )
+    except Exception as exc:
+        logger.debug("Failed to enqueue email delivery: %s", exc)

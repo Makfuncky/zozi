@@ -490,8 +490,11 @@ def bulk_restore_banners(
 # ── Promotion Order Tiers ─────────────────────────────────────────────────────
 
 @router.get("/tiers")
-def list_promotion_tiers(_: User = Depends(require_admin), db: Session = Depends(get_db)):
-    return db.query(PromotionOrderTier).order_by(PromotionOrderTier.sort_order).all()
+def list_promotion_tiers(_: User = Depends(require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
+    q = db.query(PromotionOrderTier)
+    total = q.count()
+    rows = q.order_by(PromotionOrderTier.sort_order).offset((page - 1) * page_size).limit(page_size).all()
+    return {"data": rows, "total": total, "page": page, "page_size": page_size}
 
 
 # ── Country-scoped sub-routes for Promotions ─────────────────────────────────

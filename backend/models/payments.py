@@ -27,8 +27,7 @@ class Payment(Base):
     __table_args__ = (
         CheckConstraint("amount >= 0", name="chk_payment_amount_non_negative"),
         CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded')", name="chk_payment_status_valid"),
-        Index("ix_payments_order_id", "order_id"),
-    )
+        Index("ix_payments_order_id", "order_id"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
@@ -46,6 +45,7 @@ class Payment(Base):
 
 class PaymentReconciliationRun(Base):
     __tablename__ = "payment_reconciliation_runs"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     run_date = Column(DateTime, nullable=False)
     total_amount = Column(Numeric(15, 2), nullable=True)
@@ -64,6 +64,7 @@ class PaymentReconciliationRun(Base):
 
 class Coupon(Base):
     __tablename__ = "coupons"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String, unique=True, index=True, nullable=False)
     discount_type = Column(String, default="percentage")
@@ -86,6 +87,7 @@ class Coupon(Base):
 
 class Banner(Base):
     __tablename__ = "banners"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     subtitle = Column(String, nullable=True)
@@ -119,7 +121,7 @@ class Banner(Base):
 
 class PaymentGatewayConnection(Base):
     __tablename__ = "payment_gateway_connections"
-    __table_args__ = _get_table_args()
+    __table_args__ = _get_table_args() + ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     provider_code = Column(String(100), nullable=False)
     gateway_name = Column(String(100), nullable=False)
@@ -164,6 +166,7 @@ class PaymentGatewayConnection(Base):
 
 class Payout(Base):
     __tablename__ = "payouts"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), nullable=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -189,6 +192,7 @@ class Payout(Base):
 
 class LogisticsPartnerPayout(Base):
     __tablename__ = "logistics_partner_payouts"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)

@@ -939,7 +939,7 @@ function SupplierProfilePageContent() {
                     setError("");
                   }}
                   className={`flex min-w-fit shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-2.5 text-xs font-semibold transition-colors ${
-                    tab === item.key ? "bg-primary text-on-brand" : "text-text-muted hover:text-text"
+                    tab === item.key ? "bg-primary text-on-primary" : "text-text-muted hover:text-text"
                   }`}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -1129,7 +1129,7 @@ function SupplierProfilePageContent() {
                       </div>
                     </div>
                     <div className="mt-4 h-2 overflow-hidden rounded-full bg-background">
-                      <div className="h-full rounded-full bg-gradient-to-r from-primary via-brand to-accent" style={{ width: `${storefrontCompletionPercent}%` }} />
+                      <div className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent" style={{ width: `${storefrontCompletionPercent}%` }} />
                     </div>
                   </div>
 
@@ -1192,7 +1192,7 @@ function SupplierProfilePageContent() {
 
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold text-text-muted">About Us</label>
-                  <textarea value={biz.about_us} onChange={setBizField("about_us")} placeholder="Tell customers who you are, what you sell, and why they can trust your brand." rows={5} className="theme-input w-full resize-none rounded-xl border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
+                  <textarea value={biz.about_us} onChange={setBizField("about_us")} placeholder="Tell customers who you are, what you sell, and why they can trust your primary." rows={5} className="theme-input w-full resize-none rounded-xl border px-4 py-3 text-sm focus:border-primary focus:outline-none" />
                   <p className="mt-2 text-xs leading-5 text-text-faint">
                     Use short paragraphs for your story and separate standout points with bullet lines like "- Fast custom production" to make your storefront easier to scan.
                   </p>
@@ -1723,7 +1723,7 @@ function SupplierProfilePageContent() {
               <p className="mt-2 text-sm font-semibold text-text">{storefrontReady ? "Ready for customers" : "Needs more public content"}</p>
               <p className="mt-1 text-xs text-text-muted">Add your About Us, storefront visuals, and certifications so customers can see a complete supplier page.</p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
-                <div className="h-full rounded-full bg-gradient-to-r from-primary via-brand to-accent" style={{ width: `${storefrontCompletionPercent}%` }} />
+                <div className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent" style={{ width: `${storefrontCompletionPercent}%` }} />
               </div>
               <p className="mt-2 text-[11px] text-text-faint">{completedStorefrontItems} of {storefrontChecklist.length} essentials complete.</p>
             </div>

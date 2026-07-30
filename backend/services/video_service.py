@@ -11,7 +11,7 @@ from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
 from models import Product, ProductVideo, VideoAnalytics
-from services.media_service import save_product_media, get_media_base_path
+from services.media_service import save_product_media
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +60,9 @@ class VideoService:
             is_main=False,
         )
 
-        base_url = "/uploads"
-        video_url = f"{base_url}/{storage_path}"
-
         video_record = ProductVideo(
             product_id=product_id,
-            video_url=video_url,
+            video_url=storage_path,
             video_type=video_type,
             title=title or filename,
             description=description,

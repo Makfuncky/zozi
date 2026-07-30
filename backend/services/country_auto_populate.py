@@ -177,11 +177,13 @@ def _normalize_rest_country(data: dict) -> dict:
     currencies, currency_symbol, currency_name = _first_currency(data)
     languages = data.get("languages") or {}
     timezones = data.get("timezones") or []
+    maps = data.get("maps") or {}
     return {
         "code": data.get("cca2", ""),
         "name": data.get("name", {}).get("common", ""),
         "official_name": data.get("name", {}).get("official", ""),
         "alpha3": data.get("cca3", ""),
+        "numeric_code": data.get("ccn3", ""),
         "phone_code": _phone_code(data),
         "flag_url": data.get("flags", {}).get("svg") or data.get("flags", {}).get("png", ""),
         "latitude": data.get("latlng", [None, None])[0],
@@ -195,6 +197,10 @@ def _normalize_rest_country(data: dict) -> dict:
         "region": data.get("region", ""),
         "subregion": data.get("subregion", ""),
         "population": data.get("population"),
+        "area_km2": data.get("area"),
+        "google_maps": maps.get("googleMaps"),
+        "independent": data.get("independent"),
+        "un_member": data.get("unMember"),
     }
 
 
@@ -227,8 +233,17 @@ async def fetch_world_bank_data(code: str) -> Optional[dict]:
     async def _fetch():
         indicators = {
             "gdp_per_capita_usd": "NY.GDP.PCAP.CD",
+            "gdp_usd": "NY.GDP.MKTP.CD",
+            "gdp_growth_pct": "NY.GDP.MKTP.KD.ZG",
             "population": "SP.POP.TOTL",
             "internet_penetration_pct": "IT.NET.USER.ZS",
+            "urban_population_pct": "SP.URB.TOTL.IN.ZS",
+            "literacy_rate_pct": "SE.ADT.LITR.ZS",
+            "inflation_pct": "FP.CPI.TOTL.ZG",
+            "unemployment_pct": "SL.UEM.TOTL.ZS",
+            "gini_index": "SI.POV.GINI",
+            "government_debt_pct_gdp": "GC.DOD.TOTL.GD.ZS",
+            "current_account_balance_pct_gdp": "BN.CAB.XOKA.GD.ZS",
         }
 
         async def _indicator(client: httpx.AsyncClient, field: str, indicator: str) -> tuple[str, float | None]:
@@ -557,21 +572,21 @@ async def auto_populate_country(country_code: str) -> dict:
     ]
     
     currency_code = currencies[0] if currencies else "USD"
-    currency_info = rest_data.get("currencies", {}).get(currency_code, {})
-    currency_symbol = currency_info.get("symbol") or "$"
-    currency_name = currency_info.get("name") or "US Dollar"
+    currency_symbol = rest_data.get("currency_symbol") or "$"
+    currency_name = rest_data.get("currency_name") or "US Dollar"
     
     result = {
         "code": code,
         "name": rest_data.get("name", ""),
         "official_name": rest_data.get("official_name", ""),
         "alpha3": rest_data.get("alpha3", ""),
+        "numeric_code": rest_data.get("numeric_code", ""),
         "phone_code": rest_data.get("phone_code", ""),
         "flag_url": rest_data.get("flag_url", ""),
         "latitude": rest_data.get("latitude"),
         "longitude": rest_data.get("longitude"),
         "capital": rest_data.get("capital", ""),
-        "language": rest_data.get("languages", ["en"])[0] if rest_data.get("languages") else "en",
+        "language": rest_data.get("language", ""),
         "languages": rest_data.get("languages", []),
         "currency": currency_code,
         "currencies": currencies,
@@ -582,6 +597,20 @@ async def auto_populate_country(country_code: str) -> dict:
         "internet_penetration_pct": internet,
         "economic_tier": economic_tier,
         "region": region,
+        "area_km2": rest_data.get("area_km2"),
+        "google_maps": rest_data.get("google_maps"),
+        "independent": rest_data.get("independent"),
+        "un_member": rest_data.get("un_member"),
+        "gdp_usd": wb_data.get("gdp_usd"),
+        "gdp_growth_pct": wb_data.get("gdp_growth_pct"),
+        "inflation_pct": wb_data.get("inflation_pct"),
+        "unemployment_pct": wb_data.get("unemployment_pct"),
+        "gini_index": wb_data.get("gini_index"),
+        "government_debt_pct_gdp": wb_data.get("government_debt_pct_gdp"),
+        "current_account_balance_pct_gdp": wb_data.get("current_account_balance_pct_gdp"),
+        "literacy_rate_pct": wb_data.get("literacy_rate_pct"),
+        "urban_population_pct": wb_data.get("urban_population_pct"),
+        "gdp_per_capita_ppp_usd": wb_data.get("gdp_per_capita_ppp_usd"),
         "tax_type": "VAT" if code.upper() in ["SA", "AE", "OM", "BH", "KW"] else "SalesTax",
         "tax_rate": vat_rate or 0.05,
         "tax_name": "VAT" if code.upper() in ["SA", "AE", "OM", "BH", "KW"] else "Sales Tax",

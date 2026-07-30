@@ -128,13 +128,13 @@ export default function CommandCenterAlertsPage() {
               className={`rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors ${
                 filter === severity
                   ? severity === "all"
-                    ? "bg-brand text-on-brand border-brand"
+                    ? "bg-primary text-on-primary border-primary"
                     : severity === "critical"
                     ? "bg-danger text-white border-danger"
                     : severity === "warning"
                     ? "bg-warning text-on-warning border-warning"
                     : "bg-info text-white border-info"
-                  : "bg-surface-1 text-text-muted border-border hover:border-brand/40"
+                  : "bg-surface-1 text-text-muted border-border hover:border-primary/40"
               }`}
             >
               {severity === "all" ? "All" : severity.charAt(0).toUpperCase() + severity.slice(1)}

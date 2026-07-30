@@ -11,7 +11,7 @@ from fastapi import WebSocket
 from sqlalchemy import and_, event, inspect as sa_inspect
 from sqlalchemy.orm import Session as OrmSession
 
-from models import AuditLog, Notification, Payout, Product, SupplierDispute, SupportTicket, SupplierProfile, TicketReply, User
+from models import AuditLog, Notification, Payout, Product, SupplierDispute, SupportTicket, SupplierProfile, TicketReply, User, InternalEmail
 from utils.config import settings
 
 
@@ -536,6 +536,31 @@ def _collect_realtime_events(session: OrmSession, flush_context) -> None:  # pra
                     status=getattr(obj, "status", None),
                 ),
             )
+        elif isinstance(obj, InternalEmail):
+            # New internal email — notify all recipients so their
+            # inbox badge and folder tree unread count update live.
+            recipients = obj.recipients
+            if isinstance(recipients, str):
+                import json
+                recipients = json.loads(recipients)
+            if isinstance(recipients, list):
+                for entry in recipients:
+                    if isinstance(entry, dict):
+                        uid = entry.get("user_id")
+                        if uid is not None:
+                            _queue_user_event(
+                                session,
+                                uid,
+                                {
+                                    "type": "email.received",
+                                    "email_id": obj.id,
+                                    "thread_id": obj.thread_id,
+                                    "subject": obj.subject,
+                                    "sender_id": obj.sender_id,
+                                    "folder_id": obj.folder_id,
+                                    "unread": True,
+                                },
+                            )
         elif isinstance(obj, SupplierProfile):
             verification_status = getattr(obj, "verification_status", None)
             if verification_status in {None, "pending", "under_review"}:

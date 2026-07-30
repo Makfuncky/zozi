@@ -17,12 +17,12 @@ scrape_configs:
     relabel_configs:
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
-        target_label: 'container'
+        target_label: container
       - source_labels: ['__meta_docker_container_id']
-        target_label: 'container_id'
+        target_label: container_id
       - source_labels: ['__meta_docker_image_name']
         regex: '([^:]+)(?::.+)?'
-        target_label: 'image'
+        target_label: image
 
   # Backend application logs
   - job_name: backend
@@ -45,6 +45,29 @@ scrape_configs:
           level:
           request_id:
           user_id:
+
+  # Frontend error logs
+  - job_name: frontend-errors
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: frontend
+          app: zozi-frontend
+          __path__: /var/log/frontend/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            message: message
+            source: source
+            url: url
+            user_agent: user_agent
+            error_type: error_type
+            request_id: request_id
+      - labels:
+          level:
+          source:
+          error_type:
 
   # Nginx access logs
   - job_name: nginx

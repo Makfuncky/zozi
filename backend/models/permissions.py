@@ -16,6 +16,7 @@ __all__ = [
 
 class PermissionCategory(Base):
     __tablename__ = "permission_categories"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, unique=True)
     slug = Column(String(100), nullable=False, unique=True)
@@ -32,6 +33,7 @@ class PermissionCategory(Base):
 
 class Permission(Base):
     __tablename__ = "permissions"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("permission_categories.id"), nullable=False)
     name = Column(String(150), nullable=False)
@@ -48,8 +50,7 @@ class Permission(Base):
 class RolePermissionAssignment(Base):
     __tablename__ = "role_permission_assignments"
     __table_args__ = (
-        UniqueConstraint("role_name", "permission_id", "country_code", name="uq_role_permission_country"),
-    )
+        UniqueConstraint("role_name", "permission_id", "country_code", name="uq_role_permission_country"), {"schema": "core"})
     id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(80), nullable=False)
     permission_id = Column(Integer, ForeignKey("permissions.id"), nullable=False)
@@ -63,8 +64,7 @@ class RolePermissionAssignment(Base):
 class UserPermissionOverride(Base):
     __tablename__ = "user_permission_overrides"
     __table_args__ = (
-        UniqueConstraint("user_id", "permission_id", "country_code", name="uq_user_perm_override_country"),
-    )
+        UniqueConstraint("user_id", "permission_id", "country_code", name="uq_user_perm_override_country"), {"schema": "core"})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     permission_id = Column(Integer, ForeignKey("permissions.id"), nullable=False)
@@ -77,6 +77,7 @@ class UserPermissionOverride(Base):
 
 class PermissionAuditLog(Base):
     __tablename__ = "permission_audit_log"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     actor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     action = Column(String(50), nullable=False)

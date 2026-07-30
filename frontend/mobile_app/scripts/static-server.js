@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, 'web-dist');
-const PORT = process.env.PW_PORT || 8081;
+const PORT = process.env.PW_PORT || 8090;
 const MIME = {
   '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
   '.css': 'text/css', '.json': 'application/json', '.ico': 'image/x-icon',

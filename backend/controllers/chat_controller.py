@@ -1,10 +1,10 @@
-﻿"""
+"""
 Chat System Controller
 """
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from db.database import get_db
@@ -71,9 +71,22 @@ def create_thread(
 
 
 @router.get("/threads/{thread_id}/messages")
-def get_thread_messages(thread_id: int, limit: int = 100, db: Session = Depends(get_db)):
+def get_thread_messages(
+    thread_id: int,
+    limit: int = Query(50, ge=1, le=200),
+    cursor: Optional[int] = Query(None, description="Message ID to fetch messages before (cursor-based pagination)"),
+    db: Session = Depends(get_db),
+):
+    """Get messages for a thread with cursor-based pagination.
+
+    - First call: no cursor → returns the most recent `limit` messages.
+    - Subsequent calls: pass the oldest message's `id` as cursor to fetch
+      earlier messages.
+    - Response includes `has_more: bool` and `next_cursor: int | null`.
+    """
     chat = get_chat_system(db)
-    return {"messages": chat.get_thread_messages(thread_id, limit)}
+    data = chat.get_thread_messages(thread_id, limit, cursor)
+    return data
 
 
 @router.post("/threads/{thread_id}/messages")
@@ -86,6 +99,22 @@ def send_thread_message(
     chat = get_chat_system(db)
     result = chat.send_message(str(thread_id), sender_id, message)
     return result
+
+
+@router.post("/threads/{thread_id}/messages/upload")
+async def send_thread_message_with_attachments(
+    thread_id: int,
+    sender_id: int = Form(...),
+    message: str = Form(""),
+    files: list[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+):
+    """Send a thread message with optional file attachments via multipart/form-data."""
+    chat = get_chat_system(db)
+    file_list = files or []
+    return await chat.send_message_with_files(
+        str(thread_id), sender_id, message, file_list
+    )
 
 
 @router.post("/read")

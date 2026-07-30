@@ -41,15 +41,21 @@ class OrmBase(BaseModel):
 
 
 class MessageResponse(BaseModel):
-    message: str
+    """Simple message response for status updates."""
+    message: str = Field(description="Response message text")
 
 
 class PaginatedResponse(BaseModel):
-    items: List[Any]
-    total: int
-    page: int
-    size: int
-    pages: int
+    """Standard paginated list response envelope.
+
+    Used by all list endpoints to return paginated results with
+    consistent metadata about the result set.
+    """
+    items: List[Any] = Field(description="List of items for the current page")
+    total: int = Field(description="Total number of items across all pages")
+    page: int = Field(description="Current page number (1-based)", ge=1)
+    size: int = Field(description="Number of items per page", ge=1, le=100)
+    pages: int = Field(description="Total number of pages", ge=0)
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -64,11 +70,19 @@ def _validate_password_complexity(v: str) -> str:
             "Password must be at least 8 characters with at least one uppercase letter, "
             "one lowercase letter, one digit, and one special character"
         )
+    if len(v) > 72:
+        import warnings
+        warnings.warn(
+            "Passwords longer than 72 characters are truncated to 72 characters by bcrypt.",
+            UserWarning,
+            stacklevel=2,
+        )
     return v
 
 class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+    """Login credentials."""
+    email: EmailStr = Field(description="User email address")
+    password: str = Field(description="User password (min 8 chars)")
 
 class RegisterRequest(BaseModel):
     email: EmailStr
@@ -85,13 +99,14 @@ class RegisterRequest(BaseModel):
         return _validate_password_complexity(v)
 
 class TokenResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    user: "UserOut"
+    """JWT authentication token response."""
+    access_token: str = Field(description="JWT access token")
+    refresh_token: str = Field(description="JWT refresh token")
+    token_type: str = Field(default="bearer", description="Token type")
+    user: "UserOut" = Field(description="Authenticated user profile")
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str | None = None
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -530,11 +545,12 @@ class ProductOut(OrmBase):
     variants: List[ProductVariantOut] = []
 
 class PaginatedProducts(BaseModel):
-    items: List[ProductListOut]
-    total: int
-    page: int
-    size: int
-    pages: int
+    """Paginated list of products."""
+    items: List[ProductListOut] = Field(description="Product list")
+    total: int = Field(description="Total products")
+    page: int = Field(description="Current page")
+    size: int = Field(description="Page size")
+    pages: int = Field(description="Total pages")
 
 
 # ── Cart ──────────────────────────────────────────────────────────────────────
@@ -670,11 +686,12 @@ class OrderListOut(OrmBase):
     items: List[OrderItemOut] = []
 
 class PaginatedOrders(BaseModel):
-    items: List[OrderListOut]
-    total: int
-    page: int
-    size: int
-    pages: int
+    """Paginated list of orders."""
+    items: List[OrderListOut] = Field(description="Order list")
+    total: int = Field(description="Total orders")
+    page: int = Field(description="Current page")
+    size: int = Field(description="Page size")
+    pages: int = Field(description="Total pages")
 
 
 # ── Payments ──────────────────────────────────────────────────────────────────
@@ -821,6 +838,20 @@ class CouponValidateResponse(BaseModel):
 
 
 CouponSchema = CouponOut
+
+
+# ── Supplier Documents ─────────────────────────────────────────────────────────
+
+class SupplierDocumentOut(OrmBase):
+    id: int
+    supplier_id: int
+    document_type: str
+    document_url: str
+    status: str
+    review_note: Optional[str] = None
+    reviewed_by: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
 
 
 # ── Banners ───────────────────────────────────────────────────────────────────
@@ -2153,5 +2184,7 @@ class LogisticsFraudCheck(BaseModel):
     time_anomaly: bool
     missing_proof: bool
     score: int
+
+
 
 

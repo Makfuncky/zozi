@@ -746,7 +746,7 @@ describe("Logistics Shipments – bulk operations", () => {
     await waitFor(() => screen.getByTestId("bulk-action-bar"));
 
     // Click the apply-status button (label: "Set to <status>")
-    const applyBtn = screen.getByRole("button", { name: /set to/i });
+    const applyBtn = screen.getAllByRole("button", { name: /set to/i })[0];
     fireEvent.click(applyBtn);
 
     await waitFor(() =>

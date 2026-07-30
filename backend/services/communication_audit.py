@@ -15,23 +15,23 @@ class CommunicationAuditService:
 
     def log_event(
         self,
-        event_type: str,
+        action: str,
+        channel: str,
+        content_preview: Optional[str] = None,
         user_id: Optional[int] = None,
         entity_type: Optional[str] = None,
         entity_id: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        metadata_json: Optional[Dict[str, Any]] = None,
     ) -> dict:
         audit = CommunicationAuditTrail(
-            event_type=event_type,
+            action=action,
+            channel=channel,
+            content_preview=content_preview,
             user_id=user_id,
             entity_type=entity_type,
             entity_id=entity_id,
-            metadata=metadata or {},
-            ip_address=ip_address,
-            user_agent=user_agent,
-            timestamp=datetime.now(timezone.utc),
+            metadata_json=metadata_json or {},
+            created_at=datetime.now(timezone.utc),
         )
         self.db.add(audit)
         self.db.commit()
@@ -39,13 +39,14 @@ class CommunicationAuditService:
 
         return {
             "id": audit.id,
-            "event_type": event_type,
+            "action": audit.action,
+            "channel": audit.channel,
+            "content_preview": audit.content_preview,
             "user_id": user_id,
             "entity_type": entity_type,
             "entity_id": entity_id,
-            "metadata": audit.metadata,
-            "ip_address": ip_address,
-            "timestamp": audit.timestamp.isoformat() if audit.timestamp else None,
+            "metadata_json": audit.metadata_json,
+            "created_at": audit.created_at.isoformat() if audit.created_at else None,
         }
 
     def get_audit_trail(
@@ -53,7 +54,7 @@ class CommunicationAuditService:
         user_id: Optional[int] = None,
         entity_type: Optional[str] = None,
         entity_id: Optional[int] = None,
-        event_type: Optional[str] = None,
+        action: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> List[dict]:
@@ -65,24 +66,26 @@ class CommunicationAuditService:
             query = query.filter(CommunicationAuditTrail.entity_type == entity_type)
         if entity_id is not None:
             query = query.filter(CommunicationAuditTrail.entity_id == entity_id)
-        if event_type is not None:
-            query = query.filter(CommunicationAuditTrail.event_type == event_type)
+        if action is not None:
+            query = query.filter(CommunicationAuditTrail.action == action)
 
-        audits = query.order_by(CommunicationAuditTrail.timestamp.desc()).offset(offset).limit(limit).all()
+        audits = query.order_by(CommunicationAuditTrail.created_at.desc()).offset(offset).limit(limit).all()
 
         return [
             {
                 "id": a.id,
-                "event_type": a.event_type,
+                "action": a.action,
+                "channel": a.channel,
+                "content_preview": a.content_preview,
                 "user_id": a.user_id,
                 "entity_type": a.entity_type,
                 "entity_id": a.entity_id,
-                "metadata": a.metadata,
-                "ip_address": a.ip_address,
-                "timestamp": a.timestamp.isoformat() if a.timestamp else None,
+                "metadata_json": a.metadata_json,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
             }
             for a in audits
         ]
+
 
     def export_for_ediscovery(
         self,
@@ -95,22 +98,23 @@ class CommunicationAuditService:
         if user_id is not None:
             query = query.filter(CommunicationAuditTrail.user_id == user_id)
         if date_from is not None:
-            query = query.filter(CommunicationAuditTrail.timestamp >= date_from)
+            query = query.filter(CommunicationAuditTrail.created_at >= date_from)
         if date_to is not None:
-            query = query.filter(CommunicationAuditTrail.timestamp <= date_to)
+            query = query.filter(CommunicationAuditTrail.created_at <= date_to)
 
-        audits = query.order_by(CommunicationAuditTrail.timestamp.asc()).all()
+        audits = query.order_by(CommunicationAuditTrail.created_at.asc()).all()
 
         return [
             {
                 "id": a.id,
-                "event_type": a.event_type,
+                "action": a.action,
+                "channel": a.channel,
+                "content_preview": a.content_preview,
                 "user_id": a.user_id,
                 "entity_type": a.entity_type,
                 "entity_id": a.entity_id,
-                "metadata": a.metadata,
-                "ip_address": a.ip_address,
-                "timestamp": a.timestamp.isoformat() if a.timestamp else None,
+                "metadata_json": a.metadata_json,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
             }
             for a in audits
         ]

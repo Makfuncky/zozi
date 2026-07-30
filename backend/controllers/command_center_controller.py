@@ -21,6 +21,42 @@ from controllers.auth_controller import get_current_user
 from utils.dependencies import require_admin
 from services.command_center_service import CommandCenterService
 
+_ALLOWED_TABLES = {
+    "orders", "order_items", "shipments", "users", "user_sessions",
+    "employees", "system_health_events", "logistics_partners", "accounts",
+    "account_balances", "products", "system_alerts", "fraud_alerts",
+    "executive_news", "support_tickets", "return_requests", "search_logs",
+    "supplier_profiles", "employee_work_logs", "supplier_kyc_requirements",
+}
+
+
+def _validate_table_name(table_name: str) -> str:
+    normalized = table_name.strip().lower()
+    if normalized not in _ALLOWED_TABLES:
+        raise ValueError(f"Table '{table_name}' is not allowed in command center queries")
+    return normalized
+
+
+def safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
+    try:
+        return db.execute(text(sql), params or {}).scalar() or 0
+    except Exception:
+        return 0
+
+
+def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool = False) -> Any:
+    try:
+        result = db.execute(text(sql), params or {})
+        return result.scalar() if scalar else result.fetchall()
+    except Exception:
+        return 0 if scalar else []
+
+
+def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
+    validated_table = _validate_table_name(table)
+    return safe_fetch(db, f"SELECT COUNT(*) FROM {validated_table} WHERE {where}", params, scalar=True)
+
+
 router = APIRouter()
 
 
@@ -464,17 +500,17 @@ async def websocket_endpoint(websocket: WebSocket):
                             return 0
 
                     heartbeat = {
-                        "today_orders": safe_scalar("SELECT COUNT(*) FROM orders WHERE created_at >= :today", {"today": today_start}),
-                        "today_revenue": float(safe_scalar("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "today_gmv": float(safe_scalar("SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "delayed_orders": int(safe_scalar("SELECT COUNT(*) FROM shipments WHERE status = 'delayed' AND estimated_delivery < :now", {"now": now})),
-                        "failed_deliveries": int(safe_scalar("SELECT COUNT(*) FROM orders WHERE status = 'failed' AND created_at >= :today", {"today": today_start})),
-                        "active_customers_buying": int(safe_scalar("SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "active_customers_window_shopping": int(safe_scalar("SELECT COUNT(*) FROM user_sessions WHERE last_activity >= :active AND is_active = true", {"active": now - timedelta(minutes=10)})),
-                        "employees_working": int(safe_scalar("SELECT COUNT(*) FROM employees WHERE employment_status = 'active'")),
-                        "system_issues": int(safe_scalar("SELECT COUNT(*) FROM system_health_events WHERE severity IN ('error', 'critical') AND created_at >= :since", {"since": one_hour_ago})),
-                        "active_logistics_partners": int(safe_scalar("SELECT COUNT(*) FROM logistics_partners WHERE status = 'active'")),
-                        "logistics_issues": int(safe_scalar("SELECT COUNT(*) FROM logistics_partners WHERE status = 'active' AND verification_status = 'rejected'")),
+                        "today_orders": safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE created_at >= :today", {"today": today_start}),
+                        "today_revenue": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
+                        "today_gmv": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
+                        "delayed_orders": int(safe_scalar(db, "SELECT COUNT(*) FROM shipments WHERE status = 'delayed' AND estimated_delivery < :now", {"now": now})),
+                        "failed_deliveries": int(safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE status = 'failed' AND created_at >= :today", {"today": today_start})),
+                        "active_customers_buying": int(safe_scalar(db, "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
+                        "active_customers_window_shopping": int(safe_scalar(db, "SELECT COUNT(*) FROM user_sessions WHERE last_activity >= :active AND is_active = true", {"active": now - timedelta(minutes=10)})),
+                        "employees_working": int(safe_scalar(db, "SELECT COUNT(*) FROM employees WHERE employment_status = 'active'")),
+                        "system_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM system_health_events WHERE severity IN ('error', 'critical') AND created_at >= :since", {"since": one_hour_ago})),
+                        "active_logistics_partners": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active'")),
+                        "logistics_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active' AND verification_status = 'rejected'")),
                     }
 
                     await websocket.send_json({"type": "heartbeat", "data": heartbeat, "timestamp": now.isoformat()})
@@ -506,8 +542,14 @@ def get_command_center(db: Session) -> CommandCenterService:
 def get_comprehensive_dashboard(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
+    country_code: str | None = Query(None, alias="country_code"),
 ):
-    """Single endpoint returning ALL Command Center metrics for the 6-Zone layout."""
+    """Single endpoint returning ALL Command Center metrics for the 6-Zone layout.
+    
+    Args:
+        country_code: Optional ISO 2-letter country code to scope results.
+            If omitted, falls back to user's staff_country_codes or "OM".
+    """
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     thirty_days_ago = now - timedelta(days=30)
@@ -527,82 +569,72 @@ def get_comprehensive_dashboard(
                 return str(val)
         return str(val)
 
-    # ── Helper to run raw SQL and handle errors ──
-    def safe_fetch(sql: str, params: dict | None = None, scalar: bool = False):
-        try:
-            result = db.execute(text(sql), params or {})
-            return result.scalar() if scalar else result.fetchall()
-        except Exception:
-            return 0 if scalar else []
+    # ── Resolve effective country ──
+    # Query param takes precedence; fallback to user's staff country or "OM"
+    effective_country = country_code or (
+        (current_user or {}).get("staff_country_codes") or ["OM"]
+    )[0]
 
-    def safe_count(table: str, where: str = "1=1", params: dict | None = None):
-        return safe_fetch(f"SELECT COUNT(*) FROM {table} WHERE {where}", params, scalar=True)
+    # ── Zone 1: Heartbeat (scoped to effective_country) ──
+    today_orders = safe_count(db, "orders", "created_at >= :today AND country_code = :cc", {"today": today_start, "cc": effective_country})
+    today_revenue = safe_fetch(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned') AND country_code = :cc", {"today": today_start, "cc": effective_country}, scalar=True) or 0
+    today_gmv = safe_fetch(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned') AND country_code = :cc", {"today": today_start, "cc": effective_country}, scalar=True) or 0
 
-    # ── Zone 1: Heartbeat ──
-    today_orders = safe_count("orders", "created_at >= :today", {"today": today_start})
-    today_revenue = safe_fetch(
-        "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')",
-        {"today": today_start}, scalar=True,
+    delayed_count = safe_fetch(db,
+        "SELECT COUNT(*) FROM shipments s JOIN orders o ON s.order_id = o.id WHERE s.status = 'delayed' AND s.estimated_delivery < :now AND o.country_code = :cc",
+        {"now": now, "cc": effective_country}, scalar=True,
     ) or 0
-    today_gmv = safe_fetch(
-        "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')",
-        {"today": today_start}, scalar=True,
+    failed_deliveries = safe_count(db, "orders", "status = 'failed' AND created_at >= :today AND country_code = :cc", {"today": today_start, "cc": effective_country})
+    buying_customers = safe_fetch(db, "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned') AND country_code = :cc", {"today": today_start, "cc": effective_country}, scalar=True) or 0
+    window_shoppers = safe_fetch(db,
+        "SELECT COUNT(*) FROM user_sessions us JOIN users u ON us.user_id = u.id WHERE us.last_activity >= :active AND us.is_active = true AND u.country_code = :cc",
+        {"active": now - timedelta(minutes=10), "cc": effective_country}, scalar=True,
     ) or 0
-
-    delayed_count = safe_count("shipments", "status = 'delayed' AND estimated_delivery < :now", {"now": now})
-    failed_deliveries = safe_count("orders", "status = 'failed' AND created_at >= :today", {"today": today_start})
-    buying_customers = safe_fetch(
-        "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')",
-        {"today": today_start}, scalar=True,
-    ) or 0
-    window_shoppers = safe_count(
-        "user_sessions", "last_activity >= :active AND is_active = true",
-        {"active": now - timedelta(minutes=10)},
-    )
-    employees_working = safe_count("employees", "employment_status = 'active'")
-    system_issues = safe_count(
+    employees_working = safe_count(db, "employees", "employment_status = 'active' AND country_code = :cc", {"cc": effective_country})
+    system_issues = safe_count(db,
         "system_health_events",
         "severity IN ('error', 'critical') AND created_at >= :since",
         {"since": one_hour_ago},
     )
 
     # ── Zone 2: Treasury & Cash ──
-    # Live ledger balances from the double-entry Chart of Accounts
-    acct_balances = safe_fetch("""
+    # Live ledger balances from the double-entry Chart of Accounts (global, not country-scoped)
+    acct_balances = safe_fetch(db, """
         SELECT a.code, COALESCE(ab.balance, 0) as balance
         FROM accounts a
         LEFT JOIN account_balances ab ON ab.account_id = a.id AND ab.currency = 'OMR'
         WHERE a.code IN ('1010','1020','2010','2020','2030','2040','2050')
     """)
     balance_map: dict[str, float] = {str(r[0]): float(r[1]) for r in acct_balances}
-    available_cash = balance_map.get("1010", 0)  # Cash - Operating (debit-normal)
-    locked_cash = balance_map.get("1020", 0)  # Cash - Gateway Settlement (debit-normal)
+    available_cash = balance_map.get("1010", 0)
+    locked_cash = balance_map.get("1020", 0)
     operating_cash = available_cash + locked_cash
-    commission_reserve = abs(balance_map.get("2050", 0))  # Commission Payable (credit-normal)
-    vat_liability = abs(balance_map.get("2040", 0))  # VAT Payable (credit-normal)
+    commission_reserve = abs(balance_map.get("2050", 0))
+    vat_liability = abs(balance_map.get("2040", 0))
     supplier_payables = abs(balance_map.get("2010", 0))
     logistics_payables = abs(balance_map.get("2020", 0))
     refund_reserve = abs(balance_map.get("2030", 0))
     pending_payouts = supplier_payables + logistics_payables
 
-    refunds_today = safe_fetch(
-        "SELECT COALESCE(SUM(refund_amount), 0) FROM orders WHERE created_at >= :today AND status = 'returned'",
-        {"today": today_start}, scalar=True,
+    refunds_today = safe_fetch(db,
+        "SELECT COALESCE(SUM(refund_amount), 0) FROM orders WHERE created_at >= :today AND status = 'returned' AND country_code = :cc",
+        {"today": today_start, "cc": effective_country}, scalar=True,
     ) or 0
-    active_disputes = safe_count("system_alerts", "alert_type = 'dispute' AND is_acknowledged = 0")
-    return_requests = safe_count("return_requests", "status = 'pending'")
+    active_disputes = safe_count(db, "system_alerts", "alert_type = 'dispute' AND is_acknowledged = 0 AND country_code = :cc", {"cc": effective_country})
+    return_requests = safe_count(db, "return_requests", "status = 'pending' AND country_code = :cc", {"cc": effective_country})
 
-    # ── Zone 3: Growth & Trends ──
-    revenue_trend = safe_fetch("""
+    # ── Zone 3: Growth & Trends (scoped to effective_country) ──
+    revenue_trend = safe_fetch(db, """
         SELECT DATE(created_at) as dt,
                COALESCE(SUM(total_amount), 0) as revenue
         FROM orders
-        WHERE created_at >= :since AND status NOT IN ('cancelled', 'returned')
+        WHERE created_at >= :since AND status NOT IN ('cancelled', 'returned') AND country_code = :cc
         GROUP BY DATE(created_at)
         ORDER BY dt ASC
-    """, {"since": thirty_days_ago})
+    """, {"since": thirty_days_ago, "cc": effective_country})
 
-    country_sales = safe_fetch("""
+    # country_sales stays global — it's a cross-country comparison view
+    country_sales = safe_fetch(db, """
         SELECT COALESCE(u.country_code, 'Unknown') as country,
                COUNT(o.id) as orders,
                COALESCE(SUM(o.total_amount), 0) as revenue
@@ -613,33 +645,33 @@ def get_comprehensive_dashboard(
         ORDER BY revenue DESC
     """, {"since": thirty_days_ago})
 
-    category_trend = safe_fetch("""
+    category_trend = safe_fetch(db, """
         SELECT COALESCE(p.category, 'Uncategorized') as category,
                COUNT(oi.id) as items_sold,
                COALESCE(SUM(oi.total_price), 0) as revenue
         FROM order_items oi
         JOIN products p ON oi.product_id = p.id
         JOIN orders o ON oi.order_id = o.id
-        WHERE o.created_at >= :since AND o.status NOT IN ('cancelled', 'returned')
+        WHERE o.created_at >= :since AND o.status NOT IN ('cancelled', 'returned') AND o.country_code = :cc
         GROUP BY p.category
         ORDER BY revenue DESC
         LIMIT 10
-    """, {"since": thirty_days_ago})
+    """, {"since": thirty_days_ago, "cc": effective_country})
 
-    top_products = safe_fetch("""
+    top_products = safe_fetch(db, """
         SELECT p.id, p.name,
                COUNT(oi.id) as units_sold,
                COALESCE(SUM(oi.total_price), 0) as revenue
         FROM order_items oi
         JOIN products p ON oi.product_id = p.id
         JOIN orders o ON oi.order_id = o.id
-        WHERE o.created_at >= :since AND o.status NOT IN ('cancelled', 'returned')
+        WHERE o.created_at >= :since AND o.status NOT IN ('cancelled', 'returned') AND o.country_code = :cc
         GROUP BY p.id, p.name
         ORDER BY revenue DESC
         LIMIT 10
-    """, {"since": thirty_days_ago})
+    """, {"since": thirty_days_ago, "cc": effective_country})
 
-    top_searches = safe_fetch("""
+    top_searches = safe_fetch(db, """
         SELECT search_query, COUNT(*) as cnt,
                SUM(CASE WHEN zero_result THEN 1 ELSE 0 END) as zero_results
         FROM search_logs
@@ -649,39 +681,40 @@ def get_comprehensive_dashboard(
         LIMIT 10
     """, {"since": seven_days_ago})
 
-    # ── Zone 4: Demographics & Ecosystem ──
+    # ── Zone 4: Demographics & Ecosystem (scoped to effective_country) ──
     user_totals = {
-        "customers": safe_count("users", "role = 'customer' AND is_active = true"),
-        "suppliers": safe_count("users", "role = 'supplier' AND is_active = true"),
+        "customers": safe_count(db, "users", "role = 'customer' AND is_active = true AND country_code = :cc", {"cc": effective_country}),
+        "suppliers": safe_count(db, "users", "role = 'supplier' AND is_active = true AND country_code = :cc", {"cc": effective_country}),
         "employees": employees_working,
-        "logistics_companies": safe_count("logistics_partners", "type = 'company' AND status = 'active'"),
-        "logistics_individuals": safe_count("logistics_partners", "type = 'individual' AND status = 'active'"),
+        "logistics_companies": safe_count(db, "logistics_partners", "type = 'company' AND status = 'active'"),
+        "logistics_individuals": safe_count(db, "logistics_partners", "type = 'individual' AND status = 'active'"),
     }
 
-    gender_stats = safe_fetch("""
+    gender_stats = safe_fetch(db, """
         SELECT COALESCE(gender, 'unknown') as gender, COUNT(*) as cnt
-        FROM users WHERE role = 'customer' AND gender IS NOT NULL
+        FROM users WHERE role = 'customer' AND gender IS NOT NULL AND country_code = :cc
         GROUP BY gender
-    """)
+    """, {"cc": effective_country})
 
-    active_suppliers = safe_count("users", "role = 'supplier' AND is_active = true")
-    supplier_issues = safe_count("supplier_profiles", "verification_status = 'rejected'")
-    total_products = safe_count("products", "is_active = true")
+    active_suppliers = safe_count(db, "users", "role = 'supplier' AND is_active = true AND country_code = :cc", {"cc": effective_country})
+    # supplier_profiles — country_code status unknown, keeping unscoped
+    supplier_issues = safe_count(db, "supplier_profiles", "verification_status = 'rejected'")
+    total_products = safe_count(db, "products", "is_active = true AND country_code = :cc", {"cc": effective_country})
 
-    # ── Operations ──
-    stuck_orders = safe_count("orders", "status = 'processing' AND updated_at < :stuck", {"stuck": one_hour_ago})
-    pending_kyc = safe_count("supplier_kyc_requirements", "status = 'pending'")
-    product_moderation = safe_count("products", "is_active = false")
-    open_tickets = safe_count("support_tickets", "status = 'open'")
-    active_logistics = safe_count("logistics_partners", "status = 'active'")
-    logistics_issues_count = safe_count("logistics_partners", "status = 'active' AND verification_status = 'rejected'")
+    # ── Operations (scoped where possible) ──
+    stuck_orders = safe_count(db, "orders", "status = 'processing' AND updated_at < :stuck AND country_code = :cc", {"stuck": one_hour_ago, "cc": effective_country})
+    pending_kyc = safe_count(db, "supplier_kyc_requirements", "status = 'pending'")
+    product_moderation = safe_count(db, "products", "is_active = false AND country_code = :cc", {"cc": effective_country})
+    open_tickets = safe_count(db, "support_tickets", "status = 'open'")
+    active_logistics = safe_count(db, "logistics_partners", "status = 'active'")
+    logistics_issues_count = safe_count(db, "logistics_partners", "status = 'active' AND verification_status = 'rejected'")
 
     # ── Alerts & News (raw SQL avoids model mismatch) ──
-    active_alerts_raw = safe_fetch("""
+    active_alerts_raw = safe_fetch(db, """
         SELECT id, alert_type, severity, title, message, country_code, created_at
-        FROM system_alerts WHERE COALESCE(is_acknowledged, 0) = 0
+        FROM system_alerts WHERE COALESCE(is_acknowledged, 0) = 0 AND (country_code IS NULL OR country_code = :cc)
         ORDER BY severity DESC, created_at DESC LIMIT 10
-    """)
+    """, {"cc": effective_country})
     active_alerts = [
         {
             "id": r[0], "type": r[1], "severity": r[2], "title": r[3],
@@ -691,7 +724,7 @@ def get_comprehensive_dashboard(
         for r in active_alerts_raw
     ]
 
-    fraud_alerts_raw = safe_fetch("""
+    fraud_alerts_raw = safe_fetch(db, """
         SELECT id, fraud_score, triggered_rules, is_resolved, priority, created_at
         FROM fraud_alerts WHERE is_resolved = false
         ORDER BY created_at DESC LIMIT 10
@@ -707,12 +740,12 @@ def get_comprehensive_dashboard(
         for r in fraud_alerts_raw
     ]
 
-    news_headlines_raw = safe_fetch("""
+    news_headlines_raw = safe_fetch(db, """
         SELECT id, title, COALESCE(summary, ''), COALESCE(category, 'general'),
                COALESCE(ai_sentiment, 'neutral'), published_at
-        FROM executive_news WHERE is_published = true
+        FROM executive_news WHERE is_published = true AND (country_code IS NULL OR country_code = :cc)
         ORDER BY published_at DESC LIMIT 5
-    """)
+    """, {"cc": effective_country})
     headlines = [
         {
             "id": r[0], "title": r[1], "summary": r[2],
@@ -722,43 +755,44 @@ def get_comprehensive_dashboard(
         for r in news_headlines_raw
     ]
 
-    # ── Workforce ──
-    employees_by_dept = safe_fetch("""
+    # ── Workforce (scoped to effective_country) ──
+    employees_by_dept = safe_fetch(db, """
         SELECT department, COUNT(*) as cnt
         FROM employees
-        WHERE employment_status = 'active' AND department IS NOT NULL
+        WHERE employment_status = 'active' AND department IS NOT NULL AND country_code = :cc
         GROUP BY department ORDER BY cnt DESC
-    """)
-    recent_hires = safe_fetch(
-        "SELECT COUNT(*) FROM employees WHERE hire_date >= :since AND employment_status = 'active'",
-        {"since": thirty_days_ago.date()}, scalar=True,
+    """, {"cc": effective_country})
+    recent_hires = safe_fetch(db,
+        "SELECT COUNT(*) FROM employees WHERE hire_date >= :since AND employment_status = 'active' AND country_code = :cc",
+        {"since": thirty_days_ago.date(), "cc": effective_country}, scalar=True,
     ) or 0
 
-    # ── Workforce Performance Tickers ──
-    tickets_resolved_today = safe_fetch(
+    # ── Workforce Performance Tickers (scoped where possible) ──
+    tickets_resolved_today = safe_fetch(db,
         "SELECT COUNT(*) FROM support_tickets WHERE status = 'resolved' AND updated_at >= :today",
         {"today": today_start}, scalar=True,
     ) or 0
-    moderation_approved = safe_fetch(
-        "SELECT COUNT(*) FROM products WHERE is_active = true", scalar=True,
+    moderation_approved = safe_fetch(db,
+        "SELECT COUNT(*) FROM products WHERE is_active = true AND country_code = :cc", {"cc": effective_country}, scalar=True,
     ) or 1
-    moderation_pending = safe_fetch(
-        "SELECT COUNT(*) FROM products WHERE is_active = false AND deleted_at IS NULL", scalar=True,
+    moderation_pending = safe_fetch(db,
+        "SELECT COUNT(*) FROM products WHERE is_active = false AND deleted_at IS NULL AND country_code = :cc", {"cc": effective_country}, scalar=True,
     ) or 0
     moderation_approval_rate = round(moderation_approved / (moderation_approved + moderation_pending) * 100, 1) if (moderation_approved + moderation_pending) > 0 else 0
-    employees_logged_today = safe_fetch(
-        "SELECT COUNT(DISTINCT employee_id) FROM employee_work_logs WHERE date = CURRENT_DATE",
-        scalar=True,
+    employees_logged_today = safe_fetch(db,
+        "SELECT COUNT(DISTINCT employee_id) FROM employee_work_logs WHERE date = CURRENT_DATE AND country_code = :cc",
+        {"cc": effective_country}, scalar=True,
     ) or 0
-    avg_hours_logged_today = safe_fetch(
-        "SELECT COALESCE(AVG(hours_worked), 0) FROM employee_work_logs WHERE date = CURRENT_DATE",
-        scalar=True,
+    avg_hours_logged_today = safe_fetch(db,
+        "SELECT COALESCE(AVG(hours_worked), 0) FROM employee_work_logs WHERE date = CURRENT_DATE AND country_code = :cc",
+        {"cc": effective_country}, scalar=True,
     ) or 0
 
-    active_sessions = safe_count(
-        "user_sessions", "last_activity >= :since AND is_active = true",
-        {"since": one_hour_ago},
-    )
+    # System health metrics — global (infrastructure), not country-scoped
+    active_sessions = safe_fetch(db,
+        "SELECT COUNT(*) FROM user_sessions us JOIN users u ON us.user_id = u.id WHERE us.last_activity >= :since AND us.is_active = true AND u.country_code = :cc",
+        {"since": one_hour_ago, "cc": effective_country}, scalar=True,
+    ) or 0
 
     return {
         "timestamp": now.isoformat(),
@@ -825,19 +859,19 @@ def get_comprehensive_dashboard(
         },
         "system": {
             "active_sessions": active_sessions,
-            "api_latency": safe_fetch(
+            "api_latency": safe_fetch(db,
                 "SELECT COALESCE(AVG(metric_value), 0) FROM system_health_events WHERE metric_name = 'api_latency' AND created_at >= :since",
                 {"since": one_hour_ago}, scalar=True,
             ) or 0.0,
-            "error_rate": safe_fetch(
+            "error_rate": safe_fetch(db,
                 "SELECT COUNT(*) FROM system_health_events WHERE metric_name = 'error_rate' AND created_at >= :since",
                 {"since": one_hour_ago}, scalar=True,
             ) or 0.0,
-            "cpu_usage": safe_fetch(
+            "cpu_usage": safe_fetch(db,
                 "SELECT COALESCE(AVG(metric_value), 0) FROM system_health_events WHERE metric_name = 'cpu_usage' AND created_at >= :since",
                 {"since": one_hour_ago}, scalar=True,
             ) or 0.0,
-            "memory_usage": safe_fetch(
+            "memory_usage": safe_fetch(db,
                 "SELECT COALESCE(AVG(metric_value), 0) FROM system_health_events WHERE metric_name = 'memory_usage' AND created_at >= :since",
                 {"since": one_hour_ago}, scalar=True,
             ) or 0.0,

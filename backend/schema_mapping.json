@@ -1,0 +1,1417 @@
+{
+  "addresses": {
+    "model": "Address",
+    "module": "models.core",
+    "schema": "customer"
+  },
+  "alert_escalation_rules": {
+    "model": "AlertEscalationRule",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "audit_logs": {
+    "model": "AuditLog",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "carts": {
+    "model": "Cart",
+    "module": "models.core",
+    "schema": "commerce"
+  },
+  "cart_items": {
+    "model": "CartItem",
+    "module": "models.core",
+    "schema": "commerce"
+  },
+  "city_distance_matrix": {
+    "model": "CityDistanceMatrix",
+    "module": "models.core",
+    "schema": "logistics"
+  },
+  "command_center_views": {
+    "model": "CommandCenterView",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "direct_chat_messages": {
+    "model": "DirectChatMessage",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "direct_chat_rooms": {
+    "model": "DirectChatRoom",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "entity_chat_messages": {
+    "model": "EntityChatMessage",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "entity_chat_threads": {
+    "model": "EntityChatThread",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "escalation_sla_logs": {
+    "model": "EscalationSLALog",
+    "module": "models.core",
+    "schema": "configuration"
+  },
+  "escalation_sla_rules": {
+    "model": "EscalationSLARule",
+    "module": "models.core",
+    "schema": "configuration"
+  },
+  "executive_news": {
+    "model": "ExecutiveNews",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "group_chat_members": {
+    "model": "GroupChatMember",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "group_chat_messages": {
+    "model": "GroupChatMessage",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "group_chat_rooms": {
+    "model": "GroupChatRoom",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "internal_notices": {
+    "model": "InternalNotice",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "news_articles": {
+    "model": "NewsArticle",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "news_sources": {
+    "model": "NewsSource",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "predictive_simulations": {
+    "model": "PredictiveSimulation",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "shift_handover_sessions": {
+    "model": "ShiftHandoverSession",
+    "module": "models.core",
+    "schema": "hr"
+  },
+  "shift_handover_tasks": {
+    "model": "ShiftHandoverTask",
+    "module": "models.core",
+    "schema": "hr"
+  },
+  "support_tickets": {
+    "model": "SupportTicket",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "support_ticket_replies": {
+    "model": "SupportTicketReply",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "system_health_events": {
+    "model": "SystemHealthEvent",
+    "module": "models.core",
+    "schema": "audit"
+  },
+  "ticket_attachments": {
+    "model": "TicketAttachment",
+    "module": "models.core",
+    "schema": "communication"
+  },
+  "user_browsing_history": {
+    "model": "UserBrowsingHistory",
+    "module": "models.core",
+    "schema": "core"
+  },
+  "user_sessions": {
+    "model": "UserSession",
+    "module": "models.core",
+    "schema": "core"
+  },
+  "video_rooms": {
+    "model": "VideoRoom",
+    "module": "models.core",
+    "schema": "media"
+  },
+  "video_room_participants": {
+    "model": "VideoRoomParticipant",
+    "module": "models.core",
+    "schema": "media"
+  },
+  "video_room_recordings": {
+    "model": "VideoRoomRecording",
+    "module": "models.core",
+    "schema": "media"
+  },
+  "email_verification_tokens": {
+    "model": "EmailVerificationToken",
+    "module": "models.user",
+    "schema": "core"
+  },
+  "password_reset_tokens": {
+    "model": "PasswordResetToken",
+    "module": "models.user",
+    "schema": "core"
+  },
+  "referrals": {
+    "model": "Referral",
+    "module": "models.user",
+    "schema": "customer"
+  },
+  "referral_point_events": {
+    "model": "ReferralPointEvent",
+    "module": "models.user",
+    "schema": "customer"
+  },
+  "revoked_tokens": {
+    "model": "RevokedToken",
+    "module": "models.user",
+    "schema": "core"
+  },
+  "users": {
+    "model": "User",
+    "module": "models.user",
+    "schema": "core"
+  },
+  "user_devices": {
+    "model": "UserDevice",
+    "module": "models.user",
+    "schema": "core"
+  },
+  "user_login_history": {
+    "model": "UserLoginHistory",
+    "module": "models.user",
+    "schema": "core"
+  },
+  "categories": {
+    "model": "Category",
+    "module": "models.products",
+    "schema": "commerce"
+  },
+  "products": {
+    "model": "Product",
+    "module": "models.products",
+    "schema": "commerce"
+  },
+  "product_filter_metadata": {
+    "model": "ProductFilterMetadata",
+    "module": "models.products",
+    "schema": "configuration"
+  },
+  "product_filter_options": {
+    "model": "ProductFilterOption",
+    "module": "models.products",
+    "schema": "configuration"
+  },
+  "product_variants": {
+    "model": "ProductVariant",
+    "module": "models.products",
+    "schema": "commerce"
+  },
+  "product_videos": {
+    "model": "ProductVideo",
+    "module": "models.products",
+    "schema": "configuration"
+  },
+  "reviews": {
+    "model": "Review",
+    "module": "models.products",
+    "schema": "customer"
+  },
+  "video_analytics": {
+    "model": "VideoAnalytics",
+    "module": "models.products",
+    "schema": "media"
+  },
+  "wishlists": {
+    "model": "Wishlist",
+    "module": "models.products",
+    "schema": "customer"
+  },
+  "wishlist_items": {
+    "model": "WishlistItem",
+    "module": "models.products",
+    "schema": "customer"
+  },
+  "orders": {
+    "model": "Order",
+    "module": "models.orders",
+    "schema": "commerce"
+  },
+  "order_items": {
+    "model": "OrderItem",
+    "module": "models.orders",
+    "schema": "commerce"
+  },
+  "order_logistics_allocations": {
+    "model": "OrderLogisticsAllocation",
+    "module": "models.orders",
+    "schema": "logistics"
+  },
+  "return_requests": {
+    "model": "ReturnRequest",
+    "module": "models.orders",
+    "schema": "configuration"
+  },
+  "banners": {
+    "model": "Banner",
+    "module": "models.payments",
+    "schema": "commerce"
+  },
+  "coupons": {
+    "model": "Coupon",
+    "module": "models.payments",
+    "schema": "commerce"
+  },
+  "logistics_partner_payouts": {
+    "model": "LogisticsPartnerPayout",
+    "module": "models.payments",
+    "schema": "logistics"
+  },
+  "payments": {
+    "model": "Payment",
+    "module": "models.payments",
+    "schema": "finance"
+  },
+  "payment_gateway_connections": {
+    "model": "PaymentGatewayConnection",
+    "module": "models.payments",
+    "schema": "finance"
+  },
+  "payment_reconciliation_runs": {
+    "model": "PaymentReconciliationRun",
+    "module": "models.payments",
+    "schema": "finance"
+  },
+  "payouts": {
+    "model": "Payout",
+    "module": "models.payments",
+    "schema": "configuration"
+  },
+  "logistics_category_pricing_rules": {
+    "model": "LogisticsCategoryPricingRule",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "logistics_partners": {
+    "model": "LogisticsPartner",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "logistics_partner_profiles": {
+    "model": "LogisticsPartnerProfile",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "logistics_partner_service_areas": {
+    "model": "LogisticsPartnerServiceArea",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "logistics_pricing_profiles": {
+    "model": "LogisticsPricingProfile",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "logistics_vehicle_rules": {
+    "model": "LogisticsVehicleRule",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "shipments": {
+    "model": "Shipment",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "shipment_events": {
+    "model": "ShipmentEvent",
+    "module": "models.logistics",
+    "schema": "logistics"
+  },
+  "supplier_documents": {
+    "model": "SupplierDocument",
+    "module": "models.suppliers",
+    "schema": "supplier"
+  },
+  "supplier_notification_preferences": {
+    "model": "SupplierNotificationPreference",
+    "module": "models.suppliers",
+    "schema": "supplier"
+  },
+  "supplier_profiles": {
+    "model": "SupplierProfile",
+    "module": "models.suppliers",
+    "schema": "supplier"
+  },
+  "ai_generation_logs": {
+    "model": "AIGenerationLog",
+    "module": "models.ai_upload",
+    "schema": "ai"
+  },
+  "ai_staging_products": {
+    "model": "AIStagingProduct",
+    "module": "models.ai_upload",
+    "schema": "ai"
+  },
+  "ai_staging_variants": {
+    "model": "AIStagingVariant",
+    "module": "models.ai_upload",
+    "schema": "ai"
+  },
+  "ai_upload_jobs": {
+    "model": "AIUploadJob",
+    "module": "models.ai_upload",
+    "schema": "ai"
+  },
+  "country_communications": {
+    "model": "CountryCommunication",
+    "module": "models.countries",
+    "schema": "country"
+  },
+  "country_configs": {
+    "model": "CountryConfig",
+    "module": "models.countries",
+    "schema": "country"
+  },
+  "country_gateway_credentials": {
+    "model": "CountryGatewayCredentials",
+    "module": "models.countries",
+    "schema": "country"
+  },
+  "messages": {
+    "model": "Message",
+    "module": "models.countries",
+    "schema": "communication"
+  },
+  "payout_rules": {
+    "model": "PayoutRule",
+    "module": "models.countries",
+    "schema": "finance"
+  },
+  "payout_rule_categories": {
+    "model": "PayoutRuleCategory",
+    "module": "models.countries",
+    "schema": "finance"
+  },
+  "payout_rule_products": {
+    "model": "PayoutRuleProduct",
+    "module": "models.countries",
+    "schema": "finance"
+  },
+  "shipping_rules": {
+    "model": "ShippingRule",
+    "module": "models.countries",
+    "schema": "logistics"
+  },
+  "tax_rules": {
+    "model": "TaxRule",
+    "module": "models.countries",
+    "schema": "configuration"
+  },
+  "country_category_tax_rates": {
+    "model": "CountryCategoryTaxRate",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_cities": {
+    "model": "CountryCity",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_commission_rates": {
+    "model": "CountryCommissionRate",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_commission_rate_history": {
+    "model": "CountryCommissionRateHistory",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_communication_threads": {
+    "model": "CountryCommunicationThread",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_config_versions": {
+    "model": "CountryConfigVersion",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_feature_flags": {
+    "model": "CountryFeatureFlag",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_gateway_configs": {
+    "model": "CountryGatewayConfig",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_holiday_calendars": {
+    "model": "CountryHolidayCalendar",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_legal_contracts": {
+    "model": "CountryLegalContract",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_localization": {
+    "model": "CountryLocalization",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_logistics_zones": {
+    "model": "CountryLogisticsZone",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_payment_aliases": {
+    "model": "CountryPaymentAlias",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_payout_rules": {
+    "model": "CountryPayoutRule",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "country_staff_assignments": {
+    "model": "CountryStaffAssignment",
+    "module": "models.country_enhancements",
+    "schema": "country"
+  },
+  "cross_country_customer_sessions": {
+    "model": "CrossCountryCustomerSession",
+    "module": "models.country_enhancements",
+    "schema": "customer"
+  },
+  "logistics_partner_kyc_requirements": {
+    "model": "LogisticsPartnerKYCRequirement",
+    "module": "models.country_enhancements",
+    "schema": "logistics"
+  },
+  "oman_delivery_zones": {
+    "model": "OmanDeliveryZone",
+    "module": "models.country_enhancements",
+    "schema": "logistics"
+  },
+  "supplier_kyc_requirements": {
+    "model": "SupplierKYCRequirement",
+    "module": "models.country_enhancements",
+    "schema": "supplier"
+  },
+  "country_map_configs": {
+    "model": "CountryMapConfig",
+    "module": "models.country_control",
+    "schema": "country"
+  },
+  "data_residency_records": {
+    "model": "DataResidencyRecord",
+    "module": "models.country_control",
+    "schema": "country"
+  },
+  "legal_contract_templates": {
+    "model": "LegalContractTemplate",
+    "module": "models.country_control",
+    "schema": "configuration"
+  },
+  "logistics_partner_locations": {
+    "model": "LogisticsPartnerLocation",
+    "module": "models.country_control",
+    "schema": "logistics"
+  },
+  "parcel_location_trackers": {
+    "model": "ParcelLocationTracker",
+    "module": "models.country_control",
+    "schema": "logistics"
+  },
+  "payment_orchestrator_sync": {
+    "model": "PaymentOrchestratorSync",
+    "module": "models.country_control",
+    "schema": "finance"
+  },
+  "shift_handover_logs": {
+    "model": "ShiftHandoverLog",
+    "module": "models.country_control",
+    "schema": "hr"
+  },
+  "shop_warehouse_locations": {
+    "model": "ShopWarehouseLocation",
+    "module": "models.country_control",
+    "schema": "logistics"
+  },
+  "supplier_onboarding_sync": {
+    "model": "SupplierOnboardingSync",
+    "module": "models.country_control",
+    "schema": "supplier"
+  },
+  "announcements": {
+    "model": "Announcement",
+    "module": "models.communication",
+    "schema": "configuration"
+  },
+  "communication_audit_trail": {
+    "model": "CommunicationAuditTrail",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "employee_communication_threads": {
+    "model": "EmployeeCommunicationThread",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "external_contact_masking": {
+    "model": "ExternalContactMasking",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "faqs": {
+    "model": "FAQ",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "help_categories": {
+    "model": "HelpCategory",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "internal_channels": {
+    "model": "InternalChannel",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "internal_channel_members": {
+    "model": "InternalChannelMember",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "internal_messages": {
+    "model": "InternalMessage",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "notifications": {
+    "model": "Notification",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "proxy_call_logs": {
+    "model": "ProxyCallLog",
+    "module": "models.communication",
+    "schema": "supplier"
+  },
+  "proxy_channels": {
+    "model": "ProxyChannel",
+    "module": "models.communication",
+    "schema": "supplier"
+  },
+  "proxy_messages": {
+    "model": "ProxyMessage",
+    "module": "models.communication",
+    "schema": "supplier"
+  },
+  "proxy_sessions": {
+    "model": "ProxySession",
+    "module": "models.communication",
+    "schema": "supplier"
+  },
+  "ticket_messages": {
+    "model": "TicketMessage",
+    "module": "models.communication",
+    "schema": "communication"
+  },
+  "alumni_network": {
+    "model": "AlumniNetwork",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "coi_reports": {
+    "model": "COIReport",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "disciplinary_cases": {
+    "model": "DisciplinaryCase",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "dynamic_qr_sessions": {
+    "model": "DynamicQRSession",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employees": {
+    "model": "Employee",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_addresses": {
+    "model": "EmployeeAddress",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_assets": {
+    "model": "EmployeeAsset",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_attendance": {
+    "model": "EmployeeAttendance",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_biometrics": {
+    "model": "EmployeeBiometric",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_certifications": {
+    "model": "EmployeeCertification",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_dependents": {
+    "model": "EmployeeDependent",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_documents": {
+    "model": "EmployeeDocument",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_leave_ledgers": {
+    "model": "EmployeeLeaveLedger",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_leave_requests": {
+    "model": "EmployeeLeaveRequest",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_relations": {
+    "model": "EmployeeRelation",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_roles": {
+    "model": "EmployeeRole",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_shift_rosters": {
+    "model": "EmployeeShiftRoster",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_work_logs": {
+    "model": "EmployeeWorkLog",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "geo_fence_logs": {
+    "model": "GeoFenceLog",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "offboarding_cases": {
+    "model": "OffboardingCase",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "offices": {
+    "model": "Office",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "org_units": {
+    "model": "OrgUnit",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "physical_id_cards": {
+    "model": "PhysicalIDCard",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "employee_travel_requests": {
+    "model": "TravelRequest",
+    "module": "models.employee_models",
+    "schema": "hr"
+  },
+  "api_keys": {
+    "model": "APIKey",
+    "module": "models.admin",
+    "schema": "security"
+  },
+  "admin_activity_logs": {
+    "model": "AdminActivityLog",
+    "module": "models.admin",
+    "schema": "audit"
+  },
+  "admin_analytics_snapshots": {
+    "model": "AdminAnalyticsSnapshot",
+    "module": "models.admin",
+    "schema": "audit"
+  },
+  "admin_change_audit_logs": {
+    "model": "AdminChangeAuditLog",
+    "module": "models.admin",
+    "schema": "audit"
+  },
+  "badge_billing_records": {
+    "model": "BadgeBillingRecord",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "badge_tiers": {
+    "model": "BadgeTier",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "badge_transactions": {
+    "model": "BadgeTransaction",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "chatbot_query_events": {
+    "model": "ChatbotQueryEvent",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "commission_badge_tiers": {
+    "model": "CommissionBadgeTier",
+    "module": "models.admin",
+    "schema": "finance"
+  },
+  "commission_global_configs": {
+    "model": "CommissionGlobalConfig",
+    "module": "models.admin",
+    "schema": "finance"
+  },
+  "coupon_usage": {
+    "model": "CouponUsage",
+    "module": "models.admin",
+    "schema": "commerce"
+  },
+  "email_provider_configs": {
+    "model": "EmailProviderConfig",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "employee_expenses": {
+    "model": "EmployeeExpense",
+    "module": "models.admin",
+    "schema": "hr"
+  },
+  "finance_bank_accounts": {
+    "model": "FinanceBankAccount",
+    "module": "models.admin",
+    "schema": "finance"
+  },
+  "logistics_cod_remittance_receipts": {
+    "model": "LogisticsCODRemittanceReceipt",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "logistics_partner_bank_accounts": {
+    "model": "LogisticsPartnerBankAccount",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "logistics_partner_documents": {
+    "model": "LogisticsPartnerDocument",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "logistics_settlements": {
+    "model": "LogisticsSettlement",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "normalized_webhook_events": {
+    "model": "NormalizedWebhookEvent",
+    "module": "models.admin",
+    "schema": "finance"
+  },
+  "payment_provider_configs": {
+    "model": "PaymentProviderConfig",
+    "module": "models.admin",
+    "schema": "finance"
+  },
+  "processed_webhook_events": {
+    "model": "ProcessedWebhookEvent",
+    "module": "models.admin",
+    "schema": "finance"
+  },
+  "product_verifications": {
+    "model": "ProductVerification",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "promotion_engine_configs": {
+    "model": "PromotionEngineConfig",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "promotion_ledger_entries": {
+    "model": "PromotionLedgerEntry",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "promotion_order_tiers": {
+    "model": "PromotionOrderTier",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "push_notification_tokens": {
+    "model": "PushNotificationToken",
+    "module": "models.admin",
+    "schema": "communication"
+  },
+  "retention_job_runs": {
+    "model": "RetentionJobRun",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "role_permission_settings": {
+    "model": "RolePermissionSetting",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "shipment_confirmations": {
+    "model": "ShipmentConfirmation",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "shipping_carriers": {
+    "model": "ShippingCarrier",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "shipping_zones": {
+    "model": "ShippingZone",
+    "module": "models.admin",
+    "schema": "logistics"
+  },
+  "supplier_bank_accounts": {
+    "model": "SupplierBankAccount",
+    "module": "models.admin",
+    "schema": "supplier"
+  },
+  "supplier_country_commissions": {
+    "model": "SupplierCountryCommission",
+    "module": "models.admin",
+    "schema": "supplier"
+  },
+  "supplier_disputes": {
+    "model": "SupplierDispute",
+    "module": "models.admin",
+    "schema": "supplier"
+  },
+  "system_alerts": {
+    "model": "SystemAlert",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "system_settings": {
+    "model": "SystemSetting",
+    "module": "models.admin",
+    "schema": "configuration"
+  },
+  "ticket_replies": {
+    "model": "TicketReply",
+    "module": "models.admin",
+    "schema": "communication"
+  },
+  "credit_card_bins": {
+    "model": "CreditCardBin",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "dlp_violations": {
+    "model": "DLPViolation",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "device_fingerprints": {
+    "model": "DeviceFingerprint",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_alerts": {
+    "model": "FraudAlert",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_blacklist": {
+    "model": "FraudBlacklist",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_cases": {
+    "model": "FraudCase",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_case_assignments": {
+    "model": "FraudCaseAssignment",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_events": {
+    "model": "FraudEvent",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_rules": {
+    "model": "FraudRule",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "fraud_scoring_logs": {
+    "model": "FraudScoringLog",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "ip_account_linkages": {
+    "model": "IPAccountLinkage",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "ip_reputations": {
+    "model": "IPReputation",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "logistics_fraud_indicators": {
+    "model": "LogisticsFraudIndicator",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "manual_review_queue": {
+    "model": "ManualReviewQueue",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "meeting_action_items": {
+    "model": "MeetingActionItem",
+    "module": "models.fraud",
+    "schema": "hr"
+  },
+  "meeting_recordings": {
+    "model": "MeetingRecording",
+    "module": "models.fraud",
+    "schema": "hr"
+  },
+  "meeting_transcripts": {
+    "model": "MeetingTranscript",
+    "module": "models.fraud",
+    "schema": "hr"
+  },
+  "return_abuse_patterns": {
+    "model": "ReturnAbusePattern",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "supplier_fraud_indicators": {
+    "model": "SupplierFraudIndicator",
+    "module": "models.fraud",
+    "schema": "supplier"
+  },
+  "fraud_velocity_counters": {
+    "model": "VelocityCounter",
+    "module": "models.fraud",
+    "schema": "security"
+  },
+  "campaign_recipients": {
+    "model": "CampaignRecipient",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "email_campaigns": {
+    "model": "EmailCampaign",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "email_campaign_logs": {
+    "model": "EmailCampaignLog",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "email_delivery_events": {
+    "model": "EmailDeliveryEvent",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "email_runtime_config": {
+    "model": "EmailRuntimeConfig",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "email_suppressions": {
+    "model": "EmailSuppression",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "email_templates": {
+    "model": "EmailTemplate",
+    "module": "models.marketing",
+    "schema": "configuration"
+  },
+  "flash_sales": {
+    "model": "FlashSale",
+    "module": "models.marketing",
+    "schema": "commerce"
+  },
+  "flash_sale_items": {
+    "model": "FlashSaleItem",
+    "module": "models.marketing",
+    "schema": "commerce"
+  },
+  "newsletter_subscribers": {
+    "model": "NewsletterSubscriber",
+    "module": "models.marketing",
+    "schema": "communication"
+  },
+  "permissions": {
+    "model": "Permission",
+    "module": "models.permissions",
+    "schema": "configuration"
+  },
+  "permission_audit_log": {
+    "model": "PermissionAuditLog",
+    "module": "models.permissions",
+    "schema": "audit"
+  },
+  "permission_categories": {
+    "model": "PermissionCategory",
+    "module": "models.permissions",
+    "schema": "configuration"
+  },
+  "role_permission_assignments": {
+    "model": "RolePermissionAssignment",
+    "module": "models.permissions",
+    "schema": "configuration"
+  },
+  "user_permission_overrides": {
+    "model": "UserPermissionOverride",
+    "module": "models.permissions",
+    "schema": "core"
+  },
+  "ap_bills": {
+    "model": "APBill",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "ap_ledger_entries": {
+    "model": "APLedger",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "ar_invoices": {
+    "model": "ARInvoice",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "ar_ledger_entries": {
+    "model": "ARLedgerEntry",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "accounts": {
+    "model": "Account",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "account_balances": {
+    "model": "AccountBalance",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "account_groups": {
+    "model": "AccountGroup",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "accruals": {
+    "model": "Accrual",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "bank_accounts": {
+    "model": "BankAccount",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "bank_mapping_rules": {
+    "model": "BankMappingRule",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "bank_reconciliations": {
+    "model": "BankReconciliation",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "bank_statement_imports": {
+    "model": "BankStatementImport",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "bank_statement_lines": {
+    "model": "BankStatementLine",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "bank_transactions": {
+    "model": "BankTransaction",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "budgets": {
+    "model": "Budget",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "cash_accounts": {
+    "model": "CashAccount",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "cash_flow_forecasts": {
+    "model": "CashFlowForecast",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "cash_position_snapshots": {
+    "model": "CashPositionSnapshot",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "cash_transactions": {
+    "model": "CashTransaction",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "cost_centers": {
+    "model": "CostCenter",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "customers": {
+    "model": "Customer",
+    "module": "models.finance",
+    "schema": "customer"
+  },
+  "finance_audit_logs": {
+    "model": "FinanceAuditLog",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "finance_automation_logs": {
+    "model": "FinanceAutomationLog",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "financial_reports": {
+    "model": "FinancialReport",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "fiscal_periods": {
+    "model": "FiscalPeriod",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "fixed_assets": {
+    "model": "FixedAsset",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "gateway_settlement_schedules": {
+    "model": "GatewaySettlementSchedule",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "invoices": {
+    "model": "Invoice",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "invoice_items": {
+    "model": "InvoiceItem",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "journal_entries": {
+    "model": "JournalEntry",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "journal_entry_lines": {
+    "model": "JournalEntryLine",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "payout_batches": {
+    "model": "PayoutBatch",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "payout_batch_items": {
+    "model": "PayoutBatchItem",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "pending_journal_entries": {
+    "model": "PendingJournalEntry",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "recurring_templates": {
+    "model": "RecurringTemplate",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "refund_ledger": {
+    "model": "RefundLedger",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "scanned_expenses": {
+    "model": "ScannedExpense",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "supplier_settlements": {
+    "model": "SupplierSettlement",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "transaction_ledgers": {
+    "model": "TransactionLedger",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "treasury_accounts": {
+    "model": "TreasuryAccount",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "treasury_transactions": {
+    "model": "TreasuryTransaction",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "vat_remittances": {
+    "model": "VATRemittance",
+    "module": "models.finance",
+    "schema": "treasury"
+  },
+  "vendors": {
+    "model": "Vendor",
+    "module": "models.finance",
+    "schema": "finance"
+  },
+  "media_assets": {
+    "model": "MediaAsset",
+    "module": "models.media_models",
+    "schema": "media"
+  },
+  "media_upload_sessions": {
+    "model": "MediaUploadSession",
+    "module": "models.media_models",
+    "schema": "configuration"
+  },
+  "upload_jobs": {
+    "model": "UploadJob",
+    "module": "models.upload_job",
+    "schema": "ai"
+  },
+  "commission_agreements": {
+    "model": "CommissionAgreement",
+    "module": "models.commission",
+    "schema": "finance"
+  },
+  "commission_category_rates": {
+    "model": "CommissionCategoryRate",
+    "module": "models.commission",
+    "schema": "finance"
+  },
+  "commission_ledger_entries": {
+    "model": "CommissionLedgerEntry",
+    "module": "models.commission",
+    "schema": "finance"
+  },
+  "product_commission_overrides": {
+    "model": "ProductCommissionOverride",
+    "module": "models.commission",
+    "schema": "finance"
+  },
+  "document_verifications": {
+    "model": "DocumentVerification",
+    "module": "models.onboarding",
+    "schema": "configuration"
+  },
+  "kyc_verifications": {
+    "model": "KYCVerification",
+    "module": "models.onboarding",
+    "schema": "configuration"
+  },
+  "ocr_results": {
+    "model": "OCRResult",
+    "module": "models.onboarding",
+    "schema": "configuration"
+  },
+  "onboarding_pipelines": {
+    "model": "OnboardingPipeline",
+    "module": "models.onboarding",
+    "schema": "configuration"
+  },
+  "onboarding_steps": {
+    "model": "OnboardingStep",
+    "module": "models.onboarding",
+    "schema": "configuration"
+  },
+  "incident_action_items": {
+    "model": "IncidentActionItem",
+    "module": "models.incident",
+    "schema": "configuration"
+  },
+  "incident_threads": {
+    "model": "IncidentThread",
+    "module": "models.incident",
+    "schema": "configuration"
+  },
+  "incident_war_rooms": {
+    "model": "IncidentWarRoom",
+    "module": "models.incident",
+    "schema": "configuration"
+  },
+  "war_room_templates": {
+    "model": "WarRoomTemplate",
+    "module": "models.incident",
+    "schema": "configuration"
+  }
+}

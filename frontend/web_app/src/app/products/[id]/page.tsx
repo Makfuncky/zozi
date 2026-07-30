@@ -656,7 +656,7 @@ export default function ProductDetailPage() {
                       onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
                       className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
                         selectedSize === size
-                          ? "border-primary bg-primary text-on-brand shadow-primary/50"
+                          ? "border-primary bg-primary text-on-primary shadow-primary/50"
                           : "border-border bg-surface-1 text-text-muted hover:border-border-light hover:text-text"
                       }`}
                     >
@@ -757,10 +757,10 @@ export default function ProductDetailPage() {
                     : `${tr("inStock")} (${stock} ${tr("units")})`}
                 </span>
               </div>
-              {product.brand && (
+              {product.primary && (
                 <span className="flex items-center gap-1 text-[11px] text-text-faint">
                   <Package className="w-3 h-3 text-primary/60" />
-                  {product.brand}
+                  {product.primary}
                 </span>
               )}
             </div>
@@ -856,7 +856,7 @@ export default function ProductDetailPage() {
                         className="object-cover h-full w-full"
                       />
                     ) : (
-                      <span className="text-brand font-bold text-base">
+                      <span className="text-primary font-bold text-base">
                         {supplierDisplayName.slice(0, 2).toUpperCase()}
                       </span>
                     )}
@@ -1016,7 +1016,7 @@ export default function ProductDetailPage() {
                  </h3>
                  {!isLoggedIn ? (
                    <p className="text-text-faint text-sm">
-                     <button onClick={() => router.push("/login")} className="theme-link-brand">{tr("signIn")}</button>{" "}{tr("toLeaveReview")}
+                     <button onClick={() => router.push("/login")} className="theme-link-primary">{tr("signIn")}</button>{" "}{tr("toLeaveReview")}
                    </p>
                  ) : (
                    <form onSubmit={submitReview} className="space-y-4">

@@ -55,23 +55,25 @@ def _slugify(name: str) -> str:
     return slug.strip("-")[:60]
 
 
-def _save_upload(file: UploadFile, job_dir: str) -> str:
-    os.makedirs(job_dir, exist_ok=True)
+def _save_upload(file: UploadFile, job_dir: str) -> tuple[str, str, bytes]:
+    """Save uploaded file through storage abstraction.
+
+    Returns ``(storage_key, public_url, content_bytes)``.
+    """
+    from services.storage import storage as _storage
+
     ext = os.path.splitext(file.filename or "")[1] or ".bin"
     fname = f"{uuid.uuid4().hex}{ext}"
-    path = os.path.join(job_dir, fname)
+    key = f"ai_upload/{os.path.basename(job_dir)}/{fname}"
     content = file.file.read()
-    with open(path, "wb") as fh:
-        fh.write(content)
-    return path
+    mime_type = file.content_type or "application/octet-stream"
+    url = _storage.save(key, content, content_type=mime_type)
+    return key, url, content
 
 
-def _enrich_one(image_path: str, idx: int, job: AIUploadJob) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
+def _enrich_one(img_bytes: bytes, idx: int, job: AIUploadJob, image_url: str) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     """Run AI enrichment for a single image. Returns staging product, its variants, and logs."""
     from services import ai_service
-
-    with open(image_path, "rb") as fh:
-        img_bytes = fh.read()
 
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)
@@ -111,7 +113,7 @@ def _enrich_one(image_path: str, idx: int, job: AIUploadJob) -> tuple[AIStagingP
         tags=tags,
         sizes=sizes,
         materials=materials,
-        image_url=image_path,
+        image_url=image_url,
         ai_description=description,
         variant_axes={"size": sizes, "color": [color] if color else [], "material": materials},
         attributes=None,
@@ -140,7 +142,7 @@ def _enrich_one(image_path: str, idx: int, job: AIUploadJob) -> tuple[AIStagingP
                 product_code=None,
                 price=None,
                 stock=0,
-                media_url=image_path,
+                media_url=image_url,
                 attributes_json=None,
                 is_active=True,
                 confidence_score=confidence_score,
@@ -172,17 +174,22 @@ def process_ai_upload_job(job_id: int) -> None:
         except (json.JSONDecodeError, TypeError):
             parsed = []
 
-        job_dir = os.path.join(str(BASE_DIR), "uploads", "ai_upload", str(job.id))
         staging_products: list[AIStagingProduct] = []
         try:
             for idx, media in enumerate(parsed):
-                image_path = media.get("path")
-                if not image_path or not os.path.isfile(image_path):
+                image_bytes_str = media.get("content") or media.get("bytes")
+                image_url = media.get("url", "")
+                if image_bytes_str:
+                    img_bytes = bytes(image_bytes_str) if isinstance(image_bytes_str, str) else image_bytes_str
+                elif media.get("key"):
+                    from services.storage import storage as _storage
+                    img_bytes = _storage.read(media["key"])
+                else:
                     continue
                 try:
-                    staging, variants, logs = _enrich_one(image_path, idx, job)
+                    staging, variants, logs = _enrich_one(img_bytes, idx, job, image_url)
                 except Exception as exc:  # per-image isolation
-                    logger.warning("AI enrichment failed for image %s in job %s: %s", image_path, job_id, exc)
+                    logger.warning("AI enrichment failed for image %s in job %s: %s", image_url, job_id, exc)
                     db.add(AIGenerationLog(
                         job_id=job.id, field="error", model_used="worker",
                         prompt_hash=None, tokens_used=None, cost=None, confidence=None,
@@ -198,7 +205,7 @@ def process_ai_upload_job(job_id: int) -> None:
                 for log in logs:
                     db.add(log)
                 staging_products.append(staging)
-                media_list.append({"path": image_path, "staging_id": staging.id})
+                media_list.append({"path": image_url, "staging_id": staging.id})
 
             job.source_media_json = json.dumps(media_list)
             if staging_products:
@@ -313,12 +320,11 @@ async def create_ai_upload_job(
     db.add(job)
     db.flush()
 
-    job_dir = os.path.join(str(BASE_DIR), "uploads", "ai_upload", str(job.id))
     media_list = []
     for img in images:
         try:
-            path = _save_upload(img, job_dir)
-            media_list.append({"filename": img.filename, "path": path})
+            key, url, content = _save_upload(img, str(job.id))
+            media_list.append({"filename": img.filename, "key": key, "url": url})
         except Exception as exc:
             logger.warning("Failed to save upload %s: %s", img.filename, exc)
     job.source_media_json = json.dumps(media_list)

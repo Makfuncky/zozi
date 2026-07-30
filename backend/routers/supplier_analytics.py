@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from db.database import get_db
-from db.models import Order, OrderItem, Product, SupplierProfile, User
+from models import Order, OrderItem, Product, SupplierProfile, User
 from utils.dependencies import require_supplier
 
 router = APIRouter()

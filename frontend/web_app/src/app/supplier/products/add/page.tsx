@@ -3,6 +3,14 @@
 import { Button } from "@/components/ui/Button";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useUploadOrchestrator } from '@/lib/uploadOrchestrator';
+import { useBgABTest } from '@/lib/useBgABTest';
+import { useBgRecommendations } from '@/lib/useBgRecommendations';
+import BgStrategyOnboardingTooltip from '@/components/supplier/BgStrategyOnboardingTooltip';
+import ProcessingModal from '@/components/supplier/ProcessingModal';
+import AIResultsModal from '@/components/supplier/AIResultsModal';
+import QuantityModal from '@/components/supplier/QuantityModal';
+import VerifyPublishModal from '@/components/supplier/VerifyPublishModal';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SupplierLayout from '@/components/SupplierLayout';
@@ -13,6 +21,7 @@ import { getSuggestedVariants } from '@/lib/variantConfig';
 import { resolveCategorySlug, getMatrixAxes, getSpecGroupsForCategory } from '@/lib/categoryVariantBridge';
 import SmartMediaUpload from '@/components/supplier/SmartMediaUpload';
 import VoiceProductInput from '@/components/supplier/VoiceProductInput';
+import VoiceToCatalogPipeline from '@/components/supplier/VoiceToCatalogPipeline';
 import VerificationPopup from '@/components/supplier/VerificationPopup';
 import SmartVariantMatrix from '@/components/supplier/SmartVariantMatrix';
 import SmartPricingPanel from '@/components/supplier/SmartPricingPanel';
@@ -28,7 +37,7 @@ import {
   ListChecks, Grid2x2, Plus, Trash2,
   Gauge, Globe, Loader2, PenLine, Save, Edit3,
   Check, ChevronDown, ChevronRight, BadgeCheck, TrendingUp, AlertCircle,
-  BarChart3, Home, Star,
+  BarChart3, Home, Star, Info,
 } from '@/lib/icons';
 
 /* ════════════════════════ Types ════════════════════════ */
@@ -93,12 +102,12 @@ interface VoiceData {
 // Six tested background-removal pipelines (br_05..br_13) implemented as
 // lightweight VPS-safe strategies in backend/services/bg_removal_service.py.
 const BG_MODELS = [
-  { key: 'clean_commercial', label: 'Clean · br05', icon: Wand2 },
-  { key: 'precision_geometry', label: 'Geometry · br06', icon: Layers },
-  { key: 'birefnet_production', label: 'Production · br08', icon: Zap },
-  { key: 'ultimate_gaps', label: 'Gaps · br11', icon: Sparkles },
-  { key: 'marketing_variants', label: 'Marketing · br12', icon: Tag },
-  { key: 'lite_variants', label: 'Lite · br13', icon: Camera },
+  { key: 'clean_commercial', label: 'Clean · br05', icon: Wand2, bestFor: ['clothing'] as string[], tooltip: 'Recommended for clothing & textiles. Clean, artifact-free edges with 39% foreground coverage.' },
+  { key: 'precision_geometry', label: 'Geometry · br06', icon: Layers, bestFor: ['electronics', 'beauty'] as string[], tooltip: 'Recommended for electronics & beauty. Precision geometry preserves fine details with zero artifacts.' },
+  { key: 'birefnet_production', label: 'Production · br08', icon: Zap, bestFor: [] as string[], tooltip: 'Highest alpha confidence (1.0). Best for complex backgrounds and wood textures.' },
+  { key: 'ultimate_gaps', label: 'Gaps · br11', icon: Sparkles, bestFor: [] as string[], tooltip: 'Fast all-rounder (2.6s). Best for unknown product types or textured backgrounds.' },
+  { key: 'marketing_variants', label: 'Marketing · br12', icon: Tag, bestFor: [] as string[], tooltip: 'Aggressive artifact & floating-object removal. Best for clean marketing shots.' },
+  { key: 'lite_variants', label: 'Lite · br13', icon: Camera, bestFor: [] as string[], tooltip: 'Smallest memory footprint. Best for low-RAM VPS or batch processing.' },
 ];
 
 const IMAGE_TOOLS = [
@@ -173,6 +182,28 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false);
   const [createMore, setCreateMore] = useState(false);
 
+  // ── BG A/B Test (auto-select best strategy) ──────────
+  const {
+    runABTest,
+    applyWinnerBg,
+    testing: abTesting,
+    lastResult: abTestResult,
+    error: abTestError,
+  } = useBgABTest();
+
+  // ── BG Recommendations (metrics-driven per-category scores) ──
+  const {
+    recommendations,
+    loading: recsLoading,
+    getStrategyMetrics,
+    getRecommendedStrategy,
+  } = useBgRecommendations();
+
+  // ── BG Onboarding / Why-this UI state ─────────────────────
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showWhyThis, setShowWhyThis] = useState(false);
+  const [autoSelectedWinner, setAutoSelectedWinner] = useState<string | null>(null);
+
   // ── AI Auto-fill ───────────────────────────────────────
   const [aiLoading, setAiLoading] = useState(false);
   const [aiNote, setAiNote] = useState('');
@@ -231,6 +262,20 @@ export default function AddProduct() {
   const [nameAr, setNameAr] = useState('');
   const [descriptionAr, setDescriptionAr] = useState('');
   const [translating, setTranslating] = useState(false);
+
+  // ── Upload orchestrator (5-step modal flow) ────────────
+  const {
+    state: uploadState,
+    setImage: orchestratorSetImage,
+    updateField,
+    setQuantityForColor,
+    advanceColor: advanceColorStep,
+    goToPhotoEdit,
+    goToAiResults,
+    goToQuantity,
+    goToVerify,
+    reset,
+  } = useUploadOrchestrator();
 
   // ── New flow orchestration ─────────────────────────────
   const [showMediaUpload, setShowMediaUpload] = useState(false);
@@ -357,9 +402,42 @@ export default function AddProduct() {
       setAiNote('Photo ready. AI analyzing…');
       speakGuidance('Photo uploaded. AI is analyzing your product.');
       setShowMediaUpload(false);
-      // Streamlined flow: skip the interrupting action picker and go straight
-      // into AI analysis → auto-opened variant matrix (faster happy path).
-      setTimeout(() => handleAiFill(), 300);
+      // Show onboarding tooltip on first upload
+      try {
+        const seen = localStorage.getItem('zozi_bg_onboarding_seen');
+        if (!seen) {
+          setShowOnboarding(true);
+          localStorage.setItem('zozi_bg_onboarding_seen', '1');
+        }
+      } catch { }
+      // Send to orchestrator for parallel BG removal + AI analysis
+      orchestratorSetImage(file, url);
+      // Auto-run A/B test across 6 BG strategies and apply the winner
+      runABTest(file, formData.category || undefined).then((winner) => {
+        if (winner) {
+          setAutoSelectedWinner(winner);
+          setShowWhyThis(true);
+          setBgLoading(winner);
+          applyWinnerBg(file, winner)
+            .then((blob) => {
+              if (blob) {
+                const blobUrl = URL.createObjectURL(blob);
+                // Use ref for processedImageUrl to avoid stale closure
+                if (selectedImageRef.current) {
+                  setProcessedImageBlob(blob);
+                  setProcessedImageUrl(blobUrl);
+                  setActiveBgModel(winner);
+                  setImagePreview(blobUrl);
+                  setAiNote(`✨ Auto-selected BG strategy: ${winner.replace(/_/g, ' ')}`);
+                }
+              }
+            })
+            .catch(() => {
+              setAiNote('⚠️ BG A/B test completed but auto-apply failed. Try manual BG selection.');
+            })
+            .finally(() => setBgLoading(null));
+        }
+      });
     };
     reader.readAsDataURL(file);
   };
@@ -1146,6 +1224,13 @@ export default function AddProduct() {
           }
         />
 
+        {/* ── BG Strategy Onboarding Tooltip ── */}
+        <BgStrategyOnboardingTooltip
+          isOpen={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          category={formData.category || undefined}
+        />
+
         {/* ── Flow Progress Indicator ── */}
         <div className="flex items-center justify-center gap-0.5 sm:gap-2 mb-4 text-[11px] font-medium">
           {[
@@ -1170,8 +1255,61 @@ export default function AddProduct() {
         {aiNote && (
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/8 border border-primary/20 text-sm text-primary mb-3">
             <Sparkles className="w-4 h-4 shrink-0" /> {aiNote}
+            {showWhyThis && autoSelectedWinner && (
+              <button
+                type="button"
+                onClick={() => setShowWhyThis((p) => !p)}
+                className="ml-auto inline-flex items-center gap-1 text-[11px] text-primary/80 hover:text-primary transition-colors"
+                title="Why this strategy?"
+              >
+                <Info className="w-3.5 h-3.5" /> Why this?
+              </button>
+            )}
           </div>
         )}
+
+        {/* ── Why this? expander ── */}
+        {showWhyThis && autoSelectedWinner && (() => {
+          const cat = formData.category || 'unknown';
+          const metrics = getStrategyMetrics(autoSelectedWinner, cat);
+          if (!metrics) return null;
+          return (
+            <div className="px-4 py-3 rounded-xl bg-surface-1 border border-border/60 text-xs text-text-muted mb-3 animate-in fade-in slide-in-from-top-1">
+              <div className="flex items-center gap-2 mb-2">
+                <BarChart3 className="w-3.5 h-3.5 text-primary" />
+                <span className="font-semibold text-text text-xs">
+                  {autoSelectedWinner.replace(/_/g, ' ')} selected for <span className="capitalize">{cat.toLowerCase()}</span>
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="theme-card p-2">
+                  <p className="text-[10px] text-text-faint uppercase tracking-wide">SSIM</p>
+                  <p className="text-sm font-bold text-text">{metrics.ssim.toFixed(3)}</p>
+                </div>
+                <div className="theme-card p-2">
+                  <p className="text-[10px] text-text-faint uppercase tracking-wide">PSNR</p>
+                  <p className="text-sm font-bold text-text">{metrics.psnr_rgb_db.toFixed(1)} dB</p>
+                </div>
+                <div className="theme-card p-2">
+                  <p className="text-[10px] text-text-faint uppercase tracking-wide">Edge IoU</p>
+                  <p className="text-sm font-bold text-text">{(metrics.edge_band_iou * 100).toFixed(1)}%</p>
+                </div>
+                <div className="theme-card p-2">
+                  <p className="text-[10px] text-text-faint uppercase tracking-wide">Timing</p>
+                  <p className="text-sm font-bold text-text">{metrics.timing_s.toFixed(2)}s</p>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-3 text-[11px]">
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Coverage: {metrics.coverage_pct.toFixed(1)}%
+                </span>
+                <span className="text-text-faint">
+                  Score weights: SSIM 50% · PSNR 25% · Edge IoU 25%
+                </span>
+              </div>
+            </div>
+          );
+        })()}
 
         {error && (
           <div className="px-4 py-3 theme-alert-danger rounded-xl flex items-center justify-between text-sm">
@@ -1308,13 +1446,47 @@ export default function AddProduct() {
                 {/* Background removal models */}
                 <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-border/10">
                   <span className="text-[11px] font-medium text-text-muted mr-1">BG:</span>
-                  {BG_MODELS.map((mdl) => (
-                    <button key={mdl.key} type="button" onClick={() => handleRemoveBgModel(mdl.key)} disabled={bgLoading !== null}
-                      className={`theme-btn-secondary px-2 py-1.5 text-xs ${activeBgModel === mdl.key ? 'bg-accent text-white' : ''}`}>
-                      {bgLoading === mdl.key ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                      {mdl.label}
-                    </button>
-                  ))}
+                  {BG_MODELS.map((mdl) => {
+                    const selectedCat = formData.category?.toLowerCase() || '';
+                    const isBestForCategory = mdl.bestFor.some(cat => selectedCat.includes(cat));
+                    const metrics = getStrategyMetrics(mdl.key, selectedCat);
+                    return (
+                      <div key={mdl.key} className="relative group">
+                        <button type="button" onClick={() => handleRemoveBgModel(mdl.key)} disabled={bgLoading !== null}
+                          className={`theme-btn-secondary px-2 py-1.5 text-xs relative ${activeBgModel === mdl.key ? 'bg-accent text-white' : ''} ${isBestForCategory ? 'ring-1 ring-emerald-500/40' : ''}`}>
+                          {bgLoading === mdl.key ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                          {mdl.label}
+                          {isBestForCategory && (
+                            <span className="absolute -top-1.5 -right-1.5 inline-flex items-center px-1 py-0.5 rounded-full bg-emerald-500 text-[8px] font-bold text-white leading-none shadow-sm">
+                              Best
+                            </span>
+                          )}
+                        </button>
+                        {/* Metrics badge */}
+                        {metrics && (
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 hidden group-hover:flex items-center gap-1 z-50 bg-gray-900 text-white text-[9px] rounded px-1.5 py-1 shadow-xl whitespace-nowrap">
+                            <span className="text-emerald-400">{metrics.coverage_pct.toFixed(0)}%</span>
+                            <span className="text-gray-500">·</span>
+                            <span className="text-gray-300">{metrics.timing_s.toFixed(2)}s</span>
+                          </div>
+                        )}
+                        {/* Hover tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50 w-56">
+                          <div className="bg-gray-900 text-white text-[11px] rounded-lg px-3 py-2 shadow-xl">
+                            <p className="font-semibold text-[12px] mb-1">{mdl.label.replace(' · ', ' — ')}</p>
+                            <p className="text-gray-300 leading-relaxed">{mdl.tooltip}</p>
+                            {mdl.bestFor.length > 0 && (
+                              <div className="mt-1.5 pt-1.5 border-t border-gray-700">
+                                <span className="text-emerald-400 font-medium">Best for: </span>
+                                <span className="text-gray-300">{mdl.bestFor.map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 -mt-0.5 rotate-45 bg-gray-900" />
+                        </div>
+                      </div>
+                    );
+                  })}
                   <div className="w-px h-5 bg-border/30 mx-1" />
                   {(activeBgPreset || activeBgModel) && (
                     <button type="button" onClick={resetBg} className="theme-btn-secondary px-2 py-1.5 text-xs"><RefreshCw className="w-3 h-3" /></button>
@@ -1680,13 +1852,48 @@ export default function AddProduct() {
         </div>
       )}
 
-      {/* ── Voice Product Input ── */}
-      {showVoiceInput && (
+      {/* ── Voice Product Input / Voice-to-Catalog Pipeline ── */}
+      {/* When an image is uploaded, use the full auto pipeline (BG+voice). */}
+      {/* Otherwise, use the simpler voice-only input. */}
+      {showVoiceInput && selectedImage ? (
+        <VoiceToCatalogPipeline
+          imageFile={selectedImage}
+          onComplete={(data) => {
+            // Apply voice + BG A/B test results
+            const voiceData = data.extractedData;
+            handleVoiceData({
+              product_name: voiceData.product_name,
+              category: voiceData.category,
+              subcategory: voiceData.subcategory,
+              colors: voiceData.colors,
+              fabric: voiceData.fabric,
+              print_text: voiceData.print_text,
+              description: voiceData.description,
+              suggested_tags: voiceData.suggested_tags,
+              variants: voiceData.variants,
+              stock_hints: voiceData.stock_hints,
+              quantity: voiceData.quantity,
+              price: voiceData.price,
+            });
+            // Apply BG result if available
+            if (data.bgBlob) {
+              const blobUrl = URL.createObjectURL(data.bgBlob);
+              if (processedImageUrl) URL.revokeObjectURL(processedImageUrl);
+              setProcessedImageBlob(data.bgBlob);
+              setProcessedImageUrl(blobUrl);
+              setActiveBgModel(data.bgWinner);
+              setImagePreview(blobUrl);
+            }
+            setShowVoiceInput(false);
+          }}
+          onClose={() => setShowVoiceInput(false)}
+        />
+      ) : showVoiceInput ? (
         <VoiceProductInput
           onDataExtracted={handleVoiceData}
           onClose={() => { setShowVoiceInput(false); }}
         />
-      )}
+      ) : null}
 
       {/* ── Variant Matrix modal ── */}
       {showVariantMatrix && (
@@ -1754,7 +1961,9 @@ export default function AddProduct() {
           }}
           onClose={() => {
             setShowPhotoEditor(false);
-            setShowActionPicker(true);
+            setShowActionPicker(false);
+            // Reset orchestrator phase back to ai_results
+            goToAiResults();
           }}
         />
       )}
@@ -1810,6 +2019,122 @@ export default function AddProduct() {
           onClose={() => setShowSuccess(false)}
         />
       )}
+
+      {/* UPLOAD ORCHESTRATOR — 5-Step Modal Flow */}
+      {/* Step 2: Processing — Dual progress bars for BG removal + AI analysis */}
+      {uploadState.phase === 'processing' && (
+        <ProcessingModal
+          bgProgress={uploadState.processingProgress.bg}
+          aiProgress={uploadState.processingProgress.ai}
+          bgModel={uploadState.bgModel}
+          error={uploadState.processingError}
+          onRetry={() => {
+            if (uploadState.image) orchestratorSetImage(uploadState.image, uploadState.imagePreview || '');
+          }}
+          onClose={() => reset()}
+        />
+      )}
+
+      {/* Photo Edit — Uses existing PhotoEditorModal, returns to ai_results */}
+      {uploadState.phase === 'photo_edit' && !showPhotoEditor && (
+        // PhotoEditorModal is shown via showPhotoEditor state.
+        // When closed, go back to ai_results.
+        <div style={{ display: 'none' }} />
+      )}
+
+      {/* Step 3: AI Results — Review and edit AI-filled fields */}
+      {uploadState.phase === 'ai_results' && (
+        <AIResultsModal
+          state={uploadState}
+          onUpdateField={updateField}
+          onNext={() => {
+            if (uploadState.name) setFormData(f => ({ ...f, name: uploadState.name }));
+            if (uploadState.category) setFormData(f => ({ ...f, category: uploadState.category }));
+            if (uploadState.description) setFormData(f => ({ ...f, description: uploadState.description }));
+            if (uploadState.price) setFormData(f => ({ ...f, price: uploadState.price }));
+            if (uploadState.tags.length) setFormData(f => ({ ...f, tags: uploadState.tags.join(', ') }));
+            if (uploadState.subcategory) setFormData(f => ({ ...f, subcategory: uploadState.subcategory }));
+            if (uploadState.brand) setFormData(f => ({ ...f, brand: uploadState.brand }));
+            // Go to quantity step if we have colors, otherwise go straight to verify
+            if (uploadState.colors.length > 0 && uploadState.sizes.length > 0) {
+              goToQuantity();
+            } else {
+              goToVerify();
+            }
+          }}
+          onPhotoEdit={() => {
+            if (uploadState.processedImageUrl) {
+              setMagicEditImage(uploadState.processedImageUrl);
+              setShowPhotoEditor(true);
+            } else if (imagePreview) {
+              setMagicEditImage(imagePreview);
+              setShowPhotoEditor(true);
+            }
+            goToPhotoEdit();
+          }}
+          onClose={() => reset()}
+        />
+      )}
+
+      {/* Step 4: Quantity — Per-color cycling quantity popups */}
+      {uploadState.phase === 'quantity' &&
+        uploadState.colors.length > 0 &&
+        uploadState.currentColorIndex < uploadState.colors.length && (
+        <QuantityModal
+          color={uploadState.colors[uploadState.currentColorIndex]}
+          colorIndex={uploadState.currentColorIndex}
+          totalColors={uploadState.colors.length}
+          sizes={uploadState.sizes}
+          initialQuantities={uploadState.quantityMap[uploadState.colors[uploadState.currentColorIndex]] || {}}
+          onSave={(qty) => setQuantityForColor(uploadState.colors[uploadState.currentColorIndex], qty)}
+          onNext={advanceColorStep}
+          onSkip={() => advanceColorStep()}
+        />
+      )}
+
+      {/* Step 5: Verify & Publish — Final review before publishing */}
+      {uploadState.phase === 'verify' && (
+        <VerifyPublishModal
+          productName={uploadState.name || formData.name}
+          category={uploadState.category || formData.category}
+          colors={uploadState.colors}
+          variantsSummary={`${uploadState.colors.length > 0 ? uploadState.colors.length + ' colors' : ''}${uploadState.colors.length > 0 && uploadState.sizes.length > 0 ? ' x ' : ''}${uploadState.sizes.length > 0 ? uploadState.sizes.length + ' sizes' : uploadState.sizes.length === 0 && uploadState.colors.length === 0 ? 'None' : ''}`}
+          totalStock={uploadState.stockTotal}
+          price={uploadState.price || formData.price}
+          description={uploadState.description || formData.description}
+          imagesCount={selectedImage ? 1 : 0}
+          hasVideo={!!videoFile}
+          tags={uploadState.tags.length > 0 ? uploadState.tags : formData.tags.split(',').map(t => t.trim()).filter(Boolean)}
+          imagePreview={imagePreview}
+          processedImageUrl={uploadState.processedImageUrl}
+          publishing={publishing}
+          onEditDetails={() => goToAiResults()}
+          onEditImages={() => {
+            if (uploadState.processedImageUrl) {
+              setMagicEditImage(uploadState.processedImageUrl);
+              setShowPhotoEditor(true);
+            } else if (imagePreview) {
+              setMagicEditImage(imagePreview);
+              setShowPhotoEditor(true);
+            }
+          }}
+          onPublish={async () => {
+            // Sync orchestrator state into formData before submitting
+            if (uploadState.name) setFormData(f => ({ ...f, name: uploadState.name }));
+            if (uploadState.category) setFormData(f => ({ ...f, category: uploadState.category }));
+            if (uploadState.description) setFormData(f => ({ ...f, description: uploadState.description }));
+            if (uploadState.price) setFormData(f => ({ ...f, price: uploadState.price }));
+            if (uploadState.tags.length) setFormData(f => ({ ...f, tags: uploadState.tags.join(', ') }));
+            if (uploadState.subcategory) setFormData(f => ({ ...f, subcategory: uploadState.subcategory }));
+            if (uploadState.brand) setFormData(f => ({ ...f, brand: uploadState.brand }));
+            setPublishing(true);
+            await submitProduct();
+            setPublishing(false);
+          }}
+          onClose={() => reset()}
+        />
+      )}
+
     </SupplierLayout>
   );
 }

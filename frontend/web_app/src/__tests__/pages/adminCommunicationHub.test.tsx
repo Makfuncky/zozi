@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { isAdminStaffRole, canAccessAdminEmailManagement } from "@shared/adminPermissions";
 
 const mockPush = jest.fn();
@@ -37,35 +37,22 @@ jest.mock("@/components/AdminLayout", () => ({
   ),
 }));
 
-jest.mock("@/components/PanelPage", () => ({
-  PanelContent: ({ children }: any) => <div data-testid="panel-content">{children}</div>,
-  PanelTabs: ({ items, value, onChange }: any) => (
-    <div role="tablist">
-      {items.map((it: any) => (
-        <button
-          key={it.key}
-          role="tab"
-          aria-selected={value === it.key}
-          data-testid={`tab-${it.key}`}
-          onClick={() => onChange(it.key)}
-        >
-          {it.label}
-        </button>
-      ))}
-    </div>
-  ),
+jest.mock("@/components/comms/CommandPalette", () => ({
+  __esModule: true,
+  default: () => <div data-testid="command-palette">⌘K</div>,
 }));
 
-jest.mock("@/components/admin/AdminEmailPanel", () => ({ __esModule: true, default: () => <div>ADMIN EMAIL PANEL</div> }));
-jest.mock("@/components/admin/AdminChatPanel", () => ({ __esModule: true, default: () => <div>ADMIN CHAT PANEL</div> }));
-jest.mock("@/components/admin/AdminVideoPanel", () => ({ __esModule: true, default: () => <div>ADMIN VIDEO PANEL</div> }));
+jest.mock("@/components/comms/StatusDock", () => ({
+  __esModule: true,
+  default: () => <div data-testid="status-dock">Connected</div>,
+}));
 
 import CommunicationPage from "@/app/admin/communication/page";
 import AdminVideoPage from "@/app/admin/video/page";
 import AdminChatPage from "@/app/admin/chat/page";
 import AdminEmailDashboard from "@/app/admin/email/page";
 
-describe("Unified Communication hub", () => {
+describe("Unified Communication hub (conversation deck)", () => {
   beforeEach(() => {
     mockUser = { id: 1, username: "admin", email: "admin@zozi.test", role: "admin", permissions: ["email.manage"] };
     mockIsLoggedIn = true;
@@ -73,44 +60,41 @@ describe("Unified Communication hub", () => {
     jest.clearAllMocks();
   });
 
-  it("renders the unified hub with Email, Chat and Video tabs", async () => {
+  it("renders the conversation deck with command palette and status dock", async () => {
     render(<CommunicationPage />);
     await waitFor(() => {
-      expect(screen.getByText("Unified internal & external communication hub")).toBeInTheDocument();
+      expect(screen.getByText("Communication")).toBeInTheDocument();
     });
-    expect(screen.getByRole("heading", { name: "Communication" })).toBeInTheDocument();
-    expect(screen.getByTestId("tab-email")).toBeInTheDocument();
-    expect(screen.getByTestId("tab-chat")).toBeInTheDocument();
-    expect(screen.getByTestId("tab-video")).toBeInTheDocument();
+    expect(screen.getByTestId("command-palette")).toBeInTheDocument();
+    expect(screen.getByTestId("status-dock")).toBeInTheDocument();
   });
 
-  it("shows the Email panel by default", async () => {
+  it("shows the welcome splash when no thread is selected", async () => {
     render(<CommunicationPage />);
     await waitFor(() => {
-      expect(screen.getByText("ADMIN EMAIL PANEL")).toBeInTheDocument();
+      expect(screen.getByText("Communication Hub")).toBeInTheDocument();
     });
-    expect(screen.queryByText("ADMIN CHAT PANEL")).not.toBeInTheDocument();
-    expect(screen.queryByText("ADMIN VIDEO PANEL")).not.toBeInTheDocument();
+    expect(screen.getByText(/Select a conversation/)).toBeInTheDocument();
   });
 
-  it("switches to Chat panel when the Chat tab is clicked", async () => {
+  it("shows the modality rail with inbox/direct/groups/channels/email/meet", async () => {
     render(<CommunicationPage />);
-    await waitFor(() => expect(screen.getByTestId("tab-chat")).toBeInTheDocument());
-    fireEvent.click(screen.getByTestId("tab-chat"));
     await waitFor(() => {
-      expect(screen.getByText("ADMIN CHAT PANEL")).toBeInTheDocument();
+      expect(screen.getByText("Unified Inbox")).toBeInTheDocument();
     });
-    expect(screen.queryByText("ADMIN EMAIL PANEL")).not.toBeInTheDocument();
+    expect(screen.getByText("Direct")).toBeInTheDocument();
+    expect(screen.getByText("Channels")).toBeInTheDocument();
+    expect(screen.getByText("Email")).toBeInTheDocument();
+    expect(screen.getByText("Meet")).toBeInTheDocument();
   });
 
-  it("switches to Video panel when the Video tab is clicked", async () => {
+  it("renders the thread list with sample conversations", async () => {
     render(<CommunicationPage />);
-    await waitFor(() => expect(screen.getByTestId("tab-video")).toBeInTheDocument());
-    fireEvent.click(screen.getByTestId("tab-video"));
     await waitFor(() => {
-      expect(screen.getByText("ADMIN VIDEO PANEL")).toBeInTheDocument();
+      expect(screen.getByText("Aisha Al-Mamari")).toBeInTheDocument();
     });
-    expect(screen.queryByText("ADMIN EMAIL PANEL")).not.toBeInTheDocument();
+    expect(screen.getByText("#oman-sales")).toBeInTheDocument();
+    expect(screen.getByText("Invoice #INV-2024-0891")).toBeInTheDocument();
   });
 });
 

@@ -9,7 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
-from db.database import Base, engine
+from db.base import Base
+from db.database import engine
 from db.seed import seed_data
 from utils.config import settings
 

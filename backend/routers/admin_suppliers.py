@@ -78,6 +78,8 @@ def list_suppliers_by_country(
 @router.get("/{code}/suppliers/pending-kyc")
 def list_pending_kyc_suppliers(
     code: str = Path(..., description="ISO country code"),
+    page: int = 1,
+    size: int = 50,
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -89,7 +91,13 @@ def list_pending_kyc_suppliers(
     )
     if code != "*":
         q = q.filter(SupplierProfile.country_code == code.upper())
-    return [_supplier_to_dict(s) for s in q.all()]
+    from utils.pagination import paginated_response
+    return paginated_response(
+        q.order_by(SupplierProfile.updated_at.desc()),
+        page=page,
+        size=size,
+        serializer=_supplier_to_dict,
+    )
 
 
 @router.get("/{code}/suppliers/{supplier_id}")

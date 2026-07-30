@@ -13,13 +13,15 @@ router = APIRouter()
 
 
 @router.get("/{country_code}/partners")
-def list_partners(country_code: str = Path(..., description="ISO country code"), include_deleted: bool = False, _: User = Depends(require_admin), db: Session = Depends(get_db)):
+def list_partners(country_code: str = Path(..., description="ISO country code"), include_deleted: bool = False, page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100), _: User = Depends(require_admin), db: Session = Depends(get_db)):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         q = db.query(LogisticsPartner).filter(LogisticsPartner.country_code == country_code.upper())
         if not include_deleted: q = q.filter(LogisticsPartner.is_deleted == False)
-        return q.all()
+        total = q.count()
+        rows = q.offset((page - 1) * page_size).limit(page_size).all()
+        return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
 

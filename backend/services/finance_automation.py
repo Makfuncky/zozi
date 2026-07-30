@@ -441,7 +441,7 @@ def _post_gl(
 
 def _log_automation(
     db: Session, kind: str, processed: int, changed: int,
-    detail: dict, run_by: Optional[int], country_code: Optional[str],
+    detail: dict = None, run_by: Optional[int] = None, country_code: Optional[str] = None,
 ) -> None:
     log = FinanceAutomationLog(
         kind=kind, records_processed=processed, records_changed=changed,

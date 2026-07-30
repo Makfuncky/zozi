@@ -24,7 +24,7 @@ def _resolve_country(request: Request, default: str = "AE") -> str:
     return raw or default
 
 
-@router.get("/")
+@router.get("/chat")
 def admin_list_all_threads(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),

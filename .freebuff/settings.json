@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "startup": {},
+  "skills": {
+    "preloaded": [
+      "mcp-builder",
+      "planning-with-files",
+      "frontend-design",
+      "web-design-guidelines",
+      "image-to-code",
+      "tailwind-design-system",
+      "performance",
+      "improve-codebase-architecture",
+      "agent-browser",
+      "brainstorming",
+      "executing-plans",
+      "git-commit",
+      "python-performance-optimization",
+      "python-testing-patterns",
+      "api-design-principles",
+      "nextjs-app-router-patterns",
+      "nodejs-backend-patterns",
+      "typescript-advanced-types",
+      "multi-stage-dockerfile",
+      "canvas-design",
+      "security-review"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 """Zero-Trust IAM Controller with QR, Biometric, and Geo-fence."""
 from __future__ import annotations
+import os
 import hashlib
 import hmac
 import secrets
@@ -18,7 +19,7 @@ from utils.datetime_utils import utcnow as _utcnow
 router = APIRouter()
 
 
-_QR_SECRET_KEY = "zozi-employee-qr-v2"
+_QR_SECRET_KEY = os.getenv("EMPLOYEE_QR_SECRET_KEY", "")
 
 
 def generate_physical_card(employee_id: int, db: Session) -> dict:

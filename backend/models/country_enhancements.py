@@ -17,8 +17,7 @@ __all__ = ["SupplierKYCRequirement", "LogisticsPartnerKYCRequirement", "CountryC
 class CountryFeatureFlag(Base):
     __tablename__ = "country_feature_flags"
     __table_args__ = (
-        UniqueConstraint("country_code", "feature_key", name="uq_country_feature"),
-    )
+        UniqueConstraint("country_code", "feature_key", name="uq_country_feature"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
@@ -38,8 +37,7 @@ class CountryStaffAssignment(Base):
     __tablename__ = "country_staff_assignments"
     __table_args__ = (
         UniqueConstraint("user_id", "country_code", name="uq_staff_country"),
-        Index("ix_staff_user", "user_id"),
-    )
+        Index("ix_staff_user", "user_id"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -59,8 +57,7 @@ class CountryStaffAssignment(Base):
 class CrossCountryCustomerSession(Base):
     __tablename__ = "cross_country_customer_sessions"
     __table_args__ = (
-        Index("ix_cross_country_user", "user_id"),
-    )
+        Index("ix_cross_country_user", "user_id"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -80,8 +77,7 @@ class CrossCountryCustomerSession(Base):
 class OmanDeliveryZone(Base):
     __tablename__ = "oman_delivery_zones"
     __table_args__ = (
-        Index("ix_oman_zone_code", "zone_code"),
-    )
+        Index("ix_oman_zone_code", "zone_code"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
     zone_code = Column(String(20), nullable=False, unique=True)
@@ -102,8 +98,7 @@ class CountryConfigVersion(Base):
     __tablename__ = "country_config_versions"
     __table_args__ = (
         Index("ix_country_config_version_type", "config_type"),
-        Index("ix_country_config_version_status", "status"),
-    )
+        Index("ix_country_config_version_status", "status"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
@@ -154,8 +149,7 @@ class LogisticsPartnerKYCRequirement(Base):
 class CountryCommissionRate(Base):
     __tablename__ = 'country_commission_rates'
     __table_args__ = (
-        UniqueConstraint('country_code', 'supplier_tier', 'name', name='uq_country_commission'),
-    )
+        UniqueConstraint('country_code', 'supplier_tier', 'name', name='uq_country_commission'), {"schema": "configuration"})
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
     supplier_tier = Column(String(20), nullable=False)
@@ -171,8 +165,7 @@ class CountryCommissionRate(Base):
 class CountryLocalization(Base):
     __tablename__ = 'country_localization'
     __table_args__ = (
-        UniqueConstraint('country_code', name='uq_country_localization'),
-    )
+        UniqueConstraint('country_code', name='uq_country_localization'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False, unique=True)
@@ -189,8 +182,7 @@ class CountryLocalization(Base):
 class CountryPaymentAlias(Base):
     __tablename__ = 'country_payment_aliases'
     __table_args__ = (
-        UniqueConstraint('country_code', 'alias_type', name='uq_country_payment_alias'),
-    )
+        UniqueConstraint('country_code', 'alias_type', name='uq_country_payment_alias'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -205,8 +197,7 @@ class CountryPaymentAlias(Base):
 class CountryLegalContract(Base):
     __tablename__ = 'country_legal_contracts'
     __table_args__ = (
-        UniqueConstraint('country_code', 'contract_type', name='uq_country_legal_contract'),
-    )
+        UniqueConstraint('country_code', 'contract_type', name='uq_country_legal_contract'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -223,8 +214,7 @@ class CountryLegalContract(Base):
 class CountryCategoryTaxRate(Base):
     __tablename__ = 'country_category_tax_rates'
     __table_args__ = (
-        UniqueConstraint('country_code', 'category_id', name='uq_country_category_tax'),
-    )
+        UniqueConstraint('country_code', 'category_id', name='uq_country_category_tax'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -271,8 +261,7 @@ class CountryCity(Base):
 class CountryHolidayCalendar(Base):
     __tablename__ = 'country_holiday_calendars'
     __table_args__ = (
-        Index('ix_country_holiday_date', 'holiday_date'),
-    )
+        Index('ix_country_holiday_date', 'holiday_date'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -288,8 +277,7 @@ class CountryHolidayCalendar(Base):
 class CountryGatewayConfig(Base):
     __tablename__ = 'country_gateway_configs'
     __table_args__ = (
-        UniqueConstraint('country_code', 'gateway_id', name='uq_country_gateway'),
-    )
+        UniqueConstraint('country_code', 'gateway_id', name='uq_country_gateway'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -311,8 +299,7 @@ class CountryGatewayConfig(Base):
 class CountryCommunicationThread(Base):
     __tablename__ = 'country_communication_threads'
     __table_args__ = (
-        Index('ix_comm_thread_entity', 'entity_type', 'entity_id'),
-    )
+        Index('ix_comm_thread_entity', 'entity_type', 'entity_id'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -329,8 +316,7 @@ class CountryCommunicationThread(Base):
 class CountryCommissionRateHistory(Base):
     __tablename__ = 'country_commission_rate_history'
     __table_args__ = (
-        Index('ix_comm_rate_effective', 'effective_from'),
-    )
+        Index('ix_comm_rate_effective', 'effective_from'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -350,8 +336,7 @@ class CountryCommissionRateHistory(Base):
 class CountryLogisticsZone(Base):
     __tablename__ = 'country_logistics_zones'
     __table_args__ = (
-        UniqueConstraint('country_code', 'zone_code', name='uq_zone_code'),
-    )
+        UniqueConstraint('country_code', 'zone_code', name='uq_zone_code'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)
@@ -369,8 +354,7 @@ class CountryLogisticsZone(Base):
 class CountryPayoutRule(Base):
     __tablename__ = 'country_payout_rules'
     __table_args__ = (
-        Index('ix_payout_supplier', 'supplier_tier'),
-    )
+        Index('ix_payout_supplier', 'supplier_tier'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey('country_configs.code'), nullable=False)

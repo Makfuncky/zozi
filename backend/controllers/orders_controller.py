@@ -1090,7 +1090,15 @@ def _build_supply_chain_timeline(shipments: list[Shipment], events: list[Shipmen
 
 
 def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = (
+        db.query(Order)
+        .options(
+            selectinload(Order.items).selectinload(OrderItem.product),
+            selectinload(Order.shipments).selectinload(Shipment.carrier),
+        )
+        .filter(Order.id == order_id)
+        .first()
+    )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 

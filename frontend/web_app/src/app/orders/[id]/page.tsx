@@ -534,7 +534,7 @@ export default function OrderDetailPage({ params }: PageProps) {
                     <select
                       value={returnIntent}
                       onChange={(e) => setReturnIntent(e.target.value as "return" | "replacement")}
-                      className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text focus:outline-none focus:border-brand/60"
+                      className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text focus:outline-none focus:border-primary/60"
                     >
                       <option value="return">Return for refund</option>
                       <option value="replacement">Replacement</option>
@@ -545,7 +545,7 @@ export default function OrderDetailPage({ params }: PageProps) {
                     <select
                       value={selectedReturnScope}
                       onChange={(e) => setSelectedReturnScope(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text focus:outline-none focus:border-brand/60"
+                      className="w-full rounded-xl border border-border bg-surface-2 px-3 py-2 text-text focus:outline-none focus:border-primary/60"
                     >
                       <option value="order">All eligible items in this order</option>
                       {order.items?.map((item) => (
@@ -564,7 +564,7 @@ export default function OrderDetailPage({ params }: PageProps) {
                   onChange={(e) => setReturnReason(e.target.value)}
                   placeholder={returnIntent === "replacement" ? "Describe what needs to be replaced..." : "Describe the reason for your return..."}
                   rows={3}
-                  className="w-full rounded-xl border border-border bg-surface-2 text-text text-xs px-3 py-2 resize-none focus:outline-none focus:border-brand/60"
+                  className="w-full rounded-xl border border-border bg-surface-2 text-text text-xs px-3 py-2 resize-none focus:outline-none focus:border-primary/60"
                 />
                 <div className="flex gap-2">
                   <button

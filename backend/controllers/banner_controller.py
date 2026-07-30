@@ -19,7 +19,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from controllers.audit_controller import audit_log, AuditAction
-from controllers.cache_utils import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from models import Banner
 
 logger = logging.getLogger(__name__)
@@ -266,7 +266,7 @@ def get_banners(db: Session, banner_type: Optional[str] = None, active_only: boo
         ).filter(
             (Banner.ends_at == None) | (Banner.ends_at >= now)
         )
-    banners = q.order_by(Banner.sort_order.asc(), Banner.id.asc()).all()
+    banners = q.order_by(Banner.sort_order.asc(), Banner.id.asc()).limit(100).all()
     serialized = [_banner_to_dict(b) for b in banners]
     if cache_key is not None:
         cache_set_json(cache_key, serialized, _BANNER_CACHE_TTL)
@@ -297,8 +297,7 @@ def get_banners_page(
     query = query.order_by(Banner.sort_order.asc(), Banner.id.asc())
     if offset:
         query = query.offset(offset)
-    if limit is not None:
-        query = query.limit(limit)
+    query = query.limit(limit if limit is not None else 100)
     banners = query.all()
     serialized = [_banner_to_dict(banner) for banner in banners]
     return _build_list_page_payload(serialized, total, offset=offset, page_size=limit if limit is not None else len(serialized))
@@ -406,7 +405,7 @@ async def upload_banner_image(
 ) -> dict:
     """Upload and attach an image to a banner."""
     from utils.file_validation import validate_upload_image
-    from utils.config import settings
+    from services.storage import storage as _storage
 
     banner = db.query(Banner).filter(Banner.id == banner_id).first()
     if not banner:
@@ -416,12 +415,10 @@ async def upload_banner_image(
     ext = validate_upload_image(content, file.filename or "banner")
     suffix = ext if ext.startswith(".") else f".{ext}"
     filename = f"banner_{uuid.uuid4().hex[:8]}{suffix}"
-    os.makedirs(settings.upload_dir, exist_ok=True)
-    save_path = os.path.join(settings.upload_dir, filename)
-    with open(save_path, "wb") as fh:
-        fh.write(content)
+    key = f"banners/{filename}"
+    url = _storage.save(key, content, content_type=file.content_type)
 
-    setattr(banner, "image_url", f"/uploads/{filename}")
+    setattr(banner, "image_url", url)
     setattr(banner, "updated_at", datetime.now(timezone.utc).replace(tzinfo=None))
     db.commit()
     db.refresh(banner)

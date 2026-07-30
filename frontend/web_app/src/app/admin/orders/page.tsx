@@ -37,8 +37,8 @@ import { ORDER_STATUS_CHIP } from "@shared/statusColors";
 import { dc, useDensity } from "@/lib/densityContext";
 import { PanelContent, PanelTabs } from "@/components/PanelPage";
 import { Button } from "@/components/ui/Button";
-import ReturnsPanel from "./ReturnsPanel";
-import BarcodePanel from "./BarcodePanel";
+import ReturnsPanel from "./_components/ReturnsPanel";
+import BarcodePanel from "./_components/BarcodePanel";
 import { EnterpriseDataTable, type EnterpriseColumn } from "@shared/components/EnterpriseDataTable";
 
 interface AdminOrder {

@@ -1,0 +1,90 @@
+- generic [active] [ref=f8e1]:
+  - link "Skip to main content" [ref=f8e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=f8e3]:
+    - banner [ref=f8e5]:
+      - generic [ref=f8e7]:
+        - link "Go to home" [ref=f8e8] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f8e9]:
+            - img "Zozi logo" [ref=f8e11]
+            - generic [ref=f8e27]: Zozi
+        - generic [ref=f8e28]:
+          - button "Switch to dark theme" [ref=f8e129] [cursor=pointer]: 🌙
+          - generic [ref=f8e30]:
+            - generic [ref=f8e31]:
+              - generic [ref=f8e32]: PKR
+              - generic [ref=f8e33]: Detected PK
+            - button "Choose country" [ref=f8e35] [cursor=pointer]:
+              - generic [ref=f8e36]: PK
+            - button "Choose language" [ref=f8e40] [cursor=pointer]:
+              - generic [ref=f8e41]: EN
+          - link "Notifications" [ref=f8e137] [cursor=pointer]:
+            - /url: /notifications
+          - link "Wishlist" [ref=f8e44] [cursor=pointer]:
+            - /url: /wishlist
+          - link "Cart (1 items)" [ref=f8e130] [cursor=pointer]:
+            - /url: /cart
+            - generic [ref=f8e131]: "1"
+          - button "Open account menu" [ref=f8e141] [cursor=pointer]:
+            - generic [ref=f8e142]: customer
+    - main [ref=f8e57]:
+      - main [ref=f8e58]:
+        - generic [ref=f8e59]:
+          - generic [ref=f8e60]:
+            - heading "Customer Sign In" [level=1] [ref=f8e65]
+            - paragraph [ref=f8e66]: Welcome back — sign in to your ZOZI account
+          - generic [ref=f8e67]:
+            - generic [ref=f8e68]:
+              - generic [ref=f8e69]: Email or Username
+              - textbox "you@email.com" [ref=f8e71]: customer
+            - generic [ref=f8e72]:
+              - generic [ref=f8e73]: Password
+              - generic [ref=f8e74]:
+                - textbox "••••••••" [ref=f8e75]: customer123
+                - button "Show password" [ref=f8e76] [cursor=pointer]
+            - button "Sign In" [ref=f8e80] [cursor=pointer]
+          - paragraph [ref=f8e84]:
+            - text: New to ZOZI?
+            - link "Create an account" [ref=f8e85] [cursor=pointer]:
+              - /url: /register
+          - paragraph [ref=f8e86]:
+            - text: Are you a seller or logistics partner?
+            - link "Supplier" [ref=f8e87] [cursor=pointer]:
+              - /url: /supplier/login
+            - text: ·
+            - link "Logistics" [ref=f8e88] [cursor=pointer]:
+              - /url: /logistics-partner/login
+    - contentinfo [ref=f8e90]:
+      - generic [ref=f8e92]:
+        - generic [ref=f8e93]:
+          - generic [ref=f8e94]: ZOZI
+          - paragraph [ref=f8e100]: Trust delivered through verified suppliers, exceptional products, and global reach.
+          - generic [ref=f8e101]:
+            - link "Become a Supplier" [ref=f8e102] [cursor=pointer]:
+              - /url: /supplier/register
+            - link "Become Logistics Partner" [ref=f8e103] [cursor=pointer]:
+              - /url: /logistics-partner/login
+        - generic [ref=f8e104]:
+          - heading "The ZOZI Dispatch" [level=5] [ref=f8e105]
+          - generic [ref=f8e106]:
+            - generic [ref=f8e107]:
+              - heading "Stay in Style" [level=3] [ref=f8e108]
+              - paragraph [ref=f8e109]: Get exclusive access to new arrivals, special offers, and fashion tips.
+            - generic [ref=f8e110]:
+              - textbox "First name (optional)" [ref=f8e112]
+              - textbox "Enter your email" [ref=f8e114]
+              - button "Subscribe" [disabled] [ref=f8e115]
+      - generic [ref=f8e120]:
+        - paragraph [ref=f8e121]: © 2026 ZOZI. All rights reserved.
+        - generic [ref=f8e122]:
+          - link "Terms" [ref=f8e123] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=f8e124] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f8e125] [cursor=pointer]:
+            - /url: /cookies
+          - link "Admin Portal" [ref=f8e126] [cursor=pointer]:
+            - /url: /admin/login
+    - button "Chat" [ref=f8e132] [cursor=pointer]
+  - alert [ref=f8e136]

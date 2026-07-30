@@ -27,9 +27,10 @@ class CountryDetectionMiddleware(BaseHTTPMiddleware):
         return response
     
     async def _detect_country(self, request: Request) -> tuple[Optional[str], str]:
+        db = None
         try:
             client_host = get_request_ip(request)
-            
+
             db = get_db_session()
             service = CountryDetectionService(db)
             country_code, source = service.detect_country_from_ip({}, client_host)
@@ -37,6 +38,12 @@ class CountryDetectionMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.debug("Country detection failed: %s", e)
             return None, "error"
+        finally:
+            if db is not None:
+                try:
+                    db.close()
+                except Exception:
+                    pass
 
 
 def get_country_from_request(request: Request) -> Optional[str]:

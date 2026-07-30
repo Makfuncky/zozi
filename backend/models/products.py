@@ -10,6 +10,7 @@ __all__ = ["Category", "Product", "ProductVariant", "Review", "WishlistItem", "W
 
 class Category(Base):
     __tablename__ = "categories"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, index=True)
@@ -35,6 +36,7 @@ class Category(Base):
 
 class Product(Base):
     __tablename__ = "products"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, index=True)
@@ -103,6 +105,7 @@ class Product(Base):
 
 class Review(Base):
     __tablename__ = "reviews"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -121,6 +124,7 @@ class Review(Base):
 
 class WishlistItem(Base):
     __tablename__ = "wishlist_items"
+    __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -132,6 +136,7 @@ class WishlistItem(Base):
 
 class Wishlist(Base):
     __tablename__ = "wishlists"
+    __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -171,12 +176,12 @@ class ProductVariant(Base):
     product = relationship("Product", back_populates="variants")
 
     __table_args__ = (
-        UniqueConstraint("product_id", "variant_key", name="uq_product_variant_key"),
-    )
+        UniqueConstraint("product_id", "variant_key", name="uq_product_variant_key"), {"schema": "commerce"})
 
 
 class ProductVideo(Base):
     __tablename__ = "product_videos"
+    __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
     video_url = Column(String(500), nullable=False)
@@ -196,6 +201,7 @@ class ProductVideo(Base):
 
 class VideoAnalytics(Base):
     __tablename__ = "video_analytics"
+    __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
     video_id = Column(Integer, ForeignKey("product_videos.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
@@ -208,6 +214,7 @@ class VideoAnalytics(Base):
 
 class ProductFilterMetadata(Base):
     __tablename__ = "product_filter_metadata"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True, index=True)
     filter_name = Column(String(100), nullable=False)
@@ -222,6 +229,7 @@ class ProductFilterMetadata(Base):
 
 class ProductFilterOption(Base):
     __tablename__ = "product_filter_options"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     filter_metadata_id = Column(Integer, ForeignKey("product_filter_metadata.id"), nullable=False, index=True)
     option_value = Column(String(255), nullable=False)

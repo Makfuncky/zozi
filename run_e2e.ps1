@@ -1,5 +1,5 @@
 $root = "D:\Projects\10- E-COMMERCE WEBSITE\zozi"
-$python = "$root\backend\.venv\Scripts\python.exe"
+$python = "$root\backend\venv\Scripts\python.exe"
 
 # Kill leftover processes
 netstat -ano | Select-String ":8000 |:3000 " | ForEach-Object {
@@ -14,6 +14,7 @@ $env:BACKEND_PORT = "8000"
 $be = Start-Process -FilePath $python -ArgumentList "-m uvicorn main:app --host 0.0.0.0 --port 8000 --log-level warning" -WorkingDirectory "$root\backend" -PassThru -WindowStyle Hidden
 
 # Start frontend
+$env:NODE_ENV = "development"
 $fe = Start-Process -FilePath "npx.cmd" -ArgumentList "next dev --hostname localhost --port 3000" -WorkingDirectory "$root\frontend\web_app" -PassThru -WindowStyle Hidden
 
 Write-Host "Backend PID: $($be.Id), Frontend PID: $($fe.Id)"

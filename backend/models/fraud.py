@@ -18,8 +18,7 @@ class FraudEvent(Base):
     __table_args__ = (
         Index("ix_fraud_event_user", "user_id"),
         Index("ix_fraud_event_type", "event_type"),
-        Index("ix_fraud_event_score", "fraud_score"),
-    )
+        Index("ix_fraud_event_score", "fraud_score"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -45,8 +44,7 @@ class FraudEvent(Base):
 class FraudBlacklist(Base):
     __tablename__ = "fraud_blacklist"
     __table_args__ = (
-        UniqueConstraint("identifier_type", "identifier_value", name="uq_blacklist_identifier"),
-    )
+        UniqueConstraint("identifier_type", "identifier_value", name="uq_blacklist_identifier"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     identifier_type = Column(String, nullable=False)
@@ -61,7 +59,7 @@ class FraudBlacklist(Base):
 
 class FraudRule(Base):
     __tablename__ = "fraud_rules"
-    __table_args__ = (Index("ix_fraud_rule_active", "is_active"),)
+    __table_args__ = (Index("ix_fraud_rule_active", "is_active"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     rule_key = Column(String(100), unique=True, nullable=False)
@@ -80,8 +78,7 @@ class ManualReviewQueue(Base):
     __tablename__ = "manual_review_queue"
     __table_args__ = (
         Index("ix_manual_review_status", "status"),
-        Index("ix_manual_review_priority", "priority"),
-    )
+        Index("ix_manual_review_priority", "priority"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     entity_type = Column(String(50), nullable=False)
@@ -99,7 +96,7 @@ class ManualReviewQueue(Base):
 
 class IPReputation(Base):
     __tablename__ = "ip_reputations"
-    __table_args__ = (Index("ix_ip_reputation_ip", "ip_address"),)
+    __table_args__ = (Index("ix_ip_reputation_ip", "ip_address"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     ip_address = Column(String, nullable=False, index=True)
@@ -118,7 +115,7 @@ class IPReputation(Base):
 
 class DeviceFingerprint(Base):
     __tablename__ = "device_fingerprints"
-    __table_args__ = (Index("ix_device_fingerprint", "fingerprint_hash"),)
+    __table_args__ = (Index("ix_device_fingerprint", "fingerprint_hash"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -138,6 +135,7 @@ class DeviceFingerprint(Base):
 
 class CreditCardBin(Base):
     __tablename__ = "credit_card_bins"
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     bin = Column(String(10), unique=True, nullable=False)
     brand = Column(String(50), nullable=True)
@@ -149,6 +147,7 @@ class CreditCardBin(Base):
 
 class ReturnAbusePattern(Base):
     __tablename__ = "return_abuse_patterns"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     abuse_type = Column(String(50), nullable=False)
@@ -162,6 +161,7 @@ class ReturnAbusePattern(Base):
 
 class SupplierFraudIndicator(Base):
     __tablename__ = "supplier_fraud_indicators"
+    __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     indicator_type = Column(String(50), nullable=False)
@@ -173,6 +173,7 @@ class SupplierFraudIndicator(Base):
 
 class LogisticsFraudIndicator(Base):
     __tablename__ = "logistics_fraud_indicators"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics_partners.id"), nullable=False)
     indicator_type = Column(String(50), nullable=False)
@@ -184,6 +185,7 @@ class LogisticsFraudIndicator(Base):
 
 class FraudAlert(Base):
     __tablename__ = "fraud_alerts"
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     alert_type = Column(String(50), nullable=False)
     entity_type = Column(String(50), nullable=False)
@@ -200,6 +202,7 @@ class FraudAlert(Base):
 
 class IPAccountLinkage(Base):
     __tablename__ = "ip_account_linkages"
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     ip_address = Column(String, nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -214,7 +217,7 @@ class IPAccountLinkage(Base):
 
 class VelocityCounter(Base):
     __tablename__ = "fraud_velocity_counters"
-    __table_args__ = (Index("ix_velocity_key", "key", "window_start"),)
+    __table_args__ = (Index("ix_velocity_key", "key", "window_start"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(255), nullable=False, index=True)
@@ -230,8 +233,7 @@ class FraudScoringLog(Base):
     __tablename__ = "fraud_scoring_logs"
     __table_args__ = (
         Index("ix_scoring_event", "event_type", "created_at"),
-        Index("ix_scoring_score", "raw_score"),
-    )
+        Index("ix_scoring_score", "raw_score"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String(50), nullable=False)
@@ -254,8 +256,7 @@ class FraudCase(Base):
     __tablename__ = "fraud_cases"
     __table_args__ = (
         Index("ix_fraud_case_status", "status"),
-        Index("ix_fraud_case_priority", "priority"),
-    )
+        Index("ix_fraud_case_priority", "priority"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     case_number = Column(String(50), unique=True, nullable=False)
@@ -281,6 +282,8 @@ class FraudCase(Base):
 class FraudCaseAssignment(Base):
     __tablename__ = "fraud_case_assignments"
     
+    __table_args__ = ({"schema": "security"},)
+    
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("fraud_cases.id"), nullable=False)
     assigned_to = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -297,8 +300,7 @@ class DLPViolation(Base):
     __tablename__ = "dlp_violations"
     __table_args__ = (
         Index("ix_dlp_status", "status"),
-        Index("ix_dlp_created_at", "created_at"),
-    )
+        Index("ix_dlp_created_at", "created_at"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     violation_type = Column(String(50), nullable=False)
@@ -318,7 +320,7 @@ class DLPViolation(Base):
 
 class MeetingTranscript(Base):
     __tablename__ = "meeting_transcripts"
-    __table_args__ = (Index("ix_transcript_room", "room_id"),)
+    __table_args__ = (Index("ix_transcript_room", "room_id"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(String(64), nullable=False)
@@ -335,8 +337,7 @@ class MeetingActionItem(Base):
     __tablename__ = "meeting_action_items"
     __table_args__ = (
         Index("ix_action_item_meeting", "meeting_id"),
-        Index("ix_action_item_status", "status"),
-    )
+        Index("ix_action_item_status", "status"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
     meeting_id = Column(Integer, ForeignKey("meeting_transcripts.id"), nullable=False)
@@ -355,6 +356,8 @@ class MeetingActionItem(Base):
 
 class MeetingRecording(Base):
     __tablename__ = "meeting_recordings"
+    
+    __table_args__ = ({"schema": "communication"},)
     
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(String(64), nullable=False)

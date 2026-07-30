@@ -5,6 +5,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { apiFetch } from "./api";
+import { normalizeCountryCode } from "@shared/localization";
 
 export interface CurrencyInfo {
   code: string;
@@ -41,46 +42,6 @@ const CURRENCY_LOCALE_BY_CODE: Record<string, string> = {
   SAR: "en-SA",
   USD: "en-US",
 };
-
-const COUNTRY_ALIASES: Record<string, string> = {
-  AE: "AE",
-  UAE: "AE",
-  UNITEDARABEMIRATES: "AE",
-  EMIRATES: "AE",
-  PK: "PK",
-  PAKISTAN: "PK",
-  OM: "OM",
-  OMAN: "OM",
-  SA: "SA",
-  KSA: "SA",
-  SAUDIARABIA: "SA",
-  IN: "IN",
-  INDIA: "IN",
-  US: "US",
-  USA: "US",
-  UNITEDSTATES: "US",
-  UNITEDSTATESOFAMERICA: "US",
-  GB: "GB",
-  UK: "GB",
-  UNITEDKINGDOM: "GB",
-  QA: "QA",
-  QATAR: "QA",
-  KW: "KW",
-  KUWAIT: "KW",
-  BH: "BH",
-  BAHRAIN: "BH",
-};
-
-function normalizeCountryCode(value?: string | null): string {
-  if (!value) return "";
-  const lettersOnly = value.toUpperCase().replace(/[^A-Z]/g, "");
-  if (!lettersOnly) return "";
-
-  const alias = COUNTRY_ALIASES[lettersOnly];
-  if (alias) return alias;
-  if (lettersOnly.length === 2) return lettersOnly;
-  return "";
-}
 
 function persistCountryContext(countryCode: string) {
   if (typeof window === "undefined") return;

@@ -21,8 +21,7 @@ class FiscalPeriod(Base):
     __tablename__ = "fiscal_periods"
     __table_args__ = (
         UniqueConstraint("country_code", "period_year", "period_month", name="uq_fiscal_period"),
-        Index("ix_fiscal_period_country", "country_code"),
-    )
+        Index("ix_fiscal_period_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), nullable=False, index=True)
     period_year = Column(Integer, nullable=False)
@@ -43,8 +42,7 @@ class TransactionLedger(Base):
     __table_args__ = (
         CheckConstraint("amount >= 0", name="chk_transaction_ledger_amount_non_negative"),
         CheckConstraint("currency IN ('USD', 'EUR', 'GBP', 'AED', 'OMR', 'KWD', 'BHD', 'QAR', 'SAR', 'JOD')", name="chk_transaction_ledger_currency_valid"),
-        Index("ix_transaction_ledger_country", "country_code"),
-    )
+        Index("ix_transaction_ledger_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -83,8 +81,7 @@ class SupplierSettlement(Base):
     __table_args__ = (
         CheckConstraint("gross_amount >= 0", name="chk_supplier_settlement_gross_non_negative"),
         CheckConstraint("commission_amount >= 0", name="chk_supplier_settlement_commission_non_negative"),
-        CheckConstraint("net_amount >= 0", name="chk_supplier_settlement_net_non_negative"),
-    )
+        CheckConstraint("net_amount >= 0", name="chk_supplier_settlement_net_non_negative"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -115,8 +112,7 @@ class JournalEntry(Base):
     __table_args__ = (
         Index("ix_journal_entry_date", "entry_date"),
         Index("ix_journal_entry_ref", "reference_number"),
-        Index("ix_journal_entry_country", "country_code"),
-    )
+        Index("ix_journal_entry_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     entry_date = Column(DateTime, nullable=False)
     reference_number = Column(String(50), unique=True, nullable=False)
@@ -143,8 +139,7 @@ class JournalEntryLine(Base):
     __tablename__ = "journal_entry_lines"
     __table_args__ = (Index("ix_jel_entry", "entry_id"), Index("ix_jel_account", "account_id"),
         CheckConstraint("amount >= 0", name="chk_jel_amount_non_negative"),
-        CheckConstraint("side IN ('debit', 'credit')", name="chk_jel_side_valid"),
-    )
+        CheckConstraint("side IN ('debit', 'credit')", name="chk_jel_side_valid"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     entry_id = Column(Integer, ForeignKey("journal_entries.id"), nullable=False)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
@@ -163,8 +158,7 @@ class JournalEntryLine(Base):
 class Account(Base):
     __tablename__ = "accounts"
     __table_args__ = (Index("ix_accounts_code", "code"), Index("ix_accounts_group", "group_id"),
-        CheckConstraint("normal_side IN ('debit', 'credit')", name="chk_account_normal_side_valid"),
-    )
+        CheckConstraint("normal_side IN ('debit', 'credit')", name="chk_account_normal_side_valid"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("account_groups.id"), nullable=True)
     code = Column(String(20), unique=True, nullable=False)
@@ -181,7 +175,7 @@ class Account(Base):
 
 class AccountGroup(Base):
     __tablename__ = "account_groups"
-    __table_args__ = (Index("ix_account_groups_code", "code"), Index("ix_account_groups_order", "display_order"))
+    __table_args__ = (Index("ix_account_groups_code", "code"), Index("ix_account_groups_order", "display_order"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(10), unique=True, nullable=False)
     name = Column(String(100), nullable=False)
@@ -199,8 +193,7 @@ class AccountBalance(Base):
     __table_args__ = (
         Index("ix_account_balance_account", "account_id"),
         Index("ix_account_balance_user", "user_id"),
-        UniqueConstraint("account_id", "currency", name="uq_account_balance_account_currency"),
-    )
+        UniqueConstraint("account_id", "currency", name="uq_account_balance_account_currency"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -219,8 +212,7 @@ class ARLedgerEntry(Base):
     __tablename__ = "ar_ledger_entries"
     __table_args__ = (
         Index("ix_ar_ledger_user", "customer_id"),
-        Index("ix_ar_ledger_status", "status"),
-    )
+        Index("ix_ar_ledger_status", "status"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     customer_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -249,8 +241,7 @@ class APLedger(Base):
     __tablename__ = "ap_ledger_entries"
     __table_args__ = (
         Index("ix_ap_ledger_supplier", "supplier_id"),
-        Index("ix_ap_ledger_status", "status"),
-    )
+        Index("ix_ap_ledger_status", "status"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
@@ -279,6 +270,7 @@ class APLedger(Base):
 
 class FinancialReport(Base):
     __tablename__ = "financial_reports"
+    __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
     report_type = Column(String, nullable=False)
     period_start = Column(DateTime, nullable=False)
@@ -292,6 +284,7 @@ class FinancialReport(Base):
 
 class Invoice(Base):
     __tablename__ = "invoices"
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     shipment_id = Column(Integer, ForeignKey("shipments.id"), nullable=True)
@@ -325,6 +318,7 @@ class Invoice(Base):
 
 class InvoiceItem(Base):
     __tablename__ = "invoice_items"
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
@@ -342,6 +336,7 @@ class InvoiceItem(Base):
 
 class RefundLedger(Base):
     __tablename__ = "refund_ledger"
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
     return_request_id = Column(Integer, ForeignKey("return_requests.id"), nullable=True)
@@ -370,6 +365,7 @@ class RefundLedger(Base):
 
 class BankTransaction(Base):
     __tablename__ = "bank_transactions"
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     transaction_ref = Column(String, nullable=True, index=True)
     source = Column(String, nullable=True)
@@ -396,6 +392,7 @@ class BankTransaction(Base):
 
 class VATRemittance(Base):
     __tablename__ = "vat_remittances"
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
@@ -416,6 +413,7 @@ class VATRemittance(Base):
 
 class CashAccount(Base):
     __tablename__ = "cash_accounts"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     account_type = Column(String, nullable=False)
@@ -431,6 +429,7 @@ class CashAccount(Base):
 
 class CashTransaction(Base):
     __tablename__ = "cash_transactions"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     account_id = Column(Integer, ForeignKey("cash_accounts.id"), nullable=False)
     transaction_type = Column(String, nullable=False)
@@ -446,6 +445,7 @@ class CashTransaction(Base):
 
 class TreasuryAccount(Base):
     __tablename__ = "treasury_accounts"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     slug = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
@@ -463,6 +463,7 @@ class TreasuryAccount(Base):
 
 class TreasuryTransaction(Base):
     __tablename__ = "treasury_transactions"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     from_account_id = Column(Integer, ForeignKey("treasury_accounts.id"), nullable=True)
     to_account_id = Column(Integer, ForeignKey("treasury_accounts.id"), nullable=True)
@@ -478,6 +479,7 @@ class TreasuryTransaction(Base):
 
 class CashFlowForecast(Base):
     __tablename__ = "cash_flow_forecasts"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     forecast_date = Column(DateTime, nullable=False)
     period_start = Column(DateTime, nullable=False)
@@ -491,6 +493,7 @@ class CashFlowForecast(Base):
 
 class CashPositionSnapshot(Base):
     __tablename__ = "cash_position_snapshots"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     snapshot_time = Column(DateTime, nullable=False)
     account_id = Column(Integer, ForeignKey("treasury_accounts.id"), nullable=False)
@@ -502,6 +505,7 @@ class CashPositionSnapshot(Base):
 
 class GatewaySettlementSchedule(Base):
     __tablename__ = "gateway_settlement_schedules"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     gateway_id = Column(Integer, ForeignKey("payment_gateway_connections.id"), nullable=False)
     settlement_date = Column(DateTime, nullable=False)
@@ -515,7 +519,7 @@ class GatewaySettlementSchedule(Base):
 class PendingJournalEntry(Base):
     """Maker-Checker: pending journal entries awaiting second approval."""
     __tablename__ = "pending_journal_entries"
-    __table_args__ = (Index("ix_pending_je_status", "status"), Index("ix_pending_je_maker", "created_by"), Index("ix_pending_je_country", "country_code"))
+    __table_args__ = (Index("ix_pending_je_status", "status"), Index("ix_pending_je_maker", "created_by"), Index("ix_pending_je_country", "country_code"), {"schema": "finance"})
 
     id = Column(Integer, primary_key=True, index=True)
     lines_json = Column(Text, nullable=False)
@@ -562,6 +566,7 @@ class PayoutBatch(Base):
 
 class PayoutBatchItem(Base):
     __tablename__ = "payout_batch_items"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     batch_id = Column(Integer, ForeignKey("payout_batches.id"), nullable=False)
     entity_type = Column(String(20), nullable=False)
@@ -580,8 +585,7 @@ class BankMappingRule(Base):
     __tablename__ = "bank_mapping_rules"
     __table_args__ = (
         Index("ix_bank_mapping_country", "country_code"),
-        Index("ix_bank_mapping_priority", "priority"),
-    )
+        Index("ix_bank_mapping_priority", "priority"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), nullable=True, index=True)
     name = Column(String(120), nullable=False)
@@ -601,7 +605,7 @@ class BankMappingRule(Base):
 class BankStatementImport(Base):
     """Header record for one uploaded bank statement file."""
     __tablename__ = "bank_statement_imports"
-    __table_args__ = (Index("ix_bsi_country", "country_code"),)
+    __table_args__ = (Index("ix_bsi_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     bank_name = Column(String(120), nullable=True)
     file_name = Column(String(255), nullable=True)
@@ -623,8 +627,7 @@ class BankStatementLine(Base):
     __table_args__ = (
         Index("ix_bsl_import", "import_id"),
         Index("ix_bsl_status", "status"),
-        Index("ix_bsl_country", "country_code"),
-    )
+        Index("ix_bsl_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     import_id = Column(Integer, ForeignKey("bank_statement_imports.id"), nullable=False, index=True)
     txn_date = Column(DateTime, nullable=True)
@@ -645,7 +648,7 @@ class BankStatementLine(Base):
 class FixedAsset(Base):
     """Fixed asset register with straight-line depreciation schedule."""
     __tablename__ = "fixed_assets"
-    __table_args__ = (Index("ix_fa_country", "country_code"),)
+    __table_args__ = (Index("ix_fa_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     asset_code = Column(String(40), nullable=True)
@@ -669,7 +672,7 @@ class FixedAsset(Base):
 class Accrual(Base):
     """Accrued expense / revenue recognized before cash movement."""
     __tablename__ = "accruals"
-    __table_args__ = (Index("ix_accrual_country", "country_code"), Index("ix_accrual_status", "status"))
+    __table_args__ = (Index("ix_accrual_country", "country_code"), Index("ix_accrual_status", "status"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     accrual_type = Column(String(20), nullable=False)  # expense / revenue
     description = Column(String(500), nullable=True)
@@ -689,7 +692,7 @@ class Accrual(Base):
 class ScannedExpense(Base):
     """Bill scanned via OCR that becomes an expense + GL posting after approval."""
     __tablename__ = "scanned_expenses"
-    __table_args__ = (Index("ix_se_country", "country_code"), Index("ix_se_status", "status"))
+    __table_args__ = (Index("ix_se_country", "country_code"), Index("ix_se_status", "status"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     vendor_name = Column(String(200), nullable=True)
@@ -715,7 +718,7 @@ class ScannedExpense(Base):
 class Vendor(Base):
     """Vendor master (entity we receive bills from / owe money to)."""
     __tablename__ = "vendors"
-    __table_args__ = (Index("ix_vendors_country", "country_code"),)
+    __table_args__ = (Index("ix_vendors_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     tax_id = Column(String(60), nullable=True)
@@ -731,7 +734,7 @@ class Vendor(Base):
 class Customer(Base):
     """Customer master for B2B / trade receivables (distinct from platform User)."""
     __tablename__ = "customers"
-    __table_args__ = (Index("ix_customers_country", "country_code"),)
+    __table_args__ = (Index("ix_customers_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     tax_id = Column(String(60), nullable=True)
@@ -748,7 +751,7 @@ class Customer(Base):
 class CostCenter(Base):
     """Cost center / department used to tag journal lines for reporting."""
     __tablename__ = "cost_centers"
-    __table_args__ = (Index("ix_cost_centers_country", "country_code"),)
+    __table_args__ = (Index("ix_cost_centers_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(30), nullable=False)
     name = Column(String(160), nullable=False)
@@ -765,8 +768,7 @@ class APBill(Base):
         Index("ix_ap_bills_vendor", "vendor_id"),
         Index("ix_ap_bills_status", "status"),
         Index("ix_ap_bills_due", "due_date"),
-        Index("ix_ap_bills_country", "country_code"),
-    )
+        Index("ix_ap_bills_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=False, index=True)
     bill_number = Column(String(80), nullable=True)
@@ -793,8 +795,7 @@ class ARInvoice(Base):
         Index("ix_ar_invoices_customer", "customer_id"),
         Index("ix_ar_invoices_status", "status"),
         Index("ix_ar_invoices_due", "due_date"),
-        Index("ix_ar_invoices_country", "country_code"),
-    )
+        Index("ix_ar_invoices_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False, index=True)
     invoice_number = Column(String(80), nullable=True)
@@ -817,7 +818,7 @@ class ARInvoice(Base):
 class BankAccount(Base):
     """Company bank-account registry mapped to a GL cash account."""
     __tablename__ = "bank_accounts"
-    __table_args__ = (Index("ix_bank_accounts_country", "country_code"),)
+    __table_args__ = (Index("ix_bank_accounts_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     bank_name = Column(String(160), nullable=False)
     account_name = Column(String(200), nullable=True)
@@ -837,8 +838,7 @@ class Budget(Base):
     __tablename__ = "budgets"
     __table_args__ = (
         UniqueConstraint("account_code", "fiscal_period_id", "country_code", name="uq_budget_account_period"),
-        Index("ix_budgets_country", "country_code"),
-    )
+        Index("ix_budgets_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     account_code = Column(String(20), nullable=False)
     fiscal_period_id = Column(Integer, ForeignKey("fiscal_periods.id"), nullable=False)
@@ -858,8 +858,7 @@ class BankReconciliation(Base):
     __table_args__ = (
         UniqueConstraint("statement_line_id", name="uq_bank_recon_line"),
         Index("ix_bank_recon_status", "status"),
-        Index("ix_bank_recon_country", "country_code"),
-    )
+        Index("ix_bank_recon_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     statement_line_id = Column(Integer, ForeignKey("bank_statement_lines.id"), nullable=False, index=True)
     journal_entry_id = Column(Integer, ForeignKey("journal_entries.id"), nullable=True)
@@ -875,7 +874,7 @@ class BankReconciliation(Base):
 class RecurringTemplate(Base):
     """Template that generates a journal entry on trigger (e.g. monthly rent)."""
     __tablename__ = "recurring_templates"
-    __table_args__ = (Index("ix_recurring_country", "country_code"),)
+    __table_args__ = (Index("ix_recurring_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     frequency = Column(String(20), default="monthly")  # daily, weekly, monthly, quarterly, yearly
@@ -896,8 +895,7 @@ class FinanceAuditLog(Base):
     __table_args__ = (
         Index("ix_finance_audit_action", "action"),
         Index("ix_finance_audit_actor", "actor_id"),
-        Index("ix_finance_audit_at", "created_at"),
-    )
+        Index("ix_finance_audit_at", "created_at"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     action = Column(String(60), nullable=False)  # journal_post, journal_reverse, approval, reconciliation, automation
     actor_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -912,7 +910,7 @@ class FinanceAuditLog(Base):
 class FinanceAutomationLog(Base):
     """Audit trail for automation runs (OCR, reconciliation, depreciation, mapping)."""
     __tablename__ = "finance_automation_logs"
-    __table_args__ = (Index("ix_fal_kind", "kind"), Index("ix_fal_country", "country_code"))
+    __table_args__ = (Index("ix_fal_kind", "kind"), Index("ix_fal_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     kind = Column(String(40), nullable=False)  # ocr_scan, bank_reconcile, depreciation, mapping
     records_processed = Column(Integer, default=0)

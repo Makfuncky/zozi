@@ -17,7 +17,7 @@ def get_audit_trail(
     user_id: Optional[int] = Query(None),
     entity_type: Optional[str] = Query(None),
     entity_id: Optional[int] = Query(None),
-    event_type: Optional[str] = Query(None),
+    action: Optional[str] = Query(None),
     limit: int = Query(100),
     offset: int = Query(0),
     db: Session = Depends(get_db),
@@ -27,7 +27,7 @@ def get_audit_trail(
         user_id=user_id,
         entity_type=entity_type,
         entity_id=entity_id,
-        event_type=event_type,
+        action=action,
         limit=limit,
         offset=offset,
     )

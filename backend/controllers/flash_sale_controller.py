@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from controllers.audit_controller import audit_log, AuditAction
-from controllers.cache_utils import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from controllers.products_controller import _bump_product_cache_version
 from models import FlashSale
 from db.schemas import FlashSaleCreate, FlashSaleOut

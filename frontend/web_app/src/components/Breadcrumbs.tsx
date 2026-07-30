@@ -47,14 +47,14 @@ export default function Breadcrumbs({ category, search }: BreadcrumbsProps) {
   }
 
   return (
-    <nav aria-label="Breadcrumb" className="text-xs text-(--color-text-faint) mb-2">
+    <nav aria-label="Breadcrumb" className="text-xs text-text-faint mb-2">
       <ol className="flex flex-wrap items-center gap-1">
         {segs.map((s, idx) => (
           <li key={idx} className="flex items-center gap-1">
-            <Link href={s.href} className="hover:underline text-(--color-text-muted) hover:text-(--color-text) transition-colors">
+            <Link href={s.href} className="hover:underline text-text-muted hover:text-text transition-colors">
               {s.label}
             </Link>
-            {idx < segs.length - 1 && <span className="select-none text-(--color-border-light)">›</span>}
+            {idx < segs.length - 1 && <span className="select-none text-border-light">›</span>}
           </li>
         ))}
       </ol>

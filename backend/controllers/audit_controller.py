@@ -101,6 +101,7 @@ class AuditAction:
     BULK_ARCHIVE = "BULK_ARCHIVE"
     BULK_RESTORE = "BULK_RESTORE"
     PERMANENT_DELETE = "PERMANENT_DELETE"
+    INBOX_RESET = "INBOX_RESET"
 
     # ── Financial / Treasury ────────────────────────────────────────────────
     JOURNAL_ENTRY_CREATED = "JOURNAL_ENTRY_CREATED"

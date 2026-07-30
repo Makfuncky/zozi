@@ -4,18 +4,17 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models import User
 from db.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin, require_super_admin
+from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
+from utils.pagination import paginated_response
 from controllers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_user_role, toggle_user_active, force_reset_password_admin, delete_user_admin
-from utils.auth import get_password_hash
-import math
 
 router = APIRouter()
 
 
 @router.get("/users/{country_code}")
-def list_users(country_code: str = Path(..., description="ISO country code"), page: int = Query(1, ge=1), size: int = Query(50), role: str = None, search: str = None, include_deleted: bool = False, _: User = Depends(require_admin), db: Session = Depends(get_db)):
+def list_users(country_code: str = Path(..., description="ISO country code"), page: int = Query(1, ge=1), size: int = Query(50), role: str = None, search: str = None, include_deleted: bool = False, _=Depends(require_admin), db: Session = Depends(get_db)):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
@@ -23,9 +22,7 @@ def list_users(country_code: str = Path(..., description="ISO country code"), pa
         if role: q = q.filter(User.role == role)
         if search: q = q.filter(User.email.ilike(f"%{search}%") | User.full_name.ilike(f"%{search}%"))
         if not include_deleted: q = q.filter(User.is_deleted == False)
-        total = q.count()
-        items = q.offset((page-1)*size).limit(size).all()
-        return {"items": items, "total": total, "page": page, "pages": math.ceil(total/size) if total else 1}
+        return paginated_response(q, page, size)
     finally:
         clear_rls_context()
 

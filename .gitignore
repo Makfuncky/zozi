@@ -1,63 +1,43 @@
-# ===== Dependencies (incl. nested + leftovers) =====
+# Dependencies (too large for GitHub)
 node_modules/
-node_modules_*/
-**/node_modules/
-.pnp
+.pnp/
 .pnp.js
-.next/
-.web-build/
-.web-build-test/
-web-dist/
-android/
-ios/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 .venv/
 venv/
-env/
-backend/venv/
-**/venv/
 
-# ===== Build / generated =====
+# Environment secrets (NEVER push real credentials)
+.env
+.env.local
+.env.production
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Build outputs (regeneratable)
 .next/
-out/
 dist/
 build/
 *.tsbuildinfo
+
+# Expo
 .expo/
-web_app/.expo/
 
-# ===== Python caches =====
-__pycache__/
-*.py[cod]
-.pytest_cache/
-*.egg-info/
-.eggs/
+# Logs (regeneratable)
+*.log
 
-# ===== Databases / data =====
+# Database files (regeneratable locally)
 *.db
 *.db-shm
 *.db-wal
-*.sqlite
-*.sqlite3
-dump.rdb
-backend/uploads/
-**/uploads/*
-!**/uploads/.gitkeep
-
-# ===== Secrets / env =====
-.env
-.env.*
-!.env.example
-backend/.env
-frontend/.env.local
-frontend/mobile_app/.env
-scripts/backend/.env
-
-# ===== Generated knowledge-base dumps (not source) =====
-codebase_v*.md
-
-# ===== Kilo / editor / OS =====
-.kilo/
-.DS_Store
-Thumbs.db
-*.log
-backend/backend_*.txt

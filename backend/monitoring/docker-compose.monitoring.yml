@@ -18,12 +18,15 @@ services:
     image: grafana/promtail:latest
     container_name: zozi-promtail
     volumes:
-      - ./loki-config.yaml:/etc/loki/promtail-config.yaml
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    command: -config.file=/etc/loki/promtail-config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
     networks:
       - monitoring
+    depends_on:
+      - loki
 
   # Prometheus - Metrics collection
   prometheus:
@@ -45,11 +48,16 @@ services:
       - "3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     networks:
       - monitoring
+    depends_on:
+      - prometheus
+      - loki
 
   # Tempo - Distributed tracing
   tempo:
@@ -59,8 +67,33 @@ services:
       - "3200:3200"
       - "4320:4320"
     volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml
       - tempo_data:/tmp/tempo
     command: -config.file=/etc/tempo.yaml
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+  # Postgres Exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: zozi-postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:postgres@host.docker.internal:5432/postgres?sslmode=disable
+    networks:
+      - monitoring
+
+  # Redis Exporter
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: zozi-redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=host.docker.internal:6379
     networks:
       - monitoring
 

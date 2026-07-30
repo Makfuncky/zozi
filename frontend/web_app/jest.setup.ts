@@ -42,3 +42,26 @@ class MockResponse {
 
 // Use act from @testing-library/react
 (global as any).act = act;
+
+// Polyfill for ResizeObserver (missing in jsdom)
+class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+(globalThis as any).ResizeObserver = ResizeObserver;
+
+// Polyfill for matchMedia (missing in jsdom)
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+});

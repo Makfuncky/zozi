@@ -1,6 +1,6 @@
 """Support tickets router."""
-from fastapi import APIRouter, Body, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from sqlalchemy.orm import Session, selectinload
 from db.database import get_db
 from models import SupportTicket, TicketMessage, User
 from utils.dependencies import get_current_user
@@ -50,12 +50,13 @@ def _validate_ticket_input(payload: dict) -> tuple[str, str, str]:
 
 
 @router.get("")
-def list_tickets(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_tickets(current_user: User = Depends(get_current_user), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
     q = db.query(SupportTicket)
     if current_user.role == "customer":
         q = q.filter(SupportTicket.user_id == current_user.id)
-    tickets = q.order_by(SupportTicket.created_at.desc()).all()
-    return [_ticket_payload(t) for t in tickets]
+    total = q.count()
+    tickets = q.order_by(SupportTicket.created_at.desc()).options(selectinload(SupportTicket.messages)).offset((page - 1) * page_size).limit(page_size).all()
+    return {"data": [_ticket_payload(t) for t in tickets], "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("", status_code=201)
@@ -77,7 +78,7 @@ def create_ticket(payload: dict = Body(...), current_user: User = Depends(get_cu
 
 @router.get("/{ticket_id}")
 def get_ticket(ticket_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
+    ticket = db.query(SupportTicket).options(selectinload(SupportTicket.messages)).filter(SupportTicket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(404)
     if current_user.role == "customer" and ticket.user_id != current_user.id:

@@ -17,6 +17,69 @@ import controllers.disputes_controller as disputes_ctrl
 
 router = APIRouter()
 
+
+@router.get("/upload/history")
+async def get_upload_history(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("supplier", "admin")),
+):
+    """
+    Return the supplier's product upload history with status tracking.
+
+    Returns products ordered by creation date (newest first) with
+    upload status inferred from the product state (completed=active,
+    processing=inactive + has images). Designed to feed the
+    Real-Time Upload Dashboard on the frontend.
+
+    Returns:
+      {
+        "items": [{ id, name, status, progress, started_at, completed_at,
+                     bg_strategy, ai_result: { name, category, price, variants_count },
+                     image_thumbnail, error }],
+        "total": int
+      }
+    """
+    products_data = ctrl.get_supplier_products(current_user, db, limit=limit, offset=offset)
+    items = products_data.get("items", products_data.get("data", [])) if isinstance(products_data, dict) else (products_data or [])
+    total = products_data.get("total", len(items)) if isinstance(products_data, dict) else len(items)
+
+    history = []
+    for p in items:
+        created = getattr(p, "created_at", None) or getattr(p, "updated_at", None) or ""
+        is_active = getattr(p, "is_active", True)
+        variants = getattr(p, "variants", None) or getattr(p, "variants_json", None) or []
+        if isinstance(variants, str):
+            import json
+            try:
+                variants = json.loads(variants)
+            except Exception:
+                variants = []
+        variants_count = len(variants) if isinstance(variants, (list, dict)) else 0
+
+        record = {
+            "id": str(getattr(p, "id", 0)),
+            "filename": getattr(p, "name", "Product") or "Product",
+            "status": "completed" if is_active else "processing_bg",
+            "progress": 100 if is_active else 65,
+            "started_at": str(created) if created else "",
+            "completed_at": str(created) if created else "",
+            "image_thumbnail": getattr(p, "image_url", None) or getattr(p, "images", [None] * 1)[0] or None,
+            "bg_strategy": getattr(p, "bg_preset", None),
+            "ai_result": {
+                "name": getattr(p, "name", ""),
+                "category": getattr(p, "category", ""),
+                "price": getattr(p, "price", 0) or 0,
+                "variants_count": variants_count,
+            },
+            "error": None,
+        }
+        history.append(record)
+
+    return {"items": history, "total": total}
+
+
 SupplierOrAdminUser = Annotated[dict, Depends(require_roles("supplier", "admin"))]
 SupplierAdminOrSubAdminUser = Annotated[dict, Depends(require_roles("supplier", "admin", "sub_admin"))]
 
@@ -228,17 +291,47 @@ async def process_image_ai(
     image: UploadFile = File(...),
     generate_angles: bool = Form(True),
 ):
+    """Enqueue AI image processing as an ML job and return ``job_id``.
+
+    Poll ``GET /supplier/upload/jobs/{job_id}`` for the result. The job
+    removes the background and optionally generates novel-angle views.
     """
-    AI image processing pipeline:
-      1. Remove product background (white bg) — briaai/RMBG-1.4
-      2. Generate 4 novel-angle product views — sudo-ai/zero123-plus
-    Returns URLs of the processed images stored in uploads/.
-    """
-    return await ctrl.process_product_image(
-        image=image,
-        generate_angles=generate_angles,
-        current_user=current_user,
+    import uuid
+    from utils.background_jobs import enqueue_ml_job
+    from services.storage import storage as _storage
+
+    raw = await image.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty image file")
+
+    owner_id = current_user.get("id") or current_user.get("user_id")
+    owner_role = current_user.get("role", "supplier")
+
+    image_key = f"analysis_input/{uuid.uuid4().hex}_{image.filename or 'image'}"
+    _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
+
+    def _run_process_image() -> dict:
+        from controllers.supplier_controller import process_product_image
+        from io import BytesIO
+        from fastapi import UploadFile
+        import asyncio
+
+        upload = UploadFile(filename=image.filename or "image.jpg", file=BytesIO(raw))
+        result = asyncio.run(process_product_image(
+            image=upload,
+            generate_angles=generate_angles,
+            current_user=current_user,
+        ))
+        return result
+
+    job = enqueue_ml_job(
+        owner_user_id=owner_id,
+        owner_role=owner_role,
+        func=_run_process_image,
+        metadata={"generate_angles": generate_angles},
+        max_retries=1,
     )
+    return {"job_id": job["id"], "status": "queued"}
 
 @router.post("/upload")
 async def upload_product(
@@ -478,6 +571,98 @@ async def create_product(
     )
 
 
+@router.post("/upload/analyze-async")
+async def analyze_async(
+    current_user: dict = Depends(require_roles("supplier", "admin")),
+    image: UploadFile = File(...),
+):
+    """
+    Enqueue BG removal + AI product analysis as an ML background job and
+    return immediately with a ``job_id`` the frontend polls at
+    ``GET /supplier/upload/jobs/{job_id}``.
+
+    This prevents ML inference from blocking HTTP workers — under an upload
+    burst the job is queued and processed by the dedicated ML worker pool.
+    """
+    import uuid
+    from utils.background_jobs import enqueue_ml_job
+    from services.storage import storage as _storage
+
+    raw = await image.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty image file")
+
+    owner_id = current_user.get("id") or current_user.get("user_id")
+    owner_role = current_user.get("role", "supplier")
+
+    # Save the image bytes to storage so the ML worker can read them
+    image_key = f"analysis_input/{uuid.uuid4().hex}_{image.filename or 'image'}"
+    image_url = _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
+
+    def _run_analysis() -> dict:
+        import asyncio
+        from services.bg_removal_service import remove_background
+        from services.ai_variant_config import analyze_product_image
+        from services.storage import storage as _store
+
+        bg_result = remove_background(raw, strategy="general", fast_mode=True)
+        ai_result = asyncio.run(analyze_product_image(
+            raw, filename=image.filename or "", generate_copy=True
+        ))
+
+        bg_key = f"supplier_uploads/{uuid.uuid4().hex}_nobg.png"
+        bg_url = _store.save(bg_key, bg_result, content_type="image/png")
+
+        return {
+            "bg_removed_url": bg_url,
+            "product_name": ai_result.get("product_name_hint", ""),
+            "suggested_category": ai_result.get("suggested_category", ""),
+            "suggested_subcategory": ai_result.get("suggested_subcategory", ""),
+            "suggested_brand": ai_result.get("suggested_brand", ""),
+            "product_description": ai_result.get("product_description", ""),
+            "suggested_tags": ai_result.get("suggested_tags", []),
+            "detected_colors": ai_result.get("detected_attributes", {}).get("color", []),
+            "detected_materials": ai_result.get("detected_attributes", {}).get("material", []),
+            "variant_options": ai_result.get("variant_options", {}),
+            "suggested_variants": ai_result.get("suggested_variants", []),
+            "price_suggestion": ai_result.get("ai_suggested_price", 0),
+            "price_min": ai_result.get("price_min", 0),
+            "price_max": ai_result.get("price_max", 0),
+            "stock_hints": ai_result.get("stock_hints", {}),
+            "photo_analysis": ai_result.get("photo_analysis", {}),
+            "source": ai_result.get("source", "heuristic_fallback"),
+        }
+
+    job = enqueue_ml_job(
+        owner_user_id=owner_id,
+        owner_role=owner_role,
+        func=_run_analysis,
+        metadata={"image_key": image_key},
+        max_retries=1,
+    )
+    return {"job_id": job["id"], "status": "queued"}
+
+
+@router.get("/upload/jobs/{job_id}")
+async def get_async_job_result(job_id: str):
+    """Poll the result of an async analysis job."""
+    from utils.background_jobs import get_job
+
+    job = get_job(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    resp: dict[str, Any] = {
+        "job_id": job["id"],
+        "status": job["status"],
+        "kind": job["kind"],
+    }
+    if job.get("result"):
+        resp["result"] = job["result"]
+    if job.get("error"):
+        resp["error"] = job["error"]
+    return resp
+
+
 @router.post("/upload/remove-background")
 async def remove_background(
     current_user: dict = Depends(require_roles("supplier", "admin")),
@@ -486,51 +671,52 @@ async def remove_background(
     model: str = Form(""),
     fast_mode: bool = Form(False),
 ):
+    """Enqueue background removal as an ML job and return ``job_id``.
+
+    Poll ``GET /supplier/upload/jobs/{job_id}`` for the result. This keeps
+    rembg inference off the HTTP worker so upload bursts can't freeze the API.
     """
-    Interactive background removal for the supplier's selected image.
+    import uuid
+    from utils.background_jobs import enqueue_ml_job
+    from services.storage import storage as _storage
 
-    Two modes:
-      1. **Preset** — ``preset`` (general / handheld / wood / texture_gap /
-         marketing / cloth_lite) — applies a full post-processing pipeline.
-      2. **Direct model** — ``model`` set to one of the 9 available rembg
-         model names (birefnet-general, isnet-general-use, u2net,
-         u2net_cloth_seg, birefnet-massive, birefnet-hrsod,
-         briaai-rmbg-1.4, birefnet-general-lite, silueta).
-
-    VPS optimisation:
-      - ``fast_mode`` — skip heavy OpenCV post-processing
-        (k-means, connectedComponents, guided filter). Recommended when
-        the VPS has <1 GB free RAM.
-      - Concurrency is limited to ``BG_MAX_CONCURRENT`` (default 2).
-      - Image is auto-downscaled to ``BG_MAX_IMAGE_DIM`` (default 768 px)
-        before rembg inference.
-      - Heavy models (birefnet-massive, birefnet-hrsod) are skipped when
-        ``BG_SKIP_HEAVY_MODELS=true``.
-
-    If ``model`` is provided it takes precedence over ``preset``.
-
-    Returns processed transparent PNG bytes. Never 500s — returns the
-    original bytes unchanged on any failure.
-    """
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty image file")
-    from services.bg_removal_service import (
-        remove_background_model,
-        AVAILABLE_MODELS,
-        VALID_STRATEGIES,
+
+    owner_id = current_user.get("id") or current_user.get("user_id")
+    owner_role = current_user.get("role", "supplier")
+
+    image_key = f"analysis_input/{uuid.uuid4().hex}_{image.filename or 'image'}"
+    _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
+
+    def _run_remove_background() -> dict:
+        from services.bg_removal_service import (
+            remove_background_model,
+            AVAILABLE_MODELS,
+            VALID_STRATEGIES,
+        )
+        from services.storage import storage as _store
+
+        if model and model in AVAILABLE_MODELS:
+            processed = remove_background_model(raw, model, fast_mode=fast_mode)
+        else:
+            preset_effective = preset if preset in VALID_STRATEGIES else "general"
+            from services.bg_removal_service import remove_background
+            processed = remove_background(raw, strategy=preset_effective, fast_mode=fast_mode)
+
+        out_key = f"supplier_uploads/{uuid.uuid4().hex}_nobg.png"
+        out_url = _store.save(out_key, processed, content_type="image/png")
+        return {"bg_removed_url": out_url, "bytes_len": len(processed)}
+
+    job = enqueue_ml_job(
+        owner_user_id=owner_id,
+        owner_role=owner_role,
+        func=_run_remove_background,
+        metadata={"preset": preset, "model": model, "fast_mode": fast_mode},
+        max_retries=1,
     )
-
-    if model and model in AVAILABLE_MODELS:
-        processed = remove_background_model(raw, model, fast_mode=fast_mode)
-    else:
-        if preset not in VALID_STRATEGIES:
-            preset = "general"
-        from services.bg_removal_service import remove_background
-        processed = remove_background(raw, strategy=preset, fast_mode=fast_mode)
-    from fastapi.responses import Response
-    return Response(content=processed, media_type="image/png")
-
+    return {"job_id": job["id"], "status": "queued"}
 
 @router.post("/upload/ai-analyze")
 async def ai_analyze(
@@ -691,6 +877,30 @@ async def translate_text(
     return {"translated_text": translated, "target": target}
 
 
+@router.get("/upload/variant-axes")
+async def get_variant_axes(
+    current_user: dict = Depends(require_roles("supplier", "admin")),
+    category: str = Query("Clothing", description="Picker category name e.g. Clothing, Electronics"),
+    subcategory: str = Query(None, description="Optional subcategory"),
+):
+    """
+    Return applicable variant axes + default options for a product category.
+
+    Used by the frontend to render correct quantity-modals for any product type:
+    - Apparel: color × size, sleeve_length, fit, etc.
+    - Electronics: storage × RAM, processor, screen_size, etc.
+    - Beauty: volume × scent, etc.
+    - Jewelry: karat × plating, chain_length, ring_size, etc.
+
+    Reads from zozi_variant_config.json at runtime.
+    """
+    from services.variant_config_service import get_axes_for_category
+    return {
+        "category": category,
+        "axes": get_axes_for_category(category, subcategory=subcategory),
+    }
+
+
 @router.post("/upload/moderate")
 async def moderate_text(
     current_user: dict = Depends(require_roles("supplier", "admin")),
@@ -707,15 +917,47 @@ async def generate_angles(
     current_user: dict = Depends(require_roles("supplier", "admin")),
     image: UploadFile = File(...),
 ):
-    """
-    Step 1 — AI angle generation: remove background + create novel-angle views
-    from a single product photo. Returns bg_removed_url + angle_urls (served
-    from /uploads). Never 500s — falls back to an empty angle list on failure.
-    """
-    from controllers.supplier_controller import process_product_image
-    result = await process_product_image(image, generate_angles=True, current_user=current_user)
-    return result
+    """Enqueue AI angle generation as an ML job and return ``job_id``.
 
+    Poll ``GET /supplier/upload/jobs/{job_id}`` for the result. The job
+    removes the background and creates novel-angle product views.
+    """
+    import uuid
+    from utils.background_jobs import enqueue_ml_job
+    from services.storage import storage as _storage
+
+    raw = await image.read()
+    if not raw:
+        raise HTTPException(status_code=400, detail="Empty image file")
+
+    owner_id = current_user.get("id") or current_user.get("user_id")
+    owner_role = current_user.get("role", "supplier")
+
+    image_key = f"analysis_input/{uuid.uuid4().hex}_{image.filename or 'image'}"
+    _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
+
+    def _run_generate_angles() -> dict:
+        from controllers.supplier_controller import process_product_image
+        from io import BytesIO
+        from fastapi import UploadFile
+        import asyncio
+
+        upload = UploadFile(filename=image.filename or "image.jpg", file=BytesIO(raw))
+        result = asyncio.run(process_product_image(
+            image=upload,
+            generate_angles=True,
+            current_user=current_user,
+        ))
+        return result
+
+    job = enqueue_ml_job(
+        owner_user_id=owner_id,
+        owner_role=owner_role,
+        func=_run_generate_angles,
+        metadata={"generate_angles": True},
+        max_retries=1,
+    )
+    return {"job_id": job["id"], "status": "queued"}
 
 @router.post("/upload/process-tools")
 async def process_tools(

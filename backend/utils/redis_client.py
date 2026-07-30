@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from utils.config import settings
+
 
 class _NoOpRedis:
     """Fallback Redis client that silently no-ops all operations."""
@@ -79,7 +81,7 @@ def redis_client() -> redis.Redis | _NoOpRedis:
     if not _redis_available:
         return _NoOpRedis()
     if _client is None:
-        client = redis.Redis.from_url("redis://localhost:6379", decode_responses=True)
+        client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
         try:
             client.ping()
         except Exception:

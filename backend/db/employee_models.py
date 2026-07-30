@@ -5,11 +5,11 @@ from typing import Optional, TYPE_CHECKING
 from decimal import Decimal
 from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint, BigInteger, Time
 from sqlalchemy.orm import relationship
-from db.database import Base
+from db.base import Base
 from utils.datetime_utils import utcnow as _utcnow
 
 if TYPE_CHECKING:
-    from db.models import User
+    from models import User
 
 __all__ = [
     "Office", "PhysicalIDCard", "DynamicQRSession", "EmployeeBiometric",
@@ -23,6 +23,7 @@ __all__ = [
 
 class Office(Base):
     __tablename__ = "offices"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     country_code = Column(String(10), nullable=False)
@@ -35,6 +36,7 @@ class Office(Base):
 
 class PhysicalIDCard(Base):
     __tablename__ = "physical_id_cards"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), unique=True, nullable=False)
     card_number = Column(String(50), unique=True, nullable=False, index=True)
@@ -60,11 +62,12 @@ class DynamicQRSession(Base):
     created_at = Column(DateTime, default=_utcnow)
     
     employee = relationship("Employee")
-    __table_args__ = (Index("ix_qr_session_employee_expires", "employee_id", "expires_at"),)
+    __table_args__ = (Index("ix_qr_session_employee_expires", "employee_id", "expires_at"), {"schema": "logistics"})
 
 
 class EmployeeBiometric(Base):
     __tablename__ = "employee_biometrics"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), unique=True, nullable=False)
     fingerprint_hash = Column(String(255), nullable=True)
@@ -78,6 +81,7 @@ class EmployeeBiometric(Base):
 
 class GeoFenceLog(Base):
     __tablename__ = "geo_fence_logs"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     latitude = Column(Float, nullable=False)
@@ -91,6 +95,7 @@ class GeoFenceLog(Base):
 
 class EmployeeRole(Base):
     __tablename__ = "employee_roles"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(100), unique=True)
     permissions = Column(JSON)
@@ -102,8 +107,7 @@ class Employee(Base):
         UniqueConstraint("employee_code", name="uq_employees_code"),
         Index("ix_employees_user_id", "user_id"),
         Index("ix_employees_office", "office_id"),
-        Index("ix_employees_country_status", "country_code", "employment_status"),
-    )
+        Index("ix_employees_country_status", "country_code", "employment_status"), {"schema": "logistics"})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True)
     employee_code = Column(String(20), unique=True, index=True, nullable=False)
@@ -122,6 +126,8 @@ class Employee(Base):
     notes = Column(Text, nullable=True)
     reporting_manager_id = Column(Integer, ForeignKey("employees.id"), nullable=True)
     hiring_manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    authority_level = Column(Integer, nullable=True)
+    performance_score = Column(Numeric(3, 2), nullable=True, comment="Weighted average of 360° reviews, 0.00-5.00")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     
@@ -164,11 +170,12 @@ class EmployeeAttendance(Base):
     
     employee = relationship("Employee", back_populates="attendance")
     
-    __table_args__ = (UniqueConstraint("employee_id", "date", name="uq_attendance_employee_date"),)
+    __table_args__ = (UniqueConstraint("employee_id", "date", name="uq_attendance_employee_date"), {"schema": "logistics"})
 
 
 class EmployeeWorkLog(Base):
     __tablename__ = "employee_work_logs"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False)
@@ -184,6 +191,7 @@ class EmployeeWorkLog(Base):
 
 class EmployeeLeaveRequest(Base):
     __tablename__ = "employee_leave_requests"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     leave_type = Column(String(50), nullable=False)
@@ -215,11 +223,12 @@ class EmployeeShiftRoster(Base):
     
     employee = relationship("Employee", back_populates="shift_rosters")
     
-    __table_args__ = (UniqueConstraint("employee_id", "shift_date", name="uq_shift_employee_date"),)
+    __table_args__ = (UniqueConstraint("employee_id", "shift_date", name="uq_shift_employee_date"), {"schema": "logistics"})
 
 
 class EmployeeAsset(Base):
     __tablename__ = "employee_assets"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     asset_type = Column(String(50), nullable=False)
@@ -236,6 +245,7 @@ class EmployeeAsset(Base):
 
 class EmployeeCertification(Base):
     __tablename__ = "employee_certifications"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     cert_type = Column(String(100), nullable=False)
@@ -251,6 +261,7 @@ class EmployeeCertification(Base):
 
 class EmployeeDocument(Base):
     __tablename__ = "employee_documents"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     doc_type = Column(String(50), nullable=False)
@@ -267,6 +278,7 @@ class EmployeeDocument(Base):
 
 class EmployeeDependent(Base):
     __tablename__ = "employee_dependents"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(160), nullable=False)
@@ -281,6 +293,7 @@ class EmployeeDependent(Base):
 
 class EmployeeRelation(Base):
     __tablename__ = "employee_relations"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     related_person_name = Column(String(160), nullable=False)
@@ -296,6 +309,7 @@ class EmployeeRelation(Base):
 
 class EmployeeAddress(Base):
     __tablename__ = "employee_addresses"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
     address_type = Column(String(30), nullable=False)
@@ -314,6 +328,7 @@ class EmployeeAddress(Base):
 
 class COIReport(Base):
     __tablename__ = "coi_reports"
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
     related_person_name = Column(String(160), nullable=False)

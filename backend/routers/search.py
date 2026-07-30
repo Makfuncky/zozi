@@ -1,7 +1,10 @@
-"""Search routes restored from the recovered controller layer."""
+"""Search routes — text, AI-powered, voice, visual, autocomplete, and recommendations."""
+from __future__ import annotations
+
+import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from sqlalchemy.orm import Session
 
 from controllers.auth_controller import get_current_user, get_optional_user
@@ -10,8 +13,51 @@ from db.database import get_db
 from services.advanced_filter_service import AdvancedFilterService
 from services.advanced_search_engine import AdvancedSearchEngine
 from services.ai_search_service import AISearchService
+from providers.image import process_image_search
+from providers.voice_to_text import transcribe_audio
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.post("/voice")
+async def voice_search(
+    audio: UploadFile = File(None),
+    text: str = Form(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Voice search — accepts raw audio (transcribed via Whisper) OR pre-transcribed text.
+
+    The frontend Web Speech API can send the transcript as `text` directly.
+    For server-side whisper transcription, send the audio file as `audio`.
+
+    Returns the transcript so the client can pass it to GET /search/filtered.
+    """
+    if text:
+        transcript = text.strip()
+    elif audio:
+        audio_bytes = await audio.read()
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="Empty audio file")
+        transcript = transcribe_audio(audio_bytes) or ""
+        if not transcript.strip():
+            raise HTTPException(status_code=400, detail="Could not transcribe audio")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either 'audio' (file upload) or 'text' (transcript string)",
+        )
+
+    # Parse the transcript through the NLP engine for structured intent
+    engine = AdvancedSearchEngine(db)
+    parsed = engine.parse_query(transcript)
+
+    return {
+        "transcript": transcript,
+        "parsed_query": parsed,
+    }
 
 
 @router.get("")
@@ -140,6 +186,23 @@ def autocomplete(
 ):
     engine = AdvancedSearchEngine(db)
     return {"suggestions": engine.get_autocomplete_suggestions(query=q, limit=limit)}
+
+
+@router.post("/visual")
+async def visual_search(
+    image: UploadFile = File(...),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
+    """
+    Visual similarity search — upload an image and find visually similar products.
+
+    Accepts an image file, processes it through the AI image service,
+    and returns visually similar products ranked by similarity score.
+    """
+    image_bytes = await image.read()
+    result = await process_image_search(image_bytes=image_bytes, db=db, limit=limit)
+    return result
 
 
 @router.get("/trending")

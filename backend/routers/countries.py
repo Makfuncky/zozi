@@ -262,11 +262,14 @@ def list_public_country_employees(code: str, db: Session = Depends(get_db)):
     return ctrl.list_employees(code, db)
 
 
-@router.get("/{code}/cities")
-def list_public_cities(code: str, db: Session = Depends(get_db)):
-    """Public cities list — for customer-facing checkout/shipping dropdowns."""
-    return country_controller.list_public_cities(code, db)
-
+# NOTE: The public GET /{code}/cities endpoint was removed — it was shadowed by
+# the authenticated list_country_cities route at the same path (second registration
+# wins in FastAPI). The authenticated version supports search (?q=), pagination
+# (?limit=), and admin auth.
+#
+# TODO: If customer-facing checkout/shipping dropdowns need city data without auth,
+# add a dedicated public route at GET /public/{code}/cities that calls
+# country_controller.list_public_cities(code, db).
 
 @router.post("")
 def create_admin_country(body: CountryCreateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):

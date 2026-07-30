@@ -82,11 +82,11 @@ export default function FraudDetectionDashboard() {
     setLoading(true);
     try {
       const [statsRes, eventsRes, rulesRes, blacklistRes, reviewsRes] = await Promise.all([
-        apiFetch("/admin/fraud-detection/dashboard/stats"),
-        apiFetch(`/admin/fraud-detection/events?page=1&size=50&min_score=${minScore}`),
-        apiFetch("/admin/fraud-detection/rules?is_active=true"),
-        apiFetch("/admin/fraud-detection/blacklist"),
-        apiFetch("/admin/fraud-detection/review?status=pending"),
+        apiFetch("/fraud-detection/dashboard/stats"),
+        apiFetch(`/fraud-detection/events?page=1&size=50&min_score=${minScore}`),
+        apiFetch("/fraud-detection/rules?is_active=true"),
+        apiFetch("/fraud-detection/blacklist"),
+        apiFetch("/fraud-detection/review?status=pending"),
       ]);
 
       if (statsRes.ok) {
@@ -144,7 +144,7 @@ export default function FraudDetectionDashboard() {
     if (!selectedEvent) return;
     setAddingToBlacklist(true);
     try {
-      const res = await apiFetch("/admin/fraud-detection/blacklist", {
+      const res = await apiFetch("/fraud-detection/blacklist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

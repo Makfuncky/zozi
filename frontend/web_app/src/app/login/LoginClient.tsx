@@ -40,10 +40,10 @@ function CustomerLoginPage() {
     }
     setLoading(true);
     try {
-      const body = new URLSearchParams({ username: identifier.trim(), password });
+      const body = JSON.stringify({ username: identifier.trim(), password });
       const res = await apiFetch("/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/json" },
         body,
         skipAuthRedirect: true,
       });

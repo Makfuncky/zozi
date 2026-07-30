@@ -16,6 +16,8 @@ import { PanelContent, PanelLoadingState } from "@/components/PanelPage";
 import { StatCard } from "@/components/ui/StatCard";
 import { apiFetch } from "@/lib/api";
 import { useCurrencyStore } from "@/lib/currencyStore";
+import UploadProgressDashboard from "@/components/supplier/UploadProgressDashboard";
+import ParcelAuditWidget from "@/components/supplier/ParcelAuditWidget";
 
 interface Overview {
   totalRevenue: number;
@@ -157,6 +159,25 @@ export default function SupplierDashboardPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Real-Time Upload Activity Dashboard */}
+            <div className="mt-6">
+              <UploadProgressDashboard
+                onNewUpload={() => window.location.href = "/supplier/products/add"}
+                compact={true}
+                maxItems={8}
+                refreshInterval={8000}
+              />
+            </div>
+
+            {/* Parcel Verification Audit Widget */}
+            <div className="mt-6">
+              <ParcelAuditWidget
+                compact={true}
+                maxItems={10}
+                refreshInterval={30_000}
+              />
             </div>
           </>
         )}

@@ -192,7 +192,7 @@ export default function TicketDetailPage() {
       <main className="min-h-screen px-4 py-8">
         <div className="max-w-2xl mx-auto theme-card p-8 text-center">
           <p className="text-danger font-semibold">{error ?? "Ticket not found"}</p>
-          <button onClick={() => router.push("/tickets")} className="mt-4 text-brand text-sm hover:underline">
+          <button onClick={() => router.push("/tickets")} className="mt-4 text-primary text-sm hover:underline">
             ← Back to Tickets
           </button>
         </div>
@@ -209,7 +209,7 @@ export default function TicketDetailPage() {
         {/* Back */}
         <button
           onClick={() => router.push("/tickets")}
-          className="flex items-center gap-2 text-sm theme-text-muted hover:text-brand transition-colors mb-5"
+          className="flex items-center gap-2 text-sm theme-text-muted hover:text-primary transition-colors mb-5"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Tickets
         </button>
@@ -269,13 +269,13 @@ export default function TicketDetailPage() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className={`theme-card p-4 ${r.is_admin ? "border-brand/30" : ""}`}
+                className={`theme-card p-4 ${r.is_admin ? "border-primary/30" : ""}`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   {r.is_admin ? (
                     <>
-                      <ShieldCheck className="w-4 h-4 text-brand" />
-                      <span className="text-xs font-bold text-brand">Support Team</span>
+                      <ShieldCheck className="w-4 h-4 text-primary" />
+                      <span className="text-xs font-bold text-primary">Support Team</span>
                     </>
                   ) : (
                     <>

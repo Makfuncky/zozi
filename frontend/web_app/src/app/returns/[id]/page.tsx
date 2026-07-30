@@ -74,7 +74,7 @@ export default function ReturnDetailPage() {
         <div className="text-center">
           <PackageX className="w-12 h-12 text-danger/40 mx-auto mb-4" />
           <p className="text-danger text-sm">{error ?? "Return not found."}</p>
-          <button onClick={() => router.push("/returns")} className="mt-4 text-brand text-xs underline">
+          <button onClick={() => router.push("/returns")} className="mt-4 text-primary text-xs underline">
             Back to Returns
           </button>
         </div>

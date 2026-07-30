@@ -9,9 +9,9 @@ import { useAuth } from "@/lib/useAuth";
 import { isAdminStaffRole, hasAdminPermission } from "@shared/adminPermissions";
 import { useAdminCountry } from "@/lib/useAdminCountry";
 
-import ModerationPage from "../dashboard/tabs/ModerationTab";
-import TicketsPage from "../dashboard/tabs/TicketsTab";
-import AdminDisputesPage from "../disputes/DisputesPanel";
+import ModerationPage from "../dashboard/_tabs/ModerationTab";
+import TicketsPage from "../dashboard/_tabs/TicketsTab";
+import AdminDisputesPage from "../disputes/_components/DisputesPanel";
 
 function ResolutionInner() {
   const router = useRouter();

@@ -38,8 +38,6 @@ ALLOWED_DOC_TYPES = (
 )
 ALLOWED_STATUSES = ("pending", "under_review", "approved", "rejected", "expired")
 
-UPLOAD_DIR = "uploads/supplier_documents"
-
 
 def _serialize_doc(doc: SupplierDocument) -> dict:
     expires_at = cast(Optional[datetime], getattr(doc, "expires_at", None))
@@ -140,16 +138,14 @@ async def upload_and_submit_document(
     if document_type not in ALLOWED_DOC_TYPES:
         raise HTTPException(status_code=422, detail=f"Invalid document type. Allowed: {ALLOWED_DOC_TYPES}")
 
-    # ── Validate and save file ─────────────────────────────────────────────
-    from utils.file_validation import validate_upload_document  # noqa: PLC0415
-    from utils.constants import MAX_UPLOAD_SIZE_BYTES        # noqa: PLC0415
+    from services.storage import storage as _storage
+    from utils.file_validation import validate_upload_document
+    from utils.constants import MAX_UPLOAD_SIZE_BYTES
 
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    # Sanitize filename — never trust client-supplied names for path construction
     safe_name = os.path.basename(file.filename or "document.pdf")
     ext = os.path.splitext(safe_name)[1].lower() or ".pdf"
     filename = f"{uuid.uuid4().hex}{ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    key = f"supplier_documents/{filename}"
 
     contents = await file.read()
     if len(contents) > MAX_UPLOAD_SIZE_BYTES:
@@ -157,13 +153,8 @@ async def upload_and_submit_document(
     if not contents:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
-    # Reject files whose magic bytes don't match their declared type
     validate_upload_document(contents, safe_name)
-
-    with open(file_path, "wb") as f:
-        f.write(contents)
-
-    file_url = f"/{UPLOAD_DIR}/{filename}"
+    url = _storage.save(key, contents, content_type=file.content_type)
 
     expires_at = None
     if expires_at_str:
@@ -177,7 +168,7 @@ async def upload_and_submit_document(
         supplier_id=supplier_profile_id,
         doc_type=document_type,
         document_name=document_name or file.filename or "document",
-        file_url=file_url,
+        file_url=url,
         status="pending",
         expires_at=expires_at,
     )

@@ -30,6 +30,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig
+from events import PaymentConfirmedEvent
 from utils.config import settings
 from controllers.products_controller import _bump_product_cache_version
 from utils.currency import (
@@ -37,6 +38,7 @@ from utils.currency import (
     get_currency_context,
     money_to_minor_units_for_currency,
 )
+from events import EventPublisher
 
 logger = logging.getLogger(__name__)
 
@@ -2159,43 +2161,43 @@ def _confirm_order(
     )
 
 
+_event_publisher = EventPublisher()
+
+
 def _apply_successful_payment(order: Order, confirmation_message: str, db: Session) -> None:
-    # Create journal entry for customer payment (Gateway Settlement Receivable -> Deferred Revenue)
-    from services.general_ledger_service import post_order_payment_journal
-    
-    try:
-        # Calculate order total amount for the journal entry
-        total_amount = order.total_amount if order.total_amount is not None else (
-            order.subtotal_amount if order.subtotal_amount is not None else 0
-        )
-        
-        # Post payment journal entry to general ledger
-        post_order_payment_journal(db, order.id, total_amount)
-    except Exception as e:
-        # Log the error but don't fail the payment process
-        # The general ledger entry failure should not rollback the payment
-        logger.error(f"Failed to create payment journal entry for order {order.id}: {str(e)}")
-    
-    _confirm_order(
-        order,
-        "Payment Confirmed",
-        confirmation_message,
-        db,
-        mark_paid=True,
+    _confirm_order(order, "Payment Confirmed", confirmation_message, db, mark_paid=True)
+
+    total_amount = order.total_amount if order.total_amount is not None else (
+        order.subtotal_amount if order.subtotal_amount is not None else 0
     )
 
-    # Keep the local Payment ledger consistent with the now-confirmed order so
-    # that downstream confirm/idempotency checks (which look for a "completed"
-    # Payment) behave correctly for every provider, including plug-and-play
-    # generic gateways.
+    # Post payment journal entry to general ledger
+    try:
+        from services.general_ledger_service import post_order_payment_journal
+        post_order_payment_journal(db, order.id, total_amount)
+    except Exception as e:
+        logger.error("Failed to create payment journal entry for order %s: %s", order.id, e)
+
+    # Publish event for async fulfillment processing
     try:
         normalized = _normalized_payment_method(order)
+        event = PaymentConfirmedEvent.create(
+            payment_id="pending",
+            order_id=order.id,
+            amount=total_amount,
+            currency=order.currency_code or "USD",
+            user_id=order.user_id,
+            payment_method=normalized,
+            payment_gateway=normalized,
+        )
+        _event_publisher.publish(event)
+
         db.query(Payment).filter(
             Payment.order_id == order.id,
             Payment.provider == normalized,
         ).update({Payment.status: "completed"})
     except Exception:
-        logger.exception("Failed to mark Payment rows completed for order %s", order.id)
+        logger.exception("Failed to process PaymentConfirmedEvent for order %s", order.id)
 
 
 def confirm_cash_on_delivery_order(order: Order, db: Session) -> None:

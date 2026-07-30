@@ -10,6 +10,7 @@ __all__ = ["IncidentWarRoom", "IncidentThread", "IncidentActionItem", "WarRoomTe
 
 class IncidentWarRoom(Base):
     __tablename__ = "incident_war_rooms"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     incident_id = Column(String, unique=True, nullable=False, index=True)
     title = Column(String(200), nullable=False)
@@ -27,6 +28,7 @@ class IncidentWarRoom(Base):
 
 class IncidentThread(Base):
     __tablename__ = "incident_threads"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     war_room_id = Column(Integer, ForeignKey("incident_war_rooms.id"), nullable=False)
     participant_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -38,6 +40,7 @@ class IncidentThread(Base):
 
 class IncidentActionItem(Base):
     __tablename__ = "incident_action_items"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     war_room_id = Column(Integer, ForeignKey("incident_war_rooms.id"), nullable=False)
     assignee_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -54,6 +57,7 @@ class IncidentActionItem(Base):
 
 class WarRoomTemplate(Base):
     __tablename__ = "war_room_templates"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     severity = Column(String, nullable=False)

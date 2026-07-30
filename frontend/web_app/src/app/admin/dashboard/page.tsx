@@ -20,7 +20,7 @@ import { ADMIN_DASHBOARD_FEATURED_ITEMS, ADMIN_LEGACY_DASHBOARD_REDIRECTS, ADMIN
 import AdminLayout from "@/components/AdminLayout";
 import { PanelContent, PanelLoadingState, PanelTabs } from "@/components/PanelPage";
 import TranslatedText from "@/components/TranslatedText";
-import ExportsPanel from "./ExportsPanel";
+import ExportsPanel from "./_components/ExportsPanel";
 import { hasAdminPermission, isAdminStaffRole } from "@shared/adminPermissions";
 import { isRtlLocale } from "@shared/localization";
 

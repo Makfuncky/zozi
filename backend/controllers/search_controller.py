@@ -1,6 +1,7 @@
 """
 Search Controller — natural-language query parsing and smart product search logic.
 """
+import hashlib
 import json
 import re
 from typing import Any, Optional, List, cast
@@ -9,48 +10,8 @@ from fastapi.responses import Response
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
-from models import Order, OrderItem, Product, Wishlist
-from db.schemas import _normalize_image_path
-
-# Redis TTL for recommendation cache (5 minutes)
-_REC_CACHE_TTL = 300
-
-
-def _cache_get(key: str) -> Optional[dict]:
-    """Return cached JSON dict from Redis or None if miss/unavailable."""
-    try:
-        from utils.auth import _get_redis
-        r = _get_redis()
-        if r:
-            raw = r.get(key)
-            if raw:
-                return json.loads(cast(str | bytes | bytearray, raw))
-    except Exception:
-        pass
-    return None
-
-
-def _cache_set(key: str, value: dict, ttl: int = _REC_CACHE_TTL) -> None:
-    """Store JSON dict in Redis with TTL; silently ignores unavailability."""
-    try:
-        from utils.auth import _get_redis
-        r = _get_redis()
-        if r:
-            r.setex(key, ttl, json.dumps(value, default=str))
-    except Exception:
-        pass
-
-
-def _cache_invalidate_user(user_id: int) -> None:
-    """Remove all recommendation cache entries for a user (on purchase/wishlist change)."""
-    try:
-        from utils.auth import _get_redis
-        r = _get_redis()
-        if r:
-            for key in r.scan_iter(f"rec:{user_id}:*"):
-                r.delete(key)
-    except Exception:
-        pass
+from models.products import Product
+from utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
 
 # ── Price-range keyword map ────────────────────────────────────────────────
 PRICE_KEYWORDS: list[tuple[re.Pattern, float | None, float | None]] = [
@@ -150,21 +111,7 @@ def _database_supports_postgres_fts(db: Session) -> bool:
 
 
 def _build_postgres_search_document():
-    return func.to_tsvector(
-        "simple",
-        func.concat_ws(
-            " ",
-            func.coalesce(Product.name, ""),
-            func.coalesce(Product.description, ""),
-            func.coalesce(Product.category, ""),
-            func.coalesce(Product.brand, ""),
-            func.coalesce(Product.tags, ""),
-            func.coalesce(Product.ai_description, ""),
-            func.coalesce(Product.materials, ""),
-            func.coalesce(Product.color, ""),
-            func.coalesce(Product.sizes, ""),
-        ),
-    )
+    return Product.search_vector
 
 
 def _build_postgres_tsquery(parsed: dict[str, Any]):
@@ -262,9 +209,10 @@ def _resolve_brand_from_catalog(parsed: dict[str, Any], db: Session) -> dict[str
     if not raw_query:
         return parsed
 
-    brand_cache_key = "search:brand_catalog"
-    brands = _cache_get(brand_cache_key)
-    if not isinstance(brands, list):
+    q_digest = hashlib.sha1(raw_query.encode()).hexdigest()
+    brand_cache_key = f"search:brand_catalog:{q_digest}"
+
+    def _fetch_brands() -> list[str]:
         brand_rows = (
             db.query(Product.brand)
             .filter(
@@ -277,12 +225,13 @@ def _resolve_brand_from_catalog(parsed: dict[str, Any], db: Session) -> dict[str
             .distinct()
             .all()
         )
-        brands = sorted(
+        return sorted(
             [cast(str, row[0]).strip() for row in brand_rows if row and row[0]],
             key=len,
             reverse=True,
         )
-        _cache_set(brand_cache_key, brands, 300)
+
+    brands = cache_or_compute(key=brand_cache_key, compute=_fetch_brands, ttl=300, namespace="products:search")
     for brand in brands:
         if re.search(rf"\b{re.escape(brand.lower())}\b", raw_query):
             updated = dict(parsed)
@@ -715,166 +664,170 @@ def get_recommendations(
     # ── Redis cache lookup ────────────────────────────────────────────────────
     _cats_key = ",".join(sorted(normalized_recent_categories))
     _cache_key = f"rec:{user_id}:{limit}:{hash(_cats_key)}"
-    cached = _cache_get(_cache_key)
-    if cached is not None:
-        return cached
-    category_rows = (
-        db.query(Product.category, func.sum(OrderItem.quantity).label("units"))
-        .join(OrderItem, OrderItem.product_id == Product.id)
-        .join(Order, Order.id == OrderItem.order_id)
-        .filter(
-            Order.user_id == user_id,
-            Product.is_deleted == False,  # noqa: E712
-            Product.is_active == True,    # noqa: E712
-            Product.is_approved == True,  # noqa: E712
+
+    def _compute_payload() -> dict:
+        category_rows = (
+            db.query(Product.category, func.sum(OrderItem.quantity).label("units"))
+            .join(OrderItem, OrderItem.product_id == Product.id)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(
+                Order.user_id == user_id,
+                Product.is_deleted == False,  # noqa: E712
+                Product.is_active == True,    # noqa: E712
+                Product.is_approved == True,  # noqa: E712
+            )
+            .group_by(Product.category)
+            .order_by(desc(func.sum(OrderItem.quantity)))
+            .all()
         )
-        .group_by(Product.category)
-        .order_by(desc(func.sum(OrderItem.quantity)))
-        .all()
-    )
-    weighted_categories: dict[str, float] = {
-        (row.category or "Uncategorized"): float(row.units or 0)
-        for row in category_rows
-    }
+        weighted_categories: dict[str, float] = {
+            (row.category or "Uncategorized"): float(row.units or 0)
+            for row in category_rows
+        }
 
-    # Wishlist signal — each wishlisted product contributes 0.3 pts to its category
-    wishlist_rows = (
-        db.query(Product.category)
-        .join(Wishlist, Wishlist.product_id == Product.id)
-        .filter(
-            Wishlist.user_id == user_id,
-            Product.is_deleted == False,  # noqa: E712
-            Product.is_active == True,    # noqa: E712
+        # Wishlist signal — each wishlisted product contributes 0.3 pts to its category
+        wishlist_rows = (
+            db.query(Product.category)
+            .join(Wishlist, Wishlist.product_id == Product.id)
+            .filter(
+                Wishlist.user_id == user_id,
+                Product.is_deleted == False,  # noqa: E712
+                Product.is_active == True,    # noqa: E712
+            )
+            .all()
         )
-        .all()
-    )
-    for row in wishlist_rows:
-        cat = (row.category or "Uncategorized").strip()
-        if cat:
-            weighted_categories[cat] = weighted_categories.get(cat, 0) + 0.3
+        for row in wishlist_rows:
+            cat = (row.category or "Uncategorized").strip()
+            if cat:
+                weighted_categories[cat] = weighted_categories.get(cat, 0) + 0.3
 
-    for category in normalized_recent_categories:
-        clean = (category or "").strip()
-        if clean:
-            weighted_categories[clean] = weighted_categories.get(clean, 0) + 0.5
+        for category in normalized_recent_categories:
+            clean = (category or "").strip()
+            if clean:
+                weighted_categories[clean] = weighted_categories.get(clean, 0) + 0.5
 
-    # Item-item collaborative signal ("also bought"):
-    # For each product this user purchased, find other products that appear in the
-    # same orders from *other* users, and boost those products' categories.
-    # Capped at 20 seed products and 50 co-purchase rows for performance.
-    user_product_ids_subq = (
-        db.query(OrderItem.product_id)
-        .join(Order, Order.id == OrderItem.order_id)
-        .filter(Order.user_id == user_id)
-        .distinct()
-        .limit(20)
-        .scalar_subquery()
-    )
-    # Orders that contain any of the user's purchased products, placed by other users
-    co_order_ids_subq = (
-        db.query(OrderItem.order_id)
-        .join(Order, Order.id == OrderItem.order_id)
-        .filter(
-            OrderItem.product_id.in_(user_product_ids_subq),
-            Order.user_id != user_id,
+        # Item-item collaborative signal ("also bought"):
+        # For each product this user purchased, find other products that appear in the
+        # same orders from *other* users, and boost those products' categories.
+        # Capped at 20 seed products and 50 co-purchase rows for performance.
+        user_product_ids_subq = (
+            db.query(OrderItem.product_id)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(Order.user_id == user_id)
+            .distinct()
+            .limit(20)
+            .scalar_subquery()
         )
-        .distinct()
-        .limit(100)
-        .scalar_subquery()
-    )
-    # Products bought in those co-orders (excluding this user's own items)
-    also_bought_rows = (
-        db.query(Product.category, func.count(OrderItem.product_id).label("co_count"))
-        .join(OrderItem, OrderItem.product_id == Product.id)
-        .filter(
-            OrderItem.order_id.in_(co_order_ids_subq),
-            Product.id.notin_(user_product_ids_subq),
-            Product.is_deleted == False,  # noqa: E712
-            Product.is_active == True,    # noqa: E712
-            Product.is_approved == True,  # noqa: E712
+        # Orders that contain any of the user's purchased products, placed by other users
+        co_order_ids_subq = (
+            db.query(OrderItem.order_id)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(
+                OrderItem.product_id.in_(user_product_ids_subq),
+                Order.user_id != user_id,
+            )
+            .distinct()
+            .limit(100)
+            .scalar_subquery()
         )
-        .group_by(Product.category)
-        .limit(50)
-        .all()
-    )
-    for row in also_bought_rows:
-        cat = (row.category or "Uncategorized").strip()
-        if cat:
-            # 0.2 pts per co-purchase occurrence, capped at 3.0 pts from this signal
-            boost = min(float(row.co_count) * 0.2, 3.0)
-            weighted_categories[cat] = weighted_categories.get(cat, 0) + boost
+        # Products bought in those co-orders (excluding this user's own items)
+        also_bought_rows = (
+            db.query(Product.category, func.count(OrderItem.product_id).label("co_count"))
+            .join(OrderItem, OrderItem.product_id == Product.id)
+            .filter(
+                OrderItem.order_id.in_(co_order_ids_subq),
+                Product.id.notin_(user_product_ids_subq),
+                Product.is_deleted == False,  # noqa: E712
+                Product.is_active == True,    # noqa: E712
+                Product.is_approved == True,  # noqa: E712
+            )
+            .group_by(Product.category)
+            .limit(50)
+            .all()
+        )
+        for row in also_bought_rows:
+            cat = (row.category or "Uncategorized").strip()
+            if cat:
+                # 0.2 pts per co-purchase occurrence, capped at 3.0 pts from this signal
+                boost = min(float(row.co_count) * 0.2, 3.0)
+                weighted_categories[cat] = weighted_categories.get(cat, 0) + boost
 
-    # Price-preference signal — compute user's typical spend band from purchase history
-    price_avg_row = (
-        db.query(func.avg(Product.price).label("avg_price"))
-        .join(OrderItem, OrderItem.product_id == Product.id)
-        .join(Order, Order.id == OrderItem.order_id)
-        .filter(Order.user_id == user_id)
-        .first()
-    )
-    price_band_lo: Optional[float] = None
-    price_band_hi: Optional[float] = None
-    if price_avg_row and price_avg_row.avg_price:
-        avg = float(price_avg_row.avg_price)
-        price_band_lo = avg * 0.4
-        price_band_hi = avg * 2.5
+        # Price-preference signal — compute user's typical spend band from purchase history
+        price_avg_row = (
+            db.query(func.avg(Product.price).label("avg_price"))
+            .join(OrderItem, OrderItem.product_id == Product.id)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(Order.user_id == user_id)
+            .first()
+        )
+        price_band_lo: Optional[float] = None
+        price_band_hi: Optional[float] = None
+        if price_avg_row and price_avg_row.avg_price:
+            avg = float(price_avg_row.avg_price)
+            price_band_lo = avg * 0.4
+            price_band_hi = avg * 2.5
 
-    top_categories = [
-        category
-        for category, _score in sorted(
-            weighted_categories.items(),
-            key=lambda kv: kv[1],
-            reverse=True,
-        )[:4]
-    ]
+        top_categories = [
+            category
+            for category, _score in sorted(
+                weighted_categories.items(),
+                key=lambda kv: kv[1],
+                reverse=True,
+            )[:4]
+        ]
 
-    purchased_product_ids = {
-        row.product_id
-        for row in db.query(OrderItem.product_id)
-        .join(Order, Order.id == OrderItem.order_id)
-        .filter(Order.user_id == user_id)
-        .distinct()
-        .all()
-    }
+        purchased_product_ids = {
+            row.product_id
+            for row in db.query(OrderItem.product_id)
+            .join(Order, Order.id == OrderItem.order_id)
+            .filter(Order.user_id == user_id)
+            .distinct()
+            .all()
+        }
 
-    query = db.query(Product).filter(
-        Product.is_deleted == False,   # noqa: E712
-        Product.is_active == True,     # noqa: E712
-        Product.is_approved == True,   # noqa: E712
-        Product.stock > 0,
-    )
-    if purchased_product_ids:
-        query = query.filter(Product.id.notin_(purchased_product_ids))
-    if top_categories:
-        query = query.filter(Product.category.in_(top_categories))
-
-    recommended = query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
-    if not recommended:
-        # Fallback to global best products when category affinity is sparse.
-        fallback_query = db.query(Product).filter(
+        query = db.query(Product).filter(
             Product.is_deleted == False,   # noqa: E712
             Product.is_active == True,     # noqa: E712
             Product.is_approved == True,   # noqa: E712
             Product.stock > 0,
         )
         if purchased_product_ids:
-            fallback_query = fallback_query.filter(Product.id.notin_(purchased_product_ids))
-        recommended = fallback_query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
+            query = query.filter(Product.id.notin_(purchased_product_ids))
+        if top_categories:
+            query = query.filter(Product.category.in_(top_categories))
 
-    # Apply price-preference soft sort — in-band items surface first, preserving existing order within each group
-    if price_band_lo is not None:
-        def _out_of_band(p: Product) -> int:
-            prc = float(cast(Any, getattr(p, "price")) or 0)
-            return 0 if price_band_lo <= prc <= price_band_hi else 1  # type: ignore[operator]
-        recommended = sorted(recommended, key=_out_of_band)
+        recommended = query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
+        if not recommended:
+            # Fallback to global best products when category affinity is sparse.
+            fallback_query = db.query(Product).filter(
+                Product.is_deleted == False,   # noqa: E712
+                Product.is_active == True,     # noqa: E712
+                Product.is_approved == True,   # noqa: E712
+                Product.stock > 0,
+            )
+            if purchased_product_ids:
+                fallback_query = fallback_query.filter(Product.id.notin_(purchased_product_ids))
+            recommended = fallback_query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
 
-    results = [_serialize_recommendation_product(product) for product in recommended]
-    payload = {
-        "source_categories": top_categories,
-        "products": results,
-        "results": results,
-    }
-    # Store result in Redis cache for next request
-    _cache_set(_cache_key, payload)
-    return payload
+        # Apply price-preference soft sort — in-band items surface first, preserving existing order within each group
+        if price_band_lo is not None:
+            def _out_of_band(p: Product) -> int:
+                prc = float(cast(Any, getattr(p, "price")) or 0)
+                return 0 if price_band_lo <= prc <= price_band_hi else 1  # type: ignore[operator]
+            recommended = sorted(recommended, key=_out_of_band)
+
+        results = [_serialize_recommendation_product(product) for product in recommended]
+        payload = {
+            "source_categories": top_categories,
+            "products": results,
+            "results": results,
+        }
+        return payload
+
+    return cache_or_compute(
+        key=_cache_key,
+        compute=_compute_payload,
+        ttl=300,
+        namespace="products:search",
+    )
 

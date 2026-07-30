@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends
 from db.database import get_db
 
 from db.employee_models import Employee, EmployeeAttendance, GeoFenceLog
-from db.models import TreasuryAccount
+from models import TreasuryAccount
 
 logger = logging.getLogger("zozi.command_center")
 

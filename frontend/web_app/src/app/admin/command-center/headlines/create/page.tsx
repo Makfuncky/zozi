@@ -141,7 +141,7 @@ export default function CommandCenterHeadlinesCreatePage() {
           className="theme-card rounded-xl border p-5 space-y-4"
         >
           <div className="flex items-center gap-2 mb-2">
-            <Globe className="h-4 w-4 text-brand" />
+            <Globe className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold text-text">Headline Details</h2>
           </div>
 

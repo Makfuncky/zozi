@@ -11,6 +11,7 @@ __all__ = ["CountryConfig", "CountryCommunication", "CountryGatewayCredentials",
 
 class CountryConfig(Base):
     __tablename__ = "country_configs"
+    __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(10), unique=True, nullable=False, index=True)
     name = Column(String, nullable=False)
@@ -129,8 +130,7 @@ class CountryConfig(Base):
 class CountryCommunication(Base):
     __tablename__ = "country_communications"
     __table_args__ = (
-        Index("ix_country_communications_recipient", "to_user_id", "status"),
-    )
+        Index("ix_country_communications_recipient", "to_user_id", "status"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
@@ -154,6 +154,7 @@ class CountryCommunication(Base):
 
 class CountryGatewayCredentials(Base):
     __tablename__ = "country_gateway_credentials"
+    __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
     gateway_name = Column(String(100), nullable=False)
@@ -166,6 +167,7 @@ class CountryGatewayCredentials(Base):
 
 class PayoutRule(Base):
     __tablename__ = "payout_rules"
+    __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
     min_amount = Column(Numeric(12, 2), nullable=True)
@@ -179,6 +181,7 @@ class PayoutRule(Base):
 
 class TaxRule(Base):
     __tablename__ = "tax_rules"
+    __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
     tax_name = Column(String(100), nullable=False)
@@ -190,6 +193,7 @@ class TaxRule(Base):
 
 class ShippingRule(Base):
     __tablename__ = "shipping_rules"
+    __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
     method = Column(String, nullable=False)
@@ -204,8 +208,7 @@ class Message(Base):
     __tablename__ = "messages"
     __table_args__ = (
         Index("ix_message_recipient", "to_user_id", "created_at"),
-        Index("ix_message_sender", "from_user_id", "created_at"),
-    )
+        Index("ix_message_sender", "from_user_id", "created_at"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True)
@@ -229,8 +232,7 @@ class Message(Base):
 class PayoutRuleCategory(Base):
     __tablename__ = "payout_rule_categories"
     __table_args__ = (
-        UniqueConstraint("country_code", "category_slug", name="uq_payout_rule_category"),
-    )
+        UniqueConstraint("country_code", "category_slug", name="uq_payout_rule_category"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)
@@ -247,8 +249,7 @@ class PayoutRuleCategory(Base):
 class PayoutRuleProduct(Base):
     __tablename__ = "payout_rule_products"
     __table_args__ = (
-        UniqueConstraint("country_code", "product_id", name="uq_payout_rule_product"),
-    )
+        UniqueConstraint("country_code", "product_id", name="uq_payout_rule_product"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=False)

@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import logging
 import time
 import os
 import threading
-from typing import Callable, Dict
+import hashlib
+import math
+from typing import Callable, Dict, Tuple
+from dataclasses import dataclass
 from collections import defaultdict
 
 from fastapi import Request, Response
@@ -12,6 +16,9 @@ from starlette.responses import JSONResponse
 
 from utils.config import settings
 from utils.ip_utils import get_request_ip
+from utils.redis_client import redis_client
+
+logger = logging.getLogger(__name__)
 
 PATH_LIMITS: list[tuple[str, int, int]] = [
     ("/auth/register", 5, 60),
@@ -109,8 +116,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return count < max_r, max(1, int(window - (now - (requests[0] if requests else now))))
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        app_env = os.environ.get("APP_ENV", "")
-        if app_env == "test" or not settings.rate_limit_enabled or settings.loadtest_profile_enabled:
+        app_env = str(getattr(settings, "app_env", "development")).lower()
+        if app_env == "test" or not settings.rate_limit_enabled:
             return await call_next(request)
 
         if request.method == "OPTIONS":
@@ -118,6 +125,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         if request.method not in STATE_METHODS:
             return await call_next(request)
+
+        if settings.loadtest_profile_enabled:
+            logger.warning("loadtest_profile_enabled is ON — using elevated rate limits")
 
         max_r, window = self._get_path_tier(request.url.path)
         client_ip = get_request_ip(request)
@@ -163,3 +173,62 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             _memory_store[key].append(time.time())
         return await call_next(request)
 
+
+@dataclass
+class RateLimitConfig:
+    """Configuration for rate limiting."""
+    requests_per_second: float
+    burst_capacity: int
+    window_size: int = 1
+
+
+class TokenBucket:
+    """Token bucket algorithm implementation."""
+
+    def __init__(self, config: RateLimitConfig):
+        self.config = config
+        self.rate = config.requests_per_second
+        self.capacity = config.burst_capacity
+
+    def consume(self, tokens: int = 1) -> Tuple[bool, int, int]:
+        """
+        Consume tokens from bucket.
+        Returns: (allowed, remaining_tokens, retry_after_seconds)
+        """
+        now = time.time()
+        bucket_key = f"bucket:{hashlib.sha256(str(now).encode()).hexdigest()[:16]}"
+
+        redis = redis_client()
+        if not redis:
+            return True, self.capacity - tokens, 0
+
+        try:
+            pipe = redis.pipeline()
+            pipe.get(bucket_key)
+            pipe.ttl(bucket_key)
+            current, ttl = pipe.execute()
+
+            if current is None:
+                current = self.capacity
+                last_update = now
+            else:
+                current = float(current)
+                last_update = now - ttl
+
+            tokens_to_add = (now - last_update) * self.rate
+            current = min(self.capacity, current + tokens_to_add)
+
+            if current >= tokens:
+                current -= tokens
+                redis.mset({
+                    bucket_key: current,
+                    f"last_update:{bucket_key}": now
+                })
+                redis.expire(bucket_key, int(self.config.window_size))
+                return True, int(current), 0
+            else:
+                retry_after = math.ceil((tokens - current) / self.rate)
+                return False, int(current), retry_after
+
+        except Exception:
+            return True, self.capacity - tokens, 0

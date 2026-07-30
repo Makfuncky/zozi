@@ -10,6 +10,7 @@ __all__ = ["FlashSale", "FlashSaleItem", "EmailCampaign", "EmailTemplate", "News
 
 class FlashSale(Base):
     __tablename__ = "flash_sales"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -28,6 +29,7 @@ class FlashSale(Base):
 
 class FlashSaleItem(Base):
     __tablename__ = "flash_sale_items"
+    __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     flash_sale_id = Column(Integer, ForeignKey("flash_sales.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -47,6 +49,7 @@ FlashSale.items = relationship("FlashSaleItem", back_populates="flash_sale", cas
 
 class EmailCampaign(Base):
     __tablename__ = "email_campaigns"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     subject = Column(String, nullable=False)
@@ -68,6 +71,7 @@ class EmailCampaign(Base):
 
 class EmailTemplate(Base):
     __tablename__ = "email_templates"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), unique=True, index=True, nullable=False)
     subject = Column(String(500), nullable=False)
@@ -81,6 +85,7 @@ class EmailTemplate(Base):
 
 class NewsletterSubscriber(Base):
     __tablename__ = "newsletter_subscribers"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True)
@@ -91,6 +96,7 @@ class NewsletterSubscriber(Base):
 
 class EmailCampaignLog(Base):
     __tablename__ = "email_campaign_logs"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey("email_campaigns.id"), nullable=False)
     recipient_email = Column(String, nullable=False)
@@ -103,6 +109,7 @@ class EmailCampaignLog(Base):
 
 class CampaignRecipient(Base):
     __tablename__ = "campaign_recipients"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey("email_campaigns.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -124,6 +131,7 @@ EmailCampaign.recipients = relationship("CampaignRecipient", back_populates="cam
 
 class EmailDeliveryEvent(Base):
     __tablename__ = "email_delivery_events"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String, nullable=False)
     recipient_email = Column(String, nullable=False)
@@ -135,6 +143,7 @@ class EmailDeliveryEvent(Base):
 
 class EmailSuppression(Base):
     __tablename__ = "email_suppressions"
+    __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False, index=True)
     reason = Column(String, nullable=False)
@@ -149,6 +158,7 @@ class EmailSuppression(Base):
 
 class EmailRuntimeConfig(Base):
     __tablename__ = "email_runtime_config"
+    __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String(50), default="environment")
     resend_api_key = Column(String, nullable=True)

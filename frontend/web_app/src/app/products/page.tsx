@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Loader2, Tag, Percent, Store,
   Sparkles, TrendingUp, Star, ShoppingBag, X, ChevronDown, Flame, Award,
-  Package2, Filter, ArrowUp, CheckCircle,
+  Package2, Filter, ArrowUp, CheckCircle, History, Zap,
 } from "@/lib/icons";
 import { apiFetch, parseJsonResponse } from "@/lib/api";
 import { Product, SupplierPublicSummary } from "@/lib/types";
@@ -24,30 +24,13 @@ import { ProductCardSkeleton } from "@/components/LoadingSkeleton";
 import BrandLoading from "@/components/BrandLoading";
 import { buildProductQueryParams } from "@shared/productQuery";
 import { getPartnerBadgeStyle } from "@shared/statusColors";
-import FilterSearchBar, { CATEGORIES } from "@/components/FilterSearchBar";
+import { CATEGORIES } from "@/components/FilterSearchBar";
 import BannerCarousel from "@/components/BannerCarousel";
-
-type ProductsUiState = {
-  showBackToTop: boolean;
-  filterExpanded: Record<string, boolean>;
-};
 
 type ProductsUiFlag = "showBackToTop";
 
-const INITIAL_PRODUCTS_UI_STATE: ProductsUiState = {
-  showBackToTop: false,
-  filterExpanded: {
-    quickFilters: true,
-    categories: true,
-    price: true,
-    brand: false,
-    color: false,
-    rating: true,
-    stock: true,
-    tags: false,
-    supplier: false,
-    discount: false,
-  },
+type ProductsUiState = {
+  showBackToTop: boolean;
 };
 
 function renderStars(value: string, max = 5) {
@@ -91,17 +74,22 @@ function ProductsContent() {
   const currency = useCurrencyStore((s) => s.currency);
   const formatCurrent = useCurrencyStore((s) => s.format);
   const locale = useLocaleStore((s) => s.locale);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  // Visual search / image upload
+  const [isVisualSearch, setIsVisualSearch] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-  const [search, setSearch] = useState(params?.get("search") || "");
-  const [debouncedSearch, setDebouncedSearch] = useState(params?.get("search") || "");
+  const [search, setSearch] = useState(params?.get("q") || params?.get("search") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(params?.get("q") || params?.get("search") || "");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [supplierSuggestions, setSupplierSuggestions] = useState<SupplierPublicSummary[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [trendingSearches, setTrendingSearches] = useState<string[]>([]);
+  const [showTrending, setShowTrending] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [category, setCategory] = useState(params?.get("category") || "all");
   const [sort, setSort] = useState(params?.get("sort") || "default");
   const [view, setView] = useState<"grid" | "list">(
@@ -139,20 +127,17 @@ function ProductsContent() {
   const [supplierResultTotal, setSupplierResultTotal] = useState(0);
   const [loadingSupplierResults, setLoadingSupplierResults] = useState(false);
   const [redirectingSupplierStorefront, setRedirectingSupplierStorefront] = useState(false);
-  const [ui, setUi] = useState<ProductsUiState>(INITIAL_PRODUCTS_UI_STATE);
+  const visualSearchInputRef = useRef<HTMLInputElement>(null);
 
-  const { showBackToTop, filterExpanded } = ui;
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const setUiFlag = useCallback(
     (key: ProductsUiFlag, nextValue: boolean | ((current: boolean) => boolean)) => {
-      setUi((prev) => ({
-        ...prev,
-        [key]: typeof nextValue === "function"
-          ? (nextValue as (current: boolean) => boolean)(prev[key] as boolean)
-          : nextValue,
-      }));
+      if (key === "showBackToTop") {
+        setShowBackToTop((prev) => typeof nextValue === "function" ? (nextValue as (current: boolean) => boolean)(prev) : nextValue);
+      }
     },
-    [setUi],
+    [],
   );
 
   const effectiveSupplierFilter = useMemo(() => {
@@ -172,6 +157,12 @@ function ProductsContent() {
   const deferredSupplierResults = supplierResults;
 
   const fetchProducts = useCallback(async (reset = false) => {
+    // If visual search is active, results are already set via setProducts
+    if (isVisualSearch) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const qs = buildProductQueryParams({
@@ -231,9 +222,11 @@ function ProductsContent() {
     if (trimmed.length >= 2) {
       timer = setTimeout(() => {
         Promise.all([
-          apiFetch(`/products/autocomplete?q=${encodeURIComponent(trimmed)}`)
-            .then((r) => (r.ok ? r.json() : []))
-            .catch(() => []),
+          // Use the advanced search/autocomplete endpoint for fuzzy suggestions
+          apiFetch(`/search/autocomplete?q=${encodeURIComponent(trimmed)}&limit=8`)
+            .then((r) => (r.ok ? r.json() : { suggestions: [] }))
+            .then((d: { suggestions: string[] }) => d.suggestions ?? [])
+            .catch(() => [] as string[]),
           apiFetch(`/suppliers?limit=4&q=${encodeURIComponent(trimmed)}`)
             .then((r) => (r.ok ? r.json() : { items: [] }))
             .catch(() => ({ items: [] })),
@@ -290,6 +283,8 @@ function ProductsContent() {
     if (normalized !== search) setSearch(normalized);
     setShowSuggestions(false);
     setVisibleCount(24);
+    // Clear visual search when user enters a text query
+    if (isVisualSearch) setIsVisualSearch(false);
 
     if (!normalized) {
       setDebouncedSearch("");
@@ -300,7 +295,7 @@ function ProductsContent() {
       const redirected = await tryOpenSupplierStorefront(normalized);
       if (!redirected) setDebouncedSearch(normalized);
     })();
-  }, [search, tryOpenSupplierStorefront]);
+  }, [search, tryOpenSupplierStorefront, isVisualSearch]);
 
   const uniqueTags = useMemo(() => {
     const s = new Set<string>();
@@ -327,8 +322,31 @@ function ProductsContent() {
     hasVideo, hasDiscount, Object.values(attributes).some(arr => arr.length),
   ].filter(Boolean).length;
 
+  // Handle visual search results from header (passed via sessionStorage)
   useEffect(() => {
-    setSearch(params?.get("search") || "");
+    const visualData = params?.get("visualSearch");
+    if (visualData === "1") {
+      try {
+        const stored = sessionStorage.getItem("zozi_visual_search");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Only use results if stored within last 30 seconds
+          if (parsed.timestamp && Date.now() - parsed.timestamp < 30000) {
+            if (parsed.products?.length > 0) {
+              setIsVisualSearch(true);
+              setProducts(parsed.products);
+              setTotalCount(parsed.products.length);
+            }
+          }
+          // Clean up regardless
+          sessionStorage.removeItem("zozi_visual_search");
+        }
+      } catch { /* ignore parse errors */ }
+    }
+  }, [params]);
+
+  useEffect(() => {
+    setSearch(params?.get("q") || params?.get("search") || "");
     setCategory(params?.get("category") || "all");
     setSort(params?.get("sort") || "default");
     setView(params?.get("view") === "list" ? "list" : "grid");
@@ -363,6 +381,12 @@ function ProductsContent() {
     apiFetch("/products/suppliers")
       .then((r) => (r.ok ? r.json() : []))
       .then((d: string[]) => setSupplierNames(d))
+      .catch(() => {});
+    
+    // Fetch trending searches for the autocomplete placeholder
+    apiFetch("/search/trending?limit=6")
+      .then((r) => (r.ok ? r.json() : { queries: [] }))
+      .then((d: { queries: string[] }) => setTrendingSearches(d.queries ?? []))
       .catch(() => {});
   }, []);
 
@@ -407,7 +431,7 @@ function ProductsContent() {
   useEffect(() => {
     if (redirectingSupplierStorefront) return;
     const qs = new URLSearchParams();
-    if (debouncedSearch)    qs.set("search",      debouncedSearch);
+    if (debouncedSearch)    qs.set("q",      debouncedSearch);
     if (category !== "all") qs.set("category",    category);
     if (brand)              qs.set("brand",        brand);
     if (color)              qs.set("color",        color);
@@ -429,12 +453,32 @@ function ProductsContent() {
   }, [debouncedSearch, category, brand, color, effectiveSupplierFilter, sort, view, trendingOnly, newArrivals,
     bestSellers, discountPct, deals, saleId, minPrice, maxPrice, minRating, inStock, selectedTag, router, redirectingSupplierStorefront]);
 
-  const handleImageSearch = () => imageInputRef.current?.click();
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      addToast(tr("searchImageSoon"), "info");
+  // Visual search — handle image upload from FilterSearchBar camera button
+  const handleImageFile = useCallback(async (file: File) => {
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await apiFetch("/search/visual", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        addToast("Visual search complete", "success");
+        if (data.similarProductIds?.length > 0) {
+          setIsVisualSearch(true);
+          setProducts(data.similarProducts || []);
+          setTotalCount(data.similarProducts?.length || 0);
+        }
+      } else {
+        addToast("Visual search failed. Try a different image.", "error");
+      }
+    } catch {
+      addToast("Network error during visual search.", "error");
     }
-  };
+  }, [addToast]);
 
   const presetRanges = useMemo(() => {
     const presets = [
@@ -453,12 +497,6 @@ function ProductsContent() {
     }));
   }, [formatCurrent]);
 
-  const toggleSection = (key: string) =>
-    setUi((prev) => ({
-      ...prev,
-      filterExpanded: { ...prev.filterExpanded, [key]: !prev.filterExpanded[key] },
-    }));
-
   const handleOpenSupplier = useCallback((supplierResult: SupplierPublicSummary) => {
     router.push(supplierStorefrontPath(supplierResult));
   }, [router]);
@@ -467,52 +505,10 @@ function ProductsContent() {
     setVisibleCount((v) => v + 24);
   }, []);
 
-  const handleToggleSupplier = useCallback((supplierName: string) => {
-    setSelectedSuppliers(prev =>
-      prev.includes(supplierName)
-        ? prev.filter(s => s !== supplierName)
-        : [...prev, supplierName]
-    );
-  }, []);
-
-  const handleClearSuppliers = useCallback(() => {
-    setSelectedSuppliers([]);
-    setSupplier("");
-    setSupplierSearch("");
-  }, []);
-
   if (redirectingSupplierStorefront) {
     return <BrandLoading fullscreen label="Opening supplier storefront..." />;
   }
 
-  const FilterSection = ({
-    id, title, icon: Icon, children,
-  }: { id: string; title: string; icon: React.ElementType; children: React.ReactNode }) => (
-    <div className="border-b border-border/60 pb-4 mb-4 last:border-b-0 last:mb-0 last:pb-0">
-      <button
-        onClick={() => toggleSection(id)}
-        className="w-full flex items-center justify-between text-left mb-3 group"
-      >
-        <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-text-faint group-hover:text-text-muted transition-colors">
-          <Icon className="w-3.5 h-3.5" />{title}
-        </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-text-faint group-hover:text-text-muted transition-all duration-200 ${filterExpanded[id] ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence initial={false}>
-        {filterExpanded[id] && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
 
   function PriceRangeSlider({
     min, max, valueMin, valueMax, onChange, format,
@@ -572,265 +568,109 @@ function ProductsContent() {
     );
   }
 
-  const FiltersPanel = () => (
-    <div className="space-y-0">
-      <FilterSection id="quickFilters" title={tr("quickFilters")} icon={Flame}>
-        <div className="grid grid-cols-2 gap-1.5">
-          {([
-            { label: tr("newArrivals"), state: newArrivals, set: setNewArrivals, icon: Sparkles, color: "bg-info/20 text-info border-info/30" },
-            { label: tr("trending"), state: trendingOnly, set: setTrendingOnly, icon: TrendingUp, color: "bg-danger/20 text-danger border-danger/30" },
-            { label: tr("deals"), state: deals, set: setDeals, icon: Percent, color: "bg-success/20 text-success border-success/30" },
-          ] as const).map(({ label, state, set, icon: Icon2, color }) => (
-            <button
-              key={label}
-              onClick={() => { (set as (v: boolean) => void)(!state); setVisibleCount(24); }}
-              className={`flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-[11px] font-semibold border transition-all ${
-                state
-                  ? `${color} border-current shadow-sm`
-                  : "bg-surface-base text-text-faint border-border hover:text-text-muted hover:border-border-light"
-              }`}
-            >
-              <Icon2 className="w-3 h-3" />
-              {label}
-            </button>
-          ))}
-        </div>
-      </FilterSection>
 
-      <FilterSection id="categories" title={tr("categoriesLabel")} icon={ShoppingBag}>
-        <div className="flex flex-col gap-0.5">
-          {CATEGORIES.map((cat) => {
-            const CatIcon = cat.icon;
-            return (
-              <button
-                key={cat.value}
-                onClick={() => { setCategory(cat.value); setVisibleCount(24); }}
-                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-medium transition-all text-left ${
-                  category === cat.value
-                    ? "bg-primary/20 text-primary border border-primary/30"
-                    : "text-text-muted hover:bg-surface-2/60 hover:text-text border border-transparent"
-                }`}
-              >
-                <CatIcon className="w-3.5 h-3.5 shrink-0" />
-                {tr(cat.labelKey)}
-                {category === cat.value && (
-                  <motion.span layoutId="catDot" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
-
-      <FilterSection id="price" title={tr("priceRange")} icon={Tag}>
-        <div className="space-y-3">
-          <PriceRangeSlider
-            min={0}
-            max={100000}
-            valueMin={minPrice ? Number(minPrice) : 0}
-            valueMax={maxPrice ? Number(maxPrice) : 100000}
-            onChange={(lo, hi) => { setMinPrice(lo ? String(lo) : ""); setMaxPrice(hi < 100000 ? String(hi) : ""); }}
-            format={formatCurrent}
-          />
-          <div className="flex gap-2">
-            <input type="number" placeholder="Min" value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              className="w-full h-8 px-2 rounded-lg theme-input border text-xs text-text focus:outline-none focus:ring-1 focus:ring-primary/40"
-            />
-            <input type="number" placeholder="Max" value={maxPrice}
-              onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-full h-8 px-2 rounded-lg theme-input border text-xs text-text focus:outline-none focus:ring-1 focus:ring-primary/40"
-            />
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {([["", "25"], ["25", "100"], ["100", ""]] as const).map(([mn, mx]) => {
-              const label = mx && !mn
-                ? `Under ${formatCurrent(Number(mx))}`
-                : mn && mx
-                  ? `${formatCurrent(Number(mn))} – ${formatCurrent(Number(mx))}`
-                  : `${formatCurrent(Number(mn))}+`;
-              return (
-              <button key={label} onClick={() => { setMinPrice(mn); setMaxPrice(mx); }}
-                className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                  minPrice === mn && maxPrice === mx
-                    ? "bg-primary/20 text-primary border-primary/30"
-                    : "text-text-faint border-border hover:text-text-muted hover:border-border-light"
-                }`}>{label}</button>
-              );
-            })}
-          </div>
-        </div>
-      </FilterSection>
-
-      <FilterSection id="rating" title={tr("rating")} icon={Star}>
-        <div className="flex flex-col gap-1">
-          {["4","3","2","1"].map((r) => (
-            <button key={r} onClick={() => setMinRating(minRating === r ? "" : r)}
-              className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs transition-all ${
-                minRating === r
-                  ? "bg-warning/20 text-warning border border-warning/30"
-                  : "text-text-muted hover:bg-surface-2/60 hover:text-text border border-transparent"
-              }`}
-            >
-              <span className="text-warning">{renderStars(r)}</span>
-              <span>{r}+ Stars</span>
-            </button>
-          ))}
-        </div>
-      </FilterSection>
-
-      <FilterSection id="discount" title={tr("discountPercent")} icon={Percent}>
-        <div className="flex flex-col gap-1">
-          {([["10","10% or more"],["20","20% or more"],["30","30% or more"],["50","50% or more"]] as const).map(([val, label]) => (
-            <button key={val} onClick={() => setDiscountPct(discountPct === val ? "" : val)}
-              className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs transition-all ${
-                discountPct === val
-                  ? "bg-success/20 text-success border border-success/30"
-                  : "text-text-muted hover:bg-surface-2/60 hover:text-text border border-transparent"
-              }`}
-            >
-              <Percent className="w-3 h-3" /> {label}
-            </button>
-          ))}
-        </div>
-      </FilterSection>
-
-      <FilterSection id="brand" title={tr("brand")} icon={Award}>
-        <input type="text" placeholder={tr("searchBrand")} value={brand}
-          onChange={(e) => setBrand(e.target.value)}
-          className="w-full h-8 px-3 rounded-lg theme-input border text-xs text-text focus:outline-none focus:ring-1 focus:ring-primary/40"
-        />
-      </FilterSection>
-
-      <FilterSection id="color" title={tr("color")} icon={Filter}>
-        <div className="flex flex-wrap gap-2">
-          {([
-            { name: "Red", bg: "var(--color-red)" }, { name: "Blue", bg: "var(--color-blue)" },
-            { name: "Black", bg: "var(--color-black)" }, { name: "White", bg: "var(--color-white)" },
-            { name: "Green", bg: "var(--color-green)" }, { name: "Yellow", bg: "var(--color-yellow)" },
-            { name: "Purple", bg: "var(--color-purple)" }, { name: "Pink", bg: "var(--color-pink)" },
-            { name: "Gray", bg: "var(--color-gray)" }, { name: "Brown", bg: "var(--color-brown)" },
-          ] as const).map(({ name, bg }) => (
-            <button key={name} onClick={() => { setColor(color === name ? "" : name); setVisibleCount(24); }}
-              title={name}
-              className={`w-6 h-6 rounded-full border-2 transition-all ${
-                color === name ? "border-primary scale-110 ring-2 ring-primary/30" : "border-border-light hover:border-primary"
-              }`}
-              style={{ backgroundColor: bg }}
-            />
-          ))}
-        </div>
-        {color && <p className="text-[10px] text-text-faint mt-1">{tr("selected")}: {color}</p>}
-      </FilterSection>
-
-      <FilterSection id="stock" title={tr("availability")} icon={Package2}>
-        <label className="flex items-center gap-2 text-xs text-text-muted cursor-pointer hover:text-text transition-colors">
-          <input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)}
-            className="rounded border-border bg-surface-1 text-primary focus:ring-primary/40 w-3.5 h-3.5"
-          />
-          {tr("inStockOnly")}
-        </label>
-      </FilterSection>
-
-      <FilterSection id="supplier" title={tr("supplierFilter")} icon={Store}>
-        <input type="text" list="supplier-list" placeholder={tr("searchSupplier")} value={supplier}
-          onChange={(e) => { setSupplier(e.target.value); setSelectedSuppliers([]); setSupplierSearch(""); setVisibleCount(24); }}
-          className="w-full h-8 px-3 rounded-lg theme-input border text-xs text-text focus:outline-none focus:ring-1 focus:ring-primary/40"
-        />
-        {supplierNames.length > 0 && (
-          <datalist id="supplier-list">
-            {supplierNames.map((s) => <option key={s} value={s} />)}
-          </datalist>
-        )}
-        {supplierNames.length > 0 && (
-          <div className="flex flex-col gap-0.5 mt-1.5 max-h-28 overflow-auto">
-            {supplierNames
-              .filter((s) => !supplier || s.toLowerCase().includes(supplier.toLowerCase()))
-              .slice(0, 6)
-              .map((s) => (
-                <button key={s} onClick={() => { setSupplier(s === supplier ? "" : s); setSelectedSuppliers([]); setSupplierSearch(""); setVisibleCount(24); }}
-                  className={`text-left text-[11px] px-2 py-1 rounded-lg font-medium transition-colors ${
-                    supplier === s
-                      ? "bg-primary/20 text-primary border border-primary/30"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text"
-                  }`}>{s}</button>
-              ))}
-          </div>
-        )}
-      </FilterSection>
-
-      {uniqueTags.length > 0 && (
-        <FilterSection id="tags" title={tr("tags")} icon={Tag}>
-          <div className="flex flex-wrap gap-1">
-            {uniqueTags.map((tag) => (
-              <button key={tag} onClick={() => setSelectedTag(selectedTag === tag ? "" : tag)}
-                className={`text-[10px] font-medium px-2 py-0.5 rounded-full border transition-colors ${
-                  selectedTag === tag
-                    ? "bg-primary/20 text-primary border-primary/30"
-                    : "text-text-faint border-border hover:text-text-muted hover:border-border-light"
-                }`}
-              >#{tag}</button>
-            ))}
-          </div>
-        </FilterSection>
-      )}
-    </div>
-  );
 
   return (
     <main className="min-h-screen bg-theme-bg">
       {/* Main Content Container */}
-      <div className="max-w-11xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
         {/* Promotional banner — after header, before the search engine bar */}
         <BannerCarousel position="promotional" className="mb-6" />
 
-        {/* Filter + Search Bar */}
-        <div className="mb-6">
-          <FilterSearchBar
-            category={category}
-            sort={sort}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            minRating={minRating}
-            discountPct={discountPct}
-            newArrivals={newArrivals}
-            trendingOnly={trendingOnly}
-            activeFilterCount={activeFilterCount}
-            onSetCategory={(v) => setCategory(v)}
-            onSetSort={(v) => setSort(v)}
-            onSetMinPrice={setMinPrice}
-            onSetMaxPrice={setMaxPrice}
-            onSetMinRating={setMinRating}
-            onSetDiscountPct={setDiscountPct}
-            onToggleNewArrivals={() => setNewArrivals((v) => !v)}
-            onToggleTrending={() => setTrendingOnly((v) => !v)}
-            onResetFilters={resetFilters}
-            search={search}
-            onSetSearch={setSearch}
-            suggestions={suggestions}
-            supplierSuggestions={supplierSuggestions}
-            showSuggestions={showSuggestions}
-            onSetShowSuggestions={setShowSuggestions}
-            onCommitSearch={commitSearch}
-            onImageSearch={handleImageSearch}
-            supplierSearch={supplierSearch}
-            onSetSupplierSearch={setSupplierSearch}
-            supplierNames={supplierNames}
-            selectedSuppliers={selectedSuppliers}
-            onToggleSupplier={handleToggleSupplier}
-            onClearSuppliers={handleClearSuppliers}
-            presetRanges={presetRanges}
-            tr={tr}
-            formatCurrent={formatCurrent}
-            currency={currency}
-            router={router}
-            locale={locale}
-            onResetVisibleCount={() => setVisibleCount(24)}
-          />
-        </div>
+        {/* ═══════════════════════════════════════════════════════
+            QUICK FILTER PILLS — search bar is in the header
+        ═══════════════════════════════════════════════════════ */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-4 flex flex-wrap items-center justify-center gap-2.5"
+        >
+          {/* New Arrivals */}
+          <button
+            type="button"
+            onClick={() => { setNewArrivals((p) => !p); setVisibleCount(24); }}
+            className={`flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-all duration-200 ${
+              newArrivals
+                ? "border-info/40 bg-info/20 text-info shadow-lg shadow-info/10"
+                : "banner-glass-chip text-text-faint hover:border-border-light hover:text-text"
+            }`}
+          >
+            <Sparkles className={`h-3 w-3 ${newArrivals ? "" : "text-primary/70"}`} />
+            {tr("newArrivals")}
+          </button>
 
-        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+          {/* Trending */}
+          <button
+            type="button"
+            onClick={() => { setTrendingOnly((p) => !p); setVisibleCount(24); }}
+            className={`flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-all duration-200 ${
+              trendingOnly
+                ? "border-danger/40 bg-danger/20 text-danger shadow-lg shadow-danger/10"
+                : "banner-glass-chip text-text-faint hover:border-border-light hover:text-text"
+            }`}
+          >
+            <TrendingUp className={`h-3 w-3 ${trendingOnly ? "" : "text-danger/60"}`} />
+            {tr("trending")}
+          </button>
+
+          {/* Deals */}
+          <button
+            type="button"
+            onClick={() => { setDeals((p) => !p); setVisibleCount(24); }}
+            className={`flex h-8 items-center gap-1.5 rounded-full border px-3.5 text-[11px] font-semibold transition-all duration-200 ${
+              deals
+                ? "border-success/40 bg-success/20 text-success shadow-lg shadow-success/10"
+                : "banner-glass-chip text-text-faint hover:border-border-light hover:text-text"
+            }`}
+          >
+            <Percent className={`h-3 w-3 ${deals ? "" : "text-accent/70"}`} />
+            {tr("deals")}
+          </button>
+
+          {/* Discount % */}
+          {(["10", "20", "30", "50"] as const).map((val) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => { setDiscountPct(discountPct === val ? "" : val); setVisibleCount(24); }}
+              className={`flex h-8 items-center gap-1 rounded-full border px-2.5 text-[11px] font-semibold transition-all duration-200 ${
+                discountPct === val
+                  ? "border-success/40 bg-success/20 text-success shadow-lg shadow-success/10"
+                  : "banner-glass-chip text-text-faint hover:border-border-light hover:text-text"
+              }`}
+            >
+              <Tag className={`h-2.5 w-2.5 ${discountPct === val ? "" : "text-accent/70"}`} />
+              {val}%+
+            </button>
+          ))}
+
+          {/* Clear filters */}
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="flex h-8 items-center gap-1.5 rounded-full border border-danger/30 bg-danger/10 px-3.5 text-[11px] font-semibold text-danger hover:bg-danger/20 transition-all duration-200"
+            >
+              <X className="h-2.5 w-2.5" />
+              Clear filters
+            </button>
+          )}
+        </motion.div>
+
+        {/* Hidden file input for visual search (triggered from header camera button) */}
+        <input
+          ref={visualSearchInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleImageFile(file);
+            e.target.value = "";
+          }}
+        />
 
         {/* Result count */}
         <div className="flex items-center justify-between mb-4">
@@ -897,6 +737,8 @@ function ProductsContent() {
           />
         </div>
       </div>
+
+
 
       <AnimatePresence>
         {showBackToTop && (
@@ -1183,8 +1025,7 @@ function SupplierStoreCard({
             {initials}
           </div>
         )}
-        <div className="mb-1 min-w-0 flex-1">
-          {isVerified && (
+        <div className="mb-1 min-w-0 flex-1">            {isVerified && (
             <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-semibold text-success">
               <CheckCircle className="h-3 w-3" />
               Verified

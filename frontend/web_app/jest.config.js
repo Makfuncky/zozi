@@ -12,7 +12,8 @@ module.exports = {
     '^@/components/(.*)$': '<rootDir>/src/components/$1',
     '^@/hooks/(.*)$': '<rootDir>/src/hooks/$1',
     '@shared/(.*)$': '<rootDir>/../shared/src/$1',
-    '^nanoid$': '<rootDir>/src/__mocks__/nanoid.ts'
+    '^nanoid$': '<rootDir>/src/__mocks__/nanoid.ts',
+    '^.+\\.css$': '<rootDir>/src/__mocks__/styleMock.js',
   },
   transformIgnorePatterns: [
     '/node_modules/(?!(nanoid)/)'

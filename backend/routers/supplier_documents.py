@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from db.models import SupplierDocument, SupplierProfile, User
+from models import SupplierDocument, SupplierProfile, User
 from db.schemas import SupplierDocumentOut
 from utils.dependencies import get_current_user, require_admin, require_supplier
 

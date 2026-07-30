@@ -58,6 +58,7 @@ const mockApiFetch = jest.fn((input: string) => {
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace, prefetch: jest.fn() }),
   useSearchParams: () => ({ get: () => null }),
+  usePathname: () => "/admin/staff",
 }));
 
 jest.mock("@/lib/useAuth", () => ({
@@ -123,12 +124,12 @@ jest.mock("framer-motion", () => ({
 }));
 
 // Mock tab components so they render identifiable text
-jest.mock("@/app/admin/dashboard/tabs/FinanceTab", () => ({ __esModule: true, default: () => <div>FinanceTab content</div> }));
-jest.mock("@/app/admin/dashboard/tabs/ModerationTab", () => ({ __esModule: true, default: () => <div>ModerationTab content</div> }));
-jest.mock("@/app/admin/dashboard/tabs/TicketsTab", () => ({ __esModule: true, default: () => <div>TicketsTab content</div> }));
-jest.mock("@/app/admin/dashboard/tabs/PayoutsTab", () => ({ __esModule: true, default: () => <div>PayoutsTab content</div> }));
-jest.mock("@/app/admin/dashboard/tabs/SupplierDocumentsTab", () => ({ __esModule: true, default: () => <div>SupplierDocumentsTab content</div> }));
-jest.mock("@/app/admin/dashboard/tabs/HierarchyTab", () => ({ __esModule: true, default: () => <div>HierarchyTab content</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/FinanceTab", () => ({ __esModule: true, default: () => <div>FinanceTab content</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/ModerationTab", () => ({ __esModule: true, default: () => <div>ModerationTab content</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/TicketsTab", () => ({ __esModule: true, default: () => <div>TicketsTab content</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/PayoutsTab", () => ({ __esModule: true, default: () => <div>PayoutsTab content</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/SupplierDocumentsTab", () => ({ __esModule: true, default: () => <div>SupplierDocumentsTab content</div> }));
+jest.mock("@/app/admin/dashboard/_tabs/HierarchyTab", () => ({ __esModule: true, default: () => <div>HierarchyTab content</div> }));
 
 import FinancePage from "@/app/admin/finance/page";
 import StaffPage from "@/app/admin/staff/page";

@@ -60,6 +60,14 @@ DEFAULT_PAGE_SIZE: int = 24
 #: Hard upper limit on the number of items that can be returned in one request.
 MAX_PAGE_SIZE: int = 100
 
+# ── Admin Pagination ─────────────────────────────────────────────────────────
+
+#: Default page size for admin endpoints (larger for admin panels).
+_ADMIN_DEFAULT_PAGE_SIZE: int = 50
+
+#: Maximum page size for admin endpoints.
+_ADMIN_MAX_PAGE_SIZE: int = 500
+
 # ── Token TTLs ────────────────────────────────────────────────────────────────
 
 VERIFY_TOKEN_TTL_HOURS: int = 24

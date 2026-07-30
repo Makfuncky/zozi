@@ -131,37 +131,54 @@ export default function SupplierProductDetail() {
 
   const handleSave = async () => {
     setSaving(true);
+    setError(null);
+    setSelectedImage(null);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('stock_quantity', formData.stock_quantity);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('is_active', formData.is_active.toString());
-
-      if (selectedImage) {
-        formDataToSend.append('image', selectedImage);
-      }
+      // Step 1: Send field updates as JSON
+      const payload: Record<string, unknown> = {
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        stock_quantity: formData.stock_quantity,
+        category: formData.category,
+        is_active: formData.is_active,
+      };
 
       const response = await apiFetch(`/supplier/products/${productId}`, {
         method: 'PUT',
-        body: formDataToSend,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        setProduct(result);
-        setEditing(false);
-        setSelectedImage(null);
-      } else {
+      if (!response.ok) {
         const err = await response.json().catch(() => null);
-        setError(err?.detail || 'Failed to update product');
+        throw new Error(err?.detail || 'Failed to update product');
       }
+
+      // Step 2: Upload image separately if one was selected
+      if (selectedImage) {
+        const imgFormData = new FormData();
+        imgFormData.append('file', selectedImage);
+
+        const imgRes = await apiFetch(`/supplier/products/${productId}/image`, {
+          method: 'POST',
+          body: imgFormData,
+        });
+
+        if (!imgRes.ok) {
+          console.warn('Image upload failed, but product fields were saved');
+        }
+      }
+
+      // Step 3: Refresh product from server for a clean state
+      await fetchProduct();
+      setEditing(false);
+      setSuccess('Product updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       console.error('Error updating product:', error);
-      setError('Failed to update product. Please try again.');
+      setError(error instanceof Error ? error.message : 'Failed to update product. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -233,7 +250,7 @@ export default function SupplierProductDetail() {
               <h1 className="text-2xl font-bold text-text mb-4">Product Not Found</h1>
               <Link
                 href="/supplier/products"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-brand-dark transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Products
@@ -257,6 +274,11 @@ export default function SupplierProductDetail() {
           {error && (
             <div className="mb-6 p-3 rounded-xl bg-danger/10 border border-danger/30 text-sm text-danger">
               {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700">
+              {success}
             </div>
           )}
           {/* Header */}
@@ -519,7 +541,7 @@ export default function SupplierProductDetail() {
                 </div>
 
                 {editing && (
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-brand-dark transition-colors cursor-pointer w-full justify-center">
+                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors cursor-pointer w-full justify-center">
                     <Upload className="w-4 h-4" />
                     Change Image
                     <input

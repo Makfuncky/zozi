@@ -16,8 +16,7 @@ __all__ = [
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
-        Index("ix_users_role", "role"),
-    )
+        Index("ix_users_role", "role"), {"schema": "core"})
     
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=True)
@@ -77,6 +76,7 @@ class User(Base):
 
 class UserLoginHistory(Base):
     __tablename__ = "user_login_history"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     ip_address = Column(String, nullable=False)
@@ -90,6 +90,7 @@ class UserLoginHistory(Base):
 
 class UserDevice(Base):
     __tablename__ = "user_devices"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     device_id = Column(String(255), nullable=False)
@@ -105,6 +106,7 @@ class UserDevice(Base):
 
 class Referral(Base):
     __tablename__ = "referrals"
+    __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     referrer_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     referred_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
@@ -119,6 +121,7 @@ class Referral(Base):
 
 class ReferralPointEvent(Base):
     __tablename__ = "referral_point_events"
+    __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     event_type = Column(String(40), nullable=False)
@@ -133,6 +136,7 @@ class ReferralPointEvent(Base):
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     token = Column(String, unique=True, index=True)
@@ -146,6 +150,7 @@ class PasswordResetToken(Base):
 
 class EmailVerificationToken(Base):
     __tablename__ = "email_verification_tokens"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     token = Column(String, unique=True, index=True)
@@ -159,6 +164,7 @@ class EmailVerificationToken(Base):
 
 class RevokedToken(Base):
     __tablename__ = "revoked_tokens"
+    __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     jti = Column(String(64), nullable=False, unique=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)

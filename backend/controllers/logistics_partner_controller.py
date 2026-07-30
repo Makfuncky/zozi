@@ -14,7 +14,7 @@ from typing import Any, Optional, cast
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
 from controllers.audit_controller import AuditAction, audit_log
@@ -1277,7 +1277,7 @@ def list_public_partners(
             | LogisticsPartner.country_code.ilike(pattern)
             | LogisticsPartner.bio.ilike(pattern)
         )
-    partners = query.order_by(LogisticsPartner.name.asc()).all()
+    partners = query.order_by(LogisticsPartner.name.asc()).limit(min(limit, 100)).all()
     if region_code:
         partner_ids = [cast(int, getattr(partner, "id")) for partner in partners]
         if partner_ids:
@@ -1967,13 +1967,14 @@ def _publish_shipment_update(shipment: Shipment, event: ShipmentEvent | None, ki
 def list_partners(current_user: dict, db: Session) -> list:
     role = current_user.get("role")
     if role in ("admin", "sub_admin"):
-        partners = db.query(LogisticsPartner).order_by(desc(LogisticsPartner.created_at)).all()
+        partners = db.query(LogisticsPartner).order_by(desc(LogisticsPartner.created_at)).limit(200).all()
         return [_serialize_partner(p) for p in partners]
     elif role == "supplier":
         partners = (
             db.query(LogisticsPartner)
             .filter(LogisticsPartner.status == "active", LogisticsPartner.verification_status == "approved")
             .order_by(LogisticsPartner.name.asc())
+            .limit(200)
             .all()
         )
         return [_serialize_partner(p, include_internal=False) for p in partners]
@@ -2973,7 +2974,7 @@ def get_partner_pricing_insights(
         )
 
     route_presets: list[dict[str, Any]] = []
-    areas_q = db.query(LogisticsPartnerServiceArea).filter(
+    areas_q = db.query(LogisticsPartnerServiceArea).options(selectinload(LogisticsPartnerServiceArea.partner)).filter(
         LogisticsPartnerServiceArea.partner_id == resolved_partner_id,
         LogisticsPartnerServiceArea.approval_status == "approved",
         LogisticsPartnerServiceArea.is_active == True,  # noqa: E712
@@ -3494,8 +3495,6 @@ ALLOWED_LP_DOC_TYPES = (
     "business_license", "trade_license", "tax_certificate",
     "national_id", "bank_statement", "insurance", "other",
 )
-_LP_DOC_UPLOAD_DIR = "uploads/lp_documents"
-_LP_COD_RECEIPT_UPLOAD_DIR = "uploads/logistics_cod_receipts"
 
 
 def _serialize_lp_doc(doc: LogisticsPartnerDocument) -> dict:
@@ -3567,14 +3566,14 @@ async def upload_partner_cod_remittance_receipt(
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Receipt amount must be positive")
 
-    from utils.file_validation import validate_upload_document  # noqa: PLC0415
-    from utils.constants import MAX_UPLOAD_SIZE_BYTES  # noqa: PLC0415
+    from services.storage import storage as _storage
+    from utils.file_validation import validate_upload_document
+    from utils.constants import MAX_UPLOAD_SIZE_BYTES
 
-    os.makedirs(_LP_COD_RECEIPT_UPLOAD_DIR, exist_ok=True)
     safe_name = os.path.basename(file.filename or "cod-receipt.pdf")
     ext = os.path.splitext(safe_name)[1].lower() or ".pdf"
     filename = f"cod_receipt_{uuid.uuid4().hex}{ext}"
-    file_path = os.path.join(_LP_COD_RECEIPT_UPLOAD_DIR, filename)
+    key = f"logistics_cod_receipts/{filename}"
 
     contents = await file.read()
     if len(contents) > MAX_UPLOAD_SIZE_BYTES:
@@ -3583,8 +3582,7 @@ async def upload_partner_cod_remittance_receipt(
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
     validate_upload_document(contents, safe_name)
-    with open(file_path, "wb") as fh:
-        fh.write(contents)
+    url = _storage.save(key, contents, content_type=file.content_type)
 
     partner = _get_partner_for_user(current_user, db)
     try:
@@ -3592,7 +3590,7 @@ async def upload_partner_cod_remittance_receipt(
             settlement_id=settlement_id,
             partner_id=cast(int, partner.id),
             amount=cast(Any, amount),
-            receipt_file_url=f"/{_LP_COD_RECEIPT_UPLOAD_DIR}/{filename}",
+            receipt_file_url=url,
             db=db,
             bank_reference=bank_reference,
             notes=notes,
@@ -3601,10 +3599,6 @@ async def upload_partner_cod_remittance_receipt(
         db.refresh(receipt)
         return serialize_cod_remittance_receipt(receipt, db)
     except ValueError as exc:
-        try:
-            os.remove(file_path)
-        except OSError:
-            pass
         raise HTTPException(status_code=400, detail=str(exc))
 
 
@@ -3622,14 +3616,14 @@ async def upload_partner_document(
     if document_type not in ALLOWED_LP_DOC_TYPES:
         raise HTTPException(status_code=422, detail=f"Invalid document type. Allowed: {ALLOWED_LP_DOC_TYPES}")
 
-    from utils.file_validation import validate_upload_document  # noqa: PLC0415
-    from utils.constants import MAX_UPLOAD_SIZE_BYTES            # noqa: PLC0415
+    from services.storage import storage as _storage
+    from utils.file_validation import validate_upload_document
+    from utils.constants import MAX_UPLOAD_SIZE_BYTES
 
-    os.makedirs(_LP_DOC_UPLOAD_DIR, exist_ok=True)
     safe_name = os.path.basename(file.filename or "document.pdf")
     ext = os.path.splitext(safe_name)[1].lower() or ".pdf"
     filename = f"{uuid.uuid4().hex}{ext}"
-    file_path = os.path.join(_LP_DOC_UPLOAD_DIR, filename)
+    key = f"lp_documents/{filename}"
 
     contents = await file.read()
     if len(contents) > MAX_UPLOAD_SIZE_BYTES:
@@ -3638,11 +3632,7 @@ async def upload_partner_document(
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
     validate_upload_document(contents, safe_name)
-
-    with open(file_path, "wb") as fh:
-        fh.write(contents)
-
-    file_url = f"/{_LP_DOC_UPLOAD_DIR}/{filename}"
+    url = _storage.save(key, contents, content_type=file.content_type)
 
     expires_at = None
     if expires_at_str:
@@ -3656,7 +3646,7 @@ async def upload_partner_document(
         partner_id=cast(int, partner.id),
         document_type=document_type,
         document_name=document_name or safe_name,
-        file_url=file_url,
+        file_url=url,
         status="pending",
         expires_at=expires_at,
     )

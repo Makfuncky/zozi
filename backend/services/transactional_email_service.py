@@ -284,3 +284,124 @@ def enqueue_shipment_status_email(shipment_id: int, *, event_type: str | None = 
         func=lambda: _send_shipment_status_email(shipment_id, event_type=event_type),
     )
 
+
+# ── Dunning Emails (#12) ──────────────────────────────────────────────────
+
+
+def _send_dunning_email(invoice_id: int, reminder_type: str, message: str) -> dict[str, Any]:
+    with get_service_session() as db:
+        from models import ARInvoice, Customer
+        inv = db.query(ARInvoice).filter(ARInvoice.id == invoice_id).first()
+        if not inv:
+            return {"invoice_id": invoice_id, "sent": False, "reason": "not_found"}
+        
+        customer = db.query(Customer).filter(Customer.id == inv.customer_id).first()
+        if not customer or not customer.contact_email:
+            return {"invoice_id": invoice_id, "sent": False, "reason": "no_email"}
+        
+        subject = f"ZOZI Payment Reminder - Invoice {inv.invoice_number}"
+        html = (
+            f"<h2>Payment Reminder</h2>"
+            f"<p>Dear {customer.name},</p>"
+            f"<p>{message}</p>"
+            f"<p><strong>Invoice:</strong> {inv.invoice_number}</p>"
+            f"<p><strong>Amount:</strong> {inv.amount} {inv.customer.currency if inv.customer else 'OMR'}</p>"
+            f"<p><strong>Due Date:</strong> {inv.due_date.strftime('%Y-%m-%d') if inv.due_date else 'N/A'}</p>"
+            f"<p>Please arrange payment at your earliest convenience.</p>"
+            f"<p>Best regards,<br>ZOZI Finance Team</p>"
+        )
+        send_email(customer.contact_email, subject, html, purpose="dunning")
+        return {"invoice_id": invoice_id, "sent": True, "reminder_type": reminder_type}
+
+
+def enqueue_dunning_email(invoice_id: int, reminder_type: str, message: str) -> dict[str, Any]:
+    return enqueue_job(
+        kind="email-dunning",
+        owner_user_id=None,
+        owner_role="system",
+        metadata={"invoice_id": invoice_id, "reminder_type": reminder_type},
+        func=lambda: _send_dunning_email(invoice_id, reminder_type, message),
+    )
+
+
+# ── Distributor Statement Email (#23) ─────────────────────────────────────
+
+
+def _send_distributor_statement_email(customer_id: int, period: str, statement_data: dict) -> dict[str, Any]:
+    with get_service_session() as db:
+        from models import Customer
+        customer = db.query(Customer).filter(Customer.id == customer_id).first()
+        if not customer or not customer.contact_email:
+            return {"customer_id": customer_id, "sent": False, "reason": "no_email"}
+        
+        subject = f"ZOZI Monthly Statement - {period}"
+        invoices_html = ""
+        for inv in statement_data.get("invoices", []):
+            invoices_html += (
+                f"<tr><td>{inv.get('invoice_number', 'N/A')}</td>"
+                f"<td>{inv.get('date', 'N/A')}</td>"
+                f"<td>{inv.get('amount', 0)}</td>"
+                f"<td>{inv.get('status', 'N/A')}</td></tr>"
+            )
+        
+        html = (
+            f"<h2>Monthly Statement - {period}</h2>"
+            f"<p>Dear {customer.name},</p>"
+            f"<p>Please find your monthly statement below:</p>"
+            f"<table border='1' cellpadding='8' cellspacing='0'>"
+            f"<tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Status</th></tr>"
+            f"{invoices_html}"
+            f"</table>"
+            f"<p><strong>Total Invoiced:</strong> {statement_data.get('total_invoiced', 0)}</p>"
+            f"<p><strong>Total Paid:</strong> {statement_data.get('total_paid', 0)}</p>"
+            f"<p><strong>Outstanding:</strong> {statement_data.get('total_outstanding', 0)}</p>"
+            f"<p>Best regards,<br>ZOZI Finance Team</p>"
+        )
+        send_email(customer.contact_email, subject, html, purpose="statement")
+        return {"customer_id": customer_id, "sent": True, "period": period}
+
+
+def enqueue_distributor_statement_email(customer_id: int, period: str, statement_data: dict) -> dict[str, Any]:
+    return enqueue_job(
+        kind="email-distributor-statement",
+        owner_user_id=None,
+        owner_role="system",
+        metadata={"customer_id": customer_id, "period": period},
+        func=lambda: _send_distributor_statement_email(customer_id, period, statement_data),
+    )
+
+
+# ── Supplier Payout Approval Link (#15) ───────────────────────────────────
+
+
+def _send_supplier_approval_email(supplier_id: int, batch_id: int, batch_number: str, total_amount: float) -> dict[str, Any]:
+    with get_service_session() as db:
+        from models import User
+        supplier = db.query(User).filter(User.id == supplier_id).first()
+        if not supplier or not getattr(supplier, "email", None):
+            return {"supplier_id": supplier_id, "sent": False, "reason": "no_email"}
+        
+        approval_link = f"{settings.frontend_url.rstrip('/')}/supplier/payouts/{batch_id}/approve"
+        subject = f"ZOZI Payout Batch Ready for Approval - {batch_number}"
+        html = (
+            f"<h2>Payout Batch Ready for Approval</h2>"
+            f"<p>Dear {getattr(supplier, 'username', 'Supplier')},</p>"
+            f"<p>A new payout batch is ready for your approval:</p>"
+            f"<p><strong>Batch:</strong> {batch_number}</p>"
+            f"<p><strong>Amount:</strong> {total_amount} OMR</p>"
+            f"<p><a href=\"{approval_link}\">Review and Approve</a></p>"
+            f"<p>Best regards,<br>ZOZI Finance Team</p>"
+        )
+        send_email(supplier.email, subject, html, purpose="payout_approval")
+        return {"supplier_id": supplier_id, "sent": True, "batch_id": batch_id}
+
+
+def enqueue_supplier_approval_email(supplier_id: int, batch_id: int, batch_number: str, total_amount: float) -> dict[str, Any]:
+    return enqueue_job(
+        kind="email-supplier-approval",
+        owner_user_id=None,
+        owner_role="system",
+        metadata={"supplier_id": supplier_id, "batch_id": batch_id},
+        func=lambda: _send_supplier_approval_email(supplier_id, batch_id, batch_number, total_amount),
+    )
+

@@ -4,7 +4,7 @@ from typing import List, Optional
 import json
 
 from db.database import get_db
-from db.models import CountryConfig
+from models import CountryConfig
 from utils.websocket_manager import manager
 from utils.auth import get_current_user
 from schemas.country import CountryCrossBorderSession, CountryLegalContract, CountryWarehouseLocation, LogisticsPartnerLocation
@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.get("/admin/countries/{country_code}/cross-border-sessions")
 async def list_cross_border_sessions(country_code: str, db: Session = Depends(get_db)):
-    from db.models import CrossCountryCustomerSession
+    from models import CrossCountryCustomerSession
     sessions = db.query(CrossCountryCustomerSession).filter(
         CrossCountryCustomerSession.target_country_code == country_code.upper()
     ).order_by(CrossCountryCustomerSession.created_at.desc()).limit(50).all()

@@ -13,7 +13,7 @@ import controllers.logistics_controller as ctrl
 router = APIRouter()
 
 
-# ── Summary ───────────────────────────────────────────────────────────────────
+# ── Summary ────────────────────────────────────────────────────────────────────
 
 @router.get("/summary")
 async def get_logistics_summary(
@@ -94,10 +94,12 @@ async def delete_shipping_zone(
 
 @router.get("/orders/pending")
 async def get_orders_to_fulfil(
+    limit: int = 200,
+    offset: int = 0,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    return await ctrl.get_orders_to_fulfil(current_user, db)
+    return await ctrl.get_orders_to_fulfil(current_user, db, limit=limit, offset=offset)
 
 
 # ── Shipments ─────────────────────────────────────────────────────────────────
@@ -118,7 +120,7 @@ async def scan_lookup_shipment(
     current_user: dict = Depends(get_current_user),
 ):
     """Look up a shipment by tracking number or scan code. Admin only."""
-    if current_user.get("role") not in ("admin", "sub_admin", "moderator", "support"):
+    if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
     from models import Shipment
     shipment = db.query(Shipment).filter(
@@ -148,7 +150,7 @@ async def admin_update_shipment_status(
     current_user: dict = Depends(get_current_user),
 ):
     """Admin endpoint to update a shipment status directly (bypasses supplier check)."""
-    if current_user.get("role") not in ("admin", "sub_admin", "moderator", "support"):
+    if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
     from models import Shipment, ShipmentEvent
     from datetime import datetime, timezone
