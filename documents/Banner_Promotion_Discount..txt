@@ -1,0 +1,17 @@
+Read the banner, promotion, flash-sales, discount, setup into BANNER_PROMOTION_DISCOUNT_CODE.md, document/DISCOUNT_SYSTEM.md, document/PROMOTION.md
+- Banner: 
+	- manageable by the admin team/employees 
+	- countries wise can be change and different. 
+	- it must be complete canvas system where admin/employee can manage new banner, colors shapes, images, video, buttons, design and etc. everything can be changeable. can make any shape & and shape inside and outside complete changeable everything.
+	- Banner will come at product page means main page after the header and before search-engine bar.
+
+- Background Effects animation effects.
+	- Background effect animation effects is related to the banner and celebration, season, occasion. so add into the banner-canvas to add.
+
+- Promotion:
+	read BANNER_PROMOTION_DISCOUNT_CODE.md, find out code related and integrate, just have add the country management properly which will allow promotion manageable country to country.
+
+- Flash-Sales and Discount:
+	read BANNER_PROMOTION_DISCOUNT_CODE.md, find out code related and integrate, just have add the country management properly which will allow Flash-Sales & Discount manageable country to country and supplier wise and etc.
+
+

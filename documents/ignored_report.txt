@@ -1,0 +1,1493 @@
+ M .gitignore
+ D Employee_Chat_Video_Email_System.txt
+ M Features_List.md
+ M README.md
+ D Working_API/zozi_ai_image_service/output_br_05/image_01.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_02.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_03.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_04.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_05.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_06.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_07.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_08.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_09.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_10.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_11.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_12.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_13.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_14.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_15.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_16.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_17.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_18.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_19.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_20.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_21.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_22.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_23.png
+ D Working_API/zozi_ai_image_service/output_br_05/image_24.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_01.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_02.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_03.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_04.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_05.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_06.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_07.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_08.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_09.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_10.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_11.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_12.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_13.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_14.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_15.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_16.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_17.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_18.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_19.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_20.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_21.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_22.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_23.png
+ D Working_API/zozi_ai_image_service/output_br_06/image_24.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_01_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_02_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_03_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_04_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_05_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_06_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_07_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_08_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_09_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_10_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_11_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_12_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_13_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_14_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_15_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_16_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_17_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_18_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_19_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_20_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_21_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_22_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_23_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_08/image_24_br_08.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_01_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_02_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_03_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_04_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_05_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_06_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_07_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_08_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_09_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_10_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_11_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_12_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_13_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_14_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_15_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_16_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_17_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_18_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_19_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_20_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_21_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_22_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_11/image_23_br_11.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_01_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_02_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_03_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_04_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_05_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_06_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_07_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_08_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_09_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_10_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_11_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_12_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_13_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_14_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_15_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_16_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_17_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_18_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_19_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_20_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_21_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_22_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_23_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_12/image_24_br_12.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_01_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_02_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_03_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_04_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_05_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_06_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_07_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_08_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_09_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_10_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_11_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_12_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_13_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_14_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_15_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_16_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_17_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_18_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_19_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_20_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_21_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_22_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_23_br_13.png
+ D Working_API/zozi_ai_image_service/output_br_13/image_24_br_13.png
+ D add_err.txt
+ D backend/PLAN_financial_ledger_treasury.md
+ D backend/SECURITY_AUDIT_REPORT.md
+ D backend/SECURITY_CONFIG.ini
+ D backend/SECURITY_ENHANCEMENT_PLAN.md
+ D backend/SECURITY_FINAL_REPORT.md
+ D backend/SECURITY_IMPLEMENTATION_REPORT.md
+ D backend/_audit_csrf.py
+ D backend/_audit_routers.py
+ D backend/_check_cols.py
+ D backend/_check_revs.py
+ D backend/_check_tables.py
+ D backend/_diag.py
+ D backend/_find_deps.py
+ D backend/_fix_controllers.py
+ D backend/_fix_dict_access.py
+ D backend/_fix_migration.py
+ D backend/_probe_lifespan.py
+ D backend/_probe_uvicorn.py
+ D backend/_recovered/main.cpython-310.py
+ D backend/_scan_migrations.py
+ D backend/_seed_countries.py
+ D backend/_test_api_tools.py
+ D backend/_test_auto.py
+ D backend/_test_auto2.py
+ D backend/_test_limiter.py
+ D backend/_test_net.py
+ D backend/_test_wb.py
+ D backend/alembic/versions/05a62fd3c5d3_add_origin_city_to_service_areas_and_lp_.py
+ D backend/alembic/versions/0b41557984a8_phase3_auth_hardening.py
+ D backend/alembic/versions/0bccd868b96e_add_financial_ledger_and_treasury.py
+ D backend/alembic/versions/18afc076b757_add_compare_price_to_products.py
+ D backend/alembic/versions/1abf0fe5acce_phase9_supplier_verification.py
+ D backend/alembic/versions/2024_10_01_add_country_code_fields.py
+ D backend/alembic/versions/2026_07_11_17_36-4481d6124799_baseline_canonical_orm_schema_recovered.py
+ D backend/alembic/versions/20915daf9b29_add_missing_country_config_columns.py
+ D backend/alembic/versions/20926f31a19a_normalize_country_city_schema.py
+ D backend/alembic/versions/20926f31a19b_add_country_category_tax_rates_table.py
+ D backend/alembic/versions/20926f31a19c_add_country_staff_assignments_table.py
+ D backend/alembic/versions/20926f31a19d_add_country_communications_table.py
+ D backend/alembic/versions/20926f31a19e_add_cross_country_customer_records_table.py
+ D backend/alembic/versions/20926f31a19f_add_country_config_versions_table.py
+ D backend/alembic/versions/20926f31a1a0_add_country_feature_flags_table.py
+ D backend/alembic/versions/2f07459e835f_phase9_product_moderation_and_tickets.py
+ D backend/alembic/versions/48c2a8404b0e_add_cart_items.py
+ D backend/alembic/versions/598ce7e939d1_add_commission_engine_tables.py
+ D backend/alembic/versions/5ca199ab0c03_initial_schema.py
+ D backend/alembic/versions/5d9f3a1c2b44_add_order_logistics_allocations.py
+ D backend/alembic/versions/784a891dd168_add_partner_tracking_and_charge_split.py
+ D backend/alembic/versions/78b323427448_add_email_marketing_models.py
+ D backend/alembic/versions/79b533c27897_add_cash_management_tables.py
+ D backend/alembic/versions/7b91a42af432_cart_variants_and_delivery_profile.py
+ D backend/alembic/versions/8a1e29bb7c55_add_vat_remittances.py
+ D backend/alembic/versions/97126a91bc8e_add_operating_regions_to_supplier_.py
+ D backend/alembic/versions/a0b1c2d3e4f5_add_staff_country_codes.py
+ D backend/alembic/versions/a1b2c3d4e5f6_6ec4f9ba_phase1_backend_hardening.py
+ D backend/alembic/versions/a1b2c3d4e5f6_add_normalized_webhook_events.py
+ D backend/alembic/versions/a1b2c3d4e5f6_add_rls_policies_and_country_fields.py
+ D backend/alembic/versions/a1b2c3d4e5f6_add_rls_policies_and_security_enhancements.py
+ D backend/alembic/versions/a1b2c3d4e5f6_check_constraints.py
+ D backend/alembic/versions/a1b2c3d4e5f6_phase1_backend_hardening.py
+ D backend/alembic/versions/a1b2c3d4e5f6a_add_normalized_webhook_events.py
+ D backend/alembic/versions/a1b2c3d4e5f6b_add_rls_policies_and_country_fields.py
+ D backend/alembic/versions/a1b2c3d4e5f7_add_audit_log_table.py
+ D backend/alembic/versions/a1b2c3d4e5f7_add_country_management_tables.py
+ D backend/alembic/versions/a1b2c3d4e5f7a_add_audit_log_table.py
+ D backend/alembic/versions/a1b2c3d4e5f7b_add_country_management_tables.py
+ D backend/alembic/versions/a268796caed2_merge_three_heads.py
+ D backend/alembic/versions/a2b3c4d5e6f7_add_confidence_score.py
+ D backend/alembic/versions/a3b4c5d6e7f8_phase10_push_tokens_revoked_banner.py
+ D backend/alembic/versions/a4b5c6d7e8f9_add_country_cities_and_category_tax_and_macro.py
+ D backend/alembic/versions/a9b0c1d2e3f4_add_payout_provider_metadata.py
+ D backend/alembic/versions/ab8d4b3ead2b_add_maximum_charge_to_logistics_pricing_.py
+ D backend/alembic/versions/add_communication_channels.py
+ D backend/alembic/versions/b0c1d2e3f4a5_convert_payout_amount_to_numeric.py
+ D backend/alembic/versions/b1c2d3e4f5a6_add_product_badge_fields.py
+ D backend/alembic/versions/b1c2d3e4f5g6_add_country_consistency_triggers.py
+ D backend/alembic/versions/b1c8f348e2c7_merge_financial_ledger_and_soft_delete_.py
+ D backend/alembic/versions/b2c3d4e5f6g7_add_command_center_models.py
+ D backend/alembic/versions/b2c3d4e5f6g7_add_employee_hcm_models.py
+ D backend/alembic/versions/b2c3d4e5f6g7a_add_command_center_models.py
+ D backend/alembic/versions/b2c3d4e5f6g7b_add_employee_hcm_models.py
+ D backend/alembic/versions/b7c8d9e0f1a2_add_check_constraints_core_tables.py
+ D backend/alembic/versions/bc641c523e77_phase4_payment_intent_fields.py
+ D backend/alembic/versions/c1d2e3f4a5b6_commission_return_tickets.py
+ D backend/alembic/versions/c1d2e3f4a5b6_create_employee_system.py
+ D backend/alembic/versions/c1d2e3f4a5b6a_commission_return_tickets.py
+ D backend/alembic/versions/c1d2e3f4a5b6b_create_employee_system.py
+ D backend/alembic/versions/c2d3e4f5a6b7_add_notification_fields_and_country_cities.py
+ D backend/alembic/versions/c2d3e4f5a6b7_add_provider_mapping_to_recipient_bank_accounts.py
+ D backend/alembic/versions/c3d4e5f6g7h8_add_materialized_views_for_tier4_analytics.py
+ D backend/alembic/versions/c4d5e6f7a8b9_use_numeric_for_money_fields.py
+ D backend/alembic/versions/c7d8e9f0a1b2_add_logistics_acceptance_vehicle_overrides.py
+ D backend/alembic/versions/c9d2e3f4a5b6_add_supplier_profiles.py
+ D backend/alembic/versions/cabbef94c669_add_supplier_documents_invoices_product_.py
+ D backend/alembic/versions/d0e1f2a3b4c5_add_product_minimum_stock_maximum_stock_.py
+ D backend/alembic/versions/d1e2f3a4b5c6_add_logistics_tables.py
+ D backend/alembic/versions/d3ec18c6ac15_add_index_product_supplier_id.py
+ D backend/alembic/versions/d4a7c6f2b9e1_phase4_authoritative_order_totals.py
+ D backend/alembic/versions/d5477adebb01_merge_heads.py
+ D backend/alembic/versions/d6e7f8a9b0c1_add_payment_provider_runtime_config.py
+ D backend/alembic/versions/d6e7f8a9b0c1_fix_missing_stub.py
+ D backend/alembic/versions/d6e7f8a9b0c1b_fix_missing_stub_unique.py
+ D backend/alembic/versions/d6e7f8a9b0c2_add_email_provider_config.py
+ D backend/alembic/versions/e1f2a3b4c5d6_add_banner_appearance_columns.py
+ D backend/alembic/versions/e3f4a5b6c7d8_add_vat_shipping_to_orders.py
+ D backend/alembic/versions/e7f8a9b0c1d2_add_payment_gateway_connections.py
+ D backend/alembic/versions/f1a2b3c4d5e6_search_snapshots_and_schema_hardening.py
+ D backend/alembic/versions/f2c3d4e5f6a7_phase0_product_active_sales_count.py
+ D backend/alembic/versions/f7e8d9c0b1a2_supply_chain_shipment_events.py
+ D backend/alembic/versions/f8a9b0c1d2e3_add_order_gateway_fee_fields.py
+ D backend/alembic/versions/g1h2i3j4k5l6_add_email_ab_and_gps_fields.py
+ D backend/alembic/versions/g1h2i3j4k5l6_add_gateway_settlement_cycle.py
+ D backend/alembic/versions/g1h2i3j4k5l6a_add_email_ab_and_gps_fields.py
+ D backend/alembic/versions/g1h2i3j4k5l6b_add_gateway_settlement_cycle.py
+ D backend/alembic/versions/h1j2k3l4m5n6_widen_bounded_encrypted_columns.py
+ D backend/alembic/versions/h7i8j9k0l1m2_merge_feature_heads.py
+ D backend/alembic/versions/j1k2l3m4n5o6_add_supplier_discount_duration_fields.py
+ D backend/alembic/versions/k2l3m4n5o6p7_add_shipment_package_fields_and_return_intent.py
+ D backend/alembic/versions/m0n1o2p3q4r5_add_country_staff_assignment_communication_cross_country.py
+ D backend/alembic/versions/m1n2o3p4q5r6_add_gin_indexes_country_configs.py
+ D backend/alembic/versions/m2n3o4p5q6r7_add_media_asset_and_fraud_models.py
+ D backend/alembic/versions/m3n4o5p6q7r8_add_order_payment_method.py
+ D backend/alembic/versions/m5n6o7p8q9r0_add_country_config_gin_indexes.py
+ D backend/alembic/versions/m9n0o1p2q3r4_add_country_admin_control_plane.py
+ D backend/alembic/versions/n1o2p3q4r5s6_add_supplier_public_profile_fields.py
+ D backend/alembic/versions/n5o6p7q8r9s0_uuid_enumeration_prevention.py
+ D backend/alembic/versions/n9o8p7q6r5s4_add_badge_billing_records.py
+ D backend/alembic/versions/p1h2i3j4k5l6_phase1_employee_hierarchy.py
+ D backend/alembic/versions/p1q2r3s4t5u6_add_payout_rule_tables.py
+ D backend/alembic/versions/p4q5r6s7t8u9_add_partner_assignment_and_supplier_return_state.py
+ D backend/alembic/versions/p5q6r7s8t9u0_add_country_config_heuristic_and_expansion.py
+ D backend/alembic/versions/p9q0r1s2t3u4_add_comprehensive_gin_indexes.py
+ D backend/alembic/versions/p9q8r7s6t5u4_add_product_variants_and_video.py
+ D backend/alembic/versions/q1r2s3t4u5v6_add_composite_indexes.py
+ D backend/alembic/versions/q5r6s7t8u9v0_add_gcc_country_config_fields_and_credentials.py
+ D backend/alembic/versions/q6r7s8t9u0v1_backfill_supplier_profile_badge_fields.py
+ D backend/alembic/versions/r0a1b2c3d4e5_add_role_permission_settings.py
+ D backend/alembic/versions/r7s8t9u0v1w2_add_logistics_partner_payouts.py
+ D backend/alembic/versions/s1t2u3v4w5x6_add_staff_management_user_fields.py
+ D backend/alembic/versions/s1t2u3v4w5x6_merge_variant_runtime_heads.py
+ D backend/alembic/versions/s1t2u3v4w5x6a_add_staff_management_user_fields.py
+ D backend/alembic/versions/s1t2u3v4w5x6b_merge_variant_runtime_heads.py
+ D backend/alembic/versions/s9t0u1v2w3x4_add_shipment_delivery_signature_fields.py
+ D backend/alembic/versions/s_20926f31a1a0_stub_for_20926f31a1a0.py
+ D backend/alembic/versions/s_a1b2c3d4e5f6_stub_for_a1b2c3d4e5f6_check_constraints.py
+ D backend/alembic/versions/s_a1b2c3d4e5f6_stub_for_a1b2c3d4e5f6a_add_normalized_webhook_events.py
+ D backend/alembic/versions/s_a2b3c4d5e6f7_stub_for_a2b3c4d5e6f7_add_confidence_score.py
+ D backend/alembic/versions/s_add_communic_stub_for_add_communication_channels.py
+ D backend/alembic/versions/s_b1c2d3e4f5g6_stub_for_b1c2d3e4f5g6_add_country_consistency_triggers.py
+ D backend/alembic/versions/s_b2c3d4e5f6g7_stub_for_b2c3d4e5f6g7b_add_employee_hcm_models.py
+ D backend/alembic/versions/s_c3d4e5f6g7h8_stub_for_c3d4e5f6g7h8.py
+ D backend/alembic/versions/s_d6e7f8a9b0c2_stub_for_d6e7f8a9b0c2.py
+ D backend/alembic/versions/s_g1h2i3j4k5l6_stub_for_g1h2i3j4k5l6b.py
+ D backend/alembic/versions/s_m1n2o3p4q5r6_stub_for_m1n2o3p4q5r6.py
+ D backend/alembic/versions/s_m2n3o4p5q6r7_stub_for_m2n3o4p5q6r7.py
+ D backend/alembic/versions/s_p1h2i3j4k5l6_stub_for_p1h2i3j4k5l6.py
+ D backend/alembic/versions/s_p9q0r1s2t3u4_stub_for_p9q0r1s2t3u4.py
+ D backend/alembic/versions/s_s1t2u3v4w5x6_stub_for_s1t2u3v4w5x6.py
+ D backend/alembic/versions/s_y5z6a7b8c9d0_stub_for_y5z6a7b8c9d0.py
+ D backend/alembic/versions/t1u2v3w4x5y6_add_chatbot_query_events.py
+ D backend/alembic/versions/t1u2v3w4x5y6_add_shipment_confirmation_requests.py
+ D backend/alembic/versions/t1u2v3w4x5y6a_add_chatbot_query_events.py
+ D backend/alembic/versions/t1u2v3w4x5y6b_add_shipment_confirmation_requests.py
+ D backend/alembic/versions/t2u3v4w5x6y7_merge_variant_runtime_heads.py
+ D backend/alembic/versions/u4v5w6x7y8z9_add_finance_bank_accounts.py
+ D backend/alembic/versions/u8v9w0x1y2z3_add_service_area_pricing_fields.py
+ D backend/alembic/versions/v1w2x3y4z5a6_add_per_km_rate_city_distance_matrix_and_breakdown_snapshot.py
+ D backend/alembic/versions/v2w3x4y5z6a7_add_feed_and_campaign_indexes.py
+ D backend/alembic/versions/v3w4x5y6z7a8_add_recipient_bank_accounts.py
+ D backend/alembic/versions/w1x2y3z4a5b6_add_logistics_pricing_profiles.py
+ D backend/alembic/versions/w3x4y5z6a7b8_add_referral_points_system.py
+ D backend/alembic/versions/w9x8y7z6a5b4_add_logistics_cod_remittance_receipts.py
+ D backend/alembic/versions/x1y2z3a4b5c6_add_user_last_login.py
+ D backend/alembic/versions/x2y3z4a5b6c7_merge_logistics_pricing_profile_and_cod_receipt_heads.py
+ D backend/alembic/versions/y3z4a5b6c7d8_add_logistics_category_and_vehicle_rules.py
+ D backend/alembic/versions/y4z5a6b7c8d9_add_email_provider_runtime_config.py
+ D backend/alembic/versions/y5z6a7b8c9d0_add_country_code_to_all_tables.py
+ D backend/alembic/versions/z0y1x2w3v4u5_merge_runtime_bootstrap_heads.py
+ D backend/alembic/versions/z1a2b3c4d5e6_add_employee_system_tables.py
+ D backend/alembic/versions/z2a3b4c5d6e7_seed_employee_test_data.py
+ D backend/alembic/versions/z7b8c9d0e1f2_add_email_delivery_events_and_suppressions.py
+ D backend/alembic/versions/z9a0b1c2d3e4_add_logistics_partner_profile_review_schema.py
+ D backend/alembic/versions/za1b2c3d4e5_remove_legacy_logistics_category_fields.py
+ D backend/alembic/versions/zb1c2d3e4f5_add_product_subcategory_and_visibility_regions.py
+ D backend/alembic/versions/zc1d2e3f4a5_add_soft_delete_columns_to_all_entities.py
+ D backend/alembic/versions/zd1e2f3a4b5c_add_advanced_search_filter_and_video_models.py
+ D backend/alembic/versions_archive/05a62fd3c5d3_add_origin_city_to_service_areas_and_lp_.py
+ D backend/alembic/versions_archive/0b41557984a8_phase3_auth_hardening.py
+ D backend/alembic/versions_archive/0bccd868b96e_add_financial_ledger_and_treasury.py
+ D backend/alembic/versions_archive/18afc076b757_add_compare_price_to_products.py
+ D backend/alembic/versions_archive/1abf0fe5acce_phase9_supplier_verification.py
+ D backend/alembic/versions_archive/2024_10_01_add_country_code_fields.py
+ D backend/alembic/versions_archive/20915daf9b29_add_missing_country_config_columns.py
+ D backend/alembic/versions_archive/20926f31a19a_normalize_country_city_schema.py
+ D backend/alembic/versions_archive/20926f31a19b_add_country_category_tax_rates_table.py
+ D backend/alembic/versions_archive/20926f31a19c_add_country_staff_assignments_table.py
+ D backend/alembic/versions_archive/20926f31a19d_add_country_communications_table.py
+ D backend/alembic/versions_archive/20926f31a19e_add_cross_country_customer_records_table.py
+ D backend/alembic/versions_archive/20926f31a19f_add_country_config_versions_table.py
+ D backend/alembic/versions_archive/20926f31a1a0_add_country_feature_flags_table.py
+ D backend/alembic/versions_archive/2f07459e835f_phase9_product_moderation_and_tickets.py
+ D backend/alembic/versions_archive/48c2a8404b0e_add_cart_items.py
+ D backend/alembic/versions_archive/598ce7e939d1_add_commission_engine_tables.py
+ D backend/alembic/versions_archive/5ca199ab0c03_initial_schema.py
+ D backend/alembic/versions_archive/5d9f3a1c2b44_add_order_logistics_allocations.py
+ D backend/alembic/versions_archive/784a891dd168_add_partner_tracking_and_charge_split.py
+ D backend/alembic/versions_archive/78b323427448_add_email_marketing_models.py
+ D backend/alembic/versions_archive/79b533c27897_add_cash_management_tables.py
+ D backend/alembic/versions_archive/7b91a42af432_cart_variants_and_delivery_profile.py
+ D backend/alembic/versions_archive/8a1e29bb7c55_add_vat_remittances.py
+ D backend/alembic/versions_archive/97126a91bc8e_add_operating_regions_to_supplier_.py
+ D backend/alembic/versions_archive/a0b1c2d3e4f5_add_staff_country_codes.py
+ D backend/alembic/versions_archive/a1b2c3d4e5f6_6ec4f9ba_phase1_backend_hardening.py
+ D backend/alembic/versions_archive/a1b2c3d4e5f6_check_constraints.py
+ D backend/alembic/versions_archive/a1b2c3d4e5f6a_add_normalized_webhook_events.py
+ D backend/alembic/versions_archive/a1b2c3d4e5f6b_add_rls_policies_and_country_fields.py
+ D backend/alembic/versions_archive/a1b2c3d4e5f7a_add_audit_log_table.py
+ D backend/alembic/versions_archive/a1b2c3d4e5f7b_add_country_management_tables.py
+ D backend/alembic/versions_archive/a268796caed2_merge_three_heads.py
+ D backend/alembic/versions_archive/a2b3c4d5e6f7_add_confidence_score.py
+ D backend/alembic/versions_archive/a3b4c5d6e7f8_phase10_push_tokens_revoked_banner.py
+ D backend/alembic/versions_archive/a4b5c6d7e8f9_add_country_cities_and_category_tax_and_macro.py
+ D backend/alembic/versions_archive/a9b0c1d2e3f4_add_payout_provider_metadata.py
+ D backend/alembic/versions_archive/ab8d4b3ead2b_add_maximum_charge_to_logistics_pricing_.py
+ D backend/alembic/versions_archive/add_communication_channels.py
+ D backend/alembic/versions_archive/b0c1d2e3f4a5_convert_payout_amount_to_numeric.py
+ D backend/alembic/versions_archive/b1c2d3e4f5a6_add_product_badge_fields.py
+ D backend/alembic/versions_archive/b1c2d3e4f5g6_add_country_consistency_triggers.py
+ D backend/alembic/versions_archive/b1c8f348e2c7_merge_financial_ledger_and_soft_delete_.py
+ D backend/alembic/versions_archive/b2c3d4e5f6g7a_add_command_center_models.py
+ D backend/alembic/versions_archive/b2c3d4e5f6g7b_add_employee_hcm_models.py
+ D backend/alembic/versions_archive/b7c8d9e0f1a2_add_check_constraints_core_tables.py
+ D backend/alembic/versions_archive/bc641c523e77_phase4_payment_intent_fields.py
+ D backend/alembic/versions_archive/c1d2e3f4a5b6a_commission_return_tickets.py
+ D backend/alembic/versions_archive/c1d2e3f4a5b6b_create_employee_system.py
+ D backend/alembic/versions_archive/c2d3e4f5a6b7_add_notification_fields_and_country_cities.py
+ D backend/alembic/versions_archive/c3d4e5f6g7h8_add_materialized_views_for_tier4_analytics.py
+ D backend/alembic/versions_archive/c4d5e6f7a8b9_use_numeric_for_money_fields.py
+ D backend/alembic/versions_archive/c7d8e9f0a1b2_add_logistics_acceptance_vehicle_overrides.py
+ D backend/alembic/versions_archive/c9d2e3f4a5b6_add_supplier_profiles.py
+ D backend/alembic/versions_archive/cabbef94c669_add_supplier_documents_invoices_product_.py
+ D backend/alembic/versions_archive/d0e1f2a3b4c5_add_product_minimum_stock_maximum_stock_.py
+ D backend/alembic/versions_archive/d1e2f3a4b5c6_add_logistics_tables.py
+ D backend/alembic/versions_archive/d3ec18c6ac15_add_index_product_supplier_id.py
+ D backend/alembic/versions_archive/d4a7c6f2b9e1_phase4_authoritative_order_totals.py
+ D backend/alembic/versions_archive/d5477adebb01_merge_heads.py
+ D backend/alembic/versions_archive/d6e7f8a9b0c1b_fix_missing_stub_unique.py
+ D backend/alembic/versions_archive/d6e7f8a9b0c2_add_email_provider_config.py
+ D backend/alembic/versions_archive/e1f2a3b4c5d6_add_banner_appearance_columns.py
+ D backend/alembic/versions_archive/e3f4a5b6c7d8_add_vat_shipping_to_orders.py
+ D backend/alembic/versions_archive/e7f8a9b0c1d2_add_payment_gateway_connections.py
+ D backend/alembic/versions_archive/f1a2b3c4d5e6_search_snapshots_and_schema_hardening.py
+ D backend/alembic/versions_archive/f2c3d4e5f6a7_phase0_product_active_sales_count.py
+ D backend/alembic/versions_archive/f7e8d9c0b1a2_supply_chain_shipment_events.py
+ D backend/alembic/versions_archive/f8a9b0c1d2e3_add_order_gateway_fee_fields.py
+ D backend/alembic/versions_archive/g1h2i3j4k5l6a_add_email_ab_and_gps_fields.py
+ D backend/alembic/versions_archive/g1h2i3j4k5l6b_add_gateway_settlement_cycle.py
+ D backend/alembic/versions_archive/h1j2k3l4m5n6_widen_bounded_encrypted_columns.py
+ D backend/alembic/versions_archive/h7i8j9k0l1m2_merge_feature_heads.py
+ D backend/alembic/versions_archive/j1k2l3m4n5o6_add_supplier_discount_duration_fields.py
+ D backend/alembic/versions_archive/k2l3m4n5o6p7_add_shipment_package_fields_and_return_intent.py
+ D backend/alembic/versions_archive/m0n1o2p3q4r5_add_country_staff_assignment_communication_cross_country.py
+ D backend/alembic/versions_archive/m1n2o3p4q5r6_add_gin_indexes_country_configs.py
+ D backend/alembic/versions_archive/m2n3o4p5q6r7_add_media_asset_and_fraud_models.py
+ D backend/alembic/versions_archive/m3n4o5p6q7r8_add_order_payment_method.py
+ D backend/alembic/versions_archive/m5n6o7p8q9r0_add_country_config_gin_indexes.py
+ D backend/alembic/versions_archive/m9n0o1p2q3r4_add_country_admin_control_plane.py
+ D backend/alembic/versions_archive/n1o2p3q4r5s6_add_supplier_public_profile_fields.py
+ D backend/alembic/versions_archive/n5o6p7q8r9s0_uuid_enumeration_prevention.py
+ D backend/alembic/versions_archive/n9o8p7q6r5s4_add_badge_billing_records.py
+ D backend/alembic/versions_archive/p1h2i3j4k5l6_phase1_employee_hierarchy.py
+ D backend/alembic/versions_archive/p1q2r3s4t5u6_add_payout_rule_tables.py
+ D backend/alembic/versions_archive/p4q5r6s7t8u9_add_partner_assignment_and_supplier_return_state.py
+ D backend/alembic/versions_archive/p5q6r7s8t9u0_add_country_config_heuristic_and_expansion.py
+ D backend/alembic/versions_archive/p9q0r1s2t3u4_add_comprehensive_gin_indexes.py
+ D backend/alembic/versions_archive/p9q8r7s6t5u4_add_product_variants_and_video.py
+ D backend/alembic/versions_archive/q1r2s3t4u5v6_add_composite_indexes.py
+ D backend/alembic/versions_archive/q5r6s7t8u9v0_add_gcc_country_config_fields_and_credentials.py
+ D backend/alembic/versions_archive/q6r7s8t9u0v1_backfill_supplier_profile_badge_fields.py
+ D backend/alembic/versions_archive/r0a1b2c3d4e5_add_role_permission_settings.py
+ D backend/alembic/versions_archive/r7s8t9u0v1w2_add_logistics_partner_payouts.py
+ D backend/alembic/versions_archive/s1t2u3v4w5x6a_add_staff_management_user_fields.py
+ D backend/alembic/versions_archive/s1t2u3v4w5x6b_merge_variant_runtime_heads.py
+ D backend/alembic/versions_archive/s9t0u1v2w3x4_add_shipment_delivery_signature_fields.py
+ D backend/alembic/versions_archive/s_20926f31a1a0_stub_for_20926f31a1a0.py
+ D backend/alembic/versions_archive/s_a1b2c3d4e5f6_stub_for_a1b2c3d4e5f6_check_constraints.py
+ D backend/alembic/versions_archive/s_a1b2c3d4e5f6_stub_for_a1b2c3d4e5f6a_add_normalized_webhook_events.py
+ D backend/alembic/versions_archive/s_a2b3c4d5e6f7_stub_for_a2b3c4d5e6f7_add_confidence_score.py
+ D backend/alembic/versions_archive/s_add_communic_stub_for_add_communication_channels.py
+ D backend/alembic/versions_archive/s_b1c2d3e4f5g6_stub_for_b1c2d3e4f5g6_add_country_consistency_triggers.py
+ D backend/alembic/versions_archive/s_b2c3d4e5f6g7_stub_for_b2c3d4e5f6g7b_add_employee_hcm_models.py
+ D backend/alembic/versions_archive/s_c3d4e5f6g7h8_stub_for_c3d4e5f6g7h8.py
+ D backend/alembic/versions_archive/s_d6e7f8a9b0c2_stub_for_d6e7f8a9b0c2.py
+ D backend/alembic/versions_archive/s_g1h2i3j4k5l6_stub_for_g1h2i3j4k5l6b.py
+ D backend/alembic/versions_archive/s_m1n2o3p4q5r6_stub_for_m1n2o3p4q5r6.py
+ D backend/alembic/versions_archive/s_m2n3o4p5q6r7_stub_for_m2n3o4p5q6r7.py
+ D backend/alembic/versions_archive/s_p1h2i3j4k5l6_stub_for_p1h2i3j4k5l6.py
+ D backend/alembic/versions_archive/s_p9q0r1s2t3u4_stub_for_p9q0r1s2t3u4.py
+ D backend/alembic/versions_archive/s_s1t2u3v4w5x6_stub_for_s1t2u3v4w5x6.py
+ D backend/alembic/versions_archive/s_y5z6a7b8c9d0_stub_for_y5z6a7b8c9d0.py
+ D backend/alembic/versions_archive/t1u2v3w4x5y6a_add_chatbot_query_events.py
+ D backend/alembic/versions_archive/t1u2v3w4x5y6b_add_shipment_confirmation_requests.py
+ D backend/alembic/versions_archive/t2u3v4w5x6y7_merge_variant_runtime_heads.py
+ D backend/alembic/versions_archive/u4v5w6x7y8z9_add_finance_bank_accounts.py
+ D backend/alembic/versions_archive/u8v9w0x1y2z3_add_service_area_pricing_fields.py
+ D backend/alembic/versions_archive/v1w2x3y4z5a6_add_per_km_rate_city_distance_matrix_and_breakdown_snapshot.py
+ D backend/alembic/versions_archive/v2w3x4y5z6a7_add_feed_and_campaign_indexes.py
+ D backend/alembic/versions_archive/v3w4x5y6z7a8_add_recipient_bank_accounts.py
+ D backend/alembic/versions_archive/w1x2y3z4a5b6_add_logistics_pricing_profiles.py
+ D backend/alembic/versions_archive/w3x4y5z6a7b8_add_referral_points_system.py
+ D backend/alembic/versions_archive/w9x8y7z6a5b4_add_logistics_cod_remittance_receipts.py
+ D backend/alembic/versions_archive/x1y2z3a4b5c6_add_user_last_login.py
+ D backend/alembic/versions_archive/x2y3z4a5b6c7_merge_logistics_pricing_profile_and_cod_receipt_heads.py
+ D backend/alembic/versions_archive/y3z4a5b6c7d8_add_logistics_category_and_vehicle_rules.py
+ D backend/alembic/versions_archive/y4z5a6b7c8d9_add_email_provider_runtime_config.py
+ D backend/alembic/versions_archive/y5z6a7b8c9d0_add_country_code_to_all_tables.py
+ D backend/alembic/versions_archive/z0y1x2w3v4u5_merge_runtime_bootstrap_heads.py
+ D backend/alembic/versions_archive/z1a2b3c4d5e6_add_employee_system_tables.py
+ D backend/alembic/versions_archive/z2a3b4c5d6e7_seed_employee_test_data.py
+ D backend/alembic/versions_archive/z7b8c9d0e1f2_add_email_delivery_events_and_suppressions.py
+ D backend/alembic/versions_archive/z9a0b1c2d3e4_add_logistics_partner_profile_review_schema.py
+ D backend/alembic/versions_archive/za1b2c3d4e5_remove_legacy_logistics_category_fields.py
+ D backend/alembic/versions_archive/zb1c2d3e4f5_add_product_subcategory_and_visibility_regions.py
+ D backend/alembic/versions_archive/zc1d2e3f4a5_add_soft_delete_columns_to_all_entities.py
+ D backend/alembic/versions_archive/zd1e2f3a4b5c_add_advanced_search_filter_and_video_models.py
+ M backend/api/country_communications.py
+ D backend/audit_routers_tmp.py
+ D backend/audit_test.py
+ D backend/auth.py
+ D backend/be_out.txt
+ D backend/check_db.py
+ D backend/check_hf.py
+ D backend/check_logins.py
+ D backend/check_migration.py
+ D backend/check_smoke.py
+ D backend/check_tables.py
+ D backend/check_words.py
+ D backend/client_tmp.py
+ D backend/config.py
+ M backend/controllers/address_controller.py
+ M backend/controllers/admin_controller.py
+ M backend/controllers/audit_controller.py
+ M backend/controllers/auth_controller.py
+ M backend/controllers/banner_controller.py
+ D backend/controllers/cache_utils.py
+ M backend/controllers/categories_controller.py
+ M backend/controllers/chat_controller.py
+ M backend/controllers/command_center.py
+ M backend/controllers/command_center_controller.py
+ M backend/controllers/compliance_controller.py
+ M backend/controllers/country_controller.py
+ M backend/controllers/email_controller.py
+ M backend/controllers/employee_controller.py
+ M backend/controllers/expense_controller.py
+ M backend/controllers/financial_controller.py
+ M backend/controllers/flash_sale_controller.py
+ M backend/controllers/iam_controller.py
+ M backend/controllers/invoice_controller.py
+ M backend/controllers/logistics_controller.py
+ M backend/controllers/logistics_partner_controller.py
+ M backend/controllers/mobile_controller.py
+ M backend/controllers/notifications_controller.py
+ M backend/controllers/operational_controller.py
+ M backend/controllers/orders_controller.py
+ M backend/controllers/payments_controller.py
+ M backend/controllers/products_controller.py
+ M backend/controllers/promotion_controller.py
+ M backend/controllers/returns_controller.py
+ M backend/controllers/reviews_controller.py
+ M backend/controllers/search_controller.py
+ D backend/controllers/soft_delete.py
+ M backend/controllers/supplier_controller.py
+ M backend/controllers/supplier_document_controller.py
+ D backend/controllers/treasury_controller.py
+ M backend/controllers/wishlist_controller.py
+ M backend/database.py
+ M backend/db/base.py
+ M backend/db/employee_models.py
+ M backend/db/init_db.py
+ M backend/db/media_models.py
+ M backend/db/migrations/new_tables.py
+ D backend/db/models.py
+ M backend/db/models_country_enhancements.py
+ M backend/db/schemas.py
+ M backend/db/seed.py
+ M backend/dependencies/country_rls.py
+ D backend/email_service.py
+ D backend/extract_schemas.py
+ D backend/fe_out.txt
+ D backend/find_fk.py
+ D backend/fix_main.py
+ D backend/impmain_tmp.py
+ M backend/jobs/ghost_order_detector.py
+ D backend/list_tables.py
+ M backend/main.py
+ M backend/middleware/__init__.py
+ D backend/middleware/advanced_rate_limiting.py
+ D backend/middleware/advanced_rls.py
+ M backend/middleware/country_context.py
+ D backend/middleware/country_middleware.py
+ D backend/middleware/country_rls.py
+ M backend/middleware/csrf_middleware.py
+ M backend/middleware/device_binding_middleware.py
+ D backend/middleware/device_fingerprint_middleware.py
+ D backend/middleware/fraud_prevention.py
+ D backend/middleware/fraud_scoring_middleware.py
+ D backend/middleware/geo_blocking.py
+ M backend/middleware/impossible_travel_middleware.py
+ M backend/middleware/logging_middleware.py
+ M backend/middleware/pci_dss_compliance.py
+ M backend/middleware/rate_limit_middleware.py
+ D backend/middleware/rate_limiting.py
+ M backend/middleware/rls_dependency.py
+ D backend/middleware/rls_middleware.py
+ M backend/middleware/security_headers.py
+ D backend/middleware/security_middleware.py
+ D backend/middleware/zero_trust_auth.py
+ D backend/middleware/zero_trust_network.py
+ D backend/models.py
+ M backend/models/__init__.py
+ M backend/models/admin.py
+ M backend/models/ai_upload.py
+ M backend/models/commission.py
+ M backend/models/communication.py
+ M backend/models/core.py
+ M backend/models/countries.py
+ M backend/models/country_control.py
+ M backend/models/country_enhancements.py
+ M backend/models/employee_models.py
+ M backend/models/finance.py
+ M backend/models/fraud.py
+ M backend/models/logistics.py
+ M backend/models/marketing.py
+ M backend/models/media_models.py
+ M backend/models/orders.py
+ M backend/models/payments.py
+ M backend/models/permissions.py
+ M backend/models/products.py
+ M backend/models/suppliers.py
+ M backend/models/user.py
+ M backend/monitoring/docker-compose.monitoring.yml
+ M backend/requirements.txt
+ D backend/reset_tmp.py
+ M backend/routers/addresses.py
+ M backend/routers/admin.py
+ D backend/routers/admin_analytics.py
+ M backend/routers/admin_categories.py
+ M backend/routers/admin_chat.py
+ M backend/routers/admin_commission.py
+ M backend/routers/admin_email.py
+ M backend/routers/admin_logistics.py
+ M backend/routers/admin_payouts.py
+ M backend/routers/admin_products.py
+ M backend/routers/admin_promotions.py
+ M backend/routers/admin_suppliers.py
+ M backend/routers/admin_treasury.py
+ M backend/routers/admin_users.py
+ M backend/routers/admin_video.py
+ M backend/routers/ai_upload.py
+ M backend/routers/audit.py
+ M backend/routers/auth.py
+ M backend/routers/cart.py
+ M backend/routers/categories.py
+ M backend/routers/countries.py
+ M backend/routers/country_auto_populate.py
+ M backend/routers/coupons.py
+ M backend/routers/cross_border.py
+ M backend/routers/customer_health.py
+ M backend/routers/email.py
+ M backend/routers/internal_channels.py
+ M backend/routers/logistics.py
+ M backend/routers/notifications.py
+ M backend/routers/permissions.py
+ M backend/routers/products.py
+ M backend/routers/push_notifications.py
+ M backend/routers/search.py
+ M backend/routers/supplier.py
+ M backend/routers/supplier_analytics.py
+ M backend/routers/supplier_documents.py
+ M backend/routers/supplier_orders.py
+ M backend/routers/supplier_payouts.py
+ M backend/routers/supplier_products.py
+ M backend/routers/tickets.py
+ M backend/routers/treasury.py
+ M backend/routers/upload.py
+ M backend/routers/users.py
+ M backend/routers/wishlist.py
+ M backend/routers/ws_chat.py
+ D backend/run_location_server.py
+ M backend/run_server.py
+ M backend/schemas.py
+ D backend/security_verification.py
+ D backend/seed.py
+ D backend/seed_commission.py
+ M backend/services/advanced_filter_service.py
+ M backend/services/advanced_search_engine.py
+ M backend/services/bg_removal_service.py
+ M backend/services/chat_system.py
+ M backend/services/communication_audit.py
+ M backend/services/country_auto_populate.py
+ M backend/services/email_gateway.py
+ M backend/services/finance_automation.py
+ M backend/services/fix_chat.py
+ D backend/services/gateways/__init__.py
+ D backend/services/gateways/base.py
+ D backend/services/gateways/base_models.py
+ D backend/services/gateways/generic_rest.py
+ D backend/services/gateways/mada.py
+ D backend/services/gateways/paypal.py
+ D backend/services/gateways/paytabs.py
+ D backend/services/gateways/registry.py
+ D backend/services/gateways/stc_pay.py
+ D backend/services/gateways/stripe.py
+ D backend/services/gateways/tap.py
+ D backend/services/gateways/thawani.py
+ D backend/services/gateways/webhook_models.py
+ M backend/services/hierarchy_service.py
+ M backend/services/internal_communication.py
+ M backend/services/maker.py
+ M backend/services/media_service.py
+ M backend/services/notification_engine.py
+ M backend/services/notification_service.py
+ M backend/services/payroll_engine.py
+ M backend/services/script1.py
+ M backend/services/storage.py
+ M backend/services/template.py
+ M backend/services/transactional_email_service.py
+ M backend/services/treasury_service.py
+ M backend/services/video_service.py
+ M backend/services/write_chat.py
+ M backend/services/write_files_script.py
+ D backend/start_server.py
+ D backend/test_api.py
+ D backend/test_diag.py
+ D backend/test_extra_routers.py
+ D backend/test_image_pipeline.py
+ D backend/test_imports.py
+ D backend/test_live_pipeline.py
+ D backend/test_login_and_db.py
+ D backend/test_main_imports.py
+ D backend/test_models.py
+ D backend/test_one_vision.py
+ D backend/test_pred.py
+ D backend/test_real_products.py
+ D backend/test_reset.py
+ D backend/test_schema_check.py
+ D backend/test_schemas.py
+ D backend/test_sneaker_full.py
+ M backend/tests/conftest.py
+ D backend/tmp_check_sqlite.py
+ M backend/utils/audit.py
+ M backend/utils/auth.py
+ M backend/utils/background_jobs.py
+ M backend/utils/circuit_breaker.py
+ M backend/utils/config.py
+ M backend/utils/constants.py
+ M backend/utils/country_detection_middleware.py
+ M backend/utils/dependencies.py
+ M backend/utils/email_service.py
+ M backend/utils/error_handler.py
+ M backend/utils/health.py
+ M backend/utils/logging_config.py
+ M backend/utils/migrations.py
+ M backend/utils/pagination.py
+ M backend/utils/realtime.py
+ M backend/utils/redis_client.py
+ M backend/utils/rls_interceptor.py
+ M backend/utils/slug.py
+ M backend/utils/websocket_manager.py
+ D backend/verify_seed.py
+ D backend/write_all.py
+ D backend/zozi.db.auditfix_20260713_161413
+ D backend/zozi.db.bak_20260713_062432
+ D backend/zozi.db.emptycc_20260713_202700
+ D backend/zozi.db.idx_20260713_203741
+ D backend/zozi.db.idx_20260713_203741-shm
+ D backend/zozi.db.idx_20260713_203741-wal
+ D backend/zozi.db.idx_20260713_204248
+ D backend/zozi.db.idx_20260713_204248-shm
+ D backend/zozi.db.idx_20260713_204248-wal
+ D backend/zozi.db.opendec_20260713_164112
+ D backend/zozi.db.opendec_20260713_165126
+ D backend/zozi.db.opendec_20260713_202139
+ D browser-tests/final-cart.png
+ D browser-tests/final-login.png
+ D browser-tests/final-orders.png
+ D browser-tests/final-product-detail.png
+ D browser-tests/final-products.png
+ D browser-tests/final-returns.png
+ D browser-tests/final-wishlist.png
+ D browser-tests/screenshot-cart.png
+ D browser-tests/screenshot-login.png
+ D browser-tests/screenshot-orders.png
+ D browser-tests/screenshot-product-detail.png
+ D browser-tests/screenshot-products.png
+ D browser-tests/screenshot-returns.png
+ D browser-tests/screenshot-wishlist.png
+ D browser-tests/verify-cart.png
+ D browser-tests/verify-orders.png
+ D browser-tests/verify-product-detail.png
+ D browser-tests/verify-products.png
+ D browser-tests/verify-returns.png
+ D browser-tests/verify-wishlist.png
+ M docker-compose.override.yml
+ M docker-compose.prod.yml
+ M docker-compose.yml
+ D docs/CODEBASE_STATUS_MATRIX.md
+ M docs/SCALING_PLAN.md
+ M documents/CODEBASE_STATUS_MATRIX.md
+ D documents/DATABASE_ECOSYSTEM_HANDLING_PLAN.md
+ M documents/DATABASE_REFERENCE.md
+ D documents/DATABASE_TABLE.md
+ D documents/LOGISTICS_CHARGE_FILE_INVENTORY.md
+ D documents/LOGISTIC_CHRGES.md
+ M documents/Prompt_1.md
+ M documents/SUPPLIER_PRODUCT_UPLOAD.md
+ M frontend/README.md
+ D frontend/balance.js
+ D frontend/countDivs.js
+ D frontend/countDivs2.js
+ D frontend/instrumentation.ts
+ D frontend/linenums.js
+ D frontend/listDivs.js
+ M frontend/mobile_app/app.json
+ M frontend/mobile_app/app/(tabs)/_layout.tsx
+ M frontend/mobile_app/app/_layout.tsx
+ D frontend/mobile_app/check.js
+ M frontend/mobile_app/components/ui/ErrorHandlerInit.tsx
+ D frontend/mobile_app/components/ui/ProductCard.tsx
+ M frontend/mobile_app/jest.config.js
+ M frontend/mobile_app/lib/countrySelection.ts
+ M frontend/mobile_app/lib/globalErrorHandler.ts
+ M frontend/mobile_app/lib/paymentService.ts
+ M frontend/mobile_app/package.json
+ D frontend/mobile_app/package.json.wyJ3QXz5UTYVCJ5vF4RXrbU7AaAMy7-F5hmL-pJuRaM
+ M frontend/mobile_app/playwright-out/00-home.png
+ M frontend/mobile_app/playwright-out/01-Shop.png
+ M frontend/mobile_app/playwright-out/02-Cart.png
+ M "frontend/mobile_app/playwright-out/03-Sign In.png"
+ M frontend/mobile_app/playwright-out/route-0-_login.png
+ M frontend/mobile_app/playwright-out/route-1-_edit-profile.png
+ M frontend/mobile_app/playwright-out/route-10-_flash-sales.png
+ M frontend/mobile_app/playwright-out/route-11-_coupons.png
+ M frontend/mobile_app/playwright-out/route-12-_profile.png
+ M frontend/mobile_app/playwright-out/route-13-_settings.png
+ D frontend/mobile_app/playwright-out/route-14-_addresses.png
+ D frontend/mobile_app/playwright-out/route-15-_returns.png
+ M frontend/mobile_app/playwright-out/route-2-_orders.png
+ M frontend/mobile_app/playwright-out/route-3-_wishlist.png
+ M frontend/mobile_app/playwright-out/route-4-_notifications.png
+ M frontend/mobile_app/playwright-out/route-5-_offers.png
+ M frontend/mobile_app/playwright-out/route-6-_products.png
+ M frontend/mobile_app/playwright-out/route-7-_products_1.png
+ M frontend/mobile_app/playwright-out/route-8-_cart.png
+ M frontend/mobile_app/playwright-out/route-9-_checkout.png
+ M frontend/mobile_app/playwright-out/summary.json
+ M frontend/mobile_app/pnpm-lock.yaml
+ M frontend/mobile_app/pnpm-workspace.yaml
+ D frontend/mobile_app/polyfills/react.js
+ M frontend/mobile_app/scripts/pw-smoke-prod.js
+ M frontend/mobile_app/scripts/pw-smoke.js
+ M frontend/mobile_app/scripts/static-server.js
+ D frontend/parse.js
+ D frontend/patch-vars.js
+ D frontend/patch-vars2.js
+ D frontend/printLines.js
+ D frontend/sentry.client.config.ts
+ D frontend/sentry.server.config.ts
+ M frontend/shared/src/adminPermissions.ts
+ M frontend/shared/src/components/ui/ErrorBoundary.tsx
+ M frontend/shared/src/errorLogging.ts
+ M frontend/shared/src/i18n.ts
+ M frontend/shared/src/localization.ts
+ M frontend/shared/src/types.ts
+ M frontend/shared/tsconfig.json
+ D frontend/stackDivs.js
+ D frontend/tailwind.config.js
+ M frontend/web_app/README.md
+ D frontend/web_app/__tests__/ErrorBoundary.test.tsx
+ D frontend/web_app/add_rgb_vars.ps1
+ D frontend/web_app/cc_probe.js
+ D frontend/web_app/cc_probe2.js
+ D frontend/web_app/cc_probe3.js
+ D frontend/web_app/command-center-analytics.png
+ M frontend/web_app/command-center-fixed.png
+ D frontend/web_app/command-center-legacy.png
+ D frontend/web_app/command-center-unified.png
+ D frontend/web_app/debug_after_fast.png
+ D frontend/web_app/debug_before_fast.png
+ D frontend/web_app/debug_test6.png
+ M frontend/web_app/e2e/admin-audit-fixes.spec.ts
+ M frontend/web_app/e2e/admin-commission.spec.ts
+ M frontend/web_app/e2e/admin-communication-hub.spec.ts
+ M frontend/web_app/e2e/admin-country-control-plane.spec.ts
+ M frontend/web_app/e2e/admin-country-enhanced.spec.ts
+ M frontend/web_app/e2e/admin-data-ops.spec.ts
+ M frontend/web_app/e2e/admin-hr-permissions.spec.ts
+ M frontend/web_app/e2e/admin-logistics-pricing-insights-live.spec.ts
+ M frontend/web_app/e2e/admin-modules-reconciliation.spec.ts
+ M frontend/web_app/e2e/admin-payment-gateways.spec.ts
+ M frontend/web_app/e2e/admin-treasury-payout.spec.ts
+ M frontend/web_app/e2e/auth-role-login.spec.ts
+ M frontend/web_app/e2e/command-center.spec.ts
+ M frontend/web_app/e2e/countries-search.spec.ts
+ M frontend/web_app/e2e/country-auto-populate.spec.ts
+ M frontend/web_app/e2e/country-integration-rls.spec.ts
+ M frontend/web_app/e2e/customer-core-flow.spec.ts
+ M frontend/web_app/e2e/finance-cod-proof-live.spec.ts
+ M frontend/web_app/e2e/helpers/auth.ts
+ M frontend/web_app/e2e/hr-router-prefix.spec.ts
+ M frontend/web_app/e2e/supplier-bulk-upload.spec.ts
+ M frontend/web_app/e2e/supplier-kyc-form.spec.ts
+ M frontend/web_app/e2e/supplier-smoke.spec.ts
+ D frontend/web_app/e2e_upload_test.js
+ D frontend/web_app/fix_rgb_vars.ps1
+ D frontend/web_app/fix_rgb_vars_test.ps1
+ D frontend/web_app/inspect_add.js
+ D frontend/web_app/inspect_login.js
+ D frontend/web_app/inspect_slogin.js
+ D frontend/web_app/inspect_slogin2.js
+ D frontend/web_app/inspect_slogin3.js
+ D frontend/web_app/inspect_slogin4.js
+ D frontend/web_app/inspect_slogin5.js
+ D frontend/web_app/inspect_slogin6.js
+ M frontend/web_app/jest.config.js
+ M frontend/web_app/jest.setup.ts
+ M frontend/web_app/middleware.ts
+ M frontend/web_app/next.config.ts
+ D frontend/web_app/next_dev.err
+ M frontend/web_app/package-lock.json
+ M frontend/web_app/package.json
+ M frontend/web_app/playwright.config.ts
+ D frontend/web_app/playwright_finance_test.cjs
+ M frontend/web_app/postcss.config.js
+ M frontend/web_app/src/__tests__/pages/adminCommunicationHub.test.tsx
+ M frontend/web_app/src/__tests__/pages/adminDashboardNavigation.test.tsx
+ M frontend/web_app/src/__tests__/pages/adminExportsPanel.test.tsx
+ M frontend/web_app/src/__tests__/pages/adminFinanceCodVerification.test.tsx
+ M frontend/web_app/src/__tests__/pages/adminLogisticsPages.test.tsx
+ M frontend/web_app/src/__tests__/pages/adminStaffPage.test.tsx
+ M frontend/web_app/src/__tests__/pages/adminStandalonePages.test.tsx
+ D frontend/web_app/src/__tests__/pages/adminTabAuthGating.test.tsx
+ M frontend/web_app/src/__tests__/pages/bulkOperations.test.tsx
+ M frontend/web_app/src/__tests__/pages/promotionBuilderPanel.test.tsx
+ M frontend/web_app/src/app/HomeClient.tsx
+ M frontend/web_app/src/app/admin/command-center/alerts/page.tsx
+ M frontend/web_app/src/app/admin/command-center/headlines/create/page.tsx
+ M frontend/web_app/src/app/admin/command-center/page.tsx
+ M frontend/web_app/src/app/admin/communication/page.tsx
+ M frontend/web_app/src/app/admin/countries/page.tsx
+ D frontend/web_app/src/app/admin/dashboard/ExportsPanel.tsx
+ M frontend/web_app/src/app/admin/dashboard/page.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/AnalyticsTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/ApprovalMatrixTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/BannerTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/CouponsTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/FinanceTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/HierarchyTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/InsightsTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/ModerationTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/OrdersTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/PayoutsTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/ProductsTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/SupplierDocumentsTab.tsx
+ D frontend/web_app/src/app/admin/dashboard/tabs/TicketsTab.tsx
+ D frontend/web_app/src/app/admin/disputes/DisputesPanel.tsx
+ D frontend/web_app/src/app/admin/employees/employees-content.tsx
+ M frontend/web_app/src/app/admin/employees/page.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/AddressMatrixTab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/AlumniContractorTab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/CommunicationsTab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/DEITab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/DisciplinaryOffboardingTab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/HseTab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/InsuranceBenefitsTab.tsx
+ D frontend/web_app/src/app/admin/employees/tabs/PerformanceTab.tsx
+ D frontend/web_app/src/app/admin/finance/AccountingPanels.tsx
+ D frontend/web_app/src/app/admin/finance/BankAccountsPanel.tsx
+ D frontend/web_app/src/app/admin/finance/ErpPanels.tsx
+ D frontend/web_app/src/app/admin/finance/FinanceModules.tsx
+ M frontend/web_app/src/app/admin/finance/page.tsx
+ M frontend/web_app/src/app/admin/login/page.tsx
+ D frontend/web_app/src/app/admin/logistics/LogisticsPartnersPanel.tsx
+ M frontend/web_app/src/app/admin/logistics/page.tsx
+ D frontend/web_app/src/app/admin/orders/BarcodePanel.tsx
+ D frontend/web_app/src/app/admin/orders/ReturnsPanel.tsx
+ M frontend/web_app/src/app/admin/orders/page.tsx
+ M frontend/web_app/src/app/admin/organization/page.tsx
+ M frontend/web_app/src/app/admin/payouts/page.tsx
+ M frontend/web_app/src/app/admin/permissions/page.tsx
+ D frontend/web_app/src/app/admin/permissions/permissions-content.tsx
+ D frontend/web_app/src/app/admin/promotions/BannersPanel.tsx
+ D frontend/web_app/src/app/admin/promotions/CouponsPanel.tsx
+ D frontend/web_app/src/app/admin/promotions/FlashSalesPanel.tsx
+ D frontend/web_app/src/app/admin/promotions/PromotionBuilderPanel.tsx
+ M frontend/web_app/src/app/admin/promotions/page.tsx
+ M frontend/web_app/src/app/admin/resolution/page.tsx
+ M frontend/web_app/src/app/admin/staff/page.tsx
+ D frontend/web_app/src/app/admin/staff/staff-content.tsx
+ D frontend/web_app/src/app/admin/treasury/treasury-content.tsx
+ M frontend/web_app/src/app/brand/page.tsx
+ M frontend/web_app/src/app/cart/page.tsx
+ M frontend/web_app/src/app/checkout/page.tsx
+ M frontend/web_app/src/app/error.tsx
+ M frontend/web_app/src/app/global-error.tsx
+ M frontend/web_app/src/app/login/LoginClient.tsx
+ M frontend/web_app/src/app/logistics-partner/layout.tsx
+ D frontend/web_app/src/app/logistics-partner/login/page.tsx
+ M frontend/web_app/src/app/logistics-partner/profile/page.tsx
+ D frontend/web_app/src/app/logistics-partner/register/page.tsx
+ M frontend/web_app/src/app/logistics-partners/page.tsx
+ M frontend/web_app/src/app/not-found.tsx
+ M frontend/web_app/src/app/orders/[id]/page.tsx
+ M frontend/web_app/src/app/products/[id]/page.tsx
+ M frontend/web_app/src/app/products/page.tsx
+ M frontend/web_app/src/app/register/RegisterClient.tsx
+ M frontend/web_app/src/app/returns/[id]/page.tsx
+ M frontend/web_app/src/app/supplier/dashboard/page.tsx
+ M frontend/web_app/src/app/supplier/layout.tsx
+ D frontend/web_app/src/app/supplier/login/page.tsx
+ M frontend/web_app/src/app/supplier/products/[id]/page.tsx
+ M frontend/web_app/src/app/supplier/products/add/page.tsx
+ M frontend/web_app/src/app/supplier/profile/page.tsx
+ D frontend/web_app/src/app/supplier/register/page.tsx
+ M frontend/web_app/src/app/suppliers/[id]/page.tsx
+ M frontend/web_app/src/app/tickets/[id]/page.tsx
+ M frontend/web_app/src/app/tracking/[id]/page.tsx
+ M frontend/web_app/src/components/AuthRequiredModal.tsx
+ M frontend/web_app/src/components/BannerCarousel.tsx
+ M frontend/web_app/src/components/Breadcrumbs.tsx
+ M frontend/web_app/src/components/Chatbot.tsx
+ M frontend/web_app/src/components/ErrorHandlerInit.tsx
+ M frontend/web_app/src/components/FraudDetectionDashboard.tsx
+ M frontend/web_app/src/components/Header.tsx
+ M frontend/web_app/src/components/MobileNav.tsx
+ M frontend/web_app/src/components/PanelPage.tsx
+ M frontend/web_app/src/components/PanelShell.tsx
+ M frontend/web_app/src/components/admin/AdminChatPanel.tsx
+ M frontend/web_app/src/components/admin/AdminEmailPanel.tsx
+ M frontend/web_app/src/components/admin/AdminVideoPanel.tsx
+ M frontend/web_app/src/components/admin/commandCenter/hud.tsx
+ M frontend/web_app/src/components/country/CountryDetailWorkspace.tsx
+ M frontend/web_app/src/components/ui/FormLayout.tsx
+ M frontend/web_app/src/components/ui/shared/Badge.tsx
+ M frontend/web_app/src/lib/adminPanelConfig.ts
+ D frontend/web_app/src/lib/api.ts
+ M frontend/web_app/src/lib/currencyStore.ts
+ M frontend/web_app/src/lib/globalErrorHandler.ts
+ M frontend/web_app/src/lib/icons.ts
+ M frontend/web_app/src/lib/panelNavigation.ts
+ M frontend/web_app/src/lib/variantConfig.ts
+ M frontend/web_app/src/services/addressFormatService.ts
+ M frontend/web_app/src/services/crossBorderService.ts
+ M frontend/web_app/src/services/localizationService.ts
+ M frontend/web_app/tailwind.config.js
+ D frontend/web_app/test-results/.last-run.json
+ M frontend/web_app/tsconfig.json
+ D frontend/web_app/verify-tmp.js
+ D generate_codebase.py
+ M monitoring/docker-compose.monitoring.yml
+ M monitoring/grafana/provisioning/dashboards/zozi-system-health.json
+ M monitoring/prometheus.yml
+ M monitoring/promtail/promtail-config.yml
+ D recover_backend.py
+ M run_e2e.ps1
+ M run_zozi.bat
+ D test_bg_smoke.py
+ M vercel.json
+?? .env.example
+?? .freebuff/
+?? .github/
+?? .governance/
+?? .kilocode/
+?? .playwright-mcp/
+?? .token
+?? AGENTS.md
+?? API_DOCUMENTATION.md
+?? Employee_Chat_Video_Email_System.md
+?? Makefile
+?? PROJECT_SCAFFOLDING.md
+?? REPO_LAYOUT_AUDIT_REPORT.md
+?? SECURITY.md
+?? Working_API/zozi_ai_image_service/run_bg_all.py
+?? Working_API/zozi_ai_image_service/run_br_benchmark.py
+?? Working_API/zozi_ai_image_service/test_strategies.py
+?? _orchestrator_read.py
+?? backend/.env.example
+?? backend/Dockerfile
+?? backend/Dockerfile.prod
+?? backend/_import_test_out.txt
+?? backend/alembic/_diagnose_tree.py
+?? backend/alembic/script.py.mako
+?? backend/alembic/versions/2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py
+?? backend/alembic/versions/2026_07_26_20_27-837e1e29bd49_add_banner_layout_json.py
+?? backend/alembic/versions/2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py
+?? backend/alembic/versions/2026_07_26_22_00-e70b2cb9a90f_fix_internal_channels_fk.py
+?? backend/alembic/versions/2026_07_27_00_32-c0f3f1817791_add_production_postgres_indexes.py
+?? backend/alembic/versions/2026_07_27_09_08-20260727_0908_add_check_constraints_to_status_enum_columns.py
+?? backend/alembic/versions/2026_07_28_0000_employee_hr_tables.py
+?? backend/alembic/versions/2026_07_28_19_30-e8efae30fc29_add_missing_indexes_and_constraints.py
+?? backend/alembic/versions/2026_07_28_21_14-87146598d2c3_add_missing_fk_constraints_for_.py
+?? backend/alembic/versions/2026_07_29_10_17-e281faa0c087_add_orm_models_for_orphaned_employee_.py
+?? backend/alembic/versions/2026_07_29_10_28-9ff24a0683dd_schema_drift_check.py
+?? backend/alembic/versions/2026_07_29_19_14-20260729_1914_add_products_search_vector_trigger.py
+?? backend/alembic/versions/2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py
+?? backend/alembic/versions/2026_07_30_0004-20260730_0004_create_event_tables.py
+?? backend/alembic_test.json
+?? backend/controllers/admin/
+?? backend/controllers/commerce/
+?? backend/controllers/communication/
+?? backend/controllers/finance/
+?? backend/controllers/governance/
+?? backend/controllers/hr/
+?? backend/controllers/products/
+?? backend/controllers/supplier/
+?? backend/data/
+?? backend/db/transaction.py
+?? backend/docs/
+?? backend/events/
+?? backend/gen_phase2_migration.py
+?? backend/gen_schema_summary.py
+?? backend/lifespan.py
+?? backend/middleware/api_version_middleware.py
+?? backend/middleware/orchestrator.py
+?? backend/models/employee_active_tasks.py
+?? backend/models/employee_audit_timeline.py
+?? backend/models/employee_risk_scores.py
+?? backend/models/events.py
+?? backend/models/imports.py
+?? backend/models/trading.py
+?? backend/models/upload_job.py
+?? backend/providers/
+?? backend/requirements.lock
+?? backend/routers/admin_fallback.py
+?? backend/routers/ai_research.py
+?? backend/routers/automation.py
+?? backend/routers/batch_upload.py
+?? backend/routers/chat_enrichment.py
+?? backend/routers/comms_unified.py
+?? backend/routers/country_research.py
+?? backend/routers/email_enrichment.py
+?? backend/routers/ess.py
+?? backend/routers/frontend_errors.py
+?? backend/routers/hierarchy.py
+?? backend/routers/hr_dashboard.py
+?? backend/routers/imports.py
+?? backend/routers/logistics_orders_v2.py
+?? backend/routers/payout_approval.py
+?? backend/routers/payroll.py
+?? backend/routers/performance.py
+?? backend/routers/supplier_bg_ab_test.py
+?? backend/routers/supplier_finance.py
+?? backend/routers/trading.py
+?? backend/routers/upload_jobs.py
+?? backend/run_tests.ps1
+?? backend/run_tests.sh
+?? backend/schema-audit-report.json
+?? backend/schema_mapping.json
+?? backend/scripts/add_schema_to_models.py
+?? backend/scripts/backend_layout_audit_3_0.py
+?? backend/scripts/generate_codebase.py
+?? backend/scripts/generate_scaffolding.py
+?? backend/scripts/migrate_media_to_s3.py
+?? backend/scripts/partition_maintenance.sql
+?? backend/scripts/schema_audit_ci.py
+?? backend/scripts/system_architecture_audit.py
+?? backend/seed_all.py
+?? backend/services/ai_automation_service.py
+?? backend/services/ai_research_jobs.py
+?? backend/services/auth_service.py
+?? backend/services/auto_payout_scheduler.py
+?? backend/services/automation_scheduler.py
+?? backend/services/background_check.py
+?? backend/services/chat_enrichment.py
+?? backend/services/country_ai_research.py
+?? backend/services/country_research.py
+?? backend/services/credit_control_service.py
+?? backend/services/effective_permissions.py
+?? backend/services/email_enrichment.py
+?? backend/services/employee_activity_logger.py
+?? backend/services/employee_communication_service.py
+?? backend/services/employee_lifecycle_service.py
+?? backend/services/fulfillment_service.py
+?? backend/services/gateway_reconciliation_service.py
+?? backend/services/import_service.py
+?? backend/services/order_tracking_service.py
+?? backend/services/payout_batch_service.py
+?? backend/services/payout_notification_service.py
+?? backend/services/performance_service.py
+?? backend/services/promotion_bogo_service.py
+?? backend/services/promotion_points_service.py
+?? backend/services/refund_posting_service.py
+?? backend/services/trading_service.py
+?? backend/services/upload_job_service.py
+?? backend/services/variant_config_service.py
+?? backend/settings/
+?? backend/start_backend.ps1
+?? backend/test_schema_translate.py
+?? backend/tests/playwright/
+?? backend/tests/test_admin.py
+?? backend/tests/test_ai_research_jobs.py
+?? backend/tests/test_ai_research_router.py
+?? backend/tests/test_api_endpoints.py
+?? backend/tests/test_api_pagination.py
+?? backend/tests/test_auth.py
+?? backend/tests/test_auto_payout_sweep.py
+?? backend/tests/test_background_jobs.py
+?? backend/tests/test_banners.py
+?? backend/tests/test_cart.py
+?? backend/tests/test_categories.py
+?? backend/tests/test_chat.py
+?? backend/tests/test_circuit_breaker.py
+?? backend/tests/test_communication_services.py
+?? backend/tests/test_comprehensive_system.py
+?? backend/tests/test_controller_subpackages.py
+?? backend/tests/test_countries.py
+?? backend/tests/test_country_ai_research.py
+?? backend/tests/test_country_auto_populate.py
+?? backend/tests/test_country_research.py
+?? backend/tests/test_coupons.py
+?? backend/tests/test_ems_edge_cases.py
+?? backend/tests/test_ems_lifecycle.py
+?? backend/tests/test_error_handling.py
+?? backend/tests/test_health.py
+?? backend/tests/test_internal_communication.py
+?? backend/tests/test_logistics.py
+?? backend/tests/test_middleware_helpers.py
+?? backend/tests/test_models.py
+?? backend/tests/test_notifications.py
+?? backend/tests/test_orders.py
+?? backend/tests/test_pagination_integration.py
+?? backend/tests/test_payments.py
+?? backend/tests/test_products.py
+?? backend/tests/test_response_wrapper.py
+?? backend/tests/test_reviews.py
+?? backend/tests/test_search.py
+?? backend/tests/test_search_endpoints.py
+?? backend/tests/test_security.py
+?? backend/tests/test_shipping_quote.py
+?? backend/tests/test_suppliers.py
+?? backend/tests/test_transaction.py
+?? backend/tests/test_treasury.py
+?? backend/tests/test_users.py
+?? backend/tests/test_versioning.py
+?? backend/tests/test_wishlist.py
+?? backend/tools/
+?? backend/utils/analytics_service.py
+?? backend/utils/api_docs.py
+?? backend/utils/cache.py
+?? backend/utils/middleware_helpers.py
+?? backend/utils/ml_worker.py
+?? backend/utils/prometheus_setup.py
+?? backend/utils/response_wrapper.py
+?? backend/utils/soft_delete.py
+?? backend/utils/tracing.py
+?? backend/utils/versioning.py
+?? backup_20260729/
+?? documents/00_SCOPE_BINDING.md
+?? documents/01_DATABASE.md
+?? documents/CASH_PAYMENT_CYCLE_AUDIT.md
+?? documents/DATABASE_IMPLEMENTATION_PLAN.md
+?? documents/DIR_AUDIT.md
+?? documents/DIR_AUDIT_FILE_WORKING.md
+?? documents/MULTI_COUNTRY_SYSTEM.md
+?? documents/scope/
+?? fix_issues.py
+?? fix_migration_downgrade.py
+?? frontend/mobile_app/e2e/auth.spec.ts
+?? frontend/mobile_app/e2e/mobile-smoke.spec.ts
+?? frontend/mobile_app/e2e/navigation.spec.ts
+?? frontend/mobile_app/lib/errorReporter.ts
+?? frontend/mobile_app/playwright-out/route-14-_returns.png
+?? frontend/mobile_app/playwright-out/test-write.txt
+?? frontend/mobile_app/playwright-report/
+?? frontend/mobile_app/playwright.config.ts
+?? frontend/mobile_app/scripts/simple-server.js
+?? frontend/mobile_app/sentry.config.ts
+?? frontend/mobile_app/test-output/
+?? frontend/mobile_app/test-results/
+?? frontend/web_app/__tests__/ErrorBoundary.test.tsx.bak
+?? frontend/web_app/__tests__/browser.spec.ts
+?? frontend/web_app/build_log.txt
+?? frontend/web_app/build_output.txt
+?? frontend/web_app/bulk_test_output.txt
+?? frontend/web_app/bulk_test_verbose.txt
+?? frontend/web_app/e2e-screenshots/
+?? frontend/web_app/e2e/auth-registration-login.spec.ts
+?? frontend/web_app/e2e/bg-comparison-visual.spec.ts
+?? frontend/web_app/e2e/comprehensive-test.spec.ts
+?? frontend/web_app/e2e/country-research-all-modules.spec.ts
+?? frontend/web_app/e2e/helpers/api.ts
+?? frontend/web_app/e2e/hr-dashboard-visual.spec.ts
+?? frontend/web_app/e2e/hr-dashboard.spec.ts
+?? frontend/web_app/e2e/parcel-verification.spec.ts
+?? frontend/web_app/e2e/search-bar-header.spec.ts
+?? frontend/web_app/e2e/shipping-quote-checkout.spec.ts
+?? frontend/web_app/e2e/test_vat_remittance_fix.py
+?? frontend/web_app/e2e/verify-8-fixes.spec.ts
+?? frontend/web_app/e2e/voice-to-catalog.spec.ts
+?? frontend/web_app/inspect-playwright.cjs
+?? frontend/web_app/logistics_test.txt
+?? frontend/web_app/playwright-results.txt
+?? frontend/web_app/playwright.__tests__.config.ts
+?? frontend/web_app/scripts/extract_tabs.py
+?? frontend/web_app/scripts/extract_tabs_v2.py
+?? frontend/web_app/scripts/final_fixes.py
+?? frontend/web_app/scripts/fix_components.py
+?? frontend/web_app/scripts/update_page_imports.py
+?? frontend/web_app/src/__mocks__/styleMock.js
+?? frontend/web_app/src/__tests__/components/CountryDetailWorkspace.test.tsx
+?? frontend/web_app/src/__tests__/components/CountryResearchPanel.test.tsx
+?? frontend/web_app/src/__tests__/components/GhostRowForm.test.tsx
+?? frontend/web_app/src/app/admin/countries/components/
+?? frontend/web_app/src/app/admin/countries/constants.ts
+?? frontend/web_app/src/app/admin/countries/types.ts
+?? frontend/web_app/src/app/admin/dashboard/_components/
+?? frontend/web_app/src/app/admin/dashboard/_tabs/
+?? frontend/web_app/src/app/admin/disputes/_components/
+?? frontend/web_app/src/app/admin/employees/_components/
+?? frontend/web_app/src/app/admin/employees/_tabs/
+?? frontend/web_app/src/app/admin/ess/
+?? frontend/web_app/src/app/admin/finance/_components/
+?? frontend/web_app/src/app/admin/hr/
+?? frontend/web_app/src/app/admin/logistics/_components/
+?? frontend/web_app/src/app/admin/orders/_components/
+?? frontend/web_app/src/app/admin/payouts/background-jobs/
+?? frontend/web_app/src/app/admin/payroll/
+?? frontend/web_app/src/app/admin/permissions/_components/
+?? frontend/web_app/src/app/admin/promotions/_components/
+?? frontend/web_app/src/app/admin/staff/_components/
+?? frontend/web_app/src/app/admin/treasury/_components/
+?? frontend/web_app/src/app/api/frontend-errors/
+?? frontend/web_app/src/app/loading.tsx
+?? frontend/web_app/src/app/logistics-partner/(auth)/
+?? frontend/web_app/src/app/supplier/(auth)/
+?? frontend/web_app/src/app/supplier/batch-upload/
+?? frontend/web_app/src/app/supplier/upload/bg-compare/
+?? frontend/web_app/src/components/HeaderSearchBar.tsx
+?? frontend/web_app/src/components/MobileSearchOverlay.tsx
+?? frontend/web_app/src/components/SearchParamsReader.tsx
+?? frontend/web_app/src/components/UnifiedSearchBar.tsx
+?? frontend/web_app/src/components/comms/
+?? frontend/web_app/src/components/country/CountryResearchPanel.tsx
+?? frontend/web_app/src/components/ems/
+?? frontend/web_app/src/components/supplier/AIResultsModal.tsx
+?? frontend/web_app/src/components/supplier/BgStrategyOnboardingTooltip.tsx
+?? frontend/web_app/src/components/supplier/ParcelAuditWidget.tsx
+?? frontend/web_app/src/components/supplier/ProcessingModal.tsx
+?? frontend/web_app/src/components/supplier/QuantityModal.tsx
+?? frontend/web_app/src/components/supplier/UploadProgressDashboard.tsx
+?? frontend/web_app/src/components/supplier/VerifyPublishModal.tsx
+?? frontend/web_app/src/components/supplier/VoiceToCatalogPipeline.tsx
+?? frontend/web_app/src/components/supplier/upload/
+?? frontend/web_app/src/hooks/useChatHistory.ts
+?? frontend/web_app/src/hooks/useCommState.ts
+?? frontend/web_app/src/hooks/usePanelLayout.ts
+?? frontend/web_app/src/hooks/useSearchHistory.ts
+?? frontend/web_app/src/hooks/useSendMessage.ts
+?? frontend/web_app/src/hooks/useThreadMessages.ts
+?? frontend/web_app/src/hooks/useUnifiedInbox.ts
+?? frontend/web_app/src/hooks/useWebSocket.ts
+?? frontend/web_app/src/lib/api/
+?? frontend/web_app/src/lib/backgroundJobRealtime.ts
+?? frontend/web_app/src/lib/errorReporter.ts
+?? frontend/web_app/src/lib/logger.ts
+?? frontend/web_app/src/lib/serverAuth.ts
+?? frontend/web_app/src/lib/uploadOrchestrator.ts
+?? frontend/web_app/src/lib/useBgABTest.ts
+?? frontend/web_app/src/lib/useBgRecommendations.ts
+?? frontend/web_app/src/styles/comm.css
+?? frontend/web_app/src/styles/panel-modern.css
+?? frontend/web_app/src/styles/tokens.css
+?? frontend/web_app/staff_test.txt
+?? frontend/web_app/staff_test2.txt
+?? frontend/web_app/standalone_test.txt
+?? frontend/web_app/standalone_test2.txt
+?? frontend/web_app/test-assets/
+?? frontend/web_app/test-results/admin-audit-fixes-Admin-au-3bfec-ect-admin-promotions-prefix/
+?? frontend/web_app/test-results/admin-audit-fixes-Admin-au-8a00f-apped-in-AdminLayout-chrome/
+?? frontend/web_app/test-results/admin-commission-Admin-Com-575b9-ists-rates-and-supports-add/
+?? frontend/web_app/test-results/admin-commission-Admin-Com-824c0-al-config-and-summary-cards/
+?? frontend/web_app/test-results/admin-commission-Admin-Com-bed3f-ists-tiers-and-supports-add/
+?? frontend/web_app/test-results/admin-communication-hub-Ad-27da8-ds-and-supports-create-flow/
+?? frontend/web_app/test-results/admin-communication-hub-Ad-6f823-ms-and-supports-create-flow/
+?? frontend/web_app/test-results/admin-communication-hub-Ad-74564-stats-and-campaign-creation/
+?? frontend/web_app/test-results/admin-country-control-plan-141f5-al-logistics-draft-creation/
+?? frontend/web_app/test-results/admin-country-control-plan-39623-d-provider-and-create-draft/
+?? frontend/web_app/test-results/admin-country-control-plan-39bc5-ountry-via-the-compact-form/
+?? frontend/web_app/test-results/admin-country-control-plan-a7583-d-verify-overview-tab-loads/
+?? frontend/web_app/test-results/admin-country-control-plan-ac2b1-view-and-tax-draft-creation/
+?? frontend/web_app/test-results/admin-country-control-plan-ce440-ers-with-existing-countries/
+?? ignored_report.txt
+?? login_rsp.json
+?? monitoring/alertmanager.yml
+?? monitoring/alerts.yml
+?? monitoring/tempo/
+?? package.json
+?? run_zozi.sh
+!! .env
+!! .freebuff/backend.log
+!! .freebuff/desktop.db
+!! .freebuff/desktop.db-shm
+!! .freebuff/desktop.db-wal
+!! .freebuff/frontend.log
+!! .freebuff/preview-thmrzggjh9r2tq.log
+!! .hypothesis/
+!! .kilo/
+!! .kilocode/.gitignore
+!! .kilocode/node_modules/
+!! .kilocode/package-lock.json
+!! .kilocode/package.json
+!! .playwright-mcp/console-2026-07-19T04-46-37-226Z.log
+!! .playwright-mcp/console-2026-07-19T04-48-50-989Z.log
+!! .playwright-mcp/console-2026-07-19T04-49-37-274Z.log
+!! .playwright-mcp/console-2026-07-19T04-56-05-438Z.log
+!! .playwright-mcp/console-2026-07-19T04-56-42-593Z.log
+!! .playwright-mcp/console-2026-07-19T06-08-38-152Z.log
+!! .playwright-mcp/console-2026-07-19T06-08-55-312Z.log
+!! .playwright-mcp/console-2026-07-19T06-09-41-184Z.log
+!! .playwright-mcp/console-2026-07-19T06-09-41-675Z.log
+!! .playwright-mcp/console-2026-07-19T06-11-42-559Z.log
+!! .playwright-mcp/console-2026-07-19T06-13-13-990Z.log
+!! .playwright-mcp/console-2026-07-19T06-16-58-120Z.log
+!! .playwright-mcp/console-2026-07-19T06-20-39-014Z.log
+!! .playwright-mcp/console-2026-07-19T07-40-54-217Z.log
+!! .playwright-mcp/console-2026-07-19T07-53-17-642Z.log
+!! .playwright-mcp/console-2026-07-19T08-10-11-883Z.log
+!! .playwright-mcp/console-2026-07-19T08-11-58-420Z.log
+!! .playwright-mcp/console-2026-07-19T10-16-18-536Z.log
+!! .playwright-mcp/console-2026-07-19T10-18-56-696Z.log
+!! .playwright-mcp/console-2026-07-19T10-21-10-050Z.log
+!! .playwright-mcp/console-2026-07-19T10-34-36-026Z.log
+!! .playwright-mcp/console-2026-07-22T09-36-37-046Z.log
+!! .playwright-mcp/console-2026-07-22T09-37-38-648Z.log
+!! .playwright-mcp/console-2026-07-22T09-43-51-709Z.log
+!! .playwright-mcp/console-2026-07-22T09-45-25-797Z.log
+!! .playwright-mcp/console-2026-07-22T09-47-10-493Z.log
+!! .playwright-mcp/console-2026-07-22T09-48-11-856Z.log
+!! .playwright-mcp/console-2026-07-22T09-48-55-908Z.log
+!! .playwright-mcp/console-2026-07-26T11-20-26-110Z.log
+!! .playwright-mcp/console-2026-07-26T11-36-15-414Z.log
+!! .playwright-mcp/console-2026-07-27T01-39-43-954Z.log
+!! .playwright-mcp/console-2026-07-27T01-41-32-308Z.log
+!! .playwright-mcp/console-2026-07-27T01-43-03-747Z.log
+!! .playwright-mcp/console-2026-07-27T02-57-19-184Z.log
+!! .playwright-mcp/console-2026-07-28T21-01-43-128Z.log
+!! .playwright-mcp/console-2026-07-28T21-05-46-681Z.log
+!! .playwright-mcp/console-2026-07-28T21-09-31-410Z.log
+!! .playwright-mcp/console-2026-07-28T21-12-34-959Z.log
+!! .playwright-mcp/console-2026-07-28T21-14-18-816Z.log
+!! .pytest_cache/
+!! Working_API/zozi_ai_image_service/__pycache__/
+!! Working_API/zozi_ai_upload_session/__pycache__/
+!! __pycache__/
+!! _trash/
+!! backend/.env
+!! backend/.hypothesis/
+!! backend/.kilo/
+!! backend/.pytest_cache/
+!! backend/__pycache__/
+!! backend/alembic/__pycache__/
+!! backend/alembic/versions/__pycache__/
+!! backend/backend.log
+!! backend/controllers/__pycache__/
+!! backend/controllers/admin/__pycache__/
+!! backend/controllers/commerce/__pycache__/
+!! backend/controllers/communication/__pycache__/
+!! backend/controllers/finance/__pycache__/
+!! backend/controllers/governance/__pycache__/
+!! backend/controllers/hr/__pycache__/
+!! backend/controllers/products/__pycache__/
+!! backend/controllers/supplier/__pycache__/
+!! backend/data/__pycache__/
+!! backend/db/__pycache__/
+!! backend/dev.db
+!! backend/events/__pycache__/
+!! backend/location_service/__pycache__/
+!! backend/log/
+!! backend/middleware/__pycache__/
+!! backend/models/__pycache__/
+!! backend/provider_test/
+!! backend/providers/__pycache__/
+!! backend/routers/__pycache__/
+!! backend/scripts/__pycache__/
+!! backend/server_stderr.log
+!! backend/server_stdout.log
+!! backend/services/__pycache__/
+!! backend/tests/__pycache__/
+!! backend/tests/playwright/node_modules/
+!! backend/uploads/
+!! backend/utils/__pycache__/
+!! backend/venv/
+!! backend/zozi.db
+!! backend_server.log
+!! documents/snap/Logo/zozi-logo-app/dist/
+!! documents/snap/Logo/zozi-logo-app/node_modules/
+!! frontend/.env.local
+!! frontend/mobile_app/.env
+!! frontend/mobile_app/.expo/
+!! frontend/mobile_app/.pytest_cache/
+!! frontend/mobile_app/.web-build-test/
+!! frontend/mobile_app/android/
+!! frontend/mobile_app/dist/
+!! frontend/mobile_app/expo-env.d.ts
+!! frontend/mobile_app/expo-err.log
+!! frontend/mobile_app/expo-start.log
+!! frontend/mobile_app/node_modules/
+!! frontend/mobile_app/scripts/server.log
+!! frontend/mobile_app/scripts/spa.log
+!! frontend/mobile_app/web-dist/
+!! frontend/node_modules/
+!! frontend/shared/dist/
+!! frontend/shared/node_modules/
+!! frontend/web_app/.env.example
+!! frontend/web_app/.env.local
+!! frontend/web_app/.next/
+!! frontend/web_app/.pytest_cache/
+!! frontend/web_app/build_final.log
+!! frontend/web_app/build_final2.log
+!! frontend/web_app/build_final3.log
+!! frontend/web_app/build_final4.log
+!! frontend/web_app/build_final5.log
+!! frontend/web_app/build_final6.log
+!! frontend/web_app/build_out.log
+!! frontend/web_app/build_out10.log
+!! frontend/web_app/build_out11.log
+!! frontend/web_app/build_out12.log
+!! frontend/web_app/build_out2.log
+!! frontend/web_app/build_out3.log
+!! frontend/web_app/build_out4.log
+!! frontend/web_app/build_out5.log
+!! frontend/web_app/build_out6.log
+!! frontend/web_app/build_out7.log
+!! frontend/web_app/build_out8.log
+!! frontend/web_app/build_out9.log
+!! frontend/web_app/coverage/
+!! frontend/web_app/next-env.d.ts
+!! frontend/web_app/node_modules/
+!! frontend/web_app/tsconfig.tsbuildinfo
+!! provider_test/
+!! scripts/__pycache__/
+!! scripts/backend/.env
+!! scripts/frontend/
+!! scripts/zozi.db
+!! zozi.db
