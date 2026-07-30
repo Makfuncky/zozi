@@ -1,0 +1,120 @@
+# documents\scope\repo_structure.yaml
+# AUTHORITATIVE structure rules for ZOZI.
+# Read by backend/scripts/backend_layout_audit.py.
+# Edit HERE, not in Python.
+
+forbidden_root:
+  backend:
+    - '.*\.(log|db|db-shm|db-wal)$'
+    - '^token\.tmp$'
+    - '^.*\.(json|txt)$'
+
+  backend/alembic:
+    - '^_.*\.py$'
+
+  frontend:
+    - '.*\.(log|tsbuildinfo)$'
+
+  frontend/web_app:
+    - '.*\.bak$'
+    - '\.tsbuildinfo$'
+    - '^build_final.*$'
+    - '^build_out.*$'
+    - '^build_log\.txt$'
+    - '^_audit_.*\.cjs$'
+    - '^verify_.*\.cjs$'
+    - '^debug.*\.spec\.ts$'
+    - '^diag.*\.spec\.ts$'
+    - '^inspect-playwright\.cjs$'
+    - '^playwright-results\.txt$'
+    - '.*_test(_output|_verbose)?\.txt$'
+    - '.*\.(png|jpe?g)$'
+    - '^-w$'
+    - '.*\.log$'
+
+  frontend/mobile_app:
+    - '.*\.log$'
+    - '^expo-err\.log$'
+    - '^expo-start\.log$'
+
+  ".":
+    - '^Working_API$'
+    - '^provider_test$'
+    - '^_trash$'
+    - '^backup_\d+'
+    - '^image$'
+    - '^zozi-logo-app$'
+    - '.*\.zip$'
+    - '^login_form\.yml$'
+    - '^login_rsp\.json$'
+    - '^zozi\.db(-shm|-wal)?$'
+    - '^dev\.db$'
+    - '^.*\.log$'
+    - '^_orchestrator_read\.py$'
+    - '^fix_.*\.py$'
+    - '^generate_.*\.py$'
+    - '^problems\.txt$'
+    - '^mobile_app\.html$'
+
+forbidden_any:
+  backend:
+    - '/db/migrations/'
+    - '(^|/)employee_models\.py$'
+    - '/log/.*\.(log|txt)$'
+
+  backend/db:
+    - '/migrations/'
+    - '(^|/)employee_models\.py$'
+
+  backend/alembic:
+    - '/versions/.*stub.*\.py$'
+
+  frontend/mobile_app/scripts:
+    - '.*\.(log|err)$'
+
+allow_root_md:
+  - README.md
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - CHANGELOG.md
+  - SECURITY.md
+  - LICENSE.md
+  - LICENSE
+
+allow_docs_root:
+  - scope
+  - archive
+  - README.md
+  - DOCUMENTATION_INDEX.md
+  - INDEX.md
+
+scratch_phrases:
+  - countdivs
+  - stackdivs
+  - printlines
+  - linenums
+  - fixtailwind
+  - patch-vars
+  - patch_vars
+  - verify-tmp
+  - verify_tmp
+  - impmain
+  - client_tmp
+  - reset_tmp
+
+scratch_tokens:
+  - tmp
+  - temp
+  - scratch
+  - debug
+  - test
+  - check
+  - write
+  - list
+  - reset
+  - verify
+  - run
+  - script
+  - probe
+  - diag
+  - inspect

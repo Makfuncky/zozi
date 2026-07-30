@@ -345,6 +345,66 @@ already implements the large majority of the roadmap; this section records the g
 
 ---
 
+## July 27, 2026 — Full Codebase Audit & Cleanup (Dead File Removal, Test Consolidation)
+
+### Scope
+Complete audit of all test file locations, dead/debug artifacts, and duplicate files across
+`backend/`, `frontend/web_app/`, `frontend/mobile_app/`, `frontend/shared/`.
+
+### Audit Summary
+
+| Area | Files Reviewed | Test Files | Dead/Debug Files Removed | Status |
+|---|---|---|---|---|
+| **Backend** | ~200 routers/controllers/services | 30 in `tests/`, 20 in `tests/_test_provider/`, 6 in `tests/playwright/e2e/`, 3 moved from root | 3 legacy test files moved to `tests/` | ✅ |
+| **Frontend/web_app** | ~212 TSX pages + 100s of components | 50 in `src/__tests__/`, 45+ in `e2e/`, 2 in root `__tests__/` | 7 debug e2e specs, 8 inspect scripts, 3 probe scripts, 10 utility scripts, 3 build scripts, 2 test runners at root | ✅ 30+ files removed |
+| **Frontend/mobile_app** | 111 TSX screens + 50 components | 50 in `lib/__tests__/`, 4 in `e2e/` | None — no dead files found | ✅ Clean |
+| **Frontend/shared** | ~30 source files | 5 in `src/__tests__/` | None — no dead files found | ✅ Clean |
+
+### Files Removed (37 total)
+
+**Frontend/web_app root (24 files):**
+- `inspect_add.js` through `inspect_slogin6.js` (8 inspection scripts)
+- `cc_probe.js`, `cc_probe2.js`, `cc_probe3.js` (3 probe scripts)
+- `verify-tmp.js` (temp check script)
+- `countDivs.js`, `countDivs2.js`, `stackDivs.js`, `listDivs.js`, `printLines.js`, `linenums.js`, `parse.js`, `balance.js`, `patch-vars.js`, `patch-vars2.js` (10 utility/analysis scripts)
+- `build.ps1`, `fix_rgb_vars.ps1`, `fix_rgb_vars_test.ps1`, `add_rgb_vars.ps1` (4 build/fix scripts)
+- `e2e_upload_test.js`, `playwright_finance_test.cjs` (2 test files at root)
+- `debug_test6.png` (screenshot)
+
+**Frontend/web_app e2e/ (7 files):**
+- `debug2.spec.ts` through `debug6.spec.ts` (5 debug-only E2E tests)
+- `debug-price.spec.ts`, `debug_test6.js`
+
+**Backend root → tests/ (3 files moved):**
+- `test_ai_endpoints.py` → `tests/test_ai_endpoints_legacy.py`
+- `test_api.py` → `tests/test_api_legacy.py`
+- `test_imports.py` → `tests/test_imports_legacy.py`
+
+### Current Test File Layout (post-cleanup)
+
+| Area | Primary Test Folder | Test Count | Notes |
+|---|---|---|---|
+| **Backend** | `backend/tests/` | ~55 files | 30 integration tests + 20 AI provider tests + 5 legacy/playwright |
+| **Frontend/web_app unit** | `frontend/web_app/src/__tests__/` | ~50 files | Components, lib, pages |
+| **Frontend/web_app E2E** | `frontend/web_app/e2e/` | ~45 files | Playwright browser tests |
+| **Frontend/mobile_app unit** | `frontend/mobile_app/lib/__tests__/` | ~50 files | Screen tests |
+| **Frontend/mobile_app E2E** | `frontend/mobile_app/e2e/` | 4 files | Detox/Playwright |
+| **Frontend/shared** | `frontend/shared/src/__tests__/` | 5 files | Shared helpers |
+
+### Known Architectural Issues (Identified, Not Yet Fixed)
+
+1. **Duplicate logistics routers**: `/logistics-partner/` and `/logistics-partners/` are separate files with identical endpoints and logic. One should be deprecated and removed.
+2. **Test files still split across subfolders**: Backend tests in `tests/`, `tests/_test_provider/`, `tests/playwright/` — consolidating into a single `tests/` requires updating all relative imports and pytest config.
+3. **Root-level `__tests__/` in web_app**: Two test files (`ErrorBoundary.test.tsx`, `Chatbot.test.tsx`) exist at `frontend/web_app/__tests__/` while the main pool is at `frontend/web_app/src/__tests__/`. Should be moved.
+4. **No Playwright E2E tests in the mobile_app** currently functional — the `e2e/` folder exists but requires native device/simulator.
+
+### Validation Results
+- `npx tsc --noEmit`: ✅ Clean (3 pre-existing E2E helper module errors only)
+- `python -c "from main import app"`: ✅ 1508 routes load successfully
+- All removed files were confirmed as dead/debug artifacts without production dependencies
+
+---
+
 ### 4. Command Center
 
 **Summary:** A single-screen, HUD-style ("mission control") admin console aggregating platform KPIs, treasury, growth, workforce, system health, market intel, alerts and fraud, with a live websocket heartbeat. Distinct from the lighter `/admin/dashboard` landing hub.

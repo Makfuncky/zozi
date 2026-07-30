@@ -9,6 +9,7 @@
 // Uses the same proven login helper conventions as admin-country-enhanced.spec.ts.
 
 import { test, expect, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 const BASE = process.env.E2E_BASE_URL || "http://127.0.0.1:3000";
 
@@ -23,11 +24,7 @@ async function waitForAdminNavigation(page: Page, expectedUrl: RegExp, timeoutMs
 
 async function loginAsAdmin(page: Page, destination = "/admin/countries") {
   for (const candidate of ["admin@zozi.com", "admin"]) {
-    const loginResponse = await page.request.post("/api/auth/login", {
-      form: { username: candidate, password: "admin123" },
-      failOnStatusCode: false,
-    });
-    if (!loginResponse.ok()) continue;
+    await bootstrapAdminSessionViaApi(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page
       .evaluate(() => window.localStorage.setItem("zozi_has_session", "1"))
@@ -89,3 +86,4 @@ test.describe("Admin Countries — country search / auto-populate", () => {
     await expect(page.getByTestId("new-country-modal")).not.toBeVisible({ timeout: 5_000 });
   });
 });
+

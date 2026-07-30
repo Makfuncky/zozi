@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -44,11 +45,7 @@ async function openProtectedRoute(page: Page, path: string, expectedUrl: RegExp,
 
 async function loginAsAdmin(page: Page, destination = "/admin/countries") {
   for (const candidate of ["admin@zozi.com", "admin"]) {
-    const loginResponse = await page.request.post("/api/auth/login", {
-      form: { username: candidate, password: "admin123" },
-      failOnStatusCode: false,
-    });
-    if (!loginResponse.ok()) continue;
+    await bootstrapAdminSessionViaApi(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1")).catch(() => undefined);
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
@@ -89,10 +86,7 @@ async function loginAsAdmin(page: Page, destination = "/admin/countries") {
   await openProtectedRoute(page, destination, /\/admin\/(dashboard|countries)(?:\?|$)/, 120_000);
   if (await isAdminAccessGateVisible(page)) {
     for (const candidate of ["admin@zozi.com", "admin"]) {
-      const loginResponse = await page.request.post("/api/auth/login", {
-        form: { username: candidate, password: "admin123" }, failOnStatusCode: false,
-      });
-      if (!loginResponse.ok()) continue;
+      await bootstrapAdminSessionViaApi(page);
       await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1")).catch(() => undefined);
       await page.request.get("/api/auth/me", { failOnStatusCode: false });
       await openProtectedRoute(page, destination, /\/admin\/(dashboard|countries)(?:\?|$)/, 120_000);
@@ -333,3 +327,4 @@ test.describe("Enhanced Country Features", () => {
   });
 
 });
+

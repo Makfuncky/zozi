@@ -1,0 +1,107 @@
+# documents\scope\layer_rules.yaml
+# AUTHORITATIVE layer contract for ZOZI.
+# Read by backend/scripts/backend_layout_audit.py.
+
+forbidden_edges:
+  controllers:
+    - db.database
+    - db.create_tables
+    - db.init_db
+
+  services:
+    - routers
+    - controllers
+
+  models:
+    - routers
+    - controllers
+    - services
+
+  providers:
+    - routers
+    - controllers
+    - services
+
+mis_housed_controllers:
+  - audit_controller
+  - payments_controller
+  - cache_utils
+
+forbidden_controller_to_controller: true
+
+ownership_layers:
+  - services
+  - models
+
+domains:
+  core:
+    may_import: []
+
+  auth:
+    may_import:
+      - core
+
+  users:
+    may_import:
+      - core
+      - auth
+
+  catalog:
+    may_import:
+      - core
+
+  supplier:
+    may_import:
+      - core
+      - catalog
+
+  logistics:
+    may_import:
+      - core
+      - supplier
+
+  finance:
+    may_import:
+      - core
+
+  payments:
+    may_import:
+      - core
+      - finance
+
+  treasury:
+    may_import:
+      - core
+      - finance
+
+  orders:
+    may_import:
+      - core
+      - users
+      - catalog
+      - supplier
+      - logistics
+      - finance
+      - payments
+      - comms
+
+  comms:
+    may_import:
+      - core
+      - users
+
+  hr:
+    may_import:
+      - core
+      - users
+
+  ai:
+    may_import:
+      - core
+      - catalog
+      - comms
+
+  fraud:
+    may_import:
+      - core
+      - payments

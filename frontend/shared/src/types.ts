@@ -53,6 +53,7 @@ export interface Product {
   isFeatured?: boolean;
   reviews?: Review[];
   slug_hash?: string | null; // opaque short link for sharing/affiliate
+  primary?: string | null;    // primary badge text (e.g. "Best Seller", "Featured")
 }
 
 export interface OrderItem {

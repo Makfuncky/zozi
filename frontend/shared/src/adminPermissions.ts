@@ -1,3 +1,5 @@
+declare const window: Window & typeof globalThis;
+
 export type AdminStaffRole = "admin" | "sub_admin" | "moderator" | "support" | "country_head" | "country_manager";
 
 export interface StaffPermissionGroup {

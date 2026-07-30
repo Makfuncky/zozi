@@ -1,15 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe("Command Center", () => {
   test.beforeEach(async ({ page }) => {
     // Set the session flag BEFORE any navigation (page.evaluate on about:blank
     // throws a SecurityError, so use addInitScript which runs on every document).
     await page.addInitScript(() => window.localStorage.setItem("zozi_has_session", "1"));
-    const loginResponse = await page.request.post("/api/auth/login", {
-      form: { username: "admin@zozi.com", password: "admin123" },
-      failOnStatusCode: false,
-    });
-    expect(loginResponse.ok()).toBeTruthy();
+    await bootstrapAdminSessionViaApi(page);
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
   });
 
@@ -66,3 +63,4 @@ test.describe("Command Center", () => {
     await page.screenshot({ path: "command-center-legacy.png", fullPage: true });
   });
 });
+

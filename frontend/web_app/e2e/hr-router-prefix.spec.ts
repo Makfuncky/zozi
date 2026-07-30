@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 /**
  * Verifies the HR router-prefix fix: employee sub-tabs previously called
@@ -10,11 +11,7 @@ import { expect, test } from "@playwright/test";
 test.describe("HR router-prefix fix", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => window.localStorage.setItem("zozi_has_session", "1"));
-    const loginResponse = await page.request.post("/api/auth/login", {
-      form: { username: "admin@zozi.com", password: "admin123" },
-      failOnStatusCode: false,
-    });
-    expect(loginResponse.ok()).toBeTruthy();
+    await bootstrapAdminSessionViaApi(page);
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
   });
 
@@ -69,3 +66,4 @@ test.describe("HR router-prefix fix", () => {
     ).toBeVisible({ timeout: 60_000 });
   });
 });
+

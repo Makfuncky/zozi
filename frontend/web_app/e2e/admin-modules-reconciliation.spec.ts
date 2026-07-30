@@ -1,16 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 120_000 });
 
 async function bootstrapAdminSession(page: Page) {
   await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120_000 });
-  const res = await page.request.post("/api/auth/login", {
-    form: { username: "admin@zozi.com", password: "admin123" },
-    failOnStatusCode: false,
-  });
-  if (!res.ok()) {
-    throw new Error(`admin login failed: ${res.status()}`);
-  }
+  await bootstrapAdminSessionViaApi(page);
   await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1"));
   await page.request.get("/api/auth/me", { failOnStatusCode: false });
 }
@@ -91,3 +86,4 @@ test.describe("Admin - HR / Employees / Offices / Roles", () => {
     await expect(page.getByText(/office|role/i).first()).toBeVisible({ timeout: 30_000 });
   });
 });
+

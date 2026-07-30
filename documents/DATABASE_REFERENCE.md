@@ -10,13 +10,13 @@ Where the constitution defines target rules, this file records actuals.
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| ORM-declared tables | **313** | `Base.metadata.tables` |
+| ORM-declared tables | **282** | `Base.metadata.tables` (unified `models.Base` == `db.base.Base`) |
 | Live DB tables (SQLite dev) | **314** | `sqlite_master` |
-| Extra DB-only table | `alembic_version` | Alembic stamping |
+| Extra DB-only tables | **32** | Tables without ORM models |
 | Model files | **27** | `backend/models/*.py` |
-| Alembic migrations | **13** | `backend/alembic/versions/` |
-| Current head | `20260729_2030` | Linear chain |
-| Current stamp | `20260729_2030` | `alembic_version` |
+| Alembic migrations | **16** | `backend/alembic/versions/` |
+| Current head | `20260730_0003` | Linear chain |
+| Current stamp | `20260730_0003` | `alembic_version` |
 | RLS table registry | **~150** mappings | `utils/rls_interceptor.py` |
 
 ---
@@ -78,13 +78,16 @@ b81bfc888610 (baseline)
        └─ 20260727_00_32 → 20260727_09_08
             └─ 20260728_0000 → 20260728_19_30 → 20260728_21_14
                  └─ 20260729_10_17 → 20260729_10_28
-                      └─ 20260729_19_14 → 20260729_2030 (head)
+                      └─ 20260729_19_14 → 20260729_2030 → 20260730_0001 → 20260730_0002 → 20260730_0003 (head)
 ```
 
 ### 4.2 Recent migrations
 
 | Revision | Purpose |
 |----------|---------|
+| `20260730_0003` | `upload_jobs` table migration |
+| `20260730_0002` | `points_transactions` table migration |
+| `20260730_0001` | `user_points` table migration |
 | `20260729_2030` | Range-partition `audit_logs`, `notifications`, `shipment_events` |
 | `20260729_1914` | `products.search_vector` tsvector + trigger + GIN |
 | `9ff24a0683dd` | Schema drift check (unique constraints, missing indexes) |
@@ -102,10 +105,10 @@ b81bfc888610 (baseline)
 
 | Issue | Status |
 |-------|--------|
-| `validate_migrations.py` regex broken on typed annotations | 🔴 Must fix |
-| 3 ORM-only tables missing migrations (`points_transactions`, `upload_jobs`, `user_points`) | 🟡 Verify |
+| `validate_migrations.py` regex broken on typed annotations | ✅ Fixed |
+| 3 ORM-only tables missing migrations (`points_transactions`, `upload_jobs`, `user_points`) | ✅ Created `20260730_0001`–`20260730_0003` |
 | Downgrade incomplete on `9ff24a0683dd` (SQLite batch alter table limitation) | 🟡 Acceptable for SQLite dev |
-| `20260729_1914` Revises `9ff24a0683dd`; `20260729_2030` Revises `20260729_1914` — chain is linear | ✅ |
+| `20260729_1914` Revises `9ff24a0683dd`; `20260729_2030` Revises `20260729_1914`; `20260730_0001`–`0003` Revises `20260729_2030` — chain is linear | ✅ |
 
 ---
 
@@ -215,23 +218,117 @@ Target: Phase 4/6.
 ## 12. Schema Audit Summary (Latest Run)
 
 ```
-Tables: DB=314  ORM=313
-Issues: 934 total
-  alembic_multiple_heads: 1
-  alembic_tree_not_linear: 1
-  table_extra_in_db: 1 (alembic_version — expected)
-  column_nullable_mismatch: 2
-  column_type_mismatch: 5
-  index_missing_in_db: 1
-  index_extra_in_db: 1
-  fk_missing_in_db: 3
-  index_columns_mismatch: 909
-  column_default_mismatch: 10
+Tables: DB=314  ORM=282
+Issues: 853 total
+  table_extra_in_db: 32 (DB tables without ORM models)
+  column_extra_in_db: 20
+  column_default_mismatch: 9
+  column_type_mismatch: 3
+  fk_extra_in_db: 2
+  index_columns_mismatch: 694
+  index_extra_in_db: 93
 ```
 
-**Note:** 909 of 934 issues are `index_columns_mismatch`. This reflects that
+**Note:** 694 of 853 issues are `index_columns_mismatch`. This reflects that
 the live DB was largely created via `create_all` and incremental migrations,
 while the ORM now declares many more indexes than have been migrated.
+
+### 12.1 Extra DB Tables (no ORM model)
+
+32 tables exist in the database but have no corresponding ORM model class:
+
+| Table | Notes |
+|-------|-------|
+| `alembic_version` | Alembic stamping (expected) |
+| `chat_attachments` | Chat feature |
+| `chat_legal_holds` | Chat feature |
+| `chat_reactions` | Chat feature |
+| `chat_read_receipts` | Chat feature |
+| `country_communication_templates` | Country config |
+| `customs_entries` | Imports/trading |
+| `email_folders` | Communication |
+| `employee_active_tasks` | Orphaned table (has model in `db/employee_models.py`, registered under old `db.base.Base`) |
+| `employee_activity_logs` | HR/employees |
+| `employee_audit_timeline` | HR/employees |
+| `employee_bank_accounts` | HR/employees |
+| `employee_risk_scores` | HR/employees |
+| `goods_receipt_lines` | Logistics/suppliers |
+| `goods_receipt_notes` | Logistics/suppliers |
+| `import_cost_templates` | Imports/trading |
+| `import_shipment_lines` | Imports/trading |
+| `import_shipments` | Imports/trading |
+| `internal_emails` | Communication |
+| `kpi_metrics` | Analytics |
+| `landed_cost_allocations` | Finance/logistics |
+| `okr_objectives` | HR/employees |
+| `performance_reviews` | HR/employees |
+| `points_transactions` | Loyalty (now has migration `20260730_0002`) |
+| `purchase_order_lines` | Suppliers/procurement |
+| `purchase_orders` | Suppliers/procurement |
+| `sales_order_lines` | Orders/sales |
+| `sales_orders` | Orders/sales |
+| `stock_movements` | Logistics/inventory |
+| `upload_jobs` | AI/media pipeline (now has migration `20260730_0003`) |
+| `user_points` | Loyalty (now has migration `20260730_0001`) |
+| `warehouses` | Logistics/inventory |
+
+---
+
+## 14. Phase 2 — Bounded-Context Schema Mapping
+
+Per constitution §2.2, all 282 ORM tables are mapped to 16 PostgreSQL schemas.
+Migration is metadata-only: `ALTER TABLE ... SET SCHEMA ...` does not rewrite data.
+
+### 14.1 Schema inventory
+
+| Schema | Tables | Owner | Examples |
+|--------|--------|-------|---------|
+| `core` | 16 | Identity | users, roles, sessions, devices, api_keys |
+| `commerce` | 31 | Commerce | products, variants, categories, carts, orders, banners |
+| `supplier` | 13 | Supplier Ops | supplier_profiles, supplier_documents, purchase_orders |
+| `customer` | 9 | Customer | customers, addresses, wishlists, points, referrals |
+| `logistics` | 28 | Logistics | partners, shipments, shipping, warehouses, stock_movements |
+| `finance` | 28 | Finance (strictest) | accounts, journal, ledger, AR/AP, invoices, payments |
+| `treasury` | 18 | Treasury | cash, payouts, bank_accounts, reconciliation |
+| `hr` | 35 | People | employees, attendance, shifts, leave, performance, onboarding |
+| `country` | 21 | Country Ops | country_configs, cities, tax_rates, commission_rates |
+| `media` | 8 | Media/AI | media_assets, videos, video_rooms, ocr_results |
+| `ai` | 6 | Media/AI | ai_upload_jobs, staging, generation_logs, chatbot |
+| `communication` | 53 | Comms | chat, email, notifications, tickets, proxies, meetings |
+| `audit` | 10 | Governance | audit_logs, admin_logs, system_events, retention |
+| `security` | 16 | Risk | fraud, blacklist, risk_scores, ip_reputation, kyc |
+| `analytics` | 5 | Data | kpi_metrics, financial_reports, webhook_events |
+| `configuration` | 6 | Platform | system_settings, feature_flags, email_configs, legal_templates |
+
+**Total: 282 tables across 16 schemas**
+
+### 14.2 Full table-to-schema mapping
+
+Stored in `backend/docs/schema_mapping.json` (generated from live ORM metadata).
+Use this file to drive:
+1. Model `__table_args__={"schema": "<context>"}` updates
+2. Alembic migration `ALTER TABLE ... SET SCHEMA ...` statements
+3. `search_path` configuration per ecosystem
+
+### 14.3 Migration approach
+
+- **Step 1:** Add `schema="<context>"` to each model's `__table_args__` (or class-level `__table_args__`).
+- **Step 2:** Create a single Alembic migration that issues `ALTER TABLE <table> SET SCHEMA <schema>` for all 282 tables.
+  - On PostgreSQL: native `ALTER TABLE ... SET SCHEMA` (metadata-only, instant).
+  - On SQLite: no-op (SQLite doesn't support schemas); the `schema` kwarg is ignored by SQLAlchemy's SQLite dialect.
+- **Step 3:** Update `db/database.py` to set `search_path = '<context>, public'` per request or per session.
+- **Step 4:** Verify ` alembic upgrade head` works on both SQLite (dev) and PostgreSQL (staging/prod).
+- **Done when:** every model resolves under its schema; app behavior unchanged; tests green.
+
+### 14.4 SQLite compatibility
+
+SQLite does not support PostgreSQL schemas. The migration must be conditional:
+```python
+if context.get_xbind().dialect.name == 'postgresql':
+    # ALTER TABLE ... SET SCHEMA ...
+else:
+    # no-op on SQLite
+```
 
 ---
 
@@ -239,11 +336,12 @@ while the ORM now declares many more indexes than have been migrated.
 
 | ID | Finding | Target Phase |
 |----|---------|--------------|
-| (a) | Table count discrepancy (262 / 263 / ~270 / ~310) | Phase 0 |
+| (a) | Table count discrepancy (262 / 263 / ~270 / ~310) | ✅ Resolved — 282 ORM / 314 DB tables reconciled |
 | (b) | Confirm prod has no seeded credentials | Phase 0 |
 | (c) | `country_code` width mismatch `VARCHAR(3)` vs `(10)` | Phase 5 |
 | (d) | Stale "0 migration files" audit claim | ✅ Resolved (ADR-018) |
 | (e) | 62 single-index tables, 44 missing FKs | Phase 5 |
+| (f) | **Dual `Base` classes** (`db.base.Base` vs `models.Base`) caused schema audit to report 0 ORM tables | ✅ Resolved — `models/__init__.py` now imports `Base` from `db.base`, unifying metadata |
 
 ---
 
@@ -272,8 +370,9 @@ while the ORM now declares many more indexes than have been migrated.
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| Phase 0 — Freeze & inventory | 🟡 In progress | This file is Phase 0 output |
-| Phase 1 — Migration hardening | 🟡 In progress | Fix validator, add missing migrations, contract tests |
+| Phase 0 — Freeze & inventory | ✅ Complete | 282 ORM / 314 DB tables reconciled |
+| Phase 1 — Migration hardening | ✅ Complete | Validator fixed, 3 missing migrations added, linear chain to `20260730_0003` |
+| Phase 1.5 — Schema audit fix | ✅ Complete | Unified `models.Base` with `db.base.Base` by changing `models/__init__.py` to import `Base` from `db.base`; schema audit now correctly reports 282 ORM tables |
 | Phase 2 — Bounded-context schemas | ⏳ Pending | Metadata-only `ALTER TABLE SET SCHEMA` |
 | Phase 3 — Country isolation | ⏳ Pending | Native RLS policies + partitioning |
 | Phase 4 — Canonical patterns | ⏳ Pending | FTS, AI staging, events, analytics |

@@ -9,9 +9,35 @@ export interface FrontendErrorLogEntry {
 
 type ErrorListener = (entries: FrontendErrorLogEntry[]) => void;
 
-const MAX_ERROR_LOGS = 20;
+const MAX_ERROR_LOGS = 50;
+const STORAGE_KEY = "zozi_error_logs";
+
 const entries: FrontendErrorLogEntry[] = [];
 const listeners = new Set<ErrorListener>();
+
+function loadPersisted(): FrontendErrorLogEntry[] {
+  if (typeof sessionStorage === "undefined") return [];
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as FrontendErrorLogEntry[];
+    return Array.isArray(parsed) ? parsed.slice(0, MAX_ERROR_LOGS) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persist(entries: FrontendErrorLogEntry[]) {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ERROR_LOGS)));
+  } catch {
+    // storage full — silently ignore
+  }
+}
+
+const persisted = loadPersisted();
+entries.push(...persisted);
 
 function notifyListeners() {
   const snapshot = [...entries];
@@ -43,8 +69,11 @@ export function logFrontendError(
   context?: Record<string, unknown>
 ): FrontendErrorLogEntry {
   const normalized = normalizeErrorMessage(error);
+  const id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const entry: FrontendErrorLogEntry = {
-    id: `${Date.now()}-${entries.length + 1}`,
+    id,
     source,
     message: normalized.message,
     stack: normalized.stack,
@@ -57,6 +86,7 @@ export function logFrontendError(
     entries.length = MAX_ERROR_LOGS;
   }
 
+  persist(entries);
   notifyListeners();
   return entry;
 }
@@ -75,5 +105,6 @@ export function subscribeFrontendErrorLogs(listener: ErrorListener): () => void 
 
 export function clearFrontendErrorLogs(): void {
   entries.length = 0;
+  persist(entries);
   notifyListeners();
 }

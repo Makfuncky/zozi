@@ -1,0 +1,101 @@
+# documents\scope\governance.yaml
+# Global governance policy for ZOZI auditor v3.1.
+
+policy:
+  # backend scaling
+  flat_threshold: 30
+  large_subpackage_threshold: 80
+  god_fan_out: 20
+  god_fan_in: 30
+
+  # cycles
+  max_cycles: 80
+  max_cycle_length: 10
+
+  # frontend scaling
+  frontend_flat_threshold: 40
+  frontend_large_folder_threshold: 120
+
+  frontend_workspaces:
+    - web_app
+    - mobile_app
+    - shared
+
+  frontend_source_ext:
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .cjs
+    - .mjs
+
+  frontend_root_allow:
+    - package.json
+    - package-lock.json
+    - pnpm-lock.yaml
+    - yarn.lock
+    - pnpm-workspace.yaml
+    - tsconfig.json
+    - tsconfig.build.json
+    - next.config.ts
+    - next-env.d.ts
+    - middleware.ts
+    - eslint.config.js
+    - jest.config.js
+    - jest.setup.ts
+    - playwright.config.ts
+    - postcss.config.js
+    - tailwind.config.js
+    - babel.config.js
+    - metro.config.js
+    - app.config.js
+    - app.json
+    - expo-env.d.ts
+    - README.md
+    - ERROR_HANDLING.md
+    - Dockerfile
+    - sentry.config.ts
+    - patch-logbox.js
+
+  expected_backend_packages:
+    - routers
+    - controllers
+    - services
+    - models
+    - middleware
+    - dependencies
+    - providers
+    - utils
+    - db
+    - alembic
+    - tests
+    - scripts
+
+  no_init_dirs:
+    - scripts
+    - tests
+    - alembic
+    - data
+    - monitoring
+    - docs
+
+  surface_names:
+    - admin
+    - supplier
+    - customer
+    - public
+    - webhooks
+    - webhook
+    - api
+    - internal
+    - external
+
+  # audit feature toggles
+  detect_module_cycles: true
+  detect_domain_cycles: true
+  detect_dead_modules: true
+  detect_metrics: true
+  detect_duplicate_classes: true
+  detect_dynamic_imports: true
+  detect_policy_config: true
+  detect_frontend: true

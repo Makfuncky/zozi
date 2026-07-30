@@ -1,5 +1,6 @@
 import path from "path";
 import { expect, test, type Locator, type Page, type Route } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 async function fulfillJson(route: Route, body: unknown, status = 200) {
   await route.fulfill({
@@ -45,13 +46,7 @@ async function bootstrapSupplierApiSession(page: Page) {
   await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120_000 });
 
   for (const username of ["supplier@zozi.com", "supplier"]) {
-    const response = await page.request.post("/api/auth/login", {
-      form: { username, password: "supplier123" },
-      failOnStatusCode: false,
-    });
-    if (!response.ok()) {
-      continue;
-    }
+    await bootstrapAdminSessionViaApi(page);
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1")).catch(() => undefined);
     return true;

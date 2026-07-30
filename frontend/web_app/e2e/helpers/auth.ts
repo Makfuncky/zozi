@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-async function expectNavigation(page: Page, expectedUrl: RegExp, timeoutMs = 60_000) {
+export async function expectNavigation(page: Page, expectedUrl: RegExp, timeoutMs = 60_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (expectedUrl.test(page.url())) return;
@@ -9,7 +9,7 @@ async function expectNavigation(page: Page, expectedUrl: RegExp, timeoutMs = 60_
   throw new Error(`Timed out waiting for ${expectedUrl}, current URL: ${page.url()}`);
 }
 
-async function waitForSessionFlag(page: Page, timeoutMs = 30_000) {
+export async function waitForSessionFlag(page: Page, timeoutMs = 30_000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const hasLocalSession = await page
@@ -28,7 +28,7 @@ async function waitForSessionFlag(page: Page, timeoutMs = 30_000) {
   throw new Error(`Timed out waiting for session state after ${timeoutMs}ms`);
 }
 
-async function openProtectedRoute(page: Page, path: string, expectedUrl: RegExp, timeoutMs = 120_000) {
+export async function openProtectedRoute(page: Page, path: string, expectedUrl: RegExp, timeoutMs = 120_000) {
   await page.goto(path, { waitUntil: "domcontentloaded", timeout: timeoutMs });
   await expectNavigation(page, expectedUrl, timeoutMs);
 }
@@ -60,52 +60,64 @@ export async function submitCredentialForm(page: Page, username: string, passwor
   await submitButton.click();
 }
 
-async function bootstrapSessionViaApi(page: Page, candidates: string[], password: string) {
+async function apiLogin(page: Page, username: string, password: string): Promise<boolean> {
+  const result = await page.evaluate(
+    async (creds) => {
+      try {
+        const resp = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(creds),
+          credentials: "include",
+        });
+        return { ok: resp.ok, status: resp.status, headers: [...resp.headers.entries()], body: await resp.text() };
+      } catch (e) {
+        return { ok: false, status: 0, error: String(e) };
+      }
+    },
+    { username, password },
+  );
+  if (!result.ok) return false;
+  const setCookie = (result.headers ?? []).find(([k]) => k.toLowerCase() === "set-cookie");
+  if (setCookie) {
+    const cookieValue = setCookie[1];
+    const cookies = cookieValue.split(/,(?=[^ ]+?=)/).map((part) => {
+      const [pair, ...attrs] = part.split(";");
+      const [name, ...rest] = pair.split("=");
+      return {
+        name: name.trim(),
+        value: rest.join("=").trim(),
+        url: page.url(),
+        path: attrs.find((a) => a.trim().toLowerCase().startsWith("path="))?.split("=")[1]?.trim() || "/",
+        httpOnly: attrs.some((a) => a.trim().toLowerCase() === "httponly"),
+        secure: attrs.some((a) => a.trim().toLowerCase() === "secure"),
+      } as const;
+    });
+    try {
+      await page.context().addCookies(cookies as any);
+    } catch {
+      /* best-effort */
+    }
+  }
+  return true;
+}
+
+export async function bootstrapSessionViaApi(page: Page, candidates: string[], password: string) {
   await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120_000 });
   for (const candidate of candidates) {
-    const response = await page.request.post("/api/auth/login", {
-      form: { username: candidate, password },
-      failOnStatusCode: false,
-    });
-    if (!response.ok()) continue;
+    const success = await apiLogin(page, candidate, password);
+    if (!success) continue;
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1"));
-    // Persist the auth cookies from the login response into the browser
-    // context explicitly. page.request shares the context, but some setups
-    // only set the cookie on the request scope; re-adding guarantees the
-    // page navigation and subsequent XHRs are authenticated (prevents the
-    // mid-test 401 → redirect-to-login that made admin/supplier collapse
-    // checks flaky).
-    const setCookie = response.headers()["set-cookie"];
-    if (setCookie) {
-      const cookies = setCookie.split(/,(?=[^ ]+?=)/).map((part) => {
-        const [pair, ...attrs] = part.split(";");
-        const [name, ...rest] = pair.split("=");
-        return {
-          name: name.trim(),
-          value: rest.join("=").trim(),
-          url: page.url(),
-          path: attrs.find((a) => a.trim().toLowerCase().startsWith("path="))?.split("=")[1]?.trim() || "/",
-          httpOnly: attrs.some((a) => a.trim().toLowerCase() === "httponly"),
-          secure: attrs.some((a) => a.trim().toLowerCase() === "secure"),
-        } as const;
-      });
-      try {
-        await page.context().addCookies(cookies as any);
-      } catch {
-        /* best-effort */
-      }
-    }
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
     return true;
   }
   return false;
 }
 
-/**
- * Establish an authenticated session robustly: try the API login (fast path),
- * and fall back to submitting the real login form (which reliably sets the
- * session cookie) if the API call is unavailable. Mirrors auth-role-login.spec.ts.
- */
+export async function bootstrapAdminSessionViaApi(page: Page) {
+  return bootstrapSessionViaApi(page, ["admin@zozi.com", "admin"], "admin123");
+}
+
 export async function ensurePanelSession(
   page: Page,
   opts: { user: string; pass: string; loginPath: string; landing: string; landingRegex: RegExp },

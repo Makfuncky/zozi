@@ -5,6 +5,7 @@
  * (permission categories, roles, user overrides).
  */
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 async function fulfillJson(route: Route, body: unknown, status = 200) {
   await route.fulfill({
@@ -20,11 +21,7 @@ async function mockAdminSession(page: Page) {
   await page.evaluate(() => window.localStorage.removeItem("zozi_has_session")).catch(() => undefined);
 
   for (const candidate of ["admin@zozi.com", "admin"]) {
-    const resp = await page.request.post("/api/auth/login", {
-      form: { username: candidate, password: "admin123" },
-      failOnStatusCode: false,
-    });
-    if (!resp.ok()) continue;
+    await bootstrapAdminSessionViaApi(page);
 
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1")).catch(() => undefined);
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
@@ -185,3 +182,4 @@ test.describe("Admin HR & Permissions", () => {
     await expect(page.getByRole("button", { name: /^admin$/i })).toBeVisible({ timeout: 5000 });
   });
 });
+

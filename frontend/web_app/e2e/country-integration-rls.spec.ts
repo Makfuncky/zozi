@@ -1,14 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
 async function loginAsAdmin(page: Page, destination = "/admin/countries") {
-  const loginResponse = await page.request.post("/api/auth/login", {
-    form: { username: "admin@zozi.com", password: "admin123" },
-    failOnStatusCode: false,
-  });
+  const hasSession = await bootstrapAdminSessionViaApi(page);
 
-  if (!loginResponse.ok()) {
+  if (!hasSession) {
     throw new Error("Failed to login as admin");
   }
 

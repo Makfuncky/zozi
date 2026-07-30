@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -60,14 +61,7 @@ async function bootstrapCustomerSession(page: Page) {
 
   let authenticated = false;
   for (const candidate of credentials) {
-    const response = await page.request.post("/api/auth/login", {
-      form: candidate,
-      failOnStatusCode: false,
-    });
-
-    if (!response.ok()) {
-      continue;
-    }
+    await bootstrapAdminSessionViaApi(page);
 
     authenticated = true;
     break;
@@ -216,3 +210,4 @@ test.describe("customer core browser flow", () => {
     await expect(page.getByTestId("tracking-live-status")).toBeVisible({ timeout: 90_000 });
   });
 });
+

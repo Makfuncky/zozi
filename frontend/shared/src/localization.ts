@@ -154,3 +154,41 @@ export function getDefaultCurrencyForCountry(countryCode: string): string | null
   if (!normalized) return null;
   return COUNTRY_OPTIONS.find((country) => country.code === normalized)?.currency ?? null;
 }
+
+export const COUNTRY_ALIASES: Record<string, string> = {
+  AE: "AE",
+  UAE: "AE",
+  UNITEDARABEMIRATES: "AE",
+  EMIRATES: "AE",
+  PK: "PK",
+  PAKISTAN: "PK",
+  OM: "OM",
+  OMAN: "OM",
+  SA: "SA",
+  KSA: "SA",
+  SAUDIARABIA: "SA",
+  IN: "IN",
+  INDIA: "IN",
+  US: "US",
+  USA: "US",
+  UNITEDSTATES: "US",
+  UNITEDSTATESOFAMERICA: "US",
+  GB: "GB",
+  UK: "GB",
+  UNITEDKINGDOM: "GB",
+  QA: "QA",
+  QATAR: "QA",
+  KW: "KW",
+  KUWAIT: "KW",
+  BH: "BH",
+  BAHRAIN: "BH",
+};
+
+export function normalizeCountryCode(raw: string | null | undefined): string {
+  const lettersOnly = String(raw || "").toUpperCase().replace(/[^A-Z]/g, "");
+  if (!lettersOnly) return "";
+  const aliased = COUNTRY_ALIASES[lettersOnly];
+  if (aliased) return aliased;
+  if (lettersOnly.length === 2) return lettersOnly;
+  return "";
+}

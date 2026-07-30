@@ -109,11 +109,9 @@ export const translations = {
 
     // Checkout
     checkout: "Checkout",
-    orderSummary: "Order Summary",
     subtotal: "Subtotal",
     shipping: "Shipping",
     vat: "VAT",
-    total: "Total",
     couponCode: "Coupon Code",
     applyCoupon: "Apply",
     placeOrder: "Place Order",
@@ -511,11 +509,9 @@ export const translations = {
 
     // Checkout
     checkout: "الدفع",
-    orderSummary: "ملخص الطلب",
     subtotal: "المجموع الفرعي",
     shipping: "الشحن",
     vat: "ضريبة القيمة المضافة",
-    total: "الإجمالي",
     couponCode: "رمز القسيمة",
     applyCoupon: "تطبيق",
     placeOrder: "تأكيد الطلب",

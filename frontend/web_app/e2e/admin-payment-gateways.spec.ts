@@ -6,6 +6,7 @@
  * so the tests run without a live backend.
  */
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -104,13 +105,7 @@ async function mockAdminSession(page: Page) {
   await page.evaluate(() => window.localStorage.removeItem("zozi_has_session")).catch(() => undefined);
 
   for (const candidate of ["admin@zozi.com", "admin"]) {
-    const loginResponse = await page.request.post("/api/auth/login", {
-      form: { username: candidate, password: "admin123" },
-      failOnStatusCode: false,
-    });
-    if (!loginResponse.ok()) {
-      continue;
-    }
+    await bootstrapAdminSessionViaApi(page);
 
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1")).catch(() => undefined);
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
@@ -439,3 +434,4 @@ test.describe("admin payment gateway management", () => {
     }
   });
 });
+

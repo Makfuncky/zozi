@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -96,13 +97,7 @@ async function submitCredentialForm(page: Page, username: string, password: stri
 
 async function loginAsAdmin(page: Page, destination = "/admin/dashboard") {
   for (const candidate of ["admin@zozi.com", "admin"]) {
-    const loginResponse = await page.request.post("/api/auth/login", {
-      form: { username: candidate, password: "admin123" },
-      failOnStatusCode: false,
-    });
-    if (!loginResponse.ok()) {
-      continue;
-    }
+    await bootstrapAdminSessionViaApi(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1"));
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
@@ -137,13 +132,7 @@ async function loginAsAdmin(page: Page, destination = "/admin/dashboard") {
 
   if (await isAdminAccessGateVisible(page)) {
     for (const candidate of ["admin@zozi.com", "admin"]) {
-      const loginResponse = await page.request.post("/api/auth/login", {
-        form: { username: candidate, password: "admin123" },
-        failOnStatusCode: false,
-      });
-      if (!loginResponse.ok()) {
-        continue;
-      }
+      await bootstrapAdminSessionViaApi(page);
       await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1"));
       await page.request.get("/api/auth/me", { failOnStatusCode: false });
       await openProtectedRoute(page, destination, /\/admin\/(dashboard|finance)(?:\?|$)/, 120_000);

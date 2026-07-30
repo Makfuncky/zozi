@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -7,12 +8,9 @@ async function loginAsAdmin(page: Page, destination = "/admin/countries") {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1")).catch(() => undefined);
   
-  const loginResponse = await page.request.post("/api/auth/login", {
-    form: { username: "admin@zozi.com", password: "admin123" },
-    failOnStatusCode: false,
-  });
+  const hasSession = await bootstrapAdminSessionViaApi(page);
 
-  if (loginResponse.ok()) {
+  if (hasSession) {
     await page.request.get("/api/auth/me", { failOnStatusCode: false });
     return;
   }

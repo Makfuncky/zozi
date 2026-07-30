@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
 import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
+import { bootstrapSessionViaApi, openProtectedRoute } from "./helpers/auth";
 
 test.describe.configure({ timeout: 240_000 });
 
@@ -161,24 +162,14 @@ async function submitCredentialForm(page: Page, username: string, password: stri
 
 async function loginAs(page: Page, loginPath: string, username: string, password: string, expectedUrl: RegExp) {
   if (loginPath === "/logistics-partner/login") {
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await waitForFrontendReady(page, 120_000);
-        let loginResponse = await page.request.post("/api/auth/login", {
-      form: { username, password },
-      failOnStatusCode: false,
-    });
-    if (!loginResponse.ok() && username.includes("@")) {
-      loginResponse = await page.request.post("/api/auth/login", {
-        form: { username: username.split("@")[0], password },
-        failOnStatusCode: false,
-      });
-    }
-    if (!loginResponse.ok()) {
-      throw new Error(`Logistics proxy login failed with ${loginResponse.status()}`);
+    const hasApiSession = await bootstrapSessionViaApi(page, ["logistics@zozi.com", "logistics"], "logistics123");
+    if (!hasApiSession) {
+      await page.goto("/logistics-partner/login");
+      await submitCredentialForm(page, "logistics@zozi.com", "logistics123");
+      await waitForSessionFlag(page);
     }
     await page.evaluate(() => window.localStorage.setItem("zozi_has_session", "1"));
-    await waitForSessionFlag(page, 60_000);
-    await page.goto("/logistics-partner/payouts", { waitUntil: "domcontentloaded" });
+    await openProtectedRoute(page, "/logistics-partner/payouts", /\/logistics-partner\/payouts(?:\?|$)/, 120_000);
     await waitForFrontendReady(page, 120_000);
     if (await isSignInGateVisible(page)) {
       throw new Error("Logistics login did not unlock protected payouts route");

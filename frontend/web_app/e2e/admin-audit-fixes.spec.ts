@@ -1,22 +1,9 @@
 import { expect, test } from "@playwright/test";
-
-const ADMIN_USER = { username: "admin@zozi.com", password: "admin123" };
-
-async function loginAsAdmin(page: import("@playwright/test").Page) {
-  // Set the session flag BEFORE navigation (page.evaluate on about:blank throws
-  // a SecurityError and would be swallowed, leaving the flag unset).
-  await page.addInitScript(() => window.localStorage.setItem("zozi_has_session", "1"));
-  const loginResponse = await page.request.post("/api/auth/login", {
-    form: ADMIN_USER,
-    failOnStatusCode: false,
-  });
-  expect(loginResponse.ok()).toBeTruthy();
-  await page.request.get("/api/auth/me", { failOnStatusCode: false });
-}
+import { bootstrapAdminSessionViaApi } from "./helpers/auth";
 
 test.describe("Admin audit fixes", () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsAdmin(page);
+    await bootstrapAdminSessionViaApi(page);
   });
 
   test("audit-logs page is wrapped in AdminLayout chrome", async ({ page }) => {
@@ -50,7 +37,7 @@ test.describe("Admin audit fixes", () => {
   });
 
   test("promotions API uses the correct /admin/promotions prefix", async ({ page }) => {
-    await loginAsAdmin(page);
+    await bootstrapAdminSessionViaApi(page);
 
     // The promotions page must load its flash-sales panel without routing errors.
     // Authenticate the page FIRST (it performs its own silent refresh) so the

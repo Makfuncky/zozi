@@ -244,3 +244,439 @@ Backend stores the selection as a comma-joined `countries` string → `visibilit
 - Country restriction check: `_persist_supplier_product` blocks restricted categories per
   supplier country (422).
 - Variant combos capped at `MAX_VARIANT_COMBOS = 100` in the UI.
+
+
+
+# __________________________________________________________________________________________
+# __________________________________________________________________________________________
+
+
+There is just 5 steps actually. 
+Process 1:
+1. upload or capture image.
+2. image process by bg removal.
+3. image detection and filling details and variant selection and popup generation
+4. variant wise quantity filling.
+5. User will complete the popups of variant and finish everything and publish the product.
+
+---
+Process 2:
+1. upload or capture image.
+2. image process by bg removal.
+3. voice note and voice recognition. 🎤 Voice Note: Record a natural sentence (e.g., "A cotton T-shirt, 4 colors: blue, yellow, black, white, with 'I love Oman' print, price 5 Rials").
+4. filling all details and popup of variant wise for quantity filling.
+5. User will complete the popups of variant and finish everything and publish the product.
+
+
+
+Make a better Automation step wise plan which will successfully complete all the variant and category of product upload but make it faster to execute and max complete upload system must be complete in 30 sec.
+
+---
+
+```
+
+## Supplier/ upload product 
+	```
+		1. Add Product by Upload, Take Photo.
+		2. Process of cleaning photo 	
+			"D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_image_service\br_05.py"
+			"D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_image_service\br_06.py"
+			"D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_image_service\br_08.py"
+			"D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_image_service\br_11.py"
+			"D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_image_service\br_12.py"
+			"D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_image_service\br_13.py"
+		3. Category + Sub-Category + Variant Check 	
+			"zozi\Working_API\zozi_ai_upload_session\upload_auto_05.py"
+			"zozi\Working_API\zozi_ai_upload_session\zozi_variant_config.json"
+	```
+
+	http://localhost:3000/supplier/products/add
+	Supplier-Panel/ Upload Product Page:
+
+	Automation should take place more rather then typing.
+
+	Supplier/ click button `ADD PRODUCT`
+		1. Popup of image file upload or capture, [ Once Supplier will upload the image one by one and video or capture ] then
+		2. Popup will have icon of [ Mic ~ for voice Detail, 
+	    							Magic Photo Editing Icon ~ for Photo Editing ]
+			2a. if Supplier will press on `Mic` then 
+				Voice recognition and distribution of data according to the voice note will be handle. 
+				Suppose, Supplier said : "A T-shirt - 4 color = blue, yellow, black, white, having print [I love Oman] "
+					Then system will handle everything from here by automation 
+						Description: automatic detected
+						Tag: automatic detected
+						Name of product: automatic
+						Cloth Fabric : ask by supplier by popup - [giving all kind of cloths which can be able for ticking anyone]
+						Quantity: ask by supplier by popup 
+							1st popup : 
+											Blue S = [ ? ], 
+											Blue M = [ ? ],
+											Blue L = [ ? ],
+											Blue XL = [ ? ],
+							2nd popup : 
+											Yellow S = [ ? ], 
+											Yellow M = [ ? ],
+											Yellow L = [ ? ],
+											Yellow XL = [ ? ],
+							
+						Total Quantity: System will detect by itself
+						Price: Popup will come and Supplier will enter.	
+			
+					Popup: for verification of all details then at bottom there is 3 button [ Edit Details, Upload, Edit Images]
+						if Supplier selects `Edit Detail` 
+							then he can edit by himself
+						if Supplier selects `Upload` 
+							then upload product and give finish message `Thank You to using ZOZI`
+						if Supplier selects `Edit Images` then Popup appear of canvas of Image Editing.
+							all the option will be appear on it of the Canvas 
+								When the supplier will satisfy then he will press 'Done' button
+									Popup: for verification of all details then at bottom there is 3 button [ Edit Details, Upload, Edit Images]
+										Supplier will press `Upload` and Finish everything and upload will process.
+
+			2b. if Supplier will press on `Magic Photo Editing` then 
+				all the option will be appear on it of the Canvas 
+					when supplier will done `Edit Photo` then 
+						automatically detected and there is also option of voice details.
+							Description: 	automatic detected
+							Tag: 		automatic detected
+							Name of product: automatic detected
+							Color: 		automatic-detected 
+								Popup appeared for more color to select, and type also
+
+							Cloth Fabric : ask by supplier by popup - [giving all kind of cloths which can be able for ticking anyone]
+							Quantity: ask by supplier by popup 
+							1st popup : 
+											Blue S = [ ? ], 
+											Blue M = [ ? ],
+											Blue L = [ ? ],
+											Blue XL = [ ? ],
+							2nd popup : 
+											Yellow S = [ ? ], 
+											Yellow M = [ ? ],
+											Yellow L = [ ? ],
+											Yellow XL = [ ? ],
+							
+						Total Quantity: System will detect by itself
+						Price: Popup will come and Supplier will enter.	
+			
+					Popup: for verification of all details then at bottom there is 3 button [ Edit Details, Upload, Edit Images]
+						if Supplier selects `Edit Detail` 
+							then he can edit by himself
+						if Supplier selects `Upload` 
+							then upload product and give finish message `Thank You to using ZOZI`
+						if Supplier selects `Edit Images` then Popup appear of canvas of Image Editing.
+							all the option will be appear on it of the Canvas 
+								When the supplier will satisfy then he will press 'Done' button
+									Popup: for verification of all details then at bottom there is 3 button [ Edit Details, Upload, Edit Images]
+										Supplier will press `Upload` and Finish everything and upload will process.
+				
+
+it should to handle all the variant of all category. we will have bueaty product, cosmetic, electronic items, laptop, phones, cloths, shoes, bages, household and everything. you need to make a diversify plan which can handle all kind of product with all variants, category, sub-category.
+
+	read in detail more and make the process more faster to complete for uploading the product. 
+	and check all the automation.
+
+	- for category and variant management you can check the file `D:\Projects\10- E-COMMERCE WEBSITE\zozi\Working_API\zozi_ai_upload_session\zozi_variant_config.json` to add into the system for faster adding the product.
+	- you can take reference of flow of work also from "zozi\Working_API\zozi_ai_upload_session\upload_auto_05.py".
+```
+
+
+
+
+
+# _______________________________________________________________________________________
+
+# Implementation Plan: ZOZI Supplier Product Upload — Speed-First Redesign
+
+## Goal
+Re-engineer the supplier product-upload flow into a modal-popup-driven, automation-first 5-step system
+that completes a full product upload (including BG removal, AI analysis, all variant quantity fills,
+and publish) **in under 30 seconds** for an experienced supplier.
+
+---
+
+## Overview of the Two Processes
+
+| | Process A — Photo-First | Process B — Voice-First |
+|---|---|---|
+| Step 1 | Upload / Capture image | Upload / Capture image |
+| Step 2 | BG Removal (auto-select best model) | BG Removal (auto-select best model) |
+| Step 3 | AI detect → auto-fill all fields | 🎤 Voice note → NLP parse → auto-fill |
+| Step 4 | Variant-per-color quantity popups | Variant-per-color quantity popups |
+| Step 5 | Verify popup → Publish | Verify popup → Publish |
+
+---
+
+## Design Principles
+- **Zero typing** wherever automation can fill it (name, description, tags, category, color).
+- **Modal-popup-driven** — every step is a focused bottom-sheet / center modal, not a multi-page wizard.
+- **Parallel processing** — BG removal fires simultaneously with AI analysis; both finish before Step 3.
+- **Quantity popups per color** — one popup per color, looping through colors, each showing all sizes.
+- **Universal variant support** — driven by `zozi_variant_config.json`: apparel (color/size), electronics
+  (storage/RAM), beauty (volume/scent), jewelry (karat/plating), etc.
+
+---
+
+## Step-by-Step UI Flow
+
+```
+[ADD PRODUCT button]
+        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  MODAL 1 — MEDIA UPLOAD                                         │
+│  [ 📷 Take Photo ]  [ 🗂️ Upload File ]                          │
+│  ┌────────────────┐                                             │
+│  │  image preview │  (thumbnail once selected)                  │
+│  └────────────────┘                                             │
+│  [ 🎤 Voice Note ]  [ ✨ Magic Editing ]                         │
+│                             [Next →]                            │
+└─────────────────────────────────────────────────────────────────┘
+        ↓ (Next fires PARALLEL: bg-removal + AI-analyze)
+┌─────────────────────────────────────────────────────────────────┐
+│  MODAL 2A — PROCESSING (spinner)                                │
+│  "Removing background…  ████████░░  80%"                        │
+│  "Analyzing product…    ████░░░░░░  40%"                        │
+│  (both run in parallel — typical total: 5-8 s)                 │
+└─────────────────────────────────────────────────────────────────┘
+        ↓ AI fills everything automatically
+┌─────────────────────────────────────────────────────────────────┐
+│  MODAL 2B — PHOTO EDITING CANVAS (optional, tap ✨)             │
+│  [ br05 Clean ][ br06 Geo ][ br08 Prod ][ br11 Gap ]           │
+│  [ Sharpen ][ Denoise ][ White Balance ][ Auto Light ]          │
+│  [ Done ✓ ]                                                     │
+└─────────────────────────────────────────────────────────────────┘
+        ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  MODAL 3 — AI RESULTS + FIELD REVIEW                            │
+│  Name:        [Auto-filled ✓]  [edit]                           │
+│  Description: [Auto-filled ✓]  [edit]                           │
+│  Category:    [Auto-filled ✓]  [change ▾]                       │
+│  Tags:        [chip][chip][chip]  [+ add]                       │
+│  Color(s):    [🔵 Blue][🟡 Yellow][➕ Add color]               │
+│  Fabric/Type: [tap chips: Cotton / Polyester / Leather…]        │
+│  Price:       [ OMR _____ ]  (AI suggests 5.000)               │
+│                         [Next: Set Quantities →]                │
+└─────────────────────────────────────────────────────────────────┘
+        ↓ (one popup per color, cycling)
+┌─────────────────────────────────────────────────────────────────┐
+│  MODAL 4A — QUANTITY: 🔵 BLUE                (1 of 4)           │
+│  S  [____]   M  [____]   L  [____]   XL [____]                 │
+│  XXL [____]  (only sizes relevant to category shown)            │
+│  [ Fill All = 50 ]              [Next Color →]                  │
+└─────────────────────────────────────────────────────────────────┘
+│  MODAL 4B — QUANTITY: 🟡 YELLOW              (2 of 4)           │
+│  …same layout…                  [Next Color →]                  │
+└─────────────────────────────────────────────────────────────────┘
+        ↓ (electronics: storage×RAM instead; beauty: volume/scent, etc.)
+┌─────────────────────────────────────────────────────────────────┐
+│  MODAL 5 — FINAL REVIEW & PUBLISH                               │
+│  ┌──────────┐   Product: "Blue T-Shirt I Love Oman"             │
+│  │ image ✓  │   Category: Clothing → T-Shirts                   │
+│  └──────────┘   Colors: Blue, Yellow, Black, White              │
+│                 Sizes: S, M, L, XL   Total Stock: 320           │
+│                 Price: 5.000 OMR                                 │
+│  [ ✏️ Edit Details ] [ 🖼️ Edit Images ] [ ✅ Publish ]          │
+│        ↓ on Publish                                             │
+│  "✅ Published! Thank you for using ZOZI"                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Files to Create / Modify
+
+### Frontend — New Components
+
+---
+
+#### [NEW] `src/components/supplier/upload/UploadModal.tsx`
+Single-entry modal covering Step 1 (file/camera input + Voice/Edit buttons).
+- Accepts `onImage(file)`, `onVoice()`, `onEdit()` callbacks.
+- Native `capture="environment"` for mobile camera.
+- Drag-and-drop zone for desktop.
+
+#### [NEW] `src/components/supplier/upload/ProcessingModal.tsx`
+Dual progress-bar overlay shown during parallel BG removal + AI analysis.
+- Two `<progress>` bars driven by SSE or polling.
+- Auto-closes when both complete; passes results up.
+
+#### [NEW] `src/components/supplier/upload/PhotoEditModal.tsx`
+Full-screen canvas panel (already partially exists as `PhotoEditorModal.tsx` — refactor/extend).
+- Integrates all 6 BG models (br05–br13) as one-tap buttons.
+- Image tool strip (sharpen, denoise, white balance, etc.).
+- "Done ✓" closes and returns processed blob.
+
+#### [NEW] `src/components/supplier/upload/AIResultsModal.tsx`
+Step 3 field-review modal.
+- Shows all AI-filled fields as editable inline items.
+- Color chip selector (auto-detected + add more).
+- Fabric/material chip grid (from `zozi_variant_config.json` categories).
+- Price input with AI-suggested value pre-filled.
+- "Next: Set Quantities →" button.
+
+#### [NEW] `src/components/supplier/upload/QuantityModal.tsx`
+Step 4 cycling quantity popup.
+- Props: `colorName`, `colorIndex`, `totalColors`, `sizes[]`, `onComplete(qty: Record<size, number>)`.
+- "Fill All = 50" shortcut button.
+- Keyboard-friendly: Tab moves between size inputs, Enter advances to next color.
+- For non-apparel: renders relevant variant axes (storage×RAM, volume, etc.).
+
+#### [NEW] `src/components/supplier/upload/VerifyPublishModal.tsx`
+Step 5 final review.
+- Product image thumbnail + all details.
+- Total stock auto-calculated.
+- Three buttons: Edit Details → re-opens AIResultsModal; Edit Images → re-opens PhotoEditModal; Publish → POST + success screen.
+
+#### [NEW] `src/components/supplier/upload/VoiceModal.tsx`
+Dedicated voice-recording bottom sheet (Step 3 voice path).
+- Waveform animation while recording.
+- NLP parse result displayed as editable chips before confirming.
+
+---
+
+### Frontend — Core Logic
+
+#### [NEW] `src/lib/uploadOrchestrator.ts`
+Central state machine managing the entire 5-step flow.
+```typescript
+type UploadPhase =
+  | 'idle' | 'media' | 'processing' | 'photo_edit'
+  | 'ai_results' | 'quantity' | 'verify' | 'done';
+```
+- Fires parallel `Promise.all([removeBg(), analyzeImage()])` at end of Step 1.
+- Caches results so re-opening any modal is instant.
+- Tracks current color index for quantity loop.
+- Computes `totalStock` reactively.
+
+#### [MODIFY] `src/lib/variantEngine.ts`
+Add `getVariantAxesForCategory(category, subcategory)` that reads the embedded
+`zozi_variant_config.json` to return the correct variant axes and their default options
+for every supported product type. This replaces the current hardcoded arrays.
+
+#### [NEW] `src/lib/variantConfig.ts`
+Typed wrapper around `zozi_variant_config.json` — exposes:
+- `getAxesForCategory(cat, subcat)` → `VariantAxis[]`
+- `getDefaultOptions(axisKey)` → `string[]`
+- `detectAxesFromVoice(voiceResult)` → `VariantAxis[]`
+- `getMaterialOptions(productType)` → `string[]`
+
+#### [MODIFY] `src/lib/wizardStore.ts`
+Add upload orchestrator state:
+- `uploadPhase: UploadPhase`
+- `currentColorIndex: number`
+- `quantityMap: Record<color, Record<size, number>>`
+- `detectedAxes: VariantAxis[]`
+
+---
+
+### Frontend — Page Update
+
+#### [MODIFY] `src/app/supplier/products/add/page.tsx`
+Replace the current inline two-column layout with a single **"Add Product" button**
+that opens `UploadModal`. All subsequent steps are driven by the orchestrator modals,
+not the scrollable page layout.
+
+---
+
+### Backend — AI & BG Removal
+
+#### [MODIFY] `backend/routers/suppliers/supplier.py`
+- `/supplier/upload/remove-background` — already exists ✓ (no change needed)
+- `/supplier/upload/ai-analyze` — already exists ✓ (no change needed)
+- `/supplier/upload/voice-transcribe` — already exists ✓
+
+New endpoint needed:
+#### `POST /supplier/upload/analyze-parallel`
+Accepts multipart with `image` field. Runs BG removal **and** AI analysis in parallel
+(using `asyncio.gather`) and returns combined JSON:
+```json
+{
+  "bg_removed_url": "...",
+  "name": "...", "category": "...", "tags": [...],
+  "colors": [...], "variants": {...}, "price_suggestion": 5.0
+}
+```
+This single call replaces two sequential round-trips, cutting Step 2 time by ~40%.
+
+---
+
+### Backend — Variant Config Integration
+
+#### [NEW] `backend/services/suppliers/variant_config_service.py`
+Loads `zozi_variant_config.json` at startup and exposes:
+- `get_axes_for_category(category, subcategory)` — returns applicable axes
+- `get_material_options(product_type)` — chips for the fabric/material picker
+
+#### [NEW] `GET /supplier/upload/variant-axes?category=clothing&subcategory=t-shirts`
+Returns the correct axes + default options for the frontend to render quantity modals
+correctly for any product type (apparel, electronics, beauty, jewelry, etc.).
+
+---
+
+### Playwright Test Suite
+
+#### [NEW] `backend/tests/playwright/conftest.py`
+- `login_as_supplier` fixture (re-uses token for session).
+- `backend_url` fixture reading from env.
+- `cleanup_product(id)` fixture calling `DELETE /supplier/products/{id}`.
+
+#### [NEW] `backend/tests/playwright/test_upload_flow.py`
+Tests **both** Process A (photo) and Process B (voice):
+```
+test_photo_upload_flow   — uploads image_04.jpg, bg removal, AI fill, qty, publish
+test_voice_upload_flow   — uploads image_05.jpg, voice transcribe, field fill, publish
+test_all_category_axes   — verifies correct axes rendered for clothing/electronics/beauty/jewelry
+```
+
+#### [MODIFY] `backend/requirements.txt`
+Add `playwright>=1.40.0` and `pytest-playwright>=0.4.0`.
+
+#### [NEW] `backend/scripts/run_playwright_tests.py`
+```python
+subprocess.run(["playwright", "install", "chromium"])
+subprocess.run(["pytest", "tests/playwright/", "-v", "--headed=false"])
+```
+
+---
+
+## Speed Budget (target ≤ 30 s total)
+
+| Step | Action | Time |
+|---|---|---|
+| 1 | Image selected | < 1 s |
+| 2 | Parallel BG removal + AI analysis | 5–8 s |
+| 3 | Review AI fields (pre-filled, just glance) | 3–5 s |
+| 4 | Quantity popups × N colors (Fill All = 50) | 2 s × N colors |
+| 5 | Verify + Publish click + server response | 2–3 s |
+| **Total (2 colors)** | | **~18 s** |
+| **Total (4 colors)** | | **~26 s** |
+
+> [!IMPORTANT]
+> The "Fill All = 50" button on each quantity popup fills all size inputs at once — a supplier
+> with 4 colors can complete Step 4 in 4 × 1 tap = 4 seconds total.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+cd backend
+python scripts/run_playwright_tests.py
+```
+- All 3 test cases pass (exit 0).
+- Product appears in `GET /supplier/products` after publish.
+- Product is deleted by cleanup fixture.
+
+### Manual Verification
+- Open `http://localhost:3000/supplier/products/add`.
+- Click "Add Product" → modal appears (Step 1).
+- Upload `D:\Projects\10- E-COMMERCE WEBSITE\zozi\image\image_04.jpg`.
+- Confirm processing modal shows dual progress bars.
+- Confirm AI fills name, category, tags, colors automatically.
+- Fill quantities via color popups using "Fill All = 50".
+- Publish → "Thank you for using ZOZI" screen appears.
+- Navigate to `/supplier/products` → product visible in list.
+
+
+

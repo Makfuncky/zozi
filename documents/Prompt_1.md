@@ -259,7 +259,7 @@ What will be complete ecosystem of the payment management system for the ZOZI we
 
 ### Email System Optimization | Email System Security | Email System Performance | Email System Scalability | Email System Reliability | Email System Maintainability | Email System Backup and Recovery | Email System Checking and Auditing | Email System Documentation:
 
-- List down all the File and Function of `frontend/web_app`, `frontend/mobile_app`, `backend`, `backend API`, `Database setup` for `Email System` in detail and test all the files and fix the error and bugs. 
+- List down all the File and Function of `frontend/web_app`, `frontend/mobile_app`, `backend`, `backend API`, `Database setup` for `Email System` in detail and test all the files and fix th e error and bugs. 
 - update the `CODEBASE_STATUS_MATRIX_DETAILED.md` because this the document from which we are following for completing the project and also for the future reference.
 
 - Target Result to achieve for the `Email System` should be:
