@@ -5,6 +5,13 @@ from sqlalchemy.orm import Session
 from controllers.auth_controller import get_current_user
 from db.database import get_db
 from models import Address
+from services.commerce_write_service import (
+    create_address as create_address_db,
+    update_address as update_address_db,
+    delete_address as delete_address_db,
+    unset_other_default_addresses,
+    set_default_address as set_default_address_db,
+)
 
 router = APIRouter()
 
@@ -75,7 +82,7 @@ def create_address(payload: dict, current_user: dict = Depends(get_current_user)
     normalized = _normalize_address_payload(payload)
     user_id = int(current_user["id"])
     if normalized.get("is_default"):
-        db.query(Address).filter(Address.user_id == user_id).update({"is_default": False})
+        unset_other_default_addresses(db, user_id)
     address = Address(
         user_id=user_id,
         full_name="Customer",
@@ -90,10 +97,18 @@ def create_address(payload: dict, current_user: dict = Depends(get_current_user)
         address.label = normalized["label"]
     if normalized.get("phone"):
         address.phone = normalized["phone"]
-    db.add(address)
-    db.commit()
-    db.refresh(address)
-    return _serialize_address(address)
+    return _serialize_address(create_address_db(db, **{
+        "user_id": user_id,
+        "full_name": "Customer",
+        "address_line1": normalized.get("street", ""),
+        "city": normalized.get("city", ""),
+        "state": normalized.get("state"),
+        "postal_code": normalized.get("postal_code"),
+        "country": normalized.get("country", "US"),
+        "is_default": normalized.get("is_default", False),
+        "label": normalized.get("label"),
+        "phone": normalized.get("phone"),
+    }))
 
 
 @router.put("/{address_id}")
@@ -101,31 +116,22 @@ def update_address(address_id: int, payload: dict, current_user: dict = Depends(
     address = _get_user_address(address_id, int(current_user["id"]), db)
     updates = _normalize_address_payload(payload, partial=True)
     if updates.get("is_default") is True:
-        db.query(Address).filter(Address.user_id == address.user_id).update({"is_default": False})
+        unset_other_default_addresses(db, address.user_id, address_id)
     if "street" in updates:
         address.address_line1 = updates.pop("street")
-    for key, value in updates.items():
-        setattr(address, key, value)
-    db.commit()
-    db.refresh(address)
-    return _serialize_address(address)
+    return _serialize_address(update_address_db(db, address, updates))
 
 
 @router.delete("/{address_id}")
 def delete_address(address_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     address = _get_user_address(address_id, int(current_user["id"]), db)
-    db.delete(address)
-    db.commit()
+    delete_address_db(db, address)
     return {"detail": "Deleted"}
 
 
 @router.post("/{address_id}/set-default")
 def set_default_address(address_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     user_id = int(current_user["id"])
-    db.query(Address).filter(Address.user_id == user_id).update({"is_default": False})
+    unset_other_default_addresses(db, user_id, address_id)
     address = _get_user_address(address_id, user_id, db)
-    address.is_default = True
-    db.commit()
-    db.refresh(address)
-    return _serialize_address(address)
-
+    return _serialize_address(set_default_address_db(db, address))

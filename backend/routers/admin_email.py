@@ -9,6 +9,10 @@ from db.schemas import EmailCampaignCreate, EmailCampaignOut
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
+from services.email_write_service import (
+    create_email_campaign as create_email_campaign_db,
+    delete_email_campaign as delete_email_campaign_db,
+)
 
 router = APIRouter()
 
@@ -44,7 +48,7 @@ def list_campaigns(country_code: str = Path(..., description="ISO country code")
     try:
         q = db.query(EmailCampaign).filter(EmailCampaign.country_code == country_code.upper())
         total = q.count()
-        rows = q.order_by(EmailCampaign.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
+        rows = q.offset((page - 1) * page_size).limit(page_size).all()
         return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
@@ -58,9 +62,7 @@ def create_campaign(country_code: str = Path(..., description="ISO country code"
         allowed = {"name", "subject", "status", "send_at", "created_by", "country_code"}
         data = {k: v for k, v in payload.model_dump().items() if k in allowed and v is not None}
         data["country_code"] = country_code.upper()
-        c = EmailCampaign(**data)
-        db.add(c); db.commit(); db.refresh(c)
-        return c
+        return create_email_campaign_db(db, **data)
     finally:
         clear_rls_context()
 
@@ -72,8 +74,7 @@ def delete_campaign(country_code: str = Path(..., description="ISO country code"
     try:
         c = db.query(EmailCampaign).filter(EmailCampaign.id == campaign_id, EmailCampaign.country_code == country_code.upper()).first()
         if not c: raise HTTPException(404)
-        db.delete(c); db.commit()
+        delete_email_campaign_db(db, c)
         return {"message": "Deleted"}
     finally:
         clear_rls_context()
-

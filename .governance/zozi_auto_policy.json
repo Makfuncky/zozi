@@ -1,9 +1,12 @@
 {
   "version": 1,
-  "updated": "2026-07-30T02:42:33.425127+00:00",
+  "updated": "2026-07-31T09:04:10.576190+00:00",
   "domains": [
     "ai",
-    "legacy"
+    "audit",
+    "chat",
+    "legacy",
+    "payments"
   ],
   "backend_top_dirs": [
     ".hypothesis",
@@ -225,6 +228,10 @@
       "fraud"
     ],
     [
+      "email_write_service",
+      "employee_models"
+    ],
+    [
       "employee_active_tasks",
       "employee_models"
     ],
@@ -317,11 +324,19 @@
       "employee_models"
     ],
     [
+      "hr_write_service",
+      "employee_models"
+    ],
+    [
       "hse_manager",
       "employee_models"
     ],
     [
       "iam_service",
+      "employee_models"
+    ],
+    [
+      "iam_write_service",
       "employee_models"
     ],
     [
@@ -350,6 +365,10 @@
     ],
     [
       "lms_permission_lock",
+      "employee_models"
+    ],
+    [
+      "lms_write_service",
       "employee_models"
     ],
     [
@@ -481,6 +500,14 @@
       "employee_models"
     ],
     [
+      "supplier_badge_service",
+      "audit"
+    ],
+    [
+      "supplier_badge_service",
+      "cash_management_service"
+    ],
+    [
       "tax_service",
       "logistics_partner_pricing"
     ],
@@ -542,310 +569,165 @@
     ]
   ],
   "features": {
-    "wishlist": {
+    "mobile_auth": {
       "paths": [
-        "backend\\controllers\\wishlist_controller.py",
-        "backend\\routers\\wishlist.py"
+        "backend\\services\\mobile_auth_service.py"
       ],
       "backend": [
-        "controllers",
-        "routers"
+        "services"
       ]
     },
-    "currency": {
+    "backup": {
       "paths": [
-        "backend\\routers\\currency.py",
-        "backend\\utils\\currency.py"
+        "backend\\utils\\backup.py"
       ],
       "backend": [
-        "routers",
         "utils"
       ]
     },
-    "suppliers": {
-      "backend": [
-        "controllers",
-        "models",
-        "routers"
-      ],
-      "surfaces": [
-        "admin",
-        "public"
-      ],
+    "geo_resolver": {
       "paths": [
-        "backend\\controllers\\admin\\suppliers.py",
-        "backend\\models\\suppliers.py",
-        "backend\\routers\\admin_suppliers.py",
-        "backend\\routers\\public_suppliers.py"
-      ]
-    },
-    "channels": {
-      "backend": [
-        "routers"
-      ],
-      "surfaces": [
-        "internal"
-      ],
-      "paths": [
-        "backend\\routers\\internal_channels.py"
-      ]
-    },
-    "push_notifications": {
-      "paths": [
-        "backend\\routers\\push_notifications.py"
+        "backend\\location_service\\geo_resolver.py"
       ],
       "backend": [
-        "routers"
+        "location_service"
       ]
     },
-    "settings": {
-      "backend": [
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\routers\\admin_settings.py"
-      ]
-    },
-    "confidence_scoring": {
-      "paths": [
-        "backend\\services\\confidence_scoring.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "write_chat": {
-      "paths": [
-        "backend\\services\\write_chat.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "localization": {
-      "paths": [
-        "backend\\services\\localization_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "debug_events5": {
-      "paths": [
-        "backend\\scripts\\debug_events5.py"
-      ],
+    "fix_inline_schema": {
       "backend": [
         "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_inline_schema.py"
       ]
     },
-    "notification_worker": {
-      "paths": [
-        "backend\\settings\\notification_worker.py"
-      ],
-      "backend": [
-        "settings"
-      ]
-    },
-    "ai_copy": {
-      "paths": [
-        "backend\\services\\ai_copy_jobs.py"
-      ],
+    "orders_write": {
       "backend": [
         "services"
+      ],
+      "paths": [
+        "backend\\services\\orders_write_service.py"
       ]
     },
-    "test_ems_edge_cases": {
+    "country_rls": {
       "paths": [
-        "backend\\tests\\test_ems_edge_cases.py"
+        "backend\\dependencies\\country_rls.py",
+        "backend\\services\\country_rls_service.py",
+        "backend\\utils\\country_rls.py"
       ],
       "backend": [
-        "tests"
-      ]
-    },
-    "free_image_tools": {
-      "paths": [
-        "backend\\services\\free_image_tools.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "middleware": {
-      "paths": [
-        "backend\\utils\\middleware_helpers.py"
-      ],
-      "backend": [
+        "dependencies",
+        "services",
         "utils"
       ]
     },
-    "orders": {
-      "backend": [
-        "controllers",
-        "models",
-        "routers"
-      ],
-      "surfaces": [
-        "admin",
-        "supplier"
-      ],
+    "banner": {
       "paths": [
-        "backend\\controllers\\admin\\orders.py",
-        "backend\\controllers\\orders_controller.py",
-        "backend\\controllers\\supplier\\orders.py",
-        "backend\\models\\orders.py",
-        "backend\\routers\\admin_orders.py",
-        "backend\\routers\\orders.py",
-        "backend\\routers\\supplier_orders.py"
-      ]
-    },
-    "employee": {
-      "paths": [
-        "backend\\controllers\\employee_controller.py",
-        "backend\\db\\employee_models.py",
-        "backend\\models\\employee_models.py"
-      ],
-      "backend": [
-        "controllers",
-        "db",
-        "models"
-      ]
-    },
-    "background": {
-      "paths": [
-        "backend\\utils\\background_jobs.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "advanced_search_engine": {
-      "paths": [
-        "backend\\services\\advanced_search_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "onboarding_pipeline": {
-      "paths": [
-        "backend\\services\\onboarding_pipeline.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "test_ems_lifecycle": {
-      "paths": [
-        "backend\\tests\\test_ems_lifecycle.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "vision": {
-      "paths": [
-        "backend\\providers\\ai\\vision.py",
-        "backend\\providers\\vision.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "2026_07_28_19_30_e8efae30fc29_add_missing_indexes_and_constraints": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_28_19_30-e8efae30fc29_add_missing_indexes_and_constraints.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "system_architecture_audit": {
-      "paths": [
-        "backend\\scripts\\system_architecture_audit.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "invoice": {
-      "paths": [
-        "backend\\controllers\\invoice_controller.py"
+        "backend\\controllers\\banner_controller.py"
       ],
       "backend": [
         "controllers"
       ]
     },
-    "customer_health_engine": {
+    "seed": {
       "paths": [
-        "backend\\services\\customer_health_engine.py"
+        "backend\\db\\seed.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "2026_07_26_22_00_e70b2cb9a90f_fix_internal_channels_fk": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_26_22_00-e70b2cb9a90f_fix_internal_channels_fk.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "commission": {
+      "backend": [
+        "controllers",
+        "models",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\commission_controller.py",
+        "backend\\models\\commission.py",
+        "backend\\routers\\admin_commission.py",
+        "backend\\routers\\commission.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "country_economics": {
+      "backend": [
+        "models"
+      ],
+      "paths": [
+        "backend\\models\\country_economics.py"
+      ]
+    },
+    "rate_limiter": {
+      "paths": [
+        "backend\\utils\\rate_limiter.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "approval_matrix": {
+      "paths": [
+        "backend\\services\\approval_matrix_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "variant_config": {
+    "employee_lifecycle": {
       "paths": [
-        "backend\\services\\variant_config_service.py"
+        "backend\\services\\employee_lifecycle_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "test_versioning": {
+    "finance": {
+      "backend": [
+        "models",
+        "routers"
+      ],
       "paths": [
-        "backend\\tests\\test_versioning.py"
+        "backend\\models\\finance.py",
+        "backend\\routers\\finance.py",
+        "backend\\routers\\supplier_finance.py"
+      ],
+      "surfaces": [
+        "supplier"
+      ]
+    },
+    "test_logistics": {
+      "paths": [
+        "backend\\tests\\test_logistics.py"
       ],
       "backend": [
         "tests"
       ]
     },
-    "logo": {
-      "frontend": [
-        "frontend\\shared\\src\\components\\logo"
-      ]
-    },
-    "export": {
+    "logistics_partner": {
       "paths": [
-        "backend\\controllers\\export_controller.py",
-        "backend\\routers\\export.py"
+        "backend\\controllers\\logistics_partner_controller.py",
+        "backend\\routers\\logistics_partner.py"
       ],
       "backend": [
         "controllers",
         "routers"
       ]
     },
-    "auto_payout_scheduler": {
+    "realtime": {
       "paths": [
-        "backend\\services\\auto_payout_scheduler.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "finance_automation": {
-      "paths": [
-        "backend\\routers\\finance_automation.py",
-        "backend\\services\\finance_automation.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "logistics_partner_pricing": {
-      "paths": [
-        "backend\\services\\logistics_partner_pricing.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "pagination": {
-      "paths": [
-        "backend\\utils\\pagination.py"
+        "backend\\utils\\realtime.py"
       ],
       "backend": [
         "utils"
@@ -859,102 +741,108 @@
         "utils"
       ]
     },
-    "shift_handover": {
+    "ghost_watchdog": {
       "paths": [
-        "backend\\routers\\shift_handover.py",
-        "backend\\services\\shift_handover.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "payouts": {
-      "backend": [
-        "controllers",
-        "routers"
-      ],
-      "surfaces": [
-        "admin",
-        "supplier"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\payouts.py",
-        "backend\\controllers\\supplier\\payouts.py",
-        "backend\\routers\\admin_payouts.py",
-        "backend\\routers\\supplier_payouts.py"
-      ]
-    },
-    "parcel_tracking": {
-      "paths": [
-        "backend\\routers\\parcel_tracking.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "promotions": {
-      "backend": [
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\routers\\admin_promotions.py"
-      ]
-    },
-    "logistics": {
-      "backend": [
-        "controllers",
-        "models",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\logistics_controller.py",
-        "backend\\models\\logistics.py",
-        "backend\\routers\\admin_logistics.py",
-        "backend\\routers\\logistics.py"
-      ]
-    },
-    "test_ai_research": {
-      "paths": [
-        "backend\\tests\\test_ai_research_jobs.py",
-        "backend\\tests\\test_ai_research_router.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "banners": {
-      "backend": [
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\routers\\admin_banners.py",
-        "backend\\routers\\banners.py"
-      ]
-    },
-    "country_detection": {
-      "paths": [
-        "backend\\services\\country_detection.py"
+        "backend\\services\\ghost_watchdog.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "test_reviews": {
+    "ai_search": {
       "paths": [
-        "backend\\tests\\test_reviews.py"
+        "backend\\services\\ai_search_service.py"
       ],
       "backend": [
-        "tests"
+        "services"
+      ]
+    },
+    "tickets": {
+      "backend": [
+        "controllers",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\tickets.py",
+        "backend\\routers\\tickets.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "payment_engine": {
+      "paths": [
+        "backend\\services\\payment_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "write_chat": {
+      "paths": [
+        "backend\\services\\write_chat.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "supplier_health_engine": {
+      "paths": [
+        "backend\\services\\supplier_health_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "2026_07_30_0005_20260730_0005_bounded_context_schema_migration": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0005-20260730_0005_bounded_context_schema_migration.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "2026_07_30_0007_20260730_0007_fix_country_code_width": {
+      "backend": [
+        "alembic"
+      ],
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0007-20260730_0007_fix_country_code_width.py"
+      ]
+    },
+    "check_multiline_table_args": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\check_multiline_table_args.py"
+      ]
+    },
+    "fulfillment": {
+      "paths": [
+        "backend\\services\\fulfillment_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "channels": {
+      "backend": [
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\internal_channels.py"
+      ],
+      "surfaces": [
+        "internal"
+      ]
+    },
+    "payout_notification": {
+      "paths": [
+        "backend\\services\\payout_notification_service.py"
+      ],
+      "backend": [
+        "services"
       ]
     },
     "entity_messaging": {
@@ -965,237 +853,28 @@
         "utils"
       ]
     },
-    "test_transaction": {
+    "logistics_engine": {
       "paths": [
-        "backend\\tests\\test_transaction.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "test_comprehensive_system": {
-      "paths": [
-        "backend\\tests\\test_comprehensive_system.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "employee_audit_timeline": {
-      "paths": [
-        "backend\\models\\employee_audit_timeline.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "email_reputation": {
-      "paths": [
-        "backend\\services\\email_reputation.py"
+        "backend\\services\\logistics_engine.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "country_curated": {
+    "general_ledger": {
       "paths": [
-        "backend\\data\\country_curated.py"
-      ],
-      "backend": [
-        "data"
-      ]
-    },
-    "test_security": {
-      "paths": [
-        "backend\\tests\\test_security.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "orchestrator": {
-      "paths": [
-        "backend\\middleware\\orchestrator.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "test_logistics": {
-      "paths": [
-        "backend\\tests\\test_logistics.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "slug": {
-      "paths": [
-        "backend\\utils\\slug.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "onboarding": {
-      "paths": [
-        "backend\\models\\onboarding.py",
-        "backend\\routers\\onboarding.py"
-      ],
-      "backend": [
-        "models",
-        "routers"
-      ]
-    },
-    "money": {
-      "paths": [
-        "backend\\utils\\money.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "financial": {
-      "paths": [
-        "backend\\controllers\\financial_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "imports": {
-      "paths": [
-        "backend\\models\\imports.py",
-        "backend\\routers\\imports.py"
-      ],
-      "backend": [
-        "models",
-        "routers"
-      ]
-    },
-    "test_circuit_breaker": {
-      "paths": [
-        "backend\\tests\\test_circuit_breaker.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "iam": {
-      "paths": [
-        "backend\\controllers\\iam_controller.py",
-        "backend\\routers\\iam.py",
-        "backend\\services\\iam_service.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers",
-        "services"
-      ]
-    },
-    "test_suppliers": {
-      "paths": [
-        "backend\\tests\\test_suppliers.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "country": {
-      "backend": [
-        "controllers",
-        "providers"
-      ],
-      "paths": [
-        "backend\\controllers\\country_controller.py",
-        "backend\\providers\\country.py"
-      ],
-      "frontend": [
-        "frontend\\web_app\\src\\components\\country"
-      ]
-    },
-    "mobile": {
-      "paths": [
-        "backend\\controllers\\mobile_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "ocr": {
-      "paths": [
-        "backend\\providers\\ocr.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "translation": {
-      "paths": [
-        "backend\\services\\translation_service.py"
+        "backend\\services\\general_ledger_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "websocket_chat": {
+    "schema_audit_ci": {
       "paths": [
-        "backend\\services\\websocket_chat.py"
+        "backend\\scripts\\schema_audit_ci.py"
       ],
       "backend": [
-        "services"
-      ]
-    },
-    "ghost_order_detector": {
-      "paths": [
-        "backend\\jobs\\ghost_order_detector.py"
-      ],
-      "backend": [
-        "jobs"
-      ]
-    },
-    "promotion_points": {
-      "paths": [
-        "backend\\services\\promotion_points_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "curated_cities": {
-      "paths": [
-        "backend\\data\\curated_cities.py"
-      ],
-      "backend": [
-        "data"
-      ]
-    },
-    "okr_engine": {
-      "paths": [
-        "backend\\services\\okr_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "incident": {
-      "paths": [
-        "backend\\models\\incident.py",
-        "backend\\routers\\incident.py",
-        "backend\\services\\incident_service.py"
-      ],
-      "backend": [
-        "models",
-        "routers",
-        "services"
-      ]
-    },
-    "test_products": {
-      "paths": [
-        "backend\\tests\\test_products.py"
-      ],
-      "backend": [
-        "tests"
+        "scripts"
       ]
     },
     "legal_contract": {
@@ -1206,17 +885,44 @@
         "services"
       ]
     },
-    "email_gateway": {
+    "je_reversal": {
       "paths": [
-        "backend\\services\\email_gateway.py"
+        "backend\\services\\je_reversal_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "logistics_health": {
+    "check_fk4": {
+      "backend": [
+        "tests"
+      ],
       "paths": [
-        "backend\\routers\\logistics_health.py"
+        "backend\\tests\\_check_fk4.py"
+      ]
+    },
+    "badge": {
+      "backend": [
+        "controllers"
+      ],
+      "paths": [
+        "backend\\controllers\\supplier\\badge.py"
+      ],
+      "surfaces": [
+        "supplier"
+      ]
+    },
+    "coi_middleware": {
+      "paths": [
+        "backend\\middleware\\coi_middleware.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "escalation": {
+      "paths": [
+        "backend\\routers\\escalation.py"
       ],
       "backend": [
         "routers"
@@ -1230,12 +936,483 @@
         "middleware"
       ]
     },
-    "shipments": {
+    "command_center_background": {
       "paths": [
-        "backend\\routers\\shipments.py"
+        "backend\\services\\command_center_background.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "command_center": {
+      "paths": [
+        "backend\\controllers\\command_center.py",
+        "backend\\controllers\\command_center_controller.py",
+        "backend\\routers\\command_center.py",
+        "backend\\routers\\command_center_api.py",
+        "backend\\services\\command_center_service.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers",
+        "services"
+      ]
+    },
+    "downstream_wiring": {
+      "paths": [
+        "backend\\services\\downstream_wiring.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "iam_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\iam_write_service.py"
+      ]
+    },
+    "coi": {
+      "paths": [
+        "backend\\services\\coi_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "debug_events5": {
+      "paths": [
+        "backend\\scripts\\debug_events5.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "proxy_communication": {
+      "paths": [
+        "backend\\routers\\proxy_communication.py",
+        "backend\\services\\proxy_communication.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "shift_handover": {
+      "paths": [
+        "backend\\routers\\shift_handover.py",
+        "backend\\services\\shift_handover.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "2026_07_29_19_14_20260729_1914_add_products_search_vector_trigger": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_29_19_14-20260729_1914_add_products_search_vector_trigger.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "communication_audit": {
+      "paths": [
+        "backend\\services\\communication_audit.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "country_legal": {
+      "backend": [
+        "models"
+      ],
+      "paths": [
+        "backend\\models\\country_legal.py"
+      ]
+    },
+    "dei_auditor": {
+      "paths": [
+        "backend\\services\\dei_auditor.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "country_heuristic_engine": {
+      "paths": [
+        "backend\\services\\country_heuristic_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "workflow_engine": {
+      "paths": [
+        "backend\\services\\workflow_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "accounting": {
+      "paths": [
+        "backend\\controllers\\accounting_controller.py",
+        "backend\\routers\\accounting.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "cash_management_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\cash_management_write_service.py"
+      ]
+    },
+    "hierarchy": {
+      "paths": [
+        "backend\\routers\\hierarchy.py",
+        "backend\\services\\hierarchy_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "logistics_orders": {
+      "paths": [
+        "backend\\routers\\logistics_orders.py"
       ],
       "backend": [
         "routers"
+      ]
+    },
+    "cart": {
+      "paths": [
+        "backend\\controllers\\cart_controller.py",
+        "backend\\routers\\cart.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "background_check": {
+      "paths": [
+        "backend\\services\\background_check.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "tax": {
+      "paths": [
+        "backend\\services\\tax_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "financial_reports": {
+      "paths": [
+        "backend\\services\\financial_reports_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "middleware": {
+      "paths": [
+        "backend\\utils\\middleware_helpers.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "country_maps": {
+      "paths": [
+        "backend\\routers\\country_maps.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "logistics_orders_v2": {
+      "paths": [
+        "backend\\routers\\logistics_orders_v2.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "country_control": {
+      "paths": [
+        "backend\\models\\country_control.py"
+      ],
+      "backend": [
+        "models"
+      ]
+    },
+    "auth_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\auth_write_service.py"
+      ]
+    },
+    "test_versioning": {
+      "paths": [
+        "backend\\tests\\test_versioning.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "check_fk3": {
+      "backend": [
+        "tests"
+      ],
+      "paths": [
+        "backend\\tests\\_check_fk3.py"
+      ]
+    },
+    "suppliers": {
+      "backend": [
+        "controllers",
+        "models",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\suppliers.py",
+        "backend\\models\\suppliers.py",
+        "backend\\routers\\admin_suppliers.py",
+        "backend\\routers\\public_suppliers.py"
+      ],
+      "surfaces": [
+        "admin",
+        "public"
+      ]
+    },
+    "events": {
+      "paths": [
+        "backend\\models\\events.py"
+      ],
+      "backend": [
+        "models"
+      ]
+    },
+    "test_payments": {
+      "paths": [
+        "backend\\tests\\test_payments.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "coupons": {
+      "backend": [
+        "controllers",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\coupons.py",
+        "backend\\controllers\\coupons_controller.py",
+        "backend\\routers\\coupons.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "test_circuit_breaker": {
+      "paths": [
+        "backend\\tests\\test_circuit_breaker.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "test_transaction": {
+      "paths": [
+        "backend\\tests\\test_transaction.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "order_tracking": {
+      "paths": [
+        "backend\\services\\order_tracking_service.py",
+        "backend\\utils\\order_tracking.py"
+      ],
+      "backend": [
+        "services",
+        "utils"
+      ]
+    },
+    "image": {
+      "paths": [
+        "backend\\providers\\image.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "internal_communication": {
+      "paths": [
+        "backend\\services\\internal_communication.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "pagination": {
+      "paths": [
+        "backend\\utils\\pagination.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "banners": {
+      "backend": [
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\admin_banners.py",
+        "backend\\routers\\banners.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "fix_table_args_v4": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_table_args_v4.py"
+      ]
+    },
+    "category_tax_profiles": {
+      "paths": [
+        "backend\\data\\category_tax_profiles.py"
+      ],
+      "backend": [
+        "data"
+      ]
+    },
+    "redis_client": {
+      "paths": [
+        "backend\\utils\\redis_client.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "test_api_pagination": {
+      "paths": [
+        "backend\\tests\\test_api_pagination.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "retention": {
+      "paths": [
+        "backend\\services\\retention_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "invoice": {
+      "paths": [
+        "backend\\controllers\\invoice_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "country_payouts": {
+      "paths": [
+        "backend\\routers\\country_payouts.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "addresses": {
+      "paths": [
+        "backend\\routers\\addresses.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "export": {
+      "paths": [
+        "backend\\controllers\\export_controller.py",
+        "backend\\routers\\export.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "coi_engine": {
+      "paths": [
+        "backend\\services\\coi_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_search": {
+      "paths": [
+        "backend\\tests\\test_search.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "compliance_engine": {
+      "paths": [
+        "backend\\services\\compliance_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "webhook_verification": {
+      "paths": [
+        "backend\\middleware\\webhook_verification.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "country_basics": {
+      "backend": [
+        "models"
+      ],
+      "paths": [
+        "backend\\models\\country_basics.py"
+      ]
+    },
+    "secrets_manager": {
+      "paths": [
+        "backend\\utils\\secrets_manager.py"
+      ],
+      "backend": [
+        "utils"
       ]
     },
     "ghost_record": {
@@ -1246,106 +1423,325 @@
         "utils"
       ]
     },
-    "erp_finance": {
+    "media_storage": {
       "paths": [
-        "backend\\services\\erp_finance_service.py"
+        "backend\\services\\media_storage.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "video_conferencing": {
+    "webhook_ip_whitelist": {
       "paths": [
-        "backend\\services\\video_conferencing.py"
+        "backend\\middleware\\webhook_ip_whitelist.py"
       ],
       "backend": [
-        "services"
+        "middleware"
       ]
     },
-    "refund_posting": {
+    "shop_locations": {
       "paths": [
-        "backend\\services\\refund_posting_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "comms": {
-      "frontend": [
-        "frontend\\web_app\\src\\components\\comms"
-      ]
-    },
-    "2026_07_29_20_30_20260729_2030_add_postgres_range_partitioning_audit_notif": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "ai_image": {
-      "paths": [
-        "backend\\routers\\ai_image.py"
+        "backend\\routers\\shop_locations.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "notification": {
-      "paths": [
-        "backend\\services\\notification_service.py"
+    "email": {
+      "backend": [
+        "controllers",
+        "routers",
+        "services",
+        "utils"
       ],
+      "paths": [
+        "backend\\controllers\\email_controller.py",
+        "backend\\routers\\admin_email.py",
+        "backend\\routers\\email.py",
+        "backend\\routers\\email_controller.py",
+        "backend\\services\\email_event_service.py",
+        "backend\\utils\\email_service.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "banner_write": {
       "backend": [
         "services"
+      ],
+      "paths": [
+        "backend\\services\\banner_write_service.py"
       ]
     },
-    "product_moderation": {
+    "add_schema_declarations": {
       "paths": [
-        "backend\\routers\\product_moderation.py"
+        "backend\\scripts\\add_schema_declarations.py"
       ],
       "backend": [
-        "routers"
+        "scripts"
       ]
     },
-    "init_db": {
+    "new_tables": {
       "paths": [
-        "backend\\db\\init_db.py"
+        "backend\\db\\migrations\\new_tables.py"
       ],
       "backend": [
         "db"
       ]
     },
-    "script1": {
+    "add_schema_declarations_v2": {
+      "backend": [
+        "scripts"
+      ],
       "paths": [
-        "backend\\services\\script1.py"
+        "backend\\scripts\\add_schema_declarations_v2.py"
+      ]
+    },
+    "fix_single_line_table_args": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_single_line_table_args.py"
+      ]
+    },
+    "promotion_points": {
+      "paths": [
+        "backend\\services\\promotion_points_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "payout_engine": {
+    "email_reputation": {
       "paths": [
-        "backend\\services\\payout_engine.py"
+        "backend\\services\\email_reputation.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "chat": {
+    "inventory": {
       "backend": [
-        "controllers",
-        "routers"
+        "controllers"
+      ],
+      "paths": [
+        "backend\\controllers\\supplier\\inventory.py"
       ],
       "surfaces": [
-        "admin"
+        "supplier"
+      ]
+    },
+    "disputes_write": {
+      "backend": [
+        "services"
       ],
       "paths": [
-        "backend\\controllers\\chat_controller.py",
-        "backend\\routers\\admin_chat.py",
-        "backend\\routers\\chat.py"
+        "backend\\services\\disputes_write_service.py"
+      ]
+    },
+    "data_residency": {
+      "paths": [
+        "backend\\services\\data_residency.py",
+        "backend\\services\\data_residency_service.py"
       ],
-      "frontend": [
-        "frontend\\web_app\\src\\components\\chat"
+      "backend": [
+        "services"
+      ]
+    },
+    "shipments": {
+      "paths": [
+        "backend\\routers\\shipments.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "shift_roster": {
+      "paths": [
+        "backend\\services\\shift_roster_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "supplier_badge": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\supplier_badge_service.py"
+      ]
+    },
+    "push_notifications": {
+      "paths": [
+        "backend\\routers\\push_notifications.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "add_schema_to_bare_classes": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\add_schema_to_bare_classes.py"
+      ]
+    },
+    "treasury_adapter": {
+      "paths": [
+        "backend\\services\\treasury_adapter.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "circuit_breaker": {
+      "paths": [
+        "backend\\utils\\circuit_breaker.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "currency": {
+      "paths": [
+        "backend\\routers\\currency.py",
+        "backend\\utils\\currency.py"
+      ],
+      "backend": [
+        "routers",
+        "utils"
+      ]
+    },
+    "biometric_auth": {
+      "paths": [
+        "backend\\services\\biometric_auth.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "key_rotation": {
+      "paths": [
+        "backend\\utils\\key_rotation.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "qr_auth": {
+      "paths": [
+        "backend\\utils\\qr_auth.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "migrations": {
+      "paths": [
+        "backend\\utils\\migrations.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "database_security": {
+      "paths": [
+        "backend\\middleware\\database_security.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "workflows": {
+      "paths": [
+        "backend\\routers\\workflows.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "lms_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\lms_write_service.py"
+      ]
+    },
+    "br_06": {
+      "paths": [
+        "backend\\providers\\legacy\\br_06.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "parcel_verification": {
+      "paths": [
+        "backend\\providers\\parcel_verification.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "generate_scaffolding": {
+      "paths": [
+        "backend\\scripts\\generate_scaffolding.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "vat_rates": {
+      "paths": [
+        "backend\\data\\vat_rates.py"
+      ],
+      "backend": [
+        "data"
+      ]
+    },
+    "email_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\email_write_service.py"
+      ]
+    },
+    "automation_scheduler": {
+      "paths": [
+        "backend\\services\\automation_scheduler.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_background": {
+      "paths": [
+        "backend\\tests\\test_background_jobs.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "2026_07_30_0003_20260730_0003_create_upload_jobs_table": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0003-20260730_0003_create_upload_jobs_table.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "background_tasks": {
+      "paths": [
+        "backend\\tasks\\background_tasks.py"
+      ],
+      "backend": [
+        "tasks"
       ]
     },
     "2026_07_26_20_27_837e1e29bd49_add_banner_layout_json": {
@@ -1364,819 +1760,20 @@
         "services"
       ]
     },
-    "country_enhancements": {
-      "paths": [
-        "backend\\models\\country_enhancements.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "country_maps": {
-      "paths": [
-        "backend\\routers\\country_maps.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "treasurer": {
-      "paths": [
-        "backend\\services\\treasurer.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "travel": {
-      "paths": [
-        "backend\\routers\\travel.py",
-        "backend\\services\\travel_service.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "generate_scaffolding": {
-      "paths": [
-        "backend\\scripts\\generate_scaffolding.py"
-      ],
+    "fix_table_args_final": {
       "backend": [
         "scripts"
-      ]
-    },
-    "rate_limit_middleware": {
-      "paths": [
-        "backend\\middleware\\rate_limit_middleware.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "2026_07_27_09_08_20260727_0908_add_check_constraints_to_status_enum_columns": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_27_09_08-20260727_0908_add_check_constraints_to_status_enum_columns.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "env": {
-      "paths": [
-        "backend\\alembic\\env.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "key_rotation": {
-      "paths": [
-        "backend\\utils\\key_rotation.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "chat_enrichment": {
-      "paths": [
-        "backend\\routers\\chat_enrichment.py",
-        "backend\\services\\chat_enrichment.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "health": {
-      "backend": [
-        "routers",
-        "utils"
-      ],
-      "surfaces": [
-        "customer",
-        "supplier"
-      ],
-      "paths": [
-        "backend\\routers\\customer_health.py",
-        "backend\\routers\\supplier_health.py",
-        "backend\\utils\\health.py"
-      ]
-    },
-    "profile": {
-      "backend": [
-        "controllers",
-        "routers"
-      ],
-      "surfaces": [
-        "supplier"
-      ],
-      "paths": [
-        "backend\\controllers\\supplier\\profile.py",
-        "backend\\routers\\supplier_profile.py"
-      ]
-    },
-    "websocket_manager": {
-      "paths": [
-        "backend\\utils\\websocket_manager.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "country_data_orchestrator": {
-      "paths": [
-        "backend\\services\\country_data_orchestrator.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "finance_ai": {
-      "paths": [
-        "backend\\providers\\finance_ai.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "content": {
-      "paths": [
-        "backend\\services\\content_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "triple_auth": {
-      "paths": [
-        "backend\\services\\triple_auth.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "maker": {
-      "paths": [
-        "backend\\services\\maker.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "br_06": {
-      "paths": [
-        "backend\\providers\\legacy\\br_06.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "notifications": {
-      "paths": [
-        "backend\\controllers\\notifications_controller.py",
-        "backend\\routers\\notifications.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "category_tax_profiles": {
-      "paths": [
-        "backend\\data\\category_tax_profiles.py"
-      ],
-      "backend": [
-        "data"
-      ]
-    },
-    "auth": {
-      "backend": [
-        "controllers",
-        "routers",
-        "services",
-        "utils"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\auth.py",
-        "backend\\controllers\\auth_controller.py",
-        "backend\\routers\\auth.py",
-        "backend\\services\\auth_service.py",
-        "backend\\utils\\auth.py"
-      ],
-      "frontend": [
-        "frontend\\web_app\\src\\components\\auth"
-      ]
-    },
-    "hse_manager": {
-      "paths": [
-        "backend\\services\\hse_manager.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "cross_border": {
-      "paths": [
-        "backend\\routers\\cross_border.py",
-        "backend\\services\\cross_border_service.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "workflow_engine": {
-      "paths": [
-        "backend\\services\\workflow_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "ai_upload": {
-      "paths": [
-        "backend\\models\\ai_upload.py",
-        "backend\\routers\\ai_upload.py"
-      ],
-      "backend": [
-        "models",
-        "routers"
-      ]
-    },
-    "rls_middleware": {
-      "paths": [
-        "backend\\utils\\rls_middleware.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "error_handler": {
-      "paths": [
-        "backend\\utils\\error_handler.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "employees": {
-      "paths": [
-        "backend\\controllers\\employees_controller.py",
-        "backend\\routers\\employees.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "media_storage": {
-      "paths": [
-        "backend\\services\\media_storage.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "email_enrichment": {
-      "paths": [
-        "backend\\routers\\email_enrichment.py",
-        "backend\\services\\email_enrichment.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "categories": {
-      "backend": [
-        "controllers",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\categories_controller.py",
-        "backend\\routers\\admin_categories.py",
-        "backend\\routers\\categories.py"
-      ]
-    },
-    "geo_resolver": {
-      "paths": [
-        "backend\\location_service\\geo_resolver.py"
-      ],
-      "backend": [
-        "location_service"
-      ]
-    },
-    "test_api_endpoints": {
-      "paths": [
-        "backend\\tests\\test_api_endpoints.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "comms_unified": {
-      "paths": [
-        "backend\\routers\\comms_unified.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "payment_engine": {
-      "paths": [
-        "backend\\services\\payment_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "fraud_detection": {
-      "paths": [
-        "backend\\routers\\fraud_detection.py",
-        "backend\\services\\fraud_detection.py",
-        "backend\\services\\fraud_detection_service.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "risk": {
-      "paths": [
-        "backend\\controllers\\risk_controller.py",
-        "backend\\routers\\risk.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "test_country_auto_populate": {
-      "paths": [
-        "backend\\tests\\test_country_auto_populate.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "fix_chat": {
-      "paths": [
-        "backend\\services\\fix_chat.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "soft_delete": {
-      "paths": [
-        "backend\\utils\\soft_delete.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "impossible_travel_middleware": {
-      "paths": [
-        "backend\\middleware\\impossible_travel_middleware.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "flash_sales": {
-      "paths": [
-        "backend\\routers\\flash_sales.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "worm_audit": {
-      "paths": [
-        "backend\\services\\worm_audit.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "ess": {
-      "paths": [
-        "backend\\routers\\ess.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "country_detection_middleware": {
-      "paths": [
-        "backend\\utils\\country_detection_middleware.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "db_backup": {
-      "paths": [
-        "backend\\utils\\db_backup.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "ai_research": {
-      "paths": [
-        "backend\\routers\\ai_research.py",
-        "backend\\services\\ai_research_jobs.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "country_rls": {
-      "paths": [
-        "backend\\dependencies\\country_rls.py",
-        "backend\\services\\country_rls_service.py",
-        "backend\\utils\\country_rls.py"
-      ],
-      "backend": [
-        "dependencies",
-        "services",
-        "utils"
-      ]
-    },
-    "qr_auth": {
-      "paths": [
-        "backend\\utils\\qr_auth.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "treasury": {
-      "backend": [
-        "routers",
-        "services"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\routers\\admin_treasury.py",
-        "backend\\routers\\treasury.py",
-        "backend\\services\\treasury_service.py"
-      ]
-    },
-    "test_health": {
-      "paths": [
-        "backend\\tests\\test_health.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "versioning": {
-      "paths": [
-        "backend\\utils\\versioning.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "cache": {
-      "paths": [
-        "backend\\utils\\cache.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "analyze_graph": {
-      "paths": [
-        "backend\\alembic\\_analyze_graph.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "email": {
-      "backend": [
-        "controllers",
-        "routers",
-        "services",
-        "utils"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\email_controller.py",
-        "backend\\routers\\admin_email.py",
-        "backend\\routers\\email.py",
-        "backend\\services\\email_event_service.py",
-        "backend\\utils\\email_service.py"
-      ]
-    },
-    "encryption": {
-      "paths": [
-        "backend\\utils\\encryption.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "2026_07_29_10_17_e281faa0c087_add_orm_models_for_orphaned_employee": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_29_10_17-e281faa0c087_add_orm_models_for_orphaned_employee_.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "siem_engine": {
-      "paths": [
-        "backend\\middleware\\siem_engine.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "2026_07_30_0004_20260730_0004_create_event_tables": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_30_0004-20260730_0004_create_event_tables.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "csp_reporting": {
-      "paths": [
-        "backend\\routers\\csp_reporting.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "referrals": {
-      "paths": [
-        "backend\\routers\\referrals.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "2026_07_26_16_09_b81bfc888610_baseline_canonical_orm_schema_clean": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "accounting": {
-      "paths": [
-        "backend\\controllers\\accounting_controller.py",
-        "backend\\routers\\accounting.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "audit": {
-      "paths": [
-        "backend\\controllers\\audit_controller.py",
-        "backend\\routers\\audit.py",
-        "backend\\services\\audit_service.py",
-        "backend\\utils\\audit.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers",
-        "services",
-        "utils"
-      ]
-    },
-    "parcel_verification": {
-      "paths": [
-        "backend\\providers\\parcel_verification.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "employee_lifecycle": {
-      "paths": [
-        "backend\\services\\employee_lifecycle_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "bg_ab": {
-      "backend": [
-        "routers"
-      ],
-      "surfaces": [
-        "supplier"
-      ],
-      "paths": [
-        "backend\\routers\\supplier_bg_ab_test.py"
-      ]
-    },
-    "communication": {
-      "paths": [
-        "backend\\models\\communication.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "2026_07_28_21_14_87146598d2c3_add_missing_fk_constraints_for": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_28_21_14-87146598d2c3_add_missing_fk_constraints_for_.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "asset_tracking": {
-      "paths": [
-        "backend\\services\\asset_tracking.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "add_schema_to": {
-      "paths": [
-        "backend\\scripts\\add_schema_to_models.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "notification_engine": {
-      "paths": [
-        "backend\\services\\notification_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "treasury_engine": {
-      "paths": [
-        "backend\\services\\treasury_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "write_files_script": {
-      "paths": [
-        "backend\\services\\write_files_script.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "2026_07_28_0000_employee_hr_tables": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_28_0000_employee_hr_tables.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "file_validation": {
-      "paths": [
-        "backend\\utils\\file_validation.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "treasury_adapter": {
-      "paths": [
-        "backend\\services\\treasury_adapter.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "payment": {
-      "paths": [
-        "backend\\events\\payment_events.py"
-      ],
-      "backend": [
-        "events"
-      ]
-    },
-    "ai_variant_config": {
-      "paths": [
-        "backend\\services\\ai_variant_config.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "mixins": {
-      "paths": [
-        "backend\\db\\mixins.py",
-        "backend\\models\\mixins.py"
-      ],
-      "backend": [
-        "db",
-        "models"
-      ]
-    },
-    "template": {
-      "paths": [
-        "backend\\services\\template.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "mcp_server": {
-      "paths": [
-        "backend\\tools\\mcp\\mcp_server.py"
-      ],
-      "backend": [
-        "tools"
-      ]
-    },
-    "add_schema_declarations": {
-      "paths": [
-        "backend\\scripts\\add_schema_declarations.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "debug_events3": {
-      "paths": [
-        "backend\\scripts\\debug_events3.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "country_admin": {
-      "paths": [
-        "backend\\routers\\country_admin.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "credit_control": {
-      "paths": [
-        "backend\\services\\credit_control_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "hr_dashboard": {
-      "paths": [
-        "backend\\routers\\hr_dashboard.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "rls_context": {
-      "paths": [
-        "backend\\utils\\rls_context.py"
       ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "threat_feed_updater": {
       "paths": [
-        "backend\\jobs\\threat_feed_updater.py"
-      ],
-      "backend": [
-        "jobs"
+        "backend\\scripts\\fix_table_args_final.py"
       ]
     },
-    "payroll": {
+    "notification_worker": {
       "paths": [
-        "backend\\routers\\payroll.py",
-        "backend\\services\\payroll_service.py"
+        "backend\\settings\\notification_worker.py"
       ],
       "backend": [
-        "routers",
-        "services"
+        "settings"
       ]
     },
     "okr": {
@@ -2187,550 +1784,64 @@
         "routers"
       ]
     },
-    "shop_locations": {
+    "test_response_wrapper": {
       "paths": [
-        "backend\\routers\\shop_locations.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "2026_07_29_10_28_9ff24a0683dd_schema_drift_check": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_29_10_28-9ff24a0683dd_schema_drift_check.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "background_tasks": {
-      "paths": [
-        "backend\\tasks\\background_tasks.py"
-      ],
-      "backend": [
-        "tasks"
-      ]
-    },
-    "2026_07_29_19_14_20260729_1914_add_products_search_vector_trigger": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_29_19_14-20260729_1914_add_products_search_vector_trigger.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "escalation": {
-      "paths": [
-        "backend\\routers\\escalation.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "marketing": {
-      "paths": [
-        "backend\\models\\marketing.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "payments": {
-      "paths": [
-        "backend\\controllers\\payments_controller.py",
-        "backend\\models\\payments.py",
-        "backend\\routers\\payments.py"
-      ],
-      "backend": [
-        "controllers",
-        "models",
-        "routers"
-      ]
-    },
-    "expense": {
-      "paths": [
-        "backend\\controllers\\expense_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "staff_permissions": {
-      "paths": [
-        "backend\\utils\\staff_permissions.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "proxy_communication": {
-      "paths": [
-        "backend\\routers\\proxy_communication.py",
-        "backend\\services\\proxy_communication.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "country_control": {
-      "paths": [
-        "backend\\models\\country_control.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "pci_dss_compliance": {
-      "paths": [
-        "backend\\middleware\\pci_dss_compliance.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "country_auto_populate": {
-      "paths": [
-        "backend\\routers\\country_auto_populate.py",
-        "backend\\services\\country_auto_populate.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "text": {
-      "paths": [
-        "backend\\providers\\ai\\text.py",
-        "backend\\providers\\text.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "geo_fence": {
-      "paths": [
-        "backend\\services\\geo_fence_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "test_auto_payout_sweep": {
-      "paths": [
-        "backend\\tests\\test_auto_payout_sweep.py"
+        "backend\\tests\\test_response_wrapper.py"
       ],
       "backend": [
         "tests"
       ]
     },
-    "supplier_onboarding": {
-      "paths": [
-        "backend\\services\\supplier_onboarding_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "ediscovery": {
-      "paths": [
-        "backend\\routers\\ediscovery.py",
-        "backend\\services\\ediscovery.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "mobile_auth": {
-      "paths": [
-        "backend\\services\\mobile_auth_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "contact": {
-      "paths": [
-        "backend\\routers\\contact.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "test_orders": {
-      "paths": [
-        "backend\\tests\\test_orders.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "coi": {
-      "paths": [
-        "backend\\services\\coi_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "webhook_processor": {
-      "paths": [
-        "backend\\services\\webhook_processor.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "kms_integration": {
-      "paths": [
-        "backend\\utils\\kms_integration.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "backup": {
-      "paths": [
-        "backend\\utils\\backup.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "expenses": {
-      "paths": [
-        "backend\\routers\\expenses.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "map": {
-      "backend": [
-        "providers",
-        "services"
-      ],
-      "paths": [
-        "backend\\providers\\map.py",
-        "backend\\services\\map_service.py"
-      ],
-      "frontend": [
-        "frontend\\web_app\\src\\components\\map"
-      ]
-    },
-    "category_tree": {
-      "paths": [
-        "backend\\utils\\category_tree.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "invoice_html": {
-      "paths": [
-        "backend\\utils\\invoice_html.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "command_center_background": {
-      "paths": [
-        "backend\\services\\command_center_background.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "diagnose_tree": {
-      "paths": [
-        "backend\\alembic\\_diagnose_tree.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "payout_batch": {
-      "paths": [
-        "backend\\services\\payout_batch_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "product_videos": {
-      "paths": [
-        "backend\\routers\\product_videos.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "debug_events2": {
-      "paths": [
-        "backend\\scripts\\debug_events2.py"
-      ],
+    "test_create_all": {
       "backend": [
         "scripts"
-      ]
-    },
-    "test_payments": {
-      "paths": [
-        "backend\\tests\\test_payments.py"
       ],
-      "backend": [
-        "tests"
+      "paths": [
+        "backend\\scripts\\test_create_all.py"
       ]
     },
-    "video": {
+    "treasury": {
       "backend": [
-        "controllers",
         "routers",
         "services"
+      ],
+      "paths": [
+        "backend\\routers\\admin_treasury.py",
+        "backend\\routers\\treasury.py",
+        "backend\\routers\\treasury_api.py",
+        "backend\\services\\treasury_service.py"
       ],
       "surfaces": [
         "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\video_controller.py",
-        "backend\\routers\\admin_video.py",
-        "backend\\routers\\video.py",
-        "backend\\routers\\video_controller.py",
-        "backend\\services\\video_service.py"
       ]
     },
-    "run_py": {
+    "entity_communication": {
       "paths": [
-        "backend\\services\\run_py.py"
+        "backend\\routers\\entity_communication.py"
       ],
-      "backend": [
-        "services"
-      ]
-    },
-    "br_05": {
-      "paths": [
-        "backend\\providers\\legacy\\br_05.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "product_verification": {
-      "paths": [
-        "backend\\controllers\\product_verification_controller.py",
-        "backend\\routers\\product_verification.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "cross_border_tracker": {
-      "paths": [
-        "backend\\services\\cross_border_tracker.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "seed": {
-      "paths": [
-        "backend\\db\\seed.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "config": {
-      "paths": [
-        "backend\\providers\\config.py",
-        "backend\\utils\\config.py"
-      ],
-      "backend": [
-        "providers",
-        "utils"
-      ]
-    },
-    "mcp_client_example": {
-      "paths": [
-        "backend\\tools\\mcp\\mcp_client_example.py"
-      ],
-      "backend": [
-        "tools"
-      ]
-    },
-    "test_free_country_research": {
-      "paths": [
-        "backend\\tests\\test_free_country_research.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "add_schema_declarations_debug": {
-      "paths": [
-        "backend\\scripts\\add_schema_declarations_debug.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "performance": {
-      "paths": [
-        "backend\\routers\\performance.py",
-        "backend\\services\\performance_service.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "bg_removal_presets": {
-      "paths": [
-        "backend\\services\\bg_removal_presets.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "fulfillment": {
-      "paths": [
-        "backend\\services\\fulfillment_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "cross_border_detection": {
-      "paths": [
-        "backend\\services\\cross_border_detection.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "test_background": {
-      "paths": [
-        "backend\\tests\\test_background_jobs.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "downstream": {
-      "paths": [
-        "backend\\services\\downstream_hooks.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "approval_matrix": {
-      "paths": [
-        "backend\\services\\approval_matrix_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "security_audit": {
-      "paths": [
-        "backend\\utils\\security_audit.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "document": {
-      "backend": [
-        "controllers"
-      ],
-      "surfaces": [
-        "supplier"
-      ],
-      "paths": [
-        "backend\\controllers\\supplier_document_controller.py"
-      ]
-    },
-    "image_ai": {
-      "paths": [
-        "backend\\services\\image_ai_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "import": {
-      "paths": [
-        "backend\\services\\import_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "cash": {
       "backend": [
         "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\routers\\admin_cash.py"
       ]
     },
-    "test_users": {
+    "promotions_write": {
+      "backend": [
+        "services"
+      ],
       "paths": [
-        "backend\\tests\\test_users.py"
+        "backend\\services\\promotions_write_service.py"
+      ]
+    },
+    "commission_engine": {
+      "paths": [
+        "backend\\services\\commission_engine.py"
       ],
       "backend": [
-        "tests"
+        "services"
       ]
     },
-    "promotion": {
+    "csrf_middleware": {
       "paths": [
-        "backend\\controllers\\promotion_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "user": {
-      "paths": [
-        "backend\\models\\user.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "test_search": {
-      "paths": [
-        "backend\\tests\\test_search.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "coi_middleware": {
-      "paths": [
-        "backend\\middleware\\coi_middleware.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "add_schema_declarations_ast": {
-      "paths": [
-        "backend\\scripts\\add_schema_declarations_ast.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "ip_extraction_middleware": {
-      "paths": [
-        "backend\\middleware\\ip_extraction_middleware.py"
+        "backend\\middleware\\csrf_middleware.py"
       ],
       "backend": [
         "middleware"
@@ -2744,190 +1855,116 @@
         "utils"
       ]
     },
-    "test_coupons": {
+    "ocr_parser": {
       "paths": [
-        "backend\\tests\\test_coupons.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "logistics_engine": {
-      "paths": [
-        "backend\\services\\logistics_engine.py"
+        "backend\\services\\ocr_parser.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "invoices": {
+    "2026_07_28_19_30_e8efae30fc29_add_missing_indexes_and_constraints": {
       "paths": [
-        "backend\\routers\\invoices.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "validate_migrations": {
-      "paths": [
-        "backend\\scripts\\validate_migrations.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "realtime": {
-      "paths": [
-        "backend\\utils\\realtime.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "ws_chat": {
-      "paths": [
-        "backend\\routers\\ws_chat.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "new_tables": {
-      "paths": [
-        "backend\\db\\migrations\\new_tables.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "je_reversal": {
-      "paths": [
-        "backend\\services\\je_reversal_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "rate_limiter": {
-      "paths": [
-        "backend\\utils\\rate_limiter.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py"
+        "backend\\alembic\\versions\\2026_07_28_19_30-e8efae30fc29_add_missing_indexes_and_constraints.py"
       ],
       "backend": [
         "alembic"
       ]
     },
-    "vault": {
+    "test_country_ai_research": {
       "paths": [
-        "backend\\utils\\vault.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "translate": {
-      "paths": [
-        "backend\\routers\\translate.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "test_chat": {
-      "paths": [
-        "backend\\tests\\test_chat.py"
+        "backend\\tests\\test_country_ai_research.py"
       ],
       "backend": [
         "tests"
       ]
     },
-    "generate_codebase": {
-      "paths": [
-        "backend\\scripts\\generate_codebase.py"
-      ],
+    "misc": {
       "backend": [
-        "scripts"
+        "controllers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\misc.py"
+      ],
+      "surfaces": [
+        "admin"
       ]
     },
-    "country_research": {
+    "travel": {
       "paths": [
-        "backend\\routers\\country_research.py",
-        "backend\\services\\country_research.py"
+        "backend\\routers\\travel.py",
+        "backend\\services\\travel_service.py"
       ],
       "backend": [
         "routers",
         "services"
       ]
     },
-    "test_communication": {
-      "paths": [
-        "backend\\tests\\test_communication_services.py"
-      ],
+    "bg_ab": {
       "backend": [
-        "tests"
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\supplier_bg_ab_test.py"
+      ],
+      "surfaces": [
+        "supplier"
       ]
     },
-    "backend_layout_audit_3_0": {
+    "payout_engine": {
       "paths": [
-        "backend\\scripts\\backend_layout_audit_3_0.py"
-      ],
-      "backend": [
-        "scripts"
-      ]
-    },
-    "test_api_pagination": {
-      "paths": [
-        "backend\\tests\\test_api_pagination.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "test_categories": {
-      "paths": [
-        "backend\\tests\\test_categories.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "dei_auditor": {
-      "paths": [
-        "backend\\services\\dei_auditor.py"
+        "backend\\services\\payout_engine.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "ai_search": {
-      "paths": [
-        "backend\\services\\ai_search_service.py"
-      ],
+    "health": {
       "backend": [
-        "services"
-      ]
-    },
-    "attendance": {
-      "paths": [
-        "backend\\services\\attendance_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "metrics": {
-      "paths": [
-        "backend\\utils\\metrics.py"
-      ],
-      "backend": [
+        "routers",
         "utils"
+      ],
+      "paths": [
+        "backend\\routers\\customer_health.py",
+        "backend\\routers\\health.py",
+        "backend\\routers\\supplier_health.py",
+        "backend\\utils\\health.py"
+      ],
+      "surfaces": [
+        "customer",
+        "supplier"
+      ]
+    },
+    "transactional_email": {
+      "paths": [
+        "backend\\services\\transactional_email_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "invoice_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\invoice_write_service.py"
+      ]
+    },
+    "employee_risk_scores": {
+      "paths": [
+        "backend\\models\\employee_risk_scores.py"
+      ],
+      "backend": [
+        "models"
+      ]
+    },
+    "finance_ai": {
+      "paths": [
+        "backend\\providers\\finance_ai.py"
+      ],
+      "backend": [
+        "providers"
       ]
     },
     "advanced_filter": {
@@ -2938,20 +1975,84 @@
         "services"
       ]
     },
-    "prometheus_setup": {
+    "employee_audit_timeline": {
       "paths": [
-        "backend\\utils\\prometheus_setup.py"
+        "backend\\models\\employee_audit_timeline.py"
       ],
       "backend": [
-        "utils"
+        "models"
       ]
     },
-    "background_check": {
+    "test_controller_subpackages": {
       "paths": [
-        "backend\\services\\background_check.py"
+        "backend\\tests\\test_controller_subpackages.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "communication": {
+      "paths": [
+        "backend\\models\\communication.py"
+      ],
+      "backend": [
+        "models"
+      ]
+    },
+    "promotions": {
+      "backend": [
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\admin_promotions.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "country_detection": {
+      "paths": [
+        "backend\\services\\country_detection.py"
       ],
       "backend": [
         "services"
+      ]
+    },
+    "commission_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\commission_write_service.py"
+      ]
+    },
+    "test_products": {
+      "paths": [
+        "backend\\tests\\test_products.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "payout_batch": {
+      "paths": [
+        "backend\\services\\payout_batch_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "employee_activity_logger": {
+      "paths": [
+        "backend\\services\\employee_activity_logger.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "ems": {
+      "frontend": [
+        "frontend\\web_app\\src\\components\\ems"
       ]
     },
     "logging_middleware": {
@@ -2962,266 +2063,195 @@
         "middleware"
       ]
     },
-    "period_close": {
-      "paths": [
-        "backend\\services\\period_close_service.py"
-      ],
+    "permissions_write": {
       "backend": [
         "services"
+      ],
+      "paths": [
+        "backend\\services\\permissions_write_service.py"
       ]
     },
-    "security_headers": {
-      "paths": [
-        "backend\\middleware\\security_headers.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "communication_audit": {
-      "paths": [
-        "backend\\services\\communication_audit.py"
-      ],
+    "misc_write": {
       "backend": [
         "services"
+      ],
+      "paths": [
+        "backend\\services\\misc_write_service.py"
       ]
     },
-    "tax": {
+    "ess": {
       "paths": [
-        "backend\\services\\tax_service.py"
+        "backend\\routers\\ess.py"
       ],
       "backend": [
-        "services"
+        "routers"
+      ]
+    },
+    "mobile": {
+      "paths": [
+        "backend\\controllers\\mobile_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "test_communication": {
+      "paths": [
+        "backend\\tests\\test_communication_services.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "contact": {
+      "paths": [
+        "backend\\routers\\contact.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "fix_table_args_v2": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_table_args_v2.py"
+      ]
+    },
+    "csp_reporting": {
+      "paths": [
+        "backend\\routers\\csp_reporting.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "location": {
+      "paths": [
+        "backend\\routers\\location_api.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "country_versioning": {
+      "paths": [
+        "backend\\controllers\\country_versioning_controller.py",
+        "backend\\routers\\country_versioning.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
       ]
     },
     "documents": {
       "backend": [
         "routers"
       ],
-      "surfaces": [
-        "supplier"
-      ],
       "paths": [
         "backend\\routers\\supplier_documents.py"
-      ]
-    },
-    "ghost_watchdog": {
-      "paths": [
-        "backend\\services\\ghost_watchdog.py"
       ],
-      "backend": [
-        "services"
+      "surfaces": [
+        "supplier"
       ]
     },
-    "country_payouts": {
+    "product_moderation": {
       "paths": [
-        "backend\\routers\\country_payouts.py"
+        "backend\\routers\\product_moderation.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "bulk_ops": {
-      "backend": [
-        "controllers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\bulk_ops.py"
-      ]
-    },
-    "banner": {
-      "paths": [
-        "backend\\controllers\\banner_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "lms": {
-      "paths": [
-        "backend\\controllers\\lms_controller.py",
-        "backend\\routers\\lms.py",
-        "backend\\services\\lms.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers",
-        "services"
-      ]
-    },
-    "event_publisher": {
-      "paths": [
-        "backend\\events\\event_publisher.py"
-      ],
-      "backend": [
-        "events"
-      ]
-    },
-    "database": {
-      "backend": [
-        "controllers",
-        "db"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\database.py",
-        "backend\\db\\database.py"
-      ]
-    },
-    "migrate_media_to_s3": {
-      "paths": [
-        "backend\\scripts\\migrate_media_to_s3.py"
-      ],
+    "fix_table_args_v3": {
       "backend": [
         "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_table_args_v3.py"
       ]
     },
-    "storage": {
+    "generate_data_dictionary": {
+      "backend": [
+        "scripts"
+      ],
       "paths": [
-        "backend\\services\\storage.py"
+        "backend\\scripts\\generate_data_dictionary.py"
+      ]
+    },
+    "2026_07_30_0001_20260730_0001_create_user_points_table": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0001-20260730_0001_create_user_points_table.py"
       ],
       "backend": [
-        "services"
+        "alembic"
       ]
     },
-    "permission": {
+    "prometheus_setup": {
       "paths": [
-        "backend\\services\\permission_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "offboarding": {
-      "paths": [
-        "backend\\services\\offboarding.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "frontend_errors": {
-      "paths": [
-        "backend\\routers\\frontend_errors.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "hierarchy": {
-      "paths": [
-        "backend\\routers\\hierarchy.py",
-        "backend\\services\\hierarchy_service.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "entity_communication": {
-      "paths": [
-        "backend\\routers\\entity_communication.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "succession": {
-      "paths": [
-        "backend\\routers\\succession.py",
-        "backend\\services\\succession_service.py"
-      ],
-      "backend": [
-        "routers",
-        "services"
-      ]
-    },
-    "test_search_endpoints": {
-      "paths": [
-        "backend\\tests\\test_search_endpoints.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "expense_processing": {
-      "paths": [
-        "backend\\services\\expense_processing.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "flash_sale": {
-      "paths": [
-        "backend\\controllers\\flash_sale_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "secrets_manager": {
-      "paths": [
-        "backend\\utils\\secrets_manager.py"
+        "backend\\utils\\prometheus_setup.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "misc": {
-      "backend": [
-        "controllers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
+    "script1": {
       "paths": [
-        "backend\\controllers\\admin\\misc.py"
+        "backend\\services\\script1.py"
+      ],
+      "backend": [
+        "services"
       ]
     },
-    "logistics_orders": {
+    "fraud_monitoring": {
       "paths": [
-        "backend\\routers\\logistics_orders.py"
+        "backend\\tasks\\fraud_monitoring.py"
       ],
       "backend": [
-        "routers"
+        "tasks"
       ]
     },
-    "commission": {
-      "backend": [
-        "controllers",
-        "models",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
+    "chat_enrichment": {
       "paths": [
-        "backend\\controllers\\commission_controller.py",
-        "backend\\models\\commission.py",
-        "backend\\routers\\admin_commission.py",
-        "backend\\routers\\commission.py"
+        "backend\\routers\\chat_enrichment.py",
+        "backend\\services\\chat_enrichment.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
       ]
     },
-    "test_middleware": {
+    "live_tracking": {
       "paths": [
-        "backend\\tests\\test_middleware_helpers.py"
+        "backend\\services\\live_tracking_service.py"
       ],
       "backend": [
-        "tests"
+        "services"
       ]
     },
-    "employee_risk_scores": {
+    "debug_classes": {
+      "backend": [
+        "scripts"
+      ],
       "paths": [
-        "backend\\models\\employee_risk_scores.py"
+        "backend\\scripts\\debug_classes.py"
+      ]
+    },
+    "2026_07_29_10_17_e281faa0c087_add_orm_models_for_orphaned_employee": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_29_10_17-e281faa0c087_add_orm_models_for_orphaned_employee_.py"
       ],
       "backend": [
-        "models"
+        "alembic"
+      ]
+    },
+    "fix_chat": {
+      "paths": [
+        "backend\\services\\fix_chat.py"
+      ],
+      "backend": [
+        "services"
       ]
     },
     "upload": {
@@ -3237,109 +2267,12 @@
         "services"
       ]
     },
-    "effective_permissions": {
+    "test_categories": {
       "paths": [
-        "backend\\services\\effective_permissions.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "async_workers": {
-      "paths": [
-        "backend\\providers\\async_workers.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "2026_07_30_0005_20260730_0005_bounded_context_schema_migration": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_30_0005-20260730_0005_bounded_context_schema_migration.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "logistics_orders_v2": {
-      "paths": [
-        "backend\\routers\\logistics_orders_v2.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "rls_dependency": {
-      "paths": [
-        "backend\\middleware\\rls_dependency.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "fraud": {
-      "paths": [
-        "backend\\models\\fraud.py",
-        "backend\\services\\fraud_service.py"
-      ],
-      "backend": [
-        "models",
-        "services"
-      ]
-    },
-    "test": {
-      "paths": [
-        "backend\\tests\\test_models.py"
+        "backend\\tests\\test_categories.py"
       ],
       "backend": [
         "tests"
-      ]
-    },
-    "operational": {
-      "paths": [
-        "backend\\controllers\\operational_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "permissions": {
-      "backend": [
-        "controllers",
-        "models",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\permissions.py",
-        "backend\\models\\permissions.py",
-        "backend\\routers\\permissions.py"
-      ]
-    },
-    "shift_roster": {
-      "paths": [
-        "backend\\services\\shift_roster_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "location": {
-      "paths": [
-        "backend\\routers\\location_api.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "finance_transfer": {
-      "paths": [
-        "backend\\services\\finance_transfer_service.py"
-      ],
-      "backend": [
-        "services"
       ]
     },
     "gateway_auto_enable": {
@@ -3350,358 +2283,103 @@
         "services"
       ]
     },
-    "2026_07_30_0001_20260730_0001_create_user_points_table": {
+    "env": {
       "paths": [
-        "backend\\alembic\\versions\\2026_07_30_0001-20260730_0001_create_user_points_table.py"
+        "backend\\alembic\\env.py"
       ],
       "backend": [
         "alembic"
       ]
     },
-    "2026_07_30_0002_20260730_0002_create_points_transactions_table": {
+    "security_audit": {
       "paths": [
-        "backend\\alembic\\versions\\2026_07_30_0002-20260730_0002_create_points_transactions_table.py"
+        "backend\\utils\\security_audit.py"
       ],
       "backend": [
-        "alembic"
+        "utils"
       ]
     },
-    "analytics": {
+    "coupons_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\coupons_write_service.py"
+      ]
+    },
+    "wishlist": {
+      "paths": [
+        "backend\\controllers\\wishlist_controller.py",
+        "backend\\routers\\wishlist.py"
+      ],
       "backend": [
         "controllers",
-        "providers",
-        "routers",
-        "utils"
+        "routers"
+      ]
+    },
+    "products": {
+      "backend": [
+        "controllers",
+        "models",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\products.py",
+        "backend\\controllers\\products_controller.py",
+        "backend\\controllers\\supplier\\products.py",
+        "backend\\models\\products.py",
+        "backend\\routers\\admin_products.py",
+        "backend\\routers\\products.py",
+        "backend\\routers\\supplier_products.py"
       ],
       "surfaces": [
         "admin",
         "supplier"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\analytics.py",
-        "backend\\controllers\\supplier\\analytics.py",
-        "backend\\providers\\analytics.py",
-        "backend\\routers\\supplier_analytics.py",
-        "backend\\utils\\analytics_service.py"
       ]
     },
-    "br_08": {
+    "money": {
       "paths": [
-        "backend\\providers\\legacy\\br_08.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "test_country_research": {
-      "paths": [
-        "backend\\tests\\test_country_research.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "transaction": {
-      "paths": [
-        "backend\\db\\transaction.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "chat_system": {
-      "paths": [
-        "backend\\services\\chat_system.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "check_birefnet": {
-      "paths": [
-        "backend\\providers\\legacy\\check_BiRefNet.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "payment_orchestrator": {
-      "paths": [
-        "backend\\services\\payment_orchestrator.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "base": {
-      "paths": [
-        "backend\\db\\base.py",
-        "backend\\providers\\_base.py"
-      ],
-      "backend": [
-        "db",
-        "providers"
-      ]
-    },
-    "address": {
-      "paths": [
-        "backend\\controllers\\address_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "voice_to_text": {
-      "paths": [
-        "backend\\providers\\voice_to_text.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "test_cart": {
-      "paths": [
-        "backend\\tests\\test_cart.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "ai_automation": {
-      "paths": [
-        "backend\\services\\ai_automation_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "general_ledger": {
-      "paths": [
-        "backend\\services\\general_ledger_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "schemas": {
-      "paths": [
-        "backend\\db\\schemas.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "test_auth": {
-      "paths": [
-        "backend\\tests\\test_auth.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "test_notifications": {
-      "paths": [
-        "backend\\tests\\test_notifications.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "ml_worker": {
-      "paths": [
-        "backend\\utils\\ml_worker.py"
+        "backend\\utils\\money.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "payout_notification": {
+    "security_headers": {
       "paths": [
-        "backend\\services\\payout_notification_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "order_tracking": {
-      "paths": [
-        "backend\\services\\order_tracking_service.py",
-        "backend\\utils\\order_tracking.py"
-      ],
-      "backend": [
-        "services",
-        "utils"
-      ]
-    },
-    "multi_secret_webhook": {
-      "paths": [
-        "backend\\utils\\multi_secret_webhook.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "device_binding_middleware": {
-      "paths": [
-        "backend\\middleware\\device_binding_middleware.py"
+        "backend\\middleware\\security_headers.py"
       ],
       "backend": [
         "middleware"
       ]
     },
-    "cart": {
-      "paths": [
-        "backend\\controllers\\cart_controller.py",
-        "backend\\routers\\cart.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "image": {
-      "paths": [
-        "backend\\providers\\image.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "models_country_enhancements": {
-      "paths": [
-        "backend\\db\\models_country_enhancements.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "cash_management": {
-      "paths": [
-        "backend\\controllers\\cash_management_controller.py",
-        "backend\\routers\\cash_management.py",
-        "backend\\services\\cash_management_service.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers",
-        "services"
-      ]
-    },
-    "automation_scheduler": {
-      "paths": [
-        "backend\\services\\automation_scheduler.py"
-      ],
+    "admin_analytics": {
       "backend": [
         "services"
-      ]
-    },
-    "leave_accrual": {
-      "paths": [
-        "backend\\services\\leave_accrual.py"
       ],
-      "backend": [
-        "services"
+      "paths": [
+        "backend\\services\\admin_analytics_service.py"
       ]
     },
-    "test_response_wrapper": {
+    "rls_interceptor": {
       "paths": [
-        "backend\\tests\\test_response_wrapper.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "comm": {
-      "paths": [
-        "backend\\controllers\\comm_controller.py",
-        "backend\\routers\\comm.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "security_metrics": {
-      "paths": [
-        "backend\\utils\\security_metrics.py"
+        "backend\\utils\\rls_interceptor.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "conftest": {
+    "parcel_tracking": {
       "paths": [
-        "backend\\tests\\conftest.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "shipping_tier": {
-      "paths": [
-        "backend\\services\\shipping_tier.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "data_residency": {
-      "paths": [
-        "backend\\services\\data_residency.py",
-        "backend\\services\\data_residency_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "br_13": {
-      "paths": [
-        "backend\\providers\\legacy\\br_13.py"
-      ],
-      "backend": [
-        "providers"
-      ]
-    },
-    "compliance_engine": {
-      "paths": [
-        "backend\\services\\compliance_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "tickets": {
-      "backend": [
-        "controllers",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\tickets.py",
-        "backend\\routers\\tickets.py"
-      ]
-    },
-    "graph_analysis": {
-      "paths": [
-        "backend\\alembic\\_graph_analysis.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "messaging": {
-      "paths": [
-        "backend\\routers\\messaging.py"
+        "backend\\routers\\parcel_tracking.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "biometric_auth": {
+    "escalation_sla": {
       "paths": [
-        "backend\\services\\biometric_auth.py"
+        "backend\\services\\escalation_sla.py"
       ],
       "backend": [
         "services"
@@ -3719,54 +2397,262 @@
         "routers"
       ]
     },
-    "br_11": {
+    "2026_07_28_21_14_87146598d2c3_add_missing_fk_constraints_for": {
       "paths": [
-        "backend\\providers\\legacy\\br_11.py"
+        "backend\\alembic\\versions\\2026_07_28_21_14-87146598d2c3_add_missing_fk_constraints_for_.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "notification_engine": {
+      "paths": [
+        "backend\\services\\notification_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_notifications": {
+      "paths": [
+        "backend\\tests\\test_notifications.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "test_internal_communication": {
+      "paths": [
+        "backend\\tests\\test_internal_communication.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "bg_remover": {
+      "paths": [
+        "backend\\providers\\bg_remover.py"
       ],
       "backend": [
         "providers"
       ]
     },
-    "webhook_ip_whitelist": {
+    "country_research": {
       "paths": [
-        "backend\\middleware\\webhook_ip_whitelist.py"
+        "backend\\routers\\country_research.py",
+        "backend\\services\\country_research.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "suppliers_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\suppliers_write_service.py"
+      ]
+    },
+    "country_staff": {
+      "paths": [
+        "backend\\routers\\country_staff.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "country": {
+      "backend": [
+        "controllers",
+        "providers"
+      ],
+      "frontend": [
+        "frontend\\web_app\\src\\components\\country"
+      ],
+      "paths": [
+        "backend\\controllers\\country_controller.py",
+        "backend\\providers\\country.py"
+      ]
+    },
+    "cross_border": {
+      "paths": [
+        "backend\\routers\\cross_border.py",
+        "backend\\services\\cross_border_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "cart_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\cart_write_service.py"
+      ]
+    },
+    "promotion_engine": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\promotion_engine_service.py"
+      ]
+    },
+    "operational": {
+      "paths": [
+        "backend\\controllers\\operational_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "slug": {
+      "paths": [
+        "backend\\utils\\slug.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "logo": {
+      "frontend": [
+        "frontend\\shared\\src\\components\\logo"
+      ]
+    },
+    "comms": {
+      "frontend": [
+        "frontend\\web_app\\src\\components\\comms"
+      ]
+    },
+    "config": {
+      "paths": [
+        "backend\\providers\\config.py",
+        "backend\\utils\\config.py"
+      ],
+      "backend": [
+        "providers",
+        "utils"
+      ]
+    },
+    "test_auth": {
+      "paths": [
+        "backend\\tests\\test_auth.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "country_curated": {
+      "paths": [
+        "backend\\data\\country_curated.py"
+      ],
+      "backend": [
+        "data"
+      ]
+    },
+    "list_no_table_args": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\list_no_table_args.py"
+      ]
+    },
+    "auth": {
+      "paths": [
+        "backend\\controllers\\admin\\auth.py",
+        "backend\\controllers\\auth_controller.py",
+        "backend\\routers\\auth.py",
+        "backend\\services\\auth_service.py",
+        "backend\\utils\\auth.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers",
+        "services",
+        "utils"
+      ],
+      "frontend": [
+        "frontend\\web_app\\src\\components\\auth"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "fix_table_args_comprehensive": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_table_args_comprehensive.py"
+      ]
+    },
+    "rbac": {
+      "paths": [
+        "backend\\services\\rbac_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "siem_engine": {
+      "paths": [
+        "backend\\middleware\\siem_engine.py"
       ],
       "backend": [
         "middleware"
       ]
     },
-    "employee_active_tasks": {
+    "core": {
       "paths": [
-        "backend\\models\\employee_active_tasks.py"
+        "backend\\models\\core.py"
       ],
       "backend": [
         "models"
       ]
     },
-    "downstream_wiring": {
+    "user": {
       "paths": [
-        "backend\\services\\downstream_wiring.py"
+        "backend\\models\\user.py"
       ],
       "backend": [
-        "services"
+        "models"
       ]
     },
-    "employee_activity_logger": {
+    "test_free_country_research": {
       "paths": [
-        "backend\\services\\employee_activity_logger.py"
+        "backend\\tests\\test_free_country_research.py"
       ],
       "backend": [
-        "services"
+        "tests"
       ]
     },
-    "logistics_partner": {
+    "test": {
       "paths": [
-        "backend\\controllers\\logistics_partner_controller.py",
-        "backend\\routers\\logistics_partner.py"
+        "backend\\tests\\test_models.py"
       ],
       "backend": [
-        "controllers",
+        "tests"
+      ]
+    },
+    "batch_upload": {
+      "paths": [
+        "backend\\routers\\batch_upload.py"
+      ],
+      "backend": [
         "routers"
+      ]
+    },
+    "br_05": {
+      "paths": [
+        "backend\\providers\\legacy\\br_05.py"
+      ],
+      "backend": [
+        "providers"
       ]
     },
     "test_treasury": {
@@ -3777,124 +2663,81 @@
         "tests"
       ]
     },
-    "constant_time": {
+    "debug_events2": {
       "paths": [
-        "backend\\utils\\constant_time.py"
+        "backend\\scripts\\debug_events2.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "file_validation": {
+      "paths": [
+        "backend\\utils\\file_validation.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "lms_permission_lock": {
+    "test_chat": {
       "paths": [
-        "backend\\services\\lms_permission_lock.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "employee_communication": {
-      "paths": [
-        "backend\\services\\employee_communication_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "database_security": {
-      "paths": [
-        "backend\\middleware\\database_security.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "test_banners": {
-      "paths": [
-        "backend\\tests\\test_banners.py"
+        "backend\\tests\\test_chat.py"
       ],
       "backend": [
         "tests"
       ]
     },
-    "payroll_engine": {
+    "downstream": {
       "paths": [
-        "backend\\services\\payroll_engine.py"
+        "backend\\services\\downstream_hooks.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "ems": {
-      "frontend": [
-        "frontend\\web_app\\src\\components\\ems"
-      ]
-    },
-    "logistics_locations": {
+    "messaging": {
       "paths": [
-        "backend\\routers\\logistics_locations.py"
+        "backend\\routers\\messaging.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "entity_chat": {
+    "logistics_health_engine": {
       "paths": [
-        "backend\\routers\\entity_chat.py",
-        "backend\\services\\entity_chat_service.py"
+        "backend\\services\\logistics_health_engine.py"
       ],
       "backend": [
-        "routers",
         "services"
       ]
     },
-    "products": {
+    "referrals": {
+      "paths": [
+        "backend\\routers\\referrals.py"
+      ],
       "backend": [
-        "controllers",
-        "models",
         "routers"
-      ],
-      "surfaces": [
-        "admin",
-        "supplier"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\products.py",
-        "backend\\controllers\\products_controller.py",
-        "backend\\controllers\\supplier\\products.py",
-        "backend\\models\\products.py",
-        "backend\\routers\\admin_products.py",
-        "backend\\routers\\products.py",
-        "backend\\routers\\supplier_products.py"
       ]
     },
-    "retention": {
+    "system_architecture_audit": {
       "paths": [
-        "backend\\services\\retention_service.py"
+        "backend\\scripts\\system_architecture_audit.py"
       ],
       "backend": [
-        "services"
+        "scripts"
       ]
     },
-    "test_controller_subpackages": {
-      "paths": [
-        "backend\\tests\\test_controller_subpackages.py"
-      ],
+    "20260730_0008_split_country_configs_into_domain_tables": {
       "backend": [
-        "tests"
-      ]
-    },
-    "test_countries": {
-      "paths": [
-        "backend\\tests\\test_countries.py"
+        "alembic"
       ],
-      "backend": [
-        "tests"
+      "paths": [
+        "backend\\alembic\\versions\\20260730_0008_split_country_configs_into_domain_tables.py"
       ]
     },
-    "schema_audit_ci": {
+    "backend_layout_audit_3_0": {
       "paths": [
-        "backend\\scripts\\schema_audit_ci.py"
+        "backend\\scripts\\backend_layout_audit_3_0.py"
       ],
       "backend": [
         "scripts"
@@ -3908,374 +2751,124 @@
         "utils"
       ]
     },
-    "addresses": {
-      "paths": [
-        "backend\\routers\\addresses.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "debug": {
-      "paths": [
-        "backend\\scripts\\debug_events.py"
-      ],
+    "comprehensive_schema_check": {
       "backend": [
         "scripts"
-      ]
-    },
-    "test_shipping_quote": {
-      "paths": [
-        "backend\\tests\\test_shipping_quote.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "sub_ledger": {
-      "paths": [
-        "backend\\controllers\\sub_ledger_controller.py",
-        "backend\\services\\sub_ledger_service.py"
-      ],
-      "backend": [
-        "controllers",
-        "services"
-      ]
-    },
-    "inventory": {
-      "backend": [
-        "controllers"
-      ],
-      "surfaces": [
-        "supplier"
       ],
       "paths": [
-        "backend\\controllers\\supplier\\inventory.py"
+        "backend\\scripts\\comprehensive_schema_check.py"
       ]
     },
-    "live_tracking": {
+    "variant_config": {
       "paths": [
-        "backend\\services\\live_tracking_service.py"
+        "backend\\services\\variant_config_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "debug_events4": {
-      "paths": [
-        "backend\\scripts\\debug_events4.py"
-      ],
+    "check_schema_coverage": {
       "backend": [
         "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\check_schema_coverage.py"
       ]
     },
-    "logistics_health_engine": {
+    "bg_removal_presets": {
       "paths": [
-        "backend\\services\\logistics_health_engine.py"
+        "backend\\services\\bg_removal_presets.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "jobs": {
+    "encryption": {
       "paths": [
-        "backend\\routers\\jobs.py"
+        "backend\\utils\\encryption.py"
       ],
       "backend": [
-        "routers"
-      ]
-    },
-    "internal_communication": {
-      "paths": [
-        "backend\\services\\internal_communication.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "test_error_handling": {
-      "paths": [
-        "backend\\tests\\test_error_handling.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "reviews": {
-      "paths": [
-        "backend\\controllers\\reviews_controller.py",
-        "backend\\routers\\reviews.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "vat_rates": {
-      "paths": [
-        "backend\\data\\vat_rates.py"
-      ],
-      "backend": [
-        "data"
-      ]
-    },
-    "rbac": {
-      "paths": [
-        "backend\\services\\rbac_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "events": {
-      "paths": [
-        "backend\\models\\events.py"
-      ],
-      "backend": [
-        "models"
-      ]
-    },
-    "shift_scheduling": {
-      "paths": [
-        "backend\\services\\shift_scheduling.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "kms_encryption": {
-      "paths": [
-        "backend\\services\\kms_encryption.py",
-        "backend\\utils\\kms_encryption.py"
-      ],
-      "backend": [
-        "services",
         "utils"
       ]
     },
-    "country_versioning": {
+    "impossible_travel_middleware": {
       "paths": [
-        "backend\\controllers\\country_versioning_controller.py"
-      ],
-      "backend": [
-        "controllers"
-      ]
-    },
-    "request_id_middleware": {
-      "paths": [
-        "backend\\middleware\\request_id_middleware.py"
+        "backend\\middleware\\impossible_travel_middleware.py"
       ],
       "backend": [
         "middleware"
       ]
     },
-    "api_version_middleware": {
+    "localization": {
       "paths": [
-        "backend\\middleware\\api_version_middleware.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "commission_engine": {
-      "paths": [
-        "backend\\services\\commission_engine.py"
+        "backend\\services\\localization_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "create_tables": {
+    "rls_context": {
       "paths": [
-        "backend\\db\\create_tables.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "test_pagination_integration": {
-      "paths": [
-        "backend\\tests\\test_pagination_integration.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "constants": {
-      "paths": [
-        "backend\\utils\\constants.py"
+        "backend\\utils\\rls_context.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "rls_interceptor": {
-      "paths": [
-        "backend\\utils\\rls_interceptor.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "gateway_reconciliation": {
-      "paths": [
-        "backend\\services\\gateway_reconciliation_service.py"
-      ],
+    "communication_write": {
       "backend": [
         "services"
-      ]
-    },
-    "batch_upload": {
-      "paths": [
-        "backend\\routers\\batch_upload.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "fallback": {
-      "backend": [
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
       ],
       "paths": [
-        "backend\\routers\\admin_fallback.py"
+        "backend\\services\\communication_write_service.py"
       ]
     },
-    "logging_config": {
+    "background": {
       "paths": [
-        "backend\\utils\\logging_config.py"
+        "backend\\utils\\background_jobs.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "treasury_seeder": {
+    "async_workers": {
       "paths": [
-        "backend\\db\\treasury_seeder.py"
-      ],
-      "backend": [
-        "db"
-      ]
-    },
-    "2026_07_27_00_32_c0f3f1817791_add_production_postgres_indexes": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_27_00_32-c0f3f1817791_add_production_postgres_indexes.py"
-      ],
-      "backend": [
-        "alembic"
-      ]
-    },
-    "bg_remover": {
-      "paths": [
-        "backend\\providers\\bg_remover.py"
+        "backend\\providers\\async_workers.py"
       ],
       "backend": [
         "providers"
       ]
     },
-    "test_wishlist": {
+    "cash_flow_forecast": {
       "paths": [
-        "backend\\tests\\test_wishlist.py"
+        "backend\\services\\cash_flow_forecast_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_api_endpoints": {
+      "paths": [
+        "backend\\tests\\test_api_endpoints.py"
       ],
       "backend": [
         "tests"
       ]
     },
-    "finance_erp": {
+    "pci_dss_compliance": {
       "paths": [
-        "backend\\routers\\finance_erp.py"
+        "backend\\middleware\\pci_dss_compliance.py"
       ],
       "backend": [
-        "routers"
+        "middleware"
       ]
     },
-    "travel_detector": {
+    "disputes": {
       "paths": [
-        "backend\\services\\travel_detector.py"
+        "backend\\controllers\\disputes_controller.py"
       ],
       "backend": [
-        "services"
-      ]
-    },
-    "migrations": {
-      "paths": [
-        "backend\\utils\\migrations.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "audit_trail": {
-      "paths": [
-        "backend\\services\\audit_trail_service.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "coi_engine": {
-      "paths": [
-        "backend\\services\\coi_engine.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "users": {
-      "backend": [
-        "controllers",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\users.py",
-        "backend\\routers\\admin_users.py",
-        "backend\\routers\\users.py"
-      ]
-    },
-    "payout_approval": {
-      "paths": [
-        "backend\\routers\\payout_approval.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "automation": {
-      "paths": [
-        "backend\\routers\\automation.py"
-      ],
-      "backend": [
-        "routers"
-      ]
-    },
-    "financial_reporting": {
-      "paths": [
-        "backend\\services\\financial_reporting.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "test_country_ai_research": {
-      "paths": [
-        "backend\\tests\\test_country_ai_research.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "2026_07_26_22_00_e70b2cb9a90f_fix_internal_channels_fk": {
-      "paths": [
-        "backend\\alembic\\versions\\2026_07_26_22_00-e70b2cb9a90f_fix_internal_channels_fk.py"
-      ],
-      "backend": [
-        "alembic"
+        "controllers"
       ]
     },
     "returns": {
@@ -4288,52 +2881,173 @@
         "routers"
       ]
     },
-    "country_dropdown": {
+    "payout_approval": {
       "paths": [
-        "backend\\routers\\country_dropdown.py"
+        "backend\\routers\\payout_approval.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "schema_audit": {
+    "profile": {
+      "backend": [
+        "controllers",
+        "routers"
+      ],
       "paths": [
-        "backend\\utils\\schema_audit.py"
+        "backend\\controllers\\supplier\\profile.py",
+        "backend\\routers\\supplier_profile.py"
+      ],
+      "surfaces": [
+        "supplier"
+      ]
+    },
+    "validate_migrations": {
+      "paths": [
+        "backend\\scripts\\validate_migrations.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "map": {
+      "backend": [
+        "providers",
+        "services"
+      ],
+      "frontend": [
+        "frontend\\web_app\\src\\components\\map"
+      ],
+      "paths": [
+        "backend\\providers\\map.py",
+        "backend\\services\\map_service.py"
+      ]
+    },
+    "dependencies": {
+      "paths": [
+        "backend\\utils\\dependencies.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "external_contact": {
+    "rls_middleware": {
       "paths": [
-        "backend\\services\\external_contact.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "fraud_monitoring": {
-      "paths": [
-        "backend\\tasks\\fraud_monitoring.py"
-      ],
-      "backend": [
-        "tasks"
-      ]
-    },
-    "redis_client": {
-      "paths": [
-        "backend\\utils\\redis_client.py"
+        "backend\\utils\\rls_middleware.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "country_heuristic_engine": {
+    "payment_orchestrator": {
       "paths": [
-        "backend\\services\\country_heuristic_engine.py"
+        "backend\\services\\payment_orchestrator.py"
       ],
       "backend": [
         "services"
+      ]
+    },
+    "product_verification": {
+      "paths": [
+        "backend\\controllers\\product_verification_controller.py",
+        "backend\\routers\\product_verification.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "check_birefnet": {
+      "paths": [
+        "backend\\providers\\legacy\\check_BiRefNet.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "kms_integration": {
+      "paths": [
+        "backend\\utils\\kms_integration.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "fraud_detection": {
+      "paths": [
+        "backend\\routers\\fraud_detection.py",
+        "backend\\services\\fraud_detection.py",
+        "backend\\services\\fraud_detection_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "text": {
+      "paths": [
+        "backend\\providers\\ai\\text.py",
+        "backend\\providers\\text.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "test_country_research": {
+      "paths": [
+        "backend\\tests\\test_country_research.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "add_schema_to": {
+      "paths": [
+        "backend\\scripts\\add_schema_to_models.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "cash_management": {
+      "paths": [
+        "backend\\controllers\\cash_management_controller.py",
+        "backend\\routers\\cash_management.py",
+        "backend\\services\\cash_management_service.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers",
+        "services"
+      ]
+    },
+    "ediscovery": {
+      "paths": [
+        "backend\\routers\\ediscovery.py",
+        "backend\\services\\ediscovery.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "fallback": {
+      "backend": [
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\admin_fallback.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "logistics_health": {
+      "paths": [
+        "backend\\routers\\logistics_health.py"
+      ],
+      "backend": [
+        "routers"
       ]
     },
     "countries": {
@@ -4346,238 +3060,137 @@
         "routers"
       ]
     },
-    "financial_reports": {
+    "fix": {
+      "backend": [
+        "tests"
+      ],
       "paths": [
-        "backend\\services\\financial_reports_service.py"
+        "backend\\tests\\fix_models.py"
+      ]
+    },
+    "debug_first_class": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\debug_first_class.py"
+      ]
+    },
+    "import": {
+      "paths": [
+        "backend\\services\\import_service.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "cash_flow_forecast": {
+    "curated_cities": {
       "paths": [
-        "backend\\services\\cash_flow_forecast_service.py"
+        "backend\\data\\curated_cities.py"
       ],
       "backend": [
-        "services"
+        "data"
       ]
     },
-    "command_center": {
+    "test_ems_lifecycle": {
       "paths": [
-        "backend\\controllers\\command_center.py",
-        "backend\\controllers\\command_center_controller.py",
-        "backend\\routers\\command_center.py",
-        "backend\\services\\command_center_service.py"
+        "backend\\tests\\test_ems_lifecycle.py"
       ],
       "backend": [
-        "controllers",
-        "routers",
-        "services"
+        "tests"
       ]
     },
-    "bg_removal": {
+    "test_security": {
       "paths": [
-        "backend\\services\\bg_removal_service.py"
+        "backend\\tests\\test_security.py"
       ],
       "backend": [
-        "services"
+        "tests"
       ]
     },
-    "disputes": {
+    "test_reviews": {
       "paths": [
-        "backend\\controllers\\disputes_controller.py"
+        "backend\\tests\\test_reviews.py"
       ],
       "backend": [
-        "controllers"
-      ]
-    },
-    "compliance": {
-      "paths": [
-        "backend\\controllers\\compliance_controller.py",
-        "backend\\routers\\compliance.py"
-      ],
-      "backend": [
-        "controllers",
-        "routers"
-      ]
-    },
-    "webhook_verification": {
-      "paths": [
-        "backend\\middleware\\webhook_verification.py"
-      ],
-      "backend": [
-        "middleware"
+        "tests"
       ]
     },
     "country_communications": {
       "paths": [
-        "backend\\api\\country_communications.py"
+        "backend\\api\\country_communications.py",
+        "backend\\routers\\country_communications.py"
       ],
       "backend": [
-        "api"
-      ]
-    },
-    "behavioral_analytics": {
-      "paths": [
-        "backend\\middleware\\behavioral_analytics.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "ocr_parser": {
-      "paths": [
-        "backend\\services\\ocr_parser.py"
-      ],
-      "backend": [
-        "services"
-      ]
-    },
-    "badge": {
-      "backend": [
-        "controllers"
-      ],
-      "surfaces": [
-        "supplier"
-      ],
-      "paths": [
-        "backend\\controllers\\supplier\\badge.py"
-      ]
-    },
-    "tracing": {
-      "paths": [
-        "backend\\utils\\tracing.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "variant_key": {
-      "paths": [
-        "backend\\utils\\variant_key.py"
-      ],
-      "backend": [
-        "utils"
-      ]
-    },
-    "test_internal_communication": {
-      "paths": [
-        "backend\\tests\\test_internal_communication.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "test_admin": {
-      "paths": [
-        "backend\\tests\\test_admin.py"
-      ],
-      "backend": [
-        "tests"
-      ]
-    },
-    "coupons": {
-      "backend": [
-        "controllers",
-        "routers"
-      ],
-      "surfaces": [
-        "admin"
-      ],
-      "paths": [
-        "backend\\controllers\\admin\\coupons.py",
-        "backend\\controllers\\coupons_controller.py",
-        "backend\\routers\\coupons.py"
-      ]
-    },
-    "csrf_middleware": {
-      "paths": [
-        "backend\\middleware\\csrf_middleware.py"
-      ],
-      "backend": [
-        "middleware"
-      ]
-    },
-    "chatbot": {
-      "paths": [
-        "backend\\controllers\\chatbot_controller.py",
-        "backend\\providers\\chatbot.py",
-        "backend\\routers\\chatbot.py"
-      ],
-      "backend": [
-        "controllers",
-        "providers",
+        "api",
         "routers"
       ]
     },
-    "media": {
+    "country_enhancements": {
       "paths": [
-        "backend\\db\\media_models.py",
-        "backend\\models\\media_models.py",
-        "backend\\services\\media_service.py"
-      ],
-      "backend": [
-        "db",
-        "models",
-        "services"
-      ]
-    },
-    "core": {
-      "paths": [
-        "backend\\models\\core.py"
+        "backend\\models\\country_enhancements.py"
       ],
       "backend": [
         "models"
       ]
     },
-    "transactional_email": {
+    "event_publisher": {
       "paths": [
-        "backend\\services\\transactional_email_service.py"
+        "backend\\events\\event_publisher.py"
+      ],
+      "backend": [
+        "events"
+      ]
+    },
+    "write_files_script": {
+      "paths": [
+        "backend\\services\\write_files_script.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "geo": {
+    "chat_system": {
       "paths": [
-        "backend\\providers\\geo.py",
-        "backend\\routers\\geo.py"
-      ],
-      "backend": [
-        "providers",
-        "routers"
-      ]
-    },
-    "expense_routing": {
-      "paths": [
-        "backend\\services\\expense_routing.py"
+        "backend\\services\\chat_system.py"
       ],
       "backend": [
         "services"
       ]
     },
-    "escalation_sla": {
+    "fix_db": {
+      "backend": [
+        "scripts"
+      ],
       "paths": [
-        "backend\\services\\escalation_sla.py"
+        "backend\\scripts\\fix_db_models.py"
+      ]
+    },
+    "payments": {
+      "paths": [
+        "backend\\controllers\\payments_controller.py",
+        "backend\\models\\payments.py",
+        "backend\\routers\\payments.py",
+        "backend\\services\\payments\\payments_service.py"
       ],
       "backend": [
+        "controllers",
+        "models",
+        "routers",
         "services"
       ]
     },
-    "supplier_health_engine": {
-      "paths": [
-        "backend\\services\\supplier_health_engine.py"
-      ],
+    "database": {
       "backend": [
-        "services"
-      ]
-    },
-    "br_12": {
-      "paths": [
-        "backend\\providers\\legacy\\br_12.py"
+        "controllers",
+        "db"
       ],
-      "backend": [
-        "providers"
+      "paths": [
+        "backend\\controllers\\admin\\database.py",
+        "backend\\db\\database.py"
+      ],
+      "surfaces": [
+        "admin"
       ]
     },
     "trading": {
@@ -4592,58 +3205,771 @@
         "services"
       ]
     },
-    "circuit_breaker": {
+    "geo_fence": {
       "paths": [
-        "backend\\utils\\circuit_breaker.py"
+        "backend\\services\\geo_fence_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "bulk_ops": {
+      "backend": [
+        "controllers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\bulk_ops.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "ml_worker": {
+      "paths": [
+        "backend\\utils\\ml_worker.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "2026_07_30_0003_20260730_0003_create_upload_jobs_table": {
+    "cache": {
       "paths": [
-        "backend\\alembic\\versions\\2026_07_30_0003-20260730_0003_create_upload_jobs_table.py"
+        "backend\\utils\\cache.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "test_country_auto_populate": {
+      "paths": [
+        "backend\\tests\\test_country_auto_populate.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "ai_automation": {
+      "paths": [
+        "backend\\services\\ai_automation_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "2026_07_26_16_09_b81bfc888610_baseline_canonical_orm_schema_clean": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py"
       ],
       "backend": [
         "alembic"
       ]
     },
-    "dependencies": {
+    "expense": {
       "paths": [
-        "backend\\utils\\dependencies.py"
+        "backend\\controllers\\expense_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "models_country_enhancements": {
+      "paths": [
+        "backend\\db\\models_country_enhancements.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "test_comprehensive_system": {
+      "paths": [
+        "backend\\tests\\test_comprehensive_system.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "debug_systemalert": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\debug_systemalert.py"
+      ]
+    },
+    "employee": {
+      "paths": [
+        "backend\\controllers\\employee_controller.py",
+        "backend\\db\\employee_models.py",
+        "backend\\models\\employee_models.py"
+      ],
+      "backend": [
+        "controllers",
+        "db",
+        "models"
+      ]
+    },
+    "users_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\users_write_service.py"
+      ]
+    },
+    "customer_health_engine": {
+      "paths": [
+        "backend\\services\\customer_health_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "add_schema_declarations_ast": {
+      "paths": [
+        "backend\\scripts\\add_schema_declarations_ast.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "address": {
+      "paths": [
+        "backend\\controllers\\address_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "device_binding_middleware": {
+      "paths": [
+        "backend\\middleware\\device_binding_middleware.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "audit_trail": {
+      "paths": [
+        "backend\\services\\audit_trail_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "2026_07_27_00_32_c0f3f1817791_add_production_postgres_indexes": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_27_00_32-c0f3f1817791_add_production_postgres_indexes.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "rls_dependency": {
+      "paths": [
+        "backend\\middleware\\rls_dependency.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "webhook_processor": {
+      "paths": [
+        "backend\\services\\webhook_processor.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "video_conferencing": {
+      "paths": [
+        "backend\\services\\video_conferencing.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "onboarding": {
+      "paths": [
+        "backend\\models\\onboarding.py",
+        "backend\\routers\\onboarding.py"
+      ],
+      "backend": [
+        "models",
+        "routers"
+      ]
+    },
+    "add_schema_declarations_v3": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\add_schema_declarations_v3.py"
+      ]
+    },
+    "security_metrics": {
+      "paths": [
+        "backend\\utils\\security_metrics.py"
       ],
       "backend": [
         "utils"
       ]
     },
-    "country_staff": {
+    "vision": {
       "paths": [
-        "backend\\routers\\country_staff.py"
+        "backend\\providers\\ai\\vision.py",
+        "backend\\providers\\vision.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "generate_codebase": {
+      "paths": [
+        "backend\\scripts\\generate_codebase.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "versioning": {
+      "paths": [
+        "backend\\utils\\versioning.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "mcp_client_example": {
+      "paths": [
+        "backend\\tools\\mcp\\mcp_client_example.py"
+      ],
+      "backend": [
+        "tools"
+      ]
+    },
+    "chatbot": {
+      "paths": [
+        "backend\\controllers\\chatbot_controller.py",
+        "backend\\providers\\chatbot.py",
+        "backend\\routers\\chatbot.py"
+      ],
+      "backend": [
+        "controllers",
+        "providers",
+        "routers"
+      ]
+    },
+    "constant_time": {
+      "paths": [
+        "backend\\utils\\constant_time.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "debug_bare": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\debug_bare.py"
+      ]
+    },
+    "flash_sales": {
+      "paths": [
+        "backend\\routers\\flash_sales.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "workflows": {
+    "fraud": {
       "paths": [
-        "backend\\routers\\workflows.py"
+        "backend\\models\\fraud.py",
+        "backend\\services\\fraud_service.py"
+      ],
+      "backend": [
+        "models",
+        "services"
+      ]
+    },
+    "analyze_graph": {
+      "paths": [
+        "backend\\alembic\\_analyze_graph.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "jobs": {
+      "paths": [
+        "backend\\routers\\jobs.py"
       ],
       "backend": [
         "routers"
       ]
     },
-    "finance": {
+    "init_db": {
+      "paths": [
+        "backend\\db\\init_db.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "2026_07_30_0004_20260730_0004_create_event_tables": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0004-20260730_0004_create_event_tables.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "hr_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\hr_write_service.py"
+      ]
+    },
+    "payroll": {
+      "paths": [
+        "backend\\routers\\payroll.py",
+        "backend\\services\\payroll_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "fix_table_args_ast": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\fix_table_args_ast.py"
+      ]
+    },
+    "worm_audit": {
+      "paths": [
+        "backend\\services\\worm_audit.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "products_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\products_write_service.py"
+      ]
+    },
+    "ws_chat": {
+      "paths": [
+        "backend\\routers\\ws_chat.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "rate_limit_middleware": {
+      "paths": [
+        "backend\\middleware\\rate_limit_middleware.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "2026_07_28_0000_employee_hr_tables": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_28_0000_employee_hr_tables.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "performance": {
+      "paths": [
+        "backend\\routers\\performance.py",
+        "backend\\services\\performance_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "frontend_errors": {
+      "paths": [
+        "backend\\routers\\frontend_errors.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "br_11": {
+      "paths": [
+        "backend\\providers\\legacy\\br_11.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "add": {
+      "backend": [
+        "tests"
+      ],
+      "paths": [
+        "backend\\tests\\_add_models.py"
+      ]
+    },
+    "mixins": {
+      "paths": [
+        "backend\\db\\mixins.py",
+        "backend\\models\\mixins.py"
+      ],
+      "backend": [
+        "db",
+        "models"
+      ]
+    },
+    "payments_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\payments_write_service.py"
+      ]
+    },
+    "marketing": {
+      "paths": [
+        "backend\\models\\marketing.py"
+      ],
+      "backend": [
+        "models"
+      ]
+    },
+    "imports": {
+      "paths": [
+        "backend\\models\\imports.py",
+        "backend\\routers\\imports.py"
+      ],
       "backend": [
         "models",
         "routers"
+      ]
+    },
+    "commerce_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\commerce_write_service.py"
+      ]
+    },
+    "users": {
+      "backend": [
+        "controllers",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\users.py",
+        "backend\\routers\\admin_users.py",
+        "backend\\routers\\users.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "iam": {
+      "paths": [
+        "backend\\controllers\\iam_controller.py",
+        "backend\\routers\\iam.py",
+        "backend\\services\\iam_service.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers",
+        "services"
+      ]
+    },
+    "schema_audit": {
+      "paths": [
+        "backend\\utils\\schema_audit.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "okr_engine": {
+      "paths": [
+        "backend\\services\\okr_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_error_handling": {
+      "paths": [
+        "backend\\tests\\test_error_handling.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "auto_payout_scheduler": {
+      "paths": [
+        "backend\\services\\auto_payout_scheduler.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "br_12": {
+      "paths": [
+        "backend\\providers\\legacy\\br_12.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "document": {
+      "backend": [
+        "controllers"
+      ],
+      "paths": [
+        "backend\\controllers\\supplier_document_controller.py"
       ],
       "surfaces": [
         "supplier"
+      ]
+    },
+    "voice_to_text": {
+      "paths": [
+        "backend\\providers\\voice_to_text.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "image_ai": {
+      "paths": [
+        "backend\\services\\image_ai_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "logistics_write": {
+      "backend": [
+        "services"
       ],
       "paths": [
-        "backend\\models\\finance.py",
-        "backend\\routers\\finance.py",
-        "backend\\routers\\supplier_finance.py"
+        "backend\\services\\logistics_write_service.py"
+      ]
+    },
+    "check_db": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\check_db_models.py"
+      ]
+    },
+    "test_ai_research": {
+      "paths": [
+        "backend\\tests\\test_ai_research_jobs.py",
+        "backend\\tests\\test_ai_research_router.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "returns_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\returns_write_service.py"
+      ]
+    },
+    "hr_dashboard": {
+      "paths": [
+        "backend\\routers\\hr_dashboard.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "free_image_tools": {
+      "paths": [
+        "backend\\services\\free_image_tools.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "mcp_server": {
+      "paths": [
+        "backend\\tools\\mcp\\mcp_server.py"
+      ],
+      "backend": [
+        "tools"
+      ]
+    },
+    "test_middleware": {
+      "paths": [
+        "backend\\tests\\test_middleware_helpers.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "test_health": {
+      "paths": [
+        "backend\\tests\\test_health.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "categories": {
+      "backend": [
+        "controllers",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\categories_controller.py",
+        "backend\\routers\\admin_categories.py",
+        "backend\\routers\\categories.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "conftest": {
+      "paths": [
+        "backend\\tests\\conftest.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "country_tax": {
+      "backend": [
+        "models"
+      ],
+      "paths": [
+        "backend\\models\\country_tax.py"
+      ]
+    },
+    "ai_copy": {
+      "paths": [
+        "backend\\services\\ai_copy_jobs.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "request_id_middleware": {
+      "paths": [
+        "backend\\middleware\\request_id_middleware.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "tracing": {
+      "paths": [
+        "backend\\utils\\tracing.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "treasurer": {
+      "paths": [
+        "backend\\services\\treasurer.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "onboarding_pipeline": {
+      "paths": [
+        "backend\\services\\onboarding_pipeline.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "finance_erp": {
+      "paths": [
+        "backend\\routers\\finance_erp.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "logging_config": {
+      "paths": [
+        "backend\\utils\\logging_config.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "test_auto_payout_sweep": {
+      "paths": [
+        "backend\\tests\\test_auto_payout_sweep.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "country_admin": {
+      "paths": [
+        "backend\\routers\\country_admin.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "cash": {
+      "backend": [
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\admin_cash.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "test_countries": {
+      "paths": [
+        "backend\\tests\\test_countries.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "tickets_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\tickets_write_service.py"
+      ]
+    },
+    "logistics_partner_pricing": {
+      "paths": [
+        "backend\\services\\logistics_partner_pricing.py"
+      ],
+      "backend": [
+        "services"
       ]
     },
     "logistics_sla": {
@@ -4654,9 +3980,1304 @@
         "services"
       ]
     },
+    "reviews": {
+      "paths": [
+        "backend\\controllers\\reviews_controller.py",
+        "backend\\routers\\reviews.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "metrics": {
+      "paths": [
+        "backend\\utils\\metrics.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "travel_detector": {
+      "paths": [
+        "backend\\services\\travel_detector.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "confidence_scoring": {
+      "paths": [
+        "backend\\services\\confidence_scoring.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "invoice_html": {
+      "paths": [
+        "backend\\utils\\invoice_html.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "orchestrator": {
+      "paths": [
+        "backend\\middleware\\orchestrator.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "finance_transfer": {
+      "paths": [
+        "backend\\services\\finance_transfer_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "rls": {
+      "backend": [
+        "middleware"
+      ],
+      "paths": [
+        "backend\\middleware\\rls.py"
+      ]
+    },
+    "storage": {
+      "paths": [
+        "backend\\services\\storage.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "check_fk": {
+      "backend": [
+        "tests"
+      ],
+      "paths": [
+        "backend\\tests\\_check_fk.py"
+      ]
+    },
+    "notifications": {
+      "paths": [
+        "backend\\controllers\\notifications_controller.py",
+        "backend\\routers\\notifications.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "test_pagination_integration": {
+      "paths": [
+        "backend\\tests\\test_pagination_integration.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "permission": {
+      "paths": [
+        "backend\\services\\permission_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "advanced_search_engine": {
+      "paths": [
+        "backend\\services\\advanced_search_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "verify_syntax": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\verify_syntax.py"
+      ]
+    },
+    "check_remaining": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\check_remaining.py"
+      ]
+    },
+    "ip_extraction_middleware": {
+      "paths": [
+        "backend\\middleware\\ip_extraction_middleware.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "analytics": {
+      "backend": [
+        "controllers",
+        "models",
+        "providers",
+        "routers",
+        "utils"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\analytics.py",
+        "backend\\controllers\\supplier\\analytics.py",
+        "backend\\models\\analytics.py",
+        "backend\\providers\\analytics.py",
+        "backend\\routers\\supplier_analytics.py",
+        "backend\\utils\\analytics_service.py"
+      ],
+      "surfaces": [
+        "admin",
+        "supplier"
+      ]
+    },
+    "br_13": {
+      "paths": [
+        "backend\\providers\\legacy\\br_13.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "behavioral_analytics": {
+      "paths": [
+        "backend\\middleware\\behavioral_analytics.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "bg_removal": {
+      "paths": [
+        "backend\\services\\bg_removal_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "offboarding": {
+      "paths": [
+        "backend\\services\\offboarding.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "add_schema_declarations_debug": {
+      "paths": [
+        "backend\\scripts\\add_schema_declarations_debug.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "content": {
+      "paths": [
+        "backend\\services\\content_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "2026_07_29_20_30_20260729_2030_add_postgres_range_partitioning_audit_notif": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "financial_reporting": {
+      "paths": [
+        "backend\\services\\financial_reporting.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "variant_key": {
+      "paths": [
+        "backend\\utils\\variant_key.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "risk": {
+      "paths": [
+        "backend\\controllers\\risk_controller.py",
+        "backend\\routers\\risk.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "incident": {
+      "paths": [
+        "backend\\models\\incident.py",
+        "backend\\routers\\incident.py",
+        "backend\\services\\incident_service.py"
+      ],
+      "backend": [
+        "models",
+        "routers",
+        "services"
+      ]
+    },
+    "debug_events4": {
+      "paths": [
+        "backend\\scripts\\debug_events4.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "ghost_order_detector": {
+      "paths": [
+        "backend\\jobs\\ghost_order_detector.py"
+      ],
+      "backend": [
+        "jobs"
+      ]
+    },
+    "succession": {
+      "paths": [
+        "backend\\routers\\succession.py",
+        "backend\\services\\succession_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "email_enrichment": {
+      "paths": [
+        "backend\\routers\\email_enrichment.py",
+        "backend\\services\\email_enrichment.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "treasury_seeder": {
+      "paths": [
+        "backend\\db\\treasury_seeder.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "external_contact": {
+      "paths": [
+        "backend\\services\\external_contact.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "websocket_manager": {
+      "paths": [
+        "backend\\services\\websocket_manager.py",
+        "backend\\utils\\websocket_manager.py"
+      ],
+      "backend": [
+        "services",
+        "utils"
+      ]
+    },
+    "employee_active_tasks": {
+      "paths": [
+        "backend\\models\\employee_active_tasks.py"
+      ],
+      "backend": [
+        "models"
+      ]
+    },
+    "expense_routing": {
+      "paths": [
+        "backend\\services\\expense_routing.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "country_dropdown": {
+      "paths": [
+        "backend\\routers\\country_dropdown.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "test_wishlist": {
+      "paths": [
+        "backend\\tests\\test_wishlist.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "migrate_media_to_s3": {
+      "paths": [
+        "backend\\scripts\\migrate_media_to_s3.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "geo": {
+      "paths": [
+        "backend\\providers\\geo.py",
+        "backend\\routers\\geo.py"
+      ],
+      "backend": [
+        "providers",
+        "routers"
+      ]
+    },
+    "gateway_reconciliation": {
+      "paths": [
+        "backend\\services\\gateway_reconciliation_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "video": {
+      "backend": [
+        "controllers",
+        "routers",
+        "services"
+      ],
+      "paths": [
+        "backend\\controllers\\video_controller.py",
+        "backend\\routers\\admin_video.py",
+        "backend\\routers\\video.py",
+        "backend\\routers\\video_controller.py",
+        "backend\\services\\video_service.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "supplier_onboarding": {
+      "paths": [
+        "backend\\services\\supplier_onboarding_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "shipping_tier": {
+      "paths": [
+        "backend\\services\\shipping_tier.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "ai_upload": {
+      "paths": [
+        "backend\\models\\ai_upload.py",
+        "backend\\routers\\ai_upload.py"
+      ],
+      "backend": [
+        "models",
+        "routers"
+      ]
+    },
+    "flash_sale": {
+      "paths": [
+        "backend\\controllers\\flash_sale_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "notification": {
+      "paths": [
+        "backend\\services\\notification_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "payouts": {
+      "backend": [
+        "controllers",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\payouts.py",
+        "backend\\controllers\\supplier\\payouts.py",
+        "backend\\routers\\admin_payouts.py",
+        "backend\\routers\\supplier_payouts.py"
+      ],
+      "surfaces": [
+        "admin",
+        "supplier"
+      ]
+    },
+    "country_data_orchestrator": {
+      "paths": [
+        "backend\\services\\country_data_orchestrator.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "ai_research": {
+      "paths": [
+        "backend\\routers\\ai_research.py",
+        "backend\\services\\ai_research_jobs.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
     "country_ai_research": {
       "paths": [
         "backend\\services\\country_ai_research.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "staff_permissions": {
+      "paths": [
+        "backend\\utils\\staff_permissions.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "leave_accrual": {
+      "paths": [
+        "backend\\services\\leave_accrual.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "orders": {
+      "backend": [
+        "controllers",
+        "models",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\orders.py",
+        "backend\\controllers\\orders_controller.py",
+        "backend\\controllers\\supplier\\orders.py",
+        "backend\\models\\orders.py",
+        "backend\\routers\\admin_orders.py",
+        "backend\\routers\\orders.py",
+        "backend\\routers\\supplier_orders.py"
+      ],
+      "surfaces": [
+        "admin",
+        "supplier"
+      ]
+    },
+    "product_videos": {
+      "paths": [
+        "backend\\routers\\product_videos.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "lms": {
+      "paths": [
+        "backend\\controllers\\lms_controller.py",
+        "backend\\routers\\lms.py",
+        "backend\\services\\lms.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers",
+        "services"
+      ]
+    },
+    "multi_secret_webhook": {
+      "paths": [
+        "backend\\utils\\multi_secret_webhook.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "maker": {
+      "paths": [
+        "backend\\services\\maker.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "debug_events3": {
+      "paths": [
+        "backend\\scripts\\debug_events3.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "schemas": {
+      "paths": [
+        "backend\\db\\schemas.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "test_cart": {
+      "paths": [
+        "backend\\tests\\test_cart.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "ai_variant_config": {
+      "paths": [
+        "backend\\services\\ai_variant_config.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "2026_07_30_0002_20260730_0002_create_points_transactions_table": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0002-20260730_0002_create_points_transactions_table.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "payment": {
+      "paths": [
+        "backend\\events\\payment_events.py"
+      ],
+      "backend": [
+        "events"
+      ]
+    },
+    "2026_07_29_10_28_9ff24a0683dd_schema_drift_check": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_29_10_28-9ff24a0683dd_schema_drift_check.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "automation": {
+      "paths": [
+        "backend\\routers\\automation.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "2026_07_27_09_08_20260727_0908_add_check_constraints_to_status_enum_columns": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_27_09_08-20260727_0908_add_check_constraints_to_status_enum_columns.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "soft_delete": {
+      "paths": [
+        "backend\\utils\\soft_delete.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "translation": {
+      "paths": [
+        "backend\\services\\translation_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "lms_permission_lock": {
+      "paths": [
+        "backend\\services\\lms_permission_lock.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "debug": {
+      "paths": [
+        "backend\\scripts\\debug_events.py"
+      ],
+      "backend": [
+        "scripts"
+      ]
+    },
+    "2026_07_30_0009_20260730_0009_create_analytics_snapshot_tables": {
+      "backend": [
+        "alembic"
+      ],
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_30_0009-20260730_0009_create_analytics_snapshot_tables.py"
+      ]
+    },
+    "asset_tracking": {
+      "paths": [
+        "backend\\services\\asset_tracking.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_suppliers": {
+      "paths": [
+        "backend\\tests\\test_suppliers.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "cross_border_tracker": {
+      "paths": [
+        "backend\\services\\cross_border_tracker.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "finance_automation": {
+      "paths": [
+        "backend\\routers\\finance_automation.py",
+        "backend\\services\\finance_automation.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "translate": {
+      "paths": [
+        "backend\\routers\\translate.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "treasury_engine": {
+      "paths": [
+        "backend\\services\\treasury_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "expenses": {
+      "paths": [
+        "backend\\routers\\expenses.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "logistics_locations": {
+      "paths": [
+        "backend\\routers\\logistics_locations.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "ai_image": {
+      "paths": [
+        "backend\\routers\\ai_image.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "threat_feed_updater": {
+      "paths": [
+        "backend\\jobs\\threat_feed_updater.py"
+      ],
+      "backend": [
+        "jobs"
+      ]
+    },
+    "test_shipping_quote": {
+      "paths": [
+        "backend\\tests\\test_shipping_quote.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "entity_chat": {
+      "paths": [
+        "backend\\routers\\entity_chat.py",
+        "backend\\services\\entity_chat_service.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "test_banners": {
+      "paths": [
+        "backend\\tests\\test_banners.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "country_auto_populate": {
+      "paths": [
+        "backend\\routers\\country_auto_populate.py",
+        "backend\\services\\country_auto_populate.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "invoices": {
+      "paths": [
+        "backend\\routers\\invoices.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "cross_border_detection": {
+      "paths": [
+        "backend\\services\\cross_border_detection.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "employee_communication": {
+      "paths": [
+        "backend\\services\\employee_communication_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "permissions": {
+      "backend": [
+        "controllers",
+        "models",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\admin\\permissions.py",
+        "backend\\models\\permissions.py",
+        "backend\\routers\\permissions.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "promotion": {
+      "paths": [
+        "backend\\controllers\\promotion_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "employee_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\employee_write_service.py"
+      ]
+    },
+    "test_ems_edge_cases": {
+      "paths": [
+        "backend\\tests\\test_ems_edge_cases.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "comm": {
+      "paths": [
+        "backend\\controllers\\comm_controller.py",
+        "backend\\routers\\comm.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "vault": {
+      "paths": [
+        "backend\\utils\\vault.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "base": {
+      "paths": [
+        "backend\\db\\base.py",
+        "backend\\providers\\_base.py"
+      ],
+      "backend": [
+        "db",
+        "providers"
+      ]
+    },
+    "erp_finance": {
+      "paths": [
+        "backend\\services\\erp_finance_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "credit_control": {
+      "paths": [
+        "backend\\services\\credit_control_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "logistics": {
+      "backend": [
+        "controllers",
+        "models",
+        "routers"
+      ],
+      "paths": [
+        "backend\\controllers\\logistics_controller.py",
+        "backend\\models\\logistics.py",
+        "backend\\routers\\admin_logistics.py",
+        "backend\\routers\\logistics.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "audit": {
+      "paths": [
+        "backend\\controllers\\audit_controller.py",
+        "backend\\routers\\audit.py",
+        "backend\\services\\audit\\audit_service.py",
+        "backend\\services\\audit_service.py",
+        "backend\\utils\\audit.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers",
+        "services",
+        "utils"
+      ]
+    },
+    "test_users": {
+      "paths": [
+        "backend\\tests\\test_users.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "error_handler": {
+      "paths": [
+        "backend\\utils\\error_handler.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "test_search_endpoints": {
+      "paths": [
+        "backend\\tests\\test_search_endpoints.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "effective_permissions": {
+      "paths": [
+        "backend\\routers\\effective_permissions.py",
+        "backend\\services\\effective_permissions.py"
+      ],
+      "backend": [
+        "routers",
+        "services"
+      ]
+    },
+    "diagnose_tree": {
+      "paths": [
+        "backend\\alembic\\_diagnose_tree.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "test_coupons": {
+      "paths": [
+        "backend\\tests\\test_coupons.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "chat": {
+      "paths": [
+        "backend\\controllers\\chat_controller.py",
+        "backend\\routers\\admin_chat.py",
+        "backend\\routers\\chat.py",
+        "backend\\routers\\chat_api.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ],
+      "frontend": [
+        "frontend\\web_app\\src\\components\\chat"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "logistics_partner_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\logistics_partner_write_service.py"
+      ]
+    },
+    "financial": {
+      "paths": [
+        "backend\\controllers\\financial_controller.py"
+      ],
+      "backend": [
+        "controllers"
+      ]
+    },
+    "br_08": {
+      "paths": [
+        "backend\\providers\\legacy\\br_08.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "template": {
+      "paths": [
+        "backend\\services\\template.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "period_close": {
+      "paths": [
+        "backend\\services\\period_close_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "check_fk2": {
+      "backend": [
+        "tests"
+      ],
+      "paths": [
+        "backend\\tests\\_check_fk2.py"
+      ]
+    },
+    "employees": {
+      "paths": [
+        "backend\\controllers\\employees_controller.py",
+        "backend\\routers\\employees.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables": {
+      "paths": [
+        "backend\\alembic\\versions\\2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "sub_ledger": {
+      "paths": [
+        "backend\\controllers\\sub_ledger_controller.py",
+        "backend\\services\\sub_ledger_service.py"
+      ],
+      "backend": [
+        "controllers",
+        "services"
+      ]
+    },
+    "comms_unified": {
+      "paths": [
+        "backend\\routers\\comms_unified.py"
+      ],
+      "backend": [
+        "routers"
+      ]
+    },
+    "create_tables": {
+      "paths": [
+        "backend\\db\\create_tables.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "test_orders": {
+      "paths": [
+        "backend\\tests\\test_orders.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "graph_analysis": {
+      "paths": [
+        "backend\\alembic\\_graph_analysis.py"
+      ],
+      "backend": [
+        "alembic"
+      ]
+    },
+    "country_write": {
+      "backend": [
+        "services"
+      ],
+      "paths": [
+        "backend\\services\\country_write_service.py"
+      ]
+    },
+    "country_detection_middleware": {
+      "paths": [
+        "backend\\utils\\country_detection_middleware.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "shift_scheduling": {
+      "paths": [
+        "backend\\services\\shift_scheduling.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "api_version_middleware": {
+      "paths": [
+        "backend\\middleware\\api_version_middleware.py"
+      ],
+      "backend": [
+        "middleware"
+      ]
+    },
+    "debug_regex": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\debug_regex.py"
+      ]
+    },
+    "email_gateway": {
+      "paths": [
+        "backend\\services\\email_gateway.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "test_admin": {
+      "paths": [
+        "backend\\tests\\test_admin.py"
+      ],
+      "backend": [
+        "tests"
+      ]
+    },
+    "compliance": {
+      "paths": [
+        "backend\\controllers\\compliance_controller.py",
+        "backend\\routers\\compliance.py"
+      ],
+      "backend": [
+        "controllers",
+        "routers"
+      ]
+    },
+    "db_backup": {
+      "paths": [
+        "backend\\utils\\db_backup.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "safe_structure_migration": {
+      "backend": [
+        "scripts"
+      ],
+      "paths": [
+        "backend\\scripts\\safe_structure_migration.py"
+      ]
+    },
+    "expense_processing": {
+      "paths": [
+        "backend\\services\\expense_processing.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "payroll_engine": {
+      "paths": [
+        "backend\\services\\payroll_engine.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "category_tree": {
+      "paths": [
+        "backend\\utils\\category_tree.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "refund_posting": {
+      "paths": [
+        "backend\\services\\refund_posting_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "ocr": {
+      "paths": [
+        "backend\\providers\\ocr.py"
+      ],
+      "backend": [
+        "providers"
+      ]
+    },
+    "triple_auth": {
+      "paths": [
+        "backend\\services\\triple_auth.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "media": {
+      "paths": [
+        "backend\\db\\media_models.py",
+        "backend\\models\\media_models.py",
+        "backend\\services\\media_service.py"
+      ],
+      "backend": [
+        "db",
+        "models",
+        "services"
+      ]
+    },
+    "kms_encryption": {
+      "paths": [
+        "backend\\services\\kms_encryption.py",
+        "backend\\utils\\kms_encryption.py"
+      ],
+      "backend": [
+        "services",
+        "utils"
+      ]
+    },
+    "run_py": {
+      "paths": [
+        "backend\\services\\run_py.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "constants": {
+      "paths": [
+        "backend\\utils\\constants.py"
+      ],
+      "backend": [
+        "utils"
+      ]
+    },
+    "settings": {
+      "backend": [
+        "routers"
+      ],
+      "paths": [
+        "backend\\routers\\admin_settings.py"
+      ],
+      "surfaces": [
+        "admin"
+      ]
+    },
+    "websocket_chat": {
+      "paths": [
+        "backend\\services\\websocket_chat.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "transaction": {
+      "paths": [
+        "backend\\db\\transaction.py"
+      ],
+      "backend": [
+        "db"
+      ]
+    },
+    "attendance": {
+      "paths": [
+        "backend\\services\\attendance_service.py"
+      ],
+      "backend": [
+        "services"
+      ]
+    },
+    "hse_manager": {
+      "paths": [
+        "backend\\services\\hse_manager.py"
       ],
       "backend": [
         "services"

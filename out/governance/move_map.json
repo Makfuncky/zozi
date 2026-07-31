@@ -1,0 +1,2340 @@
+{
+  "generated_at": "2026-07-30T20:43:34.495571+00:00",
+  "count": 389,
+  "moves": [
+    {
+      "from": "backend\\services\\advanced_filter_service.py",
+      "to": "backend/services/catalog/advanced_filter_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\advanced_search_engine.py",
+      "to": "backend/services/ai/advanced_search_engine.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ai_automation_service.py",
+      "to": "backend/services/ai/ai_automation_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ai_copy_jobs.py",
+      "to": "backend/services/ai/ai_copy_jobs.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ai_research_jobs.py",
+      "to": "backend/services/ai/ai_research_jobs.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ai_search_service.py",
+      "to": "backend/services/ai/ai_search_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ai_service.py",
+      "to": "backend/services/ai/ai_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ai_variant_config.py",
+      "to": "backend/services/ai/ai_variant_config.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\approval_matrix_service.py",
+      "to": "backend/services/core/approval_matrix_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\asset_tracking.py",
+      "to": "backend/services/core/asset_tracking.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\attendance_service.py",
+      "to": "backend/services/hr/attendance_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\audit_service.py",
+      "to": "backend/services/audit/audit_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\audit_trail_service.py",
+      "to": "backend/services/audit/audit_trail_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\auth_service.py",
+      "to": "backend/services/auth/auth_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\auto_payout_scheduler.py",
+      "to": "backend/services/finance/auto_payout_scheduler.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\automation_scheduler.py",
+      "to": "backend/services/core/automation_scheduler.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\background_check.py",
+      "to": "backend/services/core/background_check.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\bg_removal_presets.py",
+      "to": "backend/services/ai/bg_removal_presets.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\bg_removal_service.py",
+      "to": "backend/services/ai/bg_removal_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\biometric_auth.py",
+      "to": "backend/services/auth/biometric_auth.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\cash_flow_forecast_service.py",
+      "to": "backend/services/finance/cash_flow_forecast_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\cash_management_service.py",
+      "to": "backend/services/finance/cash_management_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\chat_enrichment.py",
+      "to": "backend/services/comms/chat_enrichment.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\chat_system.py",
+      "to": "backend/services/comms/chat_system.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\coi_engine.py",
+      "to": "backend/services/core/coi_engine.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\coi_service.py",
+      "to": "backend/services/core/coi_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\command_center_background.py",
+      "to": "backend/services/core/command_center_background.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\command_center_service.py",
+      "to": "backend/services/core/command_center_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\commission_engine.py",
+      "to": "backend/services/finance/commission_engine.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\communication_audit.py",
+      "to": "backend/services/audit/communication_audit.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\compliance_engine.py",
+      "to": "backend/services/audit/compliance_engine.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\confidence_scoring.py",
+      "to": "backend/services/core/confidence_scoring.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\content_service.py",
+      "to": "backend/services/core/content_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_ai_research.py",
+      "to": "backend/services/ai/country_ai_research.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_auto_populate.py",
+      "to": "backend/services/core/country_auto_populate.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_data_orchestrator.py",
+      "to": "backend/services/core/country_data_orchestrator.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_detection.py",
+      "to": "backend/services/core/country_detection.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_heuristic_engine.py",
+      "to": "backend/services/core/country_heuristic_engine.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_research.py",
+      "to": "backend/services/ai/country_research.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_rls_service.py",
+      "to": "backend/services/core/country_rls_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\country_write_service.py",
+      "to": "backend/services/core/country_write_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\credit_control_service.py",
+      "to": "backend/services/core/credit_control_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\cross_border_detection.py",
+      "to": "backend/services/orders/cross_border_detection.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\cross_border_service.py",
+      "to": "backend/services/orders/cross_border_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\cross_border_tracker.py",
+      "to": "backend/services/orders/cross_border_tracker.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\customer_health_engine.py",
+      "to": "backend/services/core/customer_health_engine.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\data_residency.py",
+      "to": "backend/services/core/data_residency.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\data_residency_service.py",
+      "to": "backend/services/core/data_residency_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\dei_auditor.py",
+      "to": "backend/services/audit/dei_auditor.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\downstream_hooks.py",
+      "to": "backend/services/core/downstream_hooks.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\downstream_wiring.py",
+      "to": "backend/services/core/downstream_wiring.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ediscovery.py",
+      "to": "backend/services/core/ediscovery.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\effective_permissions.py",
+      "to": "backend/services/core/effective_permissions.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\email_enrichment.py",
+      "to": "backend/services/comms/email_enrichment.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\email_event_service.py",
+      "to": "backend/services/comms/email_event_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\email_gateway.py",
+      "to": "backend/services/comms/email_gateway.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\email_reputation.py",
+      "to": "backend/services/comms/email_reputation.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\employee_activity_logger.py",
+      "to": "backend/services/hr/employee_activity_logger.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\employee_communication_service.py",
+      "to": "backend/services/communication/employee_communication_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\employee_lifecycle_service.py",
+      "to": "backend/services/hr/employee_lifecycle_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\entity_chat_service.py",
+      "to": "backend/services/comms/entity_chat_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\erp_finance_service.py",
+      "to": "backend/services/finance/erp_finance_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\escalation_sla.py",
+      "to": "backend/services/core/escalation_sla.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\expense_processing.py",
+      "to": "backend/services/core/expense_processing.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\expense_routing.py",
+      "to": "backend/services/core/expense_routing.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\external_contact.py",
+      "to": "backend/services/core/external_contact.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\finance_automation.py",
+      "to": "backend/services/finance/finance_automation.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\finance_transfer_service.py",
+      "to": "backend/services/finance/finance_transfer_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\financial_reporting.py",
+      "to": "backend/services/core/financial_reporting.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\financial_reports_service.py",
+      "to": "backend/services/core/financial_reports_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\fix_chat.py",
+      "to": "backend/services/comms/fix_chat.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\fraud_detection.py",
+      "to": "backend/services/fraud/fraud_detection.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\fraud_detection_service.py",
+      "to": "backend/services/fraud/fraud_detection_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\fraud_service.py",
+      "to": "backend/services/fraud/fraud_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\free_image_tools.py",
+      "to": "backend/services/core/free_image_tools.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\fulfillment_service.py",
+      "to": "backend/services/logistics/fulfillment_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\gateway_auto_enable.py",
+      "to": "backend/services/core/gateway_auto_enable.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\gateway_reconciliation_service.py",
+      "to": "backend/services/core/gateway_reconciliation_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\general_ledger_service.py",
+      "to": "backend/services/finance/general_ledger_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\geo_fence_service.py",
+      "to": "backend/services/core/geo_fence_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ghost_watchdog.py",
+      "to": "backend/services/core/ghost_watchdog.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\hierarchy_service.py",
+      "to": "backend/services/core/hierarchy_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\hse_manager.py",
+      "to": "backend/services/core/hse_manager.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\iam_service.py",
+      "to": "backend/services/core/iam_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\image_ai_service.py",
+      "to": "backend/services/ai/image_ai_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\import_service.py",
+      "to": "backend/services/core/import_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\incident_service.py",
+      "to": "backend/services/core/incident_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\internal_communication.py",
+      "to": "backend/services/communication/internal_communication.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\je_reversal_service.py",
+      "to": "backend/services/core/je_reversal_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\kms_encryption.py",
+      "to": "backend/services/core/kms_encryption.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\leave_accrual.py",
+      "to": "backend/services/core/leave_accrual.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\legal_contract_service.py",
+      "to": "backend/services/core/legal_contract_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\live_tracking_service.py",
+      "to": "backend/services/core/live_tracking_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\lms.py",
+      "to": "backend/services/core/lms.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\lms_permission_lock.py",
+      "to": "backend/services/core/lms_permission_lock.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\localization_service.py",
+      "to": "backend/services/core/localization_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\logistics_engine.py",
+      "to": "backend/services/logistics/logistics_engine.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\logistics_health_engine.py",
+      "to": "backend/services/logistics/logistics_health_engine.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\logistics_partner_pricing.py",
+      "to": "backend/services/logistics/logistics_partner_pricing.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\logistics_sla_service.py",
+      "to": "backend/services/logistics/logistics_sla_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\maker.py",
+      "to": "backend/services/core/maker.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\map_service.py",
+      "to": "backend/services/core/map_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\media_service.py",
+      "to": "backend/services/core/media_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\media_storage.py",
+      "to": "backend/services/core/media_storage.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\mobile_auth_service.py",
+      "to": "backend/services/auth/mobile_auth_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\notification_engine.py",
+      "to": "backend/services/comms/notification_engine.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\notification_service.py",
+      "to": "backend/services/comms/notification_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\ocr_parser.py",
+      "to": "backend/services/ai/ocr_parser.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\offboarding.py",
+      "to": "backend/services/core/offboarding.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\okr_engine.py",
+      "to": "backend/services/core/okr_engine.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\onboarding_pipeline.py",
+      "to": "backend/services/supplier/onboarding_pipeline.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\order_tracking_service.py",
+      "to": "backend/services/orders/order_tracking_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\orders_write_service.py",
+      "to": "backend/services/orders/orders_write_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payment_engine.py",
+      "to": "backend/services/finance/payment_engine.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payment_orchestrator.py",
+      "to": "backend/services/finance/payment_orchestrator.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payout_batch_service.py",
+      "to": "backend/services/finance/payout_batch_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payout_engine.py",
+      "to": "backend/services/finance/payout_engine.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payout_notification_service.py",
+      "to": "backend/services/comms/payout_notification_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payroll_engine.py",
+      "to": "backend/services/core/payroll_engine.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\payroll_service.py",
+      "to": "backend/services/core/payroll_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\performance_service.py",
+      "to": "backend/services/core/performance_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\period_close_service.py",
+      "to": "backend/services/core/period_close_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\permission_service.py",
+      "to": "backend/services/core/permission_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\products_write_service.py",
+      "to": "backend/services/products/products_write_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\promotion_bogo_service.py",
+      "to": "backend/services/commerce/promotion_bogo_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\promotion_points_service.py",
+      "to": "backend/services/commerce/promotion_points_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\promotions_write_service.py",
+      "to": "backend/services/commerce/promotions_write_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\proxy_communication.py",
+      "to": "backend/services/communication/proxy_communication.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\qr_service.py",
+      "to": "backend/services/core/qr_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\rbac_service.py",
+      "to": "backend/services/core/rbac_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\refund_posting_service.py",
+      "to": "backend/services/core/refund_posting_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\retention_service.py",
+      "to": "backend/services/hr/retention_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\run_py.py",
+      "to": "backend/services/core/run_py.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\script1.py",
+      "to": "backend/services/core/script1.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\shift_handover.py",
+      "to": "backend/services/hr/shift_handover.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\shift_roster_service.py",
+      "to": "backend/services/hr/shift_roster_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\shift_scheduling.py",
+      "to": "backend/services/hr/shift_scheduling.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\shipping_tier.py",
+      "to": "backend/services/logistics/shipping_tier.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\storage.py",
+      "to": "backend/services/core/storage.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\sub_ledger_service.py",
+      "to": "backend/services/finance/sub_ledger_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\succession_service.py",
+      "to": "backend/services/hr/succession_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\supplier_health_engine.py",
+      "to": "backend/services/supplier/supplier_health_engine.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\supplier_onboarding_service.py",
+      "to": "backend/services/supplier/supplier_onboarding_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\suppliers_write_service.py",
+      "to": "backend/services/supplier/suppliers_write_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\tax_service.py",
+      "to": "backend/services/finance/tax_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\template.py",
+      "to": "backend/services/core/template.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\trading_service.py",
+      "to": "backend/services/core/trading_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\transactional_email_service.py",
+      "to": "backend/services/comms/transactional_email_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\translation_service.py",
+      "to": "backend/services/comms/translation_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\travel_detector.py",
+      "to": "backend/services/hr/travel_detector.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\travel_service.py",
+      "to": "backend/services/hr/travel_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\treasurer.py",
+      "to": "backend/services/core/treasurer.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\treasury_adapter.py",
+      "to": "backend/services/treasury/treasury_adapter.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\treasury_engine.py",
+      "to": "backend/services/treasury/treasury_engine.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\treasury_service.py",
+      "to": "backend/services/treasury/treasury_service.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\triple_auth.py",
+      "to": "backend/services/auth/triple_auth.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\upload_job_service.py",
+      "to": "backend/services/core/upload_job_service.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\variant_config_service.py",
+      "to": "backend/services/catalog/variant_config_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\video_conferencing.py",
+      "to": "backend/services/comms/video_conferencing.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\video_service.py",
+      "to": "backend/services/comms/video_service.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\webhook_processor.py",
+      "to": "backend/services/core/webhook_processor.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\websocket_chat.py",
+      "to": "backend/services/comms/websocket_chat.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\workflow_engine.py",
+      "to": "backend/services/core/workflow_engine.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\worm_audit.py",
+      "to": "backend/services/audit/worm_audit.py",
+      "reason": "known-domain",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\write_chat.py",
+      "to": "backend/services/comms/write_chat.py",
+      "reason": "keyword",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\services\\write_files_script.py",
+      "to": "backend/services/core/write_files_script.py",
+      "reason": "default",
+      "kind": "flat-services"
+    },
+    {
+      "from": "backend\\models\\admin.py",
+      "to": "backend/models/core/admin.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\ai_upload.py",
+      "to": "backend/models/ai/ai_upload.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\commission.py",
+      "to": "backend/models/finance/commission.py",
+      "reason": "keyword",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\communication.py",
+      "to": "backend/models/communication/communication.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\core.py",
+      "to": "backend/models/core/core.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\countries.py",
+      "to": "backend/models/core/countries.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\country_control.py",
+      "to": "backend/models/core/country_control.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\country_enhancements.py",
+      "to": "backend/models/core/country_enhancements.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\country_legal.py",
+      "to": "backend/models/core/country_legal.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\employee_models.py",
+      "to": "backend/models/hr/employee_models.py",
+      "reason": "keyword",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\finance.py",
+      "to": "backend/models/finance/finance.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\fraud.py",
+      "to": "backend/models/fraud/fraud.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\incident.py",
+      "to": "backend/models/core/incident.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\logistics.py",
+      "to": "backend/models/logistics/logistics.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\marketing.py",
+      "to": "backend/models/core/marketing.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\media_models.py",
+      "to": "backend/models/core/media_models.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\mixins.py",
+      "to": "backend/models/core/mixins.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\onboarding.py",
+      "to": "backend/models/supplier/onboarding.py",
+      "reason": "keyword",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\orders.py",
+      "to": "backend/models/orders/orders.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\payments.py",
+      "to": "backend/models/payments/payments.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\permissions.py",
+      "to": "backend/models/core/permissions.py",
+      "reason": "default",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\products.py",
+      "to": "backend/models/products/products.py",
+      "reason": "known-domain",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\suppliers.py",
+      "to": "backend/models/supplier/suppliers.py",
+      "reason": "keyword",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\models\\user.py",
+      "to": "backend/models/core/user.py",
+      "reason": "keyword",
+      "kind": "flat-models"
+    },
+    {
+      "from": "backend\\controllers\\accounting_controller.py",
+      "to": "backend/controllers/finance/accounting_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\address_controller.py",
+      "to": "backend/controllers/core/address_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\admin_controller.py",
+      "to": "backend/controllers/core/admin_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\ai_controller.py",
+      "to": "backend/controllers/ai/ai_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\audit_controller.py",
+      "to": "backend/services/audit/audit_controller.py",
+      "reason": "known-domain",
+      "kind": "controllers-mis-housed-writer"
+    },
+    {
+      "from": "backend\\controllers\\auth_controller.py",
+      "to": "backend/controllers/auth/auth_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\banner_controller.py",
+      "to": "backend/controllers/core/banner_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\cart_controller.py",
+      "to": "backend/controllers/orders/cart_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\cash_management_controller.py",
+      "to": "backend/controllers/finance/cash_management_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\categories_controller.py",
+      "to": "backend/controllers/catalog/categories_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\chat_controller.py",
+      "to": "backend/controllers/comms/chat_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\chatbot_controller.py",
+      "to": "backend/controllers/comms/chatbot_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\comm_controller.py",
+      "to": "backend/controllers/core/comm_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\command_center.py",
+      "to": "backend/controllers/core/command_center.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\command_center_controller.py",
+      "to": "backend/controllers/core/command_center_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\commission_controller.py",
+      "to": "backend/controllers/finance/commission_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\compliance_controller.py",
+      "to": "backend/controllers/audit/compliance_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\country_controller.py",
+      "to": "backend/controllers/core/country_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\country_versioning_controller.py",
+      "to": "backend/controllers/core/country_versioning_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\coupons_controller.py",
+      "to": "backend/controllers/commerce/coupons_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\disputes_controller.py",
+      "to": "backend/controllers/core/disputes_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\email_controller.py",
+      "to": "backend/controllers/comms/email_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\employee_controller.py",
+      "to": "backend/controllers/hr/employee_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\employees_controller.py",
+      "to": "backend/controllers/hr/employees_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\expense_controller.py",
+      "to": "backend/controllers/core/expense_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\export_controller.py",
+      "to": "backend/controllers/core/export_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\financial_controller.py",
+      "to": "backend/controllers/core/financial_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\flash_sale_controller.py",
+      "to": "backend/controllers/core/flash_sale_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\hr_controller.py",
+      "to": "backend/controllers/hr/hr_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\iam_controller.py",
+      "to": "backend/controllers/core/iam_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\invoice_controller.py",
+      "to": "backend/controllers/finance/invoice_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\lms_controller.py",
+      "to": "backend/controllers/core/lms_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\logistics_controller.py",
+      "to": "backend/controllers/logistics/logistics_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\logistics_partner_controller.py",
+      "to": "backend/controllers/logistics/logistics_partner_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\mobile_controller.py",
+      "to": "backend/controllers/core/mobile_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\notifications_controller.py",
+      "to": "backend/controllers/comms/notifications_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\operational_controller.py",
+      "to": "backend/controllers/core/operational_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\orders_controller.py",
+      "to": "backend/controllers/orders/orders_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\payments_controller.py",
+      "to": "backend/services/payments/payments_controller.py",
+      "reason": "known-domain",
+      "kind": "controllers-mis-housed-writer"
+    },
+    {
+      "from": "backend\\controllers\\product_verification_controller.py",
+      "to": "backend/controllers/catalog/product_verification_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\products_controller.py",
+      "to": "backend/controllers/products/products_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\promotion_controller.py",
+      "to": "backend/controllers/commerce/promotion_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\returns_controller.py",
+      "to": "backend/controllers/core/returns_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\reviews_controller.py",
+      "to": "backend/controllers/core/reviews_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\risk_controller.py",
+      "to": "backend/controllers/core/risk_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\search_controller.py",
+      "to": "backend/controllers/ai/search_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\sub_ledger_controller.py",
+      "to": "backend/controllers/finance/sub_ledger_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\supplier_controller.py",
+      "to": "backend/controllers/supplier/supplier_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\supplier_document_controller.py",
+      "to": "backend/controllers/supplier/supplier_document_controller.py",
+      "reason": "known-domain",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\video_controller.py",
+      "to": "backend/controllers/comms/video_controller.py",
+      "reason": "keyword",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\controllers\\wishlist_controller.py",
+      "to": "backend/controllers/core/wishlist_controller.py",
+      "reason": "default",
+      "kind": "flat-controllers"
+    },
+    {
+      "from": "backend\\routers\\accounting.py",
+      "to": "backend/routers/common/accounting.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\addresses.py",
+      "to": "backend/routers/common/addresses.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin.py",
+      "to": "backend/routers/admin/admin.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_banners.py",
+      "to": "backend/routers/admin/admin_banners.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_cash.py",
+      "to": "backend/routers/admin/admin_cash.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_categories.py",
+      "to": "backend/routers/admin/admin_categories.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_chat.py",
+      "to": "backend/routers/admin/admin_chat.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_commission.py",
+      "to": "backend/routers/admin/admin_commission.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_email.py",
+      "to": "backend/routers/admin/admin_email.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_fallback.py",
+      "to": "backend/routers/admin/admin_fallback.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_logistics.py",
+      "to": "backend/routers/admin/admin_logistics.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_orders.py",
+      "to": "backend/routers/admin/admin_orders.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_payouts.py",
+      "to": "backend/routers/admin/admin_payouts.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_products.py",
+      "to": "backend/routers/admin/admin_products.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_promotions.py",
+      "to": "backend/routers/admin/admin_promotions.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_settings.py",
+      "to": "backend/routers/admin/admin_settings.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_suppliers.py",
+      "to": "backend/routers/admin/admin_suppliers.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_treasury.py",
+      "to": "backend/routers/admin/admin_treasury.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_users.py",
+      "to": "backend/routers/admin/admin_users.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\admin_video.py",
+      "to": "backend/routers/admin/admin_video.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ai.py",
+      "to": "backend/routers/common/ai.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ai_image.py",
+      "to": "backend/routers/common/ai_image.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ai_research.py",
+      "to": "backend/routers/common/ai_research.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ai_upload.py",
+      "to": "backend/routers/common/ai_upload.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\audit.py",
+      "to": "backend/routers/common/audit.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\auth.py",
+      "to": "backend/routers/common/auth.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\automation.py",
+      "to": "backend/routers/common/automation.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\banners.py",
+      "to": "backend/routers/common/banners.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\batch_upload.py",
+      "to": "backend/routers/common/batch_upload.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\cart.py",
+      "to": "backend/routers/common/cart.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\cash_management.py",
+      "to": "backend/routers/common/cash_management.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\categories.py",
+      "to": "backend/routers/common/categories.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\chat.py",
+      "to": "backend/routers/common/chat.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\chat_enrichment.py",
+      "to": "backend/routers/common/chat_enrichment.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\chatbot.py",
+      "to": "backend/routers/common/chatbot.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\comm.py",
+      "to": "backend/routers/common/comm.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\command_center.py",
+      "to": "backend/routers/common/command_center.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\commission.py",
+      "to": "backend/routers/common/commission.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\comms_unified.py",
+      "to": "backend/routers/common/comms_unified.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\compliance.py",
+      "to": "backend/routers/common/compliance.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\contact.py",
+      "to": "backend/routers/common/contact.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\countries.py",
+      "to": "backend/routers/common/countries.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_admin.py",
+      "to": "backend/routers/common/country_admin.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_auto_populate.py",
+      "to": "backend/routers/common/country_auto_populate.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_dropdown.py",
+      "to": "backend/routers/common/country_dropdown.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_maps.py",
+      "to": "backend/routers/common/country_maps.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_payouts.py",
+      "to": "backend/routers/common/country_payouts.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_research.py",
+      "to": "backend/routers/common/country_research.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\country_staff.py",
+      "to": "backend/routers/common/country_staff.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\coupons.py",
+      "to": "backend/routers/common/coupons.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\cross_border.py",
+      "to": "backend/routers/common/cross_border.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\csp_reporting.py",
+      "to": "backend/routers/common/csp_reporting.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\currency.py",
+      "to": "backend/routers/common/currency.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\customer_health.py",
+      "to": "backend/routers/customer/customer_health.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ediscovery.py",
+      "to": "backend/routers/common/ediscovery.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\email.py",
+      "to": "backend/routers/common/email.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\email_enrichment.py",
+      "to": "backend/routers/common/email_enrichment.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\employees.py",
+      "to": "backend/routers/common/employees.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\entity_chat.py",
+      "to": "backend/routers/common/entity_chat.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\entity_communication.py",
+      "to": "backend/routers/common/entity_communication.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\escalation.py",
+      "to": "backend/routers/common/escalation.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ess.py",
+      "to": "backend/routers/common/ess.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\expenses.py",
+      "to": "backend/routers/common/expenses.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\export.py",
+      "to": "backend/routers/common/export.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\finance.py",
+      "to": "backend/routers/common/finance.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\finance_automation.py",
+      "to": "backend/routers/common/finance_automation.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\finance_erp.py",
+      "to": "backend/routers/common/finance_erp.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\flash_sales.py",
+      "to": "backend/routers/common/flash_sales.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\fraud_detection.py",
+      "to": "backend/routers/common/fraud_detection.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\frontend_errors.py",
+      "to": "backend/routers/common/frontend_errors.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\geo.py",
+      "to": "backend/routers/common/geo.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\hierarchy.py",
+      "to": "backend/routers/common/hierarchy.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\hr.py",
+      "to": "backend/routers/common/hr.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\hr_dashboard.py",
+      "to": "backend/routers/common/hr_dashboard.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\iam.py",
+      "to": "backend/routers/common/iam.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\imports.py",
+      "to": "backend/routers/common/imports.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\incident.py",
+      "to": "backend/routers/common/incident.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\internal_channels.py",
+      "to": "backend/routers/internal/internal_channels.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\invoices.py",
+      "to": "backend/routers/common/invoices.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\jobs.py",
+      "to": "backend/routers/common/jobs.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\lms.py",
+      "to": "backend/routers/common/lms.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\location_api.py",
+      "to": "backend/routers/common/location_api.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\logistics.py",
+      "to": "backend/routers/common/logistics.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\logistics_health.py",
+      "to": "backend/routers/common/logistics_health.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\logistics_locations.py",
+      "to": "backend/routers/common/logistics_locations.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\logistics_orders.py",
+      "to": "backend/routers/common/logistics_orders.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\logistics_orders_v2.py",
+      "to": "backend/routers/common/logistics_orders_v2.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\logistics_partner.py",
+      "to": "backend/routers/common/logistics_partner.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\messaging.py",
+      "to": "backend/routers/common/messaging.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\notifications.py",
+      "to": "backend/routers/common/notifications.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\okr.py",
+      "to": "backend/routers/common/okr.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\onboarding.py",
+      "to": "backend/routers/common/onboarding.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\orders.py",
+      "to": "backend/routers/common/orders.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\parcel_tracking.py",
+      "to": "backend/routers/common/parcel_tracking.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\payments.py",
+      "to": "backend/routers/common/payments.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\payout_approval.py",
+      "to": "backend/routers/common/payout_approval.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\payroll.py",
+      "to": "backend/routers/common/payroll.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\performance.py",
+      "to": "backend/routers/common/performance.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\permissions.py",
+      "to": "backend/routers/common/permissions.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\product_moderation.py",
+      "to": "backend/routers/common/product_moderation.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\product_verification.py",
+      "to": "backend/routers/common/product_verification.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\product_videos.py",
+      "to": "backend/routers/common/product_videos.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\products.py",
+      "to": "backend/routers/common/products.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\proxy_communication.py",
+      "to": "backend/routers/common/proxy_communication.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\public_suppliers.py",
+      "to": "backend/routers/public/public_suppliers.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\push_notifications.py",
+      "to": "backend/routers/common/push_notifications.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\referrals.py",
+      "to": "backend/routers/common/referrals.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\returns.py",
+      "to": "backend/routers/common/returns.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\reviews.py",
+      "to": "backend/routers/common/reviews.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\risk.py",
+      "to": "backend/routers/common/risk.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\search.py",
+      "to": "backend/routers/common/search.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\shift_handover.py",
+      "to": "backend/routers/common/shift_handover.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\shipments.py",
+      "to": "backend/routers/common/shipments.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\shop_locations.py",
+      "to": "backend/routers/common/shop_locations.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\succession.py",
+      "to": "backend/routers/common/succession.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier.py",
+      "to": "backend/routers/supplier/supplier.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_analytics.py",
+      "to": "backend/routers/supplier/supplier_analytics.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_bg_ab_test.py",
+      "to": "backend/routers/supplier/supplier_bg_ab_test.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_documents.py",
+      "to": "backend/routers/supplier/supplier_documents.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_finance.py",
+      "to": "backend/routers/supplier/supplier_finance.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_health.py",
+      "to": "backend/routers/supplier/supplier_health.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_orders.py",
+      "to": "backend/routers/supplier/supplier_orders.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_payouts.py",
+      "to": "backend/routers/supplier/supplier_payouts.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_products.py",
+      "to": "backend/routers/supplier/supplier_products.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\supplier_profile.py",
+      "to": "backend/routers/supplier/supplier_profile.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\tickets.py",
+      "to": "backend/routers/common/tickets.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\trading.py",
+      "to": "backend/routers/common/trading.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\translate.py",
+      "to": "backend/routers/common/translate.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\travel.py",
+      "to": "backend/routers/common/travel.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\treasury.py",
+      "to": "backend/routers/common/treasury.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\upload.py",
+      "to": "backend/routers/common/upload.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\upload_jobs.py",
+      "to": "backend/routers/common/upload_jobs.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\users.py",
+      "to": "backend/routers/common/users.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\video.py",
+      "to": "backend/routers/common/video.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\video_controller.py",
+      "to": "backend/routers/common/video_controller.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\wishlist.py",
+      "to": "backend/routers/common/wishlist.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\workflows.py",
+      "to": "backend/routers/common/workflows.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\routers\\ws_chat.py",
+      "to": "backend/routers/common/ws_chat.py",
+      "reason": "surface-prefix",
+      "kind": "flat-routers"
+    },
+    {
+      "from": "backend\\db\\employee_models.py",
+      "to": "backend/models/employee_models.py",
+      "reason": "M1",
+      "kind": "known-structural"
+    },
+    {
+      "from": "backend\\api\\country_communications.py",
+      "to": "backend/routers/public/country_communications.py",
+      "reason": "R1",
+      "kind": "known-structural"
+    },
+    {
+      "from": "backend\\alembic\\_analyze_graph.py",
+      "to": "backend/scripts/_analyze_graph.py",
+      "reason": "A1",
+      "kind": "known-structural"
+    },
+    {
+      "from": "backend\\alembic\\_diagnose_tree.py",
+      "to": "backend/scripts/_diagnose_tree.py",
+      "reason": "A1",
+      "kind": "known-structural"
+    },
+    {
+      "from": "backend\\alembic\\_graph_analysis.py",
+      "to": "backend/scripts/_graph_analysis.py",
+      "reason": "A1",
+      "kind": "known-structural"
+    },
+    {
+      "from": "backend\\db\\migrations",
+      "to": "backend/alembic/versions/",
+      "reason": "G1",
+      "kind": "known-structural-folder"
+    },
+    {
+      "from": "backend\\database.py",
+      "to": "backend/utils/database.py",
+      "reason": "keyword",
+      "kind": "backend-root"
+    },
+    {
+      "from": "backend\\database_logging.py",
+      "to": "backend/utils/database_logging.py",
+      "reason": "keyword",
+      "kind": "backend-root"
+    },
+    {
+      "from": "backend\\schemas.py",
+      "to": "backend/utils/schemas.py",
+      "reason": "default",
+      "kind": "backend-root"
+    },
+    {
+      "from": "backend\\seed_all.py",
+      "to": "backend/utils/seed_all.py",
+      "reason": "default",
+      "kind": "backend-root"
+    }
+  ]
+}

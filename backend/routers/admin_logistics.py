@@ -8,6 +8,7 @@ from utils.dependencies import require_admin, require_super_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from controllers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
+from services.logistics_partner_write_service import update_logistics_partner
 
 router = APIRouter()
 
@@ -33,8 +34,7 @@ def approve_partner(country_code: str = Path(..., description="ISO country code"
     try:
         p = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id, LogisticsPartner.country_code == country_code.upper()).first()
         if not p: raise HTTPException(404)
-        p.verification_status = "approved"
-        db.commit()
+        update_logistics_partner(db, p, {"verification_status": "approved"})
         return {"message": "Partner approved"}
     finally:
         clear_rls_context()
@@ -47,8 +47,7 @@ def reject_partner(country_code: str = Path(..., description="ISO country code")
     try:
         p = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id, LogisticsPartner.country_code == country_code.upper()).first()
         if not p: raise HTTPException(404)
-        p.verification_status = "rejected"
-        db.commit()
+        update_logistics_partner(db, p, {"verification_status": "rejected"})
         return {"message": "Partner rejected"}
     finally:
         clear_rls_context()
@@ -61,9 +60,9 @@ def toggle_partner_active(country_code: str = Path(..., description="ISO country
     try:
         p = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id, LogisticsPartner.country_code == country_code.upper()).first()
         if not p: raise HTTPException(404)
-        p.status = "suspended" if p.status == "active" else "active"
-        db.commit()
-        return {"message": f"Partner {'suspended' if p.status == 'suspended' else 'activated'}"}
+        new_status = "suspended" if p.status == "active" else "active"
+        update_logistics_partner(db, p, {"status": new_status})
+        return {"message": f"Partner {new_status}"}
     finally:
         clear_rls_context()
 
@@ -116,4 +115,3 @@ def delete_partner_permanent(country_code: str = Path(..., description="ISO coun
         return hard_delete_entity("logistics_partner", partner_id, {"id": current_user.id, "username": current_user.username, "role": current_user.role}, db)
     finally:
         clear_rls_context()
-

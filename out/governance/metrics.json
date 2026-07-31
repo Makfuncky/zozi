@@ -1,0 +1,4262 @@
+{
+  "summary": {
+    "timestamp": "2026-07-30T20:43:33.539260+00:00",
+    "repo": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi",
+    "red": 1303,
+    "yellow": 2762,
+    "green": 14,
+    "debt_score": 182135,
+    "by_code": {
+      "F4": 61,
+      "NM": 9,
+      "F2": 13,
+      "X1": 1,
+      "D1": 48,
+      "D2": 10,
+      "A1": 18,
+      "F9": 6,
+      "M1": 3,
+      "G1": 2,
+      "P3": 4,
+      "F1": 30,
+      "P5": 7,
+      "S1": 1,
+      "S2": 27,
+      "S3": 2,
+      "W1": 1228,
+      "Q1": 1284,
+      "W2": 2,
+      "R1": 15,
+      "W3": 36,
+      "W4": 59,
+      "DG": 18,
+      "DG2": 27,
+      "A2": 90,
+      "D3": 94,
+      "DG4": 2,
+      "DG5": 14,
+      "FE2": 21,
+      "FE3": 3,
+      "L1": 1,
+      "SEC2": 8,
+      "PERF2": 200,
+      "QUAL1": 91,
+      "QUAL2": 5,
+      "QUAL3": 82,
+      "QUAL4": 83,
+      "DB1": 5,
+      "DB2": 1,
+      "CFG5": 1,
+      "FE6": 73,
+      "MV1": 239,
+      "MV2": 12,
+      "MV3": 138,
+      "I4": 1,
+      "I1": 1,
+      "I2": 1,
+      "I3": 1,
+      "MET1": 1
+    },
+    "modules": 677,
+    "edges": 1839,
+    "classes": 1081,
+    "layer_counts": {
+      "database": 1,
+      "database_logging": 1,
+      "lifespan": 1,
+      "main": 1,
+      "run_server": 1,
+      "schemas": 1,
+      "seed_all": 1,
+      "utils": 61,
+      "tools": 2,
+      "tests": 48,
+      "tasks": 2,
+      "settings": 2,
+      "services": 167,
+      "scripts": 38,
+      "routers": 139,
+      "providers": 29,
+      "models": 25,
+      "middleware": 20,
+      "location_service": 3,
+      "jobs": 2,
+      "events": 3,
+      "dependencies": 1,
+      "db": 14,
+      "data": 5,
+      "controllers": 85,
+      "api": 1,
+      "alembic": 23
+    },
+    "top_fan_in": [
+      [
+        "models",
+        306
+      ],
+      [
+        "db.database",
+        200
+      ],
+      [
+        "utils.datetime_utils",
+        90
+      ],
+      [
+        "utils.config",
+        64
+      ],
+      [
+        "models.employee_models",
+        55
+      ],
+      [
+        "db.schemas",
+        54
+      ],
+      [
+        "controllers.auth_controller",
+        54
+      ],
+      [
+        "utils.dependencies",
+        48
+      ],
+      [
+        "utils.auth",
+        33
+      ],
+      [
+        "controllers.admin_controller",
+        31
+      ]
+    ],
+    "top_fan_out": [
+      [
+        "models",
+        24
+      ],
+      [
+        "controllers.supplier_controller",
+        22
+      ],
+      [
+        "routers.admin",
+        21
+      ],
+      [
+        "tests.conftest",
+        20
+      ],
+      [
+        "controllers.orders_controller",
+        20
+      ],
+      [
+        "main",
+        19
+      ],
+      [
+        "routers.supplier",
+        17
+      ],
+      [
+        "services.automation_scheduler",
+        16
+      ],
+      [
+        "routers.admin_treasury",
+        16
+      ],
+      [
+        "providers",
+        15
+      ]
+    ],
+    "frontend_metrics": {
+      "mobile_app": {
+        "source_files": 307,
+        "dirs": 36
+      },
+      "shared": {
+        "source_files": 101,
+        "dirs": 7
+      },
+      "web_app": {
+        "source_files": 665,
+        "dirs": 216
+      }
+    },
+    "auto_discovery": {
+      "domains": 2,
+      "features": 495,
+      "frontend_features": 7,
+      "backend_top_dirs": 27,
+      "domain_edges": 119
+    }
+  },
+  "modules": [
+    {
+      "module": "models",
+      "fan_in": 306,
+      "fan_out": 24,
+      "instability": 0.0727
+    },
+    {
+      "module": "db.database",
+      "fan_in": 200,
+      "fan_out": 2,
+      "instability": 0.0099
+    },
+    {
+      "module": "utils.datetime_utils",
+      "fan_in": 90,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.auth_controller",
+      "fan_in": 54,
+      "fan_out": 15,
+      "instability": 0.2174
+    },
+    {
+      "module": "utils.config",
+      "fan_in": 64,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "models.employee_models",
+      "fan_in": 55,
+      "fan_out": 2,
+      "instability": 0.0351
+    },
+    {
+      "module": "db.schemas",
+      "fan_in": 54,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.dependencies",
+      "fan_in": 48,
+      "fan_out": 3,
+      "instability": 0.0588
+    },
+    {
+      "module": "controllers.supplier_controller",
+      "fan_in": 14,
+      "fan_out": 22,
+      "instability": 0.6111
+    },
+    {
+      "module": "utils.auth",
+      "fan_in": 33,
+      "fan_out": 1,
+      "instability": 0.0294
+    },
+    {
+      "module": "controllers.admin_controller",
+      "fan_in": 31,
+      "fan_out": 1,
+      "instability": 0.0312
+    },
+    {
+      "module": "controllers.audit_controller",
+      "fan_in": 31,
+      "fan_out": 1,
+      "instability": 0.0312
+    },
+    {
+      "module": "utils.country_rls",
+      "fan_in": 26,
+      "fan_out": 4,
+      "instability": 0.1333
+    },
+    {
+      "module": "services",
+      "fan_in": 26,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.rls_interceptor",
+      "fan_in": 23,
+      "fan_out": 2,
+      "instability": 0.08
+    },
+    {
+      "module": "routers.auth",
+      "fan_in": 14,
+      "fan_out": 9,
+      "instability": 0.3913
+    },
+    {
+      "module": "controllers.orders_controller",
+      "fan_in": 2,
+      "fan_out": 20,
+      "instability": 0.9091
+    },
+    {
+      "module": "controllers.products_controller",
+      "fan_in": 11,
+      "fan_out": 10,
+      "instability": 0.4762
+    },
+    {
+      "module": "main",
+      "fan_in": 2,
+      "fan_out": 19,
+      "instability": 0.9048
+    },
+    {
+      "module": "routers.admin",
+      "fan_in": 0,
+      "fan_out": 21,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.conftest",
+      "fan_in": 0,
+      "fan_out": 20,
+      "instability": 1.0
+    },
+    {
+      "module": "services.cash_management_service",
+      "fan_in": 8,
+      "fan_out": 11,
+      "instability": 0.5789
+    },
+    {
+      "module": "utils.money",
+      "fan_in": 19,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "routers.supplier",
+      "fan_in": 0,
+      "fan_out": 17,
+      "instability": 1.0
+    },
+    {
+      "module": "services.storage",
+      "fan_in": 16,
+      "fan_out": 1,
+      "instability": 0.0588
+    },
+    {
+      "module": "utils.constants",
+      "fan_in": 17,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "routers.admin_treasury",
+      "fan_in": 0,
+      "fan_out": 16,
+      "instability": 1.0
+    },
+    {
+      "module": "services.automation_scheduler",
+      "fan_in": 0,
+      "fan_out": 16,
+      "instability": 1.0
+    },
+    {
+      "module": "services.logistics_partner_pricing",
+      "fan_in": 14,
+      "fan_out": 2,
+      "instability": 0.125
+    },
+    {
+      "module": "services.transactional_email_service",
+      "fan_in": 10,
+      "fan_out": 6,
+      "instability": 0.375
+    },
+    {
+      "module": "utils.ip_utils",
+      "fan_in": 16,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "models.core",
+      "fan_in": 13,
+      "fan_out": 2,
+      "instability": 0.1333
+    },
+    {
+      "module": "providers",
+      "fan_in": 0,
+      "fan_out": 15,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.background_jobs",
+      "fan_in": 13,
+      "fan_out": 2,
+      "instability": 0.1333
+    },
+    {
+      "module": "controllers.admin",
+      "fan_in": 1,
+      "fan_out": 13,
+      "instability": 0.9286
+    },
+    {
+      "module": "controllers.logistics_partner_controller",
+      "fan_in": 2,
+      "fan_out": 12,
+      "instability": 0.8571
+    },
+    {
+      "module": "utils.email_service",
+      "fan_in": 10,
+      "fan_out": 4,
+      "instability": 0.2857
+    },
+    {
+      "module": "controllers.payments_controller",
+      "fan_in": 5,
+      "fan_out": 8,
+      "instability": 0.6154
+    },
+    {
+      "module": "lifespan",
+      "fan_in": 1,
+      "fan_out": 12,
+      "instability": 0.9231
+    },
+    {
+      "module": "middleware.orchestrator",
+      "fan_in": 2,
+      "fan_out": 11,
+      "instability": 0.8462
+    },
+    {
+      "module": "providers.config",
+      "fan_in": 13,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.country_auto_populate",
+      "fan_in": 6,
+      "fan_out": 7,
+      "instability": 0.5385
+    },
+    {
+      "module": "utils.redis_client",
+      "fan_in": 12,
+      "fan_out": 1,
+      "instability": 0.0769
+    },
+    {
+      "module": "db.base",
+      "fan_in": 12,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.email_gateway",
+      "fan_in": 4,
+      "fan_out": 8,
+      "instability": 0.6667
+    },
+    {
+      "module": "tools.mcp.mcp_server",
+      "fan_in": 0,
+      "fan_out": 12,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.audit",
+      "fan_in": 10,
+      "fan_out": 2,
+      "instability": 0.1667
+    },
+    {
+      "module": "controllers.country_controller",
+      "fan_in": 3,
+      "fan_out": 8,
+      "instability": 0.7273
+    },
+    {
+      "module": "models.country_enhancements",
+      "fan_in": 9,
+      "fan_out": 2,
+      "instability": 0.1818
+    },
+    {
+      "module": "routers.accounting",
+      "fan_in": 0,
+      "fan_out": 11,
+      "instability": 1.0
+    },
+    {
+      "module": "services.auto_payout_scheduler",
+      "fan_in": 3,
+      "fan_out": 8,
+      "instability": 0.7273
+    },
+    {
+      "module": "db.seed",
+      "fan_in": 3,
+      "fan_out": 7,
+      "instability": 0.7
+    },
+    {
+      "module": "middleware",
+      "fan_in": 1,
+      "fan_out": 9,
+      "instability": 0.9
+    },
+    {
+      "module": "middleware.country_context",
+      "fan_in": 2,
+      "fan_out": 8,
+      "instability": 0.8
+    },
+    {
+      "module": "models.countries",
+      "fan_in": 8,
+      "fan_out": 2,
+      "instability": 0.2
+    },
+    {
+      "module": "routers.countries",
+      "fan_in": 1,
+      "fan_out": 9,
+      "instability": 0.9
+    },
+    {
+      "module": "routers.email",
+      "fan_in": 0,
+      "fan_out": 10,
+      "instability": 1.0
+    },
+    {
+      "module": "seed_all",
+      "fan_in": 0,
+      "fan_out": 10,
+      "instability": 1.0
+    },
+    {
+      "module": "services.employee_activity_logger",
+      "fan_in": 6,
+      "fan_out": 4,
+      "instability": 0.4
+    },
+    {
+      "module": "services.payroll_engine",
+      "fan_in": 5,
+      "fan_out": 5,
+      "instability": 0.5
+    },
+    {
+      "module": "utils.cache",
+      "fan_in": 9,
+      "fan_out": 1,
+      "instability": 0.1
+    },
+    {
+      "module": "controllers.admin.orders",
+      "fan_in": 1,
+      "fan_out": 8,
+      "instability": 0.8889
+    },
+    {
+      "module": "controllers.cash_management_controller",
+      "fan_in": 1,
+      "fan_out": 8,
+      "instability": 0.8889
+    },
+    {
+      "module": "controllers.email_controller",
+      "fan_in": 1,
+      "fan_out": 8,
+      "instability": 0.8889
+    },
+    {
+      "module": "controllers.governance.package",
+      "fan_in": 1,
+      "fan_out": 8,
+      "instability": 0.8889
+    },
+    {
+      "module": "controllers.returns_controller",
+      "fan_in": 2,
+      "fan_out": 7,
+      "instability": 0.7778
+    },
+    {
+      "module": "models.communication",
+      "fan_in": 7,
+      "fan_out": 2,
+      "instability": 0.2222
+    },
+    {
+      "module": "routers.admin_payouts",
+      "fan_in": 0,
+      "fan_out": 9,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_products",
+      "fan_in": 0,
+      "fan_out": 9,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_suppliers",
+      "fan_in": 0,
+      "fan_out": 9,
+      "instability": 1.0
+    },
+    {
+      "module": "services.effective_permissions",
+      "fan_in": 2,
+      "fan_out": 7,
+      "instability": 0.7778
+    },
+    {
+      "module": "services.finance_transfer_service",
+      "fan_in": 5,
+      "fan_out": 4,
+      "instability": 0.4444
+    },
+    {
+      "module": "services.general_ledger_service",
+      "fan_in": 6,
+      "fan_out": 3,
+      "instability": 0.3333
+    },
+    {
+      "module": "tests.test_controller_subpackages",
+      "fan_in": 0,
+      "fan_out": 9,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.file_validation",
+      "fan_in": 9,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.logging_config",
+      "fan_in": 9,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.banner_controller",
+      "fan_in": 3,
+      "fan_out": 5,
+      "instability": 0.625
+    },
+    {
+      "module": "controllers.communication.package",
+      "fan_in": 1,
+      "fan_out": 7,
+      "instability": 0.875
+    },
+    {
+      "module": "controllers.export_controller",
+      "fan_in": 1,
+      "fan_out": 7,
+      "instability": 0.875
+    },
+    {
+      "module": "controllers.finance.package",
+      "fan_in": 1,
+      "fan_out": 7,
+      "instability": 0.875
+    },
+    {
+      "module": "controllers.promotion_controller",
+      "fan_in": 4,
+      "fan_out": 4,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier_document_controller",
+      "fan_in": 2,
+      "fan_out": 6,
+      "instability": 0.75
+    },
+    {
+      "module": "models.orders",
+      "fan_in": 6,
+      "fan_out": 2,
+      "instability": 0.25
+    },
+    {
+      "module": "providers.text",
+      "fan_in": 7,
+      "fan_out": 1,
+      "instability": 0.125
+    },
+    {
+      "module": "routers.admin_categories",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_chat",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_orders",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_promotions",
+      "fan_in": 1,
+      "fan_out": 7,
+      "instability": 0.875
+    },
+    {
+      "module": "routers.admin_users",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.automation",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.finance_erp",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.search",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_products",
+      "fan_in": 0,
+      "fan_out": 8,
+      "instability": 1.0
+    },
+    {
+      "module": "services.ai_automation_service",
+      "fan_in": 2,
+      "fan_out": 6,
+      "instability": 0.75
+    },
+    {
+      "module": "services.employee_communication_service",
+      "fan_in": 4,
+      "fan_out": 4,
+      "instability": 0.5
+    },
+    {
+      "module": "services.finance_automation",
+      "fan_in": 1,
+      "fan_out": 7,
+      "instability": 0.875
+    },
+    {
+      "module": "services.hierarchy_service",
+      "fan_in": 6,
+      "fan_out": 2,
+      "instability": 0.25
+    },
+    {
+      "module": "utils.order_tracking",
+      "fan_in": 6,
+      "fan_out": 2,
+      "instability": 0.25
+    },
+    {
+      "module": "controllers",
+      "fan_in": 7,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.admin.analytics",
+      "fan_in": 2,
+      "fan_out": 5,
+      "instability": 0.7143
+    },
+    {
+      "module": "controllers.admin.products",
+      "fan_in": 1,
+      "fan_out": 6,
+      "instability": 0.8571
+    },
+    {
+      "module": "controllers.admin.users",
+      "fan_in": 1,
+      "fan_out": 6,
+      "instability": 0.8571
+    },
+    {
+      "module": "controllers.cart_controller",
+      "fan_in": 1,
+      "fan_out": 6,
+      "instability": 0.8571
+    },
+    {
+      "module": "controllers.flash_sale_controller",
+      "fan_in": 1,
+      "fan_out": 6,
+      "instability": 0.8571
+    },
+    {
+      "module": "controllers.logistics_controller",
+      "fan_in": 1,
+      "fan_out": 6,
+      "instability": 0.8571
+    },
+    {
+      "module": "providers.bg_remover",
+      "fan_in": 6,
+      "fan_out": 1,
+      "instability": 0.1429
+    },
+    {
+      "module": "providers.vision",
+      "fan_in": 5,
+      "fan_out": 2,
+      "instability": 0.2857
+    },
+    {
+      "module": "routers.admin_logistics",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_video",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.ai_upload",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.batch_upload",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_staff",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.cross_border",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.employees",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.finance_automation",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.hierarchy",
+      "fan_in": 0,
+      "fan_out": 7,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.ws_chat",
+      "fan_in": 2,
+      "fan_out": 5,
+      "instability": 0.7143
+    },
+    {
+      "module": "services.employee_lifecycle_service",
+      "fan_in": 2,
+      "fan_out": 5,
+      "instability": 0.7143
+    },
+    {
+      "module": "services.notification_engine",
+      "fan_in": 2,
+      "fan_out": 5,
+      "instability": 0.7143
+    },
+    {
+      "module": "services.payout_batch_service",
+      "fan_in": 2,
+      "fan_out": 5,
+      "instability": 0.7143
+    },
+    {
+      "module": "services.tax_service",
+      "fan_in": 3,
+      "fan_out": 4,
+      "instability": 0.5714
+    },
+    {
+      "module": "services.treasury_engine",
+      "fan_in": 4,
+      "fan_out": 3,
+      "instability": 0.4286
+    },
+    {
+      "module": "utils.pagination",
+      "fan_in": 7,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.staff_permissions",
+      "fan_in": 7,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.websocket_manager",
+      "fan_in": 7,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "api.country_communications",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.admin.database",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "controllers.command_center_controller",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "controllers.country_versioning_controller",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "controllers.coupons_controller",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "controllers.invoice_controller",
+      "fan_in": 3,
+      "fan_out": 3,
+      "instability": 0.5
+    },
+    {
+      "module": "db.employee_models",
+      "fan_in": 3,
+      "fan_out": 3,
+      "instability": 0.5
+    },
+    {
+      "module": "models.admin",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.finance",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.fraud",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.logistics",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.payments",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.permissions",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.products",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.suppliers",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.user",
+      "fan_in": 3,
+      "fan_out": 3,
+      "instability": 0.5
+    },
+    {
+      "module": "providers.async_workers",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "providers.ocr",
+      "fan_in": 5,
+      "fan_out": 1,
+      "instability": 0.1667
+    },
+    {
+      "module": "routers.admin_banners",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_cash",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_commission",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_email",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.cart",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.cash_management",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_admin",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.finance",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.fraud_detection",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.hr_dashboard",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.payroll",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.permissions",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "services.audit_trail_service",
+      "fan_in": 2,
+      "fan_out": 4,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.auth_service",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "services.chat_system",
+      "fan_in": 2,
+      "fan_out": 4,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.command_center_background",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "services.commission_engine",
+      "fan_in": 3,
+      "fan_out": 3,
+      "instability": 0.5
+    },
+    {
+      "module": "services.ediscovery",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "services.gateway_reconciliation_service",
+      "fan_in": 2,
+      "fan_out": 4,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.legal_contract_service",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "services.mobile_auth_service",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "services.period_close_service",
+      "fan_in": 2,
+      "fan_out": 4,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.trading_service",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "services.treasury_service",
+      "fan_in": 3,
+      "fan_out": 3,
+      "instability": 0.5
+    },
+    {
+      "module": "services.video_conferencing",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "tests.test_ems_edge_cases",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_ems_lifecycle",
+      "fan_in": 0,
+      "fan_out": 6,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.encryption",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "utils.error_handler",
+      "fan_in": 4,
+      "fan_out": 2,
+      "instability": 0.3333
+    },
+    {
+      "module": "utils.middleware_helpers",
+      "fan_in": 1,
+      "fan_out": 5,
+      "instability": 0.8333
+    },
+    {
+      "module": "utils.vault",
+      "fan_in": 2,
+      "fan_out": 4,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.admin.misc",
+      "fan_in": 2,
+      "fan_out": 3,
+      "instability": 0.6
+    },
+    {
+      "module": "controllers.commerce",
+      "fan_in": 4,
+      "fan_out": 1,
+      "instability": 0.2
+    },
+    {
+      "module": "controllers.commerce.package",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "events",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "middleware.impossible_travel_middleware",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "middleware.rate_limit_middleware",
+      "fan_in": 2,
+      "fan_out": 3,
+      "instability": 0.6
+    },
+    {
+      "module": "models.country_control",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "models.media_models",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "providers.finance_ai",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "providers.image",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "providers.search",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "routers.categories",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.commission",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.comms_unified",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_auto_populate",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_payouts",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.customer_health",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.entity_communication",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.ess",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.flash_sales",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.geo",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.payout_approval",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.performance",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.products",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.proxy_communication",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.returns",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_bg_ab_test",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_orders",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_profile",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.upload",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.video_controller",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "services.bg_removal_service",
+      "fan_in": 5,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.chat_enrichment",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.command_center_service",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.entity_chat_service",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "services.financial_reporting",
+      "fan_in": 2,
+      "fan_out": 3,
+      "instability": 0.6
+    },
+    {
+      "module": "services.import_service",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.leave_accrual",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "services.media_service",
+      "fan_in": 2,
+      "fan_out": 3,
+      "instability": 0.6
+    },
+    {
+      "module": "services.notification_service",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "services.payout_notification_service",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.performance_service",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.proxy_communication",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.refund_posting_service",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "services.treasury_adapter",
+      "fan_in": 1,
+      "fan_out": 4,
+      "instability": 0.8
+    },
+    {
+      "module": "tests.test_communication_services",
+      "fan_in": 0,
+      "fan_out": 5,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.currency",
+      "fan_in": 4,
+      "fan_out": 1,
+      "instability": 0.2
+    },
+    {
+      "module": "utils.realtime",
+      "fan_in": 3,
+      "fan_out": 2,
+      "instability": 0.4
+    },
+    {
+      "module": "controllers.accounting_controller",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.admin.auth",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.admin.coupons",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.admin.permissions",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.admin.suppliers",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.admin.tickets",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.ai_controller",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.hr.package",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.iam_controller",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "controllers.search_controller",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "db.init_db",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "dependencies.country_rls",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.csrf_middleware",
+      "fan_in": 3,
+      "fan_out": 1,
+      "instability": 0.25
+    },
+    {
+      "module": "middleware.logging_middleware",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "middleware.security_headers",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "models.commission",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "models.country_legal",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "models.marketing",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "models.mixins",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "routers.ai_research",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "routers.banners",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.chat_enrichment",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.chatbot",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_research",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.coupons",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.ediscovery",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.email_enrichment",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.entity_chat",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.hr",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.incident",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.invoices",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.logistics",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.logistics_health",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.logistics_orders_v2",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.logistics_partner",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "routers.onboarding",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.orders",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.payments",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.product_verification",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.product_videos",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.referrals",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.reviews",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.shipments",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.succession",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_documents",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_finance",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_health",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_payouts",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.travel",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.treasury",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.upload_jobs",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.users",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.wishlist",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "services.approval_matrix_service",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "services.cash_flow_forecast_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.country_detection",
+      "fan_in": 3,
+      "fan_out": 1,
+      "instability": 0.25
+    },
+    {
+      "module": "services.credit_control_service",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "services.cross_border_service",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "services.email_enrichment",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.email_event_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.erp_finance_service",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "services.expense_processing",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "services.financial_reports_service",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "services.fulfillment_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.iam_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.je_reversal_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.logistics_sla_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.order_tracking_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.shift_handover",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.sub_ledger_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.travel_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "services.upload_job_service",
+      "fan_in": 1,
+      "fan_out": 3,
+      "instability": 0.75
+    },
+    {
+      "module": "settings.notification_worker",
+      "fan_in": 0,
+      "fan_out": 4,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.backup",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "utils.migrations",
+      "fan_in": 2,
+      "fan_out": 2,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.admin.bulk_ops",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.admin.payouts",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.chat_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.chatbot_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.comm_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.command_center",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.commission_controller",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.communication",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "controllers.employees_controller",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.finance",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "controllers.governance",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "controllers.hr_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.lms_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.product_verification_controller",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "controllers.risk_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.sub_ledger_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "controllers.video_controller",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "database_logging",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "db.treasury_seeder",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "location_service.geo_resolver",
+      "fan_in": 3,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "middleware.pci_dss_compliance",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "middleware.request_id_middleware",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "models.ai_upload",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "models.incident",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "models.onboarding",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "providers.analytics",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "providers.chatbot",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "providers.country",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "providers.geo",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "providers.map",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "providers.parcel_verification",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "providers.voice_to_text",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "routers.addresses",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_fallback",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.admin_settings",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.ai_image",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.comm",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.contact",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_dropdown",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.escalation",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.iam",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.imports",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.logistics_locations",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.logistics_orders",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.notifications",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.okr",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.parcel_tracking",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.product_moderation",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.push_notifications",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.shift_handover",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.shop_locations",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.supplier_analytics",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.tickets",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.trading",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.workflows",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "scripts.migrate_media_to_s3",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.ai_research_jobs",
+      "fan_in": 3,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.asset_tracking",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.attendance_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.background_check",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "services.coi_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.communication_audit",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "services.compliance_engine",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.country_ai_research",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333
+    },
+    {
+      "module": "services.cross_border_tracker",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.data_residency_service",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.downstream_hooks",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.downstream_wiring",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.escalation_sla",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.expense_routing",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.fraud_detection",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.fraud_detection_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.gateway_auto_enable",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.incident_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.internal_communication",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.map_service",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.offboarding",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.okr_engine",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.onboarding_pipeline",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.payment_engine",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.promotion_points_service",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.qr_service",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.rbac_service",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.retention_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.succession_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.video_service",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "services.webhook_processor",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "services.websocket_chat",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "tasks.fraud_monitoring",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_error_handling",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_search_endpoints",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.country_detection_middleware",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.health",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.invoice_html",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "utils.key_rotation",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "utils.ml_worker",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.rls_context",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.schema_audit",
+      "fan_in": 0,
+      "fan_out": 3,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.security_audit",
+      "fan_in": 1,
+      "fan_out": 2,
+      "instability": 0.6667
+    },
+    {
+      "module": "utils.slug",
+      "fan_in": 3,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.env",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.compliance_controller",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.disputes_controller",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.expense_controller",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.analytics",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.badge",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.inventory",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.orders",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.payouts",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.products",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "controllers.supplier.profile",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "data.vat_rates",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "db.media_models",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "db.transaction",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "jobs.ghost_order_detector",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.behavioral_analytics",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.coi_middleware",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.database_security",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.ip_extraction_middleware",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "middleware.webhook_verification",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "providers.ai",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "providers.ai.text",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "providers.ai.vision",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "routers.ai",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.audit",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.country_maps",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.currency",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.export",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.frontend_errors",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.internal_channels",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.jobs",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.lms",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.public_suppliers",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.risk",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.advanced_filter_service",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.advanced_search_engine",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.ai_copy_jobs",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.ai_search_service",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.ai_variant_config",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.coi_engine",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.country_heuristic_engine",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.country_research",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.country_rls_service",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.country_write_service",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.cross_border_detection",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.customer_health_engine",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.dei_auditor",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.free_image_tools",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.geo_fence_service",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.ghost_watchdog",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.live_tracking_service",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.lms_permission_lock",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.logistics_engine",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.logistics_health_engine",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.media_storage",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.ocr_parser",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.payment_orchestrator",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.shift_roster_service",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.shift_scheduling",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.supplier_health_engine",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.supplier_onboarding_service",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.treasurer",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.triple_auth",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "services.workflow_engine",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "services.worm_audit",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tasks.background_tasks",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_ai_research_router",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_auth",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_auto_payout_sweep",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_cart",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_comprehensive_system",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_internal_communication",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_middleware_helpers",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_models",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_orders",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_payments",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_response_wrapper",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_reviews",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_security",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_shipping_quote",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_wishlist",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "utils",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.category_tree",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "utils.circuit_breaker",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.entity_messaging",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.metrics",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.prometheus_setup",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "utils.response_wrapper",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "utils.rls_middleware",
+      "fan_in": 0,
+      "fan_out": 2,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.tracing",
+      "fan_in": 1,
+      "fan_out": 1,
+      "instability": 0.5
+    },
+    {
+      "module": "utils.variant_key",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.versioning",
+      "fan_in": 2,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.address_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.categories_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.financial_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.mobile_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.notifications_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.operational_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.reviews_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "controllers.wishlist_controller",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "data.category_tax_profiles",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "data.country_curated",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "data.curated_cities",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "database",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "db",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "db.create_tables",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "db.models_country_enhancements",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "events.event_publisher",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "events.payment_events",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "location_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "location_service.main",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.api_version_middleware",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "middleware.device_binding_middleware",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.rls_dependency",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "middleware.siem_engine",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "middleware.webhook_ip_whitelist",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers._base",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "routers.chat",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.command_center",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.compliance",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.csp_reporting",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.expenses",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.location_api",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.messaging",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.translate",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "routers.video",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "schemas",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.test_create_all",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.ai_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.audit_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.biometric_auth",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.content_service",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.data_residency",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.external_contact",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.fraud_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.hse_manager",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.kms_encryption",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.lms",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.localization_service",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.orders_write_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.payout_engine",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.payroll_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.permission_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.products_write_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.promotions_write_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.shipping_tier",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.suppliers_write_service",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.travel_detector",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "services.variant_config_service",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_ai_research_jobs",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_background_jobs",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_circuit_breaker",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_country_ai_research",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_country_auto_populate",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_country_research",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_pagination_integration",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_transaction",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "tests.test_versioning",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.analytics_service",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.constant_time",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.multi_secret_webhook",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "utils.qr_auth",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.rate_limiter",
+      "fan_in": 1,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.soft_delete",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0
+    },
+    {
+      "module": "alembic._analyze_graph",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic._diagnose_tree",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic._graph_analysis",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.20260730_0008_split_country_configs_into_domain_tables",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_26_20_27-837e1e29bd49_add_banner_layout_json",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_26_22_00-e70b2cb9a90f_fix_internal_channels_fk",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_27_00_32-c0f3f1817791_add_production_postgres_indexes",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_27_09_08-20260727_0908_add_check_constraints_to_status_enum_columns",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_28_0000_employee_hr_tables",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_28_19_30-e8efae30fc29_add_missing_indexes_and_constraints",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_28_21_14-87146598d2c3_add_missing_fk_constraints_for_",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_29_10_17-e281faa0c087_add_orm_models_for_orphaned_employee_",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_29_10_28-9ff24a0683dd_schema_drift_check",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_29_19_14-20260729_1914_add_products_search_vector_trigger",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_29_20_30-20260729_2030_add_postgres_range_partitioning_audit_notif",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_30_0001-20260730_0001_create_user_points_table",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_30_0002-20260730_0002_create_points_transactions_table",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_30_0003-20260730_0003_create_upload_jobs_table",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_30_0004-20260730_0004_create_event_tables",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "alembic.versions.2026_07_30_0005-20260730_0005_bounded_context_schema_migration",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.employee_controller",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.hr",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "controllers.products",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "data",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "db.migrations.new_tables",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "db.mixins",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "jobs.threat_feed_updater",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.br_05",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.br_06",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.br_08",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.br_11",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.br_12",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.br_13",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "providers.legacy.check_BiRefNet",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "routers",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "run_server",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_declarations",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_declarations_ast",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_declarations_debug",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_declarations_v2",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_declarations_v3",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_to_bare_classes",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.add_schema_to_models",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.check_db_models",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.check_multiline_table_args",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.check_remaining",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.check_schema_coverage",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.comprehensive_schema_check",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_bare",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_classes",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_events",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_events2",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_events3",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_events4",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_events5",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_first_class",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_regex",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.debug_systemalert",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_db_models",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_inline_schema",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_single_line_table_args",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_table_args_ast",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_table_args_comprehensive",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_table_args_final",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_table_args_v2",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_table_args_v3",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.fix_table_args_v4",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.list_no_table_args",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.safe_structure_migration",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.schema_audit_ci",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.validate_migrations",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "scripts.verify_syntax",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.bg_removal_presets",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.confidence_scoring",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.country_data_orchestrator",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.email_reputation",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.fix_chat",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.image_ai_service",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.maker",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.promotion_bogo_service",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.run_py",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.script1",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.template",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.translation_service",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.write_chat",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "services.write_files_script",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "settings",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_admin",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_api_endpoints",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_api_pagination",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_banners",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_categories",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_chat",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_countries",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_coupons",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_free_country_research",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_health",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_logistics",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_notifications",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_products",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_search",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_suppliers",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_treasury",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tests.test_users",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "tools.mcp.mcp_client_example",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.api_docs",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.db_backup",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.ghost_record",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.kms_encryption",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.kms_integration",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.secrets_manager",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    },
+    {
+      "module": "utils.security_metrics",
+      "fan_in": 0,
+      "fan_out": 0,
+      "instability": 0.0
+    }
+  ]
+}

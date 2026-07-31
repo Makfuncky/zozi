@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "updated": "2026-07-31T09:03:25.779348+00:00",
+  "domains": [],
+  "backend_top_dirs": [
+    "controllers",
+    "db",
+    "services",
+    "utils"
+  ],
+  "frontend_features": [],
+  "allowed_domain_edges": [],
+  "features": {
+    "database": {
+      "backend": [
+        "db"
+      ],
+      "paths": [
+        "backend\\db\\database.py"
+      ]
+    },
+    "config": {
+      "backend": [
+        "utils"
+      ],
+      "paths": [
+        "backend\\utils\\config.py"
+      ]
+    },
+    "migrations": {
+      "backend": [
+        "utils"
+      ],
+      "paths": [
+        "backend\\utils\\migrations.py"
+      ]
+    },
+    "auth": {
+      "backend": [
+        "utils"
+      ],
+      "paths": [
+        "backend\\utils\\auth.py"
+      ]
+    },
+    "constants": {
+      "backend": [
+        "utils"
+      ],
+      "paths": [
+        "backend\\utils\\constants.py"
+      ]
+    },
+    "schemas": {
+      "backend": [
+        "db"
+      ],
+      "paths": [
+        "backend\\db\\schemas.py"
+      ]
+    }
+  }
+}

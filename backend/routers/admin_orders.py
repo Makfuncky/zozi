@@ -9,6 +9,7 @@ from controllers.admin_controller import archive_entity, restore_entity, bulk_ar
 from controllers.audit_controller import audit_log
 from utils.country_rls import enforce_country_access, get_country_or_404
 from utils.rls_interceptor import set_rls_context
+from services.orders_write_service import update_order
 import math
 
 router = APIRouter()
@@ -176,9 +177,8 @@ def bulk_update_order_status(
         for oid in payload.ids:
             o = db.query(Order).filter(Order.id == oid).first()
             if o:
-                o.status = payload.status
+                update_order(db, o, {"status": payload.status})
                 updated += 1
-        db.commit()
         return {"message": f"Status updated for {updated} orders", "updated": updated}
     finally:
         from utils.rls_interceptor import clear_rls_context
@@ -205,4 +205,3 @@ def delete_order_permanent(
     finally:
         from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
-

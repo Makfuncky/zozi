@@ -1,5 +1,5 @@
 """Admin cash management router."""
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 from db.database import get_db
 from models import CashAccount, CashTransaction, User
@@ -7,7 +7,10 @@ from db.schemas import CashAccountCreate, CashAccountOut, CashTransactionCreate,
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
-from decimal import Decimal
+from services.cash_management_write_service import (
+    create_cash_account as create_cash_account_db,
+    create_cash_transaction as create_cash_transaction_db,
+)
 
 router = APIRouter()
 
@@ -27,9 +30,7 @@ def create_account(country_code: str = Path(..., description="ISO country code")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        a = CashAccount(**payload.model_dump(), country_code=country_code.upper())
-        db.add(a); db.commit(); db.refresh(a)
-        return a
+        return create_cash_account_db(db, **payload.model_dump(), country_code=country_code.upper())
     finally:
         clear_rls_context()
 
@@ -45,9 +46,6 @@ def create_transaction(country_code: str = Path(..., description="ISO country co
             account.balance -= payload.amount
         else:
             account.balance += payload.amount
-        tx = CashTransaction(**payload.model_dump(), balance_after=account.balance, performed_by=current_user.id, country_code=country_code.upper())
-        db.add(tx); db.commit(); db.refresh(tx)
-        return tx
+        return create_cash_transaction_db(db, **payload.model_dump(), balance_after=account.balance, performed_by=current_user.id, country_code=country_code.upper())
     finally:
         clear_rls_context()
-

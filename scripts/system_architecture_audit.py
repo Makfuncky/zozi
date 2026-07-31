@@ -62,6 +62,8 @@ Auto-policy:
   .governance/zozi_auto_policy.json
 
 Usage:
+  ^ Read scripts\SYSTEM_ARCHTECTURE_AUDIT_USAGE.md for detail understanding of Usage and Output.
+  
   python backend/scripts/system_architecture_audit.py --no-fail --show-intended
 
   # first baseline
@@ -255,6 +257,12 @@ DEFAULT_ALLOW_DOCS_ROOT = {
     "DOCUMENTATION_INDEX.md",
     "INDEX.md",
 }
+
+# Document file extensions that are ALWAYS allowed at documents/ root
+# (documents/ is the doc home — these never need listing).  A file at documents/
+# root is only flagged (F8) if its extension is NOT here AND its name is not in
+# allow_docs_root.  Override via governance.yaml -> policy.doc_ext if needed.
+DEFAULT_DOC_EXT = {".md", ".txt", ".rst", ".adoc", ".pdf"}
 
 DEFAULT_FORBIDDEN_ROOT = {
     "backend": [
@@ -781,7 +789,7 @@ RULE_MEANING = {
     "F5": "secret material on disk (security)",
     "F6": "media written to / served from local disk (scale killer)",
     "F7": "raw os.environ secret read in middleware (use settings)",
-    "F8": "documents/ root entry outside allow-list (only scope/ is authoritative)",
+    "F8": "non-document artifact at documents/ root (docs are allowed; documents/ is the doc home)",
     "F9": "repo-root note outside allow-list / banned dir",
     "G0": "missing/weak root .gitignore (root cause of committed artifacts)",
     "DG": "forbidden dependency-graph edge (layer contract violated)",
@@ -810,6 +818,933 @@ RULE_MEANING = {
     "I3": "architecture metric summary",
     "T1": "architecture trend delta",
 }
+
+# ============================================================================
+# v3.4 SELF-CONTAINED ENHANCEMENTS
+# No YAML required.
+# These checks make the auditor stronger without manual configuration.
+# ============================================================================
+
+RULE_MEANING.update({
+    "SEC2": "possible hardcoded secret/token literal in source",
+    "SEC3": "dangerous dynamic execution / deserialization / shell usage",
+    "SEC4": "insecure runtime setting (debug/cors wildcard with credentials)",
+    "PERF1": "blocking call inside async function",
+    "PERF2": "possible DB query inside loop (N+1 risk)",
+    "QUAL1": "weak exception handling (bare except / swallowed exception)",
+    "QUAL2": "TODO/FIXME technical debt marker",
+    "QUAL3": "oversized file or function (scaling/maintainability risk)",
+    "QUAL4": "print/debug output in application code",
+    "DB1": "ORM model missing __table_args__ schema declaration",
+    "DB2": "multiple Alembic heads detected (migration graph fractured)",
+    "CFG5": "generated governance artifacts not gitignored",
+    "FE6": "frontend console/debugger statement left in source",
+})
+
+HOTLIST_RULES.update({
+    "SEC2",
+    "SEC3",
+    "SEC4",
+    "PERF1",
+    "PERF2",
+    "QUAL1",
+    "QUAL2",
+    "QUAL3",
+    "QUAL4",
+    "DB1",
+    "DB2",
+    "CFG5",
+    "FE6",
+})
+
+# --- secret literals ---------------------------------------------------------
+ENH_SECRET_LITERAL_RES = [
+    re.compile(r"AKIA[0-9A-Z]{16}"),
+    re.compile(r"sk_live_[0-9A-Za-z]{24,}"),
+    re.compile(r"sk_test_[0-9A-Za-z]{24,}"),
+    re.compile(r"ghp_[0-9A-Za-z]{36,}"),
+    re.compile(r"github_pat_[0-9A-Za-z_]{22,}"),
+    re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}"),
+    re.compile(r"AIza[0-9A-Za-z_\-]{35}"),
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+]
+
+ENH_SECRET_ASSIGN_RE = re.compile(
+    r"(?i)\b(api[_-]?key|apikey|secret|secret[_-]?key|token|auth[_-]?token|access[_-]?token|password|passwd|pwd)\b\s*[:=]\s*['\"][^'\"]{12,}['\"]"
+)
+
+ENH_SECRET_IGNORE_LINE_RE = re.compile(
+    r"(?i)os\.environ|getenv|settings\.|config\.|example|placeholder|<[^>]+>|\$\{|process\.env|\bimport\b|\bfrom\b|\bdef\b|\bclass\b|BaseSettings|Field\(|get_secret|secret_manager|vault"
+)
+
+# --- dangerous calls ---------------------------------------------------------
+ENH_DANGEROUS_CALLS = {
+    "eval",
+    "exec",
+    "pickle.load",
+    "pickle.loads",
+    "cPickle.load",
+    "cPickle.loads",
+    "marshal.load",
+    "marshal.loads",
+    "yaml.load",
+    "yaml.unsafe_load",
+    "os.system",
+}
+
+ENH_SUBPROCESS_CALLS = {
+    "subprocess.run",
+    "subprocess.call",
+    "subprocess.Popen",
+}
+
+# --- async blocking calls ----------------------------------------------------
+ENH_BLOCKING_CALLS = {
+    "time.sleep",
+    "requests.get",
+    "requests.post",
+    "requests.put",
+    "requests.delete",
+    "requests.patch",
+    "requests.head",
+    "requests.options",
+    "urllib.request.urlopen",
+    "socket.recv",
+    "socket.send",
+    "socket.connect",
+}
+
+# --- query-in-loop -----------------------------------------------------------
+ENH_QUERY_ATTRS = {
+    "query",
+    "execute",
+    "scalar",
+    "scalars",
+}
+
+# --- quality / debt ----------------------------------------------------------
+ENH_TODO_RE = re.compile(r"\b(TODO|FIXME|XXX|HACK)\b")
+ENH_FRONTEND_DEBUG_RE = re.compile(r"\bconsole\.(log|debug|info|warn|error)\b|\bdebugger\b")
+ENH_DEBUG_TRUE_RE = re.compile(r"\bdebug\s*=\s*True\b", re.I)
+ENH_CORS_WILDCARD_RE = re.compile(r"allow_origins\s*=\s*\[\s*['\"]\*['\"]\s*\]")
+ENH_CORS_CREDS_RE = re.compile(r"allow_credentials\s*=\s*True\b")
+
+ENH_FILE_LINE_LIMIT = 1200
+ENH_FUNC_LINE_LIMIT = 120
+
+
+def _enh_call_full_name(func: ast.AST) -> str:
+    """
+    Return a dotted best-effort name for a Call.func node.
+    Examples:
+      requests.get -> 'requests.get'
+      time.sleep -> 'time.sleep'
+      print -> 'print'
+    """
+    parts: list[str] = []
+    cur = func
+
+    while isinstance(cur, ast.Attribute):
+        parts.append(cur.attr)
+        cur = cur.value
+
+    if isinstance(cur, ast.Name):
+        parts.append(cur.id)
+
+    return ".".join(reversed(parts))
+
+
+def _enh_call_has_attr(func: ast.AST, attrs: set[str]) -> bool:
+    """
+    Detect whether a call chain contains one of the given attribute names.
+    Useful for chained calls like:
+      session.query(...).filter(...).all()
+    """
+    cur = func
+    depth = 0
+
+    while cur is not None and depth < 32:
+        if isinstance(cur, ast.Attribute):
+            if cur.attr in attrs:
+                return True
+            cur = cur.value
+        elif isinstance(cur, ast.Call):
+            cur = cur.func
+        elif isinstance(cur, ast.Name):
+            return cur.id in attrs
+        else:
+            break
+
+        depth += 1
+
+    return False
+
+
+def _enh_backend_parts(f: Path, backend: Path) -> list[str] | None:
+    try:
+        return [p.lower() for p in f.relative_to(backend).parts]
+    except ValueError:
+        return None
+
+
+def _enh_is_excluded_backend_path(parts: list[str]) -> bool:
+    excluded = {
+        "tests",
+        "test",
+        "scripts",
+        "alembic",
+        "data",
+        "monitoring",
+        "docs",
+        "node_modules",
+        "dist",
+        "build",
+        "coverage",
+        ".next",
+    }
+    return any(p in excluded for p in parts)
+
+
+def check_enhanced_secrets_in_code(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    SEC2:
+    Detect likely hardcoded secrets/tokens inside source files.
+    """
+    reported = 0
+
+    for top in ("backend", "frontend", "scripts"):
+        d = repo / top
+        if not d.exists():
+            continue
+
+        for f in iter_text_files(d, eff):
+            if f.suffix.lower() not in eff["source_ext"]:
+                continue
+
+            t = read_text(f)
+            if not t:
+                continue
+
+            hits: list[int] = []
+            strong = False
+
+            for i, line in enumerate(t.splitlines(), 1):
+                if ENH_SECRET_IGNORE_LINE_RE.search(line):
+                    continue
+
+                matched_known = False
+                for rx in ENH_SECRET_LITERAL_RES:
+                    if rx.search(line):
+                        hits.append(i)
+                        strong = True
+                        matched_known = True
+                        break
+
+                if matched_known:
+                    if len(hits) >= 5:
+                        break
+                    continue
+
+                low = line.lower()
+                if (
+                    ENH_SECRET_ASSIGN_RE.search(line)
+                    and not any(
+                        x in low
+                        for x in (
+                            "example",
+                            "test",
+                            "dummy",
+                            "changeme",
+                            "placeholder",
+                            "<",
+                            "${",
+                            "process.env",
+                            "os.environ",
+                        )
+                    )
+                ):
+                    hits.append(i)
+
+                if len(hits) >= 5:
+                    break
+
+            if hits:
+                sev = RED if strong else YEL
+                rep.add(
+                    sev,
+                    "SEC2",
+                    domain_of(rel(f, repo)),
+                    rel(f, repo),
+                    f"possible hardcoded secret/token ({len(hits)} hit(s))",
+                    intended="move secrets to env/Vault/settings; keep only placeholders in examples",
+                    line=hits[0],
+                )
+                reported += 1
+
+                if reported >= 150:
+                    return
+
+
+def check_enhanced_dangerous_calls(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    SEC3:
+    Detect dangerous execution / deserialization / shell patterns.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if parts is None or _enh_is_excluded_backend_path(parts):
+            continue
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+
+            name = _enh_call_full_name(node.func)
+            if not name:
+                continue
+
+            if name in ENH_SUBPROCESS_CALLS:
+                shell_true = False
+                for kw in node.keywords:
+                    if (
+                        kw.arg == "shell"
+                        and isinstance(kw.value, ast.Constant)
+                        and kw.value.value is True
+                    ):
+                        shell_true = True
+                        break
+
+                if shell_true:
+                    rep.add(
+                        RED,
+                        "SEC3",
+                        "security",
+                        rel(f, repo),
+                        f"dangerous subprocess call with shell=True ({name})",
+                        intended="use argument list without shell=True; validate all inputs",
+                        line=node.lineno,
+                    )
+                    reported += 1
+
+                if reported >= 200:
+                    return
+
+                continue
+
+            if name in ENH_DANGEROUS_CALLS:
+                sev = RED if name in {
+                    "eval",
+                    "exec",
+                    "pickle.load",
+                    "pickle.loads",
+                    "yaml.load",
+                    "yaml.unsafe_load",
+                    "marshal.load",
+                    "marshal.loads",
+                } else YEL
+
+                rep.add(
+                    sev,
+                    "SEC3",
+                    "security",
+                    rel(f, repo),
+                    f"dangerous dynamic execution/deserialization: {name}",
+                    intended="avoid eval/exec/pickle/marshal/unsafe yaml; use safe parsers and explicit logic",
+                    line=node.lineno,
+                )
+                reported += 1
+
+                if reported >= 200:
+                    return
+
+
+def check_enhanced_runtime_security_settings(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    SEC4:
+    Detect insecure runtime settings:
+    - debug=True
+    - CORS wildcard + credentials
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if parts is None or _enh_is_excluded_backend_path(parts):
+            continue
+
+        t = read_text(f)
+        if not t:
+            continue
+
+        if ENH_CORS_WILDCARD_RE.search(t) and ENH_CORS_CREDS_RE.search(t):
+            line = 1
+            for i, l in enumerate(t.splitlines(), 1):
+                if ENH_CORS_WILDCARD_RE.search(l):
+                    line = i
+                    break
+
+            rep.add(
+                RED,
+                "SEC4",
+                "security",
+                rel(f, repo),
+                "CORS wildcard origin combined with credentials",
+                intended="use explicit allowed origins when allow_credentials=True",
+                line=line,
+            )
+            reported += 1
+
+        if ENH_DEBUG_TRUE_RE.search(t):
+            line = 1
+            for i, l in enumerate(t.splitlines(), 1):
+                if ENH_DEBUG_TRUE_RE.search(l):
+                    line = i
+                    break
+
+            rep.add(
+                YEL,
+                "SEC4",
+                "security",
+                rel(f, repo),
+                "debug=True detected in backend code",
+                intended="drive debug from settings/env; never hardcode True in deployable code",
+                line=line,
+            )
+            reported += 1
+
+        if reported >= 150:
+            return
+
+
+def check_enhanced_async_blocking(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    PERF1:
+    Detect blocking calls inside async functions.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if parts is None or _enh_is_excluded_backend_path(parts):
+            continue
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.AsyncFunctionDef):
+                continue
+
+            for child in ast.walk(node):
+                if not isinstance(child, ast.Call):
+                    continue
+
+                name = _enh_call_full_name(child.func)
+                if not name:
+                    continue
+
+                if name in ENH_BLOCKING_CALLS or name in ENH_SUBPROCESS_CALLS:
+                    rep.add(
+                        YEL,
+                        "PERF1",
+                        "backend",
+                        rel(f, repo),
+                        f"blocking call '{name}' inside async function '{node.name}'",
+                        intended="use async client / threadpool / background job instead of blocking the event loop",
+                        line=getattr(child, "lineno", node.lineno),
+                    )
+                    reported += 1
+
+                    if reported >= 200:
+                        return
+
+
+def check_enhanced_query_in_loop(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    PERF2:
+    Detect likely DB query calls inside loops.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if parts is None or _enh_is_excluded_backend_path(parts):
+            continue
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
+                continue
+
+            for child in ast.walk(node):
+                if not isinstance(child, ast.Call):
+                    continue
+
+                if _enh_call_has_attr(child.func, ENH_QUERY_ATTRS):
+                    rep.add(
+                        YEL,
+                        "PERF2",
+                        "backend",
+                        rel(f, repo),
+                        "possible DB query inside loop (N+1 risk)",
+                        intended="batch the query / use joins / preload relationships instead of querying per item",
+                        line=getattr(child, "lineno", node.lineno),
+                    )
+                    reported += 1
+
+                    if reported >= 200:
+                        return
+
+
+def check_enhanced_exception_handling(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    QUAL1:
+    Detect weak exception handling:
+    - bare except
+    - swallowed Exception with pass
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if parts is None or _enh_is_excluded_backend_path(parts):
+            continue
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ExceptHandler):
+                continue
+
+            if node.type is None:
+                rep.add(
+                    YEL,
+                    "QUAL1",
+                    "backend",
+                    rel(f, repo),
+                    "bare except: catches everything and hides failures",
+                    intended="catch specific exceptions and handle/log them explicitly",
+                    line=node.lineno,
+                )
+                reported += 1
+
+            elif isinstance(node.type, ast.Name) and node.type.id == "Exception":
+                only_pass = all(isinstance(stmt, ast.Pass) for stmt in node.body)
+                if only_pass:
+                    rep.add(
+                        YEL,
+                        "QUAL1",
+                        "backend",
+                        rel(f, repo),
+                        "swallowed exception: 'except Exception: pass'",
+                        intended="log or re-raise; silent swallowing hides bugs",
+                        line=node.lineno,
+                    )
+                    reported += 1
+
+            if reported >= 250:
+                return
+
+
+def check_enhanced_todo_debt(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    QUAL2:
+    Detect TODO/FIXME/XXX/HACK markers.
+    """
+    reported = 0
+
+    for top in ("backend", "frontend"):
+        d = repo / top
+        if not d.exists():
+            continue
+
+        for f in iter_text_files(d, eff):
+            if f.suffix.lower() not in eff["source_ext"]:
+                continue
+
+            t = read_text(f)
+            if not t:
+                continue
+
+            count = len(ENH_TODO_RE.findall(t))
+            if count <= 0:
+                continue
+
+            rep.add(
+                YEL,
+                "QUAL2",
+                domain_of(rel(f, repo)),
+                rel(f, repo),
+                f"technical debt markers present ({count} TODO/FIXME/XXX/HACK)",
+                intended="convert important markers into tasks/ADRs; delete stale ones",
+            )
+            reported += 1
+
+            if reported >= 200:
+                return
+
+
+def check_enhanced_size_complexity(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    QUAL3:
+    Detect oversized files and functions.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if parts is None or _enh_is_excluded_backend_path(parts):
+            continue
+
+        t = read_text(f)
+        if not t:
+            continue
+
+        line_count = len(t.splitlines())
+        if line_count > ENH_FILE_LINE_LIMIT:
+            rep.add(
+                YEL,
+                "QUAL3",
+                "backend",
+                rel(f, repo),
+                f"oversized file ({line_count} lines)",
+                intended="split by domain/responsibility; large files become change bottlenecks",
+            )
+            reported += 1
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+
+            end_lineno = getattr(node, "end_lineno", None)
+            if not end_lineno:
+                continue
+
+            func_len = end_lineno - node.lineno + 1
+            if func_len > ENH_FUNC_LINE_LIMIT:
+                rep.add(
+                    YEL,
+                    "QUAL3",
+                    "backend",
+                    rel(f, repo),
+                    f"oversized function '{node.name}' ({func_len} lines)",
+                    intended="extract smaller functions / service methods; long functions hide side effects",
+                    line=node.lineno,
+                )
+                reported += 1
+
+                if reported >= 250:
+                    return
+
+        if reported >= 250:
+            return
+
+
+def check_enhanced_print_debug(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    QUAL4:
+    Detect print() in backend application code.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    app_layers = {
+        "routers",
+        "controllers",
+        "services",
+        "middleware",
+        "dependencies",
+        "providers",
+        "utils",
+        "events",
+        "jobs",
+    }
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        parts = _enh_backend_parts(f, backend)
+        if not parts:
+            continue
+
+        layer = parts[0]
+        if layer not in app_layers:
+            continue
+
+        if _enh_is_excluded_backend_path(parts):
+            continue
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+
+            name = _enh_call_full_name(node.func)
+            if name == "print":
+                rep.add(
+                    YEL,
+                    "QUAL4",
+                    "backend",
+                    rel(f, repo),
+                    "print() statement in application code",
+                    intended="use structured logging instead of print()",
+                    line=node.lineno,
+                )
+                reported += 1
+
+                if reported >= 200:
+                    return
+
+
+def check_enhanced_model_schema(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    DB1:
+    Detect ORM models that define __tablename__ but not __table_args__.
+    """
+    backend = repo / "backend"
+    models = backend / "models"
+    if not models.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(models, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ClassDef):
+                continue
+
+            has_tablename = False
+            has_tableargs = False
+
+            for stmt in node.body:
+                if isinstance(stmt, ast.Assign):
+                    for target in stmt.targets:
+                        if isinstance(target, ast.Name):
+                            if target.id == "__tablename__":
+                                has_tablename = True
+                            if target.id == "__table_args__":
+                                has_tableargs = True
+
+                elif isinstance(stmt, ast.AnnAssign) and isinstance(stmt.target, ast.Name):
+                    if stmt.target.id == "__tablename__":
+                        has_tablename = True
+                    if stmt.target.id == "__table_args__":
+                        has_tableargs = True
+
+            if has_tablename and not has_tableargs:
+                rep.add(
+                    YEL,
+                    "DB1",
+                    "database",
+                    rel(f, repo),
+                    f"model '{node.name}' has __tablename__ but no __table_args__",
+                    intended="declare schema ownership with __table_args__={'schema': '<domain>'}",
+                    line=node.lineno,
+                )
+                reported += 1
+
+                if reported >= 200:
+                    return
+
+
+def check_enhanced_alembic_heads(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    DB2:
+    Detect multiple Alembic heads.
+    """
+    versions = repo / "backend" / "alembic" / "versions"
+    if not versions.exists():
+        return
+
+    rev_re = re.compile(r"^revision(?:\s*:\s*[^=]+)?\s*=\s*['\"]([^'\"]+)['\"]", re.M)
+    down_re = re.compile(r"^down_revision(?:\s*:\s*[^=]+)?\s*=\s*(?:['\"]([^'\"]+)['\"]|None\b)", re.M)
+
+    revisions: set[str] = set()
+    downs: set[str] = set()
+
+    for f in versions.glob("*.py"):
+        t = read_text(f)
+        if not t:
+            continue
+
+        rev_match = rev_re.search(t)
+        if not rev_match:
+            continue
+
+        revisions.add(rev_match.group(1))
+
+        down_match = down_re.search(t)
+        if down_match and down_match.group(1):
+            downs.add(down_match.group(1))
+
+    heads = sorted(revisions - downs)
+
+    if len(heads) > 1:
+        rep.add(
+            YEL,
+            "DB2",
+            "database",
+            "backend/alembic/versions",
+            f"multiple Alembic heads detected ({len(heads)}): " + ", ".join(heads[:5]),
+            intended="merge to a single head (alembic merge heads) or add a reconciling revision",
+        )
+
+
+def check_enhanced_gitignore_generated(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    CFG5:
+    Ensure generated audit artifacts are gitignored, without telling you to
+    ignore the entire .governance/ folder if you want to commit the registry.
+    """
+    gi = repo / ".gitignore"
+    if not gi.exists():
+        return
+
+    t = read_text(gi) or ""
+
+    missing = [
+        item
+        for item in (
+            "REPO_LAYOUT_AUDIT_REPORT.md",
+            "out/",
+            ".governance/architecture_trend.json",
+            ".governance/zozi_auto_policy.json",
+        )
+        if item not in t
+    ]
+
+    if missing:
+        rep.add(
+            YEL,
+            "CFG5",
+            "repo",
+            ".gitignore",
+            f"generated governance artifacts not ignored: {', '.join(missing)}",
+            intended="ignore generated local outputs; keep canonical governance files if desired",
+        )
+
+def check_enhanced_frontend_debug(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    FE6:
+    Detect console/debugger statements in frontend source.
+    """
+    frontend = repo / "frontend"
+    if not frontend.exists():
+        return
+
+    source_ext = eff.get("frontend_source_ext", DEFAULT_FRONTEND_SOURCE_EXT)
+    reported = 0
+
+    for f in iter_text_files(frontend, eff):
+        if f.suffix.lower() not in source_ext:
+            continue
+
+        if in_parts(
+            f,
+            "node_modules",
+            ".next",
+            "dist",
+            "build",
+            "coverage",
+            "test-results",
+            "playwright-report",
+            "e2e",
+            "__tests__",
+        ):
+            continue
+
+        t = read_text(f)
+        if not t:
+            continue
+
+        count = len(ENH_FRONTEND_DEBUG_RE.findall(t))
+        if count <= 0:
+            continue
+
+        rep.add(
+            YEL,
+            "FE6",
+            "frontend",
+            rel(f, repo),
+            f"frontend debug statements present ({count} console/debugger)",
+            intended="remove console/debugger before merge; use proper logging/error reporting",
+        )
+        reported += 1
+
+        if reported >= 200:
+            return
 
 
 @dataclass
@@ -911,6 +1846,637 @@ class FeatureRegistry:
             "features": features,
         }
 
+# ============================================================================
+# v3.5 MOVE SUGGESTION ENGINE
+# Adds concrete file-by-file relocation suggestions.
+# No YAML required.
+# ============================================================================
+
+RULE_MEANING.update({
+    "MV1": "flat layer file should be moved into a sub-folder",
+    "MV2": "mis-housed file should be relocated to canonical layer",
+    "MV3": "router file should be grouped by surface",
+    "I4": "file move-map summary",
+})
+
+HOTLIST_RULES.update({
+    "MV1",
+    "MV2",
+    "MV3",
+})
+
+# Embedded domain inference dictionary.
+# This is intentionally self-contained and does not require YAML.
+MOVE_DOMAIN_KEYWORDS = {
+    "finance": {
+        "finance",
+        "ledger",
+        "sub_ledger",
+        "tax",
+        "invoice",
+        "commission",
+        "payout",
+        "payouts",
+        "payment",
+        "payments",
+        "cash",
+        "accounting",
+        "billing",
+    },
+    "treasury": {
+        "treasury",
+        "cash",
+        "payout",
+        "payouts",
+        "settlement",
+        "settlements",
+    },
+    "orders": {
+        "order",
+        "orders",
+        "checkout",
+        "cart",
+        "purchase",
+        "purchases",
+    },
+    "catalog": {
+        "catalog",
+        "product",
+        "products",
+        "category",
+        "categories",
+        "variant",
+        "variants",
+        "filter",
+        "filters",
+    },
+    "supplier": {
+        "supplier",
+        "suppliers",
+        "onboarding",
+        "vendor",
+        "vendors",
+    },
+    "logistics": {
+        "logistics",
+        "shipping",
+        "dispatch",
+        "fulfillment",
+        "delivery",
+        "carrier",
+    },
+    "comms": {
+        "comms",
+        "communication",
+        "communications",
+        "email",
+        "sms",
+        "chat",
+        "notification",
+        "notifications",
+        "translation",
+        "video",
+    },
+    "hr": {
+        "hr",
+        "employee",
+        "employees",
+        "shift",
+        "shifts",
+        "retention",
+        "succession",
+        "travel",
+        "attendance",
+    },
+    "ai": {
+        "ai",
+        "ml",
+        "ocr",
+        "vision",
+        "search",
+        "bg_removal",
+        "variant_config",
+    },
+    "audit": {
+        "audit",
+        "audit_log",
+        "audit_timeline",
+        "compliance",
+    },
+    "core": {
+        "core",
+        "user",
+        "users",
+        "auth",
+        "identity",
+        "config",
+        "settings",
+        "common",
+        "shared",
+        "base",
+    },
+    "commerce": {
+        "commerce",
+        "promotion",
+        "promotions",
+        "coupon",
+        "coupons",
+        "pricing",
+        "price",
+    },
+}
+
+
+def _move_normalize_stem(stem: str) -> str:
+    """
+    Normalize a file stem for domain inference.
+    Example:
+      order_service -> order
+      payments_controller -> payments
+    """
+    low = str(stem).lower()
+
+    for suffix in FEATURE_SUFFIXES:
+        if low.endswith(suffix) and len(low) > len(suffix) + 1:
+            low = low[: -len(suffix)]
+
+    low = re.sub(r"_+", "_", low).strip("_")
+    return low
+
+
+def _move_known_domains_from_dirs(repo: Path, eff: dict) -> set[str]:
+    """
+    Discover domains already present as sub-folders in domain layers.
+    """
+    domains: set[str] = set()
+    backend = repo / "backend"
+
+    for layer in ("services", "models", "controllers", "providers", "events", "jobs"):
+        d = backend / layer
+        if not d.exists():
+            continue
+
+        try:
+            entries = list(d.iterdir())
+        except OSError:
+            continue
+
+        for p in entries:
+            if not p.is_dir():
+                continue
+
+            name = p.name.lower()
+            if name in eff["ignore_dirs"]:
+                continue
+
+            if name in eff.get("surface_names", set()):
+                continue
+
+            domains.add(name)
+
+    return domains
+
+
+def _move_infer_domain(
+    stem: str,
+    known_domains: set[str],
+    default: str = "core",
+) -> tuple[str, str]:
+    """
+    Infer the best domain for a flat file.
+
+    Returns:
+      (domain, reason)
+    """
+    norm = _move_normalize_stem(stem)
+    tokens = {t for t in re.split(r"[-_.]+", norm) if t}
+
+    # 1) Exact known-domain match
+    for dom in sorted(known_domains):
+        if norm == dom or norm.startswith(dom + "_") or dom in tokens:
+            return dom, "known-domain"
+
+    # 2) Keyword-based inference
+    scores: dict[str, int] = defaultdict(int)
+
+    for dom, keywords in MOVE_DOMAIN_KEYWORDS.items():
+        for kw in keywords:
+            if kw in tokens:
+                scores[dom] += 2
+            elif norm.startswith(kw + "_"):
+                scores[dom] += 2
+            elif kw in norm:
+                scores[dom] += 1
+
+    if scores:
+        best = sorted(scores.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+        return best, "keyword"
+
+    # 3) Loose substring match against known domains
+    for dom in sorted(known_domains):
+        if len(dom) >= 4 and dom in norm:
+            return dom, "substring"
+
+    return default, "default"
+
+
+def _move_infer_surface(stem: str, eff: dict, default: str = "common") -> str:
+    """
+    Infer router surface from filename prefix.
+    Example:
+      admin_payouts -> admin
+      supplier_onboarding -> supplier
+    """
+    low = str(stem).lower()
+
+    for surf in sorted(eff.get("surface_names", set())):
+        if low == surf or low.startswith(surf + "_"):
+            return surf
+
+    return default
+
+
+def write_move_map(path: Path, moves: list[dict]) -> None:
+    payload = {
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "count": len(moves),
+        "moves": moves,
+    }
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def check_move_suggestions(
+    repo: Path,
+    rep: Report,
+    eff: dict,
+    graph: ModuleGraph,
+    reg: FeatureRegistry,
+) -> list[dict]:
+    """
+    Generate concrete file relocation suggestions.
+
+    This is the missing “tell me which file goes into which folder” engine.
+    """
+    moves: list[dict] = []
+    backend = repo / "backend"
+
+    if not backend.exists():
+        return moves
+
+    known_domains: set[str] = set()
+    known_domains |= set(reg.domains)
+    known_domains |= _move_known_domains_from_dirs(repo, eff)
+    known_domains |= set(eff.get("domains", {}).keys())
+    known_domains |= set(MOVE_DOMAIN_KEYWORDS.keys())
+
+    reported = 0
+    limit = 1500
+
+    # ------------------------------------------------------------------
+    # 1. Flat domain layers: services/ and models/
+    # ------------------------------------------------------------------
+    for layer in ("services", "models"):
+        d = backend / layer
+        if not d.exists():
+            continue
+
+        try:
+            direct_files = sorted([p for p in d.glob("*.py") if p.name != "__init__.py"])
+        except OSError:
+            direct_files = []
+
+        for f in direct_files:
+            domain, reason = _move_infer_domain(f.stem, known_domains, default="core")
+            target = f"backend/{layer}/{domain}/{f.name}"
+
+            rep.add(
+                YEL,
+                "MV1",
+                "backend",
+                rel(f, repo),
+                f"flat {layer}/ file should move into {layer}/{domain}/",
+                intended=f"mkdir -p backend/{layer}/{domain}; move {rel(f, repo)} -> {target} (inferred: {reason})",
+            )
+
+            moves.append(
+                {
+                    "from": rel(f, repo),
+                    "to": target,
+                    "reason": reason,
+                    "kind": f"flat-{layer}",
+                }
+            )
+
+            reported += 1
+            if reported >= limit:
+                break
+
+        if reported >= limit:
+            break
+
+    # ------------------------------------------------------------------
+    # 2. Controllers:
+    #    - known mis-housed writer/controllers -> services/ or utils/
+    #    - normal flat controllers -> controllers/<domain>/
+    # ------------------------------------------------------------------
+    if reported < limit:
+        d = backend / "controllers"
+        if d.exists():
+            try:
+                direct_files = sorted([p for p in d.glob("*.py") if p.name != "__init__.py"])
+            except OSError:
+                direct_files = []
+
+            for f in direct_files:
+                stem = f.stem.lower()
+
+                # Known mis-housed controller/util logic
+                if (
+                    stem in eff.get("mis_housed_controllers", set())
+                    or f.name in eff.get("known_writer_controllers", set())
+                ):
+                    if stem == "cache_utils":
+                        target = "backend/utils/cache_utils.py"
+                        rep.add(
+                            YEL,
+                            "MV2",
+                            "backend",
+                            rel(f, repo),
+                            "mis-housed util inside controllers/ should move to utils/",
+                            intended=f"move {rel(f, repo)} -> {target}",
+                        )
+                        moves.append(
+                            {
+                                "from": rel(f, repo),
+                                "to": target,
+                                "reason": "mis-housed-util",
+                                "kind": "controllers-mis-housed",
+                            }
+                        )
+                    else:
+                        default_dom = "audit" if "audit" in stem else "core"
+                        domain, reason = _move_infer_domain(
+                            f.stem,
+                            known_domains,
+                            default=default_dom,
+                        )
+                        target = f"backend/services/{domain}/{f.name}"
+
+                        rep.add(
+                            RED,
+                            "MV2",
+                            "backend",
+                            rel(f, repo),
+                            "controller appears to hold service/write logic and should move to services/",
+                            intended=(
+                                f"move {rel(f, repo)} -> {target}; "
+                                "then rename/refactor to a *_service.py if appropriate"
+                            ),
+                        )
+                        moves.append(
+                            {
+                                "from": rel(f, repo),
+                                "to": target,
+                                "reason": reason,
+                                "kind": "controllers-mis-housed-writer",
+                            }
+                        )
+
+                    reported += 1
+                    if reported >= limit:
+                        break
+
+                    continue
+
+                # Normal flat controller -> domain sub-folder
+                domain, reason = _move_infer_domain(f.stem, known_domains, default="core")
+                target = f"backend/controllers/{domain}/{f.name}"
+
+                rep.add(
+                    YEL,
+                    "MV1",
+                    "backend",
+                    rel(f, repo),
+                    "flat controllers/ file should move into a domain sub-folder",
+                    intended=f"move {rel(f, repo)} -> {target} (inferred: {reason})",
+                )
+
+                moves.append(
+                    {
+                        "from": rel(f, repo),
+                        "to": target,
+                        "reason": reason,
+                        "kind": "flat-controllers",
+                    }
+                )
+
+                reported += 1
+                if reported >= limit:
+                    break
+
+    # ------------------------------------------------------------------
+    # 3. Routers:
+    #    surface grouping is correct for routers.
+    # ------------------------------------------------------------------
+    if reported < limit:
+        d = backend / "routers"
+        if d.exists():
+            try:
+                direct_files = sorted([p for p in d.glob("*.py") if p.name != "__init__.py"])
+            except OSError:
+                direct_files = []
+
+            for f in direct_files:
+                surface = _move_infer_surface(f.stem, eff, default="common")
+                target = f"backend/routers/{surface}/{f.name}"
+
+                rep.add(
+                    YEL,
+                    "MV3",
+                    "backend",
+                    rel(f, repo),
+                    "flat routers/ file should move into a surface sub-folder",
+                    intended=f"move {rel(f, repo)} -> {target}",
+                )
+
+                moves.append(
+                    {
+                        "from": rel(f, repo),
+                        "to": target,
+                        "reason": "surface-prefix",
+                        "kind": "flat-routers",
+                    }
+                )
+
+                reported += 1
+                if reported >= limit:
+                    break
+
+    # ------------------------------------------------------------------
+    # 4. Known structural relocations
+    # ------------------------------------------------------------------
+    if reported < limit:
+        # employee_models.py inside db/ -> models/
+        emp = backend / "db" / "employee_models.py"
+        if emp.exists():
+            target = "backend/models/employee_models.py"
+            rep.add(
+                RED,
+                "MV2",
+                "database",
+                rel(emp, repo),
+                "employee_models.py must move from db/ to models/",
+                intended=f"move {rel(emp, repo)} -> {target}; add __table_args__ schema",
+            )
+            moves.append(
+                {
+                    "from": rel(emp, repo),
+                    "to": target,
+                    "reason": "M1",
+                    "kind": "known-structural",
+                }
+            )
+            reported += 1
+
+        # backend/api/*.py -> routers/
+        api_dir = backend / "api"
+        if api_dir.exists():
+            try:
+                api_files = sorted([p for p in api_dir.glob("*.py") if p.name != "__init__.py"])
+            except OSError:
+                api_files = []
+
+            for f in api_files:
+                surface = _move_infer_surface(f.stem, eff, default="public")
+                target = f"backend/routers/{surface}/{f.name}"
+
+                rep.add(
+                    RED,
+                    "MV2",
+                    "backend",
+                    rel(f, repo),
+                    "router file outside routers/ should move into routers/",
+                    intended=f"move {rel(f, repo)} -> {target}",
+                )
+
+                moves.append(
+                    {
+                        "from": rel(f, repo),
+                        "to": target,
+                        "reason": "R1",
+                        "kind": "known-structural",
+                    }
+                )
+
+                reported += 1
+                if reported >= limit:
+                    break
+
+        # alembic/_*.py diagnostics -> backend/scripts/
+        alembic = backend / "alembic"
+        if alembic.exists():
+            try:
+                diag_files = sorted([p for p in alembic.glob("_*.py") if p.is_file()])
+            except OSError:
+                diag_files = []
+
+            for f in diag_files:
+                target = f"backend/scripts/{f.name}"
+                rep.add(
+                    YEL,
+                    "MV2",
+                    "database",
+                    rel(f, repo),
+                    "alembic diagnostic script should move to backend/scripts/",
+                    intended=f"move {rel(f, repo)} -> {target}",
+                )
+
+                moves.append(
+                    {
+                        "from": rel(f, repo),
+                        "to": target,
+                        "reason": "A1",
+                        "kind": "known-structural",
+                    }
+                )
+
+                reported += 1
+                if reported >= limit:
+                    break
+
+        # backend/db/migrations/ should not exist as second migrations home
+        migrations = backend / "db" / "migrations"
+        if migrations.exists():
+            rep.add(
+                RED,
+                "MV2",
+                "database",
+                rel(migrations, repo),
+                "backend/db/migrations/ is a second migrations home and should be removed/folded into Alembic",
+                intended="fold required DDL into an Alembic revision, then delete backend/db/migrations/",
+            )
+            moves.append(
+                {
+                    "from": rel(migrations, repo),
+                    "to": "backend/alembic/versions/",
+                    "reason": "G1",
+                    "kind": "known-structural-folder",
+                }
+            )
+            reported += 1
+
+    # ------------------------------------------------------------------
+    # 5. Backend-root modules -> proper package home
+    # ------------------------------------------------------------------
+    if reported < limit and backend.exists():
+        try:
+            root_py_files = sorted([p for p in backend.glob("*.py") if p.is_file()])
+        except OSError:
+            root_py_files = []
+
+        for f in root_py_files:
+            if f.name in eff.get("backend_root_allow", set()):
+                continue
+
+            if is_scratch_name(f.stem, eff, broad=True):
+                target = f"backend/scripts/{f.name}"
+                intended = f"move {rel(f, repo)} -> {target} or delete if it is a one-off script"
+                reason = "scratch"
+            else:
+                domain, reason = _move_infer_domain(f.stem, known_domains, default="utils")
+
+                if domain in {"utils", "core"}:
+                    target = f"backend/utils/{f.name}"
+                else:
+                    target = f"backend/services/{domain}/{f.name}"
+
+                intended = f"move {rel(f, repo)} -> {target}; backend/ root must stay clean"
+
+            rep.add(
+                YEL,
+                "MV2",
+                "backend",
+                rel(f, repo),
+                "file at backend/ root should move into a proper package",
+                intended=intended,
+            )
+
+            moves.append(
+                {
+                    "from": rel(f, repo),
+                    "to": target,
+                    "reason": reason,
+                    "kind": "backend-root",
+                }
+            )
+
+            reported += 1
+            if reported >= limit:
+                break
+
+    return moves
 
 # ============================================================================
 # 3. RULE LOADING
@@ -988,6 +2554,7 @@ def _apply_policy(eff: dict, data: dict | None) -> None:
         "no_init_dirs",
         "frontend_workspaces",
         "frontend_source_ext",
+        "doc_ext",
     }
 
     set_exact_keys = {
@@ -1148,7 +2715,7 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         "forbidden_any": _merge_dict_of_lists(DEFAULT_FORBIDDEN_ANY, {}),
         "allow_root_md": set(DEFAULT_ALLOW_ROOT_MD),
         "allow_docs_root": set(DEFAULT_ALLOW_DOCS_ROOT),
-
+        "doc_ext": set(DEFAULT_DOC_EXT),
         # scratch
         "scratch_phrases": list(DEFAULT_SCRATCH_PHRASES),
         "scratch_tokens": set(DEFAULT_SCRATCH_TOKENS),
@@ -2167,22 +3734,34 @@ def check_scratch_scripts(repo: Path, rep: Report, eff: dict) -> None:
 
 
 def check_doc_and_root_allowlists(repo: Path, rep: Report, eff: dict) -> None:
+    # POLICY: documents/ IS the authoritative doc home. Prose specs (.md/.txt/...)
+    # live directly at documents/ root — there is NO required scope/ sub-folder for
+    # documents.  scope/ (and governance/) remain ONLY as the OPTIONAL home for the
+    # machine-readable governance YAML (repo_structure.yaml / layer_rules.yaml).
+    # So F8 no longer gates documents/ by an allow-list; it only catches a genuine
+    # NON-DOCUMENT artifact (a .log/.db/.png/.zip/...) dropped into the doc tree.
+    # Sub-folders (archive/, snap/, scope/, ...) are organizational and always allowed.
+    doc_ext = eff.get("doc_ext", DEFAULT_DOC_EXT)
+    allow_names = eff.get("allow_docs_root", set())
     docs = repo / "documents"
 
     if docs.exists():
-        allow = eff["allow_docs_root"]
         for c in sorted(docs.iterdir()):
-            if c.name in allow:
+            if c.is_dir():
+                # sub-folders are organizational (archive/, snap/, scope/, ...);
+                # documents/ is the doc home, so we never gate directories.
                 continue
-
-            kind = "dir" if c.is_dir() else "file"
+            if c.suffix.lower() in doc_ext or c.name in allow_names:
+                # a real document at the doc home -> always allowed
+                continue
+            # anything else here is a non-document artifact that doesn't belong in docs
             rep.add(
                 YEL,
                 "F8",
                 "docs",
                 rel(c, repo),
-                f"{kind} at documents/ root outside the allow-list",
-                intended="documents/scope/ is authoritative; move this to documents/archive/ (or delete)",
+                f"non-document artifact at documents/ root (documents/ is the doc home; this is not a doc)",
+                intended="move this artifact out of documents/ (e.g. archive/ or delete); .md/.txt docs are fine here",
             )
 
     allow_md = eff["allow_root_md"]
@@ -2198,19 +3777,18 @@ def check_doc_and_root_allowlists(repo: Path, rep: Report, eff: dict) -> None:
                 "repo",
                 rel(c, repo),
                 "design/plan note (.txt) at repo root",
-                intended="move to documents/ (spec) or experiments/ (scratch); never commit at root",
+                intended="move to documents/ (the doc home) or experiments/ (scratch); never commit at root",
             )
 
-        elif c.suffix == ".md" and c.name not in allow_md:
+        elif c.suffix == ".md" and c.name not in allow_md and c.name != "REPO_LAYOUT_AUDIT_REPORT.md":
             rep.add(
                 YEL,
                 "F9",
                 "repo",
                 rel(c, repo),
                 "doc at repo root outside the allow-list",
-                intended="move to documents/scope/ (authoritative) or documents/archive/",
+                intended="move to documents/ (the doc home) or documents/archive/",
             )
-
 
 def check_expected_packages(repo: Path, rep: Report, eff: dict) -> None:
     backend = repo / "backend"
@@ -3499,10 +5077,11 @@ def reconcile_auto_policy(
 def compute_debt_score(rep: Report, eff: dict) -> int:
     red = sum(1 for f in rep.findings if f.sev == RED)
     yel = sum(1 for f in rep.findings if f.sev == YEL)
-
     by = rep.counters
 
     score = red * 100 + yel * 15
+
+    # existing architectural weights
     score += by.get("DG2", 0) * 35
     score += by.get("DG3", 0) * 50
     score += by.get("DG4", 0) * 10
@@ -3512,12 +5091,28 @@ def compute_debt_score(rep: Report, eff: dict) -> int:
     score += by.get("D1", 0) * 10
     score += by.get("D2", 0) * 8
     score += by.get("D3", 0) * 5
+
+    # existing prefix-based weights
     score += sum(v for k, v in by.items() if k.startswith("CFG")) * 40
     score += sum(v for k, v in by.items() if k.startswith("FE")) * 8
     score += by.get("AUTO8", 0) * 20
 
-    return int(score)
+    # new v3.4 weights
+    score += by.get("SEC2", 0) * 80
+    score += by.get("SEC3", 0) * 70
+    score += by.get("SEC4", 0) * 60
+    score += by.get("PERF1", 0) * 25
+    score += by.get("PERF2", 0) * 20
 
+    score += by.get("QUAL1", 0) * 12
+    score += by.get("QUAL2", 0) * 2
+    score += by.get("QUAL3", 0) * 10
+    score += by.get("QUAL4", 0) * 3
+
+    score += by.get("DB1", 0) * 12
+    score += by.get("DB2", 0) * 35
+
+    return int(score)
 
 # ============================================================================
 # 10. SUMMARY / METRICS / TREND
@@ -3540,7 +5135,7 @@ def collect_info(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> None
     )
 
     src = (
-        "scope YAML (single source of truth)"
+        "YAML policy (documents/scope/ or governance/)"
         if eff["from_yaml"]
         else "EMBEDDED FALLBACK (create documents/scope/*.yaml to make scope authoritative)"
     )
@@ -3704,9 +5299,10 @@ def render_intended_tree() -> str:
             "│   ├── db/  alembic/   (= the 'database' logical domain; ONLY migrations home)",
             "│   └── tests/  scripts/",
             "├── frontend/   (web_app · mobile_app · shared)",
-            "├── documents/",
-            "│   ├── scope/          (AUTHORITATIVE specs + optional YAML policy)",
-            "│   └── archive/        (everything else)",
+            "├── documents/                (AUTHORITATIVE docs live HERE at the root — no scope/ needed)",
+            "│   ├── 01_DATABASE.md ...    (prose specs: the constitution + feature scopes)",
+            "│   ├── scope/                (optional: machine governance YAML only)",
+            "│   └── archive/              (optional: retired docs)",
             "├── monitoring/  nginx/  (infra)",
             "├── experiments/  design/   (gitignored outputs / logo source)",
             "└── .gitignore  .env.example  README.md  docker-compose.yml  railway.toml",
@@ -3908,6 +5504,7 @@ def render_markdown(repo: Path, rep: Report, out: Path, summary: dict) -> None:
                 + (f" → *{f.intended}*" if f.intended else "")
             )
 
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L) + "\n", encoding="utf-8")
 
 
@@ -3944,63 +5541,286 @@ def write_metrics_json(path: Path, summary: dict, graph: ModuleGraph) -> None:
 # 12. MAIN
 # ============================================================================
 
+def _looks_like_repo_root(p: Path) -> bool:
+    """A real ZOZI root has backend/main.py AND a non-trivial backend. The ghost
+    skeleton at scripts/backend/ has ~4 dirs / ~12 .py files; the real backend has
+    20+ dirs / hundreds of .py files. This guard is what stops the auditor from
+    silently auditing the ghost when CWD is wrong (the 12-module / empty-graph bug)."""
+    be = p / "backend"
+    if not (be / "main.py").is_file():
+        return False
+    try:
+        top_dirs = sum(1 for x in be.iterdir() if x.is_dir())
+        py_files = sum(1 for x in be.rglob("*.py"))
+    except OSError:
+        return False
+    return top_dirs >= 8 and py_files >= 50   # tunable; real backend clears both easily
+
+
 def find_repo(explicit: str | None) -> Path:
+    seen: list[Path] = []
+    cands: list[Path] = []
     if explicit:
-        return Path(explicit).resolve()
-
+        cands.append(Path(explicit).resolve())
     cur = Path(__file__).resolve().parent
-
-    for cand in (cur, cur.parent, cur.parent.parent, cur.parent.parent.parent):
-        if (cand / "backend").is_dir() and (cand / "frontend").is_dir():
+    cands += [cur, cur.parent, cur.parent.parent, cur.parent.parent.parent, Path.cwd().resolve()]
+    for cand in cands:
+        cand = cand.resolve()
+        if cand in seen:
+            continue
+        seen.append(cand)
+        if _looks_like_repo_root(cand):
             return cand
+    # FAIL LOUD. A silent wrong root yields plausible-but-garbage reports — worse
+    # than a crash. Tell the operator exactly what to do.
+    print("[FATAL] could not confirm the ZOZI repo root (need backend/main.py + a real backend/).", file=sys.stderr)
+    print(f"        looked in: {[str(c) for c in seen]}", file=sys.stderr)
+    print("        Ran from inside scripts/?  cd to the repo root, or pass --root <repo>.", file=sys.stderr)
+    sys.exit(2)
 
-    return Path.cwd().resolve()
+# ============================================================================
+# v3.3 REGISTRY EXTENSION  (append block — generated views over the existing graph)
+# The "Architecture Registry" = architecture_registry.json, written from data the
+# scanner already computes.  CODEOWNERS + mermaid + report are VIEWS over it.
+# Folders become a projection; the registry JSON is the canonical model.
+# Semantic fields (owner/intent/notes) are READ-ONLY overlays from
+#   .governance/owners.json   (human/LLM owned; this code NEVER overwrites them).
+# ============================================================================
 
+def _suggest_domain(stem: str, known_domains: set[str]) -> tuple[str, float]:
+    """Deterministic confidence *hint* (no ML).  Token-overlap against the set of
+    domains the scanner already discovered.  Returns (best_domain, score in {0,1}).
+    Used ONLY as a suggestion string; the authoritative domain is the folder name."""
+    toks = {t for t in re.split(r"[-_.]+", stem.lower()) if t}
+    best, score = "", 0.0
+    for dom in known_domains:
+        if dom and (dom in toks or dom.replace("_", "") in "".join(toks)):
+            return dom, 1.0
+        # partial: domain is a prefix of some token
+        if any(t.startswith(dom) or dom.startswith(t) for t in toks if len(t) >= 4):
+            best, score = dom, 0.5
+    return best, score
+
+
+def _load_semantic_overrides(repo: Path) -> dict:
+    """Read optional human/LLM semantic overlay.  Never created by this code."""
+    p = repo / ".governance" / "owners.json"
+    if not p.exists():
+        return {}
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _edge_legal(caller_layer: str, callee_mod: str, eff: dict, forbid_cc: bool) -> tuple[bool, str]:
+    """Return (legal, reason).  Mirrors check_dependency_graph but as a pure bool."""
+    for pref in eff.get("forbidden_edges", {}).get(caller_layer, []):
+        if callee_mod == pref or callee_mod.startswith(pref + "."):
+            return False, f"{caller_layer} may not depend on {pref}"
+    if forbid_cc and caller_layer == "controllers" and callee_mod.startswith("controllers.") \
+            and callee_mod != "controllers":
+        return False, "controller must not import another controller's internals"
+    return True, ""
+
+
+def emit_registry(repo: Path, eff: dict, graph: ModuleGraph, reg, rep: Report,
+                  summary: dict) -> Path:
+    """Write the canonical Architecture Registry JSON from the in-memory graph."""
+    sem = _load_semantic_overrides(repo)
+    known_domains = set(reg.domains) | set(eff.get("domains", {}).keys())
+    forbid_cc = bool(eff.get("forbidden_controller_to_controller", True))
+
+    # --- nodes: one per module, with layer + authoritative domain + metrics ---
+    parents = set()
+    for m in graph.modules:
+        parts = m.split(".")
+        for i in range(1, len(parts)):
+            parents.add(".".join(parts[:i]))
+
+    nodes = []
+    for module in sorted(graph.modules):
+        layer = layer_of_module(module)
+        # authoritative domain = the sub-folder under a domain layer, else _triage
+        parts = module.split(".")
+        folder_domain = parts[1] if (layer in eff["ownership_layers"] and len(parts) >= 3) else None
+        if folder_domain:
+            domain, confidence = folder_domain, 1.0
+            triage_reason = ""
+        else:
+            domain, confidence = "_triage", 0.0
+            triage_reason = ("flat file under " + layer +
+                             " (not in a domain sub-package; folder is the declaration)")
+        hint, hscore = _suggest_domain(module.rsplit(".", 1)[-1], known_domains)
+        fin, fout = graph.fan_in.get(module, 0), graph.fan_out.get(module, 0)
+        tot = fin + fout
+        nodes.append({
+            "module": module,
+            "layer": layer,
+            "domain": domain,
+            "domain_confidence": confidence,
+            "domain_hint": (hint if (domain == "_triage" and hscore > 0) else ""),
+            "triage_reason": triage_reason,
+            "fan_in": fin, "fan_out": fout,
+            "instability": round(fout / tot, 4) if tot else 0.0,
+            "is_entrypoint": module in parents or any(
+                rx.search(module) for rx in eff.get("dead_entrypoints_c", [])),
+            "is_dead": (layer in eff.get("dead_audit_layers", set())
+                        and module not in parents and fin == 0
+                        and not any(rx.search(module) for rx in eff.get("dead_entrypoints_c", []))),
+        })
+
+    # --- edges: one per import edge, flagged legal/illegal ---
+    edges = []
+    for caller in sorted(graph.edges):
+        c_layer = layer_of_module(caller)
+        for callee in sorted(graph.edges[caller]):
+            legal, reason = _edge_legal(c_layer, callee, eff, forbid_cc)
+            edges.append({"caller": caller, "callee": callee,
+                          "caller_layer": c_layer, "legal": legal,
+                          "illegal_reason": ("" if legal else reason)})
+
+    # --- features: aggregated from discovery + per-feature route/table hints ---
+    features = {}
+    for name, layers in reg.features.items():
+        flat = {k: sorted(v) for k, v in layers.items()}
+        features[name] = {
+            "layers": flat,
+            **({k: sem[name][k] for k in ("owner", "intent", "notes")
+                if isinstance(sem.get(name), dict) and k in sem[name]}),
+        }
+
+    # --- domains: discovered + preserved semantic overlay ---
+    domains = {}
+    for dom in sorted(known_domains):
+        domains[dom] = {
+            "module_count": sum(1 for n in nodes if n["domain"] == dom),
+            **({k: sem[dom][k] for k in ("owner", "intent", "notes")
+                if isinstance(sem.get(dom), dict) and k in sem[dom]}),
+        }
+
+    # --- illegal edges as a first-class list (the graph view highlights these) ---
+    illegal = [e for e in edges if not e["legal"]]
+
+    registry = {
+        "schema_version": 1,
+        "generated_at": summary.get("timestamp"),
+        "repo": str(repo),
+        "debt_score": summary.get("debt_score", 0),
+        "counts": {"red": summary.get("red", 0), "yellow": summary.get("yellow", 0),
+                   "nodes": len(nodes), "edges": len(edges), "illegal_edges": len(illegal),
+                   "features": len(features), "domains": len(domains),
+                   "triage_modules": sum(1 for n in nodes if n["domain"] == "_triage")},
+        "domains": domains,
+        "features": features,
+        "illegal_edges": illegal,
+        "nodes": nodes,
+        "edges": edges,
+    }
+    out = repo / ".governance" / "architecture_registry.json"
+    try:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(registry, indent=2), encoding="utf-8")
+    except Exception as exc:
+        rep.add(YEL, "AUTO0", "repo", str(out), f"could not write registry: {exc}",
+                intended="ensure .governance/ is writable")
+    return out
+
+
+def emit_codeowners(repo: Path, reg, rep: Report) -> Path:
+    """CODEOWNERS = a VIEW over the registry's domains.  Generated, never hand-edited.
+    Owner string per domain is taken from .governance/owners.json if present,
+    else a placeholder team — so the file is always regenerable."""
+    sem = _load_semantic_overrides(repo)
+    known_domains = sorted(set(reg.domains) | set())
+    lines = [
+        "# AUTO-GENERATED by system_architecture_audit.py — DO NOT HAND-EDIT.",
+        "# Regenerated every audit from the Architecture Registry.",
+        "# To set a real owner, add it to .governance/owners.json under the domain key:",
+        '#   { "finance": { "owner": "@zozi/finance" }, ... }',
+        "",
+    ]
+    for dom in known_domains:
+        owner = (sem.get(dom, {}) or {}).get("owner", f"@zozi/{dom}")
+        lines.append(f"backend/services/{dom}/   {owner}")
+        lines.append(f"backend/models/{dom}/     {owner}")
+    # surfaces (routers/controllers) default to a platform team
+    for surf in sorted(eff_surface_names_safe()):
+        lines.append(f"backend/routers/{surf}/      @zozi/platform")
+        lines.append(f"backend/controllers/{surf}/  @zozi/platform")
+    out = repo / "CODEOWNERS"
+    try:
+        out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except Exception as exc:
+        rep.add(YEL, "AUTO0", "repo", str(out), f"could not write CODEOWNERS: {exc}",
+                intended="ensure repo root is writable")
+    return out
+
+
+def eff_surface_names_safe() -> set:
+    # surfaces are static structure, safe to read from the embedded default set name
+    return set(DEFAULT_SURFACE_NAMES) if "DEFAULT_SURFACE_NAMES" in globals() else set()
+
+
+def emit_graph_mermaid(repo: Path, reg, rep: Report, graph=None) -> Path:
+    """Mermaid view. Prefer the OBSERVED domain graph; when it is empty (services/ &
+    models/ still flat — no <domain>/ folders yet) fall back to the OBSERVED LAYER
+    graph from real imports, so the file is NEVER a useless empty stub. The layer
+    graph is non-empty even pre-regrouping and shows the real (incl. illegal) wiring."""
+    lines = ["%% AUTO-GENERATED dependency graph — DO NOT HAND-EDIT.", "graph LR"]
+    drawn = 0
+    for s, t in sorted(reg.domain_edges):          # populated after services/<domain>/ regrouping
+        lines.append(f"    {s} --> {t}")
+        drawn += 1
+    if drawn == 0 and graph is not None:           # graceful fallback: layer graph
+        lines = ["%% AUTO-GENERATED dependency graph — DO NOT HAND-EDIT.",
+                 "%% NOTE: no domain sub-packages yet (services/ & models/ are flat),",
+                 "%% so this is the LAYER graph. It gains domain nodes after the",
+                 "%% services/<domain>/ regrouping (see S1 / M2 findings).",
+                 "graph LR"]
+        layer_edges: set[tuple[str, str]] = set()
+        for caller, targets in graph.edges.items():
+            cl = layer_of_module(caller)
+            if not cl:
+                continue
+            for tgt in targets:
+                tl = layer_of_module(tgt)
+                if tl and tl != cl:
+                    layer_edges.add((cl, tl))
+        for s, t in sorted(layer_edges):
+            lines.append(f"    {s} --> {t}")
+            drawn += 1
+    out = repo / ".governance" / "architecture_graph.mmd"
+    try:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except Exception as exc:
+        rep.add(YEL, "AUTO0", "repo", str(out), f"could not write mermaid: {exc}",
+                intended="ensure .governance/ is writable")
+    return out
 
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Read-only repo-wide ZOZI architecture governance auditor v3.2."
+        description="Read-only repo-wide ZOZI architecture governance auditor v3.5."
     )
 
     ap.add_argument("--root", default=None, help="repo root (default: auto-detect)")
-    ap.add_argument(
-        "--rules-dir",
-        default=None,
-        help="dir holding repo_structure.yaml + layer_rules.yaml + governance.yaml (default: documents/scope)",
-    )
+    ap.add_argument("--rules-dir", default=None, help="dir holding repo_structure.yaml + layer_rules.yaml + governance.yaml (default: documents/scope)",)
     ap.add_argument("--out", default=None, help="markdown report path")
     ap.add_argument("--json", default=None, help="write findings + summary JSON here (tooling/CI)")
     ap.add_argument("--metrics-json", default=None, help="write module metrics JSON here")
+    ap.add_argument("--move-map", default=None, help="write file relocation suggestions JSON here")
     ap.add_argument("--no-write", action="store_true", help="do not write the .md report")
     ap.add_argument("--no-fail", action="store_true", help="always exit 0")
     ap.add_argument("--show-intended", action="store_true", help="also print the target tree")
     ap.add_argument("--trend-file", default=None, help="JSON file used for trend comparison")
-    ap.add_argument(
-        "--update-trend",
-        action="store_true",
-        help="overwrite the trend file with the current summary",
-    )
-    ap.add_argument(
-        "--ci",
-        action="store_true",
-        help="CI mode: default JSON/metrics artifacts and trend file if not provided",
-    )
-    ap.add_argument(
-        "--auto-policy",
-        default=None,
-        help="path to auto-discovery policy JSON (default: .governance/zozi_auto_policy.json)",
-    )
-    ap.add_argument(
-        "--no-auto-policy",
-        action="store_true",
-        help="disable auto-discovery policy learning",
-    )
-    ap.add_argument(
-        "--reset-auto-policy",
-        action="store_true",
-        help="delete existing auto-policy and create a fresh baseline",
-    )
-
+    ap.add_argument("--update-trend", action="store_true", help="overwrite the trend file with the current summary",)
+    ap.add_argument("--ci", action="store_true", help="CI mode: default JSON/metrics artifacts and trend file if not provided",)
+    ap.add_argument("--auto-policy", default=None, help="path to auto-discovery policy JSON (default: .governance/zozi_auto_policy.json)",)
+    ap.add_argument("--no-auto-policy", action="store_true", help="disable auto-discovery policy learning",)
+    ap.add_argument("--reset-auto-policy", action="store_true", help="delete existing auto-policy and create a fresh baseline",)
+    ap.add_argument("--no-registry", action="store_true", help="skip emitting architecture_registry.json / CODEOWNERS / mermaid",)
     args = ap.parse_args()
 
     repo = find_repo(args.root)
@@ -4015,12 +5835,12 @@ def main() -> int:
             args.metrics_json = str(repo / "out" / "governance" / "metrics.json")
         if not args.trend_file:
             args.trend_file = str(repo / ".governance" / "architecture_trend.json")
+        if not args.move_map:
+            args.move_map = str(repo / "out" / "governance" / "move_map.json")
 
     eff = load_rules(repo, Path(args.rules_dir) if args.rules_dir else None)
 
-    print(
-        f"Scanning {repo} ...  (rules: {'YAML' if eff['from_yaml'] else 'embedded fallback'})"
-    )
+    print(f"Scanning {repo} ...  (rules: {'YAML' if eff['from_yaml'] else 'embedded fallback'})")
 
     rep = Report()
     graph = build_module_graph(repo, eff)
@@ -4078,6 +5898,34 @@ def main() -> int:
     check_raw_env_in_middleware(repo, rep, eff)
     check_media_on_disk(repo, rep, eff)
 
+    # v3.4 self-contained enhancements (no YAML required)
+    check_enhanced_secrets_in_code(repo, rep, eff)
+    check_enhanced_dangerous_calls(repo, rep, eff)
+    check_enhanced_runtime_security_settings(repo, rep, eff)
+    check_enhanced_async_blocking(repo, rep, eff)
+    check_enhanced_query_in_loop(repo, rep, eff)
+    check_enhanced_exception_handling(repo, rep, eff)
+    check_enhanced_todo_debt(repo, rep, eff)
+    check_enhanced_size_complexity(repo, rep, eff)
+    check_enhanced_print_debug(repo, rep, eff)
+    check_enhanced_model_schema(repo, rep, eff)
+    check_enhanced_alembic_heads(repo, rep, eff)
+    check_enhanced_gitignore_generated(repo, rep, eff)
+    check_enhanced_frontend_debug(repo, rep, eff)
+
+    # v3.5 file relocation suggestions.
+    move_suggestions = check_move_suggestions(repo, rep, eff, graph, reg)
+
+    if move_suggestions:
+        rep.add(
+            GRN,
+            "I4",
+            "repo",
+            "move-map",
+            f"{len(move_suggestions)} file move suggestions generated",
+            intended="run with --move-map to get exact from/to relocation JSON",
+        )
+
     # Summary.
     collect_info(repo, rep, eff, graph)
     frontend_metrics = collect_frontend_metrics(repo, eff)
@@ -4095,8 +5943,17 @@ def main() -> int:
     summary = build_summary(repo, rep, graph, debt_score, frontend_metrics, reg)
 
     # Trend.
-    trend_path = Path(args.trend_file).resolve() if args.trend_file else None
 
+    # v3.3: emit the Architecture Registry + its generated views (folders = projection).
+    if not args.no_registry:
+        rpath = emit_registry(repo, eff, graph, reg, rep, summary)
+        print(f"Registry written: {rpath}  (canonical model; reports/CODEOWNERS are views over it)")
+        cpath = emit_codeowners(repo, reg, rep)
+        print(f"CODEOWNERS written: {cpath}  (generated; set owners in .governance/owners.json)")
+        mpath = emit_graph_mermaid(repo, reg, rep, graph)        
+        print(f"Graph written: {mpath}")
+
+    trend_path = Path(args.trend_file).resolve() if args.trend_file else None
     if trend_path:
         if args.update_trend:
             update_trend(trend_path, summary)
@@ -4140,8 +5997,12 @@ def main() -> int:
         write_metrics_json(mp, summary, graph)
         print(f"Metrics written: {mp}")
 
-    return 1 if (n_red and not args.no_fail) else 0
+    if getattr(args, "move_map", None):
+        mm = Path(args.move_map).resolve()
+        write_move_map(mm, move_suggestions)
+        print(f"Move map written: {mm}")
 
+    return 1 if (n_red and not args.no_fail) else 0
 
 if __name__ == "__main__":
     sys.exit(main())

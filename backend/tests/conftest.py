@@ -51,6 +51,44 @@ os.environ.setdefault("SEED_ADMIN_PASSWORD", "admin123")
 
 from db.base import Base  # noqa: E402
 
+import models  # noqa: E402
+
+
+def _patch_fk_schemas():
+    """Patch unqualified FK references to include schema prefixes.
+
+    Many model files use ForeignKey("users.id") where the actual table is
+    registered as "core.users" because User.__table_args__ sets schema="core".
+    This patch rewrites every ForeignKey target to match the metadata table key
+    so that configure_mappers() / create_all() can resolve the reference.
+    """
+    metadata = Base.metadata
+
+    table_schemas: dict[str, str | None] = {}
+    for t in metadata.tables.values():
+        key = t.key
+        if "." in key:
+            schema, name_part = key.split(".", 1)
+            table_schemas[name_part] = schema
+        else:
+            table_schemas[t.name] = None
+
+    for table in metadata.tables.values():
+        for col in table.columns:
+            for fk in col.foreign_keys:
+                target = fk._colspec
+                if isinstance(target, str):
+                    parts = target.split(".")
+                    if len(parts) == 2:
+                        tbl_name, col_name = parts
+                        if tbl_name in table_schemas:
+                            schema = table_schemas[tbl_name]
+                            if schema:
+                                fk._colspec = f"{schema}.{target}"
+                                fk._column_tokens = None
+
+_patch_fk_schemas()
+
 _legacy_engine = None
 
 def _get_legacy_engine():
@@ -61,12 +99,32 @@ def _get_legacy_engine():
         Base.metadata.create_all(bind=_legacy_engine)
     return _legacy_engine
 
+
 @pytest.fixture(scope="session")
 def engine(db_file: str):
+    _SCHEMA_TRANSLATE_MAP = {
+        "core": None,
+        "commerce": None,
+        "supplier": None,
+        "customer": None,
+        "logistics": None,
+        "finance": None,
+        "treasury": None,
+        "hr": None,
+        "country": None,
+        "media": None,
+        "ai": None,
+        "communication": None,
+        "audit": None,
+        "security": None,
+        "analytics": None,
+        "configuration": None,
+    }
     eng = create_engine(
         f"sqlite:///{db_file}",
         connect_args={"check_same_thread": False},
         poolclass=__import__("sqlalchemy.pool", fromlist=["StaticPool"]).StaticPool,
+        execution_options={"schema_translate_map": _SCHEMA_TRANSLATE_MAP},
     )
     global _legacy_engine
     _legacy_engine = eng
