@@ -62,7 +62,7 @@ def _patch_fk_schemas():
     This patch rewrites every ForeignKey target to match the metadata table key
     so that configure_mappers() / create_all() can resolve the reference.
     """
-    metadata = Base.metadata
+    metadata = models.Base.metadata
 
     table_schemas: dict[str, str | None] = {}
     for t in metadata.tables.values():
@@ -96,7 +96,7 @@ def _get_legacy_engine():
     if _legacy_engine is None:
         _legacy_engine = create_engine("sqlite://", echo=False)
         _legacy_engine.execution_options(isolation_level="AUTOCOMMIT")
-        Base.metadata.create_all(bind=_legacy_engine)
+        models.Base.metadata.create_all(bind=_legacy_engine)
     return _legacy_engine
 
 
@@ -128,7 +128,7 @@ def engine(db_file: str):
     )
     global _legacy_engine
     _legacy_engine = eng
-    Base.metadata.create_all(bind=eng)
+    models.Base.metadata.create_all(bind=eng)
     _create_gap_tables(eng)
     try:
         yield eng

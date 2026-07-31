@@ -2,8 +2,6 @@
 graph LR
     ai_copy_jobs --> ai_variant_config
     approval_matrix_service --> hierarchy_service
-    audit_trail_service --> audit
-    auth_service --> employee_models
     auto_payout_scheduler --> admin
     auto_payout_scheduler --> payout_notification_service
     auto_payout_scheduler --> suppliers
@@ -18,13 +16,12 @@ graph LR
     automation_scheduler --> trading_service
     automation_scheduler --> transactional_email_service
     automation_scheduler --> treasury_engine
-    cash_management_service --> admin_analytics_service
     cash_management_service --> finance_transfer_service
     cash_management_service --> general_ledger_service
     cash_management_service --> logistics_partner_pricing
     cash_management_service --> retention_service
-    cash_management_service --> supplier_badge_service
     chat_enrichment --> employee_activity_logger
+    chat_enrichment --> employee_models
     chat_system --> core
     chat_system --> employee_models
     chat_system --> storage
@@ -41,6 +38,9 @@ graph LR
     ediscovery --> core
     ediscovery --> countries
     ediscovery --> finance
+    effective_permissions --> hierarchy_service
+    effective_permissions --> permissions
+    email_enrichment --> employee_models
     email_gateway --> communication
     email_gateway --> employee_communication_service
     email_gateway --> employee_models
@@ -56,7 +56,6 @@ graph LR
     escalation_sla --> core
     expense_routing --> employee_models
     external_contact --> communication
-    finance_automation --> audit
     finance_automation --> ocr_parser
     finance_automation --> treasury_engine
     finance_transfer_service --> logistics_partner_pricing
@@ -71,13 +70,15 @@ graph LR
     iam_service --> employee_models
     iam_write_service --> employee_models
     internal_communication --> communication
+    internal_communication --> employee_models
     je_reversal_service --> general_ledger_service
+    legal_contract_service --> localization_service
     live_tracking_service --> country_control
     lms --> employee_models
     lms_permission_lock --> employee_models
     lms_write_service --> employee_models
     logistics_engine --> logistics_partner_pricing
-    logistics_sla_service --> country_rls_service
+    logistics_sla_service --> treasury_service
     map_service --> country_control
     map_service --> country_enhancements
     media_service --> media_models
@@ -88,35 +89,40 @@ graph LR
     notification_engine --> communication
     offboarding --> employee_models
     offboarding --> notification_service
+    okr_engine --> employee_models
     payout_batch_service --> transactional_email_service
     payout_notification_service --> logistics
     payout_notification_service --> notification_engine
     payroll_engine --> employee_activity_logger
     payroll_engine --> employee_models
+    payroll_engine --> leave_accrual
     payroll_service --> employee_models
     performance_service --> employee_activity_logger
     performance_service --> hierarchy_service
     period_close_service --> general_ledger_service
     permission_service --> permissions
-    promotion_points_service --> promotion_engine_service
     proxy_communication --> orders
     qr_service --> employee_models
     rbac_service --> approval_matrix_service
     shift_handover --> core
+    shift_handover --> employee_models
     shift_roster_service --> employee_models
+    sub_ledger_service --> finance
     succession_service --> employee_models
     supplier_badge_service --> audit
     supplier_badge_service --> cash_management_service
     tax_service --> logistics_partner_pricing
     trading_service --> transactional_email_service
     travel_detector --> employee_models
+    travel_service --> countries
     travel_service --> employee_models
     treasurer --> employee_models
     treasury_engine --> general_ledger_service
     treasury_engine --> orders
+    treasury_service --> employee_models
     triple_auth --> employee_models
     upload_job_service --> upload_job
-    upload_job_service --> websocket_manager
     video_conferencing --> core
     video_service --> media_service
     websocket_chat --> core
+    websocket_chat --> employee_models
