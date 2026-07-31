@@ -435,11 +435,13 @@ def audit_schema(
     AuditReport
     """
     import time
-    from sqlalchemy import inspect, text
+    from sqlalchemy import inspect
     from db.base import Base
 
     t0 = time.time()
     _load_models()
+    from utils.schema_compat import patch_fk_schemas, SCHEMA_TRANSLATE_MAP
+    patch_fk_schemas(Base.metadata)
 
     if engine is None:
         from db.database import engine as _engine
@@ -493,7 +495,6 @@ def audit_schema(
 
     try:
         inspector = inspect(engine)
-        db_table_names = set(inspector.get_table_names())
     except Exception as exc:
         issue = Issue(
             kind=IssueKind.DB_CONNECTION_ERROR,
@@ -503,7 +504,36 @@ def audit_schema(
         report.issues.append(issue)
         return report
 
-    orm_table_names = set(Base.metadata.tables.keys())
+    dialect = engine.dialect.name
+    if dialect == "sqlite":
+        db_table_names = set(inspector.get_table_names())
+        orm_table_names = {k.split(".", 1)[-1] for k in Base.metadata.tables.keys()}
+        orm_flat_to_qualified = {
+            k.split(".", 1)[-1]: k for k in Base.metadata.tables.keys()
+        }
+        def schema_resolve(t: str) -> str:
+            return orm_flat_to_qualified.get(t) or t
+
+        table_schema_for: dict[str, str | None] = {}
+    else:
+        db_table_names: set[str] = set()
+        table_schema_for = {}
+        try:
+            for t in inspector.get_table_names(schema=None):
+                db_table_names.add(t)
+                table_schema_for[t] = None
+        except Exception:
+            pass
+        for sch in SCHEMA_TRANSLATE_MAP:
+            try:
+                for t in inspector.get_table_names(schema=sch):
+                    db_table_names.add(t)
+                    table_schema_for[t] = sch
+            except Exception:
+                pass
+        orm_table_names = {k.split(".", 1)[-1] for k in Base.metadata.tables.keys()}
+        def schema_resolve(t: str) -> str:
+            return t
 
     report.db_table_count = len(db_table_names)
     report.orm_table_count = len(orm_table_names)
@@ -551,14 +581,14 @@ def audit_schema(
             continue
 
         try:
-            db_cols = {c["name"]: c for c in inspector.get_columns(table)}
+            db_cols = {c["name"]: c for c in inspector.get_columns(table, schema=table_schema_for.get(table))}
         except Exception as exc:
             report.issues.append(
                 Issue(kind=IssueKind.DB_CONNECTION_ERROR, table=table, detail=str(exc))
             )
             continue
 
-        orm_table = Base.metadata.tables[table]
+        orm_table = Base.metadata.tables[schema_resolve(table)]
         orm_cols = dict(orm_table.columns)
 
         all_cols = set(list(db_cols.keys()) + list(orm_cols.keys()))
@@ -643,7 +673,7 @@ def audit_schema(
         # ── Index-level issues ─────────────────────────────────────────
         if check_indexes:
             try:
-                db_indexes = {i["name"]: i for i in inspector.get_indexes(table)}
+                db_indexes = {i["name"]: i for i in inspector.get_indexes(table, schema=table_schema_for.get(table))}
             except Exception:
                 db_indexes = {}
 
@@ -712,7 +742,7 @@ def audit_schema(
         # ── Foreign-key issues ─────────────────────────────────────────
         if check_fks:
             try:
-                db_fks = inspector.get_foreign_keys(table)
+                db_fks = inspector.get_foreign_keys(table, schema=table_schema_for.get(table))
             except Exception:
                 db_fks = []
 

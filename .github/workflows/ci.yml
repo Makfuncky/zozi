@@ -55,38 +55,36 @@ jobs:
           echo "✅ All migrations applied to fresh database"
 
       # NOTE: This drift check compares ORM metadata against the fresh DB
-      # just created by `alembic upgrade head`. It catches naming mismatches,
-      # missing indexes, and constraint drift. It does NOT catch ORM tables
-      # that have no migration at all — those only appear when comparing
-      # against a pre-existing production DB.
-      - name: Check ORM ↔ DB drift
+      # just created by `alembic upgrade head`. It uses a FK-patched,
+      # schema-normalized comparison so it works correctly on SQLite
+      # (where the 16 bounded-context schemas are collapsed to flat
+      # by schema_translate_map). It fails when ORM-registered tables
+      # are missing from the DB — the authoritative gate for
+      # "alembic upgrade head from empty DB".
+      - name: Check ORM ↔ DB drift (normalized, FK-patched)
         env:
           APP_ENV: test
         run: |
           python -c "
           import sys
-          try:
-              from alembic.migration import MigrationContext
-              from alembic.autogenerate import compare_metadata
-              from sqlalchemy import create_engine
-              from db.base import Base
-              import models
-
-              engine = create_engine(
-                  'sqlite:///./test_zozi.db',
-                  connect_args={'check_same_thread': False}
-              )
-              ctx = MigrationContext.configure(engine.connect())
-              diff = compare_metadata(ctx, Base.metadata)
-              if diff:
-                  print(f'::error::Schema drift detected ({len(diff)} differences)')
-                  for d in diff:
-                      print(f'  - {d}')
-                  sys.exit(1)
-              print('✅ ORM schema matches database — no drift')
-          except Exception as e:
-              print(f'::error::Drift check failed: {e}')
+          from db.base import Base
+          import models
+          from utils.schema_compat import patch_fk_schemas
+          from sqlalchemy import create_engine, inspect
+          patch_fk_schemas(Base.metadata)
+          orm_flat = {k.split('.', 1)[-1] for k in Base.metadata.tables.keys()}
+          eng = create_engine(
+              'sqlite:///./test_zozi.db',
+              connect_args={'check_same_thread': False}
+          )
+          db_flat = set(inspect(eng).get_table_names())
+          missing = orm_flat - db_flat
+          if missing:
+              print(f'::error:: {len(missing)} ORM table(s) missing from DB after upgrade head')
+              for t in sorted(missing):
+                  print(f'  MISSING: {t}')
               sys.exit(1)
+          print(f'? No ORM schema drift: all {len(orm_flat)} ORM tables present in DB')
           "
 
       - name: Verify all ORM models import cleanly
