@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from routers.auth import get_current_user
+from dependencies.auth import get_current_user
 from utils.currency import convert_between_currencies, currency_for_country, get_currency_context, normalize_currency_code, refresh_rate_cache
 
 router = APIRouter()

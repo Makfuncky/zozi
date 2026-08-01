@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from services.ediscovery import get_ediscovery_service, EDiscoveryService
+from services.audit.ediscovery import get_ediscovery_service, EDiscoveryService
 from db.database import get_db
 from dependencies.auth import get_current_user
 from controllers.admin_controller import require_admin

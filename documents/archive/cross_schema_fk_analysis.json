@@ -1,0 +1,4842 @@
+{
+  "summary": {
+    "total_fk_columns": 533,
+    "cross_schema_count": 234
+  },
+  "by_source_schema": {
+    "admin": 61,
+    "ai": 7,
+    "communication": 24,
+    "core": 44,
+    "country": 57,
+    "finance": 92,
+    "hr": 34,
+    "logistics": 22,
+    "media": 4,
+    "supplier": 7
+  },
+  "by_target_schema": {
+    "ai": 4,
+    "analytics": 2,
+    "commerce": 62,
+    "communication": 19,
+    "core": 234,
+    "country": 74,
+    "customer": 5,
+    "finance": 38,
+    "hr": 4,
+    "logistics": 68,
+    "media": 1,
+    "security": 3,
+    "supplier": 2,
+    "trading": 5,
+    "treasury": 9,
+    "users": 3
+  },
+  "high_risk": {
+    "core_users_id": 230,
+    "commerce_products_id": 24,
+    "commerce_orders_id": 25,
+    "commerce_order_items_id": 2,
+    "country_refs": 74
+  },
+  "detail": [
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "acknowledged_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "admin_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "admin_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "bank_transaction_id",
+      "target": "finance.bank_transactions.id",
+      "target_schema": "finance",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "ticket_id",
+      "target": "communication.support_tickets.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "coupon_id",
+      "target": "commerce.coupons.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "settlement_id",
+      "target": "logistics.logistics_settlements.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "verified_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "payout_id",
+      "target": "treasury.payouts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "requester_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "target_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "clicked_product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "verified_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "verified_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "return_request_id",
+      "target": "commerce.return_requests.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "resolved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "admin",
+      "source_schema": "admin",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "admin.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "created_product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "job_id",
+      "target": "ai.ai_upload_jobs.id",
+      "target_schema": "ai",
+      "is_cross_schema": false,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "job_id",
+      "target": "ai.ai_upload_jobs.id",
+      "target_schema": "ai",
+      "is_cross_schema": false,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "staging_product_id",
+      "target": "ai.ai_staging_products.id",
+      "target_schema": "ai",
+      "is_cross_schema": false,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "ai_upload",
+      "source_schema": "ai",
+      "source_column": "job_id",
+      "target": "ai.ai_upload_jobs.id",
+      "target_schema": "ai",
+      "is_cross_schema": false,
+      "source_file": "ai_upload.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "set_by_admin_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "set_by_admin_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "order_item_id",
+      "target": "commerce.order_items.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "adjusted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "category_id",
+      "target": "commerce.categories.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "commission",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "commission.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "ticket_id",
+      "target": "communication.support_tickets.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "channel_id",
+      "target": "communication.proxy_channels.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "participant_one_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "participant_two_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "session_id",
+      "target": "communication.proxy_sessions.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "recipient_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "channel_id",
+      "target": "communication.proxy_channels.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "caller_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "callee_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "channel_id",
+      "target": "communication.internal_channels.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "channel_id",
+      "target": "communication.internal_channels.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "folder_id",
+      "target": "communication.email_folders.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "in_reply_to",
+      "target": "communication.internal_emails.id",
+      "target_schema": "communication",
+      "is_cross_schema": false,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "communication",
+      "source_schema": "communication",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "communication.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "ticket_id",
+      "target": "communication.support_tickets.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "ticket_reply_id",
+      "target": "communication.support_ticket_replies.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "ticket_id",
+      "target": "communication.support_tickets.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "source_id",
+      "target": "communication.news_sources.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "thread_id",
+      "target": "customer.entity_chat_threads.id",
+      "target_schema": "customer",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "room_id",
+      "target": "customer.video_rooms.id",
+      "target_schema": "customer",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "room_id",
+      "target": "customer.video_rooms.id",
+      "target_schema": "customer",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "started_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "participant_one",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "participant_two",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "room_id",
+      "target": "customer.direct_chat_rooms.id",
+      "target_schema": "customer",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "room_id",
+      "target": "communication.group_chat_rooms.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "room_id",
+      "target": "communication.group_chat_rooms.id",
+      "target_schema": "communication",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "outgoing_employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "incoming_employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "session_id",
+      "target": "customer.shift_handover_sessions.id",
+      "target_schema": "customer",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "assigned_to",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "original_recipient_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "core",
+      "source_schema": "core",
+      "source_column": "escalated_to_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": false,
+      "source_file": "core.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "basics_id",
+      "target": "country.country_basics.id",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "from_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "to_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "from_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "to_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "countries",
+      "source_schema": "country",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "countries.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "handover_to_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "parcel_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_control",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_control.py"
+    },
+    {
+      "source_table": "country_economics",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_economics.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "assigned_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "draft_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "category_id",
+      "target": "commerce.categories.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "category_id",
+      "target": "commerce.categories.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "changed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_enhancements",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_enhancements.py"
+    },
+    {
+      "source_table": "country_legal",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_legal.py"
+    },
+    {
+      "source_table": "country_tax",
+      "source_schema": "country",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": false,
+      "source_file": "country_tax.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "parent_id",
+      "target": "hr.org_units.id",
+      "target_schema": "hr",
+      "is_cross_schema": false,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "office_id",
+      "target": "logistics.offices.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "reporting_manager_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "hiring_manager_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "org_unit_id",
+      "target": "hr.org_units.id",
+      "target_schema": "hr",
+      "is_cross_schema": false,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "verified_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "internal_employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "internal_employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "employee_models",
+      "source_schema": "hr",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "employee_models.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "created_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "updated_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "created_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "updated_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "event_id",
+      "target": "analytics.outbox_events.id",
+      "target_schema": "analytics",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "created_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "updated_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "event_id",
+      "target": "analytics.outbox_events.id",
+      "target_schema": "analytics",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "resolved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "created_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "events",
+      "source_schema": null,
+      "source_column": "updated_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "events.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "closed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "logistics_partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_item_id",
+      "target": "commerce.order_items.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "ledger_id",
+      "target": "finance.transaction_ledgers.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "payout_id",
+      "target": "treasury.payouts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "deleted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "period_id",
+      "target": "finance.fiscal_periods.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "reversal_of_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "deleted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "account_id",
+      "target": "finance.accounts.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "cost_center_id",
+      "target": "finance.cost_centers.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "group_id",
+      "target": "finance.account_groups.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "account_id",
+      "target": "finance.accounts.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "customer_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "invoice_id",
+      "target": "finance.invoices.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "invoice_id",
+      "target": "finance.invoices.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "settlement_id",
+      "target": "finance.supplier_settlements.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "deleted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "invoice_id",
+      "target": "finance.invoices.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "return_request_id",
+      "target": "commerce.return_requests.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "performed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "deleted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "linked_order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "linked_supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "reconciled_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "remitted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "account_id",
+      "target": "treasury.cash_accounts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "performed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "from_account_id",
+      "target": "treasury.treasury_accounts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "to_account_id",
+      "target": "treasury.treasury_accounts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "account_id",
+      "target": "treasury.treasury_accounts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "account_id",
+      "target": "treasury.treasury_accounts.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "gateway_id",
+      "target": "treasury.payment_gateway_connections.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "rejected_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "approved_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "batch_id",
+      "target": "treasury.payout_batches.id",
+      "target_schema": "treasury",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "imported_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "import_id",
+      "target": "finance.bank_statement_imports.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "mapping_rule_id",
+      "target": "finance.bank_mapping_rules.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "posted_journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "reconciled_transaction_id",
+      "target": "finance.bank_transactions.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "reversal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "employee_id",
+      "target": "logistics.employees.id",
+      "target_schema": "logistics",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "posted_journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "vendor_id",
+      "target": "finance.vendors.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "linked_journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "paid_journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "customer_id",
+      "target": "finance.customers.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "linked_journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "paid_journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "reference_order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "fiscal_period_id",
+      "target": "finance.fiscal_periods.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "statement_line_id",
+      "target": "finance.bank_statement_lines.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "journal_entry_id",
+      "target": "finance.journal_entries.id",
+      "target_schema": "finance",
+      "is_cross_schema": false,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "matched_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "actor_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "finance",
+      "source_schema": "finance",
+      "source_column": "run_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "finance.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "assigned_to",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "assigned_to",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "case_id",
+      "target": "security.fraud_cases.id",
+      "target_schema": "security",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "assigned_to",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "assigned_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "sender_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "meeting_id",
+      "target": "security.meeting_transcripts.id",
+      "target_schema": "security",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "assigned_to",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "fraud",
+      "source_schema": null,
+      "source_column": "started_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "fraud.py"
+    },
+    {
+      "source_table": "incident",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "incident.py"
+    },
+    {
+      "source_table": "incident",
+      "source_schema": null,
+      "source_column": "war_room_id",
+      "target": "communication.incident_war_rooms.id",
+      "target_schema": "communication",
+      "is_cross_schema": null,
+      "source_file": "incident.py"
+    },
+    {
+      "source_table": "incident",
+      "source_schema": null,
+      "source_column": "participant_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "incident.py"
+    },
+    {
+      "source_table": "incident",
+      "source_schema": null,
+      "source_column": "war_room_id",
+      "target": "communication.incident_war_rooms.id",
+      "target_schema": "communication",
+      "is_cross_schema": null,
+      "source_file": "incident.py"
+    },
+    {
+      "source_table": "incident",
+      "source_schema": null,
+      "source_column": "assignee_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "incident.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "service_area_id",
+      "target": "logistics.logistics_partner_service_areas.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "service_area_id",
+      "target": "logistics.logistics_partner_service_areas.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "service_area_id",
+      "target": "logistics.logistics_partner_service_areas.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "assigned_partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "carrier_id",
+      "target": "logistics.shipping_carriers.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": false,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "logistics",
+      "source_schema": "logistics",
+      "source_column": "actor_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "logistics.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "flash_sale_id",
+      "target": "commerce.flash_sales.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "campaign_id",
+      "target": "communication.email_campaigns.id",
+      "target_schema": "communication",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "campaign_id",
+      "target": "communication.email_campaigns.id",
+      "target_schema": "communication",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "marketing",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "marketing.py"
+    },
+    {
+      "source_table": "media_models",
+      "source_schema": "media",
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "media_models.py"
+    },
+    {
+      "source_table": "media_models",
+      "source_schema": "media",
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": true,
+      "source_file": "media_models.py"
+    },
+    {
+      "source_table": "media_models",
+      "source_schema": "media",
+      "source_column": "uploaded_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "media_models.py"
+    },
+    {
+      "source_table": "media_models",
+      "source_schema": "media",
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "media_models.py"
+    },
+    {
+      "source_table": "mixins",
+      "source_schema": null,
+      "source_column": "created_by_id",
+      "target": "users.id",
+      "target_schema": "users",
+      "is_cross_schema": null,
+      "source_file": "mixins.py"
+    },
+    {
+      "source_table": "mixins",
+      "source_schema": null,
+      "source_column": "updated_by_id",
+      "target": "users.id",
+      "target_schema": "users",
+      "is_cross_schema": null,
+      "source_file": "mixins.py"
+    },
+    {
+      "source_table": "mixins",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "users.id",
+      "target_schema": "users",
+      "is_cross_schema": null,
+      "source_file": "mixins.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "pipeline_id",
+      "target": "hr.onboarding_pipelines.id",
+      "target_schema": "hr",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "pipeline_id",
+      "target": "hr.onboarding_pipelines.id",
+      "target_schema": "hr",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "verifier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "document_verification_id",
+      "target": "security.document_verifications.id",
+      "target_schema": "security",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "onboarding",
+      "source_schema": null,
+      "source_column": "reviewer_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "onboarding.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "customer_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "invoice_id",
+      "target": "finance.ar_invoices.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "shipment_id",
+      "target": "logistics.shipments.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "service_area_id",
+      "target": "logistics.logistics_partner_service_areas.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "customer_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "orders",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "orders.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "updated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "order_id",
+      "target": "commerce.orders.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "partner_id",
+      "target": "logistics.logistics_partners.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "payments",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "payments.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "category_id",
+      "target": "core.permission_categories.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "permission_id",
+      "target": "core.permissions.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "granted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "permission_id",
+      "target": "core.permissions.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "granted_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "actor_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "target_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "permissions",
+      "source_schema": null,
+      "source_column": "permission_id",
+      "target": "core.permissions.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "permissions.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "parent_id",
+      "target": "commerce.categories.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "category_id",
+      "target": "commerce.categories.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "video_id",
+      "target": "media.product_videos.id",
+      "target_schema": "media",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "category_id",
+      "target": "commerce.categories.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "filter_metadata_id",
+      "target": "commerce.product_filter_metadata.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "warehouse_id",
+      "target": "logistics.warehouses.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "finance.vendors.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "vendor_id",
+      "target": "finance.vendors.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "warehouse_id",
+      "target": "logistics.warehouses.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "po_id",
+      "target": "trading.purchase_orders.id",
+      "target_schema": "trading",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "po_id",
+      "target": "trading.purchase_orders.id",
+      "target_schema": "trading",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "finance.vendors.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "warehouse_id",
+      "target": "logistics.warehouses.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "received_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "grn_id",
+      "target": "trading.goods_receipt_notes.id",
+      "target_schema": "trading",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "po_line_id",
+      "target": "trading.purchase_order_lines.id",
+      "target_schema": "trading",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "customer_id",
+      "target": "finance.customers.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "warehouse_id",
+      "target": "logistics.warehouses.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "so_id",
+      "target": "trading.sales_orders.id",
+      "target_schema": "trading",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "counterparty_id",
+      "target": "finance.vendors.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "deal_id",
+      "target": "finance.trade_deals.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "deal_id",
+      "target": "finance.trade_deals.id",
+      "target_schema": "finance",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "created_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "generated_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "zone_id",
+      "target": "logistics.logistics_zones.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "carrier_id",
+      "target": "logistics.shipping_carriers.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "products",
+      "source_schema": null,
+      "source_column": "zone_id",
+      "target": "logistics.logistics_zones.id",
+      "target_schema": "logistics",
+      "is_cross_schema": null,
+      "source_file": "products.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": true,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "deleted_by_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "supplier_id",
+      "target": "supplier.supplier_profiles.id",
+      "target_schema": "supplier",
+      "is_cross_schema": false,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "reviewed_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "verified_by",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": true,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "suppliers",
+      "source_schema": "supplier",
+      "source_column": "supplier_id",
+      "target": "supplier.supplier_profiles.id",
+      "target_schema": "supplier",
+      "is_cross_schema": false,
+      "source_file": "suppliers.py"
+    },
+    {
+      "source_table": "upload_job",
+      "source_schema": null,
+      "source_column": "supplier_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "upload_job.py"
+    },
+    {
+      "source_table": "upload_job",
+      "source_schema": null,
+      "source_column": "product_id",
+      "target": "commerce.products.id",
+      "target_schema": "commerce",
+      "is_cross_schema": null,
+      "source_file": "upload_job.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "referred_by_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "country_code",
+      "target": "country.country_configs.code",
+      "target_schema": "country",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "referrer_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "referred_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "referred_user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    },
+    {
+      "source_table": "user",
+      "source_schema": null,
+      "source_column": "user_id",
+      "target": "core.users.id",
+      "target_schema": "core",
+      "is_cross_schema": null,
+      "source_file": "user.py"
+    }
+  ]
+}

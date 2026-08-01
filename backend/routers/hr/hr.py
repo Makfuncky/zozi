@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from models.employee_models import Employee, AlumniNetwork
-from controllers.hr_controller import (
+from controllers.hr.hr_controller import (
     register_address, register_dependent, check_coi_conflict,
     create_coi_report, validate_gcc_compliance, get_employee_graph,
     create_disciplinary_case, get_disciplinary_cases,

@@ -3,7 +3,7 @@
 **Repo:** `D:\Projects\10- E-COMMERCE WEBSITE\zozi`  
 **Result:** 🔴 14 · 🟡 158 · 🟢 2  
 **Design Debt Score:** `5148`  
-**Token Coverage:** `83.3%` (279 distinct colors / 88 tokens / 833 files)  
+**Token Coverage:** `83.3%` (279 distinct colors / 88 tokens / 831 files)  
 **Ephemeral. Add to `.gitignore`.**
 
 ## Scorecard
@@ -279,10 +279,10 @@ the classic symptom of theme drift.
 - 🟡 **DS07** `frontend\web_app\src\app\brand\page.tsx` — font family literal 'Sora', 'Montserrat', system-ui, sans-serif' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
 - 🟡 **DS07** `frontend\shared\src\components\ui\ErrorBoundary.tsx` — font family literal 'system-ui, sans-serif' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
 - 🟡 **DS07** `frontend\web_app\src\styles\comm.css` — font family literal 'var(--font-display, ui-sans-serif)' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
-- 🟡 **DS07** `frontend\web_app\src\styles\globals.css` — font family literal 'var(--font-display), Fraunces, serif' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
-- 🟡 **DS07** `frontend\web_app\src\styles\globals.css` — font family literal '"Arabic UI"' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
 - 🟡 **DS07** `frontend\web_app\src\styles\globals.css` — font family literal 'var(--font-arabic), "Arabic UI", "Noto Naskh Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma,
                "Arial Unicode MS", sans-serif' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
+- 🟡 **DS07** `frontend\web_app\src\styles\globals.css` — font family literal 'var(--font-body), Sora, sans-serif' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
+- 🟡 **DS07** `frontend\web_app\src\styles\globals.css` — font family literal '"Arabic UI"' hardcoded in 1 file(s) → *reference the font token from the theme; one brand family + one mono*
 - 🟡 **DS09** `frontend` — 56 distinct border-radius values: 0, 0 0 4px 4px, 0.25rem, 0.5rem, 0.75rem, 0px, 1, 1.25rem, 1.2rem, 1.4rem → *standardize on 3-4 radii tokens (sm/md/lg/full)*
 - 🟡 **DS11** `frontend` — 95 distinct shadow definitions — no elevation system → *define 3 elevation tokens (shadow-sm/md/lg) and reuse them*
 - 🟡 **DS16** `frontend` — 9 distinct animation durations: 0ms, 1000ms, 120ms, 150ms, 180ms, 200ms, 300ms, 500ms, 700ms → *standardize on 2-3 motion tokens (150ms/250ms/400ms)*

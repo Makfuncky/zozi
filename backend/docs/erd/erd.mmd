@@ -1,0 +1,1833 @@
+```mermaid
+erDiagram
+
+    users {
+        id INTEGER PK
+    }
+
+    users }--|--{ code : country_code
+    users }--|--{ id : referred_by_user_id
+    user_login_history {
+        id INTEGER PK
+    }
+
+    user_login_history }--|--{ id : user_id
+    user_devices {
+        id INTEGER PK
+    }
+
+    user_devices }--|--{ id : user_id
+    password_reset_tokens {
+        id INTEGER PK
+    }
+
+    password_reset_tokens }--|--{ id : user_id
+    email_verification_tokens {
+        id INTEGER PK
+    }
+
+    email_verification_tokens }--|--{ id : user_id
+    revoked_tokens {
+        id INTEGER PK
+    }
+
+    revoked_tokens }--|--{ id : user_id
+    role_permission_settings {
+        id INTEGER PK
+    }
+
+    api_keys {
+        id INTEGER PK
+    }
+
+    api_keys }--|--{ id : created_by
+    user_browsing_history {
+        id INTEGER PK
+    }
+
+    user_browsing_history }--|--{ id : product_id
+    user_browsing_history }--|--{ id : user_id
+    permission_categories {
+        id INTEGER PK
+    }
+
+    permissions {
+        id INTEGER PK
+    }
+
+    permissions }--|--{ id : category_id
+    role_permission_assignments {
+        id INTEGER PK
+    }
+
+    role_permission_assignments }--|--{ code : country_code
+    role_permission_assignments }--|--{ id : granted_by
+    role_permission_assignments }--|--{ id : permission_id
+    user_permission_overrides {
+        id INTEGER PK
+    }
+
+    user_permission_overrides }--|--{ id : permission_id
+    user_permission_overrides }--|--{ id : granted_by
+    user_permission_overrides }--|--{ id : user_id
+    user_permission_overrides }--|--{ code : country_code
+    permission_audit_log {
+        id INTEGER PK
+    }
+
+    permission_audit_log }--|--{ id : target_user_id
+    permission_audit_log }--|--{ id : permission_id
+    permission_audit_log }--|--{ id : actor_id
+    referrals {
+        id INTEGER PK
+    }
+
+    referrals }--|--{ id : referred_id
+    referrals }--|--{ id : referrer_id
+    referral_point_events {
+        id INTEGER PK
+    }
+
+    referral_point_events }--|--{ id : user_id
+    referral_point_events }--|--{ id : referred_user_id
+    wishlist_items {
+        id INTEGER PK
+    }
+
+    wishlist_items }--|--{ id : user_id
+    wishlist_items }--|--{ id : product_id
+    wishlists {
+        id INTEGER PK
+    }
+
+    wishlists }--|--{ id : product_id
+    wishlists }--|--{ id : user_id
+    addresses {
+        id INTEGER PK
+    }
+
+    addresses }--|--{ id : user_id
+    system_health_events {
+        id INTEGER PK
+    }
+
+    user_sessions {
+        id INTEGER PK
+    }
+
+    user_sessions }--|--{ id : user_id
+    news_articles {
+        id INTEGER PK
+    }
+
+    news_articles }--|--{ id : source_id
+    entity_chat_threads {
+        id INTEGER PK
+    }
+
+    video_rooms {
+        id INTEGER PK
+    }
+
+    video_rooms }--|--{ code : country_code
+    video_rooms }--|--{ id : created_by
+    video_room_participants {
+        id INTEGER PK
+    }
+
+    video_room_participants }--|--{ id : user_id
+    video_room_participants }--|--{ id : room_id
+    direct_chat_rooms {
+        id INTEGER PK
+    }
+
+    direct_chat_rooms }--|--{ id : participant_two
+    direct_chat_rooms }--|--{ code : country_code
+    direct_chat_rooms }--|--{ id : participant_one
+    group_chat_members {
+        id INTEGER PK
+    }
+
+    group_chat_members }--|--{ id : user_id
+    group_chat_members }--|--{ id : room_id
+    shift_handover_sessions {
+        id INTEGER PK
+    }
+
+    shift_handover_sessions }--|--{ code : country_code
+    shift_handover_sessions }--|--{ id : outgoing_employee_id
+    shift_handover_sessions }--|--{ id : incoming_employee_id
+    escalation_sla_logs {
+        id INTEGER PK
+    }
+
+    escalation_sla_logs }--|--{ id : original_recipient_id
+    escalation_sla_logs }--|--{ id : escalated_to_user_id
+    categories {
+        id INTEGER PK
+    }
+
+    categories }--|--{ id : parent_id
+    products {
+        id INTEGER PK
+    }
+
+    products }--|--{ code : country_code
+    products }--|--{ id : supplier_id
+    products }--|--{ id : category_id
+    reviews {
+        id INTEGER PK
+    }
+
+    reviews }--|--{ id : product_id
+    reviews }--|--{ id : user_id
+    product_variants {
+        id INTEGER PK
+    }
+
+    product_variants }--|--{ id : product_id
+    product_variants }--|--{ code : country_code
+    product_images {
+        id INTEGER PK
+    }
+
+    product_images }--|--{ id : product_id
+    product_filter_metadata {
+        id INTEGER PK
+    }
+
+    product_filter_metadata }--|--{ id : category_id
+    product_filter_options {
+        id INTEGER PK
+    }
+
+    product_filter_options }--|--{ id : filter_metadata_id
+    orders {
+        id INTEGER PK
+    }
+
+    orders }--|--{ id : user_id
+    orders }--|--{ code : country_code
+    orders }--|--{ id : customer_id
+    orders }--|--{ id : invoice_id
+    order_items {
+        id INTEGER PK
+    }
+
+    order_items }--|--{ id : order_id
+    order_items }--|--{ code : country_code
+    order_items }--|--{ id : product_id
+    order_logistics_allocations {
+        id INTEGER PK
+    }
+
+    order_logistics_allocations }--|--{ id : service_area_id
+    order_logistics_allocations }--|--{ code : country_code
+    order_logistics_allocations }--|--{ id : supplier_id
+    order_logistics_allocations }--|--{ id : partner_id
+    order_logistics_allocations }--|--{ id : shipment_id
+    order_logistics_allocations }--|--{ id : order_id
+    return_requests {
+        id INTEGER PK
+    }
+
+    return_requests }--|--{ code : country_code
+    return_requests }--|--{ id : order_id
+    return_requests }--|--{ id : customer_id
+    order_notifications {
+        id INTEGER PK
+    }
+
+    order_notifications }--|--{ id : order_id
+    order_notifications }--|--{ id : user_id
+    coupons {
+        id INTEGER PK
+    }
+
+    coupons }--|--{ code : country_code
+    coupons }--|--{ id : deleted_by_id
+    banners {
+        id INTEGER PK
+    }
+
+    banners }--|--{ id : created_by
+    banners }--|--{ id : deleted_by_id
+    banners }--|--{ code : country_code
+    flash_sales {
+        id INTEGER PK
+    }
+
+    flash_sales }--|--{ code : country_code
+    flash_sales }--|--{ id : deleted_by_id
+    flash_sale_items {
+        id INTEGER PK
+    }
+
+    flash_sale_items }--|--{ code : country_code
+    flash_sale_items }--|--{ id : product_id
+    flash_sale_items }--|--{ id : flash_sale_id
+    commission_agreements {
+        id INTEGER PK
+    }
+
+    commission_agreements }--|--{ id : set_by_admin_id
+    commission_agreements }--|--{ id : supplier_id
+    product_commission_overrides {
+        id INTEGER PK
+    }
+
+    product_commission_overrides }--|--{ id : set_by_admin_id
+    product_commission_overrides }--|--{ id : product_id
+    product_commission_overrides }--|--{ id : supplier_id
+    commission_ledger_entries {
+        id INTEGER PK
+    }
+
+    commission_ledger_entries }--|--{ id : supplier_id
+    commission_ledger_entries }--|--{ id : order_item_id
+    commission_ledger_entries }--|--{ id : order_id
+    commission_ledger_entries }--|--{ id : product_id
+    commission_ledger_entries }--|--{ id : adjusted_by
+    commission_category_rates {
+        id INTEGER PK
+    }
+
+    commission_category_rates }--|--{ id : category_id
+    commission_category_rates }--|--{ code : country_code
+    commission_rules {
+        id INTEGER PK
+    }
+
+    commission_rules }--|--{ id : created_by
+    badge_billing_records {
+        id INTEGER PK
+    }
+
+    badge_billing_records }--|--{ id : supplier_id
+    badge_billing_records }--|--{ id : bank_transaction_id
+    badge_billing_records }--|--{ id : user_id
+    badge_transactions {
+        id INTEGER PK
+    }
+
+    badge_transactions }--|--{ id : user_id
+    badge_tiers {
+        id INTEGER PK
+    }
+
+    commission_badge_tiers {
+        id INTEGER PK
+    }
+
+    commission_badge_tiers }--|--{ id : updated_by
+    commission_global_configs {
+        id INTEGER PK
+    }
+
+    commission_global_configs }--|--{ id : updated_by
+    coupon_usage {
+        id INTEGER PK
+    }
+
+    coupon_usage }--|--{ id : coupon_id
+    coupon_usage }--|--{ code : country_code
+    coupon_usage }--|--{ id : order_id
+    coupon_usage }--|--{ id : user_id
+    promotion_engine_configs {
+        id INTEGER PK
+    }
+
+    promotion_engine_configs }--|--{ code : country_code
+    promotion_engine_configs }--|--{ id : updated_by
+    promotion_ledger_entries {
+        id INTEGER PK
+    }
+
+    promotion_ledger_entries }--|--{ id : user_id
+    promotion_order_tiers {
+        id INTEGER PK
+    }
+
+    promotion_order_tiers }--|--{ id : updated_by
+    promotion_order_tiers }--|--{ code : country_code
+    product_verifications {
+        id INTEGER PK
+    }
+
+    product_verifications }--|--{ id : product_id
+    product_verifications }--|--{ id : shipment_id
+    product_verifications }--|--{ id : verified_by
+    product_verifications }--|--{ id : order_id
+    return_abuse_patterns {
+        id INTEGER PK
+    }
+
+    return_abuse_patterns }--|--{ id : user_id
+    carts {
+        id INTEGER PK
+    }
+
+    carts }--|--{ id : user_id
+    cart_items {
+        id INTEGER PK
+    }
+
+    cart_items }--|--{ id : product_id
+    cart_items }--|--{ id : user_id
+    product_videos {
+        id INTEGER PK
+    }
+
+    product_videos }--|--{ id : product_id
+    video_analytics {
+        id INTEGER PK
+    }
+
+    video_analytics }--|--{ id : video_id
+    video_analytics }--|--{ id : user_id
+    video_room_recordings {
+        id INTEGER PK
+    }
+
+    video_room_recordings }--|--{ id : room_id
+    video_room_recordings }--|--{ id : started_by
+    media_assets {
+        id INTEGER PK
+    }
+
+    media_assets }--|--{ id : uploaded_by
+    media_assets }--|--{ id : supplier_id
+    media_assets }--|--{ id : product_id
+    media_upload_sessions {
+        id INTEGER PK
+    }
+
+    media_upload_sessions }--|--{ id : created_by
+    ocr_results {
+        id INTEGER PK
+    }
+
+    ocr_results }--|--{ id : document_verification_id
+    warehouses {
+        id INTEGER PK
+    }
+
+    warehouses }--|--{ code : country_code
+    stock_movements {
+        id INTEGER PK
+    }
+
+    stock_movements }--|--{ id : created_by
+    stock_movements }--|--{ id : product_id
+    stock_movements }--|--{ id : warehouse_id
+    logistics_zones {
+        id INTEGER PK
+    }
+
+    logistics_rates {
+        id INTEGER PK
+    }
+
+    logistics_rates }--|--{ id : zone_id
+    logistics_rates }--|--{ id : carrier_id
+    logistics_pricing_rules {
+        id INTEGER PK
+    }
+
+    logistics_pricing_rules }--|--{ id : zone_id
+    logistics_partner_payouts {
+        id INTEGER PK
+    }
+
+    logistics_partner_payouts }--|--{ id : partner_id
+    logistics_partner_payouts }--|--{ code : country_code
+    logistics_partners {
+        id INTEGER PK
+    }
+
+    logistics_partners }--|--{ code : country_code
+    logistics_partners }--|--{ id : user_id
+    logistics_partner_profiles {
+        id INTEGER PK
+    }
+
+    logistics_partner_profiles }--|--{ id : partner_id
+    logistics_partner_profiles }--|--{ code : country_code
+    logistics_partner_service_areas {
+        id INTEGER PK
+    }
+
+    logistics_partner_service_areas }--|--{ id : partner_id
+    logistics_pricing_profiles {
+        id INTEGER PK
+    }
+
+    logistics_pricing_profiles }--|--{ id : partner_id
+    logistics_pricing_profiles }--|--{ id : service_area_id
+    logistics_pricing_profiles }--|--{ id : reviewed_by
+    logistics_vehicle_rules {
+        id INTEGER PK
+    }
+
+    logistics_vehicle_rules }--|--{ id : reviewed_by
+    logistics_vehicle_rules }--|--{ id : partner_id
+    logistics_vehicle_rules }--|--{ id : service_area_id
+    logistics_category_pricing_rules {
+        id INTEGER PK
+    }
+
+    logistics_category_pricing_rules }--|--{ id : reviewed_by
+    logistics_category_pricing_rules }--|--{ id : partner_id
+    logistics_category_pricing_rules }--|--{ id : service_area_id
+    shipments {
+        id INTEGER PK
+    }
+
+    shipments }--|--{ id : supplier_id
+    shipments }--|--{ id : carrier_id
+    shipments }--|--{ id : assigned_partner_id
+    shipments }--|--{ id : order_id
+    shipment_events {
+        id INTEGER PK
+    }
+
+    shipment_events }--|--{ id : supplier_id
+    shipment_events }--|--{ id : shipment_id
+    shipment_events }--|--{ id : actor_user_id
+    shipment_events }--|--{ id : order_id
+    shipping_rules {
+        id INTEGER PK
+    }
+
+    shipping_rules }--|--{ code : country_code
+    shipping_carriers {
+        id INTEGER PK
+    }
+
+    shipping_carriers }--|--{ id : supplier_id
+    shipping_zones {
+        id INTEGER PK
+    }
+
+    shipping_zones }--|--{ id : supplier_id
+    logistics_cod_remittance_receipts {
+        id INTEGER PK
+    }
+
+    logistics_cod_remittance_receipts }--|--{ id : settlement_id
+    logistics_cod_remittance_receipts }--|--{ id : partner_id
+    logistics_cod_remittance_receipts }--|--{ id : reviewed_by
+    logistics_cod_remittance_receipts }--|--{ id : shipment_id
+    logistics_partner_bank_accounts {
+        id INTEGER PK
+    }
+
+    logistics_partner_bank_accounts }--|--{ id : partner_id
+    logistics_partner_bank_accounts }--|--{ id : verified_by
+    logistics_partner_documents {
+        id INTEGER PK
+    }
+
+    logistics_partner_documents }--|--{ id : reviewed_by
+    logistics_partner_documents }--|--{ id : partner_id
+    logistics_settlements {
+        id INTEGER PK
+    }
+
+    logistics_settlements }--|--{ id : partner_id
+    logistics_settlements }--|--{ id : shipment_id
+    logistics_settlements }--|--{ id : order_id
+    logistics_settlements }--|--{ id : payout_id
+    shipment_confirmations {
+        id INTEGER PK
+    }
+
+    shipment_confirmations }--|--{ id : order_id
+    shipment_confirmations }--|--{ id : target_user_id
+    shipment_confirmations }--|--{ id : shipment_id
+    shipment_confirmations }--|--{ id : requester_user_id
+    shipment_confirmations }--|--{ id : supplier_id
+    logistics_fraud_indicators {
+        id INTEGER PK
+    }
+
+    logistics_fraud_indicators }--|--{ id : partner_id
+    city_distance_matrix {
+        id INTEGER PK
+    }
+
+    city_distance_matrix }--|--{ id : created_by
+    city_distance_matrix }--|--{ id : updated_by
+    offices {
+        id INTEGER PK
+    }
+
+    dynamic_qr_sessions {
+        id INTEGER PK
+    }
+
+    dynamic_qr_sessions }--|--{ id : employee_id
+    geo_fence_logs {
+        id INTEGER PK
+    }
+
+    geo_fence_logs }--|--{ id : employee_id
+    employees {
+        id INTEGER PK
+    }
+
+    employees }--|--{ id : user_id
+    employees }--|--{ id : office_id
+    employees }--|--{ code : country_code
+    employees }--|--{ id : hiring_manager_id
+    employees }--|--{ id : reporting_manager_id
+    employees }--|--{ id : org_unit_id
+    employee_attendance {
+        id INTEGER PK
+    }
+
+    employee_attendance }--|--{ id : employee_id
+    employee_leave_ledgers {
+        id INTEGER PK
+    }
+
+    employee_leave_ledgers }--|--{ id : employee_id
+    employee_shift_rosters {
+        id INTEGER PK
+    }
+
+    employee_shift_rosters }--|--{ id : employee_id
+    purchase_orders {
+        id INTEGER PK
+    }
+
+    purchase_orders }--|--{ code : country_code
+    purchase_orders }--|--{ id : supplier_id
+    purchase_orders }--|--{ id : created_by
+    purchase_orders }--|--{ id : warehouse_id
+    purchase_orders }--|--{ id : vendor_id
+    purchase_order_lines {
+        id INTEGER PK
+    }
+
+    purchase_order_lines }--|--{ id : product_id
+    purchase_order_lines }--|--{ id : po_id
+    goods_receipt_notes {
+        id INTEGER PK
+    }
+
+    goods_receipt_notes }--|--{ id : po_id
+    goods_receipt_notes }--|--{ id : received_by
+    goods_receipt_notes }--|--{ id : warehouse_id
+    goods_receipt_notes }--|--{ id : supplier_id
+    goods_receipt_lines {
+        id INTEGER PK
+    }
+
+    goods_receipt_lines }--|--{ id : product_id
+    goods_receipt_lines }--|--{ id : po_line_id
+    goods_receipt_lines }--|--{ id : grn_id
+    sales_orders {
+        id INTEGER PK
+    }
+
+    sales_orders }--|--{ code : country_code
+    sales_orders }--|--{ id : warehouse_id
+    sales_orders }--|--{ id : customer_id
+    sales_orders }--|--{ id : created_by
+    sales_order_lines {
+        id INTEGER PK
+    }
+
+    sales_order_lines }--|--{ id : product_id
+    sales_order_lines }--|--{ id : so_id
+    trade_deals {
+        id INTEGER PK
+    }
+
+    trade_deals }--|--{ id : counterparty_id
+    trade_deals }--|--{ id : created_by
+    trade_deal_items {
+        id INTEGER PK
+    }
+
+    trade_deal_items }--|--{ id : deal_id
+    trade_settlements {
+        id INTEGER PK
+    }
+
+    trade_settlements }--|--{ id : created_by
+    trade_settlements }--|--{ id : deal_id
+    trading_configs {
+        id INTEGER PK
+    }
+
+    finance_reports {
+        id INTEGER PK
+    }
+
+    finance_reports }--|--{ id : generated_by
+    finance_dashboard_metrics {
+        id INTEGER PK
+    }
+
+    payments {
+        id INTEGER PK
+    }
+
+    payments }--|--{ id : order_id
+    payments }--|--{ code : country_code
+    fiscal_periods {
+        id INTEGER PK
+    }
+
+    fiscal_periods }--|--{ id : closed_by
+    transaction_ledgers {
+        id INTEGER PK
+    }
+
+    transaction_ledgers }--|--{ id : shipment_id
+    transaction_ledgers }--|--{ id : logistics_partner_id
+    transaction_ledgers }--|--{ id : user_id
+    transaction_ledgers }--|--{ id : order_id
+    transaction_ledgers }--|--{ id : supplier_id
+    transaction_ledgers }--|--{ id : order_item_id
+    supplier_settlements {
+        id INTEGER PK
+    }
+
+    supplier_settlements }--|--{ id : order_id
+    supplier_settlements }--|--{ id : shipment_id
+    supplier_settlements }--|--{ id : payout_id
+    supplier_settlements }--|--{ id : deleted_by
+    supplier_settlements }--|--{ id : supplier_id
+    supplier_settlements }--|--{ id : ledger_id
+    journal_entries {
+        id INTEGER PK
+    }
+
+    journal_entries }--|--{ id : created_by
+    journal_entries }--|--{ id : reversal_of_id
+    journal_entries }--|--{ id : deleted_by
+    journal_entries }--|--{ id : period_id
+    journal_entry_lines {
+        id INTEGER PK
+    }
+
+    journal_entry_lines }--|--{ id : account_id
+    journal_entry_lines }--|--{ id : cost_center_id
+    journal_entry_lines }--|--{ id : entry_id
+    accounts {
+        id INTEGER PK
+    }
+
+    accounts }--|--{ id : group_id
+    account_groups {
+        id INTEGER PK
+    }
+
+    account_balances {
+        id INTEGER PK
+    }
+
+    account_balances }--|--{ id : user_id
+    account_balances }--|--{ id : account_id
+    ar_ledger_entries {
+        id INTEGER PK
+    }
+
+    ar_ledger_entries }--|--{ id : customer_id
+    ar_ledger_entries }--|--{ id : order_id
+    ar_ledger_entries }--|--{ id : invoice_id
+    ar_ledger_entries }--|--{ id : created_by
+    ap_ledger_entries {
+        id INTEGER PK
+    }
+
+    ap_ledger_entries }--|--{ id : invoice_id
+    ap_ledger_entries }--|--{ id : created_by
+    ap_ledger_entries }--|--{ id : order_id
+    ap_ledger_entries }--|--{ id : supplier_id
+    ap_ledger_entries }--|--{ id : settlement_id
+    invoices {
+        id INTEGER PK
+    }
+
+    invoices }--|--{ id : order_id
+    invoices }--|--{ id : shipment_id
+    invoices }--|--{ id : supplier_id
+    invoices }--|--{ id : deleted_by
+    invoice_items {
+        id INTEGER PK
+    }
+
+    invoice_items }--|--{ id : invoice_id
+    invoice_items }--|--{ id : product_id
+    refund_ledger {
+        id INTEGER PK
+    }
+
+    refund_ledger }--|--{ id : return_request_id
+    refund_ledger }--|--{ id : performed_by
+    refund_ledger }--|--{ id : order_id
+    refund_ledger }--|--{ id : deleted_by
+    bank_transactions {
+        id INTEGER PK
+    }
+
+    bank_transactions }--|--{ id : linked_order_id
+    bank_transactions }--|--{ id : linked_supplier_id
+    bank_transactions }--|--{ id : reconciled_by
+    vat_remittances {
+        id INTEGER PK
+    }
+
+    vat_remittances }--|--{ id : remitted_by
+    pending_journal_entries {
+        id INTEGER PK
+    }
+
+    pending_journal_entries }--|--{ id : created_by
+    pending_journal_entries }--|--{ id : approved_by
+    pending_journal_entries }--|--{ id : journal_entry_id
+    pending_journal_entries }--|--{ id : rejected_by
+    bank_mapping_rules {
+        id INTEGER PK
+    }
+
+    bank_mapping_rules }--|--{ id : created_by
+    bank_statement_imports {
+        id INTEGER PK
+    }
+
+    bank_statement_imports }--|--{ id : imported_by
+    bank_statement_lines {
+        id INTEGER PK
+    }
+
+    bank_statement_lines }--|--{ id : posted_journal_entry_id
+    bank_statement_lines }--|--{ id : mapping_rule_id
+    bank_statement_lines }--|--{ id : import_id
+    bank_statement_lines }--|--{ id : reconciled_transaction_id
+    fixed_assets {
+        id INTEGER PK
+    }
+
+    fixed_assets }--|--{ id : created_by
+    accruals {
+        id INTEGER PK
+    }
+
+    accruals }--|--{ id : created_by
+    accruals }--|--{ id : reversal_entry_id
+    accruals }--|--{ id : journal_entry_id
+    scanned_expenses {
+        id INTEGER PK
+    }
+
+    scanned_expenses }--|--{ id : reviewed_by
+    scanned_expenses }--|--{ id : employee_id
+    scanned_expenses }--|--{ id : posted_journal_entry_id
+    vendors {
+        id INTEGER PK
+    }
+
+    customers {
+        id INTEGER PK
+    }
+
+    cost_centers {
+        id INTEGER PK
+    }
+
+    ap_bills {
+        id INTEGER PK
+    }
+
+    ap_bills }--|--{ id : created_by
+    ap_bills }--|--{ id : vendor_id
+    ap_bills }--|--{ id : linked_journal_entry_id
+    ap_bills }--|--{ id : paid_journal_entry_id
+    ar_invoices {
+        id INTEGER PK
+    }
+
+    ar_invoices }--|--{ id : created_by
+    ar_invoices }--|--{ id : customer_id
+    ar_invoices }--|--{ id : reference_order_id
+    ar_invoices }--|--{ id : paid_journal_entry_id
+    ar_invoices }--|--{ id : linked_journal_entry_id
+    bank_accounts {
+        id INTEGER PK
+    }
+
+    budgets {
+        id INTEGER PK
+    }
+
+    budgets }--|--{ id : created_by
+    budgets }--|--{ id : fiscal_period_id
+    bank_reconciliations {
+        id INTEGER PK
+    }
+
+    bank_reconciliations }--|--{ id : matched_by
+    bank_reconciliations }--|--{ id : journal_entry_id
+    bank_reconciliations }--|--{ id : statement_line_id
+    recurring_templates {
+        id INTEGER PK
+    }
+
+    recurring_templates }--|--{ id : created_by
+    finance_audit_logs {
+        id INTEGER PK
+    }
+
+    finance_audit_logs }--|--{ id : actor_id
+    finance_automation_logs {
+        id INTEGER PK
+    }
+
+    finance_automation_logs }--|--{ id : run_by
+    payment_reconciliation_runs {
+        id INTEGER PK
+    }
+
+    payment_gateway_connections {
+        id INTEGER PK
+    }
+
+    payment_gateway_connections }--|--{ id : updated_by
+    payouts {
+        id INTEGER PK
+    }
+
+    payouts }--|--{ id : order_id
+    payouts }--|--{ code : country_code
+    payouts }--|--{ id : supplier_id
+    payout_rules {
+        id INTEGER PK
+    }
+
+    payout_rules }--|--{ code : country_code
+    cash_accounts {
+        id INTEGER PK
+    }
+
+    cash_accounts }--|--{ id : created_by
+    cash_transactions {
+        id INTEGER PK
+    }
+
+    cash_transactions }--|--{ id : account_id
+    cash_transactions }--|--{ id : performed_by
+    treasury_accounts {
+        id INTEGER PK
+    }
+
+    treasury_accounts }--|--{ id : employee_id
+    treasury_transactions {
+        id INTEGER PK
+    }
+
+    treasury_transactions }--|--{ id : to_account_id
+    treasury_transactions }--|--{ id : account_id
+    treasury_transactions }--|--{ id : from_account_id
+    cash_flow_forecasts {
+        id INTEGER PK
+    }
+
+    cash_position_snapshots {
+        id INTEGER PK
+    }
+
+    cash_position_snapshots }--|--{ id : account_id
+    gateway_settlement_schedules {
+        id INTEGER PK
+    }
+
+    gateway_settlement_schedules }--|--{ id : gateway_id
+    payout_batches {
+        id INTEGER PK
+    }
+
+    payout_batches }--|--{ id : created_by
+    payout_batches }--|--{ id : approved_by
+    payout_batch_items {
+        id INTEGER PK
+    }
+
+    payout_batch_items }--|--{ id : batch_id
+    payment_provider_configs {
+        id INTEGER PK
+    }
+
+    payment_provider_configs }--|--{ id : updated_by
+    finance_bank_accounts {
+        id INTEGER PK
+    }
+
+    finance_bank_accounts }--|--{ id : updated_by
+    finance_bank_accounts }--|--{ id : created_by
+    supplier_profiles {
+        id INTEGER PK
+    }
+
+    supplier_profiles }--|--{ code : country_code
+    supplier_profiles }--|--{ id : user_id
+    supplier_profiles }--|--{ id : deleted_by_id
+    supplier_documents {
+        id INTEGER PK
+    }
+
+    supplier_documents }--|--{ id : supplier_id
+    supplier_documents }--|--{ id : verified_by
+    supplier_documents }--|--{ id : reviewed_by
+    supplier_notification_preferences {
+        id INTEGER PK
+    }
+
+    supplier_notification_preferences }--|--{ id : supplier_id
+    supplier_bank_accounts {
+        id INTEGER PK
+    }
+
+    supplier_bank_accounts }--|--{ id : verified_by
+    supplier_bank_accounts }--|--{ id : supplier_id
+    supplier_disputes {
+        id INTEGER PK
+    }
+
+    supplier_disputes }--|--{ id : supplier_id
+    supplier_disputes }--|--{ id : resolved_by
+    supplier_disputes }--|--{ id : return_request_id
+    supplier_disputes }--|--{ id : created_by
+    supplier_disputes }--|--{ id : order_id
+    supplier_country_commissions {
+        id INTEGER PK
+    }
+
+    supplier_country_commissions }--|--{ id : supplier_id
+    supplier_fraud_indicators {
+        id INTEGER PK
+    }
+
+    supplier_fraud_indicators }--|--{ id : supplier_id
+    email_campaigns {
+        id INTEGER PK
+    }
+
+    email_campaigns }--|--{ code : country_code
+    email_campaigns }--|--{ id : created_by
+    email_templates {
+        id INTEGER PK
+    }
+
+    email_templates }--|--{ id : created_by
+    newsletter_subscribers {
+        id INTEGER PK
+    }
+
+    email_campaign_logs {
+        id INTEGER PK
+    }
+
+    email_campaign_logs }--|--{ id : campaign_id
+    campaign_recipients {
+        id INTEGER PK
+    }
+
+    campaign_recipients }--|--{ id : user_id
+    campaign_recipients }--|--{ id : campaign_id
+    email_delivery_events {
+        id INTEGER PK
+    }
+
+    email_suppressions {
+        id INTEGER PK
+    }
+
+    notifications {
+        id INTEGER PK
+    }
+
+    notifications }--|--{ id : user_id
+    ticket_messages {
+        id INTEGER PK
+    }
+
+    ticket_messages }--|--{ id : sender_id
+    ticket_messages }--|--{ id : ticket_id
+    announcements {
+        id INTEGER PK
+    }
+
+    faqs {
+        id INTEGER PK
+    }
+
+    help_categories {
+        id INTEGER PK
+    }
+
+    proxy_channels {
+        id INTEGER PK
+    }
+
+    proxy_sessions {
+        id INTEGER PK
+    }
+
+    proxy_sessions }--|--{ id : participant_one_id
+    proxy_sessions }--|--{ id : participant_two_id
+    proxy_sessions }--|--{ id : channel_id
+    proxy_messages {
+        id INTEGER PK
+    }
+
+    proxy_messages }--|--{ id : session_id
+    proxy_messages }--|--{ id : recipient_id
+    proxy_messages }--|--{ id : sender_id
+    proxy_call_logs {
+        id INTEGER PK
+    }
+
+    proxy_call_logs }--|--{ id : callee_id
+    proxy_call_logs }--|--{ id : channel_id
+    proxy_call_logs }--|--{ id : caller_id
+    employee_communication_threads {
+        id INTEGER PK
+    }
+
+    employee_communication_threads }--|--{ code : country_code
+    external_contact_masking {
+        id INTEGER PK
+    }
+
+    external_contact_masking }--|--{ id : user_id
+    communication_audit_trail {
+        id INTEGER PK
+    }
+
+    communication_audit_trail }--|--{ id : user_id
+    internal_channels {
+        id INTEGER PK
+    }
+
+    internal_channels }--|--{ code : country_code
+    internal_channel_members {
+        id INTEGER PK
+    }
+
+    internal_channel_members }--|--{ id : channel_id
+    internal_channel_members }--|--{ id : user_id
+    internal_messages {
+        id INTEGER PK
+    }
+
+    internal_messages }--|--{ id : channel_id
+    internal_messages }--|--{ id : user_id
+    chat_read_receipts {
+        id INTEGER PK
+    }
+
+    chat_attachments {
+        id INTEGER PK
+    }
+
+    internal_emails {
+        id INTEGER PK
+    }
+
+    internal_emails }--|--{ id : folder_id
+    internal_emails }--|--{ id : in_reply_to
+    internal_emails }--|--{ id : sender_id
+    email_folders {
+        id INTEGER PK
+    }
+
+    email_folders }--|--{ id : employee_id
+    ticket_replies {
+        id INTEGER PK
+    }
+
+    ticket_replies }--|--{ id : sender_id
+    ticket_replies }--|--{ id : ticket_id
+    push_notification_tokens {
+        id INTEGER PK
+    }
+
+    push_notification_tokens }--|--{ id : user_id
+    meeting_recordings {
+        id INTEGER PK
+    }
+
+    meeting_recordings }--|--{ id : started_by
+    support_tickets {
+        id INTEGER PK
+    }
+
+    support_tickets }--|--{ id : user_id
+    support_ticket_replies {
+        id INTEGER PK
+    }
+
+    support_ticket_replies }--|--{ id : ticket_id
+    support_ticket_replies }--|--{ id : sender_id
+    ticket_attachments {
+        id INTEGER PK
+    }
+
+    ticket_attachments }--|--{ id : ticket_id
+    ticket_attachments }--|--{ id : ticket_reply_id
+    news_sources {
+        id INTEGER PK
+    }
+
+    internal_notices {
+        id INTEGER PK
+    }
+
+    entity_chat_messages {
+        id INTEGER PK
+    }
+
+    entity_chat_messages }--|--{ id : thread_id
+    entity_chat_messages }--|--{ id : sender_id
+    direct_chat_messages {
+        id INTEGER PK
+    }
+
+    direct_chat_messages }--|--{ id : sender_id
+    direct_chat_messages }--|--{ id : room_id
+    group_chat_rooms {
+        id INTEGER PK
+    }
+
+    group_chat_rooms }--|--{ id : created_by
+    group_chat_rooms }--|--{ code : country_code
+    group_chat_messages {
+        id INTEGER PK
+    }
+
+    group_chat_messages }--|--{ id : sender_id
+    group_chat_messages }--|--{ id : room_id
+    escalation_sla_rules {
+        id INTEGER PK
+    }
+
+    escalation_sla_rules }--|--{ code : country_code
+    incident_war_rooms {
+        id INTEGER PK
+    }
+
+    incident_war_rooms }--|--{ id : created_by
+    incident_threads {
+        id INTEGER PK
+    }
+
+    incident_threads }--|--{ id : war_room_id
+    incident_threads }--|--{ id : participant_id
+    incident_action_items {
+        id INTEGER PK
+    }
+
+    incident_action_items }--|--{ id : assignee_id
+    incident_action_items }--|--{ id : war_room_id
+    war_room_templates {
+        id INTEGER PK
+    }
+
+    email_runtime_config {
+        id INTEGER PK
+    }
+
+    system_alerts {
+        id INTEGER PK
+    }
+
+    system_alerts }--|--{ id : acknowledged_by
+    system_settings {
+        id INTEGER PK
+    }
+
+    email_provider_configs {
+        id INTEGER PK
+    }
+
+    email_provider_configs }--|--{ id : updated_by
+    country_feature_flags {
+        id INTEGER PK
+    }
+
+    country_feature_flags }--|--{ code : country_code
+    country_staff_assignments {
+        id INTEGER PK
+    }
+
+    country_staff_assignments }--|--{ id : assigned_by
+    country_staff_assignments }--|--{ id : user_id
+    country_staff_assignments }--|--{ code : country_code
+    cross_country_customer_sessions {
+        id INTEGER PK
+    }
+
+    cross_country_customer_sessions }--|--{ id : order_id
+    cross_country_customer_sessions }--|--{ id : user_id
+    oman_delivery_zones {
+        id INTEGER PK
+    }
+
+    country_config_versions {
+        id INTEGER PK
+    }
+
+    country_config_versions }--|--{ id : draft_by
+    country_config_versions }--|--{ id : approved_by
+    country_config_versions }--|--{ code : country_code
+    country_commission_rates {
+        id INTEGER PK
+    }
+
+    country_commission_rates }--|--{ code : country_code
+    country_localization {
+        id INTEGER PK
+    }
+
+    country_localization }--|--{ code : country_code
+    country_payment_aliases {
+        id INTEGER PK
+    }
+
+    country_payment_aliases }--|--{ code : country_code
+    country_legal_contracts {
+        id INTEGER PK
+    }
+
+    country_legal_contracts }--|--{ code : country_code
+    country_category_tax_rates {
+        id INTEGER PK
+    }
+
+    country_category_tax_rates }--|--{ code : country_code
+    country_category_tax_rates }--|--{ id : category_id
+    country_holiday_calendars {
+        id INTEGER PK
+    }
+
+    country_holiday_calendars }--|--{ code : country_code
+    country_gateway_configs {
+        id INTEGER PK
+    }
+
+    country_gateway_configs }--|--{ code : country_code
+    country_communication_threads {
+        id INTEGER PK
+    }
+
+    country_communication_threads }--|--{ code : country_code
+    country_commission_rate_history {
+        id INTEGER PK
+    }
+
+    country_commission_rate_history }--|--{ id : category_id
+    country_commission_rate_history }--|--{ code : country_code
+    country_commission_rate_history }--|--{ id : changed_by
+    country_logistics_zones {
+        id INTEGER PK
+    }
+
+    country_logistics_zones }--|--{ code : country_code
+    country_payout_rules {
+        id INTEGER PK
+    }
+
+    country_payout_rules }--|--{ code : country_code
+    feature_flags {
+        id INTEGER PK
+    }
+
+    country_configs {
+        id INTEGER PK
+    }
+
+    country_configs }--|--{ id : basics_id
+    country_communications {
+        id INTEGER PK
+    }
+
+    country_communications }--|--{ code : country_code
+    country_communications }--|--{ id : from_user_id
+    country_communications }--|--{ id : to_user_id
+    country_gateway_credentials {
+        id INTEGER PK
+    }
+
+    country_gateway_credentials }--|--{ code : country_code
+    tax_rules {
+        id INTEGER PK
+    }
+
+    tax_rules }--|--{ code : country_code
+    messages {
+        id INTEGER PK
+    }
+
+    messages }--|--{ code : country_code
+    messages }--|--{ id : to_user_id
+    messages }--|--{ id : from_user_id
+    payout_rule_categories {
+        id INTEGER PK
+    }
+
+    payout_rule_categories }--|--{ code : country_code
+    payout_rule_products {
+        id INTEGER PK
+    }
+
+    payout_rule_products }--|--{ id : product_id
+    payout_rule_products }--|--{ code : country_code
+    supplier_kyc_requirements {
+        id INTEGER PK
+    }
+
+    supplier_kyc_requirements }--|--{ code : country_code
+    logistics_partner_kyc_requirements {
+        id INTEGER PK
+    }
+
+    logistics_partner_kyc_requirements }--|--{ code : country_code
+    country_cities {
+        id INTEGER PK
+    }
+
+    country_cities }--|--{ code : country_code
+    country_basics {
+        id INTEGER PK
+    }
+
+    country_economics {
+        id INTEGER PK
+    }
+
+    country_economics }--|--{ code : country_code
+    country_legal {
+        id INTEGER PK
+    }
+
+    country_legal }--|--{ code : country_code
+    country_tax {
+        id INTEGER PK
+    }
+
+    country_tax }--|--{ code : country_code
+    financial_reports {
+        id INTEGER PK
+    }
+
+    processed_webhook_events {
+        id INTEGER PK
+    }
+
+    normalized_webhook_events {
+        id INTEGER PK
+    }
+
+    executive_news {
+        id INTEGER PK
+    }
+
+    outbox_events {
+        id INTEGER PK
+    }
+
+    inbox_events {
+        id INTEGER PK
+    }
+
+    event_retry_queue {
+        id INTEGER PK
+    }
+
+    event_retry_queue }--|--{ id : event_id
+    event_dead_letter {
+        id INTEGER PK
+    }
+
+    event_dead_letter }--|--{ id : event_id
+    mv_daily_sales {
+        id INTEGER PK
+    }
+
+    mv_monthly_sales {
+        id INTEGER PK
+    }
+
+    kpi_customer {
+        id INTEGER PK
+    }
+
+    kpi_supplier {
+        id INTEGER PK
+    }
+
+    kpi_country {
+        id INTEGER PK
+    }
+
+    kpi_revenue {
+        id INTEGER PK
+    }
+
+    kpi_orders {
+        id INTEGER PK
+    }
+
+    kpi_retention {
+        id INTEGER PK
+    }
+
+    kpi_conversion {
+        id INTEGER PK
+    }
+
+    mv_cash_position {
+        id INTEGER PK
+    }
+
+    mv_facet_counts {
+        id INTEGER PK
+    }
+
+    admin_analytics_snapshots {
+        id INTEGER PK
+    }
+
+    admin_change_audit_logs {
+        id INTEGER PK
+    }
+
+    admin_change_audit_logs }--|--{ id : admin_id
+    admin_activity_logs {
+        id INTEGER PK
+    }
+
+    admin_activity_logs }--|--{ id : admin_id
+    chatbot_query_events {
+        id INTEGER PK
+    }
+
+    chatbot_query_events }--|--{ id : user_id
+    chatbot_query_events }--|--{ id : clicked_product_id
+    retention_job_runs {
+        id INTEGER PK
+    }
+
+    audit_logs {
+        id INTEGER PK
+    }
+
+    audit_logs }--|--{ id : user_id
+    command_center_views {
+        id INTEGER PK
+    }
+
+    command_center_views }--|--{ id : user_id
+    worm_audit {
+        id INTEGER PK
+    }
+
+    employee_expenses {
+        id INTEGER PK
+    }
+
+    employee_expenses }--|--{ id : employee_id
+    employee_expenses }--|--{ id : approved_by
+    shift_handover_tasks {
+        id INTEGER PK
+    }
+
+    shift_handover_tasks }--|--{ id : session_id
+    shift_handover_tasks }--|--{ id : assigned_to
+    shift_handover_logs {
+        id INTEGER PK
+    }
+
+    shift_handover_logs }--|--{ id : handover_to_user_id
+    shift_handover_logs }--|--{ code : country_code
+    shift_handover_logs }--|--{ id : user_id
+    payment_orchestrator_sync {
+        id INTEGER PK
+    }
+
+    payment_orchestrator_sync }--|--{ code : country_code
+    supplier_onboarding_sync {
+        id INTEGER PK
+    }
+
+    supplier_onboarding_sync }--|--{ id : supplier_id
+    supplier_onboarding_sync }--|--{ code : country_code
+    legal_contract_templates {
+        id INTEGER PK
+    }
+
+    legal_contract_templates }--|--{ code : country_code
+    data_residency_records {
+        id INTEGER PK
+    }
+
+    data_residency_records }--|--{ code : country_code
+    country_map_configs {
+        id INTEGER PK
+    }
+
+    country_map_configs }--|--{ code : country_code
+    shop_warehouse_locations {
+        id INTEGER PK
+    }
+
+    shop_warehouse_locations }--|--{ code : country_code
+    logistics_partner_locations {
+        id INTEGER PK
+    }
+
+    logistics_partner_locations }--|--{ id : partner_id
+    logistics_partner_locations }--|--{ code : country_code
+    parcel_location_trackers {
+        id INTEGER PK
+    }
+
+    parcel_location_trackers }--|--{ code : country_code
+    parcel_location_trackers }--|--{ id : parcel_id
+    physical_id_cards {
+        id INTEGER PK
+    }
+
+    physical_id_cards }--|--{ id : employee_id
+    employee_biometrics {
+        id INTEGER PK
+    }
+
+    employee_biometrics }--|--{ id : employee_id
+    employee_roles {
+        id INTEGER PK
+    }
+
+    org_units {
+        id INTEGER PK
+    }
+
+    org_units }--|--{ id : parent_id
+    employee_work_logs {
+        id INTEGER PK
+    }
+
+    employee_work_logs }--|--{ id : employee_id
+    employee_leave_requests {
+        id INTEGER PK
+    }
+
+    employee_leave_requests }--|--{ id : approved_by
+    employee_leave_requests }--|--{ id : employee_id
+    employee_assets {
+        id INTEGER PK
+    }
+
+    employee_assets }--|--{ id : employee_id
+    employee_certifications {
+        id INTEGER PK
+    }
+
+    employee_certifications }--|--{ id : employee_id
+    employee_documents {
+        id INTEGER PK
+    }
+
+    employee_documents }--|--{ id : verified_by
+    employee_documents }--|--{ id : employee_id
+    employee_dependents {
+        id INTEGER PK
+    }
+
+    employee_dependents }--|--{ id : employee_id
+    employee_relations {
+        id INTEGER PK
+    }
+
+    employee_relations }--|--{ id : employee_id
+    employee_relations }--|--{ id : internal_employee_id
+    employee_addresses {
+        id INTEGER PK
+    }
+
+    employee_addresses }--|--{ code : country_code
+    employee_addresses }--|--{ id : employee_id
+    coi_reports {
+        id INTEGER PK
+    }
+
+    coi_reports }--|--{ id : employee_id
+    coi_reports }--|--{ id : approved_by
+    coi_reports }--|--{ id : internal_employee_id
+    employee_travel_requests {
+        id INTEGER PK
+    }
+
+    employee_travel_requests }--|--{ id : employee_id
+    employee_travel_requests }--|--{ id : approved_by
+    alumni_network {
+        id INTEGER PK
+    }
+
+    alumni_network }--|--{ id : employee_id
+    disciplinary_cases {
+        id INTEGER PK
+    }
+
+    disciplinary_cases }--|--{ id : employee_id
+    offboarding_cases {
+        id INTEGER PK
+    }
+
+    offboarding_cases }--|--{ id : employee_id
+    onboarding_pipelines {
+        id INTEGER PK
+    }
+
+    onboarding_pipelines }--|--{ id : user_id
+    onboarding_steps {
+        id INTEGER PK
+    }
+
+    onboarding_steps }--|--{ id : pipeline_id
+    fraud_events {
+        id INTEGER PK
+    }
+
+    fraud_events }--|--{ id : user_id
+    fraud_events }--|--{ id : reviewed_by
+    fraud_events }--|--{ id : order_id
+    fraud_blacklist {
+        id INTEGER PK
+    }
+
+    fraud_rules {
+        id INTEGER PK
+    }
+
+    manual_review_queue {
+        id INTEGER PK
+    }
+
+    manual_review_queue }--|--{ id : assigned_to
+    ip_reputations {
+        id INTEGER PK
+    }
+
+    device_fingerprints {
+        id INTEGER PK
+    }
+
+    device_fingerprints }--|--{ id : user_id
+    credit_card_bins {
+        id INTEGER PK
+    }
+
+    fraud_alerts {
+        id INTEGER PK
+    }
+
+    ip_account_linkages {
+        id INTEGER PK
+    }
+
+    ip_account_linkages }--|--{ id : user_id
+    fraud_velocity_counters {
+        id INTEGER PK
+    }
+
+    fraud_scoring_logs {
+        id INTEGER PK
+    }
+
+    fraud_scoring_logs }--|--{ id : user_id
+    fraud_scoring_logs }--|--{ id : order_id
+    fraud_cases {
+        id INTEGER PK
+    }
+
+    fraud_cases }--|--{ id : assigned_to
+    fraud_cases }--|--{ id : created_by
+    fraud_case_assignments {
+        id INTEGER PK
+    }
+
+    fraud_case_assignments }--|--{ id : assigned_to
+    fraud_case_assignments }--|--{ id : case_id
+    fraud_case_assignments }--|--{ id : assigned_by
+    dlp_violations {
+        id INTEGER PK
+    }
+
+    dlp_violations }--|--{ id : sender_id
+    dlp_violations }--|--{ id : reviewed_by
+    meeting_transcripts {
+        id INTEGER PK
+    }
+
+    meeting_action_items {
+        id INTEGER PK
+    }
+
+    meeting_action_items }--|--{ id : meeting_id
+    meeting_action_items }--|--{ id : assigned_to
+    alert_escalation_rules {
+        id INTEGER PK
+    }
+
+    document_verifications {
+        id INTEGER PK
+    }
+
+    document_verifications }--|--{ id : verifier_id
+    document_verifications }--|--{ id : pipeline_id
+    kyc_verifications {
+        id INTEGER PK
+    }
+
+    kyc_verifications }--|--{ id : user_id
+    kyc_verifications }--|--{ id : reviewer_id
+    predictive_simulations {
+        id INTEGER PK
+    }
+
+    ai_upload_jobs {
+        id INTEGER PK
+    }
+
+    ai_upload_jobs }--|--{ id : created_product_id
+    ai_upload_jobs }--|--{ id : supplier_id
+    ai_staging_products {
+        id INTEGER PK
+    }
+
+    ai_staging_products }--|--{ id : product_id
+    ai_staging_products }--|--{ id : job_id
+    ai_staging_variants {
+        id INTEGER PK
+    }
+
+    ai_staging_variants }--|--{ id : staging_product_id
+    ai_staging_variants }--|--{ id : job_id
+    ai_generation_logs {
+        id INTEGER PK
+    }
+
+    ai_generation_logs }--|--{ id : job_id
+    upload_jobs {
+        id INTEGER PK
+    }
+
+    upload_jobs }--|--{ id : supplier_id
+    upload_jobs }--|--{ id : product_id
+```

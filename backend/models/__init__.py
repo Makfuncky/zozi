@@ -1,41 +1,94 @@
 from __future__ import annotations
 
+import os
+
+from sqlalchemy import MetaData
 from sqlalchemy.orm import DeclarativeBase
 
-class Base(DeclarativeBase):
-    pass
 
-from .user import *
-from .products import *
-from .orders import *
-from .payments import *
-from .suppliers import *
-from .logistics import *
-from .marketing import *
-from .communication import *
-from .countries import *
-from .finance import *
-from .commission import *
-from .admin import *
-from .fraud import *
-from .core import *
-from .country_enhancements import *
-from .country_control import *
-from .employee_models import *
-from .media_models import *
+class _GuardedMetaData(MetaData):
+    """MetaData that forbids ``create_all`` / ``drop_all`` outside dev/test.
+
+    Implements Constitution §2.7 / ADR-012: ``Base.metadata.create_all()`` is
+    for development and test only.  Production schema changes MUST go through
+    reviewed Alembic migrations.
+
+    The guard passes through when:
+      * ``ALEMBIC_MODE=true`` (sanctioned migration context), **or**
+      * the target bind is SQLite (dev / in-memory test), **or**
+      * ``APP_ENV`` is not ``production``.
+
+    Every other combination raises ``RuntimeError`` so there is no code path
+    that can accidentally ``create_all`` against a PostgreSQL production
+    database.
+    """
+
+    def _guard(self, operation: str, bind) -> None:
+        if os.getenv("ALEMBIC_MODE") == "true":
+            return
+        env = os.getenv("APP_ENV", "development").lower()
+        if env == "production":
+            raise RuntimeError(
+                f"{operation} is forbidden in production (APP_ENV=production). "
+                f"Use a reviewed Alembic migration instead of Base.metadata."
+                f"{operation}."
+            )
+        if bind is not None and bind.dialect.name == "postgresql":
+            raise RuntimeError(
+                f"{operation} is disabled on PostgreSQL. "
+                f"Use a reviewed Alembic migration instead of Base.metadata."
+                f"{operation}."
+            )
+
+    def create_all(self, *args, **kwargs):
+        bind = kwargs.get("bind")
+        if bind is None and args:
+            bind = args[0]
+        self._guard("create_all", bind)
+        return super().create_all(*args, **kwargs)
+
+    def drop_all(self, *args, **kwargs):
+        bind = kwargs.get("bind")
+        if bind is None and args:
+            bind = args[0]
+        self._guard("drop_all", bind)
+        return super().drop_all(*args, **kwargs)
+
+
+class Base(DeclarativeBase):
+    metadata = _GuardedMetaData()
+
+from .core.user import *
+from .catalog.products import *
+from .orders.orders import *
+from .finance.payments import *
+from .communication.suppliers import *
+from .logistics.logistics import *
+from .communication.marketing import *
+from .communication.communication import *
+from .country.countries import *
+from .treasury.finance import *
+from .finance.commission import *
+from .logistics.admin import *
+from .security.fraud import *
+from .communication.core import *
+from .country.country_enhancements import *
+from .logistics.country_control import *
+from .hr.employee_models import *
+from .media.media_models import *
 from .mixins import *
-from .onboarding import *
-from .incident import *
-from .permissions import *
-from .ai_upload import *
-from .country_basics import *
-from .country_economics import *
-from .country_legal import *
+from .supplier.onboarding import *
+from .security.incident import *
+from .security.permissions import *
+from .catalog.ai_upload import *
+from .country.country_basics import *
+from .country.country_economics import *
+from .country.country_legal import *
 from .country_tax import *
 from .events import *
-from .analytics import *
-from .upload_job import *
-from .platform import *
+from .analytics.analytics import *
+from .media.upload_job import *
+from .audit.platform import *
 
 __all__ = [
     "User", "UserDevice", "Referral", "ReferralPointEvent", "UserLoginHistory",

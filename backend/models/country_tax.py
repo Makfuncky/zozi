@@ -25,12 +25,16 @@ __all__ = ["CountryTax"]
 class CountryTax(Base):
     __tablename__ = "country_tax"
     __table_args__ = (
-        Index("ix_country_tax_code", "country_code", unique=True), {"schema": "country"}
+        Index("ix_country_tax_code", "country_code", unique=True),
+        Index("ix_country_tax_active", "is_active", "is_deleted"),
+        {"schema": "country"},
     )
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
+    uuid = Column(String(36), nullable=False, unique=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code", ondelete="RESTRICT"), nullable=False, unique=True)
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
+    version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     created_by = Column(Integer, nullable=True)

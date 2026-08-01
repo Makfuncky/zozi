@@ -1,15 +1,11 @@
 %% AUTO-GENERATED dependency graph — DO NOT HAND-EDIT.
 graph LR
-    ai_copy_jobs --> ai_variant_config
-    approval_matrix_service --> hierarchy_service
-    auth_service --> employee_models
-    auto_payout_scheduler --> admin
-    auto_payout_scheduler --> payout_notification_service
-    auto_payout_scheduler --> suppliers
+    ai --> finance
+    audit --> core
+    audit --> finance
     automation_scheduler --> ai_automation_service
     automation_scheduler --> credit_control_service
     automation_scheduler --> finance_automation
-    automation_scheduler --> financial_reports_service
     automation_scheduler --> gateway_reconciliation_service
     automation_scheduler --> import_service
     automation_scheduler --> payout_batch_service
@@ -17,56 +13,23 @@ graph LR
     automation_scheduler --> trading_service
     automation_scheduler --> transactional_email_service
     automation_scheduler --> treasury_engine
-    cash_management_service --> admin_analytics_service
-    cash_management_service --> bank_transaction_service
-    cash_management_service --> finance_transfer_service
-    cash_management_service --> general_ledger_service
-    cash_management_service --> logistics_partner_pricing
-    cash_management_service --> retention_service
-    cash_management_service --> supplier_badge_service
-    chat_enrichment --> employee_activity_logger
-    chat_enrichment --> employee_models
-    chat_system --> core
-    chat_system --> storage
-    coi_engine --> employee_models
-    command_center_background --> cash_management_service
-    command_center_service --> employee_models
+    catalog --> core
     commission_engine --> logistics_partner_pricing
-    communication_audit --> communication
-    compliance_engine --> employee_models
-    country_auto_populate --> legal_contract_service
-    cross_border_tracker --> cross_border_service
-    dei_auditor --> employee_models
-    downstream_wiring --> tax_service
-    ediscovery --> core
-    ediscovery --> countries
-    ediscovery --> finance
-    effective_permissions --> hierarchy_service
-    effective_permissions --> permissions
-    email_enrichment --> employee_models
-    email_gateway --> communication
-    email_gateway --> employee_communication_service
-    email_gateway --> employee_models
-    email_gateway --> fraud
-    employee_activity_logger --> employee_models
-    employee_activity_logger --> hierarchy_service
-    employee_communication_service --> communication
-    employee_communication_service --> employee_activity_logger
-    employee_communication_service --> employee_models
-    employee_lifecycle_service --> background_check
-    employee_lifecycle_service --> employee_models
-    employee_lifecycle_service --> payroll_engine
-    escalation_sla --> core
-    expense_routing --> employee_models
+    communication --> core
+    communication --> logistics
+    communication --> orders
+    country --> logistics
+    country --> payments
     external_contact --> communication
     finance --> admin_analytics_service
     finance --> bank_transaction_service
-    finance --> employee_models
+    finance --> communication
+    finance --> core
     finance --> finance_transfer_service
-    finance --> financial_reports_service
     finance --> general_ledger_service
     finance --> logistics_partner_pricing
     finance --> ocr_parser
+    finance --> orders
     finance --> retention_service
     finance --> supplier_badge_service
     finance --> transactional_email_service
@@ -74,74 +37,31 @@ graph LR
     finance_automation --> ocr_parser
     finance_automation --> treasury_engine
     finance_transfer_service --> logistics_partner_pricing
-    financial_reporting --> financial_reports_service
-    free_image_tools --> bg_removal_service
-    fulfillment_service --> notification_service
-    gateway_auto_enable --> country_auto_populate
-    ghost_watchdog --> employee_models
-    hierarchy_service --> employee_models
-    hr_write_service --> employee_models
-    hse_manager --> employee_models
-    iam_service --> employee_models
-    iam_write_service --> employee_models
-    internal_communication --> communication
-    je_reversal_service --> general_ledger_service
-    legal_contract_service --> localization_service
-    live_tracking_service --> country_control
-    lms --> employee_models
-    lms_permission_lock --> employee_models
-    lms_write_service --> employee_models
-    logistics_engine --> logistics_partner_pricing
-    logistics_partner_write_service --> cash_management_service
-    logistics_partner_write_service --> finance_transfer_service
-    logistics_sla_service --> treasury_service
-    map_service --> country_control
-    map_service --> country_enhancements
-    media_service --> media_models
-    media_service --> storage
-    mobile_auth_service --> biometric_auth
-    mobile_auth_service --> geo_fence_service
-    mobile_auth_service --> iam_service
-    notification_engine --> communication
-    offboarding --> employee_models
-    offboarding --> notification_service
-    okr_engine --> employee_models
+    hr --> communication
+    hr --> core
+    logistics --> finance_transfer_service
+    logistics --> logistics_partner_pricing
+    logistics --> treasury_service
+    orders --> catalog
+    orders --> communication
+    orders --> logistics
     payout_batch_service --> transactional_email_service
-    payout_notification_service --> logistics
-    payout_notification_service --> notification_engine
-    payroll_engine --> employee_activity_logger
-    payroll_engine --> employee_models
-    payroll_engine --> leave_accrual
-    payroll_service --> employee_models
-    performance_service --> employee_activity_logger
-    performance_service --> hierarchy_service
     period_close_service --> general_ledger_service
-    permission_service --> permissions
-    promotion_points_service --> promotion_engine_service
-    proxy_communication --> orders
-    qr_service --> employee_models
-    rbac_service --> approval_matrix_service
-    shift_handover --> core
-    shift_handover --> employee_models
-    shift_roster_service --> employee_models
     sub_ledger_service --> finance
-    succession_service --> employee_models
+    supplier --> finance
+    supplier --> finance_transfer_service
+    supplier --> treasury
     supplier_badge_service --> audit
     supplier_badge_service --> bank_transaction_service
-    suppliers_write_service --> finance_transfer_service
-    tax_service --> logistics_partner_pricing
     trading_service --> transactional_email_service
-    travel_detector --> employee_models
-    travel_service --> countries
-    travel_service --> employee_models
-    treasurer --> employee_models
+    treasury --> ai
+    treasury --> analytics
+    treasury --> commerce
+    treasury --> communication
+    treasury --> finance
+    treasury --> hr
+    treasury --> logistics
+    treasury --> orders
+    treasury --> supplier
     treasury_engine --> general_ledger_service
     treasury_engine --> orders
-    treasury_service --> employee_models
-    triple_auth --> employee_models
-    upload_job_service --> upload_job
-    upload_job_service --> websocket_manager
-    video_conferencing --> core
-    video_service --> media_service
-    websocket_chat --> core
-    websocket_chat --> employee_models
