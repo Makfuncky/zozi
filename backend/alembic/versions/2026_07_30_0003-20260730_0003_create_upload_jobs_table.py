@@ -4,10 +4,17 @@ Revision ID: 20260730_0003
 Revises: 20260730_0002
 Create Date: 2026-07-30
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from migration_helpers import safe_create_index, safe_create_table, safe_drop_index, safe_drop_table
 
 
 revision: str = "20260730_0003"
@@ -24,7 +31,7 @@ def upgrade() -> None:
         op.execute("CREATE INDEX IF NOT EXISTS ix_upload_jobs_status ON upload_jobs (status)")
         op.execute("CREATE INDEX IF NOT EXISTS ix_upload_jobs_supplier_id ON upload_jobs (supplier_id)")
     else:
-        op.create_table(
+        safe_create_table(op, 
             "upload_jobs",
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("supplier_id", sa.Integer(), nullable=False),
@@ -51,13 +58,13 @@ def upgrade() -> None:
             sa.ForeignKeyConstraint(["supplier_id"], ["users.id"], name="fk_upload_jobs_supplier_id"),
             sa.PrimaryKeyConstraint("id"),
         )
-        op.create_index("ix_upload_jobs_id", "upload_jobs", ["id"], unique=False)
-        op.create_index("ix_upload_jobs_status", "upload_jobs", ["status"], unique=False)
-        op.create_index("ix_upload_jobs_supplier_id", "upload_jobs", ["supplier_id"], unique=False)
+        safe_create_index(op, "ix_upload_jobs_id", "upload_jobs", ["id"], unique=False)
+        safe_create_index(op, "ix_upload_jobs_status", "upload_jobs", ["status"], unique=False)
+        safe_create_index(op, "ix_upload_jobs_supplier_id", "upload_jobs", ["supplier_id"], unique=False)
 
 
 def downgrade() -> None:
-    op.drop_index("ix_upload_jobs_supplier_id", table_name="upload_jobs")
-    op.drop_index("ix_upload_jobs_status", table_name="upload_jobs")
-    op.drop_index("ix_upload_jobs_id", table_name="upload_jobs")
-    op.drop_table("upload_jobs")
+    safe_drop_index(op, "ix_upload_jobs_supplier_id", table_name="upload_jobs")
+    safe_drop_index(op, "ix_upload_jobs_status", table_name="upload_jobs")
+    safe_drop_index(op, "ix_upload_jobs_id", table_name="upload_jobs")
+    safe_drop_table(op, "upload_jobs")

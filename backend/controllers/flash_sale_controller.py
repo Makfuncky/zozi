@@ -7,12 +7,19 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from controllers.audit_controller import audit_log, AuditAction
+from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from controllers.products_controller import _bump_product_cache_version
+from services.catalog.product_utils import _bump_product_cache_version
 from models import FlashSale
 from db.schemas import FlashSaleCreate, FlashSaleOut
 from utils.datetime_utils import utcnow as _utcnow
+from services.write_helpers import (
+    add_and_flush,
+    commit_and_refresh,
+    commit_only,
+    delete_only,
+)
+
 
 _FLASH_SALE_CACHE_TTL = 45
 
@@ -88,9 +95,8 @@ def create_flash_sale(body: FlashSaleCreate, current_admin: dict, db: Session) -
         is_active=body.is_active,
         product_ids=json.dumps(body.product_ids) if body.product_ids is not None else None,
     )
-    db.add(sale)
-    db.commit()
-    db.refresh(sale)
+    add_and_flush(db, sale)
+    commit_and_refresh(db, sale)
     audit_log(
         db,
         action=AuditAction.FLASH_SALE_CREATED,
@@ -123,8 +129,7 @@ def update_flash_sale(sale_id: int, body: FlashSaleCreate, current_admin: dict, 
     setattr(sale, "ends_at", body.ends_at)
     setattr(sale, "is_active", body.is_active)
     setattr(sale, "product_ids", json.dumps(body.product_ids) if body.product_ids is not None else None)
-    db.commit()
-    db.refresh(sale)
+    commit_and_refresh(db, sale)
     audit_log(
         db,
         action=AuditAction.FLASH_SALE_UPDATED,
@@ -146,8 +151,8 @@ def delete_flash_sale(sale_id: int, current_admin: dict, db: Session) -> dict:
     if not sale:
         raise HTTPException(status_code=404, detail="Flash sale not found")
     sale_title = sale.title
-    db.delete(sale)
-    db.commit()
+    delete_only(db, sale)
+    commit_only(db)
     audit_log(
         db,
         action=AuditAction.FLASH_SALE_DELETED,
@@ -161,4 +166,5 @@ def delete_flash_sale(sale_id: int, current_admin: dict, db: Session) -> dict:
     bump_cache_version("flash-sales")
     _bump_product_cache_version()
     return {"detail": "Flash sale deleted"}
+
 

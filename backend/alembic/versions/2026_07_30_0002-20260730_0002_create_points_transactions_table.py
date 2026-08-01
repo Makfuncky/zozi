@@ -4,10 +4,17 @@ Revision ID: 20260730_0002
 Revises: 20260730_0001
 Create Date: 2026-07-30
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from migration_helpers import safe_create_index, safe_create_table, safe_drop_index, safe_drop_table
 
 
 revision: str = "20260730_0002"
@@ -24,7 +31,7 @@ def upgrade() -> None:
         op.execute("CREATE INDEX IF NOT EXISTS ix_points_transactions_user_id ON points_transactions (user_id)")
         op.execute("CREATE INDEX IF NOT EXISTS ix_points_transactions_order_id ON points_transactions (order_id)")
     else:
-        op.create_table(
+        safe_create_table(op, 
             "points_transactions",
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("user_id", sa.Integer(), nullable=False),
@@ -40,13 +47,13 @@ def upgrade() -> None:
             sa.ForeignKeyConstraint(["user_id"], ["users.id"], name="fk_points_transactions_user_id"),
             sa.PrimaryKeyConstraint("id"),
         )
-        op.create_index("ix_points_transactions_id", "points_transactions", ["id"], unique=False)
-        op.create_index("ix_points_transactions_order_id", "points_transactions", ["order_id"], unique=False)
-        op.create_index("ix_points_transactions_user_id", "points_transactions", ["user_id"], unique=False)
+        safe_create_index(op, "ix_points_transactions_id", "points_transactions", ["id"], unique=False)
+        safe_create_index(op, "ix_points_transactions_order_id", "points_transactions", ["order_id"], unique=False)
+        safe_create_index(op, "ix_points_transactions_user_id", "points_transactions", ["user_id"], unique=False)
 
 
 def downgrade() -> None:
-    op.drop_index("ix_points_transactions_user_id", table_name="points_transactions")
-    op.drop_index("ix_points_transactions_order_id", table_name="points_transactions")
-    op.drop_index("ix_points_transactions_id", table_name="points_transactions")
-    op.drop_table("points_transactions")
+    safe_drop_index(op, "ix_points_transactions_user_id", table_name="points_transactions")
+    safe_drop_index(op, "ix_points_transactions_order_id", table_name="points_transactions")
+    safe_drop_index(op, "ix_points_transactions_id", table_name="points_transactions")
+    safe_drop_table(op, "points_transactions")

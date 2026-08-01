@@ -21,7 +21,12 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(autouse=True)
 def _setup_db():
-    """Create tables before each test and drop after."""
+    """Create tables before each test and drop after.
+    
+    NOTE: This uses Base.metadata.create_all() which is intentional for test
+    isolation. Tests are only run in APP_ENV=test or development environments.
+    Production deployments use Alembic migrations only.
+    """
     from models import Base
     Base.metadata.create_all(bind=engine)
     yield

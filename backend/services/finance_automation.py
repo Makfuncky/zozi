@@ -26,7 +26,7 @@ from models import (
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
 from utils.money import round_money
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit_log import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 

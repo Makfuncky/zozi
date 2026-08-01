@@ -30,7 +30,7 @@ class Settings:
         "env": "development",
         "app_env": os.getenv("APP_ENV", "development"),
         "runtime_profile": os.getenv("RUNTIME_PROFILE", "standard"),
-        "secret_key": os.getenv("SECRET_KEY", ""),
+        "secret_key": os.getenv("SECRET_KEY", "") or ("alembic-dev-key" if os.environ.get("ALEMBIC_MODE") == "true" else ""),
         "algorithm": "HS256",
         "jwt_algorithm": "HS256",
         "access_token_expire_minutes": 60,
@@ -201,10 +201,14 @@ class Settings:
         app_env = str(self._resolve("app_env")).strip().lower()
         secret_key = str(self._resolve("secret_key") or "").strip()
         if not secret_key:
-            raise ValueError(
-                "SECRET_KEY must be set to a strong random value. "
-                "Every restart with an ephemeral key invalidates all existing JWT tokens."
-            )
+            # Allow empty for alembic migration commands when ALEMBIC_MODE is set
+            if os.environ.get('ALEMBIC_MODE') == 'true':
+                secret_key = 'alembic-dev-key'
+            else:
+                raise ValueError(
+                    "SECRET_KEY must be set to a strong random value. "
+                    "Every restart with an ephemeral key invalidates all existing JWT tokens."
+                )
 
         cookie_secure = self._resolve("cookie_secure")
         refresh_cookie_samesite = str(self._resolve("refresh_cookie_samesite") or "lax").lower()

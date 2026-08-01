@@ -2,4 +2,4 @@
 
 All business logic lives in controllers.governance.package.
 """
-from controllers.governance import *  # noqa: F401, F403
+from routers.governance import *  # noqa: F401, F403

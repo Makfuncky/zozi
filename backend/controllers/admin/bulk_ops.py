@@ -11,8 +11,9 @@ from models import (
     SupplierProfile, LogisticsPartner, CountryConfig, Payout, Shipment,
     Invoice, SupportTicket, ReturnRequest, SupplierDocument, Review
 )
-from controllers.admin.misc import archive_entity
+from services.admin.admin_operations import archive_entity
 
+from services.write_helpers import commit_only
 
 def bulk_archive_entities(
     model_name: str,
@@ -77,7 +78,7 @@ def bulk_category_change(
             product.category_id = category_id
             product.category = category.name
             updated += 1
-    db.commit()
+    commit_only(db)
     audit_log(
         db=db,
         action=AuditAction.PRODUCT_UPDATE,

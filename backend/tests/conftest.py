@@ -84,17 +84,46 @@ def _patch_fk_schemas():
                         if tbl_name in table_schemas:
                             schema = table_schemas[tbl_name]
                             if schema:
-                                fk._colspec = f"{schema}.{target}"
-                                fk._column_tokens = None
+                                fk._colspec = f"{schema}.{tbl_name}.{col_name}"
+                                if hasattr(fk, '_column_tokens'):
+                                    del fk._column_tokens
+                    elif len(parts) == 3:
+                        schema, tbl_name, col_name = parts
+                        if tbl_name in table_schemas:
+                            expected_schema = table_schemas[tbl_name]
+                            if expected_schema and expected_schema != schema:
+                                fk._colspec = f"{expected_schema}.{tbl_name}.{col_name}"
+                                if hasattr(fk, '_column_tokens'):
+                                    del fk._column_tokens
 
 _patch_fk_schemas()
+
+_SCHEMA_TRANSLATE_MAP = {
+    "core": None,
+    "commerce": None,
+    "supplier": None,
+    "customer": None,
+    "logistics": None,
+    "finance": None,
+    "treasury": None,
+    "hr": None,
+    "country": None,
+    "media": None,
+    "ai": None,
+    "communication": None,
+    "audit": None,
+    "security": None,
+    "analytics": None,
+    "configuration": None,
+    "trading": None,
+}
 
 _legacy_engine = None
 
 def _get_legacy_engine():
     global _legacy_engine
     if _legacy_engine is None:
-        _legacy_engine = create_engine("sqlite://", echo=False)
+        _legacy_engine = create_engine("sqlite://", echo=False, execution_options={"schema_translate_map": _SCHEMA_TRANSLATE_MAP})
         _legacy_engine.execution_options(isolation_level="AUTOCOMMIT")
         models.Base.metadata.create_all(bind=_legacy_engine)
     return _legacy_engine
@@ -119,6 +148,7 @@ def engine(db_file: str):
         "security": None,
         "analytics": None,
         "configuration": None,
+        "trading": None,
     }
     eng = create_engine(
         f"sqlite:///{db_file}",
@@ -144,6 +174,7 @@ def _TestSession():
 # before create_all() runs. Import order matters for foreign-key tables.
 import models  # noqa: E402
 import models.user  # noqa: E402
+import models.upload_job  # noqa: E402
 import models.products  # noqa: E402
 import models.orders  # noqa: E402
 import models.payments  # noqa: E402
@@ -294,12 +325,21 @@ _GAP_DDL: dict[str, str] = {
     "journal_entries": """
         CREATE TABLE IF NOT EXISTS journal_entries (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            entry_date DATE NOT NULL,
+            entry_date TIMESTAMP NOT NULL,
+            reference_number VARCHAR(50) NOT NULL UNIQUE,
             description TEXT,
-            reference TEXT,
-            total_debit REAL NOT NULL,
-            total_credit REAL NOT NULL,
-            status TEXT DEFAULT 'posted',
+            source VARCHAR(50),
+            country_code VARCHAR(10),
+            currency VARCHAR(3) DEFAULT 'OMR',
+            is_reconciled BOOLEAN DEFAULT 0,
+            created_by INTEGER,
+            reference_type VARCHAR(50),
+            reference_id INTEGER,
+            period_id INTEGER,
+            reversal_of_id INTEGER,
+            is_deleted BOOLEAN DEFAULT 0,
+            deleted_at TIMESTAMP,
+            deleted_by INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """,
@@ -447,6 +487,20 @@ def _seed_default_accounts(engine):
             ).first()
             if not existing:
                 session.add(CountryConfig(**c))
+        session.flush()
+
+        # ── Step 2a: seed WELCOME10 coupon for coupon validation tests ──
+        from models import Coupon as _Coupon
+        existing_coupon = session.query(_Coupon).filter(_Coupon.code == "WELCOME10").first()
+        if not existing_coupon:
+            session.add(_Coupon(
+                code="WELCOME10",
+                title="Welcome Discount",
+                discount_type="percentage",
+                discount_value=10,
+                minimum_order=10,
+                is_active=True,
+            ))
         session.flush()
 
         # ── Step 2: seed demo user accounts ──

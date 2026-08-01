@@ -14,8 +14,9 @@ from utils.auth import require_permission
 from utils.audit import audit_log, AuditAction
 from utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 from utils.order_tracking import reconcile_order_status, order_status_label
-from controllers.payments_controller import apply_order_status_change
+from services.orders import apply_order_status_change
 
+from services.write_helpers import add_and_flush, commit_only, rollback_only
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
     return {
@@ -64,7 +65,7 @@ def bulk_update_order_status_admin(
         updated.append({"id": oid, "old_status": old_status, "new_status": status})
 
     if updated:
-        db.commit()
+        commit_only(db)
         audit_log(
             db=db,
             action=AuditAction.ORDER_STATUS_CHANGED,
@@ -115,7 +116,7 @@ def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Sessio
             )
 
     if deleted:
-        db.commit()
+        commit_only(db)
         audit_log(
             db=db,
             action=AuditAction.ORDER_DELETE,
@@ -128,7 +129,7 @@ def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Sessio
             status="success",
         )
     else:
-        db.rollback()
+        rollback_only(db)
     return {
         "deleted": len(deleted),
         "skipped": len(skipped),
@@ -149,9 +150,9 @@ def delete_order_admin(order_id: int, acting_user: dict, db: Session) -> dict:
 
     try:
         deleted_order = _delete_order_records(order, db)
-        db.commit()
+        commit_only(db)
     except IntegrityError:
-        db.rollback()
+        rollback_only(db)
         logger.warning("admin order delete blocked by remaining related records", extra={"order_id": order_id})
         raise HTTPException(
             status_code=409,
@@ -373,7 +374,7 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
         )
 
     apply_order_status_change(order, status, db)
-    db.commit()
+    commit_only(db)
     try:
         from services.transactional_email_service import enqueue_order_status_email
 
@@ -416,7 +417,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
     if order_status not in allowed_statuses:
         raise HTTPException(status_code=409, detail=f"Cannot refund order in '{order_status}' status")
 
-    from controllers.payments_controller import _apply_stripe_runtime_key
+    from services.finance import _apply_stripe_runtime_key
 
     stripe.api_key = _apply_stripe_runtime_key(db) or os.getenv("STRIPE_SECRET_KEY", "")
     if not stripe.api_key:
@@ -438,8 +439,8 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
             )
         except Exception:
             logger.exception("Failed to log refund bank transaction for order %s", order.id)
-        db.add(
-            Notification(
+        add_and_flush(db, 
+   Notification(
                 user_id=order.user_id,
                 type="order_update",
                 title="Refund Issued",
@@ -447,7 +448,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
                 link=f"/orders/{order.id}",
             )
         )
-        db.commit()
+        commit_only(db)
         try:
             from services.transactional_email_service import enqueue_refund_processed_email
 
@@ -488,8 +489,8 @@ def update_order_tracking(order_id: int, tracking_number: str, acting_user: dict
 
     setattr(order, "tracking_number", tracking_number)
     setattr(order, "status", "shipped")
-    db.add(
-        Notification(
+    add_and_flush(db, 
+   Notification(
             user_id=order.user_id,
             type="order_update",
             title="Order Shipped",
@@ -497,7 +498,7 @@ def update_order_tracking(order_id: int, tracking_number: str, acting_user: dict
             link=f"/orders/{order.id}",
         )
     )
-    db.commit()
+    commit_only(db)
     audit_log(
         db=db,
         action=AuditAction.ORDER_STATUS_CHANGED,

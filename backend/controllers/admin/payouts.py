@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session, joinedload
 from models import Payout, TransactionLedger, SupplierSettlement, LogisticsSettlement, Notification
 from utils.audit import audit_log, AuditAction
 
+from services.write_helpers import add_and_flush, commit_only
 
 def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list:
     payouts = (
@@ -168,8 +169,8 @@ def verify_payout(
             if new_status != "completed"
             else f"Your payout request #{payout.id} has been completed."
         )
-        db.add(
-            Notification(
+        add_and_flush(db, 
+   Notification(
                 user_id=supplier_id,
                 type="payout",
                 title="Payout Update",
@@ -178,7 +179,7 @@ def verify_payout(
             )
         )
 
-    db.commit()
+    commit_only(db)
     audit_log(
         db=db,
         action=AuditAction.PAYOUT_PROCESSED,

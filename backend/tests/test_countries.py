@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 @pytest.mark.integration
 def test_list_countries(client):
-    resp = client.get("/countries")
+    resp = client.get("/api/v1/countries")
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
 

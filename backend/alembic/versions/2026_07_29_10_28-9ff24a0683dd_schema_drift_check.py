@@ -17,11 +17,18 @@ not implemented because batch_alter_table doesn't support DROP
 UNIQUE CONSTRAINT + CREATE UNIQUE INDEX in a single downgrade pass
 for SQLite. Full downgrade requires PostgreSQL.
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 import logging
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from migration_helpers import safe_create_index, safe_drop_index
 
 _logger = logging.getLogger("alembic")
 
@@ -50,7 +57,7 @@ def _convert_unique_index_to_constraint(conn, table: str, index_name: str, colum
     """
     if _index_exists(conn, table, index_name):
         try:
-            op.drop_index(index_name, table_name=table)
+            safe_drop_index(op, index_name, table_name=table)
         except Exception as exc:
             _logger.warning("Failed to drop index %s on %s: %s", index_name, table, exc)
             return  # Skip constraint creation if drop failed
@@ -62,7 +69,7 @@ def _convert_unique_index_to_constraint(conn, table: str, index_name: str, colum
 
 def _add_index(conn, name: str, table: str, columns: list[str]):
     if not _index_exists(conn, table, name):
-        op.create_index(name, table, columns, unique=False)
+        safe_create_index(op, name, table, columns, unique=False)
 
 
 # ── upgrade ──────────────────────────────────────────────────────────
@@ -95,7 +102,7 @@ def upgrade() -> None:
 
     # ── Drop stale index that ORM no longer defines ───────────────────
     if _index_exists(bind, "commission_ledger_entries", "ix_commission_ledger_supplier_created"):
-        op.drop_index("ix_commission_ledger_supplier_created", table_name="commission_ledger_entries")
+        safe_drop_index(op, "ix_commission_ledger_supplier_created", table_name="commission_ledger_entries")
 
     # ── Add missing indexes ──────────────────────────────────────────
     _add_index(bind, "ix_journal_entries_deleted_by", "journal_entries", ["deleted_by"])
@@ -118,7 +125,7 @@ def downgrade() -> None:
 
     # Re-add dropped index
     if not _index_exists(bind, "commission_ledger_entries", "ix_commission_ledger_supplier_created"):
-        op.create_index("ix_commission_ledger_supplier_created",
+        safe_create_index(op, "ix_commission_ledger_supplier_created",
                         "commission_ledger_entries",
                         ["supplier_id", "created_at"], unique=False)
 
@@ -128,4 +135,4 @@ def downgrade() -> None:
         ("journal_entries", "ix_journal_entries_deleted_by"),
     ]:
         if _index_exists(bind, table, name):
-            op.drop_index(name, table_name=table)
+            safe_drop_index(op, name, table_name=table)

@@ -67,6 +67,7 @@ from utils.config import settings
 from utils.datetime_utils import utcnow as _utcnow
 from utils.money import round_money, to_decimal
 from services import commission_engine as _commission_engine
+from services.bank_transaction_service import log_bank_transaction  # noqa: F401 — re-export (moved here to break DG2 cycle)
 
 logger = logging.getLogger(__name__)
 
@@ -845,48 +846,6 @@ def create_settlements_on_delivery(order: Order, db: Session) -> None:
 
 
 # ── Automated Bank Transaction logging ────────────────────────────────────────
-
-def log_bank_transaction(
-    source: str,
-    transaction_type: str,
-    category: str,
-    amount: Decimal,
-    db: Session,
-    currency: str = "OMR",
-    order_id: Optional[int] = None,
-    supplier_id: Optional[int] = None,
-    logistics_id: Optional[int] = None,
-    payout_id: Optional[int] = None,
-    refund_id: Optional[int] = None,
-    description: Optional[str] = None,
-    transaction_ref: Optional[str] = None,
-    transaction_date: Optional[datetime] = None,
-    country_code: Optional[str] = None,
-) -> BankTransaction:
-    """Log a bank transaction for reconciliation tracking."""
-    if not transaction_ref:
-        transaction_ref = f"ZOZI-{uuid.uuid4().hex[:12].upper()}"
-
-    txn = BankTransaction(
-        transaction_ref=transaction_ref,
-        source=source,
-        transaction_type=transaction_type,
-        category=category,
-        amount=round_money(amount),
-        currency=currency,
-        linked_order_id=order_id,
-        linked_supplier_id=supplier_id,
-        linked_logistics_id=logistics_id,
-        linked_payout_id=payout_id,
-        linked_refund_id=refund_id,
-        description=description,
-        reconciled=False,
-        transaction_date=transaction_date or _utcnow(),
-        country_code=country_code,
-    )
-    db.add(txn)
-    db.flush()
-    return txn
 
 
 def log_card_payment_received(order: Order, db: Session) -> BankTransaction:
@@ -2004,8 +1963,10 @@ def run_scheduled_finance_cycle(db: Session) -> dict:
     analytics_refresh: dict[str, Any] = {"refreshed": 0, "keys": []}
     retention: dict[str, Any] = {"targets": []}
 
-    from controllers.supplier_controller import run_badge_recalculation_cycle
-    from controllers.admin_controller import refresh_admin_analytics_snapshots
+    # Import from the service layer (canonical implementations) to avoid the
+    # services -> controllers forbidden dependency edge (DG violation).
+    from services.supplier_badge_service import run_badge_recalculation_cycle
+    from services.admin_analytics_service import refresh_admin_analytics_snapshots
     from services.retention_service import run_operational_retention_cycle
 
     badge_recalculation = run_badge_recalculation_cycle(db)

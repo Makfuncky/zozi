@@ -389,7 +389,7 @@ def record_badge_billing_payment(
 
     paid_at = utcnow()
     if _round_badge_amount(record.amount) > 0 and not record.bank_transaction_id:
-        from services.cash_management_service import log_bank_transaction
+        from services.bank_transaction_service import log_bank_transaction
 
         txn = log_bank_transaction(
             source="badge_billing",

@@ -7,8 +7,15 @@ Create Date: 2026-07-28
 Replaces raw SQL migration in db/migrations/new_tables.py.
 All tables are now managed by Alembic with proper downgrade support.
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from alembic import op
 import sqlalchemy as sa
+from migration_helpers import safe_create_index, safe_create_table, safe_drop_table
 
 revision = "20260728_0000"
 down_revision = "20260727_0908"
@@ -17,7 +24,7 @@ depends_on = None
 
 
 def upgrade():
-    op.create_table(
+    safe_create_table(op, 
         "employee_active_tasks",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("employee_id", sa.Integer, sa.ForeignKey("employees.id", ondelete="CASCADE"), nullable=False),
@@ -30,9 +37,9 @@ def upgrade():
         sa.Column("status", sa.String(20), nullable=True, server_default="active"),
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
-    op.create_index("idx_active_tasks_employee", "employee_active_tasks", ["employee_id"])
+    safe_create_index(op, "idx_active_tasks_employee", "employee_active_tasks", ["employee_id"])
 
-    op.create_table(
+    safe_create_table(op, 
         "employee_risk_scores",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("employee_id", sa.Integer, sa.ForeignKey("employees.id", ondelete="CASCADE"), nullable=False),
@@ -41,9 +48,9 @@ def upgrade():
         sa.Column("recorded_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
         sa.UniqueConstraint("employee_id", "metric_name", name="uq_risk_scores_employee_metric"),
     )
-    op.create_index("idx_risk_scores_employee", "employee_risk_scores", ["employee_id"])
+    safe_create_index(op, "idx_risk_scores_employee", "employee_risk_scores", ["employee_id"])
 
-    op.create_table(
+    safe_create_table(op, 
         "employee_audit_timeline",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("employee_id", sa.Integer, sa.ForeignKey("employees.id", ondelete="CASCADE"), nullable=False),
@@ -54,10 +61,10 @@ def upgrade():
         sa.Column("user_agent", sa.Text, nullable=True),
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
-    op.create_index("idx_audit_timeline_employee", "employee_audit_timeline", ["employee_id"])
-    op.create_index("idx_audit_timeline_created", "employee_audit_timeline", ["created_at"])
+    safe_create_index(op, "idx_audit_timeline_employee", "employee_audit_timeline", ["employee_id"])
+    safe_create_index(op, "idx_audit_timeline_created", "employee_audit_timeline", ["created_at"])
 
-    op.create_table(
+    safe_create_table(op, 
         "video_rooms",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("room_id", sa.String(100), unique=True, nullable=False),
@@ -69,10 +76,10 @@ def upgrade():
         sa.Column("settings", sa.Text, nullable=True),
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
-    op.create_index("ix_video_rooms_status", "video_rooms", ["status"])
-    op.create_index("ix_video_rooms_created", "video_rooms", ["created_at"])
+    safe_create_index(op, "ix_video_rooms_status", "video_rooms", ["status"])
+    safe_create_index(op, "ix_video_rooms_created", "video_rooms", ["created_at"])
 
-    op.create_table(
+    safe_create_table(op, 
         "chat_threads",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("thread_id", sa.String(100), unique=True, nullable=False),
@@ -83,9 +90,9 @@ def upgrade():
         sa.Column("is_direct", sa.Boolean, nullable=True, server_default="0"),
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
-    op.create_index("idx_chat_threads_entity", "chat_threads", ["entity_type", "entity_id"])
+    safe_create_index(op, "idx_chat_threads_entity", "chat_threads", ["entity_type", "entity_id"])
 
-    op.create_table(
+    safe_create_table(op, 
         "masked_messages",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("sender_id", sa.Integer, sa.ForeignKey("employees.id"), nullable=True),
@@ -95,7 +102,7 @@ def upgrade():
         sa.Column("sent_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         "incident_rooms",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("room_id", sa.String(100), unique=True, nullable=False),
@@ -105,7 +112,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         "training_modules",
         sa.Column("module_id", sa.String(100), primary_key=True),
         sa.Column("title", sa.String(200), nullable=False),
@@ -117,7 +124,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         "employee_trainings",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("employee_id", sa.Integer, sa.ForeignKey("employees.id", ondelete="CASCADE"), nullable=False),
@@ -129,7 +136,7 @@ def upgrade():
         sa.UniqueConstraint("employee_id", "module_id", name="uq_employee_training"),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         "country_blackout_dates",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(10), nullable=False),
@@ -140,7 +147,7 @@ def upgrade():
         sa.UniqueConstraint("country_code", "date", name="uq_blackout_date"),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         "shift_rosters",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("employee_id", sa.Integer, sa.ForeignKey("employees.id", ondelete="CASCADE"), nullable=False),
@@ -152,9 +159,9 @@ def upgrade():
         sa.Column("created_at", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
         sa.UniqueConstraint("employee_id", "shift_date", name="uq_shift_roster"),
     )
-    op.create_index("idx_shift_roster_date", "shift_rosters", ["shift_date"])
+    safe_create_index(op, "idx_shift_roster_date", "shift_rosters", ["shift_date"])
 
-    op.create_table(
+    safe_create_table(op, 
         "treasury_ledger",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("account_id", sa.Integer, sa.ForeignKey("treasury_accounts.id"), nullable=True),
@@ -165,7 +172,7 @@ def upgrade():
         sa.Column("entry_date", sa.DateTime, nullable=True, server_default=sa.func.current_timestamp()),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         "treasury_accounts",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("employee_id", sa.Integer, sa.ForeignKey("employees.id"), nullable=True),
@@ -180,16 +187,16 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table("treasury_accounts")
-    op.drop_table("treasury_ledger")
-    op.drop_table("shift_rosters")
-    op.drop_table("country_blackout_dates")
-    op.drop_table("employee_trainings")
-    op.drop_table("training_modules")
-    op.drop_table("incident_rooms")
-    op.drop_table("masked_messages")
-    op.drop_table("chat_threads")
-    op.drop_table("video_rooms")
-    op.drop_table("employee_audit_timeline")
-    op.drop_table("employee_risk_scores")
-    op.drop_table("employee_active_tasks")
+    safe_drop_table(op, "treasury_accounts")
+    safe_drop_table(op, "treasury_ledger")
+    safe_drop_table(op, "shift_rosters")
+    safe_drop_table(op, "country_blackout_dates")
+    safe_drop_table(op, "employee_trainings")
+    safe_drop_table(op, "training_modules")
+    safe_drop_table(op, "incident_rooms")
+    safe_drop_table(op, "masked_messages")
+    safe_drop_table(op, "chat_threads")
+    safe_drop_table(op, "video_rooms")
+    safe_drop_table(op, "employee_audit_timeline")
+    safe_drop_table(op, "employee_risk_scores")
+    safe_drop_table(op, "employee_active_tasks")

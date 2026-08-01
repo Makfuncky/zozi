@@ -84,6 +84,7 @@ import datetime
 import json
 import re
 import sys
+import os
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -94,143 +95,36 @@ from typing import Any, Iterable
 # 1. DEFAULT EMBEDDED RULES
 # ============================================================================
 
-DEFAULT_IGNORE_DIRS = {
-    ".git",
-    "node_modules",
-    ".venv",
-    "venv",
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".tox",
-    "htmlcov",
-    ".next",
-    ".expo",
-    ".kotlin",
-    "gradle",
-    "android",
-    "ios",
-    ".idea",
-    ".vscode",
-    "test-results",
-    ".playwright-artifacts-0",
-    "playwright-out",
-    "static-tmp",
-    ".web-build-test",
-    "artifacts",
-    "uploads",
-    ".turbo",
-    "dist",
-    "build",
-    "coverage",
-    "playwright-report",
-    "test-output",
-    "tmp",
-}
+_ACTIVE_EFF = None
+_ACTIVE_REG = None
 
-DEFAULT_CACHE_DIR_NAMES = {
-    ".ruff_cache",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".next",
-    ".expo",
-    "dist",
-    "build",
-    "coverage",
-    "htmlcov",
-    ".turbo",
-    "web-dist",
-    ".playwright-artifacts-0",
-    "test-results",
-    "playwright-report",
-    "test-output",
-}
+DEFAULT_IGNORE_DIRS = {".git","node_modules",".venv","venv","__pycache__",".mypy_cache",".pytest_cache",".ruff_cache",".tox",
+                       "htmlcov",".next",".expo",".kotlin","gradle","android","ios",".idea",".vscode","test-results",".playwright-artifacts-0",
+                       "playwright-out","static-tmp",".web-build-test","artifacts","uploads",".turbo","dist","build","coverage",
+                       "playwright-report","test-output","tmp",
+                       }
 
-DEFAULT_TEXT_EXT = {
-    ".py",
-    ".js",
-    ".ts",
-    ".tsx",
-    ".jsx",
-    ".json",
-    ".yml",
-    ".yaml",
-    ".md",
-    ".ini",
-    ".toml",
-    ".css",
-    ".html",
-    ".sh",
-    ".bat",
-    ".ps1",
-    ".cjs",
-    ".mjs",
-}
+DEFAULT_CACHE_DIR_NAMES = {".ruff_cache",".mypy_cache",".pytest_cache",".next",".expo","dist","build","coverage","htmlcov",".turbo","web-dist",
+                           ".playwright-artifacts-0","test-results","playwright-report","test-output",
+                        }
 
-DEFAULT_SOURCE_EXT = {
-    ".py",
-    ".js",
-    ".ts",
-    ".tsx",
-    ".jsx",
-    ".sh",
-    ".bat",
-    ".ps1",
-}
+DEFAULT_TEXT_EXT = {".py",".js",".ts",".tsx",".jsx",".json",".yml",".yaml",".md",".ini",".toml",".css",".html",".sh",".bat",".ps1",".cjs",".mjs",
+                    }
 
-DEFAULT_FRONTEND_SOURCE_EXT = {
-    ".ts",
-    ".tsx",
-    ".js",
-    ".jsx",
-    ".cjs",
-    ".mjs",
-}
+DEFAULT_SOURCE_EXT = {".py",".js",".ts",".tsx",".jsx",".sh",".bat",".ps1",}
+
+DEFAULT_FRONTEND_SOURCE_EXT = {".ts",".tsx",".js",".jsx",".cjs",".mjs",}
 
 DEFAULT_MAX_READ_BYTES = 2_000_000
 
-DEFAULT_SCRATCH_PHRASES = [
-    "countdivs",
-    "stackdivs",
-    "printlines",
-    "linenums",
-    "fixtailwind",
-    "patch-vars",
-    "patch_vars",
-    "verify-tmp",
-    "verify_tmp",
-    "impmain",
-    "client_tmp",
-    "reset_tmp",
-]
+DEFAULT_SCRATCH_PHRASES = ["countdivs","stackdivs","printlines","linenums","fixtailwind","patch-vars","patch_vars","verify-tmp",
+                           "verify_tmp","impmain","client_tmp","reset_tmp",
+                        ]
 
-DEFAULT_SCRATCH_TOKENS = [
-    "tmp",
-    "temp",
-    "scratch",
-    "debug",
-    "test",
-    "check",
-    "write",
-    "list",
-    "reset",
-    "verify",
-    "run",
-    "script",
-    "probe",
-    "diag",
-    "inspect",
-]
+DEFAULT_SCRATCH_TOKENS = ["tmp","temp","scratch","debug","test","check","write","list","reset","verify","run","script","probe","diag","inspect",
+                        ]
 
-DEFAULT_SCRIPTS_SAFE_TOKENS = {
-    "tmp",
-    "temp",
-    "scratch",
-    "debug",
-    "diag",
-    "inspect",
-}
+DEFAULT_SCRIPTS_SAFE_TOKENS = {"tmp","temp","scratch","debug","diag","inspect",}
 
 DEFAULT_BACKEND_ROOT_ALLOW = {
     "__init__.py",
@@ -265,10 +159,11 @@ DEFAULT_ALLOW_DOCS_ROOT = {
 DEFAULT_DOC_EXT = {".md", ".txt", ".rst", ".adoc", ".pdf"}
 
 DEFAULT_FORBIDDEN_ROOT = {
-    "backend": [
-        r".*\.(log|db|db-shm|db-wal)$",
-        r"^token\.tmp$",
-        r"^.*\.(json|txt)$",
+"backend": [
+    r".*\.(log|db|db-shm|db-wal)$",
+    r"^token\.tmp$",
+    r"^.*\.json$",
+    r"^(?!requirements\.txt$).*\.txt$",
     ],
     "backend/alembic": [
         r"^_.*\.py$",
@@ -367,12 +262,9 @@ DEFAULT_MIS_HOUSED_CONTROLLERS = [
 ]
 
 DEFAULT_WRITE_VERBS = {
-    "add",
-    "commit",
-    "delete",
-    "merge",
-    "flush",
-    "refresh",
+    "add", "commit", "delete", "merge", "flush", "refresh",
+    "execute", "bulk_insert_mappings", "bulk_save_objects",
+    "begin", "rollback", "savepoint",
 }
 
 DEFAULT_READ_VERBS = {
@@ -559,34 +451,11 @@ DEFAULT_FRONTEND_WORKSPACES = {
     "shared",
 }
 
-DEFAULT_FRONTEND_ROOT_ALLOW = {
-    "package.json",
-    "package-lock.json",
-    "pnpm-lock.yaml",
-    "yarn.lock",
-    "pnpm-workspace.yaml",
-    "tsconfig.json",
-    "tsconfig.build.json",
-    "next.config.ts",
-    "next-env.d.ts",
-    "middleware.ts",
-    "eslint.config.js",
-    "jest.config.js",
-    "jest.setup.ts",
-    "playwright.config.ts",
-    "postcss.config.js",
-    "tailwind.config.js",
-    "babel.config.js",
-    "metro.config.js",
-    "app.config.js",
-    "app.json",
-    "expo-env.d.ts",
-    "README.md",
-    "ERROR_HANDLING.md",
-    "Dockerfile",
-    "sentry.config.ts",
-    "patch-logbox.js",
-}
+DEFAULT_FRONTEND_ROOT_ALLOW = {"package.json","package-lock.json","pnpm-lock.yaml","yarn.lock","pnpm-workspace.yaml","tsconfig.json",
+                               "tsconfig.build.json","next.config.ts","next-env.d.ts","middleware.ts","eslint.config.js","jest.config.js","jest.setup.ts",
+                               "playwright.config.ts","postcss.config.js","tailwind.config.js","babel.config.js","metro.config.js","app.config.js",
+                               "app.json","expo-env.d.ts","README.md","ERROR_HANDLING.md","Dockerfile","sentry.config.ts","patch-logbox.js",
+                                }
 
 DEFAULT_FLAT_THRESHOLD = 30
 DEFAULT_LARGE_SUBPACKAGE_THRESHOLD = 80
@@ -597,78 +466,708 @@ DEFAULT_MAX_CYCLE_LENGTH = 10
 DEFAULT_FRONTEND_FLAT_THRESHOLD = 40
 DEFAULT_FRONTEND_LARGE_FOLDER_THRESHOLD = 120
 
-FEATURE_STOP_NAMES = {
-    "__init__",
-    "index",
-    "page",
-    "layout",
-    "loading",
-    "error",
-    "not-found",
-    "route",
-    "main",
-    "app",
-    "init",
-    "package",
-    "types",
-    "utils",
-    "helpers",
-    "shared",
-    "common",
-    "ui",
-    "admin",
-    "supplier",
-    "customer",
-    "public",
-    "webhooks",
-    "webhook",
-    "api",
-    "internal",
-    "external",
-    "src",
-    "components",
-    "features",
-    "hooks",
-    "lib",
-    "services",
-    "models",
-    "controllers",
-    "routers",
-}
+FEATURE_STOP_NAMES = {"__init__","index","page","layout","loading","error","not-found","route","main","app","init","package","types","utils",
+                      "helpers","shared","common","ui","admin","supplier","customer","public","webhooks","webhook","api","internal","external",
+                      "src","components","features","hooks","lib","services","models","controllers","routers",
+                    }
 
-FEATURE_SUFFIXES = [
-    "_service",
-    "_services",
-    "_controller",
-    "_controllers",
-    "_router",
-    "_routers",
-    "_model",
-    "_models",
-    "_provider",
-    "_providers",
-    "_event",
-    "_events",
-    "_job",
-    "_jobs",
-    "_page",
-    "_pages",
-    "_screen",
-    "_screens",
-    "_component",
-    "_components",
-    "_hook",
-    "_hooks",
-    "_store",
-    "_stores",
-    "_api",
-    "_utils",
-    "_helpers",
-    "_types",
-    "_test",
-    "_tests",
-    "_spec",
-]
+FEATURE_SUFFIXES = ["_service","_services","_controller","_controllers","_router","_routers","_model","_models","_provider","_providers",
+                    "_event","_events","_job","_jobs","_page","_pages","_screen","_screens","_component","_components","_hook","_hooks",
+                    "_store","_stores","_api","_utils","_helpers","_types","_test","_tests","_spec",
+                    ]
+
+# ============================================================================
+# v3.5 AUTO-LEARNING DOMAIN PLACEMENT ENGINE
+# ============================================================================
+
+# RULE_MEANING.update({
+#     "DOM1": "file should be moved into its detected domain sub-folder",
+#     "DOM2": "file is inside the wrong domain sub-folder",
+#     "DOM3": "domain files are scattered across surface/multiple folders",
+#     "DOM6": "new domain candidate auto-detected from code patterns",
+# })
+
+# HOTLIST_RULES.update({
+#     "DOM1",
+#     "DOM2",
+#     "DOM3",
+# })
+
+AUTO_ROUTE_PREFIX_RE = re.compile(
+    r"APIRouter\([^)]*prefix\s*=\s*['\"]([^'\"]+)['\"]",
+    re.I,
+)
+
+AUTO_ROUTE_DECOR_RE = re.compile(
+    r"@\w+\.(?:get|post|put|patch|delete|options|head|websocket)\(\s*['\"]([^'\"]+)['\"]",
+    re.I,
+)
+
+
+@dataclass
+class AutoDomainModel:
+    domains: set[str] = field(default_factory=set)
+    surfaces: set[str] = field(default_factory=set)
+    profiles: dict[str, dict[str, float]] = field(default_factory=dict)
+    candidate_domains: set[str] = field(default_factory=set)
+    token_files: dict[str, set[str]] = field(default_factory=dict)
+
+
+def _auto_stop_tokens(eff: dict) -> set[str]:
+    stop = {
+        str(x).lower()
+        for x in eff.get("feature_stop_names", FEATURE_STOP_NAMES)
+    }
+
+    stop |= {
+        str(x).lower()
+        for x in eff.get("surface_names", DEFAULT_SURFACE_NAMES)
+    }
+
+    stop |= {
+        str(x).lower()
+        for x in eff.get("placement", {}).get("stop_tokens", [])
+    }
+
+    stop.add("__init__")
+
+    return {x for x in stop if x}
+
+
+def auto_tokenize(name: str, eff: dict) -> set[str]:
+    """
+    Convert names, paths, imports, routes, and table names into meaningful tokens.
+    This contains no hardcoded business-domain knowledge.
+    """
+    if not name:
+        return set()
+
+    raw = str(name)
+    raw = raw.replace("\\", "/")
+
+    # CamelCase -> snake_case
+    raw = re.sub(r"(?<!^)(?=[A-Z])", "_", raw)
+
+    # Replace punctuation/path separators
+    raw = re.sub(r"[^A-Za-z0-9]+", "_", raw)
+
+    tokens = {
+        t.lower()
+        for t in raw.split("_")
+        if t
+    }
+
+    stop = _auto_stop_tokens(eff)
+
+    return {
+        t
+        for t in tokens
+        if t not in stop and len(t) >= 3
+    }
+
+
+def _add_auto_signals(
+    signals: dict[str, float],
+    tokens: set[str],
+    weight: float,
+) -> None:
+    for token in tokens:
+        signals[token] = signals.get(token, 0.0) + float(weight)
+
+
+def extract_auto_signals(
+    f: Path,
+    backend: Path,
+    text: str | None,
+    tree: ast.Module | None,
+    eff: dict,
+) -> dict[str, float]:
+    """
+    Extract domain signals from one Python file.
+
+    Signal sources:
+      - file name
+      - class names
+      - function names
+      - import paths
+      - route prefixes
+      - route paths
+      - ORM table names
+    """
+    signals: dict[str, float] = {}
+
+    # File name is a strong signal.
+    _add_auto_signals(signals, auto_tokenize(f.stem, eff), 6.0)
+
+    if tree is not None:
+        function_count = 0
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                _add_auto_signals(signals, auto_tokenize(node.name, eff), 3.0)
+
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if function_count < 300:
+                    _add_auto_signals(signals, auto_tokenize(node.name, eff), 1.0)
+                    function_count += 1
+
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    _add_auto_signals(
+                        signals,
+                        auto_tokenize(alias.name.replace(".", "_"), eff),
+                        4.0,
+                    )
+
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    _add_auto_signals(
+                        signals,
+                        auto_tokenize(node.module.replace(".", "_"), eff),
+                        4.0,
+                    )
+
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if (
+                        isinstance(target, ast.Name)
+                        and target.id == "__tablename__"
+                        and isinstance(node.value, ast.Constant)
+                        and isinstance(node.value.value, str)
+                    ):
+                        _add_auto_signals(
+                            signals,
+                            auto_tokenize(str(node.value.value), eff),
+                            8.0,
+                        )
+
+    if text:
+        for m in AUTO_ROUTE_PREFIX_RE.finditer(text):
+            _add_auto_signals(signals, auto_tokenize(m.group(1), eff), 5.0)
+
+        for m in AUTO_ROUTE_DECOR_RE.finditer(text):
+            _add_auto_signals(signals, auto_tokenize(m.group(1), eff), 5.0)
+
+    return signals
+
+
+def ensure_required_ignore_dirs(eff: dict) -> None:
+    """
+    Make sure editor/worktree/cache directories are always ignored,
+    even if YAML config overrides ignore_dirs.
+    """
+    required_ignore = {
+        ".git",
+        ".kilo",
+        "worktrees",
+        ".hypothesis",
+        ".repo",
+        ".vscode",
+        ".idea",
+        "node_modules",
+        "__pycache__",
+        ".venv",
+        "venv",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".tox",
+        "htmlcov",
+        ".next",
+        ".expo",
+        ".turbo",
+        "dist",
+        "build",
+        "coverage",
+        "test-results",
+        "playwright-report",
+        "playwright-out",
+        ".web-build-test",
+        "static-tmp",
+        "tmp",
+        "uploads",
+        "artifacts",
+    }
+
+    current = {
+        str(x).lower()
+        for x in eff.get("ignore_dirs", set())
+    }
+
+    eff["ignore_dirs"] = current | required_ignore
+
+def learn_domain_model(
+    repo: Path,
+    eff: dict,
+    reg: FeatureRegistry,
+) -> AutoDomainModel:
+    """
+    Learn domain profiles from the repository itself.
+
+    No hardcoded domain dictionary is used.
+
+    Domains are learned from:
+      1. Existing domain sub-folders.
+      2. FeatureRegistry domains.
+      3. Explicit YAML domains.
+      4. Repeated flat-file naming patterns.
+    """
+    model = AutoDomainModel()
+
+    backend = repo / "backend"
+    if not backend.exists():
+        return model
+
+    placement_cfg = eff.get("placement", {})
+
+    layers = set(
+        placement_cfg.get(
+            "layers",
+            {"services", "models", "providers", "events", "jobs", "controllers"},
+        )
+    )
+
+    surfaces = {
+        str(x).lower()
+        for x in eff.get("surface_names", DEFAULT_SURFACE_NAMES)
+    }
+
+    model.surfaces = surfaces
+
+    known_domains = set(reg.domains)
+    known_domains |= set(eff.get("domains", {}).keys())
+
+    stop_tokens = _auto_stop_tokens(eff)
+
+    # Learn existing domain folders.
+    for layer in layers:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            entries = list(layer_dir.iterdir())
+        except OSError:
+            continue
+
+        for p in entries:
+            if not p.is_dir():
+                continue
+
+            name = p.name.lower()
+
+            if name in eff.get("ignore_dirs", set()):
+                continue
+
+            if name in surfaces:
+                continue
+
+            if name in stop_tokens:
+                continue
+
+            known_domains.add(name)
+
+    model.domains |= known_domains
+
+    flat_entries: list[tuple[str, str, set[str], dict[str, float]]] = []
+
+    # Scan backend files.
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        if f.name == "__init__.py":
+            continue
+
+        try:
+            parts = [p.lower() for p in f.relative_to(backend).parts]
+        except ValueError:
+            continue
+
+        if not parts:
+            continue
+
+        layer = parts[0]
+
+        if layer not in layers:
+            continue
+
+        if any(x in eff.get("graph_exempt_layers", set()) for x in parts):
+            continue
+
+        text = read_text(f)
+        if not text:
+            continue
+
+        try:
+            tree = ast.parse(text)
+        except Exception:
+            tree = None
+
+        signals = extract_auto_signals(f, backend, text, tree, eff)
+
+        current_folder = parts[1] if len(parts) > 2 else None
+        rp = rel(f, repo)
+
+        # If already inside a domain folder, strengthen that domain's profile.
+        if (
+            current_folder
+            and current_folder not in surfaces
+            and current_folder not in stop_tokens
+        ):
+            profile = model.profiles.setdefault(current_folder, {})
+
+            for token, weight in signals.items():
+                profile[token] = profile.get(token, 0.0) + float(weight)
+
+            # Folder name is authoritative.
+            profile[current_folder] = profile.get(current_folder, 0.0) + 12.0
+
+            model.domains.add(current_folder)
+
+        else:
+            stem_tokens = auto_tokenize(f.stem, eff)
+            flat_entries.append((rp, layer, stem_tokens, signals))
+
+            for token in stem_tokens:
+                model.token_files.setdefault(token, set()).add(rp)
+
+    # Detect new candidate domains from repeated flat-file tokens.
+    min_candidate_files = int(placement_cfg.get("min_candidate_files", 2))
+
+    for token, paths in model.token_files.items():
+        if len(paths) < min_candidate_files:
+            continue
+
+        if token in model.domains:
+            continue
+
+        model.candidate_domains.add(token)
+        model.domains.add(token)
+
+        profile = model.profiles.setdefault(token, {})
+        profile[token] = profile.get(token, 0.0) + 10.0
+
+        # Build candidate profile from files that contain the token.
+        for rp, layer, stem_tokens, signals in flat_entries:
+            if token in stem_tokens or token in signals:
+                for t, w in signals.items():
+                    profile[t] = profile.get(t, 0.0) + float(w) * 0.35
+
+    return model
+
+
+def infer_auto_domain(
+    signals: dict[str, float],
+    model: AutoDomainModel,
+    eff: dict,
+) -> tuple[str | None, float, list[str], float]:
+    """
+    Infer the best domain for a file using learned domain profiles.
+
+    Returns:
+      domain, confidence, reasons, score
+    """
+    scores: dict[str, float] = {}
+    reasons: dict[str, list[str]] = {}
+
+    for domain, profile in model.profiles.items():
+        score = 0.0
+        matched: list[str] = []
+
+        for token, weight in signals.items():
+            if token in profile:
+                score += float(weight) * (float(profile[token]) ** 0.5)
+
+                if len(matched) < 12:
+                    matched.append(token)
+
+        if score > 0:
+            scores[domain] = score
+            reasons[domain] = matched
+
+    if not scores:
+        return None, 0.0, [], 0.0
+
+    best = max(scores.items(), key=lambda kv: kv[1])[0]
+    best_score = scores[best]
+
+    sorted_scores = sorted(scores.values(), reverse=True)
+    second_score = sorted_scores[1] if len(sorted_scores) > 1 else 0.0
+
+    min_score = float(eff.get("placement", {}).get("min_score", 6.0))
+
+    if best_score < min_score:
+        return None, 0.0, [], best_score
+
+    confidence = best_score / (best_score + second_score + 1.0)
+
+    reason_tokens = sorted(set(reasons.get(best, [])))[:6]
+
+    return best, round(confidence, 3), reason_tokens, round(best_score, 3)
+
+
+def detect_surface_from_name(stem: str, eff: dict) -> str | None:
+    low = str(stem).lower()
+
+    for surface in sorted(eff.get("surface_names", DEFAULT_SURFACE_NAMES)):
+        surface = str(surface).lower()
+
+        if low == surface or low.startswith(f"{surface}_"):
+            return surface
+
+    return None
+
+
+def analyze_domain_placement(
+    repo: Path,
+    eff: dict,
+    reg: FeatureRegistry,
+    model: AutoDomainModel,
+) -> list[dict]:
+    """
+    Produce file-by-file domain placement recommendations.
+    """
+    placements: list[dict] = []
+
+    backend = repo / "backend"
+    if not backend.exists():
+        return placements
+
+    placement_cfg = eff.get("placement", {})
+
+    if not placement_cfg.get("enabled", True):
+        return placements
+
+    layers = set(
+        placement_cfg.get(
+            "layers",
+            {"services", "models", "providers", "events", "jobs", "controllers"},
+        )
+    )
+
+    router_layer = placement_cfg.get("router_layer", "routers")
+
+    root_conf = float(placement_cfg.get("min_confidence_root_move", 0.45))
+    wrong_conf = float(placement_cfg.get("min_confidence_wrong_folder", 0.65))
+    surface_conf = float(placement_cfg.get("min_confidence_surface_to_domain", 0.60))
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        if f.name == "__init__.py":
+            continue
+
+        try:
+            parts = [p.lower() for p in f.relative_to(backend).parts]
+        except ValueError:
+            continue
+
+        if not parts:
+            continue
+
+        layer = parts[0]
+
+        if layer not in layers and layer != router_layer:
+            continue
+
+        if any(x in eff.get("graph_exempt_layers", set()) for x in parts):
+            continue
+
+        text = read_text(f)
+        if not text:
+            continue
+
+        try:
+            tree = ast.parse(text)
+        except Exception:
+            tree = None
+
+        signals = extract_auto_signals(f, backend, text, tree, eff)
+
+        domain, confidence, reasons, score = infer_auto_domain(
+            signals,
+            model,
+            eff,
+        )
+
+        current_folder = parts[1] if len(parts) > 2 else None
+        rp = rel(f, repo)
+
+        # ---------------- domain layers ----------------
+        if layer in layers:
+            if not domain:
+                continue
+
+            target_folder = domain
+
+            if current_folder is None:
+                if confidence < root_conf:
+                    continue
+                kind = "root_move"
+
+            elif current_folder == target_folder:
+                continue
+
+            elif current_folder in model.surfaces:
+                if confidence < surface_conf:
+                    continue
+                kind = "surface_to_domain"
+
+            elif current_folder in model.domains:
+                if confidence < wrong_conf:
+                    continue
+                kind = "wrong_folder"
+
+            else:
+                if confidence < wrong_conf:
+                    continue
+                kind = "wrong_folder"
+
+        # ---------------- router layer ----------------
+        else:
+            if current_folder is None:
+                if domain and confidence >= root_conf:
+                    target_folder = domain
+                    kind = "root_move"
+                else:
+                    surface = detect_surface_from_name(f.stem, eff)
+
+                    if not surface:
+                        continue
+
+                    target_folder = surface
+                    kind = "root_move"
+
+            else:
+                if (
+                    domain
+                    and current_folder != domain
+                    and current_folder in model.surfaces
+                    and confidence >= surface_conf
+                ):
+                    target_folder = domain
+                    kind = "surface_to_domain"
+
+                elif (
+                    domain
+                    and current_folder != domain
+                    and current_folder in model.domains
+                    and confidence >= wrong_conf
+                ):
+                    target_folder = domain
+                    kind = "wrong_folder"
+
+                else:
+                    continue
+
+        placements.append(
+            {
+                "path": rp,
+                "layer": layer,
+                "current_folder": current_folder,
+                "target_folder": target_folder,
+                "target_path": f"backend/{layer}/{target_folder}/{f.name}",
+                "domain": domain or target_folder,
+                "confidence": confidence,
+                "score": score,
+                "reasons": reasons,
+                "kind": kind,
+            }
+        )
+
+    return placements
+
+
+def check_domain_placement(
+    repo: Path,
+    rep: Report,
+    eff: dict,
+    model: AutoDomainModel,
+    placements: list[dict],
+) -> None:
+    """
+    Report auto-detected domain placement recommendations.
+    """
+    # Report new domain candidates.
+    reported_candidates = 0
+
+    for domain in sorted(model.candidate_domains):
+        files = sorted(model.token_files.get(domain, set()))[:8]
+
+        rep.add(
+            GRN,
+            "DOM6",
+            "backend",
+            f"backend/services|models/{domain}",
+            f"new domain candidate auto-detected: '{domain}'",
+            intended=(
+                "create backend/<layer>/" + domain + "/ and group related files; "
+                "or merge into nearest existing domain if this is not a real bounded context. "
+                "Examples: " + ", ".join(files)
+            ),
+        )
+
+        reported_candidates += 1
+
+        if reported_candidates >= 50:
+            break
+
+    # Group placement recommendations.
+    groups: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
+
+    for p in placements:
+        groups[(p["layer"], p["target_folder"], p["kind"])].append(p)
+
+    for key in sorted(groups.keys()):
+        layer, target_folder, kind = key
+        items = groups[key]
+
+        files = sorted({item["path"] for item in items})
+        first_reasons = items[0].get("reasons", [])
+
+        reason_text = ", ".join(first_reasons[:4]) if first_reasons else "name/content signals"
+
+        if kind == "root_move":
+            code = "DOM1"
+            message = (
+                f"{len(files)} file(s) detected as domain '{target_folder}' "
+                f"at backend/{layer}/ root"
+            )
+
+        elif kind == "wrong_folder":
+            code = "DOM2"
+            message = (
+                f"{len(files)} file(s) detected as domain '{target_folder}' "
+                f"but placed in wrong backend/{layer}/ sub-folder(s)"
+            )
+
+        else:
+            code = "DOM3"
+            message = (
+                f"{len(files)} file(s) detected as domain '{target_folder}' "
+                f"but grouped by surface/mixed folder in backend/{layer}/"
+            )
+
+        intended = (
+            f"mkdir -p backend/{layer}/{target_folder}; move: "
+            + ", ".join(files[:12])
+        )
+
+        if len(files) > 12:
+            intended += f" +{len(files) - 12} more"
+
+        intended += f" (detected from {reason_text})"
+
+        rep.add(
+            YEL,
+            code,
+            layer,
+            f"backend/{layer}/",
+            message,
+            intended=intended,
+        )
 
 
 # ============================================================================
@@ -818,6 +1317,15 @@ RULE_MEANING = {
     "I3": "architecture metric summary",
     "T1": "architecture trend delta",
 }
+
+# ============================================================================
+# ACTIVE CONFIGURATION GLOBALS
+# Used to avoid passing eff/reg into every legacy helper.
+# ============================================================================
+
+_ACTIVE_EFF: dict | None = None
+_ACTIVE_REG: FeatureRegistry | None = None
+
 
 # ============================================================================
 # v3.4 SELF-CONTAINED ENHANCEMENTS
@@ -1677,7 +2185,7 @@ def check_enhanced_gitignore_generated(repo: Path, rep: Report, eff: dict) -> No
     missing = [
         item
         for item in (
-            "REPO_LAYOUT_AUDIT_REPORT.md",
+            "ARCHITECTURE_AUDIT_REPORT.md",
             "out/",
             ".governance/architecture_trend.json",
             ".governance/zozi_auto_policy.json",
@@ -1765,6 +2273,7 @@ class Finding:
 class Report:
     findings: list[Finding] = field(default_factory=list)
     counters: dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    _seen: set[tuple] = field(default_factory=set)
 
     def add(
         self,
@@ -1776,6 +2285,13 @@ class Report:
         intended: str = "",
         line: int | None = None,
     ) -> None:
+        key = (code, path, line, message)
+
+        if key in self._seen:
+            return
+
+        self._seen.add(key)
+
         self.findings.append(
             Finding(
                 sev=sev,
@@ -1787,6 +2303,7 @@ class Report:
                 line=line,
             )
         )
+
         self.counters[code] += 1
 
 
@@ -1846,6 +2363,9 @@ class FeatureRegistry:
             "features": features,
         }
 
+
+
+
 # ============================================================================
 # v3.5 MOVE SUGGESTION ENGINE
 # Adds concrete file-by-file relocation suggestions.
@@ -1869,123 +2389,99 @@ HOTLIST_RULES.update({
 # This is intentionally self-contained and does not require YAML.
 MOVE_DOMAIN_KEYWORDS = {
     "finance": {
-        "finance",
-        "ledger",
-        "sub_ledger",
-        "tax",
-        "invoice",
-        "commission",
-        "payout",
-        "payouts",
-        "payment",
-        "payments",
-        "cash",
-        "accounting",
-        "billing",
+        "finance", "financial", "ledger", "sub_ledger", "general_ledger",
+        "journal", "invoice", "invoices", "tax", "vat", "commission",
+        "billing", "accounting", "refund_posting", "posting",
+        "period_close", "credit_control", "ap", "ar",
+        "payments", "payment",
     },
     "treasury": {
-        "treasury",
-        "cash",
-        "payout",
-        "payouts",
-        "settlement",
-        "settlements",
+        "treasury", "cash", "bank", "payout", "payouts",
+        "settlement", "settlements", "reconciliation",
+        "gateway_reconciliation", "payment_engine",
+        "payment_orchestrator", "auto_payout", "payout_batch",
     },
     "orders": {
-        "order",
-        "orders",
-        "checkout",
-        "cart",
-        "purchase",
-        "purchases",
+        "order", "orders", "checkout", "cart", "purchase", "purchases",
+        "return", "returns", "dispute", "disputes", "refund", "refunds",
+        "fulfillment",
     },
     "catalog": {
-        "catalog",
-        "product",
-        "products",
-        "category",
-        "categories",
-        "variant",
-        "variants",
-        "filter",
-        "filters",
-    },
-    "supplier": {
-        "supplier",
-        "suppliers",
-        "onboarding",
-        "vendor",
-        "vendors",
-    },
-    "logistics": {
-        "logistics",
-        "shipping",
-        "dispatch",
-        "fulfillment",
-        "delivery",
-        "carrier",
-    },
-    "comms": {
-        "comms",
-        "communication",
-        "communications",
-        "email",
-        "sms",
-        "chat",
-        "notification",
-        "notifications",
-        "translation",
-        "video",
-    },
-    "hr": {
-        "hr",
-        "employee",
-        "employees",
-        "shift",
-        "shifts",
-        "retention",
-        "succession",
-        "travel",
-        "attendance",
-    },
-    "ai": {
-        "ai",
-        "ml",
-        "ocr",
-        "vision",
-        "search",
-        "bg_removal",
-        "variant_config",
-    },
-    "audit": {
-        "audit",
-        "audit_log",
-        "audit_timeline",
-        "compliance",
-    },
-    "core": {
-        "core",
-        "user",
-        "users",
-        "auth",
-        "identity",
-        "config",
-        "settings",
-        "common",
-        "shared",
-        "base",
+        "catalog", "product", "products", "category", "categories",
+        "variant", "variants", "filter", "filters", "inventory",
+        "stock", "search", "moderation", "verification",
     },
     "commerce": {
-        "commerce",
-        "promotion",
-        "promotions",
-        "coupon",
-        "coupons",
-        "pricing",
-        "price",
+        "commerce", "promotion", "promotions", "coupon", "coupons",
+        "discount", "discounts", "flash_sale", "wishlist",
+        "referral", "reviews", "loyalty",
+    },
+    "supplier": {
+        "supplier", "suppliers", "vendor", "vendors",
+        "onboarding", "kyc", "badge", "storefront",
+    },
+    "customer": {
+        "customer", "customers", "address", "addresses",
+        "point", "points", "profile",
+    },
+    "logistics": {
+        "logistics", "shipping", "shipment", "shipments",
+        "dispatch", "delivery", "carrier", "fleet",
+        "route", "routes", "pod", "tracking", "parcel",
+    },
+    "communication": {
+        "communication", "comms", "comm", "chat", "email",
+        "sms", "push", "notification", "notifications",
+        "ticket", "tickets", "message", "messages",
+        "video", "meeting", "websocket", "translation",
+    },
+    "hr": {
+        "hr", "employee", "employees", "attendance", "shift",
+        "shifts", "leave", "coi", "lms", "performance",
+        "succession", "travel", "hse", "dei", "offboarding",
+        "roster", "handover", "payroll", "background_check",
+    },
+    "ai": {
+        "ai", "ml", "embedding", "embeddings", "ocr", "vision",
+        "bg_removal", "removal", "chatbot", "voice",
+        "recommendation", "research", "automation",
+        "variant_config", "image_ai",
+    },
+    "audit": {
+        "audit", "worm", "audit_log", "audit_trail",
+        "permission_audit", "communication_audit", "auditor",
+    },
+    "security": {
+        "security", "auth", "authentication", "authorization",
+        "permission", "permissions", "rbac", "iam", "mfa",
+        "otp", "fraud", "risk", "blacklist", "device_binding",
+        "csrf",
+    },
+    "core": {
+        "core", "user", "users", "role", "roles", "session",
+        "device", "identity", "preferences", "banner", "banners",
+        "settings", "platform", "approval_matrix", "approval",
+        "workflow", "bank_transaction",
+    },
+    "country": {
+        "country", "countries", "city", "cities", "cross_border",
+        "localization", "currency", "country_detection",
+        "country_research",
+    },
+    "media": {
+        "media", "asset", "assets", "image", "images",
+        "upload", "uploads", "file", "files", "storage",
+        "free_image",
+    },
+    "analytics": {
+        "analytics", "snapshot", "snapshots", "kpi", "mv",
+        "report", "reports", "metrics", "insights",
+    },
+    "configuration": {
+        "configuration", "config", "feature_flag", "feature",
+        "flag", "toggles", "rules",
     },
 }
-
 
 def _move_normalize_stem(stem: str) -> str:
     """
@@ -2080,21 +2576,31 @@ def _move_infer_domain(
     return default, "default"
 
 
-def _move_infer_surface(stem: str, eff: dict, default: str = "common") -> str:
+def _move_infer_surface(stem: str, eff: dict, text: str = "") -> str | None:
     """
-    Infer router surface from filename prefix.
-    Example:
-      admin_payouts -> admin
-      supplier_onboarding -> supplier
+    Infer router surface from filename and route content.
+    Priority:
+      1. filename prefix (admin_finance.py -> admin)
+      2. route prefix/path (prefix="/admin/..." -> admin)
+      3. default: internal (NOT common)
     """
-    low = str(stem).lower()
+    low = stem.lower()
+    surfaces = sorted(eff.get("surface_names", set()))
 
-    for surf in sorted(eff.get("surface_names", set())):
-        if low == surf or low.startswith(surf + "_"):
-            return surf
+    # Filename prefix match
+    for surface in surfaces:
+        if low == surface or low.startswith(f"{surface}_"):
+            return surface
 
-    return default
+    # Route content match
+    if text:
+        route_text = text.lower()
+        for surface in surfaces:
+            if f"/{surface}/" in route_text or f"/{surface}\"" in route_text:
+                return surface
 
+    # Default: internal (never common)
+    return "internal"
 
 def write_move_map(path: Path, moves: list[dict]) -> None:
     payload = {
@@ -2107,13 +2613,7 @@ def write_move_map(path: Path, moves: list[dict]) -> None:
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
-def check_move_suggestions(
-    repo: Path,
-    rep: Report,
-    eff: dict,
-    graph: ModuleGraph,
-    reg: FeatureRegistry,
-) -> list[dict]:
+def check_move_suggestions(repo: Path, rep: Report, eff: dict, graph: ModuleGraph, reg: FeatureRegistry,) -> list[dict]:
     """
     Generate concrete file relocation suggestions.
 
@@ -2289,7 +2789,8 @@ def check_move_suggestions(
                 direct_files = []
 
             for f in direct_files:
-                surface = _move_infer_surface(f.stem, eff, default="common")
+                text = read_text(f) or ""
+                surface = _move_infer_surface(f.stem, eff, text)
                 target = f"backend/routers/{surface}/{f.name}"
 
                 rep.add(
@@ -2518,7 +3019,6 @@ def _read_cfg(path: Path) -> dict | None:
     except Exception:
         return None
 
-
 def _apply_policy(eff: dict, data: dict | None) -> None:
     if not isinstance(data, dict):
         return
@@ -2644,12 +3144,62 @@ def _apply_policy(eff: dict, data: dict | None) -> None:
     eff["scripts_safe_tokens"] = {str(x).lower() for x in eff.get("scripts_safe_tokens", set())}
 
 
+def _apply_advanced_policy(eff: dict, data: dict | None) -> None:
+    """
+    Load advanced configurable policy values that were previously hardcoded.
+    """
+    if not isinstance(data, dict):
+        return
+
+    pol = data.get("policy") if isinstance(data.get("policy"), dict) else data
+    if not isinstance(pol, dict):
+        return
+
+    if isinstance(pol.get("feature_stop_names"), list):
+        eff["feature_stop_names"] = {str(x).lower() for x in pol["feature_stop_names"]}
+
+    if isinstance(pol.get("feature_suffixes"), list):
+        eff["feature_suffixes"] = [str(x).lower() for x in pol["feature_suffixes"]]
+
+    for scalar_key in ("repo_root_min_top_dirs", "repo_root_min_py_files"):
+        if scalar_key in pol:
+            try:
+                eff[scalar_key] = int(pol[scalar_key])
+            except Exception:
+                pass
+
+    for list_key in ("local_path_scan_tops", "media_scan_layers", "scratch_scan_roots"):
+        if isinstance(pol.get(list_key), list):
+            eff[list_key] = [str(x).lower() for x in pol[list_key]]
+
+    if isinstance(pol.get("logical_domains"), dict):
+        eff["logical_domains"] = pol["logical_domains"]
+
+    if isinstance(pol.get("frontend_flat_paths"), list):
+        eff["frontend_flat_paths"] = pol["frontend_flat_paths"]
+
+    if isinstance(pol.get("codeowners"), dict):
+        eff.setdefault("codeowners", {}).update(pol["codeowners"])
+
+    if isinstance(pol.get("placement"), dict):
+        eff.setdefault("placement", {}).update(pol["placement"])
+
+    if isinstance(pol.get("domain_layer_configs"), list):
+        eff["domain_layer_configs"] = pol["domain_layer_configs"]
+
+
 def _apply_structure(eff: dict, struct: dict | None) -> None:
     if not isinstance(struct, dict):
         return
 
-    eff["forbidden_root"] = _merge_dict_of_lists(eff["forbidden_root"], struct.get("forbidden_root"))
-    eff["forbidden_any"] = _merge_dict_of_lists(eff["forbidden_any"], struct.get("forbidden_any"))
+    eff["forbidden_root"] = _merge_dict_of_lists(
+        eff["forbidden_root"],
+        struct.get("forbidden_root"),
+    )
+    eff["forbidden_any"] = _merge_dict_of_lists(
+        eff["forbidden_any"],
+        struct.get("forbidden_any"),
+    )
 
     if isinstance(struct.get("allow_root_md"), list):
         eff["allow_root_md"] = {str(x) for x in struct["allow_root_md"]}
@@ -2683,21 +3233,32 @@ def _apply_layer(eff: dict, layer: dict | None) -> None:
     if "forbidden_controller_to_controller" in layer:
         val = layer["forbidden_controller_to_controller"]
         if isinstance(val, str):
-            eff["forbidden_controller_to_controller"] = val.strip().lower() in {"1", "true", "yes", "on"}
+            eff["forbidden_controller_to_controller"] = val.strip().lower() in {
+                "1",
+                "true",
+                "yes",
+                "on",
+            }
         else:
             eff["forbidden_controller_to_controller"] = bool(val)
 
     if isinstance(layer.get("domains"), dict):
         normalized: dict[str, dict[str, list[str]]] = {}
+
         for domain, cfg in layer["domains"].items():
             dom = str(domain).lower()
+
             if not isinstance(cfg, dict):
                 normalized[dom] = {"may_import": []}
                 continue
 
             may_import = cfg.get("may_import", [])
             normalized[dom] = {
-                "may_import": [str(x).lower() for x in may_import] if isinstance(may_import, list) else []
+                "may_import": (
+                    [str(x).lower() for x in may_import]
+                    if isinstance(may_import, list)
+                    else []
+                )
             }
 
         eff["domains"] = normalized
@@ -2713,9 +3274,15 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         # structure
         "forbidden_root": _merge_dict_of_lists(DEFAULT_FORBIDDEN_ROOT, {}),
         "forbidden_any": _merge_dict_of_lists(DEFAULT_FORBIDDEN_ANY, {}),
-        "allow_root_md": set(DEFAULT_ALLOW_ROOT_MD),
+        "allow_root_md": set(DEFAULT_ALLOW_ROOT_MD) | {
+            "REPO_LAYOUT_AUDIT_REPORT.md",
+            "ARCHITECTURE_AUDIT_REPORT.md",
+            "DATABASE_AUDIT_REPORT.md",
+            "DESIGN_AUDIT_REPORT.md",
+        },
         "allow_docs_root": set(DEFAULT_ALLOW_DOCS_ROOT),
         "doc_ext": set(DEFAULT_DOC_EXT),
+
         # scratch
         "scratch_phrases": list(DEFAULT_SCRATCH_PHRASES),
         "scratch_tokens": set(DEFAULT_SCRATCH_TOKENS),
@@ -2787,11 +3354,127 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         # meta
         "from_yaml": False,
         "known_layers": set(),
+
+        # v3.5 configurable policy defaults
+        "feature_stop_names": set(FEATURE_STOP_NAMES),
+        "feature_suffixes": list(FEATURE_SUFFIXES),
+
+        "repo_root_min_top_dirs": 8,
+        "repo_root_min_py_files": 50,
+
+        "local_path_scan_tops": ["backend", "frontend", "scripts"],
+        "media_scan_layers": [
+            "controllers",
+            "services",
+            "routers",
+            "providers",
+            "models",
+            "utils",
+        ],
+        "scratch_scan_roots": ["frontend", "scripts", "."],
+
+        "logical_domains": {
+            "database": {
+                "parts": ["alembic", "db", "models"],
+            },
+            "security": {
+                "parts": ["middleware", "dependencies"],
+                "basename": ["security_config.ini"],
+            },
+            "frontend": {
+                "first": "frontend",
+            },
+            "docs": {
+                "first": "documents",
+            },
+            "infra": {
+                "first": ["monitoring", "nginx", "infra"],
+            },
+            "backend": {
+                "first": "backend",
+            },
+        },
+
+        "frontend_flat_paths": [
+            {
+                "path": "frontend/web_app/src/components",
+                "threshold_key": "frontend_flat_threshold",
+            },
+            {
+                "path": "frontend/web_app/src/lib",
+                "threshold_key": "frontend_flat_threshold",
+            },
+            {
+                "path": "frontend/web_app/src/hooks",
+                "threshold_key": "frontend_flat_threshold",
+            },
+            {
+                "path": "frontend/mobile_app/components",
+                "threshold_key": "frontend_flat_threshold",
+            },
+            {
+                "path": "frontend/mobile_app/lib",
+                "threshold_key": "frontend_flat_threshold",
+            },
+            {
+                "path": "frontend/shared/src",
+                "threshold_key": "frontend_flat_threshold",
+            },
+        ],
+
+        "domain_layer_configs": [
+            {
+                "layer": "services",
+                "flat_code": "S1",
+                "surface_code": "S4",
+                "large_code": "S5",
+            },
+            {
+                "layer": "models",
+                "flat_code": "M2",
+                "surface_code": "M3",
+                "large_code": "M4",
+            },
+        ],
+
+        "codeowners": {
+            "default_owner": "@zozi/platform",
+            "domain_owner_template": "@zozi/{domain}",
+            "domain_paths": [
+                "backend/services/{domain}/",
+                "backend/models/{domain}/",
+            ],
+            "surface_paths": [
+                "backend/routers/{surface}/",
+                "backend/controllers/{surface}/",
+            ],
+        },
+
+        "placement": {
+            "enabled": True,
+            "layers": [
+                "services",
+                "models",
+                "providers",
+                "events",
+                "jobs",
+                "controllers",
+            ],
+            "router_layer": "routers",
+            "min_confidence_root_move": 0.45,
+            "min_confidence_wrong_folder": 0.65,
+            "min_confidence_surface_to_domain": 0.60,
+            "min_score": 6.0,
+            "min_candidate_files": 2,
+            "stop_tokens": [],
+        },
     }
 
     candidates: list[Path] = []
+
     if rules_dir:
         candidates.append(Path(rules_dir))
+
     candidates.append(repo / "documents" / "scope")
     candidates.append(repo / "governance")
 
@@ -2827,6 +3510,9 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         eff["from_yaml"] = True
         _apply_policy(eff, gov)
 
+    for cfg in (struct, layer, gov):
+        _apply_advanced_policy(eff, cfg)
+
     eff["text_ext"] = {str(x).lower() for x in eff["text_ext"]}
     eff["source_ext"] = {str(x).lower() for x in eff["source_ext"]}
     eff["frontend_source_ext"] = {str(x).lower() for x in eff["frontend_source_ext"]}
@@ -2839,6 +3525,7 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
 
     known_layers = {str(x).lower() for x in eff["expected_backend_packages"]}
     backend = repo / "backend"
+
     if backend.exists():
         try:
             for p in backend.iterdir():
@@ -2849,17 +3536,28 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
 
     eff["known_layers"] = known_layers
 
-    eff["forbidden_root_c"] = {k: _compile(v) for k, v in eff["forbidden_root"].items()}
-    eff["forbidden_any_c"] = {k: _compile(v) for k, v in eff["forbidden_any"].items()}
-    eff["secret_file_patterns_c"] = [re.compile(p, re.I) for p in eff["secret_file_patterns"]]
+    eff["forbidden_root_c"] = {
+        k: _compile(v)
+        for k, v in eff["forbidden_root"].items()
+    }
+    eff["forbidden_any_c"] = {
+        k: _compile(v)
+        for k, v in eff["forbidden_any"].items()
+    }
+    eff["secret_file_patterns_c"] = [
+        re.compile(p, re.I)
+        for p in eff["secret_file_patterns"]
+    ]
     eff["env_secret_keys_c"] = re.compile(eff["env_secret_keys"], re.I)
     eff["local_path_c"] = re.compile(eff["local_path"])
     eff["media_disk_write_c"] = re.compile(eff["media_disk_write"])
     eff["media_disk_url_c"] = re.compile(eff["media_disk_url"])
-    eff["dead_entrypoints_c"] = [re.compile(p) for p in eff["dead_entrypoints"]]
+    eff["dead_entrypoints_c"] = [
+        re.compile(p)
+        for p in eff["dead_entrypoints"]
+    ]
 
     return eff
-
 
 # ============================================================================
 # 4. GENERIC HELPERS
@@ -2929,7 +3627,7 @@ def is_relative_to(path: Path, base: Path) -> bool:
         return False
 
 
-def domain_of(path_rel: str) -> str:
+def _domain_of_legacy(path_rel: str) -> str:
     parts = [p.lower() for p in Path(path_rel).parts]
     base = parts[-1] if parts else ""
 
@@ -2952,6 +3650,54 @@ def domain_of(path_rel: str) -> str:
         return "backend"
 
     return "repo"
+
+
+def domain_of_cfg(path_rel: str, eff: dict | None) -> str:
+    """
+    Configurable logical-domain classifier.
+
+    The mapping is now driven by:
+      governance.yaml -> policy.logical_domains
+    instead of hardcoded Python logic.
+    """
+    parts = [p.lower() for p in Path(path_rel).parts]
+    base = parts[-1] if parts else ""
+
+    if not eff:
+        return _domain_of_legacy(path_rel)
+
+    logical_domains = eff.get("logical_domains", {})
+
+    for domain_name, cfg in logical_domains.items():
+        if not isinstance(cfg, dict):
+            continue
+
+        match_parts = {str(x).lower() for x in cfg.get("parts", [])}
+        if match_parts and any(x in parts for x in match_parts):
+            return domain_name
+
+        match_basename = {str(x).lower() for x in cfg.get("basename", [])}
+        if base and base in match_basename:
+            return domain_name
+
+        first = cfg.get("first")
+        if isinstance(first, str) and parts and parts[0] == first.lower():
+            return domain_name
+
+        if isinstance(first, list):
+            first_set = {str(x).lower() for x in first}
+            if parts and parts[0] in first_set:
+                return domain_name
+
+    return "repo"
+
+
+def domain_of(path_rel: str) -> str:
+    """
+    Backward-compatible wrapper.
+    Uses active configuration when available.
+    """
+    return domain_of_cfg(path_rel, _ACTIVE_EFF)
 
 
 def is_scratch_name(stem: str, eff: dict, broad: bool) -> bool:
@@ -3089,8 +3835,27 @@ def normalize_cycle(cycle: list[str]) -> list[str]:
 # ============================================================================
 
 def normalize_feature_name(name: str) -> str:
+    """
+    Normalize file/folder names into feature names.
+
+    Stop-names and suffixes are now configurable via:
+      governance.yaml -> policy.feature_stop_names
+      governance.yaml -> policy.feature_suffixes
+    """
     if not name:
         return ""
+
+    eff = _ACTIVE_EFF or {}
+
+    stop_names = {
+        str(x).lower()
+        for x in eff.get("feature_stop_names", FEATURE_STOP_NAMES)
+    }
+
+    suffixes = [
+        str(x).lower()
+        for x in eff.get("feature_suffixes", FEATURE_SUFFIXES)
+    ]
 
     low = str(name).lower()
     low = low.replace("\\", "/")
@@ -3102,7 +3867,7 @@ def normalize_feature_name(name: str) -> str:
 
     for _ in range(3):
         changed = False
-        for suffix in FEATURE_SUFFIXES:
+        for suffix in suffixes:
             if low.endswith(suffix) and len(low) > len(suffix) + 1:
                 low = low[: -len(suffix)].rstrip("_")
                 changed = True
@@ -3112,14 +3877,13 @@ def normalize_feature_name(name: str) -> str:
 
     low = re.sub(r"_+", "_", low).strip("_")
 
-    if low in FEATURE_STOP_NAMES:
+    if low in stop_names:
         return ""
 
     if len(low) <= 2:
         return ""
 
     return low
-
 
 def discover_features(repo: Path, eff: dict, graph: ModuleGraph) -> FeatureRegistry:
     reg = FeatureRegistry()
@@ -3138,7 +3902,12 @@ def discover_features(repo: Path, eff: dict, graph: ModuleGraph) -> FeatureRegis
 
     # Backend domains/features from files.
     if backend.exists():
-        domain_discovery_layers = {"services", "models", "providers", "events", "jobs"}
+        domain_discovery_layers = set(
+            eff.get("placement", {}).get(
+                "layers",
+                {"services", "models", "providers", "events", "jobs"},
+            )
+        )
 
         for f in iter_text_files(backend, eff):
             if f.suffix.lower() != ".py":
@@ -3449,7 +4218,9 @@ def check_node_modules(repo: Path, rep: Report, eff: dict) -> None:
 
 
 def check_hardcoded_local_paths(repo: Path, rep: Report, eff: dict) -> None:
-    for top in ("backend", "frontend"):
+    scan_tops = eff.get("local_path_scan_tops", ["backend", "frontend", "scripts"])
+
+    for top in scan_tops:
         d = repo / top
         if not d.exists():
             continue
@@ -3541,60 +4312,37 @@ def check_duplicate_basenames(repo: Path, rep: Report, eff: dict) -> None:
 
 
 def check_secrets_on_disk(repo: Path, rep: Report, eff: dict) -> None:
-    for d, entries in walk_dirs(repo, eff["ignore_dirs"]):
-        for e in entries:
-            if not e.is_file():
-                continue
+    scan_roots = [repo]
 
-            rp = rel(e, repo).replace("\\", "/")
-            for rx in eff["secret_file_patterns_c"]:
-                if rx.search("/" + rp) or rx.search(rp):
-                    rep.add(
-                        RED,
-                        "F5",
-                        "security",
-                        rel(e, repo),
-                        "secret/credential material on disk",
-                        intended="remove from VCS; load via env/Vault; keep only .env.example",
-                    )
-                    break
+    for sub in ("backend", "frontend", "scripts"):
+        d = repo / sub
+        if d.exists():
+            scan_roots.append(d)
 
+    seen: set[str] = set()
 
-def _code_for_root(key: str, c: Path) -> str:
-    if key == "." and (
-        c.name.startswith("backup_")
-        or c.name in {"Working_API", "provider_test", "_trash", "image", "zozi-logo-app"}
-        or c.suffix == ".zip"
-    ):
-        return "F9"
+    for scan_root in scan_roots:
+        for d, entries in walk_dirs(scan_root, eff["ignore_dirs"]):
+            for e in entries:
+                if not e.is_file():
+                    continue
 
-    if c.name in DEFAULT_ARTIFACT_NAMES or c.suffix in DEFAULT_ARTIFACT_EXTS or c.suffix in {".db"}:
-        return "F4"
+                rp = rel(e, repo).replace("\\", "/")
+                if rp in seen:
+                    continue
 
-    if key == "backend/alembic":
-        return "A1"
-
-    return "F4"
-
-
-def _intended_for(key: str, c: Path) -> str:
-    if c.name.startswith("backup_") or c.suffix == ".zip":
-        return "remove from VCS (backups -> object storage; design -> design/)"
-
-    if c.name in {"Working_API", "provider_test"}:
-        return "move to experiments/ and gitignore outputs (remove Working_API fallback first)"
-
-    if c.name == "_trash":
-        return "delete from repo"
-
-    if c.name in DEFAULT_ARTIFACT_NAMES or c.suffix in DEFAULT_ARTIFACT_EXTS or c.suffix in {
-        ".db",
-        ".db-shm",
-        ".db-wal",
-    }:
-        return "delete + add to .gitignore"
-
-    return "relocate per scope/repo_structure.yaml or delete"
+                for rx in eff["secret_file_patterns_c"]:
+                    if rx.search("/" + rp) or rx.search(rp):
+                        seen.add(rp)
+                        rep.add(
+                            RED,
+                            "F5",
+                            "security",
+                            rel(e, repo),
+                            "secret/credential material on disk",
+                            intended="remove from VCS; load via env/Vault; keep only .env.example",
+                        )
+                        break
 
 
 def _code_for_any(f: Path) -> str:
@@ -3619,39 +4367,77 @@ def _intended_for_any(f: Path) -> str:
 
     return "relocate per scope/repo_structure.yaml"
 
+def _code_for_root(key: str, c: Path, eff: dict) -> str:
+    if key == "." and (
+        c.name.startswith("backup_")
+        or c.name in {"Working_API", "provider_test", "_trash", "image", "zozi-logo-app"}
+        or c.suffix == ".zip"
+    ):
+        return "F9"
+    if (
+        c.name in eff.get("artifact_names", DEFAULT_ARTIFACT_NAMES)
+        or c.suffix in eff.get("artifact_exts", DEFAULT_ARTIFACT_EXTS)
+        or c.suffix in {".db"}
+    ):
+        return "F4"
+    if key == "backend/alembic":
+        return "A1"
+    return "F4"
+
+
+def _intended_for(key: str, c: Path, eff: dict) -> str:
+    if c.name.startswith("backup_") or c.suffix == ".zip":
+        return "remove from VCS (backups -> object storage; design -> design/)"
+    if c.name in {"Working_API", "provider_test"}:
+        return "move to experiments/ and gitignore outputs"
+    if c.name == "_trash":
+        return "delete from repo"
+    if (
+        c.name in eff.get("artifact_names", DEFAULT_ARTIFACT_NAMES)
+        or c.suffix in eff.get("artifact_exts", DEFAULT_ARTIFACT_EXTS)
+        or c.suffix in {".db", ".db-shm", ".db-wal"}
+    ):
+        return "delete + add to .gitignore"
+    return "relocate per scope/repo_structure.yaml or delete"
+
 
 def check_intended_violations(repo: Path, rep: Report, eff: dict) -> None:
     for key, frx in eff["forbidden_root_c"].items():
         base = repo if key == "." else repo / key
         if not base.exists() or not frx:
             continue
-
         dom = "repo" if key == "." else domain_of(key)
-
         try:
             children = list(base.iterdir())
         except OSError:
             children = []
-
         for c in children:
             for rx in frx:
                 if rx.search(c.name):
-                    sev = RED if c.suffix in {".db"} else YEL
+                    code = _code_for_root(key, c, eff)
+                    if code == "F9":
+                        sev = RED if (
+                            c.name in {"Working_API", "provider_test", "_trash"}
+                            or c.name.startswith("backup_")
+                            or c.suffix == ".zip"
+                        ) else YEL
+                    elif c.suffix in {".db"}:
+                        sev = RED
+                    else:
+                        sev = YEL
                     rep.add(
                         sev,
-                        _code_for_root(key, c),
+                        code,
                         dom,
                         rel(c, repo),
                         f"must not sit at {key or 'repo root'} (damages structure/scale)",
-                        intended=_intended_for(key, c),
+                        intended=_intended_for(key, c, eff),
                     )
                     break
-
     for key, fax in eff["forbidden_any_c"].items():
         base = repo if key == "." else repo / key
         if not base.exists() or not fax:
             continue
-
         for f in iter_text_files(base, eff):
             rp = rel(f, repo).replace("\\", "/")
             for rx in fax:
@@ -3665,7 +4451,6 @@ def check_intended_violations(repo: Path, rep: Report, eff: dict) -> None:
                         intended=_intended_for_any(f),
                     )
                     break
-
 
 def check_backend_root_modules(repo: Path, rep: Report, eff: dict) -> None:
     be = repo / "backend"
@@ -3706,7 +4491,9 @@ def check_backend_root_modules(repo: Path, rep: Report, eff: dict) -> None:
 
 
 def check_scratch_scripts(repo: Path, rep: Report, eff: dict) -> None:
-    roots = [repo / "frontend", repo / "scripts", repo]
+    scratch_roots = eff.get("scratch_scan_roots", ["frontend", "scripts", "."])
+    roots = [repo if r == "." else repo / r for r in scratch_roots]
+
     seen: set[str] = set()
 
     for r in roots:
@@ -3731,6 +4518,7 @@ def check_scratch_scripts(repo: Path, rep: Report, eff: dict) -> None:
                     "scratch/debug script (one-off; not an ops/maintenance script)",
                     intended="delete; ops scripts live in scripts/maintenance or scripts/validation",
                 )
+
 
 
 def check_doc_and_root_allowlists(repo: Path, rep: Report, eff: dict) -> None:
@@ -3780,7 +4568,7 @@ def check_doc_and_root_allowlists(repo: Path, rep: Report, eff: dict) -> None:
                 intended="move to documents/ (the doc home) or experiments/ (scratch); never commit at root",
             )
 
-        elif c.suffix == ".md" and c.name not in allow_md and c.name != "REPO_LAYOUT_AUDIT_REPORT.md":
+        elif c.suffix == ".md" and c.name not in allow_md:
             rep.add(
                 YEL,
                 "F9",
@@ -3865,15 +4653,42 @@ def check_subfolder_axis_and_shape(repo: Path, rep: Report, eff: dict) -> None:
     def count_py_dir(d: Path) -> int:
         return sum(1 for f in iter_text_files(d, eff) if f.suffix.lower() == ".py")
 
-    for layer_name, flat_code, surface_code, large_code in [
-        ("services", "S1", "S4", "S5"),
-        ("models", "M2", "M3", "M4"),
-    ]:
+    domain_layer_configs = eff.get(
+        "domain_layer_configs",
+        [
+            {
+                "layer": "services",
+                "flat_code": "S1",
+                "surface_code": "S4",
+                "large_code": "S5",
+            },
+            {
+                "layer": "models",
+                "flat_code": "M2",
+                "surface_code": "M3",
+                "large_code": "M4",
+            },
+        ],
+    )
+
+    for cfg in domain_layer_configs:
+        if not isinstance(cfg, dict):
+            continue
+
+        layer_name = cfg.get("layer")
+        flat_code = cfg.get("flat_code", "S1")
+        surface_code = cfg.get("surface_code", "S4")
+        large_code = cfg.get("large_code", "S5")
+
+        if not layer_name:
+            continue
+
         d = backend / layer_name
         if not d.exists():
             continue
 
         direct = [p for p in d.glob("*.py") if p.name != "__init__.py"]
+
         if len(direct) > eff["flat_threshold"]:
             rep.add(
                 YEL,
@@ -3924,6 +4739,7 @@ def check_subfolder_axis_and_shape(repo: Path, rep: Report, eff: dict) -> None:
                     continue
 
                 grp = [a]
+
                 for b in stems[i + 1:]:
                     if b in used:
                         continue
@@ -3952,6 +4768,7 @@ def check_subfolder_axis_and_shape(repo: Path, rep: Report, eff: dict) -> None:
             continue
 
         direct = [p for p in d.glob("*.py") if p.name != "__init__.py"]
+
         if len(direct) > eff["flat_threshold"]:
             rep.add(
                 YEL,
@@ -4011,9 +4828,13 @@ def check_raw_env_in_middleware(repo: Path, rep: Report, eff: dict) -> None:
                 )
                 break
 
-
 def check_media_on_disk(repo: Path, rep: Report, eff: dict) -> None:
-    for layer_name in ("controllers", "services", "routers"):
+    media_scan_layers = eff.get(
+        "media_scan_layers",
+        ["controllers", "services", "routers", "providers", "models", "utils"],
+    )
+
+    for layer_name in media_scan_layers:
         d = repo / "backend" / layer_name
         if not d.exists():
             continue
@@ -4044,82 +4865,33 @@ def check_media_on_disk(repo: Path, rep: Report, eff: dict) -> None:
 # 8. LAYER / DEPENDENCY CHECKS
 # ============================================================================
 
-def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
-    backend = repo / "backend"
-
-    for layer_name in ("controllers", "routers"):
-        d = backend / layer_name
-        if not d.exists():
-            continue
-
-        for f in iter_text_files(d, eff):
-            if f.suffix.lower() != ".py" or in_parts(f, "tests"):
-                continue
-
-            tree = parse_safe(f)
-            if tree is None:
-                continue
-
-            r = rel(f, repo)
-            known = f.name in eff["known_writer_controllers"]
-
-            for node in ast.walk(tree):
-                if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
-                    continue
-
-                v = node.func.attr
-
-                if v in eff["write_verbs"]:
-                    if known:
-                        rep.add(
-                            YEL,
-                            "W2",
-                            "backend",
-                            r,
-                            f"misnamed service-helper writes here (.{v}()); relocate file to services/",
-                            intended="services/<domain>/",
-                            line=node.lineno,
-                        )
-                    else:
-                        rep.add(
-                            RED,
-                            "W1",
-                            "backend",
-                            r,
-                            f"{layer_name}/ must not call session write .{v}(); move write into a service",
-                            intended="a services/<domain>/*_service.py method",
-                            line=node.lineno,
-                        )
-
-                elif v in eff["read_verbs"]:
-                    rep.add(
-                        YEL,
-                        "Q1",
-                        "backend",
-                        r,
-                        f"{layer_name}/ reads via .{v}(); delegate to a service",
-                        intended="service layer",
-                        line=node.lineno,
-                    )
-
-
 def check_router_outside(repo: Path, rep: Report, eff: dict) -> None:
     backend = repo / "backend"
     if not backend.exists():
         return
 
-    allowed_top_for_router_check = {
-        "controllers",
-        "services",
-        "middleware",
-        "dependencies",
-        "providers",
-        "utils",
-        "events",
-        "jobs",
-        "tasks",
-        "api",
+    exempt = eff.get("graph_exempt_layers", DEFAULT_GRAPH_EXEMPT_LAYERS)
+
+    allowed_top = {
+        str(x).lower()
+        for x in eff.get("known_layers", set())
+        if str(x).lower() not in exempt
+        and str(x).lower() != "routers"
     }
+
+    if not allowed_top:
+        allowed_top = {
+            "controllers",
+            "services",
+            "middleware",
+            "dependencies",
+            "providers",
+            "utils",
+            "events",
+            "jobs",
+            "tasks",
+            "api",
+        }
 
     for f in iter_text_files(backend, eff):
         if f.suffix.lower() != ".py":
@@ -4130,10 +4902,7 @@ def check_router_outside(repo: Path, rep: Report, eff: dict) -> None:
         except ValueError:
             continue
 
-        if not parts:
-            continue
-
-        if parts[0] not in allowed_top_for_router_check:
+        if not parts or parts[0] not in allowed_top:
             continue
 
         tree = parse_safe(f)
@@ -4143,7 +4912,9 @@ def check_router_outside(repo: Path, rep: Report, eff: dict) -> None:
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 fn = node.func
-                nm = fn.id if isinstance(fn, ast.Name) else (fn.attr if isinstance(fn, ast.Attribute) else None)
+                nm = fn.id if isinstance(fn, ast.Name) else (
+                    fn.attr if isinstance(fn, ast.Attribute) else None
+                )
 
                 if nm == "APIRouter":
                     rep.add(
@@ -4158,40 +4929,101 @@ def check_router_outside(repo: Path, rep: Report, eff: dict) -> None:
                     break
 
 
+def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
+    backend = repo / "backend"
+    for layer_name in ("controllers", "routers"):
+        d = backend / layer_name
+        if not d.exists():
+            continue
+        for f in iter_text_files(d, eff):
+            if f.suffix.lower() != ".py" or in_parts(f, "tests"):
+                continue
+            tree = parse_safe(f)
+            if tree is None:
+                continue
+            r = rel(f, repo)
+            known = f.name in eff["known_writer_controllers"]
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call):
+                    continue
+                if not isinstance(node.func, ast.Attribute):
+                    continue
+                v = node.func.attr
+                if v == "execute":
+                    raw_sql = False
+                    if node.args and isinstance(node.args[0], ast.Call):
+                        inner = node.args[0]
+                        if isinstance(inner.func, ast.Name) and inner.func.id == "text":
+                            raw_sql = True
+                    if raw_sql:
+                        rep.add(
+                            RED, "W1", "backend", r,
+                            f"{layer_name}/ executes raw SQL via session.execute(text(...))",
+                            intended="move raw SQL to a service or repository layer",
+                            line=node.lineno,
+                        )
+                    else:
+                        rep.add(
+                            RED, "W1", "backend", r,
+                            f"{layer_name}/ must not call session .execute(); move DB work into a service",
+                            intended="a services/<domain>/*_service.py method",
+                            line=node.lineno,
+                        )
+                elif v in eff["write_verbs"]:
+                    if known:
+                        rep.add(
+                            YEL, "W2", "backend", r,
+                            f"misnamed service-helper writes here (.{v}()); relocate file to services/",
+                            intended="services/<domain>/",
+                            line=node.lineno,
+                        )
+                    else:
+                        rep.add(
+                            RED, "W1", "backend", r,
+                            f"{layer_name}/ must not call session write .{v}(); move write into a service",
+                            intended="a services/<domain>/*_service.py method",
+                            line=node.lineno,
+                        )
+                elif v in eff["read_verbs"]:
+                    rep.add(
+                        YEL, "Q1", "backend", r,
+                        f"{layer_name}/ reads via .{v}(); delegate to a service",
+                        intended="service layer",
+                        line=node.lineno,
+                    )
+
+
 def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> None:
     edges = eff["forbidden_edges"]
     mis = eff["mis_housed_controllers"]
     forbid_cc = eff["forbidden_controller_to_controller"]
-
     for caller in sorted(graph.imports.keys()):
         caller_layer = layer_of_module(caller)
         if caller_layer in eff["graph_exempt_layers"]:
             continue
-
         reported: set[tuple[str, str]] = set()
         caller_path = module_path_rel(caller, graph, repo)
-
         for mod, line in graph.imports[caller]:
             if not mod:
                 continue
-
             leaf = mod.rsplit(".", 1)[-1]
-
-            if leaf in mis and (mod == "controllers" or mod.startswith("controllers.")):
-                key = ("W3", mod)
-                if key not in reported:
-                    reported.add(key)
-                    rep.add(
-                        RED,
-                        "W3",
-                        "backend",
-                        caller_path,
-                        f"imports mis-housed controller '{mod}' (it holds service/util logic)",
-                        intended="import from its services/<domain>/ (or utils/) home once relocated",
-                        line=line,
-                    )
-                continue
-
+            # W3: importing a mis-housed controller
+            if mod == "controllers" or mod.startswith("controllers."):
+                is_mis_housed = leaf in mis
+                if caller_layer in {"services", "models", "providers", "events", "jobs"}:
+                    is_mis_housed = True
+                if is_mis_housed:
+                    key = ("W3", mod)
+                    if key not in reported:
+                        reported.add(key)
+                        rep.add(
+                            RED, "W3", "backend", caller_path,
+                            f"imports controller '{mod}' from {caller_layer} (controller logic belongs in services/utils)",
+                            intended="move the imported logic to services/<domain>/ or utils/",
+                            line=line,
+                        )
+                    continue
+            # W4: controller -> controller internals
             if (
                 forbid_cc
                 and caller_layer == "controllers"
@@ -4202,38 +5034,31 @@ def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGrap
                 if key not in reported:
                     reported.add(key)
                     rep.add(
-                        YEL,
-                        "W4",
-                        "backend",
-                        caller_path,
+                        YEL, "W4", "backend", caller_path,
                         f"controller imports another controller ('{mod}')",
                         intended="extract shared logic into a service or util; controllers stay thin",
                         line=line,
                     )
                 continue
-
+            # DG: forbidden edge
             for pref in edges.get(caller_layer, []):
                 if mod == pref or mod.startswith(pref + "."):
                     key = ("DG", mod)
                     if key not in reported:
                         reported.add(key)
                         rep.add(
-                            RED,
-                            "DG",
-                            "backend",
-                            caller_path,
+                            RED, "DG", "backend", caller_path,
                             f"forbidden dependency edge: {caller_layer} -> {mod}",
                             intended=f"layer contract: {caller_layer} may not depend on {pref}; route via services/",
                             line=line,
                         )
                     break
-
+            # DG3: cross-domain ownership
             if eff.get("domains"):
                 target_layer = layer_of_module(mod)
                 if target_layer in eff["ownership_layers"]:
                     sd = domain_of_module(caller, eff, graph)
                     td = domain_of_module(mod, eff, graph)
-
                     if sd and td and sd != td and sd in eff["domains"]:
                         allowed = eff["domains"][sd].get("may_import", [])
                         if td not in allowed:
@@ -4241,15 +5066,11 @@ def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGrap
                             if key not in reported:
                                 reported.add(key)
                                 rep.add(
-                                    RED,
-                                    "DG3",
-                                    "backend",
-                                    caller_path,
+                                    RED, "DG3", "backend", caller_path,
                                     f"cross-domain import {sd} -> {td} violates explicit ownership rules",
                                     intended=f"declare allowed imports in layer_rules.yaml or route via {td} service facade",
                                     line=line,
                                 )
-
 
 def detect_cycles(edges: dict[str, set[str]], max_len: int, max_cycles: int) -> list[list[str]]:
     nodes = set(edges.keys())
@@ -4638,6 +5459,7 @@ def check_frontend_structure(repo: Path, rep: Report, eff: dict) -> None:
 
     for ws in workspaces:
         d = frontend / ws
+
         if not d.exists():
             rep.add(
                 YEL,
@@ -4678,6 +5500,7 @@ def check_frontend_structure(repo: Path, rep: Report, eff: dict) -> None:
                 continue
 
             low = f.name.lower()
+
             scratchy = (
                 is_scratch_name(f.stem, eff, broad=False)
                 or low.startswith("_audit_")
@@ -4703,14 +5526,20 @@ def check_frontend_structure(repo: Path, rep: Report, eff: dict) -> None:
                     intended="delete; keep only workspace config/package files at root",
                 )
 
-    flat_paths = [
-        ("frontend/web_app/src/components", eff["frontend_flat_threshold"]),
-        ("frontend/web_app/src/lib", eff["frontend_flat_threshold"]),
-        ("frontend/web_app/src/hooks", eff["frontend_flat_threshold"]),
-        ("frontend/mobile_app/components", eff["frontend_flat_threshold"]),
-        ("frontend/mobile_app/lib", eff["frontend_flat_threshold"]),
-        ("frontend/shared/src", eff["frontend_flat_threshold"]),
-    ]
+    flat_paths = []
+
+    for item in eff.get("frontend_flat_paths", []):
+        if not isinstance(item, dict):
+            continue
+
+        path_value = item.get("path")
+        if not path_value:
+            continue
+
+        threshold_key = item.get("threshold_key", "frontend_flat_threshold")
+        threshold_value = eff.get(threshold_key, eff["frontend_flat_threshold"])
+
+        flat_paths.append((path_value, threshold_value))
 
     for p, threshold in flat_paths:
         d = repo / p
@@ -4737,6 +5566,7 @@ def check_frontend_structure(repo: Path, rep: Report, eff: dict) -> None:
             )
 
     reported = 0
+
     skip_parts = {
         "e2e",
         "__tests__",
@@ -4869,7 +5699,6 @@ def check_frontend_structure(repo: Path, rep: Report, eff: dict) -> None:
 
             if reported_ws >= 50:
                 break
-
 
 def collect_frontend_metrics(repo: Path, eff: dict) -> dict:
     frontend = repo / "frontend"
@@ -5081,7 +5910,6 @@ def compute_debt_score(rep: Report, eff: dict) -> int:
 
     score = red * 100 + yel * 15
 
-    # existing architectural weights
     score += by.get("DG2", 0) * 35
     score += by.get("DG3", 0) * 50
     score += by.get("DG4", 0) * 10
@@ -5092,25 +5920,30 @@ def compute_debt_score(rep: Report, eff: dict) -> int:
     score += by.get("D2", 0) * 8
     score += by.get("D3", 0) * 5
 
-    # existing prefix-based weights
     score += sum(v for k, v in by.items() if k.startswith("CFG")) * 40
     score += sum(v for k, v in by.items() if k.startswith("FE")) * 8
     score += by.get("AUTO8", 0) * 20
 
-    # new v3.4 weights
     score += by.get("SEC2", 0) * 80
     score += by.get("SEC3", 0) * 70
     score += by.get("SEC4", 0) * 60
     score += by.get("PERF1", 0) * 25
     score += by.get("PERF2", 0) * 20
-
     score += by.get("QUAL1", 0) * 12
     score += by.get("QUAL2", 0) * 2
     score += by.get("QUAL3", 0) * 10
     score += by.get("QUAL4", 0) * 3
-
     score += by.get("DB1", 0) * 12
     score += by.get("DB2", 0) * 35
+
+    score += by.get("DOM1", 0) * 15
+    score += by.get("DOM2", 0) * 20
+    score += by.get("DOM3", 0) * 12
+    score += by.get("DOM6", 0) * 2
+
+    score += by.get("MV1", 0) * 8
+    score += by.get("MV2", 0) * 12
+    score += by.get("MV3", 0) * 6
 
     return int(score)
 
@@ -5282,33 +6115,82 @@ def update_trend(path: Path, current: dict) -> None:
 # ============================================================================
 
 def render_intended_tree() -> str:
-    return "\n".join(
-        [
-            "# INTENDED ZOZI STRUCTURE (target — derived from governance model)",
-            "Logical domains `database` & `security` live INSIDE backend/ by design.",
-            "Sub-folder axis: SURFACE in routers/ & controllers/ (admin/supplier/...);",
-            "                 DOMAIN  in services/ & models/ (finance/orders/...).",
-            "```",
-            "zozi/",
-            "├── backend/",
-            "│   ├── routers/        (admin/ supplier/ customer/ public/ webhooks/ = surface OK)",
-            "│   ├── controllers/    (admin/ supplier/ ... surface OK; thin orchestration)",
-            "│   ├── services/       (finance/ orders/ catalog/ supplier/ logistics/ comms/ hr/ ai/ = domain REQUIRED)",
-            "│   ├── models/         (same domain sub-packages; each file declares __table_args__ schema)",
-            "│   ├── middleware/  dependencies/  providers/  utils/  events/  jobs/  data/",
-            "│   ├── db/  alembic/   (= the 'database' logical domain; ONLY migrations home)",
-            "│   └── tests/  scripts/",
-            "├── frontend/   (web_app · mobile_app · shared)",
-            "├── documents/                (AUTHORITATIVE docs live HERE at the root — no scope/ needed)",
-            "│   ├── 01_DATABASE.md ...    (prose specs: the constitution + feature scopes)",
-            "│   ├── scope/                (optional: machine governance YAML only)",
-            "│   └── archive/              (optional: retired docs)",
-            "├── monitoring/  nginx/  (infra)",
-            "├── experiments/  design/   (gitignored outputs / logo source)",
-            "└── .gitignore  .env.example  README.md  docker-compose.yml  railway.toml",
-            "```",
-        ]
+    """
+    Dynamic intended structure.
+
+    This is generated from:
+      - configured surfaces
+      - discovered domains
+      - configured ownership layers
+
+    It is no longer a hardcoded ASCII tree.
+    """
+    eff = _ACTIVE_EFF or {}
+    reg = _ACTIVE_REG
+
+    surfaces = sorted(
+        {
+            str(x).lower()
+            for x in eff.get("surface_names", DEFAULT_SURFACE_NAMES)
+        }
     )
+
+    domains = sorted(
+        set(getattr(reg, "domains", set())) | set(eff.get("domains", {}).keys())
+    )
+
+    if not domains:
+        domains = ["<domain>"]
+
+    surface_preview = ", ".join(surfaces[:8])
+    if len(surfaces) > 8:
+        surface_preview += " ..."
+
+    domain_preview = ", ".join(domains[:14])
+    if len(domains) > 14:
+        domain_preview += " ..."
+
+    lines = [
+        "# INTENDED ZOZI STRUCTURE (generated from live governance config)",
+        "",
+        "Logical domains `database` and `security` live INSIDE backend/ by design.",
+        "",
+        "Sub-folder axis:",
+        f"  SURFACE in routers/ and controllers/: {surface_preview}",
+        f"  DOMAIN in services/ and models/:      {domain_preview}",
+        "",
+        "```",
+        "zozi/",
+        "├── backend/",
+        "│   ├── routers/        (surface grouping)",
+        "│   ├── controllers/    (surface or thin orchestration)",
+        "│   ├── services/       (domain grouping REQUIRED)",
+        "│   ├── models/         (domain grouping REQUIRED)",
+        "│   ├── providers/",
+        "│   ├── events/",
+        "│   ├── jobs/",
+        "│   ├── middleware/",
+        "│   ├── dependencies/",
+        "│   ├── utils/",
+        "│   ├── data/",
+        "│   ├── db/             (database logical domain)",
+        "│   ├── alembic/        (ONLY migrations home)",
+        "│   └── tests/",
+        "├── frontend/",
+        "│   ├── web_app/",
+        "│   ├── mobile_app/",
+        "│   └── shared/",
+        "├── documents/",
+        "│   ├── scope/          (optional machine governance YAML)",
+        "│   └── archive/",
+        "├── monitoring/",
+        "├── nginx/",
+        "├── experiments/",
+        "└── design/",
+        "```",
+    ]
+
+    return "\n".join(lines)
 
 
 def render_stdout(repo: Path, rep: Report, show_intended: bool, summary: dict) -> int:
@@ -5402,112 +6284,6 @@ def render_stdout(repo: Path, rep: Report, show_intended: bool, summary: dict) -
     return n_red
 
 
-def render_markdown(repo: Path, rep: Report, out: Path, summary: dict) -> None:
-    n_red = summary["red"]
-    n_yel = summary["yellow"]
-    n_grn = summary["green"]
-    debt = summary.get("debt_score", 0)
-
-    L = [
-        "# Architecture Governance Audit Report v3.2 (GENERATED — do not hand-edit)",
-        "",
-        f"**Repo:** `{repo}`  ",
-        f"**Result:** 🔴 {n_red} · 🟡 {n_yel} · 🟢 {n_grn}  ",
-        f"**Architecture Debt Score:** `{debt}`  ",
-        "**Ephemeral. Add to `.gitignore`. NOT an authoritative spec (those live in `documents/scope/`).**",
-        "",
-        render_intended_tree(),
-        "",
-        "## Scorecard",
-        "",
-        "| Code | Count | Sev | Meaning |",
-        "|---|---:|---|---|",
-    ]
-
-    for code in sorted(rep.counters):
-        sev = next((f.sev for f in rep.findings if f.code == code), GRN)
-        L.append(f"| {code} | {rep.counters[code]} | {SEV_ICON[sev]} {sev} | {RULE_MEANING.get(code, '')} |")
-
-    hot = sorted(
-        [f for f in rep.findings if f.code in HOTLIST_RULES or f.sev == RED],
-        key=lambda f: (0 if f.sev == RED else 1, f.code),
-    )
-
-    L += [
-        "",
-        "## 🔥 Damage Hotlist (fix these first)",
-        "",
-        "| Sev | Rule | Domain | Location | Problem | Intended home / action |",
-        "|---|---|---|---|---|---|",
-    ]
-
-    for f in hot:
-        L.append(
-            f"| {SEV_ICON[f.sev]} | {f.code} | {f.domain} | `{f.loc()}` | {f.message} | {f.intended or '-'} |"
-        )
-
-    L += [
-        "",
-        "## Architecture Metrics",
-        "",
-        f"- architecture debt score: **{debt}**",
-        f"- modules: **{summary['modules']}**",
-        f"- dependency edges: **{summary['edges']}**",
-        f"- classes: **{summary['classes']}**",
-    ]
-
-    if summary.get("layer_counts"):
-        L.append("- layer counts: " + ", ".join(f"`{k}={v}`" for k, v in sorted(summary["layer_counts"].items())))
-
-    if summary.get("top_fan_in"):
-        L += ["", "### Top fan-in", "", "| Module | Fan-in |", "|---|---:|"]
-        for module, count in summary["top_fan_in"]:
-            L.append(f"| `{module}` | {count} |")
-
-    if summary.get("top_fan_out"):
-        L += ["", "### Top fan-out", "", "| Module | Fan-out |", "|---|---:|"]
-        for module, count in summary["top_fan_out"]:
-            L.append(f"| `{module}` | {count} |")
-
-    if summary.get("frontend_metrics"):
-        L += ["", "### Frontend workspace metrics", "", "| Workspace | Source files | Dirs |", "|---|---:|---:|"]
-        for ws, m in sorted(summary["frontend_metrics"].items()):
-            L.append(f"| `{ws}` | {m.get('source_files', 0)} | {m.get('dirs', 0)} |")
-
-    if summary.get("auto_discovery"):
-        ad = summary["auto_discovery"]
-        L += [
-            "",
-            "### Auto-discovery",
-            "",
-            f"- domains: **{ad.get('domains', 0)}**",
-            f"- features: **{ad.get('features', 0)}**",
-            f"- frontend features: **{ad.get('frontend_features', 0)}**",
-            f"- backend top dirs: **{ad.get('backend_top_dirs', 0)}**",
-            f"- learned domain edges: **{ad.get('domain_edges', 0)}**",
-        ]
-
-    by_dom: dict[str, list[Finding]] = defaultdict(list)
-    for f in rep.findings:
-        by_dom[f.domain].append(f)
-
-    for dom in ["repo", "backend", "database", "frontend", "security", "docs", "infra"]:
-        items = by_dom.get(dom, [])
-        if not items:
-            continue
-
-        L += ["", f"## Domain: {dom}", ""]
-
-        for f in items:
-            L.append(
-                f"- {SEV_ICON[f.sev]} **{f.code}** `{f.loc()}` — {f.message}"
-                + (f" → *{f.intended}*" if f.intended else "")
-            )
-
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(L) + "\n", encoding="utf-8")
-
-
 def write_metrics_json(path: Path, summary: dict, graph: ModuleGraph) -> None:
     modules = []
 
@@ -5541,42 +6317,205 @@ def write_metrics_json(path: Path, summary: dict, graph: ModuleGraph) -> None:
 # 12. MAIN
 # ============================================================================
 
+def _repo_root_thresholds() -> tuple[int, int]:
+    """
+    Repo-root heuristic thresholds.
+
+    Configurable by environment variables:
+      ZOZI_REPO_MIN_TOP_DIRS
+      ZOZI_REPO_MIN_PY_FILES
+
+    Later these can also be loaded from governance.yaml.
+    """
+    try:
+        min_top_dirs = int(os.environ.get("ZOZI_REPO_MIN_TOP_DIRS", "8"))
+    except Exception:
+        min_top_dirs = 8
+
+    try:
+        min_py_files = int(os.environ.get("ZOZI_REPO_MIN_PY_FILES", "50"))
+    except Exception:
+        min_py_files = 50
+
+    return min_top_dirs, min_py_files
+
+
+def _repo_root_thresholds() -> tuple[int, int]:
+    """
+    Repo-root heuristic thresholds.
+
+    Configurable by environment variables:
+      ZOZI_REPO_MIN_TOP_DIRS
+      ZOZI_REPO_MIN_PY_FILES
+    """
+    try:
+        min_top_dirs = int(os.environ.get("ZOZI_REPO_MIN_TOP_DIRS", "8"))
+    except Exception:
+        min_top_dirs = 8
+
+    try:
+        min_py_files = int(os.environ.get("ZOZI_REPO_MIN_PY_FILES", "50"))
+    except Exception:
+        min_py_files = 50
+
+    return min_top_dirs, min_py_files
+
+
 def _looks_like_repo_root(p: Path) -> bool:
-    """A real ZOZI root has backend/main.py AND a non-trivial backend. The ghost
-    skeleton at scripts/backend/ has ~4 dirs / ~12 .py files; the real backend has
-    20+ dirs / hundreds of .py files. This guard is what stops the auditor from
-    silently auditing the ghost when CWD is wrong (the 12-module / empty-graph bug)."""
+    """
+    Return True only if this directory looks like the real ZOZI repository root.
+
+    Strongest signal:
+      backend/ + frontend/
+
+    Fallback:
+      backend/main.py + non-trivial backend
+    """
+    if not p.is_dir():
+        return False
+
+    if (p / "backend").is_dir() and (p / "frontend").is_dir():
+        return True
+
     be = p / "backend"
     if not (be / "main.py").is_file():
         return False
+
     try:
         top_dirs = sum(1 for x in be.iterdir() if x.is_dir())
         py_files = sum(1 for x in be.rglob("*.py"))
     except OSError:
         return False
-    return top_dirs >= 8 and py_files >= 50   # tunable; real backend clears both easily
+
+    min_top_dirs, min_py_files = _repo_root_thresholds()
+    return top_dirs >= min_top_dirs and py_files >= min_py_files
 
 
 def find_repo(explicit: str | None) -> Path:
-    seen: list[Path] = []
-    cands: list[Path] = []
+    """
+    Find the real ZOZI repository root.
+
+    Priority:
+      1. --root argument
+      2. if script is inside scripts/ or script/, use its parent if valid
+      3. walk upward from script location
+      4. walk upward from current working directory
+      5. fail loudly
+    """
+    candidates: list[Path] = []
+
     if explicit:
-        cands.append(Path(explicit).resolve())
-    cur = Path(__file__).resolve().parent
-    cands += [cur, cur.parent, cur.parent.parent, cur.parent.parent.parent, Path.cwd().resolve()]
-    for cand in cands:
-        cand = cand.resolve()
+        explicit_path = Path(explicit).resolve()
+        if _looks_like_repo_root(explicit_path):
+            return explicit_path
+        candidates.append(explicit_path)
+
+    script_dir = Path(__file__).resolve().parent
+
+    if script_dir.name.lower() in {"scripts", "script"}:
+        candidates.append(script_dir.parent)
+
+    if (
+        script_dir.parent.name.lower() == "backend"
+        and script_dir.name.lower() in {"scripts", "script"}
+    ):
+        candidates.append(script_dir.parent.parent)
+
+    candidates.extend(
+        [
+            script_dir,
+            script_dir.parent,
+            script_dir.parent.parent,
+            script_dir.parent.parent.parent,
+            Path.cwd().resolve(),
+        ]
+    )
+
+    seen: list[Path] = []
+
+    for cand in candidates:
+        try:
+            cand = cand.resolve()
+        except Exception:
+            continue
+
         if cand in seen:
             continue
+
         seen.append(cand)
+
         if _looks_like_repo_root(cand):
             return cand
-    # FAIL LOUD. A silent wrong root yields plausible-but-garbage reports — worse
-    # than a crash. Tell the operator exactly what to do.
-    print("[FATAL] could not confirm the ZOZI repo root (need backend/main.py + a real backend/).", file=sys.stderr)
-    print(f"        looked in: {[str(c) for c in seen]}", file=sys.stderr)
-    print("        Ran from inside scripts/?  cd to the repo root, or pass --root <repo>.", file=sys.stderr)
+
+    try:
+        for parent in script_dir.parents:
+            parent = parent.resolve()
+            if parent in seen:
+                continue
+            seen.append(parent)
+            if _looks_like_repo_root(parent):
+                return parent
+    except Exception:
+        pass
+
+    try:
+        cwd = Path.cwd().resolve()
+        if cwd not in seen:
+            seen.append(cwd)
+            if _looks_like_repo_root(cwd):
+                return cwd
+
+        for parent in cwd.parents:
+            parent = parent.resolve()
+            if parent in seen:
+                continue
+            seen.append(parent)
+            if _looks_like_repo_root(parent):
+                return parent
+    except Exception:
+        pass
+
+    if script_dir.name.lower() in {"scripts", "script"}:
+        fallback = script_dir.parent.resolve()
+        print(
+            "[WARN] could not fully confirm repo root markers; "
+            f"using script parent as repo root: {fallback}",
+            file=sys.stderr,
+        )
+        return fallback
+
+    print(
+        "[FATAL] could not confirm the ZOZI repository root.\n"
+        f"        looked in: {[str(c) for c in seen]}\n"
+        "        Run from the repository root, or pass --root <repo>.",
+        file=sys.stderr,
+    )
     sys.exit(2)
+
+
+def resolve_repo_output_path(repo: Path, value: str | None, default_name: str) -> Path:
+    """
+    Resolve output paths against the repository root.
+
+    Examples:
+      --out ARCHITECTURE_AUDIT_REPORT.md
+        -> <repo>/ARCHITECTURE_AUDIT_REPORT.md
+
+      --out out/report.md
+        -> <repo>/out/report.md
+
+      --out D:/reports/report.md
+        -> D:/reports/report.md
+    """
+    if not value:
+        return repo / default_name
+
+    p = Path(value)
+
+    if p.is_absolute():
+        return p.resolve()
+
+    return (repo / p).resolve()
 
 # ============================================================================
 # v3.3 REGISTRY EXTENSION  (append block — generated views over the existing graph)
@@ -5729,38 +6668,104 @@ def emit_registry(repo: Path, eff: dict, graph: ModuleGraph, reg, rep: Report,
 
 
 def emit_codeowners(repo: Path, reg, rep: Report) -> Path:
-    """CODEOWNERS = a VIEW over the registry's domains.  Generated, never hand-edited.
-    Owner string per domain is taken from .governance/owners.json if present,
-    else a placeholder team — so the file is always regenerable."""
+    """
+    CODEOWNERS is a generated view over discovered domains.
+
+    Owner templates are configurable via:
+      governance.yaml -> policy.codeowners
+
+    Real owners are still read from:
+      .governance/owners.json
+    """
+    eff = _ACTIVE_EFF or {}
+    cfg = eff.get("codeowners", {})
+
     sem = _load_semantic_overrides(repo)
+
+    default_owner = cfg.get("default_owner", "@zozi/platform")
+    domain_owner_template = cfg.get("domain_owner_template", "@zozi/{domain}")
+
+    domain_paths = cfg.get(
+        "domain_paths",
+        [
+            "backend/services/{domain}/",
+            "backend/models/{domain}/",
+        ],
+    )
+
+    surface_paths = cfg.get(
+        "surface_paths",
+        [
+            "backend/routers/{surface}/",
+            "backend/controllers/{surface}/",
+        ],
+    )
+
     known_domains = sorted(set(reg.domains) | set())
+
     lines = [
         "# AUTO-GENERATED by system_architecture_audit.py — DO NOT HAND-EDIT.",
         "# Regenerated every audit from the Architecture Registry.",
-        "# To set a real owner, add it to .governance/owners.json under the domain key:",
-        '#   { "finance": { "owner": "@zozi/finance" }, ... }',
+        "# To set a real owner, add it to .governance/owners.json under the domain key.",
+        '# Example: { "finance": { "owner": "@zozi/finance" } }',
         "",
     ]
+
     for dom in known_domains:
-        owner = (sem.get(dom, {}) or {}).get("owner", f"@zozi/{dom}")
-        lines.append(f"backend/services/{dom}/   {owner}")
-        lines.append(f"backend/models/{dom}/     {owner}")
-    # surfaces (routers/controllers) default to a platform team
+        owner = (sem.get(dom, {}) or {}).get("owner")
+
+        if not owner:
+            try:
+                owner = domain_owner_template.format(domain=dom)
+            except Exception:
+                owner = default_owner
+
+        for path_template in domain_paths:
+            try:
+                path = path_template.format(domain=dom)
+            except Exception:
+                continue
+
+            lines.append(f"{path}   {owner}")
+
     for surf in sorted(eff_surface_names_safe()):
-        lines.append(f"backend/routers/{surf}/      @zozi/platform")
-        lines.append(f"backend/controllers/{surf}/  @zozi/platform")
+        owner = (sem.get(surf, {}) or {}).get("owner", default_owner)
+
+        for path_template in surface_paths:
+            try:
+                path = path_template.format(surface=surf)
+            except Exception:
+                continue
+
+            lines.append(f"{path}   {owner}")
+
     out = repo / "CODEOWNERS"
+
     try:
         out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     except Exception as exc:
-        rep.add(YEL, "AUTO0", "repo", str(out), f"could not write CODEOWNERS: {exc}",
-                intended="ensure repo root is writable")
+        rep.add(
+            YEL,
+            "AUTO0",
+            "repo",
+            str(out),
+            f"could not write CODEOWNERS: {exc}",
+            intended="ensure repo root is writable",
+        )
+
     return out
 
-
 def eff_surface_names_safe() -> set:
-    # surfaces are static structure, safe to read from the embedded default set name
-    return set(DEFAULT_SURFACE_NAMES) if "DEFAULT_SURFACE_NAMES" in globals() else set()
+    """
+    Return configured surface names.
+    No hardcoded fallback except when no active config exists.
+    """
+    if _ACTIVE_EFF:
+        return {
+            str(x).lower()
+            for x in _ACTIVE_EFF.get("surface_names", DEFAULT_SURFACE_NAMES)
+        }
+    return set(DEFAULT_SURFACE_NAMES)
 
 
 def emit_graph_mermaid(repo: Path, reg, rep: Report, graph=None) -> Path:
@@ -5800,30 +6805,3177 @@ def emit_graph_mermaid(repo: Path, reg, rep: Report, graph=None) -> Path:
                 intended="ensure .governance/ is writable")
     return out
 
+
+# ============================================================================
+# v3.6 DOMAIN PLACEMENT FIX PACK
+# Paste this just before:
+#
+#     if __name__ == "__main__":
+#
+# This overrides the older move/domain suggestion logic and adds:
+#   1. Proper ZOZI domain keyword map
+#   2. Generic-token stop list
+#   3. Router surface/domain inference
+#   4. Unknown-folder detection
+#   5. Wrong-folder detection
+#   6. AI File Placement Contract in the report
+# ============================================================================
+
+RULE_MEANING.update({
+    "DOM1": "file should be moved into its detected domain folder",
+    "DOM2": "file is inside the wrong domain folder",
+    "DOM3": "surface folder used where domain folder is required",
+    "DOM6": "new domain candidate auto-detected",
+    "DOM7": "unknown or non-canonical domain folder",
+    "DOM8": "correctly placed domain files",
+})
+
+HOTLIST_RULES.update({
+    "DOM1",
+    "DOM2",
+    "DOM3",
+    "DOM7",
+})
+
+# Allow generated audit reports at repo root without F9 noise.
+DEFAULT_ALLOW_ROOT_MD.update({
+    "DATABASE_AUDIT_REPORT.md",
+    "DESIGN_AUDIT_REPORT.md",
+    "ARCHITECTURE_AUDIT_REPORT.md",
+    "PROJECTSCAFFOLDING.md",
+    "Features_List.md",
+})
+
+DP_DOMAIN_LAYERS = [
+    "services",
+    "models",
+    "providers",
+    "events",
+    "jobs",
+    "controllers",
+]
+
+DP_SKIP_PARTS = {
+    "tests",
+    "test",
+    "scripts",
+    "alembic",
+    "data",
+    "monitoring",
+    "docs",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "__pycache__",
+    "static",
+    "templates",
+    "e2e",
+    "__tests__",
+}
+
+# Canonical ZOZI bounded-context domains.
+# These are defaults. Later they can be moved into governance.yaml.
+DP_DOMAIN_KEYWORDS = {
+    "finance": {"finance","financial","ledger","sub_ledger","general_ledger","journal","invoice","invoices","tax","vat","commission","billing","accounting","refund_posting","posting","period_close","credit_control","ap","ar","payments","payment",},
+    "treasury": {"treasury","cash","bank","payout","payouts","settlement","settlements","reconciliation","gateway_reconciliation","payment_engine","payment_orchestrator","auto_payout","payout_batch",},
+    "orders": {"order","orders","checkout","cart","purchase","purchases","return","returns","dispute","disputes","refund","refunds","fulfillment",},
+    "catalog": {"catalog","product","products","category","categories","variant","variants","filter","filters","inventory","stock","search","moderation","verification",},
+    "commerce": {"commerce","promotion","promotions","coupon","coupons","discount","discounts","flash_sale","wishlist","referral","reviews","loyalty",},
+    "supplier": {"supplier","suppliers","vendor","vendors","onboarding","kyc","badge","storefront",},
+    "customer": {"customer","customers","address","addresses","point","points","profile",},
+    "logistics": {"logistics","shipping","shipment","shipments","dispatch","delivery","carrier","fleet","route","routes","pod","tracking","parcel",},
+    "communication": {"communication","comms","comm","chat","email","sms","push","notification","notifications","ticket","tickets","message","messages","video","meeting","websocket","translation",},
+    "hr": {"hr","employee","employees","attendance","shift","shifts","leave","coi","lms","performance","succession","travel","hse","dei","offboarding","roster","handover",},
+    "ai": {"ai","ml","embedding","embeddings","ocr","vision","bg_removal","chatbot","voice","recommendation","research","automation","variant_config",},
+    "audit": {"audit","worm","audit_log","audit_trail","permission_audit","communication_audit","auditor",},
+    "security": {"security","auth","authentication","authorization","permission","permissions","rbac","iam","mfa","otp","fraud","risk","blacklist","device_binding","csrf",},
+    "core": {"core","user","users","role","roles","session","device","identity","preferences","banner","banners","settings","platform","approval_matrix","approval","workflow",},
+    "country": {"country","countries","city","cities","cross_border","localization","currency","country_detection","country_research",},
+    "media": {"media","asset","assets","image","images","upload","uploads","file","files","storage",},
+    "analytics": {"analytics","snapshot","snapshots","kpi","mv","report","reports","metrics","insights",},
+    "configuration": {"configuration","config","feature_flag","feature","flag","toggles","rules",},
+}
+
+DP_ALIAS_TO_DOMAIN = {}
+for _dom, _aliases in DP_DOMAIN_KEYWORDS.items():
+    DP_ALIAS_TO_DOMAIN[_dom.lower()] = _dom
+    for _alias in _aliases:
+        DP_ALIAS_TO_DOMAIN[_alias.lower()] = _dom
+
+# Generic tokens that must NEVER become domains.
+DP_STOP_TOKENS = {"service","services","controller","controllers","router","routers","model","models","provider","providers","event","events","job","jobs",
+                  "write","read","create","update","delete","get","list","add","edit","remove","process","processor","handler","manager",
+                  "management","util","utils","helper","helpers","common","shared","base","main","app","module","package","lib","src",
+                  "backend","frontend","zozi","tmp","temp","test","tests","testing","debug","scratch","old","new","copy","backup","final",
+                  "wip","legacy","engine","scheduler","script","scripts","task","tasks","worker","workers","middleware","dependencies","tools","data",
+                  "docs","monitoring","alembic","db","web","mobile","ui","component","components","page","pages","hook","hooks","store","stores","type",
+                  "types","schema","schemas","mixin","mixins","init","index",
+                }
+
+
+def dp_normalize_domain(token: str | None) -> str | None:
+    if not token:
+        return None
+
+    t = str(token).lower()
+    return DP_ALIAS_TO_DOMAIN.get(t, t)
+
+
+def dp_stop_tokens(eff: dict) -> set[str]:
+    stop = set(DP_STOP_TOKENS)
+
+    # Surface names are not domains.
+    stop |= {
+        str(x).lower()
+        for x in eff.get("surface_names", set())
+    }
+
+    # Existing feature stop names from the auditor config.
+    stop |= {
+        str(x).lower()
+        for x in eff.get("feature_stop_names", set())
+    }
+
+    return {x for x in stop if x}
+
+
+def dp_tokenize(name: str, eff: dict | None = None) -> set[str]:
+    """
+    Tokenize file/class/import/route names into meaningful lowercase tokens.
+    """
+    eff = eff or {}
+    stop = dp_stop_tokens(eff)
+
+    raw = str(name)
+
+    # CamelCase -> snake_case
+    raw = re.sub(r"(?<!^)(?=[A-Z])", "_", raw)
+
+    # Replace punctuation/path separators with underscores
+    raw = re.sub(r"[^A-Za-z0-9]+", "_", raw)
+
+    tokens = {
+        t.lower()
+        for t in raw.split("_")
+        if t
+    }
+
+    return {
+        t
+        for t in tokens
+        if len(t) > 2 and t not in stop
+    }
+
+
+def dp_route_tokens(text: str) -> set[str]:
+    """
+    Extract route/path tokens from FastAPI route definitions.
+    """
+    if not text:
+        return set()
+
+    tokens: set[str] = set()
+
+    # APIRouter(prefix="/admin/finance")
+    for m in re.finditer(
+        r"APIRouter\([^)]*prefix\s*=\s*['\"]([^'\"]+)['\"]",
+        text,
+        re.I,
+    ):
+        # Use empty eff here because route tokens should keep surface tokens
+        # like admin/supplier/customer/public/webhooks.
+        tokens.update(dp_tokenize(m.group(1), {}))
+
+    # @router.get("/admin/treasury/payouts")
+    for m in re.finditer(
+        r"@\w+\.(?:get|post|put|patch|delete|options|head|websocket)\(\s*['\"]([^'\"]+)['\"]",
+        text,
+        re.I,
+    ):
+        tokens.update(dp_tokenize(m.group(1), {}))
+
+    # tags=["Admin", "Treasury"]
+    for m in re.finditer(r"tags\s*=\s*\[([^\]]*)\]", text, re.I):
+        tag_block = m.group(1)
+        for tag in re.findall(r"['\"]([^'\"]+)['\"]", tag_block):
+            tokens.update(dp_tokenize(tag, {}))
+
+    return tokens
+
+
+def dp_extract_signals(f: Path, text: str, eff: dict) -> dict[str, float]:
+    """
+    Extract domain signals from a Python file.
+
+    Signal weights:
+      filename   = 6
+      class name = 3
+      imports    = 4
+      table name = 8
+      routes     = 4
+    """
+    signals: dict[str, float] = defaultdict(float)
+
+    def add_tokens(tokens: set[str], weight: float) -> None:
+        for token in tokens:
+            signals[token] += weight
+
+    # Filename is a strong signal.
+    add_tokens(dp_tokenize(f.stem, eff), 6.0)
+
+    tree = None
+    try:
+        tree = ast.parse(text)
+    except Exception:
+        tree = None
+
+    if tree is not None:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                add_tokens(dp_tokenize(node.name, eff), 3.0)
+
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    add_tokens(dp_tokenize(alias.name.replace(".", "_"), eff), 4.0)
+
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    add_tokens(dp_tokenize(node.module.replace(".", "_"), eff), 4.0)
+
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if (
+                        isinstance(target, ast.Name)
+                        and target.id == "__tablename__"
+                        and isinstance(node.value, ast.Constant)
+                        and isinstance(node.value.value, str)
+                    ):
+                        add_tokens(dp_tokenize(str(node.value.value), eff), 8.0)
+
+    # Route paths/prefixes/tags.
+    add_tokens(dp_route_tokens(text), 4.0)
+
+    return dict(signals)
+
+
+def dp_build_candidate_domains(backend: Path, eff: dict) -> set[str]:
+    """
+    Detect possible new domains from repeated flat-file prefixes.
+
+    Example:
+      loyalty_service.py
+      loyalty_engine.py
+      loyalty_jobs.py
+
+    can become candidate domain: loyalty
+
+    But generic words like write/event/service must not become domains.
+    """
+    first_counts: dict[str, set[str]] = defaultdict(set)
+    stop = dp_stop_tokens(eff)
+
+    for layer in DP_DOMAIN_LAYERS:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            flat_files = sorted(layer_dir.glob("*.py"))
+        except OSError:
+            flat_files = []
+
+        for f in flat_files:
+            if f.name == "__init__.py":
+                continue
+
+            stem = f.stem.lower()
+            first = stem.split("_", 1)[0]
+
+            if not first:
+                continue
+
+            if first in stop:
+                continue
+
+            if first in DP_ALIAS_TO_DOMAIN:
+                continue
+
+            if len(first) < 4:
+                continue
+
+            first_counts[first].add(f.name)
+
+    candidates = {
+        token
+        for token, files in first_counts.items()
+        if len(files) >= 3
+    }
+
+    return candidates
+
+
+def dp_known_domains(repo: Path, eff: dict, reg, candidates: set[str]) -> set[str]:
+    """
+    Build the set of known canonical domains.
+    """
+    known: set[str] = set(DP_DOMAIN_KEYWORDS.keys())
+
+    # Domains already discovered by the main auditor.
+    try:
+        known |= {
+            dp_normalize_domain(d)
+            for d in getattr(reg, "domains", set())
+        }
+    except Exception:
+        pass
+
+    # Existing domain folders.
+    backend = repo / "backend"
+    stop = dp_stop_tokens(eff)
+
+    for layer in DP_DOMAIN_LAYERS:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            entries = list(layer_dir.iterdir())
+        except OSError:
+            continue
+
+        for p in entries:
+            if not p.is_dir():
+                continue
+
+            name = p.name.lower()
+
+            if name in DP_SKIP_PARTS:
+                continue
+
+            if name in stop:
+                continue
+
+            normalized = dp_normalize_domain(name)
+            if normalized:
+                known.add(normalized)
+
+    # New candidates.
+    known |= candidates
+
+    known.discard(None)
+    return known
+
+
+def dp_infer_domain(
+    signals: dict[str, float],
+    known_domains: set[str],
+    eff: dict,
+) -> tuple[str | None, float, list[str]]:
+    """
+    Infer the best domain from signals.
+    """
+    scores: dict[str, float] = defaultdict(float)
+    reasons: dict[str, list[str]] = defaultdict(list)
+
+    for token, weight in signals.items():
+        canonical = DP_ALIAS_TO_DOMAIN.get(token)
+
+        if canonical:
+            scores[canonical] += weight
+            reasons[canonical].append(token)
+
+        elif token in known_domains:
+            scores[token] += float(weight) * 0.9
+            reasons[token].append(token)
+
+    if not scores:
+        return None, 0.0, []
+
+    best = max(scores.items(), key=lambda kv: kv[1])[0]
+    best_score = scores[best]
+
+    sorted_scores = sorted(scores.values(), reverse=True)
+    second_score = sorted_scores[1] if len(sorted_scores) > 1 else 0.0
+
+    if best_score < 4.0:
+        return None, 0.0, []
+
+    confidence = best_score / (best_score + second_score + 1.0)
+
+    reason_tokens = sorted(set(reasons.get(best, [])))[:6]
+
+    return best, round(confidence, 3), reason_tokens
+
+
+def dp_infer_router_target(
+    f: Path,
+    text: str,
+    inferred_domain: str | None,
+    confidence: float,
+    eff: dict,
+) -> tuple[str | None, str]:
+    """
+    Infer where a router file should live.
+
+    Priority:
+      1. filename surface prefix: admin_finance.py -> admin
+      2. route prefix/path/tag surface: prefix="/admin/..." -> admin
+      3. inferred domain if confident
+      4. internal
+    """
+    low = f.stem.lower()
+
+    surfaces = {
+        str(x).lower()
+        for x in eff.get("surface_names", set())
+    }
+
+    if not surfaces:
+        surfaces = {
+            "admin",
+            "supplier",
+            "customer",
+            "public",
+            "webhooks",
+            "internal",
+        }
+
+    # Filename surface prefix.
+    for surface in sorted(surfaces):
+        if low == surface or low.startswith(f"{surface}_"):
+            return surface, "surface-filename"
+
+    # Route/path/tag surface.
+    route_tokens = dp_route_tokens(text)
+
+    for surface in sorted(surfaces):
+        if surface in route_tokens:
+            return surface, "surface-route"
+
+    # Domain-based router grouping if confident.
+    if inferred_domain and confidence >= 0.55 and inferred_domain not in surfaces:
+        return inferred_domain, "domain"
+
+    # Safe default.
+    return "internal", "default-surface"
+
+
+def dp_check_unknown_folders(
+    repo: Path,
+    rep: Report,
+    eff: dict,
+    known_domains: set[str],
+) -> None:
+    """
+    Detect unknown/generic/non-canonical folders inside domain layers.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    surfaces = {
+        str(x).lower()
+        for x in eff.get("surface_names", set())
+    }
+
+    stop = dp_stop_tokens(eff)
+
+    for layer in DP_DOMAIN_LAYERS:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            entries = sorted(layer_dir.iterdir())
+        except OSError:
+            continue
+
+        for p in entries:
+            if not p.is_dir():
+                continue
+
+            name = p.name.lower()
+
+            if name in DP_SKIP_PARTS:
+                continue
+
+            if name.startswith("."):
+                continue
+
+            # Surface folders are wrong inside domain layers.
+            if name in surfaces:
+                rep.add(
+                    YEL,
+                    "DOM3",
+                    layer,
+                    rel(p, repo),
+                    f"surface folder '{name}' inside domain layer {layer}/",
+                    intended=(
+                        f"surface folders belong in routers/{name}/; "
+                        f"{layer}/ must be grouped by domain"
+                    ),
+                )
+                continue
+
+            canonical = dp_normalize_domain(name)
+
+            # Already canonical/known.
+            if canonical in known_domains or canonical in DP_DOMAIN_KEYWORDS:
+                continue
+
+            # Generic folder like write/, event/, service/, legacy/.
+            if name in stop:
+                rep.add(
+                    YEL,
+                    "DOM7",
+                    layer,
+                    rel(p, repo),
+                    f"generic folder '{name}/' is not a valid domain folder",
+                    intended=(
+                        "move its files into a real domain folder "
+                        "(finance/orders/catalog/supplier/logistics/communication/...)"
+                    ),
+                )
+                continue
+
+            # Unknown folder.
+            rep.add(
+                YEL,
+                "DOM7",
+                layer,
+                rel(p, repo),
+                f"unknown domain folder '{name}/'",
+                intended=(
+                    f"if '{name}' is a real bounded context, add it to governance taxonomy; "
+                    "otherwise move its files into the nearest canonical domain"
+                ),
+            )
+
+
+def generate_ai_placement_contract() -> str:
+    """
+    Generate a prescriptive placement contract for AI agents.
+    This tells AI where to put NEW files before it creates them.
+    """
+    lines = [
+        "",
+        "## AI File Placement Contract",
+        "",
+        "**Rule for AI:** Before creating or moving any backend file, use this contract.",
+        "",
+        "### Layer rules",
+        "",
+        "| Layer | Grouping axis | Correct examples |",
+        "|---|---|---|",
+        "| `backend/routers/` | Surface | `routers/admin/`, `routers/supplier/`, `routers/customer/`, `routers/public/`, `routers/webhooks/`, `routers/internal/` |",
+        "| `backend/controllers/` | Domain | `controllers/finance/`, `controllers/orders/`, `controllers/catalog/` |",
+        "| `backend/services/` | Domain | `services/finance/`, `services/treasury/`, `services/orders/` |",
+        "| `backend/models/` | Domain | `models/finance/`, `models/orders/`, `models/catalog/` |",
+        "| `backend/providers/` | Domain/adapter | `providers/ai/`, `providers/media/`, `providers/logistics/` |",
+        "| `backend/events/` | Domain | `events/orders/`, `events/finance/` |",
+        "| `backend/jobs/` | Domain | `jobs/finance/`, `jobs/ai/` |",
+        "",
+        "### Forbidden generic folders",
+        "",
+        "Do not create folders like:",
+        "",
+        "```text",
+        "backend/services/write/",
+        "backend/services/event/",
+        "backend/services/service/",
+        "backend/services/legacy/",
+        "backend/services/common/",
+        "backend/controllers/admin/",
+        "backend/models/misc/",
+        "```",
+        "",
+        "### Domain keyword routing",
+        "",
+        "| Domain | Put files here | Keywords |",
+        "|---|---|---|",
+    ]
+
+    for domain in sorted(DP_DOMAIN_KEYWORDS.keys()):
+        aliases = sorted(DP_DOMAIN_KEYWORDS[domain])
+        examples = ", ".join(aliases[:12])
+        lines.append(
+            f"| `{domain}` | `backend/services/{domain}/`, `backend/models/{domain}/`, `backend/controllers/{domain}/` | {examples} |"
+        )
+
+    lines.extend([
+        "",
+        "### If domain is unclear",
+        "",
+        "If a file does not clearly belong to a domain:",
+        "",
+        "```text",
+        "backend/_triage/<file>.py",
+        "```",
+        "",
+        "Then ask for a domain decision before merging.",
+        "",
+    ])
+
+    return "\n".join(lines)
+
+
+# Inject the AI placement contract into the intended-tree/report output.
+try:
+    _ORIGINAL_RENDER_INTENDED_TREE = render_intended_tree
+
+    def render_intended_tree() -> str:
+        return (
+            _ORIGINAL_RENDER_INTENDED_TREE()
+            + "\n"
+            + generate_ai_placement_contract()
+        )
+
+except Exception:
+    pass
+
+
+# Override the older move-suggestion engine with the corrected one.
+def check_move_suggestions(
+    repo: Path,
+    rep: Report,
+    eff: dict,
+    graph,
+    reg,
+) -> list[dict]:
+    """
+    Corrected file placement engine.
+
+    It suggests:
+      - flat file -> domain folder
+      - wrong domain folder -> correct domain folder
+      - router file -> surface/domain folder
+      - generic/unknown folder -> cleanup
+      - correctly placed files -> keep summary
+    """
+    backend = repo / "backend"
+    moves: list[dict] = []
+
+    if not backend.exists():
+        return moves
+
+    candidates = dp_build_candidate_domains(backend, eff)
+    known_domains = dp_known_domains(repo, eff, reg, candidates)
+
+    # Report limited new-domain candidates.
+    for cand in sorted(candidates)[:20]:
+        rep.add(
+            GRN,
+            "DOM6",
+            "backend",
+            f"backend/services|models/{cand}/",
+            f"new domain candidate auto-detected: '{cand}'",
+            intended=(
+                "if this is a real bounded context, create the domain folder; "
+                "otherwise move related files into the nearest canonical domain"
+            ),
+        )
+
+    correct_count = 0
+    rename_folders: set[tuple[str, str, str]] = set()
+
+    group_files: dict[tuple[str, str, str], list[str]] = defaultdict(list)
+    group_reasons: dict[tuple[str, str, str], list[str]] = {}
+
+    scan_layers = DP_DOMAIN_LAYERS + ["routers"]
+
+    for layer in scan_layers:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            files = sorted(layer_dir.rglob("*.py"))
+        except OSError:
+            files = []
+
+        for f in files:
+            if f.name == "__init__.py":
+                continue
+
+            try:
+                rel_backend_parts = [p.lower() for p in f.relative_to(backend).parts]
+            except ValueError:
+                continue
+
+            if any(x in DP_SKIP_PARTS for x in rel_backend_parts):
+                continue
+
+            try:
+                rel_layer_parts = f.relative_to(layer_dir).parts
+            except ValueError:
+                continue
+
+            current_folder = rel_layer_parts[0].lower() if len(rel_layer_parts) > 1 else None
+
+            text = read_text(f) or ""
+            signals = dp_extract_signals(f, text, eff)
+
+            inferred_domain, confidence, reasons = dp_infer_domain(
+                signals,
+                known_domains,
+                eff,
+            )
+
+            if layer == "routers":
+                target_folder, inference_kind = dp_infer_router_target(
+                    f,
+                    text,
+                    inferred_domain,
+                    confidence,
+                    eff,
+                )
+
+                if not target_folder:
+                    continue
+
+            else:
+                if not inferred_domain:
+                    continue
+
+                if current_folder is None and confidence < 0.50:
+                    continue
+
+                if current_folder is not None and confidence < 0.65:
+                    continue
+
+                target_folder = inferred_domain
+                inference_kind = "domain"
+
+            current_norm = dp_normalize_domain(current_folder) if current_folder else None
+
+            # Correct placement.
+            if current_folder and current_norm == target_folder:
+                if current_folder != target_folder:
+                    rename_folders.add((layer, current_folder, target_folder))
+
+                correct_count += 1
+                continue
+
+            kind = "root_move" if current_folder is None else "wrong_folder"
+
+            target_path = f"backend/{layer}/{target_folder}/{f.name}"
+            source_path = rel(f, repo)
+
+            moves.append(
+                {
+                    "from": source_path,
+                    "to": target_path,
+                    "reason": inference_kind,
+                    "kind": kind,
+                    "domain": target_folder,
+                    "layer": layer,
+                    "confidence": confidence,
+                }
+            )
+
+            key = (layer, target_folder, kind)
+            group_files[key].append(source_path)
+
+            if key not in group_reasons:
+                group_reasons[key] = reasons
+
+    # Emit grouped findings.
+    for key in sorted(group_files.keys()):
+        layer, target_folder, kind = key
+        files = sorted(group_files[key])
+        reasons = group_reasons.get(key, [])
+
+        reason_text = ", ".join(reasons[:3]) if reasons else "name/content signals"
+
+        if kind == "root_move" and layer == "routers":
+            code = "MV3"
+            message = (
+                f"{len(files)} router file(s) should be grouped under "
+                f"backend/routers/{target_folder}/"
+            )
+
+        elif kind == "root_move":
+            code = "MV1"
+            message = (
+                f"{len(files)} '{target_folder}' domain file(s) at backend/{layer}/ root "
+                f"should be moved to backend/{layer}/{target_folder}/"
+            )
+
+        else:
+            code = "DOM2"
+            message = (
+                f"{len(files)} file(s) are in the wrong backend/{layer}/ sub-folder; "
+                f"detected domain: '{target_folder}'"
+            )
+
+        intended = (
+            f"mkdir -p backend/{layer}/{target_folder}; move: "
+            + ", ".join(files[:12])
+        )
+
+        if len(files) > 12:
+            intended += f" +{len(files) - 12} more"
+
+        intended += f" (detected from {reason_text})"
+
+        rep.add(
+            YEL,
+            code,
+            layer,
+            f"backend/{layer}/",
+            message,
+            intended=intended,
+        )
+
+    # Emit folder rename suggestions.
+    for layer, old_name, new_name in sorted(rename_folders):
+        rep.add(
+            YEL,
+            "DOM7",
+            layer,
+            f"backend/{layer}/{old_name}/",
+            f"non-canonical domain folder '{old_name}/' should be renamed to '{new_name}/'",
+            intended=f"git mv backend/{layer}/{old_name} backend/{layer}/{new_name}",
+        )
+
+        moves.append(
+            {
+                "from": f"backend/{layer}/{old_name}/",
+                "to": f"backend/{layer}/{new_name}/",
+                "reason": "rename-folder",
+                "kind": "folder_rename",
+                "domain": new_name,
+                "layer": layer,
+                "confidence": 1.0,
+            }
+        )
+
+    # Unknown/generic folder detection.
+    dp_check_unknown_folders(repo, rep, eff, known_domains)
+
+    # Positive placement summary.
+    if correct_count > 0:
+        rep.add(
+            GRN,
+            "DOM8",
+            "backend",
+            "backend/",
+            f"{correct_count} scanned file(s) are already in the correct domain folder",
+            intended="keep these placements; do not move them",
+        )
+
+    return moves
+
+# ============================================================================
+# v3.7 FINAL RENDER + MOVE ENGINE FIX PACK
+# ============================================================================
+# This block fixes:
+#   1. render_markdown duplicate sections
+#   2. generate_suggested_structure_mermaid argument mismatch
+#   3. main() duplicate domain placement calls
+#   4. old/new move engine conflict
+#   5. wrong generic domain suggestions like services/engine/, services/service/
+#   6. missing AI placement contract
+#   7. suggested Mermaid structure not using move-map placements
+# ============================================================================
+
+try:
+    DEFAULT_ALLOW_ROOT_MD.update({
+        "ARCHITECTURE_AUDIT_REPORT.md",
+        "DATABASE_AUDIT_REPORT.md",
+        "DESIGN_AUDIT_REPORT.md",
+        "REPO_LAYOUT_AUDIT_REPORT.md",
+    })
+except Exception:
+    pass
+
+try:
+    DEFAULT_FORBIDDEN_ROOT["backend"] = [
+        r".*\.(log|db|db-shm|db-wal)$",
+        r"^token\.tmp$",
+        r"^.*\.json$",
+        r"^(?!requirements\.txt$).*\.txt$",
+    ]
+except Exception:
+    pass
+
+RULE_MEANING.update({
+    "MV1": "flat layer file should be moved into its detected domain folder",
+    "MV2": "backend-root file should be moved into a proper package",
+    "MV3": "router file should be moved into surface/domain folder",
+    "DOM1": "file should be moved into its detected domain folder",
+    "DOM2": "file is inside the wrong domain folder",
+    "DOM3": "surface folder used where domain folder is required",
+    "DOM7": "unknown, generic, or non-canonical domain folder",
+    "DOM8": "correctly placed domain files",
+    "I4": "file move suggestions generated",
+})
+
+HOTLIST_RULES.update({
+    "MV1",
+    "MV2",
+    "MV3",
+    "DOM1",
+    "DOM2",
+    "DOM3",
+    "DOM7",
+})
+
+PLACEMENT_DOMAIN_LAYERS = [
+    "services",
+    "models",
+    "controllers",
+    "providers",
+    "events",
+    "jobs",
+]
+
+PLACEMENT_SKIP_PARTS = {
+    "tests",
+    "test",
+    "scripts",
+    "alembic",
+    "data",
+    "monitoring",
+    "docs",
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "__pycache__",
+    "static",
+    "templates",
+    "e2e",
+    "__tests__",
+    "tools",
+    ".hypothesis",
+}
+
+# Canonical ZOZI domain map.
+# This is deterministic and avoids fake domains like:
+#   engine/, service/, write/, event/, legacy/, image/, ghost/, fraud/
+PLACEMENT_DOMAIN_KEYWORDS = {
+    "finance": {
+        "finance",
+        "financial",
+        "ledger",
+        "sub_ledger",
+        "general_ledger",
+        "journal",
+        "invoice",
+        "invoices",
+        "tax",
+        "vat",
+        "commission",
+        "billing",
+        "accounting",
+        "posting",
+        "refund",
+        "ap",
+        "ar",
+        "payments",
+        "payment",
+        "credit_control",
+        "period_close",
+        "erp",
+    },
+
+    "treasury": {
+        "treasury",
+        "treasurer",
+        "cash",
+        "bank",
+        "payout",
+        "payouts",
+        "settlement",
+        "settlements",
+        "reconciliation",
+        "gateway_reconciliation",
+        "payment_engine",
+        "payment_orchestrator",
+        "auto_payout",
+        "payout_batch",
+        "cash_flow",
+    },
+    "orders": {
+        "order",
+        "orders",
+        "checkout",
+        "cart",
+        "purchase",
+        "purchases",
+        "return",
+        "returns",
+        "dispute",
+        "disputes",
+        "fulfillment",
+        "ghost",
+    },
+    "catalog": {
+        "catalog",
+        "product",
+        "products",
+        "category",
+        "categories",
+        "variant",
+        "variants",
+        "filter",
+        "filters",
+        "inventory",
+        "stock",
+        "search",
+        "moderation",
+        "verification",
+        "advanced_filter",
+        "advanced_search",
+    },
+    "commerce": {
+        "commerce",
+        "promotion",
+        "promotions",
+        "coupon",
+        "coupons",
+        "discount",
+        "discounts",
+        "flash_sale",
+        "wishlist",
+        "referral",
+        "reviews",
+        "loyalty",
+    },
+    "supplier": {
+        "supplier",
+        "suppliers",
+        "vendor",
+        "vendors",
+        "onboarding",
+        "kyc",
+        "badge",
+        "storefront",
+        "supplier_badge",
+        "supplier_health",
+    },
+    "customer": {
+        "customer",
+        "customers",
+        "address",
+        "addresses",
+        "point",
+        "points",
+        "profile",
+    },
+    "logistics": {
+        "logistics",
+        "shipping",
+        "shipment",
+        "shipments",
+        "dispatch",
+        "delivery",
+        "carrier",
+        "fleet",
+        "route",
+        "routes",
+        "pod",
+        "tracking",
+        "parcel",
+        "geo",
+        "geofence",
+        "geo_fence",
+        "map",
+        "live_tracking",
+    },
+    "communication": {
+        "communication",
+        "comms",
+        "comm",
+        "chat",
+        "email",
+        "sms",
+        "push",
+        "notification",
+        "notifications",
+        "ticket",
+        "tickets",
+        "message",
+        "messages",
+        "video",
+        "meeting",
+        "websocket",
+        "translation",
+        "websocket_manager",
+    },
+    "hr": {
+        "hr",
+        "employee",
+        "employees",
+        "attendance",
+        "shift",
+        "shifts",
+        "leave",
+        "coi",
+        "lms",
+        "performance",
+        "succession",
+        "travel",
+        "hse",
+        "dei",
+        "offboarding",
+        "roster",
+        "handover",
+        "payroll",
+        "background",
+        "shift_handover",
+        "shift_roster",
+        "shift_scheduling",
+    },
+    "ai": {
+        "ai",
+        "ml",
+        "embedding",
+        "embeddings",
+        "ocr",
+        "vision",
+        "bg",
+        "bg_removal",
+        "removal",
+        "chatbot",
+        "voice",
+        "recommendation",
+        "research",
+        "automation",
+        "variant_config",
+        "text",
+        "image_ai",
+    },
+    "audit": {
+        "audit",
+        "worm",
+        "audit_log",
+        "audit_trail",
+        "permission_audit",
+        "communication_audit",
+        "auditor",
+    },
+    "security": {
+        "security",
+        "auth",
+        "authentication",
+        "authorization",
+        "permission",
+        "permissions",
+        "rbac",
+        "iam",
+        "mfa",
+        "otp",
+        "fraud",
+        "risk",
+        "blacklist",
+        "device_binding",
+        "csrf",
+        "incident",
+        "watchdog",
+        "biometric",
+        "ghost",
+        "ghost_watchdog",
+    },
+    "core": {
+        "core",
+        "user",
+        "users",
+        "role",
+        "roles",
+        "session",
+        "device",
+        "identity",
+        "preferences",
+        "banner",
+        "banners",
+        "settings",
+        "platform",
+        "approval_matrix",
+        "approval",
+        "workflow",
+        "workflow_engine",
+        "customer_health",
+    },
+    "country": {
+        "country",
+        "countries",
+        "city",
+        "cities",
+        "cross_border",
+        "cross",
+        "border",
+        "localization",
+        "currency",
+        "country_detection",
+        "country_research",
+        "economics",
+        "cross_border_tracker",
+    },
+    "media": {
+        "media",
+        "asset",
+        "assets",
+        "image",
+        "images",
+        "upload",
+        "uploads",
+        "file",
+        "storage",
+        "free_image",
+    },
+    "analytics": {
+        "analytics",
+        "snapshot",
+        "snapshots",
+        "kpi",
+        "mv",
+        "report",
+        "reports",
+        "metrics",
+        "insights",
+        "dashboard",
+    },
+    "configuration": {
+        "configuration",
+        "config",
+        "feature_flag",
+        "feature",
+        "flag",
+        "toggles",
+        "rules",
+    },
+}
+
+PLACEMENT_ALIAS_TO_DOMAIN = {}
+for _dom, _aliases in PLACEMENT_DOMAIN_KEYWORDS.items():
+    PLACEMENT_ALIAS_TO_DOMAIN[_dom.lower()] = _dom
+    for _alias in _aliases:
+        PLACEMENT_ALIAS_TO_DOMAIN[_alias.lower()] = _dom
+
+# Additional ZOZI alias corrections.
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("finance", set()).update({
+    "commission",
+    "commission_write",
+    "financial_reports",
+    "financial_reporting",
+    "erp",
+    "finance_automation",
+    "finance_erp",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("communication", set()).update({
+    "chat",
+    "write_chat",
+    "fix_chat",
+    "comm",
+    "comms",
+    "websocket_manager",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("catalog", set()).update({
+    "verification",
+    "product_verification",
+    "moderation",
+    "product_moderation",
+    "advanced_filter",
+    "advanced_search",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("supplier", set()).update({
+    "supplier_profile",
+    "supplier_products",
+    "supplier_inventory",
+    "supplier_badge",
+    "supplier_health",
+    "supplier_onboarding",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("security", set()).update({
+    "ghost",
+    "ghost_watchdog",
+    "watchdog",
+    "fraud",
+    "incident",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("logistics", set()).update({
+    "geo",
+    "geo_fence",
+    "geofence",
+    "map",
+    "parcel",
+    "tracking",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("hr", set()).update({
+    "shift",
+    "shift_handover",
+    "shift_roster",
+    "shift_scheduling",
+    "background",
+    "background_check",
+})
+
+PLACEMENT_DOMAIN_KEYWORDS.setdefault("core", set()).update({
+    "workflow",
+    "workflow_engine",
+    "approval",
+    "approval_matrix",
+    "banner",
+    "banners",
+})
+
+# Rebuild alias map after adding corrections.
+def _rebuild_placement_aliases() -> None:
+    PLACEMENT_ALIAS_TO_DOMAIN.clear()
+
+    for domain_name, aliases in PLACEMENT_DOMAIN_KEYWORDS.items():
+        PLACEMENT_ALIAS_TO_DOMAIN[domain_name.lower()] = domain_name
+
+        for alias in aliases:
+            PLACEMENT_ALIAS_TO_DOMAIN[str(alias).lower()] = domain_name
+
+_rebuild_placement_aliases()
+
+PLACEMENT_STOP_TOKENS = {
+    "service",
+    "services",
+    "controller",
+    "controllers",
+    "router",
+    "routers",
+    "model",
+    "models",
+    "provider",
+    "providers",
+    "event",
+    "events",
+    "job",
+    "jobs",
+    "write",
+    "read",
+    "create",
+    "update",
+    "delete",
+    "get",
+    "list",
+    "add",
+    "edit",
+    "remove",
+    "process",
+    "processor",
+    "handler",
+    "manager",
+    "management",
+    "util",
+    "utils",
+    "helper",
+    "helpers",
+    "common",
+    "shared",
+    "base",
+    "main",
+    "app",
+    "module",
+    "package",
+    "lib",
+    "src",
+    "backend",
+    "frontend",
+    "zozi",
+    "tmp",
+    "temp",
+    "test",
+    "tests",
+    "testing",
+    "debug",
+    "scratch",
+    "old",
+    "new",
+    "copy",
+    "backup",
+    "final",
+    "wip",
+    "legacy",
+    "engine",
+    "scheduler",
+    "script",
+    "scripts",
+    "task",
+    "tasks",
+    "worker",
+    "workers",
+    "middleware",
+    "dependencies",
+    "tools",
+    "data",
+    "docs",
+    "monitoring",
+    "alembic",
+    "db",
+    "web",
+    "mobile",
+    "ui",
+    "component",
+    "components",
+    "page",
+    "pages",
+    "hook",
+    "hooks",
+    "store",
+    "stores",
+    "type",
+    "types",
+    "schema",
+    "schemas",
+    "mixin",
+    "mixins",
+    "init",
+    "index",
+    "system",
+    "api",
+    "async",
+    "seed",
+    "all",
+    "database",
+    "logging",
+    "logger",
+    "import",
+    "import_module",
+    "module",
+    "modules",
+    "datetime",
+    "uuid",
+    "sqlalchemy",
+    "json",
+    "os",
+    "sys",
+    "pathlib",
+    "typing",
+    "asyncio",
+    "boto3",
+    "future",
+    "exceptions",
+    "error",
+    "errors",
+    "exception",
+    "advanced",
+    "fix",
+    "script1",
+    "script2",
+    "temp",
+    "tmp",
+    "test",
+    "debug",
+    "old",
+    "new",
+    "copy",
+    "backup",
+    "final",
+    "wip",
+    "legacy",
+    "engine",
+    "manager",
+    "handler",
+    "helper",
+    "write",
+    "read",
+    "create",
+    "update",
+    "delete",
+    "get",
+    "list",
+    "add",
+    "edit",
+    "remove",
+    "process",
+    "processor",
+    "service",
+    "services",
+    "controller",
+    "controllers",
+    "router",
+    "routers",
+    "model",
+    "models",
+    "provider",
+    "providers",
+    "event",
+    "events",
+    "job",
+    "jobs",
+}
+
+PLACEMENT_FOLDER_STABLE_TOKENS = {
+    "products",
+    "product",
+    "inventory",
+    "profile",
+    "reviews",
+    "review",
+    "orders",
+    "order",
+    "payments",
+    "payment",
+    "documents",
+    "document",
+    "onboarding",
+    "reports",
+    "report",
+    "analytics",
+    "dashboard",
+    "settings",
+    "uploads",
+    "upload",
+    "labels",
+    "label",
+    "pricing",
+    "insights",
+}
+
+def _pl_normalize_domain(token: str | None) -> str | None:
+    if not token:
+        return None
+
+    t = str(token).lower()
+    return PLACEMENT_ALIAS_TO_DOMAIN.get(t, t)
+
+
+def _pl_tokenize(name: str, eff: dict, include_surfaces: bool = False) -> set[str]:
+    stop = set(PLACEMENT_STOP_TOKENS)
+
+    if not include_surfaces:
+        stop |= {
+            str(x).lower()
+            for x in eff.get("surface_names", set())
+        }
+
+    raw = str(name)
+
+    # CamelCase -> snake_case
+    raw = re.sub(r"(?<!^)(?=[A-Z])", "_", raw)
+
+    # Replace punctuation/path separators
+    raw = re.sub(r"[^A-Za-z0-9]+", "_", raw)
+
+    tokens = {
+        t.lower()
+        for t in raw.split("_")
+        if t
+    }
+
+    return {
+        t
+        for t in tokens
+        if len(t) > 2 and t not in stop
+    }
+
+
+def _pl_route_tokens(text: str) -> set[str]:
+    """
+    Extract route/path tokens from FastAPI route definitions.
+    Surface tokens are intentionally kept here.
+    """
+    if not text:
+        return set()
+
+    tokens: set[str] = set()
+
+    # APIRouter(prefix="/admin/finance")
+    for m in re.finditer(
+        r"APIRouter\([^)]*prefix\s*=\s*['\"]([^'\"]+)['\"]",
+        text,
+        re.I,
+    ):
+        tokens.update(_pl_tokenize(m.group(1), {}, include_surfaces=True))
+
+    # @router.get("/admin/treasury/payouts")
+    for m in re.finditer(
+        r"@\w+\.(?:get|post|put|patch|delete|options|head|websocket)\(\s*['\"]([^'\"]+)['\"]",
+        text,
+        re.I,
+    ):
+        tokens.update(_pl_tokenize(m.group(1), {}, include_surfaces=True))
+
+    # tags=["Admin", "Treasury"]
+    for m in re.finditer(r"tags\s*=\s*\[([^\]]*)\]", text, re.I):
+        tag_block = m.group(1)
+        for tag in re.findall(r"['\"]([^'\"]+)['\"]", tag_block):
+            tokens.update(_pl_tokenize(tag, {}, include_surfaces=True))
+
+    return tokens
+
+
+def _pl_extract_signals(f: Path, text: str, eff: dict) -> dict[str, float]:
+    signals: dict[str, float] = defaultdict(float)
+
+    def add_tokens(tokens: set[str], weight: float) -> None:
+        for token in tokens:
+            signals[token] += weight
+
+    # Filename is the strongest signal.
+    add_tokens(_pl_tokenize(f.stem, eff), 6.0)
+
+    tree = None
+    try:
+        tree = ast.parse(text)
+    except Exception:
+        tree = None
+
+    if tree is not None:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                add_tokens(_pl_tokenize(node.name, eff), 3.0)
+
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    add_tokens(
+                        _pl_tokenize(alias.name.replace(".", "_"), eff),
+                        4.0,
+                    )
+
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    add_tokens(
+                        _pl_tokenize(node.module.replace(".", "_"), eff),
+                        4.0,
+                    )
+
+            elif isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if (
+                        isinstance(target, ast.Name)
+                        and target.id == "__tablename__"
+                        and isinstance(node.value, ast.Constant)
+                        and isinstance(node.value.value, str)
+                    ):
+                        add_tokens(
+                            _pl_tokenize(str(node.value.value), eff),
+                            8.0,
+                        )
+
+    # Route tokens help routers and controllers.
+    for token in _pl_route_tokens(text):
+        signals[token] += 4.0
+
+    return dict(signals)
+
+
+def _pl_known_domains(repo: Path, eff: dict, reg) -> set[str]:
+    known: set[str] = set(PLACEMENT_DOMAIN_KEYWORDS.keys())
+
+    surfaces = {
+        str(x).lower()
+        for x in eff.get("surface_names", set())
+    }
+
+    stop = set(PLACEMENT_STOP_TOKENS) | surfaces
+
+    # Add safe discovered domains from registry.
+    try:
+        for d in getattr(reg, "domains", set()):
+            norm = _pl_normalize_domain(d)
+            if not norm or norm in stop:
+                continue
+
+            if norm in PLACEMENT_DOMAIN_KEYWORDS or len(norm) >= 4:
+                known.add(norm)
+    except Exception:
+        pass
+
+    # Add existing domain folders, normalized.
+    backend = repo / "backend"
+
+    for layer in PLACEMENT_DOMAIN_LAYERS:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            entries = list(layer_dir.iterdir())
+        except OSError:
+            continue
+
+        for p in entries:
+            if not p.is_dir():
+                continue
+
+            name = p.name.lower()
+
+            if name.startswith("."):
+                continue
+
+            if name in PLACEMENT_SKIP_PARTS:
+                continue
+
+            if name in stop:
+                continue
+
+            norm = _pl_normalize_domain(name)
+
+            if not norm:
+                continue
+
+            if norm in PLACEMENT_DOMAIN_KEYWORDS or len(norm) >= 4:
+                known.add(norm)
+
+    return known
+
+
+def _pl_infer_domain(
+    signals: dict[str, float],
+    known_domains: set[str],
+    eff: dict,
+) -> tuple[str | None, float, list[str]]:
+    scores: dict[str, float] = defaultdict(float)
+    reasons: dict[str, list[str]] = defaultdict(list)
+
+    for token, weight in signals.items():
+        canonical = PLACEMENT_ALIAS_TO_DOMAIN.get(token)
+
+        if canonical:
+            scores[canonical] += float(weight)
+            reasons[canonical].append(token)
+
+        elif token in known_domains:
+            scores[token] += float(weight) * 0.8
+            reasons[token].append(token)
+
+    if not scores:
+        return None, 0.0, []
+
+    best = max(scores.items(), key=lambda kv: kv[1])[0]
+    best_score = scores[best]
+
+    sorted_scores = sorted(scores.values(), reverse=True)
+    second_score = sorted_scores[1] if len(sorted_scores) > 1 else 0.0
+
+    if best_score < 5.0:
+        return None, 0.0, []
+
+    confidence = best_score / (best_score + second_score + 1.0)
+
+    reason_tokens = sorted(set(reasons.get(best, [])))[:6]
+
+    return best, round(confidence, 3), reason_tokens
+
+
+def _pl_infer_router_target(
+    f: Path,
+    text: str,
+    inferred_domain: str | None,
+    confidence: float,
+    eff: dict,
+) -> tuple[str, str]:
+    low = f.stem.lower()
+
+    surfaces = {
+        str(x).lower()
+        for x in eff.get("surface_names", set())
+    }
+
+    if not surfaces:
+        surfaces = {
+            "admin",
+            "supplier",
+            "customer",
+            "public",
+            "webhooks",
+            "internal",
+        }
+
+    # 1. Filename surface prefix: admin_finance.py -> admin
+    for surface in sorted(surfaces):
+        if low == surface or low.startswith(f"{surface}_"):
+            return surface, "surface-filename"
+
+    # 2. Route prefix/path/tag surface: prefix="/admin/..." -> admin
+    route_tokens = _pl_route_tokens(text)
+
+    for surface in sorted(surfaces):
+        if surface in route_tokens:
+            return surface, "surface-route"
+
+    # 3. Domain grouping if confident.
+    if inferred_domain and confidence >= 0.55:
+        return inferred_domain, "domain"
+
+    # 4. Safe default.
+    return "internal", "default-surface"
+
+
+def _pl_check_unknown_folders(
+    repo: Path,
+    rep: Report,
+    eff: dict,
+    known_domains: set[str],
+) -> None:
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    surfaces = {
+        str(x).lower()
+        for x in eff.get("surface_names", set())
+    }
+
+    stop = set(PLACEMENT_STOP_TOKENS) | surfaces
+
+    for layer in PLACEMENT_DOMAIN_LAYERS:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            entries = sorted(layer_dir.iterdir())
+        except OSError:
+            continue
+
+        for p in entries:
+            if not p.is_dir():
+                continue
+
+            name = p.name.lower()
+
+            if name.startswith("."):
+                continue
+
+            if name in PLACEMENT_SKIP_PARTS:
+                continue
+
+            # Surface folders are not allowed inside domain layers.
+            if name in surfaces:
+                rep.add(
+                    YEL,
+                    "DOM3",
+                    layer,
+                    rel(p, repo),
+                    f"surface folder '{name}/' inside domain layer {layer}/",
+                    intended=(
+                        f"surface folders belong in routers/{name}/; "
+                        f"{layer}/ must be grouped by domain"
+                    ),
+                )
+                continue
+
+            canonical = _pl_normalize_domain(name)
+
+            # Alias folder: chat/ -> communication/, payments/ -> finance/
+            if canonical and canonical != name and canonical in PLACEMENT_DOMAIN_KEYWORDS:
+                rep.add(
+                    YEL,
+                    "DOM7",
+                    layer,
+                    rel(p, repo),
+                    f"non-canonical domain folder '{name}/' should be '{canonical}/'",
+                    intended=f"git mv backend/{layer}/{name} backend/{layer}/{canonical}",
+                )
+                continue
+
+            # Known/canonical folder is okay.
+            if canonical in known_domains or canonical in PLACEMENT_DOMAIN_KEYWORDS:
+                continue
+
+            # Generic folder like write/, event/, service/, legacy/.
+            if name in stop:
+                rep.add(
+                    YEL,
+                    "DOM7",
+                    layer,
+                    rel(p, repo),
+                    f"generic folder '{name}/' is not a valid domain folder",
+                    intended=(
+                        "move its files into a real domain folder "
+                        "(finance/orders/catalog/supplier/logistics/communication/...)"
+                    ),
+                )
+                continue
+
+            # Unknown folder.
+            rep.add(
+                YEL,
+                "DOM7",
+                layer,
+                rel(p, repo),
+                f"unknown domain folder '{name}/'",
+                intended=(
+                    f"if '{name}' is a real bounded context, add it to governance taxonomy; "
+                    "otherwise move its files into the nearest canonical domain"
+                ),
+            )
+
+
+def check_move_suggestions(
+    repo: Path,
+    rep: Report,
+    eff: dict,
+    graph,
+    reg,
+) -> list[dict]:
+    """
+    Corrected deterministic move-suggestion engine.
+
+    It suggests:
+      - flat domain-layer file -> domain folder
+      - wrong domain folder -> correct domain folder
+      - router file -> surface/domain folder
+      - backend-root file -> proper package
+      - generic/unknown folder cleanup
+      - correctly placed files summary
+    """
+    backend = repo / "backend"
+    moves: list[dict] = []
+
+    if not backend.exists():
+        return moves
+
+    known_domains = _pl_known_domains(repo, eff, reg)
+
+    correct_count = 0
+    rename_folders: set[tuple[str, str, str]] = set()
+
+    group_files: dict[tuple[str, str, str], list[str]] = defaultdict(list)
+    group_reasons: dict[tuple[str, str, str], list[str]] = {}
+
+    scan_layers = PLACEMENT_DOMAIN_LAYERS + ["routers"]
+
+    for layer in scan_layers:
+        layer_dir = backend / layer
+        if not layer_dir.exists():
+            continue
+
+        try:
+            files = sorted(layer_dir.rglob("*.py"))
+        except OSError:
+            files = []
+
+        for f in files:
+            if f.name == "__init__.py":
+                continue
+
+            try:
+                rel_backend_parts = [p.lower() for p in f.relative_to(backend).parts]
+            except ValueError:
+                continue
+
+            if any(x in PLACEMENT_SKIP_PARTS for x in rel_backend_parts):
+                continue
+
+            try:
+                rel_layer_parts = f.relative_to(layer_dir).parts
+            except ValueError:
+                continue
+
+            current_folder = rel_layer_parts[0].lower() if len(rel_layer_parts) > 1 else None
+
+            text = read_text(f) or ""
+            signals = _pl_extract_signals(f, text, eff)
+
+            inferred_domain, confidence, reasons = _pl_infer_domain(
+                signals,
+                known_domains,
+                eff,
+            )
+
+            if layer == "routers":
+                target_folder, inference_kind = _pl_infer_router_target(
+                    f,
+                    text,
+                    inferred_domain,
+                    confidence,
+                    eff,
+                )
+            else:
+                if not inferred_domain:
+                    continue
+
+                if current_folder is None and confidence < 0.50:
+                    continue
+
+                if current_folder is not None and confidence < 0.65:
+                    continue
+
+                target_folder = inferred_domain
+                inference_kind = "domain"
+
+            current_norm = _pl_normalize_domain(current_folder) if current_folder else None
+
+            # Folder-stability override.
+            #
+            # Prevent false positives like:
+            #   controllers/supplier/products.py  -> controllers/catalog/
+            #   controllers/supplier/inventory.py -> controllers/catalog/
+            #   controllers/supplier/profile.py   -> controllers/customer/
+            #
+            # If the file is already inside a known domain folder and the
+            # filename uses a shared token, keep the current folder.
+            if (
+                layer != "routers"
+                and current_folder
+                and current_norm
+                and current_norm in known_domains
+                and current_norm != target_folder
+            ):
+                filename_tokens = _pl_tokenize(f.stem, eff)
+
+                # If filename explicitly contains the current domain token, keep it.
+                if current_norm in filename_tokens:
+                    target_folder = current_norm
+                    inference_kind = "folder-name-match"
+
+                # For controllers/providers, shared tokens stay in the current domain.
+                elif (
+                    layer in {"controllers", "providers"}
+                    and filename_tokens & PLACEMENT_FOLDER_STABLE_TOKENS
+                ):
+                    target_folder = current_norm
+                    inference_kind = "folder-stable"
+
+            # Correct placement.
+            if current_folder and current_norm == target_folder:
+                if current_folder != target_folder:
+                    rename_folders.add((layer, current_folder, target_folder))
+
+                correct_count += 1
+                continue
+
+            kind = "root_move" if current_folder is None else "wrong_folder"
+
+            source_path = rel(f, repo)
+            target_path = f"backend/{layer}/{target_folder}/{f.name}"
+
+            moves.append(
+                {
+                    "from": source_path,
+                    "to": target_path,
+                    "reason": inference_kind,
+                    "kind": kind,
+                    "domain": target_folder,
+                    "target_folder": target_folder,
+                    "layer": layer,
+                    "confidence": confidence,
+                }
+            )
+
+            key = (layer, target_folder, kind)
+            group_files[key].append(source_path)
+
+            if key not in group_reasons:
+                group_reasons[key] = reasons
+
+    # Backend-root file placement.
+    try:
+        root_py_files = sorted([p for p in backend.glob("*.py") if p.is_file()])
+    except OSError:
+        root_py_files = []
+
+    for f in root_py_files:
+        if f.name in eff.get("backend_root_allow", set()):
+            continue
+
+        source_path = rel(f, repo)
+        canonical = eff.get("canonical_home", {}).get(f.name)
+
+        if canonical:
+            canonical_path = Path(canonical)
+            target_folder = canonical_path.parent.as_posix()
+            target_path = f"backend/{canonical}"
+            reasons = ["canonical_home"]
+        else:
+            text = read_text(f) or ""
+            signals = _pl_extract_signals(f, text, eff)
+            inferred_domain, confidence, reasons = _pl_infer_domain(
+                signals,
+                known_domains,
+                eff,
+            )
+
+            if inferred_domain and confidence >= 0.50:
+                if inferred_domain in {"core", "configuration"}:
+                    target_folder = "utils"
+                    target_path = f"backend/utils/{f.name}"
+                else:
+                    target_folder = f"services/{inferred_domain}"
+                    target_path = f"backend/services/{inferred_domain}/{f.name}"
+            else:
+                target_folder = "utils"
+                target_path = f"backend/utils/{f.name}"
+
+        moves.append(
+            {
+                "from": source_path,
+                "to": target_path,
+                "reason": "backend-root",
+                "kind": "backend_root",
+                "domain": target_folder,
+                "target_folder": target_folder,
+                "layer": "backend",
+                "confidence": 1.0 if canonical else 0.6,
+            }
+        )
+
+        key = ("backend", target_folder, "backend_root")
+        group_files[key].append(source_path)
+
+        if key not in group_reasons:
+            group_reasons[key] = reasons
+
+    # Emit grouped findings.
+    for key in sorted(group_files.keys()):
+        layer, target_folder, kind = key
+        files = sorted(group_files[key])
+        reasons = group_reasons.get(key, [])
+
+        reason_text = ", ".join(reasons[:3]) if reasons else "name/content signals"
+
+        if kind == "root_move" and layer == "routers":
+            code = "MV3"
+            message = (
+                f"{len(files)} router file(s) should be grouped under "
+                f"backend/routers/{target_folder}/"
+            )
+
+        elif kind == "root_move":
+            code = "MV1"
+            message = (
+                f"{len(files)} '{target_folder}' domain file(s) at backend/{layer}/ root "
+                f"should be moved to backend/{layer}/{target_folder}/"
+            )
+
+        elif kind == "backend_root":
+            code = "MV2"
+            message = (
+                f"{len(files)} backend-root file(s) should be moved to backend/{target_folder}/"
+            )
+
+        else:
+            code = "DOM2"
+            message = (
+                f"{len(files)} file(s) are in the wrong backend/{layer}/ sub-folder; "
+                f"detected domain: '{target_folder}'"
+            )
+
+    # Emit grouped findings.
+    for key in sorted(group_files.keys()):
+        layer, target_folder, kind = key
+        files = sorted(group_files[key])
+        reasons = group_reasons.get(key, [])
+
+        reason_text = ", ".join(reasons[:3]) if reasons else "name/content signals"
+
+        if kind == "root_move" and layer == "routers":
+            code = "MV3"
+            message = (
+                f"{len(files)} router file(s) should be grouped under "
+                f"backend/routers/{target_folder}/"
+            )
+            mkdir_path = f"backend/routers/{target_folder}"
+
+        elif kind == "root_move":
+            code = "MV1"
+            message = (
+                f"{len(files)} '{target_folder}' domain file(s) at backend/{layer}/ root "
+                f"should be moved to backend/{layer}/{target_folder}/"
+            )
+            mkdir_path = f"backend/{layer}/{target_folder}"
+
+        elif kind == "backend_root":
+            code = "MV2"
+            message = (
+                f"{len(files)} backend-root file(s) should be moved to backend/{target_folder}/"
+            )
+            # FIX: target_folder already contains the full relative path (e.g. "db" or "utils")
+            # Do NOT prepend "backend/" again
+            mkdir_path = f"backend/{target_folder}"
+
+        else:
+            code = "DOM2"
+            message = (
+                f"{len(files)} file(s) are in the wrong backend/{layer}/ sub-folder; "
+                f"detected domain: '{target_folder}'"
+            )
+            mkdir_path = f"backend/{layer}/{target_folder}"
+
+        intended = f"mkdir -p {mkdir_path}; move: " + ", ".join(files[:12])
+
+        if len(files) > 12:
+            intended += f" +{len(files) - 12} more"
+
+        intended += f" (detected from {reason_text})"
+
+        rep.add(
+            YEL,
+            code,
+            layer,
+            f"backend/{layer}/" if layer != "backend" else "backend/",
+            message,
+            intended=intended,
+        )
+
+        if len(files) > 12:
+            intended += f" +{len(files) - 12} more"
+
+        intended += f" (detected from {reason_text})"
+
+        rep.add(
+            YEL,
+            code,
+            layer,
+            f"backend/{layer}/" if layer != "backend" else "backend/",
+            message,
+            intended=intended,
+        )
+
+    # Emit folder rename suggestions.
+    for layer, old_name, new_name in sorted(rename_folders):
+        rep.add(
+            YEL,
+            "DOM7",
+            layer,
+            f"backend/{layer}/{old_name}/",
+            f"non-canonical domain folder '{old_name}/' should be renamed to '{new_name}/'",
+            intended=f"git mv backend/{layer}/{old_name} backend/{layer}/{new_name}",
+        )
+
+        moves.append(
+            {
+                "from": f"backend/{layer}/{old_name}/",
+                "to": f"backend/{layer}/{new_name}/",
+                "reason": "rename-folder",
+                "kind": "folder_rename",
+                "domain": new_name,
+                "target_folder": new_name,
+                "layer": layer,
+                "confidence": 1.0,
+            }
+        )
+
+    # Unknown/generic folder detection.
+    _pl_check_unknown_folders(repo, rep, eff, known_domains)
+
+    # Positive placement summary.
+    if correct_count > 0:
+        rep.add(
+            GRN,
+            "DOM8",
+            "backend",
+            "backend/",
+            f"{correct_count} scanned file(s) are already in the correct domain folder",
+            intended="keep these placements; do not move them",
+        )
+
+    return moves
+
+
+def resolve_repo_output_path(repo: Path, value: str | None, default_name: str) -> Path:
+    if not value:
+        return repo / default_name
+
+    p = Path(value)
+
+    if p.is_absolute():
+        return p.resolve()
+
+    return (repo / p).resolve()
+
+
+def generate_current_structure_mermaid(repo: Path, eff: dict) -> str:
+    """Generate Mermaid graph of the CURRENT backend folder structure."""
+    backend = repo / "backend"
+    if not backend.exists():
+        return ""
+
+    ignore_dirs = {str(x).lower() for x in eff.get("ignore_dirs", set())}
+    # Always filter these from structure diagrams
+    extra_skip = {
+        ".hypothesis", "__pycache__", ".pytest_cache", ".mypy_cache",
+        ".ruff_cache", "node_modules", ".git", ".venv", "venv",
+        "provider_test", ".tox", "htmlcov",
+    }
+    skip = ignore_dirs | extra_skip
+
+    lines = ["```mermaid", "graph TD", '    ROOT["backend/"]']
+
+    try:
+        top_dirs = sorted(
+            [
+                d.name for d in backend.iterdir()
+                if d.is_dir()
+                and not d.name.startswith(".")
+                and d.name.lower() not in skip
+            ],
+            key=str.lower,
+        )
+    except OSError:
+        top_dirs = []
+
+    for td in top_dirs:
+        safe_id = td.replace("-", "_").replace(".", "_")
+        lines.append(f'    {safe_id}["{td}/"]')
+        lines.append(f"    ROOT --> {safe_id}")
+
+        try:
+            sub_dirs = sorted(
+                [
+                    sd.name for sd in (backend / td).iterdir()
+                    if sd.is_dir()
+                    and not sd.name.startswith(".")
+                    and sd.name != "__pycache__"
+                    and sd.name.lower() not in skip
+                ],
+                key=str.lower,
+            )[:12]
+        except OSError:
+            sub_dirs = []
+
+        for sd in sub_dirs:
+            sd_id = f"{safe_id}_{sd.replace('-', '_').replace('.', '_')}"
+            lines.append(f'    {sd_id}["{sd}/"]')
+            lines.append(f"    {safe_id} --> {sd_id}")
+
+        try:
+            flat_py = sum(
+                1 for f in (backend / td).iterdir()
+                if f.is_file() and f.suffix == ".py" and f.name != "__init__.py"
+            )
+        except OSError:
+            flat_py = 0
+
+        if flat_py > 0:
+            flat_id = f"{safe_id}_flat"
+            lines.append(f'    {flat_id}["{flat_py} flat .py files"]')
+            lines.append(f"    {safe_id} --> {flat_id}")
+
+    lines.append("```")
+    return "\n".join(lines)
+
+
+def generate_suggested_structure_mermaid(
+    repo: Path,
+    eff: dict,
+    placements: list[dict] | None = None,
+) -> str:
+    """Generate Mermaid graph of the SUGGESTED backend folder structure."""
+    backend = repo / "backend"
+    if not backend.exists():
+        return ""
+
+    placements = placements or []
+
+    ignore_dirs = {str(x).lower() for x in eff.get("ignore_dirs", set())}
+    extra_skip = {
+        ".hypothesis", "__pycache__", ".pytest_cache", ".mypy_cache",
+        ".ruff_cache", "node_modules", ".git", ".venv", "venv",
+        "provider_test", ".tox", "htmlcov",
+    }
+    skip = ignore_dirs | extra_skip
+
+    # Collect suggested targets from placements
+    suggested: dict[str, set[str]] = defaultdict(set)
+
+    for p in placements:
+        layer = p.get("layer", "")
+        target = p.get("target_folder") or p.get("domain", "")
+
+        if not layer or not target:
+            to_path = str(p.get("to", "")).replace("\\", "/")
+            parts = to_path.split("/")
+            if len(parts) >= 3 and parts[0] == "backend":
+                layer = parts[1]
+                target = parts[2]
+
+        if layer and target:
+            # Filter out generic/wrong targets
+            target_final = str(target).replace("\\", "/").split("/")[-1]
+            bad_targets = {
+                "service", "services", "controller", "controllers",
+                "engine", "write", "manager", "handler", "helper",
+                "common", "shared", "utils", "util", "legacy",
+                "advanced", "shift", "badge", "geo", "ghost",
+                "border", "ledger", "financial", "chat", "email",
+                "event", "config", "commission", "employee", "incident",
+                "management", "cross",
+            }
+            if target_final.lower() not in bad_targets:
+                suggested[layer].add(target_final)
+
+    lines = ["```mermaid", "graph TD", '    ROOT["backend/ (suggested)"]']
+
+    domain_like_layers = {
+        "services", "models", "controllers", "providers", "events", "jobs", "routers",
+    }
+
+    try:
+        top_dirs = sorted(
+            [
+                d.name for d in backend.iterdir()
+                if d.is_dir()
+                and not d.name.startswith(".")
+                and d.name.lower() not in skip
+            ],
+            key=str.lower,
+        )
+    except OSError:
+        top_dirs = []
+
+    # Add suggested layers that may not exist yet
+    for layer in sorted(suggested.keys()):
+        if layer not in top_dirs and layer in domain_like_layers:
+            top_dirs.append(layer)
+
+    top_dirs = sorted(top_dirs, key=str.lower)
+
+    for td in top_dirs:
+        safe_id = td.replace("-", "_").replace(".", "_")
+        lines.append(f'    {safe_id}["{td}/"]')
+        lines.append(f"    ROOT --> {safe_id}")
+
+        if td in domain_like_layers:
+            try:
+                existing_subs = sorted(
+                    [
+                        sd.name for sd in (backend / td).iterdir()
+                        if sd.is_dir()
+                        and not sd.name.startswith(".")
+                        and sd.name != "__pycache__"
+                        and sd.name.lower() not in skip
+                    ],
+                    key=str.lower,
+                )
+            except OSError:
+                existing_subs = []
+
+            suggested_subs = sorted(suggested.get(td, set()))
+            all_subs = sorted(set(existing_subs) | set(suggested_subs))
+
+            for sub in all_subs[:20]:
+                sub_id = f"{safe_id}_{sub.replace('-', '_').replace('.', '_')}"
+                is_new = sub in suggested_subs and sub not in existing_subs
+                label = f"{sub}/ ✨" if is_new else f"{sub}/"
+                lines.append(f'    {sub_id}["{label}"]')
+                lines.append(f"    {safe_id} --> {sub_id}")
+
+            try:
+                flat_py = sum(
+                    1 for f in (backend / td).iterdir()
+                    if f.is_file() and f.suffix == ".py" and f.name != "__init__.py"
+                )
+            except OSError:
+                flat_py = 0
+
+            placed_count = sum(
+                1 for p in placements
+                if p.get("layer") == td and p.get("kind") in {"root_move", "wrong_folder"}
+            )
+
+            remaining = max(0, flat_py - placed_count)
+
+            if remaining > 0:
+                remaining_id = f"{safe_id}_remaining"
+                lines.append(f'    {remaining_id}["{remaining} files still to place"]')
+                lines.append(f"    {safe_id} --> {remaining_id}")
+        else:
+            try:
+                sub_dirs = sorted(
+                    [
+                        sd.name for sd in (backend / td).iterdir()
+                        if sd.is_dir()
+                        and not sd.name.startswith(".")
+                        and sd.name != "__pycache__"
+                        and sd.name.lower() not in skip
+                    ],
+                    key=str.lower,
+                )[:10]
+            except OSError:
+                sub_dirs = []
+
+            for sd in sub_dirs:
+                sd_id = f"{safe_id}_{sd.replace('-', '_').replace('.', '_')}"
+                lines.append(f'    {sd_id}["{sd}/"]')
+                lines.append(f"    {safe_id} --> {sd_id}")
+
+    lines.append("```")
+    return "\n".join(lines)
+
+def _mermaid_safe_id(prefix: str, name: str, used_ids: set[str]) -> str:
+    """
+    Create a Mermaid-safe unique node ID.
+    """
+    clean = re.sub(r"[^A-Za-z0-9_]", "_", str(name))
+    clean = re.sub(r"_+", "_", clean).strip("_") or "node"
+
+    base = f"{prefix}_{clean}"
+    candidate = base
+    counter = 2
+
+    while candidate in used_ids:
+        candidate = f"{base}_{counter}"
+        counter += 1
+
+    used_ids.add(candidate)
+    return candidate
+
+
+def _mermaid_label(name: str, file_count: int = 0) -> str:
+    """
+    Create a Mermaid-safe quoted label.
+    """
+    label = str(name).replace('"', "'").replace("\n", " ")
+
+    if file_count > 0:
+        label += f" ({file_count} files)"
+
+    return label
+
+
+def generate_current_frontend_mermaid(repo: Path, eff: dict) -> str:
+    """
+    Generate Mermaid graph of the CURRENT frontend folder structure.
+
+    Shows:
+      - frontend workspaces
+      - important sub-folders
+      - deeper folders for src/app/components/lib/hooks/features
+      - direct source-file counts
+      - safe Mermaid IDs and labels
+    """
+    frontend = repo / "frontend"
+
+    if not frontend.exists():
+        return ""
+
+    ignore_dirs = {
+        str(x).lower()
+        for x in eff.get("ignore_dirs", set())
+    }
+
+    extra_skip = {
+        "node_modules",
+        ".next",
+        "dist",
+        "build",
+        "coverage",
+        ".expo",
+        ".turbo",
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "test-results",
+        "playwright-report",
+        "playwright-out",
+        "test-output",
+        "web-dist",
+        ".web-build-test",
+        "static-tmp",
+        "tmp",
+        "e2e",
+        ".hypothesis",
+        ".kilo",
+        ".kilocode",
+        "worktrees",
+        "__tests__",
+        "tests",
+        "test",
+        "__mocks__",
+        ".storybook",
+        ".vscode",
+        ".idea",
+        ".git",
+        ".venv",
+        "venv",
+    }
+
+    skip = ignore_dirs | extra_skip
+
+    raw_source_ext = eff.get(
+        "frontend_source_ext",
+        {".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"},
+    )
+
+    source_ext = set()
+
+    for ext in raw_source_ext:
+        ext = str(ext).lower()
+        if not ext.startswith("."):
+            ext = f".{ext}"
+        source_ext.add(ext)
+
+    def allowed_dir(p: Path) -> bool:
+        return (
+            p.is_dir()
+            and not p.name.startswith(".")
+            and p.name.lower() not in skip
+        )
+
+    def count_direct_source_files(d: Path) -> int:
+        try:
+            return sum(
+                1
+                for f in d.iterdir()
+                if f.is_file() and f.suffix.lower() in source_ext
+            )
+        except OSError:
+            return 0
+
+    used_ids: set[str] = set()
+
+    lines = [
+        "```mermaid",
+        "graph TD",
+    ]
+
+    root_id = _mermaid_safe_id("fe", "frontend", used_ids)
+    lines.append(f'    {root_id}["{_mermaid_label("frontend/")}"]')
+
+    # Optional: count flat source files directly under frontend/
+    root_flat = count_direct_source_files(frontend)
+    if root_flat > 0:
+        root_flat_id = _mermaid_safe_id(root_id, "flat_files", used_ids)
+        lines.append(
+            f'    {root_flat_id}["{_mermaid_label("flat source files", root_flat)}"]'
+        )
+        lines.append(f"    {root_id} --> {root_flat_id}")
+
+    try:
+        top_dirs = sorted(
+            [d.name for d in frontend.iterdir() if allowed_dir(d)],
+            key=str.lower,
+        )[:20]
+    except OSError:
+        top_dirs = []
+
+    deep_folder_names = {
+        "src",
+        "app",
+        "components",
+        "lib",
+        "hooks",
+        "features",
+        "pages",
+        "screens",
+        "services",
+        "store",
+        "stores",
+        "utils",
+        "types",
+        "styles",
+    }
+
+    for td in top_dirs:
+        td_path = frontend / td
+        td_id = _mermaid_safe_id("fe", td, used_ids)
+
+        td_file_count = count_direct_source_files(td_path)
+        td_label = _mermaid_label(f"{td}/", td_file_count)
+
+        lines.append(f'    {td_id}["{td_label}"]')
+        lines.append(f"    {root_id} --> {td_id}")
+
+        try:
+            sub_dirs = sorted(
+                [sd.name for sd in td_path.iterdir() if allowed_dir(sd)],
+                key=str.lower,
+            )[:12]
+        except OSError:
+            sub_dirs = []
+
+        for sd in sub_dirs:
+            sd_path = td_path / sd
+            sd_id = _mermaid_safe_id(td_id, sd, used_ids)
+
+            sd_file_count = count_direct_source_files(sd_path)
+            sd_label = _mermaid_label(f"{sd}/", sd_file_count)
+
+            lines.append(f'    {sd_id}["{sd_label}"]')
+            lines.append(f"    {td_id} --> {sd_id}")
+
+            # Show one more level for important source folders.
+            if sd in deep_folder_names:
+                try:
+                    deep_dirs = sorted(
+                        [dd.name for dd in sd_path.iterdir() if allowed_dir(dd)],
+                        key=str.lower,
+                    )[:10]
+                except OSError:
+                    deep_dirs = []
+
+                for dd in deep_dirs:
+                    dd_path = sd_path / dd
+                    dd_id = _mermaid_safe_id(sd_id, dd, used_ids)
+
+                    dd_file_count = count_direct_source_files(dd_path)
+                    dd_label = _mermaid_label(f"{dd}/", dd_file_count)
+
+                    lines.append(f'    {dd_id}["{dd_label}"]')
+                    lines.append(f"    {sd_id} --> {dd_id}")
+
+    lines.append("```")
+    return "\n".join(lines)
+
+def generate_suggested_frontend_mermaid(repo: Path, eff: dict) -> str:
+    """Generate Mermaid graph of the SUGGESTED frontend folder structure."""
+    frontend = repo / "frontend"
+    if not frontend.exists():
+        return ""
+
+    ignore_dirs = {str(x).lower() for x in eff.get("ignore_dirs", set())}
+    extra_skip = {
+        "node_modules", ".next", "dist", "build", "coverage",
+        ".expo", ".turbo", "__pycache__", ".pytest_cache",
+        "test-results", "playwright-report", "e2e", ".hypothesis",
+    }
+    skip = ignore_dirs | extra_skip
+
+    lines = ["```mermaid", "graph TD", '    ROOT["frontend/ (suggested)"]']
+
+    # Expected workspace structure
+    workspaces = sorted(eff.get("frontend_workspaces", {"web_app", "mobile_app", "shared"}))
+
+    for ws in workspaces:
+        ws_id = f"fe_{ws.replace('-', '_').replace('.', '_')}"
+        ws_path = frontend / ws
+
+        if ws_path.exists():
+            lines.append(f'    {ws_id}["{ws}/ ✅"]')
+        else:
+            lines.append(f'    {ws_id}["{ws}/ ⚠️ missing"]')
+
+        lines.append(f"    ROOT --> {ws_id}")
+
+        if ws == "web_app":
+            # Suggested web_app structure
+            web_dirs = [
+                "src/app/", "src/components/", "src/lib/",
+                "src/hooks/", "src/features/", "src/styles/",
+            ]
+            for wd in web_dirs:
+                wd_clean = wd.rstrip("/")
+                wd_id = f"{ws_id}_{wd_clean.replace('/', '_').replace('-', '_')}"
+                lines.append(f'    {wd_id}["{wd}"]')
+                lines.append(f"    {ws_id} --> {wd_id}")
+
+            # Show feature sub-folders if they exist
+            features_path = ws_path / "src" / "features"
+            if features_path.exists():
+                try:
+                    feature_dirs = sorted(
+                        [d.name for d in features_path.iterdir() if d.is_dir() and d.name.lower() not in skip],
+                        key=str.lower,
+                    )[:10]
+                except OSError:
+                    feature_dirs = []
+
+                features_id = f"{ws_id}_src_features"
+                for fd in feature_dirs:
+                    fd_id = f"{features_id}_{fd.replace('-', '_').replace('.', '_')}"
+                    lines.append(f'    {fd_id}["{fd}/"]')
+                    lines.append(f"    {features_id} --> {fd_id}")
+
+        elif ws == "mobile_app":
+            mobile_dirs = [
+                "app/", "components/", "lib/",
+                "hooks/", "features/", "assets/",
+            ]
+            for md in mobile_dirs:
+                md_clean = md.rstrip("/")
+                md_id = f"{ws_id}_{md_clean.replace('/', '_').replace('-', '_')}"
+                lines.append(f'    {md_id}["{md}"]')
+                lines.append(f"    {ws_id} --> {md_id}")
+
+        elif ws == "shared":
+            shared_dirs = ["src/components/", "src/lib/", "src/types/", "src/hooks/"]
+            for sd in shared_dirs:
+                sd_clean = sd.rstrip("/")
+                sd_id = f"{ws_id}_{sd_clean.replace('/', '_').replace('-', '_')}"
+                lines.append(f'    {sd_id}["{sd}"]')
+                lines.append(f"    {ws_id} --> {sd_id}")
+
+    lines.append("```")
+    return "\n".join(lines)
+
+def generate_ai_placement_contract() -> str:
+    lines = [
+        "## AI File Placement Contract",
+        "",
+        "**Rule for AI:** Before creating or moving any backend file, use this contract.",
+        "",
+        "### Layer rules",
+        "",
+        "| Layer | Grouping axis | Correct examples |",
+        "|---|---|---|",
+        "| `backend/routers/` | Surface | `routers/admin/`, `routers/supplier/`, `routers/customer/`, `routers/public/`, `routers/webhooks/`, `routers/internal/` |",
+        "| `backend/controllers/` | Domain | `controllers/finance/`, `controllers/orders/`, `controllers/catalog/` |",
+        "| `backend/services/` | Domain | `services/finance/`, `services/treasury/`, `services/orders/` |",
+        "| `backend/models/` | Domain | `models/finance/`, `models/orders/`, `models/catalog/` |",
+        "| `backend/providers/` | Domain/adapter | `providers/ai/`, `providers/media/`, `providers/logistics/` |",
+        "| `backend/events/` | Domain | `events/orders/`, `events/finance/` |",
+        "| `backend/jobs/` | Domain | `jobs/finance/`, `jobs/ai/` |",
+        "",
+        "### Forbidden generic folders",
+        "",
+        "Do not create folders like:",
+        "",
+        "```text",
+        "backend/services/write/",
+        "backend/services/event/",
+        "backend/services/service/",
+        "backend/services/legacy/",
+        "backend/services/common/",
+        "backend/services/engine/",
+        "backend/controllers/admin/",
+        "backend/models/misc/",
+        "```",
+        "",
+        "### Domain keyword routing",
+        "",
+        "| Domain | Put files here | Keywords |",
+        "|---|---|---|",
+    ]
+
+    for domain in sorted(PLACEMENT_DOMAIN_KEYWORDS.keys()):
+        aliases = sorted(PLACEMENT_DOMAIN_KEYWORDS[domain])
+        examples = ", ".join(aliases[:14])
+        lines.append(
+            f"| `{domain}` | `backend/services/{domain}/`, `backend/models/{domain}/`, `backend/controllers/{domain}/` | {examples} |"
+        )
+
+    lines.extend([
+        "",
+        "### If domain is unclear",
+        "",
+        "If a file does not clearly belong to a domain:",
+        "",
+        "```text",
+        "backend/_triage/<file>.py",
+        "```",
+        "",
+        "Then ask for a domain decision before merging.",
+        "",
+    ])
+
+    return "\n".join(lines)
+
+
+def render_markdown(
+    repo: Path,
+    rep: Report,
+    out: Path,
+    summary: dict,
+    placements: list[dict] | None = None,
+) -> None:
+    n_red = summary["red"]
+    n_yel = summary["yellow"]
+    n_grn = summary["green"]
+    debt = summary.get("debt_score", 0)
+
+    eff = _ACTIVE_EFF or {}
+
+    current_backend_mmd = generate_current_structure_mermaid(repo, eff)
+    suggested_backend_mmd = generate_suggested_structure_mermaid(repo, eff, placements or [])
+    current_frontend_mmd = generate_current_frontend_mermaid(repo, eff)
+    suggested_frontend_mmd = generate_suggested_frontend_mermaid(repo, eff)
+
+    L = [
+        "# Architecture Governance Audit Report (GENERATED — do not hand-edit)",
+        "",
+        f"**Repo:** `{repo}`  ",
+        f"**Result:** 🔴 {n_red} · 🟡 {n_yel} · 🟢 {n_grn}  ",
+        f"**Architecture Debt Score:** `{debt}`  ",
+        "**Ephemeral. Add to `.gitignore`. NOT an authoritative spec (those live in `documents/scope/`).**",
+        "",
+        "---",
+        "",
+        "## Current Backend Structure",
+        "",
+        current_backend_mmd,
+        "",
+        "## Suggested Backend Structure",
+        "",
+        suggested_backend_mmd,
+        "",
+        "---",
+        "",
+        "## Current Frontend Structure",
+        "",
+        current_frontend_mmd,
+        "",
+        "## Suggested Frontend Structure",
+        "",
+        suggested_frontend_mmd,
+        "",
+        "---",
+        "",
+        render_intended_tree(),
+        "",
+        generate_ai_placement_contract() if "generate_ai_placement_contract" in globals() else "",
+        "",
+        "## Scorecard",
+        "",
+        "| Code | Count | Sev | Meaning |",
+        "|---|---:|---|---|",
+    ]
+
+    for code in sorted(rep.counters):
+        sev = next((f.sev for f in rep.findings if f.code == code), GRN)
+        L.append(
+            f"| {code} | {rep.counters[code]} | {SEV_ICON[sev]} {sev} | {RULE_MEANING.get(code, '')} |"
+        )
+
+    hot = sorted(
+        [f for f in rep.findings if f.code in HOTLIST_RULES or f.sev == RED],
+        key=lambda f: (0 if f.sev == RED else 1, f.code),
+    )
+
+    L += [
+        "",
+        "## 🔥 Damage Hotlist (fix these first)",
+        "",
+        "| Sev | Rule | Domain | Location | Problem | Intended home / action |",
+        "|---|---|---|---|---|---|",
+    ]
+
+    for f in hot:
+        L.append(
+            f"| {SEV_ICON[f.sev]} | {f.code} | {f.domain} | `{f.loc()}` | {f.message} | {f.intended or '-'} |"
+        )
+
+    L += [
+        "",
+        "## Architecture Metrics",
+        "",
+        f"- architecture debt score: **{debt}**",
+        f"- modules: **{summary['modules']}**",
+        f"- dependency edges: **{summary['edges']}**",
+        f"- classes: **{summary['classes']}**",
+    ]
+
+    if summary.get("layer_counts"):
+        L.append(
+            "- layer counts: "
+            + ", ".join(f"`{k}={v}`" for k, v in sorted(summary["layer_counts"].items()))
+        )
+
+    if summary.get("top_fan_in"):
+        L += ["", "### Top fan-in", "", "| Module | Fan-in |", "|---|---:|"]
+        for module, count in summary["top_fan_in"]:
+            L.append(f"| `{module}` | {count} |")
+
+    if summary.get("top_fan_out"):
+        L += ["", "### Top fan-out", "", "| Module | Fan-out |", "|---|---:|"]
+        for module, count in summary["top_fan_out"]:
+            L.append(f"| `{module}` | {count} |")
+
+    if summary.get("frontend_metrics"):
+        L += [
+            "",
+            "### Frontend workspace metrics",
+            "",
+            "| Workspace | Source files | Dirs |",
+            "|---|---:|---:|",
+        ]
+        for ws, m in sorted(summary["frontend_metrics"].items()):
+            L.append(f"| `{ws}` | {m.get('source_files', 0)} | {m.get('dirs', 0)} |")
+
+    if summary.get("auto_discovery"):
+        ad = summary["auto_discovery"]
+        L += [
+            "",
+            "### Auto-discovery",
+            "",
+            f"- domains: **{ad.get('domains', 0)}**",
+            f"- features: **{ad.get('features', 0)}**",
+            f"- frontend features: **{ad.get('frontend_features', 0)}**",
+            f"- backend top dirs: **{ad.get('backend_top_dirs', 0)}**",
+            f"- learned domain edges: **{ad.get('domain_edges', 0)}**",
+        ]
+
+    by_dom: dict[str, list[Finding]] = defaultdict(list)
+
+    for f in rep.findings:
+        by_dom[f.domain].append(f)
+
+    for dom in ["repo", "backend", "database", "frontend", "security", "docs", "infra"]:
+        items = by_dom.get(dom, [])
+        if not items:
+            continue
+
+        L += ["", f"## Domain: {dom}", ""]
+
+        for f in items:
+            L.append(
+                f"- {SEV_ICON[f.sev]} **{f.code}** `{f.loc()}` — {f.message}"
+                + (f" → *{f.intended}*" if f.intended else "")
+            )
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(L) + "\n", encoding="utf-8")
+
+
+def collapse_noisy_findings(rep: Report) -> None:
+    """
+    Collapse high-volume line-level findings into one file-level finding.
+
+    This makes the report production-readable.
+
+    Example:
+      80 individual Q1 findings in one controller
+      becomes:
+      1 Q1 finding saying "80 DB read(s) in this file"
+    """
+    noisy_codes = {
+        "Q1",
+        "W1",
+        "W2",
+        "PERF2",
+        "QUAL1",
+        "QUAL4",
+    }
+
+    old_findings = rep.findings
+    kept: list[Finding] = []
+    grouped: dict[tuple, list[Finding]] = defaultdict(list)
+
+    for f in old_findings:
+        if f.code in noisy_codes:
+            key = (f.sev, f.code, f.domain, f.path, f.intended)
+            grouped[key].append(f)
+        else:
+            kept.append(f)
+
+    for key, items in grouped.items():
+        sev, code, domain, path, intended = key
+
+        lines = sorted({f.line for f in items if f.line is not None})
+        count = len(items)
+
+        if code == "Q1":
+            base_message = (
+                f"{count} DB read(s) via .query() in this file; "
+                "delegate reads to a service"
+            )
+
+        elif code == "W1":
+            base_message = (
+                f"{count} session write(s) in this file; "
+                "move writes into services/<domain>/"
+            )
+
+        elif code == "W2":
+            base_message = (
+                f"{count} misnamed service-helper write location(s) in this file; "
+                "relocate logic to services/"
+            )
+
+        elif code == "PERF2":
+            base_message = (
+                f"{count} possible DB query inside loop (N+1 risk) in this file; "
+                "batch queries / use joins / preload relationships"
+            )
+
+        elif code == "QUAL1":
+            base_message = (
+                f"{count} weak exception handling location(s) in this file; "
+                "log or re-raise instead of swallowing exceptions"
+            )
+
+        elif code == "QUAL4":
+            base_message = (
+                f"{count} print/debug output location(s) in this file; "
+                "use structured logging instead of print()"
+            )
+
+        else:
+            base_message = (
+                f"{count} {RULE_MEANING.get(code, code)} location(s) in this file"
+            )
+
+        if lines:
+            example_lines = ", ".join(str(x) for x in lines[:10])
+
+            if len(lines) > 10:
+                example_lines += f" +{len(lines) - 10} more"
+
+            message = f"{base_message} (lines: {example_lines})"
+        else:
+            message = base_message
+
+        kept.append(
+            Finding(
+                sev=sev,
+                code=code,
+                domain=domain,
+                path=path,
+                message=message,
+                intended=intended,
+                line=None,
+            )
+        )
+
+    rep.findings = kept
+
+    rep.counters = defaultdict(int)
+    for f in rep.findings:
+        rep.counters[f.code] += 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Read-only repo-wide ZOZI architecture governance auditor v3.5."
+        description="Read-only repo-wide ZOZI architecture governance auditor v3.7."
     )
 
     ap.add_argument("--root", default=None, help="repo root (default: auto-detect)")
-    ap.add_argument("--rules-dir", default=None, help="dir holding repo_structure.yaml + layer_rules.yaml + governance.yaml (default: documents/scope)",)
+    ap.add_argument(
+        "--rules-dir",
+        default=None,
+        help="dir holding repo_structure.yaml + layer_rules.yaml + governance.yaml",
+    )
     ap.add_argument("--out", default=None, help="markdown report path")
-    ap.add_argument("--json", default=None, help="write findings + summary JSON here (tooling/CI)")
-    ap.add_argument("--metrics-json", default=None, help="write module metrics JSON here")
-    ap.add_argument("--move-map", default=None, help="write file relocation suggestions JSON here")
+    ap.add_argument("--json", default=None, help="write findings + summary JSON")
+    ap.add_argument("--metrics-json", default=None, help="write module metrics JSON")
+    ap.add_argument("--move-map", default=None, help="write file relocation suggestions JSON")
     ap.add_argument("--no-write", action="store_true", help="do not write the .md report")
     ap.add_argument("--no-fail", action="store_true", help="always exit 0")
     ap.add_argument("--show-intended", action="store_true", help="also print the target tree")
     ap.add_argument("--trend-file", default=None, help="JSON file used for trend comparison")
-    ap.add_argument("--update-trend", action="store_true", help="overwrite the trend file with the current summary",)
-    ap.add_argument("--ci", action="store_true", help="CI mode: default JSON/metrics artifacts and trend file if not provided",)
-    ap.add_argument("--auto-policy", default=None, help="path to auto-discovery policy JSON (default: .governance/zozi_auto_policy.json)",)
-    ap.add_argument("--no-auto-policy", action="store_true", help="disable auto-discovery policy learning",)
-    ap.add_argument("--reset-auto-policy", action="store_true", help="delete existing auto-policy and create a fresh baseline",)
-    ap.add_argument("--no-registry", action="store_true", help="skip emitting architecture_registry.json / CODEOWNERS / mermaid",)
+    ap.add_argument(
+        "--update-trend",
+        action="store_true",
+        help="overwrite the trend file with the current summary",
+    )
+    ap.add_argument(
+        "--ci",
+        action="store_true",
+        help="CI mode: default JSON/metrics artifacts and trend file if not provided",
+    )
+    ap.add_argument(
+        "--auto-policy",
+        default=None,
+        help="path to auto-discovery policy JSON (default: .governance/zozi_auto_policy.json)",
+    )
+    ap.add_argument(
+        "--no-auto-policy",
+        action="store_true",
+        help="disable auto-discovery policy learning",
+    )
+    ap.add_argument(
+        "--reset-auto-policy",
+        action="store_true",
+        help="delete existing auto-policy and create a fresh baseline",
+    )
+    ap.add_argument(
+        "--no-registry",
+        action="store_true",
+        help="skip emitting architecture_registry.json / CODEOWNERS / mermaid",
+    )
+
     args = ap.parse_args()
 
     repo = find_repo(args.root)
+
     if not repo.is_dir():
         print(f"[FATAL] repo root not found: {repo}", file=sys.stderr)
         return 2
@@ -5831,22 +9983,62 @@ def main() -> int:
     if args.ci:
         if not args.json:
             args.json = str(repo / "out" / "governance" / "audit.json")
+
         if not args.metrics_json:
             args.metrics_json = str(repo / "out" / "governance" / "metrics.json")
+
         if not args.trend_file:
             args.trend_file = str(repo / ".governance" / "architecture_trend.json")
+
         if not args.move_map:
             args.move_map = str(repo / "out" / "governance" / "move_map.json")
 
-    eff = load_rules(repo, Path(args.rules_dir) if args.rules_dir else None)
+    try:
+        DEFAULT_ALLOW_ROOT_MD.update({
+            "ARCHITECTURE_AUDIT_REPORT.md",
+            "REPO_LAYOUT_AUDIT_REPORT.md",
+            "DATABASE_AUDIT_REPORT.md",
+            "DESIGN_AUDIT_REPORT.md",
+        })
+    except Exception:
+        pass
 
-    print(f"Scanning {repo} ...  (rules: {'YAML' if eff['from_yaml'] else 'embedded fallback'})")
+    eff = load_rules(repo, Path(args.rules_dir) if args.rules_dir else None)
+    ensure_required_ignore_dirs(eff)
+
+    global _ACTIVE_EFF, _ACTIVE_REG
+    _ACTIVE_EFF = eff
+
+    print(
+        f"Scanning {repo} ...  "
+        f"(rules: {'YAML' if eff['from_yaml'] else 'embedded fallback'})"
+    )
 
     rep = Report()
     graph = build_module_graph(repo, eff)
     reg = discover_features(repo, eff, graph)
 
+    _ACTIVE_REG = reg
+
+    # Single unified placement engine.
+    placement_suggestions: list[dict] = []
+
+    if "check_move_suggestions" in globals():
+        placement_suggestions = check_move_suggestions(repo, rep, eff, graph, reg)
+
+        if placement_suggestions:
+            rep.add(
+                GRN,
+                "I4",
+                "repo",
+                "move-map",
+                f"{len(placement_suggestions)} file move suggestions generated",
+                intended="run with --move-map to get exact from/to relocation JSON",
+            )
+
+    # Auto-policy learning.
     auto_policy_path = None
+
     if not args.no_auto_policy:
         auto_policy_path = (
             Path(args.auto_policy).resolve()
@@ -5898,33 +10090,31 @@ def main() -> int:
     check_raw_env_in_middleware(repo, rep, eff)
     check_media_on_disk(repo, rep, eff)
 
-    # v3.4 self-contained enhancements (no YAML required)
-    check_enhanced_secrets_in_code(repo, rep, eff)
-    check_enhanced_dangerous_calls(repo, rep, eff)
-    check_enhanced_runtime_security_settings(repo, rep, eff)
-    check_enhanced_async_blocking(repo, rep, eff)
-    check_enhanced_query_in_loop(repo, rep, eff)
-    check_enhanced_exception_handling(repo, rep, eff)
-    check_enhanced_todo_debt(repo, rep, eff)
-    check_enhanced_size_complexity(repo, rep, eff)
-    check_enhanced_print_debug(repo, rep, eff)
-    check_enhanced_model_schema(repo, rep, eff)
-    check_enhanced_alembic_heads(repo, rep, eff)
-    check_enhanced_gitignore_generated(repo, rep, eff)
-    check_enhanced_frontend_debug(repo, rep, eff)
+    # v3.4 self-contained enhancements.
+    enhanced_simple_checks = [
+        "check_enhanced_secrets_in_code",
+        "check_enhanced_dangerous_calls",
+        "check_enhanced_runtime_security_settings",
+        "check_enhanced_async_blocking",
+        "check_enhanced_query_in_loop",
+        "check_enhanced_exception_handling",
+        "check_enhanced_todo_debt",
+        "check_enhanced_size_complexity",
+        "check_enhanced_print_debug",
+        "check_enhanced_model_schema",
+        "check_enhanced_alembic_heads",
+        "check_enhanced_gitignore_generated",
+        "check_enhanced_frontend_debug",
+    ]
 
-    # v3.5 file relocation suggestions.
-    move_suggestions = check_move_suggestions(repo, rep, eff, graph, reg)
+    for fn_name in enhanced_simple_checks:
+        fn = globals().get(fn_name)
+        if fn:
+            fn(repo, rep, eff)
 
-    if move_suggestions:
-        rep.add(
-            GRN,
-            "I4",
-            "repo",
-            "move-map",
-            f"{len(move_suggestions)} file move suggestions generated",
-            intended="run with --move-map to get exact from/to relocation JSON",
-        )
+    # v3.8 production readability:
+    # collapse noisy line-level findings into file-level findings.
+    collapse_noisy_findings(rep)
 
     # Summary.
     collect_info(repo, rep, eff, graph)
@@ -5940,20 +10130,27 @@ def main() -> int:
         intended="track this number down over time; lower is healthier",
     )
 
+
     summary = build_summary(repo, rep, graph, debt_score, frontend_metrics, reg)
 
-    # Trend.
-
-    # v3.3: emit the Architecture Registry + its generated views (folders = projection).
-    if not args.no_registry:
+    # Registry / CODEOWNERS / graph.
+    if not args.no_registry and "emit_registry" in globals():
         rpath = emit_registry(repo, eff, graph, reg, rep, summary)
-        print(f"Registry written: {rpath}  (canonical model; reports/CODEOWNERS are views over it)")
-        cpath = emit_codeowners(repo, reg, rep)
-        print(f"CODEOWNERS written: {cpath}  (generated; set owners in .governance/owners.json)")
-        mpath = emit_graph_mermaid(repo, reg, rep, graph)        
+        print(f"Registry written: {rpath}")
+
+        try:
+            cpath = emit_codeowners(repo, reg, rep)
+        except TypeError:
+            cpath = emit_codeowners(repo, eff, reg, rep)
+
+        print(f"CODEOWNERS written: {cpath}")
+
+        mpath = emit_graph_mermaid(repo, reg, rep, graph)
         print(f"Graph written: {mpath}")
 
+    # Trend.
     trend_path = Path(args.trend_file).resolve() if args.trend_file else None
+
     if trend_path:
         if args.update_trend:
             update_trend(trend_path, summary)
@@ -5962,15 +10159,26 @@ def main() -> int:
             baseline = read_json(trend_path)
             print_trend(rep, summary, baseline)
 
+    # Console output.
     n_red = render_stdout(repo, rep, args.show_intended, summary)
 
+    # Markdown report.
     if not args.no_write:
-        out = Path(args.out).resolve() if args.out else (repo / "REPO_LAYOUT_AUDIT_REPORT.md")
-        render_markdown(repo, rep, out, summary)
-        print(f"\nReport written: {out}  (generated -> .gitignore it; NOT under documents/scope/)")
+        out = resolve_repo_output_path(
+            repo,
+            args.out,
+            "ARCHITECTURE_AUDIT_REPORT.md",
+        )
+        render_markdown(repo, rep, out, summary, placements=placement_suggestions)
+        print(f"\nReport written: {out}")
 
+    # JSON report.
     if args.json:
-        jp = Path(args.json).resolve()
+        jp = resolve_repo_output_path(
+            repo,
+            args.json,
+            "audit.json",
+        )
         jp.parent.mkdir(parents=True, exist_ok=True)
 
         payload = {
@@ -5990,19 +10198,31 @@ def main() -> int:
         }
 
         jp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        print(f"JSON written:   {jp}")
+        print(f"JSON written: {jp}")
 
+    # Metrics JSON.
     if args.metrics_json:
-        mp = Path(args.metrics_json).resolve()
+        mp = resolve_repo_output_path(
+            repo,
+            args.metrics_json,
+            "metrics.json",
+        )
         write_metrics_json(mp, summary, graph)
         print(f"Metrics written: {mp}")
 
-    if getattr(args, "move_map", None):
-        mm = Path(args.move_map).resolve()
-        write_move_map(mm, move_suggestions)
+    # Move-map JSON.
+    if args.move_map and placement_suggestions and "write_move_map" in globals():
+        mm = resolve_repo_output_path(
+            repo,
+            args.move_map,
+            "move_map.json",
+        )
+        write_move_map(mm, placement_suggestions)
         print(f"Move map written: {mm}")
 
     return 1 if (n_red and not args.no_fail) else 0
+
+#===========================================================================
 
 if __name__ == "__main__":
     sys.exit(main())

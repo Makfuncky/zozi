@@ -98,7 +98,7 @@ def _startup_load_role_permissions() -> None:
 
 def _startup_register_event_listeners() -> None:
     try:
-        from controllers.payments_controller import _event_publisher
+        from services.orders import _event_publisher
         from events import PaymentConfirmedEvent
         from services.fulfillment_service import FulfillmentService
 

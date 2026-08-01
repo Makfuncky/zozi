@@ -379,7 +379,7 @@ class CircuitBreakerWithRetry:
     def call(self, func: Callable, *args, **kwargs) -> Any:
         """Execute function with circuit breaker and retry protection."""
         if asyncio.iscoroutinefunction(func):
-            return asyncio.run(self._async_wrapper(func, *args, **kwargs))
+            return self._async_wrapper(func, *args, **kwargs)
         else:
             return self._sync_wrapper(func, *args, **kwargs)
 
@@ -429,7 +429,7 @@ def retry(
         Result of function execution
     """
     if asyncio.iscoroutinefunction(func):
-        return asyncio.run(_async_retry(func, retries, delay, backoff, exceptions))
+        return _async_retry(func, retries, delay, backoff, exceptions)
     else:
         return _sync_retry(func, retries, delay, backoff, exceptions)
 

@@ -4,11 +4,18 @@ Revision ID: 20260730_0009
 Revises: 20260730_0008
 Create Date: 2026-07-30
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 
 from alembic import op
+from migration_helpers import safe_create_index, safe_create_table, safe_drop_table
 
 revision: str = "20260730_0009"
 down_revision: Union[str, None] = "20260730_0008"
@@ -32,7 +39,7 @@ def upgrade() -> None:
     is_sqlite = conn.dialect.name == "sqlite"
     schema = None if is_sqlite else "analytics"
 
-    op.create_table(
+    safe_create_table(op, 
         "mv_daily_sales",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -47,10 +54,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "snapshot_date", "currency", name="uq_mv_daily_sales"),
         schema=schema,
     )
-    op.create_index("ix_mv_daily_sales_date", "mv_daily_sales", ["snapshot_date"], schema=schema)
-    op.create_index("ix_mv_daily_sales_country_code", "mv_daily_sales", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_mv_daily_sales_date", "mv_daily_sales", ["snapshot_date"], schema=schema)
+    safe_create_index(op, "ix_mv_daily_sales_country_code", "mv_daily_sales", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "mv_monthly_sales",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -66,10 +73,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "period_year", "period_month", "currency", name="uq_mv_monthly_sales"),
         schema=schema,
     )
-    op.create_index("ix_mv_monthly_sales_period", "mv_monthly_sales", ["period_year", "period_month"], schema=schema)
-    op.create_index("ix_mv_monthly_sales_country_code", "mv_monthly_sales", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_mv_monthly_sales_period", "mv_monthly_sales", ["period_year", "period_month"], schema=schema)
+    safe_create_index(op, "ix_mv_monthly_sales_country_code", "mv_monthly_sales", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_customer",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -84,10 +91,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "kpi_date", name="uq_kpi_customer"),
         schema=schema,
     )
-    op.create_index("ix_kpi_customer_kpi_date", "kpi_customer", ["kpi_date"], schema=schema)
-    op.create_index("ix_kpi_customer_country_code", "kpi_customer", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_customer_kpi_date", "kpi_customer", ["kpi_date"], schema=schema)
+    safe_create_index(op, "ix_kpi_customer_country_code", "kpi_customer", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_supplier",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -101,10 +108,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "kpi_date", name="uq_kpi_supplier"),
         schema=schema,
     )
-    op.create_index("ix_kpi_supplier_kpi_date", "kpi_supplier", ["kpi_date"], schema=schema)
-    op.create_index("ix_kpi_supplier_country_code", "kpi_supplier", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_supplier_kpi_date", "kpi_supplier", ["kpi_date"], schema=schema)
+    safe_create_index(op, "ix_kpi_supplier_country_code", "kpi_supplier", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_country",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -119,10 +126,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "kpi_date", name="uq_kpi_country"),
         schema=schema,
     )
-    op.create_index("ix_kpi_country_kpi_date", "kpi_country", ["kpi_date"], schema=schema)
-    op.create_index("ix_kpi_country_country_code", "kpi_country", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_country_kpi_date", "kpi_country", ["kpi_date"], schema=schema)
+    safe_create_index(op, "ix_kpi_country_country_code", "kpi_country", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_revenue",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -137,10 +144,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "kpi_date", name="uq_kpi_revenue"),
         schema=schema,
     )
-    op.create_index("ix_kpi_revenue_kpi_date", "kpi_revenue", ["kpi_date"], schema=schema)
-    op.create_index("ix_kpi_revenue_country_code", "kpi_revenue", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_revenue_kpi_date", "kpi_revenue", ["kpi_date"], schema=schema)
+    safe_create_index(op, "ix_kpi_revenue_country_code", "kpi_revenue", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_orders",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -155,10 +162,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "kpi_date", name="uq_kpi_orders"),
         schema=schema,
     )
-    op.create_index("ix_kpi_orders_kpi_date", "kpi_orders", ["kpi_date"], schema=schema)
-    op.create_index("ix_kpi_orders_country_code", "kpi_orders", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_orders_kpi_date", "kpi_orders", ["kpi_date"], schema=schema)
+    safe_create_index(op, "ix_kpi_orders_country_code", "kpi_orders", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_retention",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -171,10 +178,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "cohort_month", name="uq_kpi_retention"),
         schema=schema,
     )
-    op.create_index("ix_kpi_retention_cohort_month", "kpi_retention", ["cohort_month"], schema=schema)
-    op.create_index("ix_kpi_retention_country_code", "kpi_retention", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_retention_cohort_month", "kpi_retention", ["cohort_month"], schema=schema)
+    safe_create_index(op, "ix_kpi_retention_country_code", "kpi_retention", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "kpi_conversion",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -188,10 +195,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "kpi_date", name="uq_kpi_conversion"),
         schema=schema,
     )
-    op.create_index("ix_kpi_conversion_kpi_date", "kpi_conversion", ["kpi_date"], schema=schema)
-    op.create_index("ix_kpi_conversion_country_code", "kpi_conversion", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_kpi_conversion_kpi_date", "kpi_conversion", ["kpi_date"], schema=schema)
+    safe_create_index(op, "ix_kpi_conversion_country_code", "kpi_conversion", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "mv_cash_position",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -207,10 +214,10 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "snapshot_date", "currency", name="uq_mv_cash_position"),
         schema=schema,
     )
-    op.create_index("ix_mv_cash_position_snapshot_date", "mv_cash_position", ["snapshot_date"], schema=schema)
-    op.create_index("ix_mv_cash_position_country_code", "mv_cash_position", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_mv_cash_position_snapshot_date", "mv_cash_position", ["snapshot_date"], schema=schema)
+    safe_create_index(op, "ix_mv_cash_position_country_code", "mv_cash_position", ["country_code"], schema=schema)
 
-    op.create_table(
+    safe_create_table(op, 
         "mv_facet_counts",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(length=3), nullable=False),
@@ -222,9 +229,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("country_code", "facet_type", "facet_value", "snapshot_date", name="uq_mv_facet_counts"),
         schema=schema,
     )
-    op.create_index("ix_mv_facet_counts_type", "mv_facet_counts", ["facet_type"], schema=schema)
-    op.create_index("ix_mv_facet_counts_country_code", "mv_facet_counts", ["country_code"], schema=schema)
-    op.create_index("ix_mv_facet_counts_snapshot_date", "mv_facet_counts", ["snapshot_date"], schema=schema)
+    safe_create_index(op, "ix_mv_facet_counts_type", "mv_facet_counts", ["facet_type"], schema=schema)
+    safe_create_index(op, "ix_mv_facet_counts_country_code", "mv_facet_counts", ["country_code"], schema=schema)
+    safe_create_index(op, "ix_mv_facet_counts_snapshot_date", "mv_facet_counts", ["snapshot_date"], schema=schema)
 
 
 def downgrade() -> None:
@@ -245,4 +252,4 @@ def downgrade() -> None:
         "mv_monthly_sales",
         "mv_daily_sales",
     ):
-        op.drop_table(table, schema=schema)
+        safe_drop_table(op, table, schema=schema)

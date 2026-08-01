@@ -1,83 +1,23 @@
-# documents\scope\governance.yaml
-# Global governance policy for ZOZI auditor v3.1.
-
 policy:
-  # backend scaling
-  flat_threshold: 30
-  large_subpackage_threshold: 80
-  god_fan_out: 20
-  god_fan_in: 30
-
-  # cycles
-  max_cycles: 80
-  max_cycle_length: 10
-
-  # frontend scaling
-  frontend_flat_threshold: 40
-  frontend_large_folder_threshold: 120
-
-  frontend_workspaces:
-    - web_app
-    - mobile_app
-    - shared
-
-  frontend_source_ext:
-    - .ts
-    - .tsx
-    - .js
-    - .jsx
-    - .cjs
-    - .mjs
-
-  frontend_root_allow:
-    - package.json
-    - package-lock.json
-    - pnpm-lock.yaml
-    - yarn.lock
-    - pnpm-workspace.yaml
-    - tsconfig.json
-    - tsconfig.build.json
-    - next.config.ts
-    - next-env.d.ts
-    - middleware.ts
-    - eslint.config.js
-    - jest.config.js
-    - jest.setup.ts
-    - playwright.config.ts
-    - postcss.config.js
-    - tailwind.config.js
-    - babel.config.js
-    - metro.config.js
-    - app.config.js
-    - app.json
-    - expo-env.d.ts
-    - README.md
-    - ERROR_HANDLING.md
-    - Dockerfile
-    - sentry.config.ts
-    - patch-logbox.js
-
-  expected_backend_packages:
-    - routers
-    - controllers
-    - services
-    - models
-    - middleware
-    - dependencies
-    - providers
-    - utils
-    - db
-    - alembic
-    - tests
-    - scripts
-
-  no_init_dirs:
-    - scripts
-    - tests
-    - alembic
-    - data
-    - monitoring
-    - docs
+  # --------------------------------------------------
+  # Previously hardcoded Python constants
+  # --------------------------------------------------
+  ignore_dirs:
+    - .git
+    - node_modules
+    - .venv
+    - venv
+    - __pycache__
+    - .mypy_cache
+    - .pytest_cache
+    - .ruff_cache
+    - .next
+    - .expo
+    - dist
+    - build
+    - coverage
+    - playwright-report
+    - test-results
 
   surface_names:
     - admin
@@ -90,12 +30,141 @@ policy:
     - internal
     - external
 
-  # audit feature toggles
-  detect_module_cycles: true
-  detect_domain_cycles: true
-  detect_dead_modules: true
-  detect_metrics: true
-  detect_duplicate_classes: true
-  detect_dynamic_imports: true
-  detect_policy_config: true
-  detect_frontend: true
+  feature_stop_names:
+    - __init__
+    - index
+    - page
+    - layout
+    - loading
+    - error
+    - not-found
+    - route
+    - main
+    - app
+    - init
+    - package
+    - types
+    - utils
+    - helpers
+    - shared
+    - common
+    - ui
+    - src
+    - components
+    - features
+    - hooks
+    - lib
+    - services
+    - models
+    - controllers
+    - routers
+
+  feature_suffixes:
+    - _service
+    - _services
+    - _controller
+    - _controllers
+    - _router
+    - _routers
+    - _model
+    - _models
+    - _provider
+    - _providers
+    - _event
+    - _events
+    - _job
+    - _jobs
+    - _page
+    - _pages
+    - _screen
+    - _screens
+    - _component
+    - _components
+    - _hook
+    - _hooks
+    - _store
+    - _stores
+    - _api
+    - _utils
+    - _helpers
+    - _types
+    - _test
+    - _tests
+    - _spec
+
+  # --------------------------------------------------
+  # Logical domain classification
+  # --------------------------------------------------
+  logical_domains:
+    database:
+      parts:
+        - alembic
+        - db
+        - models
+    security:
+      parts:
+        - middleware
+        - dependencies
+      basename:
+        - security_config.ini
+    frontend:
+      first: frontend
+    docs:
+      first: documents
+    infra:
+      first:
+        - monitoring
+        - nginx
+        - infra
+    backend:
+      first: backend
+
+  # --------------------------------------------------
+  # Frontend scaling paths
+  # --------------------------------------------------
+  frontend_flat_paths:
+    - path: frontend/web_app/src/components
+      threshold_key: frontend_flat_threshold
+    - path: frontend/web_app/src/lib
+      threshold_key: frontend_flat_threshold
+    - path: frontend/web_app/src/hooks
+      threshold_key: frontend_flat_threshold
+    - path: frontend/mobile_app/components
+      threshold_key: frontend_flat_threshold
+    - path: frontend/mobile_app/lib
+      threshold_key: frontend_flat_threshold
+    - path: frontend/shared/src
+      threshold_key: frontend_flat_threshold
+
+  # --------------------------------------------------
+  # CODEOWNERS generation
+  # --------------------------------------------------
+  codeowners:
+    default_owner: "@zozi/platform"
+    domain_owner_template: "@zozi/{domain}"
+    domain_paths:
+      - backend/services/{domain}/
+      - backend/models/{domain}/
+    surface_paths:
+      - backend/routers/{surface}/
+      - backend/controllers/{surface}/
+
+  # --------------------------------------------------
+  # Auto domain placement engine
+  # --------------------------------------------------
+  placement:
+    enabled: true
+    layers:
+      - services
+      - models
+      - providers
+      - events
+      - jobs
+      - controllers
+    router_layer: routers
+    min_confidence_root_move: 0.45
+    min_confidence_wrong_folder: 0.65
+    min_confidence_surface_to_domain: 0.60
+    min_score: 6.0
+    min_candidate_files: 2
+    stop_tokens: []

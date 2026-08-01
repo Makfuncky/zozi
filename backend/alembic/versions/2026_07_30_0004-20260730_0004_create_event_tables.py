@@ -4,10 +4,17 @@ Revision ID: 20260730_0004
 Revises: 20260730_0003
 Create Date: 2026-07-30
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from migration_helpers import safe_create_index, safe_create_table, safe_drop_index, safe_drop_table
 
 
 revision: str = "20260730_0004"
@@ -124,7 +131,7 @@ def upgrade() -> None:
     else:
         op.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
-        op.create_table(
+        safe_create_table(op, 
             "outbox_events",
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("uuid", sa.String(length=36), nullable=False),
@@ -149,11 +156,11 @@ def upgrade() -> None:
             sa.UniqueConstraint("uuid", name="uq_outbox_uuid"),
             schema="analytics",
         )
-        op.create_index("ix_outbox_aggregate", "outbox_events", ["aggregate_type", "aggregate_id"], schema="analytics")
-        op.create_index("ix_outbox_status", "outbox_events", ["status", "created_at"], schema="analytics")
-        op.create_index("ix_outbox_country", "outbox_events", ["country_code"], schema="analytics")
+        safe_create_index(op, "ix_outbox_aggregate", "outbox_events", ["aggregate_type", "aggregate_id"], schema="analytics")
+        safe_create_index(op, "ix_outbox_status", "outbox_events", ["status", "created_at"], schema="analytics")
+        safe_create_index(op, "ix_outbox_country", "outbox_events", ["country_code"], schema="analytics")
 
-        op.create_table(
+        safe_create_table(op, 
             "inbox_events",
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("idempotency_key", sa.String(length=64), nullable=False),
@@ -175,11 +182,11 @@ def upgrade() -> None:
             sa.UniqueConstraint("idempotency_key", name="uq_inbox_idempotency_key"),
             schema="analytics",
         )
-        op.create_index("ix_inbox_event_type", "inbox_events", ["event_type"], schema="analytics")
-        op.create_index("ix_inbox_processed", "inbox_events", ["processed_at"], schema="analytics")
-        op.create_index("ix_inbox_country", "inbox_events", ["country_code"], schema="analytics")
+        safe_create_index(op, "ix_inbox_event_type", "inbox_events", ["event_type"], schema="analytics")
+        safe_create_index(op, "ix_inbox_processed", "inbox_events", ["processed_at"], schema="analytics")
+        safe_create_index(op, "ix_inbox_country", "inbox_events", ["country_code"], schema="analytics")
 
-        op.create_table(
+        safe_create_table(op, 
             "event_retry_queue",
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("event_id", sa.Integer(), nullable=False),
@@ -201,11 +208,11 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint("id"),
             schema="analytics",
         )
-        op.create_index("ix_retry_event", "event_retry_queue", ["event_id"], schema="analytics")
-        op.create_index("ix_retry_next_attempt", "event_retry_queue", ["next_attempt_at"], schema="analytics")
-        op.create_index("ix_retry_country", "event_retry_queue", ["country_code"], schema="analytics")
+        safe_create_index(op, "ix_retry_event", "event_retry_queue", ["event_id"], schema="analytics")
+        safe_create_index(op, "ix_retry_next_attempt", "event_retry_queue", ["next_attempt_at"], schema="analytics")
+        safe_create_index(op, "ix_retry_country", "event_retry_queue", ["country_code"], schema="analytics")
 
-        op.create_table(
+        safe_create_table(op, 
             "event_dead_letter",
             sa.Column("id", sa.Integer(), nullable=False),
             sa.Column("event_id", sa.Integer(), nullable=False),
@@ -229,9 +236,9 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint("id"),
             schema="analytics",
         )
-        op.create_index("ix_dlq_event", "event_dead_letter", ["event_id"], schema="analytics")
-        op.create_index("ix_dlq_failed", "event_dead_letter", ["failed_at"], schema="analytics")
-        op.create_index("ix_dlq_country", "event_dead_letter", ["country_code"], schema="analytics")
+        safe_create_index(op, "ix_dlq_event", "event_dead_letter", ["event_id"], schema="analytics")
+        safe_create_index(op, "ix_dlq_failed", "event_dead_letter", ["failed_at"], schema="analytics")
+        safe_create_index(op, "ix_dlq_country", "event_dead_letter", ["country_code"], schema="analytics")
 
 
 def downgrade() -> None:
@@ -254,19 +261,19 @@ def downgrade() -> None:
         op.execute("DROP INDEX IF EXISTS ix_outbox_aggregate")
         op.execute("DROP TABLE IF EXISTS outbox_events")
     else:
-        op.drop_index("ix_dlq_country", table_name="event_dead_letter", schema="analytics")
-        op.drop_index("ix_dlq_failed", table_name="event_dead_letter", schema="analytics")
-        op.drop_index("ix_dlq_event", table_name="event_dead_letter", schema="analytics")
-        op.drop_table("event_dead_letter", schema="analytics")
-        op.drop_index("ix_retry_country", table_name="event_retry_queue", schema="analytics")
-        op.drop_index("ix_retry_next_attempt", table_name="event_retry_queue", schema="analytics")
-        op.drop_index("ix_retry_event", table_name="event_retry_queue", schema="analytics")
-        op.drop_table("event_retry_queue", schema="analytics")
-        op.drop_index("ix_inbox_country", table_name="inbox_events", schema="analytics")
-        op.drop_index("ix_inbox_processed", table_name="inbox_events", schema="analytics")
-        op.drop_index("ix_inbox_event_type", table_name="inbox_events", schema="analytics")
-        op.drop_table("inbox_events", schema="analytics")
-        op.drop_index("ix_outbox_country", table_name="outbox_events", schema="analytics")
-        op.drop_index("ix_outbox_status", table_name="outbox_events", schema="analytics")
-        op.drop_index("ix_outbox_aggregate", table_name="outbox_events", schema="analytics")
-        op.drop_table("outbox_events", schema="analytics")
+        safe_drop_index(op, "ix_dlq_country", table_name="event_dead_letter", schema="analytics")
+        safe_drop_index(op, "ix_dlq_failed", table_name="event_dead_letter", schema="analytics")
+        safe_drop_index(op, "ix_dlq_event", table_name="event_dead_letter", schema="analytics")
+        safe_drop_table(op, "event_dead_letter", schema="analytics")
+        safe_drop_index(op, "ix_retry_country", table_name="event_retry_queue", schema="analytics")
+        safe_drop_index(op, "ix_retry_next_attempt", table_name="event_retry_queue", schema="analytics")
+        safe_drop_index(op, "ix_retry_event", table_name="event_retry_queue", schema="analytics")
+        safe_drop_table(op, "event_retry_queue", schema="analytics")
+        safe_drop_index(op, "ix_inbox_country", table_name="inbox_events", schema="analytics")
+        safe_drop_index(op, "ix_inbox_processed", table_name="inbox_events", schema="analytics")
+        safe_drop_index(op, "ix_inbox_event_type", table_name="inbox_events", schema="analytics")
+        safe_drop_table(op, "inbox_events", schema="analytics")
+        safe_drop_index(op, "ix_outbox_country", table_name="outbox_events", schema="analytics")
+        safe_drop_index(op, "ix_outbox_status", table_name="outbox_events", schema="analytics")
+        safe_drop_index(op, "ix_outbox_aggregate", table_name="outbox_events", schema="analytics")
+        safe_drop_table(op, "outbox_events", schema="analytics")

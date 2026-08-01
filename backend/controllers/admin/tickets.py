@@ -11,6 +11,7 @@ from models import SupportTicket, TicketMessage, TicketAttachment, Notification
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_MAX_PAGE_SIZE
 
+from services.write_helpers import add_and_flush, commit_and_refresh
 
 def _serialize_ticket_attachment(attachment: TicketAttachment) -> dict[str, Any]:
     return {
@@ -110,11 +111,11 @@ def reply_to_ticket(ticket_id: int, message: str, acting_user: dict, db: Session
         message=message.strip(),
         is_admin=True,
     )
-    db.add(reply)
+    add_and_flush(db, reply)
     if cast(str, getattr(ticket, "status")) in {"open", "pending", "resolved", "closed"}:
         setattr(ticket, "status", "in_progress")
-    db.add(
-        Notification(
+    add_and_flush(db, 
+   Notification(
             user_id=ticket.user_id,
             type="support",
             title="Support Reply Received",
@@ -122,8 +123,7 @@ def reply_to_ticket(ticket_id: int, message: str, acting_user: dict, db: Session
             link=f"/tickets/{ticket.id}",
         )
     )
-    db.commit()
-    db.refresh(ticket)
+    commit_and_refresh(db, ticket)
     return _serialize_support_ticket(ticket, include_message=True, include_replies=True)
 
 
@@ -135,8 +135,7 @@ def update_ticket_status(ticket_id: int, status: str, acting_user: dict, db: Ses
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     setattr(ticket, "status", status)
-    db.commit()
-    db.refresh(ticket)
+    commit_and_refresh(db, ticket)
     return _serialize_support_ticket(ticket, include_message=True, include_replies=True)
 
 

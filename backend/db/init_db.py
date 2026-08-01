@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 from db.base import Base
-from db.database import engine
+from db.database import engine, _IS_POSTGRES
 from db.seed import seed_data
 from utils.config import settings
 
@@ -29,6 +29,15 @@ def _reset_sqlite_database() -> bool:
 
 
 def _create_tables() -> None:
+    if _IS_POSTGRES:
+        raise RuntimeError(
+            "create_all is disabled on PostgreSQL. "
+            "Use a reviewed Alembic migration instead of Base.metadata.create_all."
+        )
+    if str(getattr(settings, "app_env", "development")).lower() == "production":
+        raise RuntimeError(
+            "create_all is disabled in production. Use a reviewed Alembic migration."
+        )
     Base.metadata.create_all(bind=engine)
     print("Database tables created successfully.")
 

@@ -4,12 +4,19 @@ Revision ID: 20260730_0008
 Revises: 20260730_0007_fix_country_code_width
 Create Date: 2026-07-30
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from decimal import Decimal
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 
 from alembic import op
+from migration_helpers import safe_create_index, safe_create_table, safe_drop_table
 
 revision: str = "20260730_0008"
 down_revision: Union[str, None] = "20260730_0007"
@@ -22,7 +29,7 @@ def upgrade() -> None:
     if conn.dialect.name == "sqlite":
         return
 
-    op.create_table(
+    safe_create_table(op, 
         "country_basics",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("code", sa.String(3), unique=True, nullable=False, index=True),
@@ -58,9 +65,9 @@ def upgrade() -> None:
         sa.Column("macro_indicators_json", sa.Text, nullable=True),
         schema="country",
     )
-    op.create_index("ix_country_basics_code", "country_basics", ["code"], unique=True)
+    safe_create_index(op, "ix_country_basics_code", "country_basics", ["code"], unique=True)
 
-    op.create_table(
+    safe_create_table(op, 
         "country_economics",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(3), sa.ForeignKey("country.country_configs.code"), nullable=False, unique=True),
@@ -101,9 +108,9 @@ def upgrade() -> None:
         sa.Column("logistics_zones_json", sa.Text, default="[]"),
         schema="country",
     )
-    op.create_index("ix_country_economics_code", "country_economics", ["country_code"], unique=True)
+    safe_create_index(op, "ix_country_economics_code", "country_economics", ["country_code"], unique=True)
 
-    op.create_table(
+    safe_create_table(op, 
         "country_tax",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(3), sa.ForeignKey("country.country_configs.code"), nullable=False, unique=True),
@@ -121,9 +128,9 @@ def upgrade() -> None:
         sa.Column("tax_reduced_rates_json", sa.Text, default="{}"),
         schema="country",
     )
-    op.create_index("ix_country_tax_code", "country_tax", ["country_code"], unique=True)
+    safe_create_index(op, "ix_country_tax_code", "country_tax", ["country_code"], unique=True)
 
-    op.create_table(
+    safe_create_table(op, 
         "country_legal",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
         sa.Column("country_code", sa.String(3), sa.ForeignKey("country.country_configs.code"), nullable=False, unique=True),
@@ -144,7 +151,7 @@ def upgrade() -> None:
         sa.Column("regulatory_bodies_json", sa.Text, default="[]"),
         schema="country",
     )
-    op.create_index("ix_country_legal_code", "country_legal", ["country_code"], unique=True)
+    safe_create_index(op, "ix_country_legal_code", "country_legal", ["country_code"], unique=True)
 
     with op.batch_alter_table("country_configs") as batch_op:
         batch_op.add_column("basics_id", sa.Integer(sa.ForeignKey("country.country_basics.id"), nullable=True))
@@ -164,7 +171,7 @@ def downgrade() -> None:
         batch_op.drop_column("economics_id")
         batch_op.drop_column("basics_id")
 
-    op.drop_table("country_legal")
-    op.drop_table("country_tax")
-    op.drop_table("country_economics")
-    op.drop_table("country_basics")
+    safe_drop_table(op, "country_legal")
+    safe_drop_table(op, "country_tax")
+    safe_drop_table(op, "country_economics")
+    safe_drop_table(op, "country_basics")

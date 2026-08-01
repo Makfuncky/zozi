@@ -15,6 +15,7 @@ from models import (
 from utils.audit import audit_log
 from utils.constants import DEFAULT_COUNTRY
 
+from services.write_helpers import add_and_flush, delete_only
 
 def soft_delete(db: Session, model: type, record_id: int, acting_user: dict, reason: Optional[str] = None) -> None:
     """Soft delete a record."""
@@ -26,7 +27,7 @@ def soft_delete(db: Session, model: type, record_id: int, acting_user: dict, rea
             setattr(record, "deleted_at", datetime.now())
         if hasattr(record, "deleted_reason"):
             setattr(record, "deleted_reason", reason)
-        db.add(record)
+        add_and_flush(db, record)
 
 
 def restore(db: Session, model: type, record_id: int, acting_user: dict) -> None:
@@ -39,14 +40,14 @@ def restore(db: Session, model: type, record_id: int, acting_user: dict) -> None
             setattr(record, "deleted_at", None)
         if hasattr(record, "deleted_reason"):
             setattr(record, "deleted_reason", None)
-        db.add(record)
+        add_and_flush(db, record)
 
 
 def hard_delete(db: Session, model: type, record_id: int, acting_user: dict, reason: Optional[str] = None) -> None:
     """Hard delete a record permanently."""
     record = db.query(model).filter(model.id == record_id).first()
     if record:
-        db.delete(record)
+        delete_only(db, record)
 
 
 def archive_entity(

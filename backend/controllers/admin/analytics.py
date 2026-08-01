@@ -16,6 +16,7 @@ from utils.constants import _ADMIN_MAX_PAGE_SIZE, _ADMIN_DEFAULT_PAGE_SIZE
 from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
 from utils.cache import cache_get_json, cache_set_json, build_versioned_cache_key
 
+from services.write_helpers import add_and_flush, flush_only
 _ANALYTICS_SNAPSHOT_TTL = 3600
 _ANALYTICS_CACHE_TTL_SECONDS = 300
 _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90}
@@ -56,14 +57,14 @@ def _store_admin_analytics_snapshot(
             computed_at=now,
             expires_at=expires_at,
         )
-        db.add(snapshot)
+        add_and_flush(db, snapshot)
     else:
         setattr(snapshot, "snapshot_group", snapshot_group)
         setattr(snapshot, "period", period)
         setattr(snapshot, "payload_json", serialized_payload)
         setattr(snapshot, "computed_at", now)
         setattr(snapshot, "expires_at", expires_at)
-    db.flush()
+    flush_only(db)
     return payload
 
 

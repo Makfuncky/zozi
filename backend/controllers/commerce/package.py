@@ -7,11 +7,12 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from controllers.audit_controller import audit_log, AuditAction
+from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from db.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
 from models import Address, Category, Order, OrderItem, Product, Review, Wishlist
 
+from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
 
 # ── Wishlist ──────────────────────────────────────────────────────────────────
 
@@ -39,9 +40,8 @@ def add_to_wishlist(product_id: int, current_user: dict, db: Session) -> Wishlis
         return existing
 
     item = Wishlist(user_id=current_user["id"], product_id=product_id)
-    db.add(item)
-    db.commit()
-    db.refresh(item)
+    add_and_flush(db, item)
+    commit_and_refresh(db, item)
     return item
 
 
@@ -52,14 +52,14 @@ def remove_from_wishlist(product_id: int, current_user: dict, db: Session) -> di
     ).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not in wishlist")
-    db.delete(item)
-    db.commit()
+    delete_only(db, item)
+    commit_only(db)
     return {"detail": "Removed from wishlist"}
 
 
 def clear_wishlist(current_user: dict, db: Session) -> dict:
     db.query(Wishlist).filter(Wishlist.user_id == current_user["id"]).delete()
-    db.commit()
+    commit_only(db)
     return {"detail": "Wishlist cleared"}
 
 
@@ -108,9 +108,8 @@ def create_review(product_id: int, review: ReviewCreate, current_user: dict, db:
         image_url=review.image_url,
         is_verified_purchase=bool(purchased),
     )
-    db.add(db_review)
-    db.commit()
-    db.refresh(db_review)
+    add_and_flush(db, db_review)
+    commit_and_refresh(db, db_review)
 
     all_ratings = (
         db.query(Review.rating)
@@ -119,7 +118,7 @@ def create_review(product_id: int, review: ReviewCreate, current_user: dict, db:
     )
     avg = sum(r[0] for r in all_ratings) / len(all_ratings)
     db.query(Product).filter(Product.id == product_id).update({"rating": round(avg, 2)})
-    db.commit()
+    commit_only(db)
     return db_review
 
 
@@ -132,8 +131,7 @@ def update_review(review_id: int, review: ReviewCreate, current_user: dict, db: 
     setattr(db_review, "rating", review.rating)
     setattr(db_review, "comment", review.comment)
     setattr(db_review, "image_url", review.image_url)
-    db.commit()
-    db.refresh(db_review)
+    commit_and_refresh(db, db_review)
     return db_review
 
 
@@ -144,7 +142,7 @@ def delete_review(review_id: int, current_user: dict, db: Session) -> dict:
     if db_review.user_id != current_user["id"] and current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Not authorised")
     setattr(db_review, "is_deleted", True)
-    db.commit()
+    commit_only(db)
     return {"detail": "Review deleted"}
 
 
@@ -178,9 +176,8 @@ def create_address(user_id: int, body: AddressCreate, current_user: dict, db: Se
         country=body.country,
         is_default=body.is_default,
     )
-    db.add(addr)
-    db.commit()
-    db.refresh(addr)
+    add_and_flush(db, addr)
+    commit_and_refresh(db, addr)
     audit_log(
         db,
         action=AuditAction.ADDRESS_CREATED,
@@ -206,8 +203,7 @@ def update_address(address_id: int, user_id: int, body: AddressUpdate, current_u
     for field, value in updates.items():
         setattr(addr, field, value)
 
-    db.commit()
-    db.refresh(addr)
+    commit_and_refresh(db, addr)
     audit_log(
         db,
         action=AuditAction.ADDRESS_UPDATED,
@@ -224,8 +220,8 @@ def update_address(address_id: int, user_id: int, body: AddressUpdate, current_u
 def delete_address(address_id: int, user_id: int, current_user: dict, db: Session) -> None:
     addr = _get_own_address(address_id, user_id, db)
     address_label = addr.label
-    db.delete(addr)
-    db.commit()
+    delete_only(db, addr)
+    commit_only(db)
     audit_log(
         db,
         action=AuditAction.ADDRESS_DELETED,
@@ -245,8 +241,7 @@ def set_default_address(address_id: int, user_id: int, current_user: dict, db: S
 
     addr = _get_own_address(address_id, user_id, db)
     setattr(addr, "is_default", True)
-    db.commit()
-    db.refresh(addr)
+    commit_and_refresh(db, addr)
     audit_log(
         db,
         action=AuditAction.ADDRESS_SET_DEFAULT,
@@ -321,9 +316,8 @@ def create_category(category: CategoryCreate, current_user: dict, db: Session) -
     if db.query(Category).filter(Category.slug == category.slug).first():
         raise HTTPException(status_code=409, detail="Slug already exists")
     db_cat = Category(**category.model_dump())
-    db.add(db_cat)
-    db.commit()
-    db.refresh(db_cat)
+    add_and_flush(db, db_cat)
+    commit_and_refresh(db, db_cat)
     bump_cache_version("categories")
     return db_cat
 
@@ -336,7 +330,7 @@ def update_category(category_id: int, category: CategoryCreate, current_user: di
         raise HTTPException(status_code=404, detail="Category not found")
     for k, v in category.model_dump().items():
         setattr(db_cat, k, v)
-    db.commit()
-    db.refresh(db_cat)
+    commit_and_refresh(db, db_cat)
     bump_cache_version("categories")
     return db_cat
+

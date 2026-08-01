@@ -7,7 +7,8 @@ from datetime import date
 import pytest
 
 from models import User
-from models.employee_models import Employee, EmailFolder, InternalEmail, ChatAttachment
+from models.employee_models import Employee
+from models.communication import EmailFolder, InternalEmail, ChatAttachment
 from services.employee_communication_service import (
     get_or_create_direct_room,
     send_chat_message,

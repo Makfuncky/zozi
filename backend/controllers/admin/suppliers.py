@@ -11,6 +11,7 @@ from models import User, SupplierProfile as SP, Notification
 from utils.auth import require_permission
 from utils.audit import audit_log, AuditAction
 
+from services.write_helpers import add_and_flush, commit_only, flush_only
 
 def bulk_supplier_verification(
     supplier_ids: List[int], action: str, note: Optional[str], acting_user: dict, db: Session
@@ -38,8 +39,8 @@ def bulk_supplier_verification(
         profile = db.query(SP).filter(SP.user_id == sid).first()
         if profile is None:
             profile = SP(user_id=sid)
-            db.add(profile)
-            db.flush()
+            add_and_flush(db, profile)
+            flush_only(db)
 
         if action == "verify":
             if bool(cast(Any, getattr(user, "is_verified"))) and cast(str | None, getattr(profile, "verification_status")) == "approved":
@@ -49,8 +50,8 @@ def bulk_supplier_verification(
             setattr(user, "verification_note", note or "Approved")
             setattr(profile, "verification_status", "approved")
             setattr(profile, "verified_at", datetime.now(timezone.utc).replace(tzinfo=None))
-            db.add(
-                Notification(
+            add_and_flush(db, 
+   Notification(
                     user_id=user.id,
                     type="account",
                     title="Account Verified",
@@ -63,8 +64,8 @@ def bulk_supplier_verification(
             setattr(user, "verification_note", note or "Rejected")
             setattr(profile, "verification_status", "rejected")
             setattr(profile, "verified_at", None)
-            db.add(
-                Notification(
+            add_and_flush(db, 
+   Notification(
                     user_id=user.id,
                     type="account",
                     title="Verification Declined",
@@ -75,7 +76,7 @@ def bulk_supplier_verification(
         processed.append({"id": sid, "username": user.username})
 
     if processed:
-        db.commit()
+        commit_only(db)
         audit_log(
             db=db,
             action=AuditAction.SUPPLIER_VERIFIED if action == "verify" else AuditAction.SUPPLIER_REJECTED,
@@ -133,8 +134,8 @@ def bulk_manage_suppliers(
         profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
         if profile is None:
             profile = SupplierProfile(user_id=supplier_id)
-            db.add(profile)
-            db.flush()
+            add_and_flush(db, profile)
+            flush_only(db)
 
         if normalized_action == "verify":
             setattr(user, "is_verified", True)
@@ -177,7 +178,7 @@ def bulk_manage_suppliers(
         )
 
     if processed:
-        db.commit()
+        commit_only(db)
         audit_action = (
             AuditAction.SUPPLIER_VERIFIED
             if normalized_action == "verify"
@@ -376,8 +377,8 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
     profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
     if profile is None:
         profile = SupplierProfile(user_id=user_id)
-        db.add(profile)
-        db.flush()
+        add_and_flush(db, profile)
+        flush_only(db)
 
     if bool(cast(Any, getattr(user, "is_verified"))) and cast(str | None, getattr(profile, "verification_status", None)) == "approved":
         return {"message": "Supplier already verified"}
@@ -422,8 +423,8 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
     setattr(user, "verification_note", note or "Approved")
     setattr(profile, "verification_status", "approved")
     setattr(profile, "verified_at", datetime.now(timezone.utc).replace(tzinfo=None))
-    db.add(
-        Notification(
+    add_and_flush(db, 
+   Notification(
             user_id=user.id,
             type="account",
             title="Account Verified",
@@ -431,7 +432,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
             link="/supplier/dashboard",
         )
     )
-    db.commit()
+    commit_only(db)
     audit_log(
         db=db,
         action=AuditAction.SUPPLIER_VERIFIED,
@@ -456,15 +457,15 @@ def reject_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
     profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
     if profile is None:
         profile = SupplierProfile(user_id=user_id)
-        db.add(profile)
-        db.flush()
+        add_and_flush(db, profile)
+        flush_only(db)
 
     setattr(user, "is_verified", False)
     setattr(user, "verification_note", note or "Rejected")
     setattr(profile, "verification_status", "rejected")
     setattr(profile, "verified_at", None)
-    db.add(
-        Notification(
+    add_and_flush(db, 
+   Notification(
             user_id=user.id,
             type="account",
             title="Verification Declined",
@@ -472,7 +473,7 @@ def reject_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
             link="/supplier/dashboard",
         )
     )
-    db.commit()
+    commit_only(db)
     audit_log(
         db=db,
         action=AuditAction.SUPPLIER_REJECTED,

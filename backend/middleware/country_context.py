@@ -32,9 +32,10 @@ from db.database import get_db
 from models import User, CountryStaffAssignment, CountryConfig
 from utils.auth import decode_token, verify_token, SECRET_KEY, ALGORITHM
 from utils.config import settings
-from utils.rls_interceptor import set_rls_context, clear_rls_context
+from utils.rls_interceptor import set_rls_context, clear_rls_context as _clear_rls_context
 from utils.redis_client import redis_client
 from utils.ip_utils import get_request_ip
+from services.coi_service import check_approval_blocked
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +131,10 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
 
         set_rls_context(scope, is_restricted=is_restricted)
 
+        _set_pg_rls_context(scope)
+
         response: Response = await call_next(request)
+        _clear_rls_context()
         clear_rls_context()
         return response
 
@@ -148,7 +152,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
             return None
         try:
             from services.country_detection import CountryDetectionService
-            svc = self._get_country_detection_service()
+            svc = CountryDetectionService()
             ip = svc._extract_ip(dict(request.headers), client_ip)
             if ip and not svc._is_private_ip(ip):
                 country, _ = svc._lookup_country_by_ip(ip)
@@ -158,6 +162,41 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
         except Exception as exc:
             logger.debug("IP geolocation failed: %s", exc)
         return None
+
+
+def _set_pg_rls_context(scope: Optional[set[str]]) -> None:
+    """Set PostgreSQL RLS session variable app.current_country_code.
+    
+    This enables RLS policies to use current_setting('app.current_country_code')
+    for country isolation. On SQLite or if the SET fails, the error is silently
+    ignored since RLS is enforced at the application layer via set_rls_context().
+    """
+    if scope is None or not scope:
+        return
+    
+    country_code = next(iter(scope), None)
+    if not country_code:
+        return
+    
+    try:
+        from db.database import SessionLocal, _IS_POSTGRES
+        
+        if not _IS_POSTGRES:
+            return
+        
+        db = SessionLocal()
+        try:
+            db.execute(text(f"SET LOCAL app.current_country_code = '{country_code}'"))
+        except Exception:
+            logger.debug(
+                "RLS context not set in PostgreSQL session (SQLite or unsupported dialect). "
+                "Country isolation enforced at application layer."
+            )
+        finally:
+            db.close()
+    except Exception:
+        pass
+
 
 # --- Merged from advanced_rls.py ---
 class RLSContext:

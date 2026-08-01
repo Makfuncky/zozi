@@ -16,12 +16,19 @@ schema moves) and guard against objects that already exist, so they are
 no-op-safe whether the database was created by this baseline or already had the
 objects from a prior deployment.
 """
+import os
+import sys
+os.environ.setdefault("ALEMBIC_MODE", "true")
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
 from models import Base
-from utils.migration_helpers import safe_add_column, safe_create_index, safe_drop_column, safe_drop_index
+from migration_helpers import safe_add_column, safe_create_index, safe_drop_column, safe_drop_index
 from utils.schema_compat import SCHEMA_TRANSLATE_MAP
 
 

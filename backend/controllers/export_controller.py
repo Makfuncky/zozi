@@ -19,8 +19,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from controllers.audit_controller import audit_log, AuditAction
-from db.database import SessionLocal
+from utils.audit_log import audit_log, AuditAction
+from dependencies.db import SessionLocal
 from models import AuditLog, Coupon, Order, Product, User
 from services.finance_transfer_service import build_transfer_export_payload
 from utils.background_jobs import enqueue_job, get_job
@@ -517,4 +517,5 @@ def download_export_job_result(job_id: str, current_user: dict) -> FileResponse:
     if not file_path or not filename or not Path(file_path).exists():
         raise HTTPException(status_code=404, detail="Export artifact not found")
     return FileResponse(file_path, media_type="text/csv", filename=filename)
+
 

@@ -2,4 +2,4 @@
 
 All business logic lives in controllers.finance.package.
 """
-from controllers.finance import *  # noqa: F401, F403
+from routers.finance_domain import *  # noqa: F401, F403

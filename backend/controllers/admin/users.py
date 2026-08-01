@@ -15,6 +15,7 @@ from utils.staff_permissions import default_permissions_for_role, sanitize_staff
 
 from db.schemas import CreateStaffAccount, UpdateStaffAccount
 
+from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only, rollback_only
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
     return {
@@ -131,7 +132,7 @@ def update_user_role(user_id: int, role: str, acting_user: dict, db: Session) ->
 
     old_role = cast(str, getattr(user, "role"))
     setattr(user, "role", role)
-    db.commit()
+    commit_only(db)
 
     audit_log(
         db=db,
@@ -154,7 +155,7 @@ def toggle_user_active(user_id: int, acting_user: dict, db: Session) -> dict:
 
     current_active = bool(cast(Any, getattr(user, "is_active")))
     setattr(user, "is_active", 0 if current_active else 1)
-    db.commit()
+    commit_only(db)
     audit_log(
         db=db,
         action="USER_ACTIVE_TOGGLED",
@@ -286,16 +287,16 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
 
     try:
         _hard_delete_user_record(user, db)
-        db.commit()
+        commit_only(db)
     except IntegrityError as e:
-        db.rollback()
+        rollback_only(db)
         logger.warning("admin delete blocked by remaining related records", extra={"user_id": user_id, "error": str(e)})
         raise HTTPException(
             status_code=409,
             detail="User has related records that must be archived or removed before deletion.",
         )
     except Exception as e:
-        db.rollback()
+        rollback_only(db)
         logger.exception("admin delete user failed", extra={"user_id": user_id, "error": str(e)})
         raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
 
@@ -352,7 +353,7 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
                 _hard_delete_user_record(user, db)
             deleted.append({"id": uid, "username": username})
         except IntegrityError:
-            db.rollback()
+            rollback_only(db)
             skipped.append(
                 {
                     "id": uid,
@@ -361,7 +362,7 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
             )
 
     if deleted:
-        db.commit()
+        commit_only(db)
         audit_log(
             db=db,
             action=AuditAction.USER_DELETE,
@@ -374,7 +375,7 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
             status="success",
         )
     else:
-        db.rollback()
+        rollback_only(db)
 
     return {
         "deleted": len(deleted),
@@ -401,7 +402,7 @@ def force_reset_password_admin(user_id: int, new_password: str, acting_user: dic
         raise HTTPException(status_code=403, detail="Cannot reset another admin's password")
 
     setattr(user, "hashed_password", get_password_hash(new_password))
-    db.commit()
+    commit_only(db)
 
     audit_log(
         db=db,
@@ -473,7 +474,7 @@ def bulk_update_users_role(
         )
 
     if updated:
-        db.commit()
+        commit_only(db)
         audit_log(
             db=db,
             action=AuditAction.ROLE_CHANGED,
@@ -529,7 +530,7 @@ def bulk_toggle_users_active(
         updated.append({"id": uid, "username": user.username, "is_active": is_active})
 
     if updated:
-        db.commit()
+        commit_only(db)
         audit_log(
             db=db,
             action="USER_BULK_TOGGLE_ACTIVE",
@@ -585,9 +586,8 @@ def create_staff_account(payload: CreateStaffAccount, acting_user: dict, db: Ses
         staff_permissions=assigned_permissions,
         staff_notes=payload.staff_notes,
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    add_and_flush(db, new_user)
+    commit_and_refresh(db, new_user)
 
     audit_log(
         db=db,
@@ -672,8 +672,7 @@ def update_staff_account(user_id: int, payload: UpdateStaffAccount, acting_user:
     elif "role" in updates:
         setattr(user, "staff_permissions", default_permissions_for_role(next_role))
 
-    db.commit()
-    db.refresh(user)
+    commit_and_refresh(db, user)
 
     audit_log(
         db=db,
@@ -802,7 +801,7 @@ def bulk_update_staff_accounts(user_ids: List[int], updates: UpdateStaffAccount,
 
         updated_users.append(_serialize_staff_user(user))
 
-    db.commit()
+    commit_only(db)
 
     audit_log(
         db=db,
@@ -936,7 +935,7 @@ def verify_bank_account(
         setattr(record, "provider_last_synced_at", None)
     setattr(record, "verified_at", datetime.now(timezone.utc))
     setattr(record, "verified_by", int(current_user["id"]))
-    db.commit()
+    commit_only(db)
 
     audit_log(
         db,
@@ -976,8 +975,8 @@ def delete_bank_account_record(
         raise HTTPException(status_code=404, detail="Bank account record not found.")
 
     verification_status = cast(str | None, getattr(record, "verification_status", None))
-    db.delete(record)
-    db.commit()
+    delete_only(db, record)
+    commit_only(db)
 
     audit_log(
         db,

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-def generate_project_scaffolding(root_dir=".", output_file="documents/PROJECT_SCAFFOLDING.md"):
+def generate_project_scaffolding(root_dir=".", output_file="./PROJECT_SCAFFOLDING.md"):
     """
     Generates a Markdown file containing the tree structure of the project.
     """

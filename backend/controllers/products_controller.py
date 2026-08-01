@@ -21,8 +21,14 @@ from models import (
     CartItem, Category, FlashSale, Notification, Order, OrderItem, Product, ProductVariant, Review, SupplierProfile, User, Wishlist, CountryConfig
 )
 from db.schemas import Product as ProductSchema, ProductCreate
-from controllers.audit_controller import audit_log, AuditAction
-from utils.cache import cache_or_compute, cache_get_json, cache_set_json
+from utils.audit_log import audit_log, AuditAction
+from utils.cache import cache_or_compute, cache_get_json, cache_set_json, build_versioned_cache_key
+from services.write_helpers import (
+    add_and_flush,
+    commit_only,
+    refresh_only,
+)
+
 
 logger = logging.getLogger(__name__)
 
@@ -688,10 +694,10 @@ def create_product(product: ProductCreate, db: Session) -> Product:
     if data.get("description"):
         data["description"] = html.escape(data["description"])
     db_product = Product(**data)
-    db.add(db_product)
-    db.commit()
+    add_and_flush(db, db_product)
+    commit_only(db)
     _bump_product_cache_version()
-    db.refresh(db_product)
+    refresh_only(db, db_product)
     return db_product
 
 
@@ -731,9 +737,9 @@ def update_product(product_id: int, product: ProductCreate, current_user: dict, 
         data["description"] = html.escape(data["description"])
     for key, value in data.items():
         setattr(db_product, key, value)
-    db.commit()
+    commit_only(db)
     _bump_product_cache_version()
-    db.refresh(db_product)
+    refresh_only(db, db_product)
     audit_log(
         db,
         action=AuditAction.PRODUCT_UPDATE,
@@ -779,7 +785,7 @@ def delete_product(product_id: int, current_user: dict, db: Session) -> dict:
         .all()
     )
     for order in affected_orders:
-        db.add(Notification(
+        add_and_flush(db, Notification(
             user_id=order.user_id,
             type="system",
             title="Product Unavailable",
@@ -791,7 +797,7 @@ def delete_product(product_id: int, current_user: dict, db: Session) -> dict:
         ))
 
     setattr(product, "is_deleted", True)
-    db.commit()
+    commit_only(db)
     _bump_product_cache_version()
     audit_log(
         db,
@@ -842,7 +848,7 @@ def update_product_return_window(
         )
 
     setattr(product, "return_window_days", days)
-    db.commit()
+    commit_only(db)
     return {"message": "Return window updated", "return_window_days": days}
 
 
@@ -875,7 +881,7 @@ def patch_product_stock(
         raise HTTPException(status_code=400, detail="Stock cannot go below 0")
 
     setattr(product, "stock", new_stock)
-    db.commit()
+    commit_only(db)
     _bump_product_cache_version()
 
     audit_log(
@@ -965,10 +971,10 @@ def create_supplier_product_with_upload(
     if category_match is not None:
         product.category_id = cast(int, getattr(category_match, "id"))
         product.category = cast(str, getattr(category_match, "name"))
-    db.add(product)
-    db.commit()
+    add_and_flush(db, product)
+    commit_only(db)
     _bump_product_cache_version()
-    db.refresh(product)
+    refresh_only(db, product)
     return product
 
 

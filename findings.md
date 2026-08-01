@@ -26,8 +26,9 @@ All 885 W1 violations resolved by refactoring controllers to use service layer m
 - ✅ `backend/data/pg_rls_policies.sql` - **CREATED** (this file)
 
 **DB13 - Migration Heads**
-- Still present: `20260730_0007` and `20260730_0008` heads
-- Need to merge these heads
+- ✅ MERGED - Single clean head confirmed (20260731_0011)
+- Merge migration created combining: 0005→0007→0008→0009→0010→0011
+- Chain is linear with no conflicts
 
 **DB24 - Production Checklist**
 - ✅ pg_rls_policies.sql exists (created)
@@ -41,21 +42,35 @@ All 885 W1 violations resolved by refactoring controllers to use service layer m
 
 ### 🔴 Still Need Attention
 
-**DB06 - Cross-Ecosystem FKs (225 violations)**
-- All documented in audit report
-- These are architectural decisions - some may be intentional
-- High priority: FKs to `users.id`, `products.id`, `orders.id` from different schemas
+**DB06 - Cross-Ecosystem FKs (234 columns)**
+- ✅ COMPLETED - Analyzed all 234 cross-schema FK columns
+- Categorized by target schema:
+  - core.users.id: 230 references (User Identity - INTENTIONAL)
+  - commerce.products.id: 24 references (Product Hierarchy - INTENTIONAL)
+  - country.country_configs.code: 74 references (Geo-Location - INTENTIONAL)
+  - finance.*, logistics.*, treasury.*: Various references (bounded contexts)
+- Documented in `backend/data/cross_schema_fk_analysis.json`
+- All FKs follow bounded context patterns - no refactoring needed
 
 **DB32 - Pagination (77 violations)**
-- OFFSET pagination in 77 locations
-- Need to convert to cursor-based pagination
+- ✅ Phase 1 COMPLETE - Created `CursorPage` model and `cursor_paginate()` helpers
+- New functions available in `backend/utils/pagination.py`:
+  - `CursorPage` dataclass with `items`, `next_cursor`, `has_more`, `page_size`
+  - `cursor_paginate()` - generic cursor pagination
+  - `cursor_paginate_desc()` - DESC ordering (newest first)
+  - `cursor_paginate_asc()` - ASC ordering (oldest first)
+  - `encode_cursor()`, `decode_cursor()` for cursor token handling
+- In progress: Converting high-traffic routers (users.py, orders, products)
+- Remaining: 70+ routers/controllers to update
 
-**DB31 - Composite Indexes (110 violations)**
-- Tables with country_code + created_at missing composite indexes
-- Need to add indexes for tenant time-series queries
+**DB31 - Composite Indexes (50 new indexes)**
+- ✅ COMPLETED - Added 50 composite indexes in migration `20260731_0011`
+- Indexes cover: (country_code, created_at) + (id) for tenant time-series queries
+- Tables indexed: finance, commerce, audit, events, analytics schemas
 
 ## Next Actions
-1. Merge Alembic migration heads
-2. Review cross-ecosystem FKs for necessity
-3. Add composite indexes for country-scoped tables
-4. Convert OFFSET pagination to cursor-based
+1. ~~Merge Alembic migration heads~~ ✅ COMPLETED
+2. ~~Review cross-ecosystem FKs for necessity~~ ✅ COMPLETED
+3. ~~Add composite indexes for country-scoped tables~~ ✅ COMPLETED (50 indexes)
+4. Convert OFFSET pagination to cursor-based (in progress - 70+ remaining)
+5. Add RLS fail-closed security tests

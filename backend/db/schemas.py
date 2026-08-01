@@ -1677,6 +1677,23 @@ class ListPage(BaseModel, Generic[_ListPageItem]):
     pageSize: int = 20
 
 
+_CursorPageItem = TypeVar("_CursorPageItem")
+
+
+class CursorPage(BaseModel, Generic[_CursorPageItem]):
+    """Cursor-based pagination response.
+
+    Use cursor (nextCursor) to fetch subsequent pages.
+    Pass nextCursor as 'cursor' query parameter for next page.
+    """
+
+    model_config = ConfigDict(from_attributes=True, extra="allow")
+    items: List[Any] = Field(default_factory=list)
+    nextCursor: Optional[str] = None
+    hasMore: bool = False
+    pageSize: int = 20
+
+
 # Audit log
 class AuditLogSchema(_PermissiveBase):
     id: Optional[int] = None

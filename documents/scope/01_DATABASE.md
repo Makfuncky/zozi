@@ -1,9 +1,3 @@
-Below is the complete, single, ready-to-save file. One important governance note up front, because it's the whole point of what you're trying to fix: **this one file now *is* the database constitution — the five companion specs are embedded as Part II (§6–§10), not kept as separate files.** Keeping them in two places would re-create the exact two-sources-of-truth drift you're escaping (recorded as ADR-016). I also corrected two things against your actual codebase rather than my earlier drafts: the prod connection pool is **5 / 10** (per `DATABASE_SCOPE.md`, not 50/100), and the audit doc's claim of "0 migration files" is **stale** — `versions/` + `versions_archive/` already contain 100+ migrations incl. merge-heads; the real defect is the broken head + 3 ORM-only tables (ADR-018). Both are now encoded so a future session can't "re-discover" them wrongly.
-
-Save as `documents/scope/01_DATABASE.md`. Delete the old `DATABASE_*.md` files and any separate companion files after sign-off.
-
-<!-- FILE START: documents/scope/01_DATABASE.md -->
-
 # ZOZI SCOPE · 01 — DATABASE SYSTEM (CONSTITUTION)
 **Document type:** Scope-binding specification — **single source of truth** for the entire data layer.
 **Version:** 2.1 · **Status:** DRAFT → needs founder sign-off · **Owner:** Platform / DBA
@@ -37,7 +31,7 @@ Treat the database as an **Enterprise Data Platform**, not an app database. Prov
 ```
 IN THIS DOCUMENT (the data constitution)         NOT HERE (own scope docs)
 ✔ Data architecture, schemas, ownership           ✘ Business logic / workflows
-✔ Table standards, naming, classification         ✘ UI / mobile
+✔ Table standards, naming, classification       ✘ UI / mobile
 ✔ Security, RLS, encryption posture               ✘ Search ranking algorithm   → 02_SEARCH
 ✔ Performance: indexing / partition / cache rules ✘ AI model logic             → 07_AI_MEDIA
 ✔ Backup / DR / retention / lifecycle             ✘ Finance posting workflow   → 03_FINANCE
@@ -65,7 +59,7 @@ IN THIS DOCUMENT (the data constitution)         NOT HERE (own scope docs)
 7. **Cross-ecosystem = services/events, never raw FK chains.** Domains communicate through well-defined service calls or durable events (§2.13), not arbitrary foreign keys spanning ecosystems.
 8. **Separate master data, configuration, transactions, snapshots, and events** (§2.4b). Never mix them in one table.
 9. **Store accounting events, not calculations.** Financial movement flows through the ledger chain only; never `UPDATE` posted journal entries; no separate "financial truth."
-10. **AI outputs are staged.** AI writes to `ai_*` / staging tables and is *committed* into business tables by an explicit step — never directly.
+10. **AI outputs are staged.** AI writes to `ai_*` / staging tables and is *committed* into business tables by an explicit step; never directly.
 11. **Config is data.** Commission %, delivery fee, refund %, reward %, feature toggles live in config tables — never hardcoded.
 12. **Files: metadata in DB, bytes in object storage.** The DB stores `media_assets` metadata; S3/CDN (Cloudflare R2) holds bytes.
 13. **Machine-document the schema.** The data dictionary is generated (`backend/scripts/generate_data_dictionary.py`), never hand-maintained.
@@ -98,31 +92,31 @@ ZOZI Platform (PostgreSQL schemas)
 
 ### 2.3 System diagram (layered request → data flow)
 ```
-                        ┌──────────────────────────────┐
-   HTTP / WS  ─────────►│  routers/   (entry, validate) │
-                        └──────────────┬───────────────┘
-                                       ▼
-                        ┌──────────────────────────────┐
-                        │ controllers/ (orchestrate)    │
-                        └──────────────┬───────────────┘
-                                       ▼
-        ┌──────────────────────────────────────────────────────┐
-        │ services/ (business logic — the ONLY writers)         │
-        │   • finance ledger service  • ai staging/commit       │
-        │   • advanced_filter/search  • country/RLS context     │
-        └───────┬───────────────────────────────┬──────────────┘
-                ▼                               ▼
-   ┌────────────────────────┐      ┌────────────────────────────┐
-   │ providers/ (AI/external)│      │ models/ (SQLAlchemy, 27 files)│
-   └────────────────────────┘      └──────────────┬─────────────┘
-                                                   ▼
+                  ┌──────────────────────────────┐
+ HTTP / WS ───────►│  routers/   (entry, validate) │
+                  └──────────────┬───────────────┘
+                                 ▼
+                  ┌──────────────────────────────┐
+                  │ controllers/ (orchestrate)    │
+                  └──────────────┬───────────────┘
+                                 ▼
+    ┌──────────────────────────────────────────────────────┐
+    │ services/ (business logic — the ONLY writers)         │
+    │   • finance ledger service  • ai staging/commit       │
+    │   • advanced_filter/search  • country/RLS context     │
+    └───────┬───────────────────────────────┬──────────────┘
+            ▼                               ▼
+┌────────────────────────┐      ┌────────────────────────────┐
+│ providers/ (AI/external)│      │ models/ (SQLAlchemy, 27 files)│
+└────────────────────────┘      └──────────────┬─────────────┘
+                                                    ▼
                 ┌──────────────────────────────────────────────────────┐
                 │ PostgreSQL  (schemas §2.2 · RLS · partitioning · GIN) │
                 └───────────────┬──────────────────────────┬───────────┘
                                 ▼                          ▼
-                    ┌───────────────────┐      ┌──────────────────────┐
-                    │ Redis (cache/queue)│      │ Object storage (bytes)│
-                    └───────────────────┘      └──────────────────────┘
+                  ┌───────────────────┐      ┌──────────────────────┐
+                  │ Redis (cache/queue)│      │ Object storage (bytes)│
+                  └───────────────────┘      └──────────────────────┘
    Events: services publish durable events (§2.13) → other ecosystems subscribe (no cross-FK).
 ```
 Direction is always **router → controller → service → (providers + models) → DB**. Routers never touch the DB directly; services are the only writers. (Note: this stack uses `controllers/`+`services/`, not a "repository" layer.)
@@ -131,7 +125,7 @@ Direction is always **router → controller → service → (providers + models)
 ```
 User → API → Validation → Business Rules → Service (only writer)
    → Database (transactional write) → Event published (§2.13 outbox)
-        → Queue → (Analytics snapshots · Cache invalidation · AI jobs · Notifications)
+      → Queue → (Analytics snapshots · Cache invalidation · AI jobs · Notifications)
    → Read models / Materialized views (§2.15) → Dashboard
 ```
 Rule: the transactional write is synchronous & ACID; everything downstream (analytics, cache, AI, notify) is **event-driven & async**.
@@ -156,7 +150,7 @@ Rule: the transactional write is synchronous & ACID; everything downstream (anal
 | Configuration | rules/toggles | commission_rules, country_configs, feature_flags | Maker-Checker |
 | Financial ledger | accounting truth | journal_entries, ap/ar_ledger | **immutable** |
 | Historical/Archive | aged-out rows | partitioned audit/chat/shipment events | read-only |
-| Snapshot/Analytics | read models | daily/monthly KPIs, mat views (§2.15) | rebuilt |
+| Snapshot/Analytics | read models | daily/monthly KPIs, mat views | rebuilt |
 | AI | model I/O + staging | ai_requests, ai_embeddings, ai_staging_products | staged→commit |
 | Media | file metadata (bytes in object store) | media_assets | metadata only |
 | Audit | who-did-what | audit_logs, worm_audit, permission_audit | append-only |
@@ -174,11 +168,11 @@ backend/
 │                      #   ai_variant_config.py, bg_removal_service.py, finance ledger service, ...)
 ├── providers/         # AI/external adapters (embedding, CLIP, Whisper, OCR) — graceful degradation
 ├── alembic/           # env.py · versions/ (live) · versions_archive/ (retired/merged heads)
-├── scripts/           # generate_data_dictionary.py · analyze_tables.py · seed · maintenance · reconciliation
+├── scripts/           # generate_data_dictionary.py · analyze_tables.py · seed · maintenance
 ├── db/                # base.py · database.py · mixins.py · schemas.py · seed.py · treasury_seeder.py
 ├── tests/             # unit / integration / contract / migration  (test_database.py = 33 tests)
 ├── monitoring/        # prometheus · grafana · promtail · fraud_monitoring · ghost_order_detector
-├── docs/              # erd/ (generated) · data-dictionary (generated) · performance-reports
+├── docs/              # erd/ (generated) · data-dictionary · performance-reports
 ├── data/              # pg_rls_policies.sql (RLS as code)
 ├── utils/config.py    # Settings (env-driven)
 └── zozi.db            # ⚠ DEV/SEED ONLY — never production
@@ -186,10 +180,10 @@ backend/
 
 ### 2.6 Handling & normalization (summary; deep rules in §7)
 - **RLS:** `SET app.current_country_code` per session (`rls_interceptor.py`, ~154 mappings); policies on every country-scoped table; verified by test.
-- **Partitioning:** range by `created_at` (monthly) for `journal_entries`, `audit_logs`, chat/messages, shipment events; hash `product_variants` by `product_id` past ~10M rows (see §7.2).
-- **Indexes:** composite `(country_code, created_at)`, `(status, due_date)`, `(entity_type, entity_id)`; GIN on JSONB `attributes`; tsvector GIN for search (see §7.1).
-- **Caching:** Redis for hot reads + facet counts; invalidate on write; materialized views refreshed by cron (see §7.5).
-- **Naming:** `snake_case`, plural tables, `<context>_<entity>` where helpful, `*_json` for JSONB, `is_*`/`*_at` conventions; standardized across all modules (App. B).
+- **Partitioning:** range by `created_at` (monthly) for `journal_entries`, `audit_logs`, chat/messages, shipment events; hash `product_variants` by `product_id` past ~10M rows.
+- **Indexes:** composite `(country_code, created_at)`, `(status, due_date)`, `(entity_type, entity_id)`, `(supplier_id, is_active)`.
+- **Caching:** Redis for hot reads + facet counts; invalidate on write; materialized views refreshed by cron.
+- **Naming:** `snake_case`, plural tables, `<context>_<entity>` when clarifying; `*_json` for JSONB; `is_*` booleans; `*_at` timestamps; `country_code` on all tenant rows; `id` INTEGER PK + `uuid` for public refs; soft-delete via `is_deleted`/`deleted_at`/`deleted_by`/`delete_reason`; `version` for optimistic locking; `created_by`/`updated_by` → `users.id`.
 - **Normalization fix (planned):** split the 85-column `country_configs` into `country_basics`, `country_economics`, `country_tax`, `country_legal`.
 
 ### 2.7 Technologies
@@ -237,7 +231,7 @@ Rules: integer PK for speed + UUID for public APIs (matches ecosystem plan §6/�
 | `ENUM` / lookup tables | stable status sets (prefer lookup tables when values evolve) |
 | `ARRAY` | tags, multi-value filters |
 | Generated columns | `search_vector` (tsvector), slug |
-| Materialized views | dashboards / facets (ADR-008) |
+| Materialized views | dashboards / facet counts (ADR-008) |
 | Triggers / Functions | RLS context, `updated_at`, ledger immutability guard |
 | **Extensions** | `pgvector` (search/AI), `pgcrypto` (`gen_random_uuid`, hashing), `citext` (case-insensitive email), `btree_gin` (composite GIN), `pg_trgm` (fuzzy/trigram), `uuid-ossp` |
 > Ban: stored procedures for business logic (keep logic in services); `LIKE '%…%'` on large tables.
@@ -343,7 +337,7 @@ PostgreSQL provisioned for staging/prod (dev stays SQLite). Redis. Object storag
 
 ### Phase 5 — Normalization & storage fixes
 - Split `country_configs` (85 cols) → `country_basics/economics/tax/legal` with a data-preserving migration; resolve `country_code` `VARCHAR(3)` vs `(10)` here, **before** any joins.
-- Enforce metadata-in-DB / bytes-in-object-storage for all file-bearing tables. Add the high-priority composite indexes + missing FKs (**PostgreSQL only** — see §7 / grounded: 62 single-index tables, 44 missing FKs).
+- Enforce metadata-in-DB / bytes-in-object-storage for all file-bearing tables. Add the high-priority composite indexes + missing FKs (**PostgreSQL only** — SQLite default B-tree; 62 single-index tables would slow writes).
 - **Done when:** no table > ~40 columns without justification; no file bytes stored in the DB.
 
 ### Phase 6 — Governance automation
@@ -395,20 +389,20 @@ PostgreSQL provisioned for staging/prod (dev stays SQLite). Redis. Object storag
 
 ### Appendix A — AI BINDING CONTRACT (paste into every AI task that touches the DB)
 > You are working on the ZOZI database. Before any change you MUST have read `documents/scope/01_DATABASE.md` in full. You MUST obey, without exception:
-1. Never run `Base.metadata.create_all()` in production; Alembic migrations only.
-2. Never drop or merge tables to reduce count; extend an existing ecosystem (§2.2).
-3. Every new table declares its schema/ecosystem and an owner.
-4. Every migration is reviewed, has a downgrade, and has a contract test.
-5. Never add a foreign key that spans ecosystems; use a service call or a durable event (§2.13).
-6. Every country-scoped table carries `country_code` and an RLS policy.
-7. Financial writes go only through the ledger service; never `UPDATE` a posted journal entry.
-8. AI outputs go to staging/`ai_*` tables and are committed explicitly — never written straight into business tables.
-9. Store business constants in config tables; never hardcode them.
-10. Store file metadata in the DB and bytes in object storage.
-11. After any schema change: regenerate the data dictionary and update `CODEBASE_STATUS_MATRIX.md`.
-12. No silent fallbacks. If a pipeline can't run, report it explicitly.
-13. **This file is the single source of truth.** Do not maintain parallel companion docs; verify claims against the codebase, not against other prose (audits rot — see ADR-018).
-14. If a requested change conflicts with this contract, **STOP and ask** before proceeding.
+> 1. Never run `Base.metadata.create_all()` in production; Alembic migrations only.
+> 2. Never drop or merge tables to reduce count; extend an existing ecosystem (§2.2).
+> 3. Every new table declares its schema/ecosystem and an owner.
+> 4. Every migration is reviewed, has a downgrade, and has a contract test.
+> 5. Never add a foreign key that spans ecosystems; use a service call or a durable event (§2.13).
+> 6. Every country-scoped table carries `country_code` and an RLS policy.
+> 7. Financial writes go only through the ledger service; never `UPDATE` a posted journal entry.
+> 8. AI outputs go to staging/`ai_*` tables and are committed explicitly — never written straight into business tables.
+> 9. Store business constants in config tables; never hardcode them.
+> 10. Store file metadata in the DB and bytes in object storage.
+> 11. After any schema change: regenerate the data dictionary and update `CODEBASE_STATUS_MATRIX.md`.
+> 12. No silent fallbacks. If a pipeline can't run, report it explicitly.
+> 13. **This file is the single source of truth.** Do not maintain parallel companion docs; verify claims against the codebase, not against other prose (audits rot — see ADR-018).
+> 14. If a requested change conflicts with this contract, **STOP and ask** before proceeding.
 
 ### Appendix B — Naming conventions
 `snake_case`; plural tables; `<context>_<entity>` when clarifying; `*_json` for JSONB; `is_*` booleans; `*_at` timestamps; `country_code` on all tenant rows; `id` INTEGER PK + `uuid` for public refs; soft-delete via `is_deleted`/`deleted_at`/`deleted_by`/`delete_reason`; `version` for optimistic locking; `created_by`/`updated_by` → `users.id`.
@@ -427,7 +421,7 @@ PostgreSQL provisioned for staging/prod (dev stays SQLite). Redis. Object storag
 - [ ] Domain owner + (for finance/security/audit) Platform/DBA sign-off.
 
 ### Appendix E — How this scope series works (single-file rule)
-This is doc **01** and — for the database domain — it is **the only file**. The operational specs (relationship map, indexing, migrations, production, development) are embedded as **Part II (§6–§10)**; do **not** keep them as separate files (ADR-016). Each *future feature* domain gets its own file using the same template + rigor: `02_SEARCH.md`, `03_FINANCE.md`, `04_LOGISTICS.md`, `05_HR.md`, `06_COMMUNICATION.md`, `07_AI_MEDIA.md`, `08_COUNTRY.md`, `09_SECURITY_AUDIT.md`, `10_ANALYTICS.md`. Each MUST cite this doc for any data-layer rule and MAY NOT contradict Appendix A.
+This is doc **01** and — for the database domain — it is **the only file**. The operational specs (relationship map, indexing, migrations, production, development) are embedded as **§6–§10** (with ADR-016 forbidding parallel copies). Each *future feature* domain gets its own file using the same template + rigor: `02_SEARCH.md`, `03_FINANCE.md`, `04_LOGISTICS.md`, `05_HR.md`, `06_COMMUNICATION.md`, `07_AI_MEDIA.md`, `08_COUNTRY.md`, `09_SECURITY_AUDIT.md`, `10_ANALYTICS.md`. Each MUST cite this doc for any data-layer rule and MAY NOT contradict Appendix A.
 
 ### Appendix F — DATABASE DECISION LOG (ADR) · *the anti-drift memory*
 > Every major data decision is recorded here. **Future AI/dev sessions MUST NOT reverse an ADR without a new, approved ADR.** This is what stops flip-flopping.
@@ -435,7 +429,7 @@ This is doc **01** and — for the database domain — it is **the only file**. 
 | ID | Decision | Rationale | Grounded in | Date | Status |
 |---|---|---|---|---|---|
 | ADR-001 | PostgreSQL in prod; SQLite **dev-only** | ACID, JSONB, RLS, pgvector; `db/database.py` raises on SQLite in prod | codebase / DATABASE_SCOPE | 2026 | Accepted |
-| ADR-002 | Keep all tables; govern, don't consolidate | each domain is an in-use subsystem; *rejects the earlier "merge ~20%" idea* | ecosystem plan | 2026 | Accepted (supersedes merge proposal) |
+| ADR-002 | Keep all tables; govern, don't consolidate | each domain is an in-use subsystem; *rejects the earlier "merge ~20%" idea* | ecosystem plan | 2026 | Accepted |
 | ADR-003 | Bounded-context PostgreSQL schemas (16 ecosystems) | clarity without rewrite; metadata-only move | §2.2 | 2026 | Accepted |
 | ADR-004 | JSONB `attributes` + GIN for variants (not flat cols) | flexible, fast faceting at 1M+ variants | ecosystem plan | 2026 | Accepted |
 | ADR-005 | Materialized-path categories (`/1/15/42/`) | instant subtree queries vs recursive CTE | ecosystem plan | 2026 | Accepted |
@@ -479,28 +473,28 @@ This is doc **01** and — for the database domain — it is **the only file**. 
 ### 6.1 Domain (ecosystem) relationship graph
 Allowed interactions are via services/events only (ADR-014). No cross-ecosystem FK chains.
 ```
-                        ┌──────────────┐
-                        │     core     │  users · roles · devices · auth
-                        └──────┬───────┘
-            ┌───────────────┬──┴───────────┬────────────────┐
-            ▼               ▼              ▼                ▼
-      ┌──────────   ┌──────────┐   ┌──────────┐    ┌────────────┐
-      │ commerce │   │ supplier │   │ customer │    │    hr      │
-      │ products │   │ profiles │   │ profiles │    │ employees  │
-      │ orders   │   │ docs/KYC │   │ addresses│    │ attendance │
-      └────┬─────┘   └────┬─────   └────┬─────┘    └────────────┘
-           │  events       │              │
-           ▼               ▼              ▼
-      ┌──────────┐   ┌──────────   ┌──────────────
-      │logistics │   │ finance  │◄──┤   treasury   │
-      │ shipments│   │ ledger   │   │ cash/payouts │
-      └────┬─────┘   └────┬─────   └──────────────
-           │              │
-           ▼              ▼
-      ┌──────────────────────────┐  ┌──────────────┐  ┌────────────┐
-      │        audit             │  │  analytics   │  │  media/ai  │
-      │  (append-only, WORM)     │  │  snapshots   │  │  staging   │
-      └──────────────────────────┘  └──────────────┘  └────────────┘
+                  ┌──────────────┐
+                  │     core     │  users · roles · sessions · devices · auth
+                  └──────┬───────┘
+        ┌───────────────┬──┴───────────┬────────────────┐
+        ▼               ▼              ▼                ▼
+  ┌──────────   ┌──────────┐   ┌──────────┐    ┌────────────┐
+  │ commerce │   │ supplier │   │ customer │    │    hr      │
+  │ products │   │ profiles │   │ addresses│    │ employees  │
+  │ orders   │   │ docs/KYC │   │          │    │ attendance │
+  └────┬─────┘   └────┬─────   └────┬─────┘    └────────────┘
+       │  events       │              │
+       ▼               ▼              ▼
+  ┌──────────┐   ┌──────────   ┌──────────────
+  │logistics │   │ finance  │◄──┤   treasury   │
+  │ shipments│   │ ledger   │   │ cash/payouts │
+  └────┬─────┘   └────┬─────   └──────────────
+       │              │
+       ▼              ▼
+  ┌──────────────────────────┐  ┌──────────────┐  ┌────────────┐
+  │        audit             │  │  analytics   │  │  media/ai  │
+  │  (append-only, WORM)     │  │  snapshots   │  │  staging   │
+  └──────────────────────────┘  └──────────────┘  └────────────┘
    Cross-cutting (read by all, written by owners): country · configuration · communication · security
 ```
 
@@ -520,8 +514,8 @@ orders ──1:N── order_items
    │ publish OrderDelivered / RefundRequested (NO direct FK to finance)
    ▼
 finance.ledger_service ──► journal_entries ──1:N── journal_entry_lines ──N:1── accounts
-                              ▲                        │
-                    ap_ledger / ar_ledger (sub-ledgers reconcile to control accounts)
+                               ▲                        │
+             ap_ledger / ar_ledger (sub-ledgers reconcile to control accounts)
 payout_batches ──► treasury payout ──► journal (balanced) ──► bank
 ```
 **AI staging → commit (ADR-007)**
@@ -610,7 +604,7 @@ Extend `backend/scripts/generate_data_dictionary.py` to also emit FK edges → M
 - Every migration has `upgrade()` AND `downgrade()`.
 - Every migration ships a contract test asserting the exact before/after shape.
 - Data migrations separated from schema migrations; idempotent; batched for big tables.
-- Resolve `country_code` `VARCHAR(3)` vs `(10)` in the unifying migration **before** joins (finding *c*).
+- Resolve `country_code` `VARCHAR(3)` vs `(10)` in the unifying migration **before** joins.
 - Create the 3 missing migrations for ORM-only tables: `points_transactions`, `upload_jobs`, `user_points`.
 - Repair the broken Alembic line (the `Union` import) so the existing chain runs (ADR-018).
 
@@ -639,18 +633,18 @@ Extend `backend/scripts/generate_data_dictionary.py` to also emit FK edges → M
 ### 9.1 Topology
 ```
                  WAF (ModSecurity + OWASP CRS) · fail2ban · Let's Encrypt TLS
-                                  │
-                         Nginx reverse proxy
-                                  │
-        ┌─────────────────────────┼──────────────────────────┐
-        ▼                         ▼                          ▼
-   FastAPI (API)          Task workers (Celery/ARQ)     WS servers
-        │                  AI/ML · bulk · email · AI jobs
-        ▼                         │
-   PgBouncer ──► PostgreSQL 15 (primary) ──► read replica(s)
-        │                         │
-        ▼                         ▼
-   Redis (cache/queue/rate)   Object storage + CDN (Cloudflare R2)  ← media bytes
+                                   │
+                          Nginx reverse proxy
+                                   │
+         ┌─────────────────────────┼──────────────────────────┐
+         ▼                         ▼                          ▼
+    FastAPI (API)          Task workers (Celery/ARQ)     WS servers
+         │                  AI/ML · bulk · email · AI jobs
+         ▼                         │
+    PgBouncer ──► PostgreSQL 15 (primary) ──► read replica(s)
+         │                         │
+         ▼                         ▼
+    Redis (cache/queue/rate-limit)   Object storage + CDN (Cloudflare R2)  ← media bytes
 ```
 - Postgres: managed (RDS/Cloud SQL/Neon/Supabase), primary + ≥1 read replica **[CONFIRM provider]**.
 - Object storage + CDN: Cloudflare R2 (S3-compatible, zero egress; works with existing `boto3` + `endpoint_url`).
@@ -664,7 +658,7 @@ DB stores media_assets metadata ONLY (url, mime, hash, w/h, ai_status). Never st
 This removes the #1 crash cause: local-disk media served by the API (DATABASE_STRUCTURE P0-A).
 
 ### 9.3 Concurrency — handling 1000s of concurrent users
-- Pool: PgBouncer (transaction mode) in front; app pool 5 + overflow 10 (raise only after PgBouncer).
+- Pool: PgBouncer (transaction mode) in front; app pool 5 + overflow 10 (raise only after PgBouncer is in place).
 - Offload: AI/ML/bulk/email → task queue workers (never in the request path).
 - Read scale: dashboards/reports → read replicas + materialized views.
 - Cache: Redis for hot reads/facets; invalidate on write; stampede guards.
@@ -733,7 +727,7 @@ backend/
 ├── routers/  controllers/  services/  providers/
 ├── alembic/       env.py · versions/ · versions_archive/
 ├── scripts/       generate_data_dictionary.py · analyze_tables.py · seed · maintenance
-├── tests/         unit · integration · contract · migration  (test_database.py = 33 tests)
+├── tests/         unit · integration · contract · migration (test_database.py = 33 tests)
 ├── monitoring/    prometheus · grafana · promtail · fraud_monitoring · ghost_order_detector
 ├── docs/          erd/ · data-dictionary · performance-reports
 └── zozi.db        ⚠ DEV/SEED ONLY
@@ -754,812 +748,3 @@ backend/
 Sign off **Appendix F (the ADRs)** first — they are the leash. Then this database domain is fully bound in one file, and we move to the next feature scope (`03_FINANCE.md` or `06_COMMUNICATION.md`) in the same binding format — citing §01, never contradicting Appendix A. If you want, the next concrete artifact is the `generate_data_dictionary.py` **ERD-extension script** so §6.4 (and therefore the Relationship Map) becomes self-maintaining.
 
 <!-- FILE END: documents/scope/01_DATABASE.md -->
-
-That's the complete v2.1 — one file, the seven gap blocks folded into §2.9–§2.15 + Appendix G, and the five companions embedded as §6–§10 (with ADR-016 forbidding parallel copies). Want me to write the ERD-generator script next, or proceed to the next feature scope?
-
----------------------------------------------------------------------------------------------------
-
-Based on everything we've designed for ZOZI over the last several months, your **`DATABASE.md`** should no longer be just a database document.
-It should become the **Database Constitution** of the entire platform.
-At the moment I'd estimate it is around **80–85% complete architecturally**, but it is missing several enterprise-level sections that will save you hundreds of hours later.
-
----
-
-# Current Status
-
-| Section                | Status     |
-| ---------------------- | ---------- |
-| Database Philosophy    | ✅ Complete |
-| Naming Convention      | ✅ Complete |
-| Table Organization     | ✅ Complete |
-| Primary Keys           | ✅ Complete |
-| Foreign Keys           | ✅ Complete |
-| Soft Delete Strategy   | ✅ Complete |
-| Audit Fields           | ✅ Complete |
-| Country Isolation      | ✅ Complete |
-| Multi Tenant Logic     | ✅ Complete |
-| Finance Integration    | ✅ Complete |
-| Payment Integration    | ✅ Complete |
-| Product Database       | ✅ Complete |
-| Order Database         | ✅ Complete |
-| User Database          | ✅ Complete |
-| Delivery Database      | ✅ Complete |
-| Supplier Database      | ✅ Complete |
-| Security Tables        | ⚠ Partial  |
-| Media Storage          | ❌ Missing  |
-| Chat Database          | ❌ Missing  |
-| Notification Database  | ❌ Missing  |
-| AI Database            | ❌ Missing  |
-| Search Index Strategy  | ❌ Missing  |
-| Cache Strategy         | ❌ Missing  |
-| Database Scaling       | ❌ Missing  |
-| Partition Strategy     | ❌ Missing  |
-| Backup Strategy        | ❌ Missing  |
-| Disaster Recovery      | ❌ Missing  |
-| Read Replica Strategy  | ❌ Missing  |
-| Database Versioning    | ❌ Missing  |
-| Migration Strategy     | ❌ Missing  |
-| Performance Guidelines | ❌ Missing  |
-| Index Guidelines       | ❌ Missing  |
-| Query Rules            | ❌ Missing  |
-| Transaction Rules      | ❌ Missing  |
-| Event Tables           | ❌ Missing  |
-| Analytics Tables       | ❌ Missing  |
-| Log Tables             | ❌ Missing  |
-| Archive Tables         | ❌ Missing  |
-
----
-
-# These sections should be added
-
----
-
-# 1. Database Principles
-
-Define rules such as:
-
-* Never duplicate data
-* Normalize until necessary
-* Denums only for performance
-* Everything auditable
-* No hard delete
-* Country isolated
-* Tenant isolated
-* UUID internally
-* Human readable IDs externally
-
----
-
-# 2. Database Folder Architecture
-
-Example
-
-```
-Database
-
-├── Core
-├── Users
-├── Supplier
-├── Customer
-├── Products
-├── Orders
-├── Finance
-├── Logistics
-├── Notification
-├── AI
-├── Chat
-├── Analytics
-├── Security
-├── Audit
-├── Archive
-└── System
-```
-
----
-
-# 3. Table Naming Rules
-
-Example
-
-```
-supplier_products, customer_orders, order_items, finance_transactions, finance_ledgers, supplier_wallets, delivery_assignments, notification_queue, chat_messages, chat_rooms, media_files, audit_logs
-```
-
----
-
-# 4. Column Naming Standard
-
-```
-id, uuid, supplier_id, customer_id, country_id, created_at, updated_at, deleted_at, created_by, updated_by, deleted_by, status, is_active, is_deleted, version
-```
-
----
-
-# 5. Relationship Rules
-
-One-to-One
-One-to-Many
-Many-to-Many
-Bridge Tables
-Cascade Rules
-Delete Rules
-Update Rules
-
----
-
-# 6. Database Layer Diagram
-
-```
-Application
-↓
-API
-↓
-Service
-↓
-Repository
-↓
-Database
-↓
-Storage
-```
-
----
-
-# 7. Index Strategy
-
-Every table should specify
-Primary Index
-Unique Index
-Composite Index
-GIN
-GiST
-Vector
-JSONB
-Partial Index
-
----
-
-# 8. PostgreSQL Features
-
-Define usage for
-JSONB
-ENUM
-Array
-Generated Columns
-Materialized Views
-Triggers
-Functions
-Stored Procedures
-Extensions
-
-```
-pgvector
-pgcrypto
-uuid-ossp
-citext
-btree_gin
-pg_trgm
-```
-
----
-
-# 9. Partition Strategy
-
-Orders
-Payments
-Logs
-Notifications
-Analytics
-Archive
-by
-
-```
-Country
-Year
-Month
-```
-
----
-
-# 10. Read Replica Architecture
-
-```
-Write DB
-↓
-Replica 1
-↓
-Replica 2
-↓
-Analytics Replica
-```
-
----
-
-# 11. Backup Strategy
-
-Daily
-Weekly
-Monthly
-Yearly
-Point in Time Recovery
-Snapshot
-Cold Backup
-
----
-
-# 12. Disaster Recovery
-
-Recovery Time Objective
-Recovery Point Objective
-Server Failure
-Database Failure
-Storage Failure
-Country Failure
-
----
-
-# 13. Media Storage Architecture
-
-Missing completely.
-Need
-
-```
-photos
-videos
-voice
-documents
-attachments
-supplier logos
-product images
-chat images
-chat files
-AI generated images
-```
-
-Store only metadata in PostgreSQL.
-
-Actual file stored in S3-compatible object storage.
-
----
-
-# 14. Chat Database
-
-Missing.
-Need
-
-```
-Chat Room
-Messages
-Attachments
-Read Status
-Typing
-Last Seen
-Online
-Voice Notes
-Image Messages
-Video Messages
-```
-
----
-
-# 15. Notification Database
-
-Need
-
-```
-Push
-Email
-SMS
-WhatsApp
-In App
-Queue
-Retry
-History
-```
-
----
-
-# 16. AI Database
-
-Need tables for
-
-```
-AI Embeddings
-Recommendations
-Image Embeddings
-Voice Embeddings
-Vector Search
-AI Logs
-Prompt History
-Model Version
-Confidence Score
-```
-
----
-
-# 17. Search Database
-
-Need
-
-```
-Search History
-Popular Search
-Trending
-Auto Complete
-Search Analytics
-Search Cache
-```
-
----
-
-# 18. Cache Layer
-
-Redis Keys
-Naming
-TTL
-Invalidation
-Warm Cache
-Cold Cache
-
----
-
-# 19. Event Driven Tables
-
-Need
-
-```
-Outbox
-Inbox
-Events
-Event Queue
-Retry Queue
-Dead Letter Queue
-```
-
----
-
-# 20. Audit System
-
-Need dedicated
-
-```
-audit_logs
-activity_logs
-security_logs
-finance_logs
-api_logs
-error_logs
-system_logs
-```
-
----
-
-# 21. Analytics Tables
-
-Need
-
-```
-Daily Sales
-Monthly Sales
-Customer KPI
-Supplier KPI
-Country KPI
-Revenue KPI
-Orders KPI
-Retention KPI
-Conversion KPI
-```
-
----
-
-# 22. Archive Strategy
-
-Move
-
-```
-Old Orders
-Old Chats
-Old Notifications
-Old Logs
-Old Analytics
-```
-
-after retention period.
-
----
-
-# 23. Security Layer
-
-Need
-Encryption
-Masking
-PII
-Secrets
-Hash
-Token
-Session
-API Keys
-
----
-
-# 24. Migration Strategy
-
-Every schema change must define
-
-```
-Migration ID
-Rollback
-Version
-Dependencies
-Testing
-Deployment Order
-```
-
----
-
-# 25. Performance Rules
-
-Maximum joins
-Maximum query time
-Pagination
-Cursor Pagination
-Batch Inserts
-Bulk Updates
-N+1 Prevention
-Connection Pool
-
----
-
-# 26. Database Monitoring
-
-Need
-Slow Query Log
-Index Usage
-Deadlock Monitor
-Connection Monitor
-Storage Monitor
-Vacuum
-Autovacuum
-Replication Lag
-
----
-
-# 27. Production Checklist
-
-Before deployment
-
-* Indexes verified
-* Foreign Keys verified
-* Constraints verified
-* Backup tested
-* Restore tested
-* Migration tested
-* Performance tested
-* Security tested
-* Load tested
-* Monitoring enabled
-
----
-
-## Overall Assessment
-
-Your current `DATABASE.md` is already significantly more comprehensive than what many startups create. However, to serve as the single source of truth for a platform intended to scale across multiple GCC countries, I would expand it into an enterprise architecture document with approximately **30 major sections**.
-
-Once those missing areas—particularly **media storage, chat, notifications, AI/vector search, caching, partitioning, disaster recovery, migration strategy, monitoring, and performance standards**—are added, the document would be at a level suitable for guiding a production-grade system over the next 5–10 years without requiring major architectural redesign.
-
-
------------------------------------------------------------------------------------------
-
-Yes. After reviewing the direction we've been moving with ZOZI, I think you've reached a good architectural direction.
-However, if your goal is to build **one document that will never need a major redesign**, I would make a few final improvements before considering `DATABASE.md` frozen.
-
----
-
-# Overall Rating
-
-| Area                 | Status   |
-| -------------------- | -------- |
-| Architecture         | ✅ 10/10  |
-| Scalability          | ✅ 10/10  |
-| Multi-country        | ✅ 10/10  |
-| Finance              | ✅ 10/10  |
-| Security             | ✅ 9.5/10 |
-| AI Integration       | ✅ 10/10  |
-| Maintainability      | ✅ 10/10  |
-| Production Readiness | ✅ 9.5/10 |
-| Enterprise Design    | ✅ 10/10  |
-
-**Overall:** **9.8/10**
-
-This is already beyond what most startups document.
-
----
-
-# I would add only a few more sections
-
-## 1. Database Versioning ⭐⭐⭐⭐⭐
-
-Every release should know which schema version it belongs to.
-
-Example
-
-```
-Database Version
-
-v1.0
-Core Tables
-
-v1.1
-Finance
-
-v1.2
-Supplier
-
-v1.3
-AI
-
-v2.0
-Saudi Arabia Expansion
-```
-
----
-
-## 2. Data Lifecycle ⭐⭐⭐⭐⭐
-
-Every table should define
-
-```
-Created
-↓
-Active
-↓
-Archived
-↓
-Deleted
-↓
-Backup
-↓
-Destroyed
-```
-
-This prevents future confusion.
-
----
-
-## 3. Storage Strategy ⭐⭐⭐⭐⭐
-
-Instead of writing only
-
-```
-Product Images
-```
-
-Define
-
-```
-Hot Storage
-Warm Storage
-Cold Storage
-Archive Storage
-```
-
-Example
-Product Images
-↓
-S3
-↓
-Cloudflare CDN
-↓
-User
-
----
-
-Logs
-↓
-Archive Bucket
-↓
-Delete after 5 years
-
----
-
-Chat Attachments
-↓
-Compress
-↓
-Archive
-
-```
-
----
-
-## 4. Database Limits ⭐⭐⭐⭐⭐
-
-Example
-
-```
-Maximum product images
-20
-Maximum video size
-200 MB
-Maximum chat attachment
-50 MB
-Maximum supplier products
-Unlimited
-Maximum order notes
-5000 chars
-Maximum description
-20000 chars
-```
-
-Having these limits documented is extremely useful.
-
----
-
-## 5. Growth Planning ⭐⭐⭐⭐⭐
-
-Document expected scale.
-
-```
-Year 1
-500 Suppliers
-100k Products
-5k Customers
-100 Orders/day
-
----
-
-Year 2
-2500 Suppliers
-800k Products
-100k Customers
-2000 Orders/day
-
----
-
-Year 5
-50,000 Suppliers
-40 Million Products
-10 Million Customers
-100k Orders/day
-
-```
-
-This ensures today's decisions support tomorrow's scale.
-
----
-
-## 6. Performance Targets ⭐⭐⭐⭐⭐
-
-For example:
-
-```
-
-Search
-<300 ms
-Product Page
-<200 ms
-Checkout
-<500 ms
-Order Creation
-<1 sec
-Payment Callback
-<2 sec
-
-```
-
-These become measurable engineering goals.
-
----
-
-## 7. Data Ownership ⭐⭐⭐⭐⭐
-
-Specify which service owns each table.
-
-| Module | Owner |
-|---------|-------|
-| Users | Auth Service |
-| Products | Product Service |
-| Orders | Order Service |
-| Payments | Finance Service |
-| Logistics | Logistics Service |
-| AI | AI Service |
-| Chat | Communication Service |
-
-This becomes especially important if you later split the monolith into microservices.
-
----
-
-## 8. Event Flow ⭐⭐⭐⭐⭐
-
-Document major events.
-
-Example
-
-```
-Order Created
-↓
-Inventory Reserved
-↓
-Payment Success
-↓
-Supplier Notification
-↓
-Delivery Assigned
-↓
-Customer Notification
-↓
-Ledger Updated
-↓
-Analytics Updated
-
-```
-
-This avoids inconsistent workflows across features.
-
----
-
-## 9. Dependency Map ⭐⭐⭐⭐⭐
-
-Show relationships between modules.
-
-```
-
-Customer
-↓
-Cart
-↓
-Checkout
-↓
-Payment
-↓
-Order
-↓
-Supplier
-↓
-Delivery
-↓
-Finance
-↓
-Analytics
-
-```
-
-Useful for impact analysis during changes.
-
----
-
-## 10. Future Reserved Modules ⭐⭐⭐⭐⭐
-Reserve placeholders now, even if not implemented.
-
-```
-Advertising
-Marketplace Ads
-Affiliate
-Subscription
-Warehouse
-B2B Marketplace
-Cross Border Trade
-Wholesale
-AI Recommendation Engine
-Marketplace API
-POS
-ERP Integration
-CRM
-Business Intelligence
-
-```
-
-This prevents namespace conflicts later.
-
----
-
-# Final Verdict
-
-Once these additions are included, I would consider `DATABASE.md` **complete** and avoid major structural changes unless your business model changes significantly.
-
-At that point, I would freeze the document and treat it as a core architecture specification. Any schema or database change should require updating `DATABASE.md` first, ensuring the implementation always follows the documented architecture rather than drifting over time. This discipline is especially valuable since you've said your goal is to finish the technical architecture now so you can focus on CEO responsibilities after launch.
-```
-
-
-
-

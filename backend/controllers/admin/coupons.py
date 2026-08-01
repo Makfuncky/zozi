@@ -12,6 +12,7 @@ from models import Coupon
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 
+from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only, rollback_only
 
 def list_coupons(db: Session, *, skip: int = 0, limit: int | None = None, search: Optional[str] = None) -> dict:
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
@@ -70,9 +71,8 @@ def create_coupon(data: dict, acting_user: dict, db: Session) -> dict:
         expires_at=expires_at,
         is_active=bool(data.get("is_active", True)),
     )
-    db.add(coupon)
-    db.commit()
-    db.refresh(coupon)
+    add_and_flush(db, coupon)
+    commit_and_refresh(db, coupon)
     audit_log(
         db=db,
         action="COUPON_CREATED",
@@ -100,7 +100,7 @@ def update_coupon(coupon_id: int, data: dict, acting_user: dict, db: Session) ->
             setattr(coupon, "expires_at", _dt.fromisoformat(str(data["expires_at"]).replace("Z", "+00:00")).replace(tzinfo=None))
         except ValueError:
             pass
-    db.commit()
+    commit_only(db)
     return {"message": "Coupon updated", "id": coupon_id}
 
 
@@ -117,10 +117,10 @@ def delete_coupon(coupon_id: int, acting_user: dict, db: Session) -> dict:
         )
 
     try:
-        db.delete(coupon)
-        db.commit()
+        delete_only(db, coupon)
+        commit_only(db)
     except IntegrityError:
-        db.rollback()
+        rollback_only(db)
         raise HTTPException(
             status_code=409,
             detail="Coupon has related records that must be archived or removed before deletion.",

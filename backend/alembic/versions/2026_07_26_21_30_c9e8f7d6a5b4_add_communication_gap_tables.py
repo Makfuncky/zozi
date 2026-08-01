@@ -22,10 +22,17 @@ This migration creates the internal communication gap tables:
 - proxy_messages: Proxy message history
 - proxy_call_logs: Call recording logs
 """
+import os
+import sys
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.join(_project_root, "alembic"))
+sys.path.insert(0, _project_root)
+
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from migration_helpers import safe_create_table, safe_drop_table
 
 
 revision: str = 'c9e8f7d6a5b4'
@@ -35,7 +42,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.create_table(
+    safe_create_table(op, 
         'internal_channels',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('channel_id', sa.String(36), nullable=False, unique=True, index=True),
@@ -54,7 +61,7 @@ def upgrade() -> None:
         sa.Index('ix_internal_channel_entity', 'entity_type', 'entity_id'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'internal_channel_members',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -66,7 +73,7 @@ def upgrade() -> None:
         sa.UniqueConstraint('channel_id', 'user_id', name='uq_channel_member'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'internal_messages',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -83,7 +90,7 @@ def upgrade() -> None:
         sa.Index('ix_internal_msg_user', 'user_id'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'chat_reactions',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('message_id', sa.Integer(), nullable=False),
@@ -96,7 +103,7 @@ def upgrade() -> None:
         sa.Index('ix_chat_reaction_msg', 'message_id', 'message_type'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'chat_legal_holds',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('room_id', sa.Integer(), nullable=False),
@@ -110,7 +117,7 @@ def upgrade() -> None:
         sa.UniqueConstraint('room_id', 'room_type', name='uq_legal_hold_room'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'external_contact_masking',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('user_id', sa.Integer(), nullable=False),
@@ -125,7 +132,7 @@ def upgrade() -> None:
         sa.Index('ix_masking_user', 'user_id'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'communication_audit_trail',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('entity_type', sa.String(50), nullable=False),
@@ -141,7 +148,7 @@ def upgrade() -> None:
         sa.Index('ix_comm_user', 'user_id', 'created_at'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'employee_communication_threads',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('country_code', sa.String(10), nullable=True),
@@ -155,7 +162,7 @@ def upgrade() -> None:
         sa.Index('ix_emp_comm_entity', 'entity_type', 'entity_id'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'notifications',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('user_id', sa.Integer(), nullable=False),
@@ -179,7 +186,7 @@ def upgrade() -> None:
         sa.Index('ix_notifications_user_read', 'user_id', 'is_read'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'announcements',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('title', sa.String(), nullable=False),
@@ -191,7 +198,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(), nullable=True),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'faqs',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('question', sa.Text(), nullable=False),
@@ -204,7 +211,7 @@ def upgrade() -> None:
         sa.Index('ix_faqs_country_code', 'country_code'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'help_categories',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('name', sa.String(), nullable=False),
@@ -214,7 +221,7 @@ def upgrade() -> None:
         sa.Column('created_at', sa.DateTime(), nullable=True),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'proxy_channels',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('entity_type', sa.String(), nullable=False),
@@ -228,7 +235,7 @@ def upgrade() -> None:
         sa.Index('idx_proxy_entity', 'entity_type', 'entity_id'),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'proxy_sessions',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -243,7 +250,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['participant_two_id'], ['users.id']),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'proxy_messages',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('session_id', sa.Integer(), nullable=False),
@@ -259,7 +266,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['recipient_id'], ['users.id']),
     )
 
-    op.create_table(
+    safe_create_table(op, 
         'proxy_call_logs',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('channel_id', sa.Integer(), nullable=False),
@@ -278,19 +285,19 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('proxy_call_logs')
-    op.drop_table('proxy_messages')
-    op.drop_table('proxy_sessions')
-    op.drop_table('proxy_channels')
-    op.drop_table('help_categories')
-    op.drop_table('faqs')
-    op.drop_table('announcements')
-    op.drop_table('notifications')
-    op.drop_table('employee_communication_threads')
-    op.drop_table('communication_audit_trail')
-    op.drop_table('external_contact_masking')
-    op.drop_table('chat_legal_holds')
-    op.drop_table('chat_reactions')
-    op.drop_table('internal_messages')
-    op.drop_table('internal_channel_members')
-    op.drop_table('internal_channels')
+    safe_drop_table(op, 'proxy_call_logs')
+    safe_drop_table(op, 'proxy_messages')
+    safe_drop_table(op, 'proxy_sessions')
+    safe_drop_table(op, 'proxy_channels')
+    safe_drop_table(op, 'help_categories')
+    safe_drop_table(op, 'faqs')
+    safe_drop_table(op, 'announcements')
+    safe_drop_table(op, 'notifications')
+    safe_drop_table(op, 'employee_communication_threads')
+    safe_drop_table(op, 'communication_audit_trail')
+    safe_drop_table(op, 'external_contact_masking')
+    safe_drop_table(op, 'chat_legal_holds')
+    safe_drop_table(op, 'chat_reactions')
+    safe_drop_table(op, 'internal_messages')
+    safe_drop_table(op, 'internal_channel_members')
+    safe_drop_table(op, 'internal_channels')

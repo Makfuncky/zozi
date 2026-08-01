@@ -15,6 +15,17 @@ from db.base import Base
 
 logger = logging.getLogger(__name__)
 
+pool_size = 20
+max_overflow = 30
+pool_recycle = 1800
+pool_timeout = 10
+db_statement_timeout = 60000
+POOL_SIZE = pool_size
+MAX_OVERFLOW = max_overflow
+POOL_RECYCLE = pool_recycle
+POOL_TIMEOUT = pool_timeout
+DB_STATEMENT_TIMEOUT = db_statement_timeout
+
 DATABASE_URL = str(settings.database_url)
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL must be configured in settings or environment")
@@ -53,21 +64,21 @@ elif _IS_POSTGRES:
         connect_args["sslrootcert"] = os.getenv("DB_SSL_ROOT_CERT")
     poolclass = QueuePool
     _pool_kwargs = {
-        "pool_size": settings.db_pool_size,
-        "max_overflow": settings.db_max_overflow,
-        "pool_recycle": settings.db_pool_recycle,
+        "pool_size": POOL_SIZE,
+        "max_overflow": MAX_OVERFLOW,
+        "pool_recycle": POOL_RECYCLE,
         "pool_pre_ping": True,
-        "pool_timeout": settings.db_connect_timeout,
+        "pool_timeout": POOL_TIMEOUT,
     }
 else:
     connect_args = {}
     poolclass = QueuePool
     _pool_kwargs = {
-        "pool_size": settings.db_pool_size,
-        "max_overflow": settings.db_max_overflow,
-        "pool_recycle": settings.db_pool_recycle,
+        "pool_size": POOL_SIZE,
+        "max_overflow": MAX_OVERFLOW,
+        "pool_recycle": POOL_RECYCLE,
         "pool_pre_ping": True,
-        "pool_timeout": settings.db_connect_timeout,
+        "pool_timeout": POOL_TIMEOUT,
     }
 
 search_path = None
