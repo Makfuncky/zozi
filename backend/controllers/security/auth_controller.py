@@ -42,7 +42,7 @@ from db.schemas import (
     ReferralPointEventSchema,
     ReferralShareRequest,
 )
-from db.database import get_db
+from services.database import get_db
 from utils.cache import cache_get_json, cache_set_json, cache_delete
 from utils.auth import (
     verify_password,

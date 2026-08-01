@@ -4,6 +4,26 @@ This document records **explicitly allowed** cross-domain imports that the auto-
 flags as DG3 violations. These are legitimate business requirements, not architectural
 debt.
 
+## Database Access Pattern
+
+### DB Dependency Layer (DG Exception)
+
+The `services/database.py` module provides the `get_db` dependency wrapper. Controllers
+and routers MUST use this instead of importing `db.database` directly.
+
+| Source Module | Import | Target | Justification |
+|---|---|---|---|
+| `controllers/*` | `get_db` | `services.database` | Controllers receive DB session via dependency injection |
+| `routers/*` | `get_db` | `services.database` | Routers receive DB session via dependency injection |
+| `utils/dependencies.py` | `get_db` | `services.database` | Shared utility dependencies |
+| `middleware/*` | `get_db` | `services.database` | Middleware-level database access |
+
+### Services → Database Layer
+
+Services MAY import directly from `db.database` for database operations. This is the
+intended pattern: services encapsulate the business logic and access the database layer
+directly.
+
 ## Finance → Other Domains
 
 | Source Module | Import | Target | Justification |
