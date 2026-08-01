@@ -14,7 +14,7 @@ class CountryConfig(Base):
     __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
     basics_id = Column(Integer, ForeignKey("country.country_basics.id"), nullable=True)
-    code = Column(String(10), unique=True, nullable=False, index=True)
+    code = Column(String(3), unique=True, nullable=False, index=True)
     name = Column(String, nullable=False)
     currency = Column(String(3), default="USD")
     currency_symbol = Column(String(10), nullable=True)
@@ -138,7 +138,7 @@ class CountryCommunication(Base):
         Index("ix_country_communications_recipient", "to_user_id", "status"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     from_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     to_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     subject = Column(String(200), nullable=False)
@@ -161,7 +161,7 @@ class CountryGatewayCredentials(Base):
     __tablename__ = "country_gateway_credentials"
     __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     gateway_name = Column(String(100), nullable=False)
     environment = Column(String(20), default="test")
     credentials = Column(JSON, nullable=True)
@@ -174,7 +174,7 @@ class PayoutRule(Base):
     __tablename__ = "payout_rules"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     min_amount = Column(Numeric(12, 2), nullable=True)
     max_amount = Column(Numeric(12, 2), nullable=True)
     fixed_fee = Column(Numeric(12, 2), default=0)
@@ -188,7 +188,7 @@ class TaxRule(Base):
     __tablename__ = "tax_rules"
     __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     tax_name = Column(String(100), nullable=False)
     tax_rate = Column(Numeric(5, 4), nullable=False)
     is_active = Column(Boolean, default=True)
@@ -200,7 +200,7 @@ class ShippingRule(Base):
     __tablename__ = "shipping_rules"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     method = Column(String, nullable=False)
     base_rate = Column(Numeric(10, 2), nullable=False)
     per_kg_rate = Column(Numeric(10, 2), nullable=True)
@@ -216,7 +216,7 @@ class Message(Base):
         Index("ix_message_sender", "from_user_id", "created_at"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     from_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     to_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     subject = Column(String(200), nullable=False)
@@ -240,7 +240,7 @@ class PayoutRuleCategory(Base):
         UniqueConstraint("country_code", "category_slug", name="uq_payout_rule_category"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     category_slug = Column(String, nullable=False)
     payout_rate = Column(Numeric(5, 4), nullable=False)
     min_amount = Column(Numeric(12, 2), nullable=True)
@@ -257,7 +257,7 @@ class PayoutRuleProduct(Base):
         UniqueConstraint("country_code", "product_id", name="uq_payout_rule_product"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     payout_rate = Column(Numeric(5, 4), nullable=False)
     min_amount = Column(Numeric(12, 2), nullable=True)

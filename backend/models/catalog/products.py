@@ -40,7 +40,7 @@ class Category(Base):
     meta_description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     # Materialized path (Phase 3a): derived from parent_id. e.g. "/1/", "/1/15/",
     # "/1/15/42/". Enables O(1) sub-tree queries without recursive CTEs.
     path = Column(String(255), nullable=True, index=True)
@@ -74,7 +74,7 @@ class Product(Base):
     tags = Column(JSON, nullable=True)
     attributes = Column(JSON, nullable=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
     is_digital = Column(Boolean, default=False)
@@ -132,7 +132,7 @@ class Review(Base):
     is_deleted = Column(Boolean, default=False)
     is_verified_purchase = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="reviews")
     product = relationship("Product", back_populates="reviews")
 
@@ -144,7 +144,7 @@ class WishlistItem(Base):
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="wishlist_items")
     product = relationship("Product", back_populates="wishlist_items")
 
@@ -156,7 +156,7 @@ class Wishlist(Base):
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="wishlists")
     product = relationship("Product", back_populates="wishlists")
 
@@ -182,7 +182,7 @@ class ProductVariant(Base):
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
     # Deterministic variant identity (Phase 3b). sha256 of the normalized
     # product_id + axes. Enables idempotent upserts and prevents duplicate
@@ -223,7 +223,7 @@ class ProductVideo(Base):
     upload_status = Column(String(50), default="pending")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     product = relationship("Product", back_populates="videos")
 
 
@@ -237,7 +237,7 @@ class VideoAnalytics(Base):
     watch_duration_seconds = Column(Integer, nullable=True)
     device_type = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class ProductFilterMetadata(Base):
@@ -250,7 +250,7 @@ class ProductFilterMetadata(Base):
     display_order = Column(Integer, nullable=False, server_default="0")
     is_active = Column(Boolean, nullable=False, server_default=sa_text("true"))
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     category = relationship("Category")
     options = relationship("ProductFilterOption", back_populates="filter_metadata", order_by="ProductFilterOption.sort_order")
 
@@ -264,7 +264,7 @@ class ProductFilterOption(Base):
     option_display_name = Column(String(255), nullable=False)
     product_count = Column(Integer, nullable=False, server_default="0")
     sort_order = Column(Integer, nullable=False, server_default="0")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     filter_metadata = relationship("ProductFilterMetadata", back_populates="options")
 
 
@@ -285,7 +285,7 @@ class Warehouse(Base):
     code = Column(String(50), unique=True, nullable=False, index=True)
     address = Column(Text, nullable=True)
     city = Column(String(100), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -308,7 +308,7 @@ class StockMovement(Base):
     quantity_after = Column(Numeric(14, 4), nullable=False)
     unit_cost = Column(Numeric(14, 4), nullable=True)
     total_cost = Column(Numeric(14, 4), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow, index=True)
     product = relationship("Product")
@@ -340,7 +340,7 @@ class PurchaseOrder(Base):
     terms = Column(Text, nullable=True)
     shipping_address = Column(Text, nullable=True)
     status = Column(String(50), default="draft")
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -369,7 +369,7 @@ class PurchaseOrderLine(Base):
     line_total = Column(Numeric(14, 2), default=0)
     weight = Column(Numeric(10, 3), nullable=True)
     volume = Column(Numeric(10, 3), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     purchase_order = relationship("PurchaseOrder", back_populates="lines")
     product = relationship("Product")
@@ -390,7 +390,7 @@ class GoodsReceiptNote(Base):
     status = Column(String(50), default="draft")
     notes = Column(Text, nullable=True)
     received_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     purchase_order = relationship("PurchaseOrder")
@@ -414,7 +414,7 @@ class GoodsReceiptLine(Base):
     lot_number = Column(String(100), nullable=True)
     expiry_date = Column(DateTime, nullable=True)
     unit_cost = Column(Numeric(14, 4), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     grn = relationship("GoodsReceiptNote", back_populates="lines")
     po_line = relationship("PurchaseOrderLine")
@@ -446,7 +446,7 @@ class SalesOrder(Base):
     notes = Column(Text, nullable=True)
     terms = Column(Text, nullable=True)
     status = Column(String(50), default="draft")
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -475,7 +475,7 @@ class SalesOrderLine(Base):
     line_total = Column(Numeric(14, 2), default=0)
     weight = Column(Numeric(10, 3), nullable=True)
     volume = Column(Numeric(10, 3), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     sales_order = relationship("SalesOrder", back_populates="lines")
     product = relationship("Product")
@@ -504,7 +504,7 @@ class TradeDeal(Base):
     rate = Column(Numeric(14, 6), nullable=True)
     total_value = Column(Numeric(14, 2), default=0)
     description = Column(Text, nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -523,7 +523,7 @@ class TradeDealItem(Base):
     quantity = Column(Numeric(14, 4), nullable=False, default=0)
     unit_price = Column(Numeric(14, 4), nullable=False, default=0)
     total_value = Column(Numeric(14, 2), default=0)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     deal = relationship("TradeDeal", back_populates="items")
 
@@ -542,7 +542,7 @@ class TradeSettlement(Base):
     reference_number = Column(String(100), nullable=True)
     payment_method = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -560,7 +560,7 @@ class TradingConfig(Base):
     value_type = Column(String(20), default="string")
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -580,7 +580,7 @@ class FinanceReport(Base):
     status = Column(String(50), default="generated")
     payload_json = Column(Text, nullable=True)
     file_url = Column(String(500), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -596,7 +596,7 @@ class FinanceDashboardMetrics(Base):
     metric_label = Column(String(255), nullable=True)
     category = Column(String(50), nullable=True)
     computed_at = Column(DateTime, default=_utcnow, index=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
 
@@ -632,7 +632,7 @@ class LogisticsRate(Base):
     estimated_days_min = Column(Integer, nullable=True)
     estimated_days_max = Column(Integer, nullable=True)
     is_active = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     zone = relationship("LogisticsZone")

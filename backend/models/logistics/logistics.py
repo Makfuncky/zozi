@@ -29,7 +29,7 @@ class LogisticsPartner(Base):
     verification_note = Column(String, nullable=True)
     verified_by = Column(Integer, nullable=True)
     verified_at = Column(DateTime, nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     business_type = Column(String, nullable=True)
     region = Column(String, nullable=True)
@@ -71,7 +71,7 @@ class LogisticsPartnerProfile(Base):
     insurance_expiry = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
     
     partner = relationship("LogisticsPartner", back_populates="profile")
@@ -82,7 +82,7 @@ class LogisticsPartnerServiceArea(Base):
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=False)
-    country_code = Column(String(10), nullable=False)
+    country_code = Column(String(3), nullable=False)
     country_name = Column(String, nullable=False)
     origin_city = Column(String, nullable=False)
     city_name = Column(String, nullable=False)
@@ -133,7 +133,7 @@ class LogisticsPricingProfile(Base):
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     partner = relationship("LogisticsPartner", back_populates="pricing_profiles")
     service_area = relationship("LogisticsPartnerServiceArea", back_populates="pricing_profiles")
 
@@ -157,7 +157,7 @@ class LogisticsVehicleRule(Base):
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     partner = relationship("LogisticsPartner", back_populates="vehicle_rules")
     service_area = relationship("LogisticsPartnerServiceArea", back_populates="vehicle_rules")
 
@@ -179,7 +179,7 @@ class LogisticsCategoryPricingRule(Base):
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     partner = relationship("LogisticsPartner", back_populates="category_pricing_rules")
     service_area = relationship("LogisticsPartnerServiceArea", back_populates="category_pricing_rules")
 
@@ -218,7 +218,7 @@ class Shipment(Base):
     accepted_vehicle_selected_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     order = relationship("Order", back_populates="shipments")
     supplier = relationship("User", backref="shipments")
@@ -246,4 +246,4 @@ class ShipmentEvent(Base):
     scan_code = Column(String, nullable=True)
     notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)

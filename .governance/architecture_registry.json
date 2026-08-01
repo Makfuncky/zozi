@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-01T19:47:06.199700+00:00",
+  "generated_at": "2026-08-01T19:54:53.535539+00:00",
   "repo": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi",
-  "debt_score": 34005,
+  "debt_score": 33920,
   "counts": {
-    "red": 115,
-    "yellow": 921,
-    "nodes": 855,
-    "edges": 2095,
-    "illegal_edges": 31,
+    "red": 114,
+    "yellow": 922,
+    "nodes": 856,
+    "edges": 2096,
+    "illegal_edges": 30,
     "features": 538,
     "domains": 24,
-    "triage_modules": 625
+    "triage_modules": 626
   },
   "domains": {
     "ai": {
@@ -1582,6 +1582,23 @@
         ],
         "paths": [
           "backend\\services\\cross_border_tracker.py"
+        ]
+      }
+    },
+    "database": {
+      "layers": {
+        "backend": [
+          "controllers",
+          "db",
+          "services"
+        ],
+        "paths": [
+          "backend\\controllers\\admin\\database.py",
+          "backend\\db\\database.py",
+          "backend\\services\\database.py"
+        ],
+        "surfaces": [
+          "admin"
         ]
       }
     },
@@ -5499,21 +5516,6 @@
         ]
       }
     },
-    "database": {
-      "layers": {
-        "backend": [
-          "controllers",
-          "db"
-        ],
-        "paths": [
-          "backend\\controllers\\admin\\database.py",
-          "backend\\db\\database.py"
-        ],
-        "surfaces": [
-          "admin"
-        ]
-      }
-    },
     "init_db": {
       "layers": {
         "backend": [
@@ -6224,13 +6226,6 @@
       "caller_layer": "controllers",
       "legal": false,
       "illegal_reason": "controller must not import another controller's internals"
-    },
-    {
-      "caller": "controllers.security.auth_controller",
-      "callee": "db.database",
-      "caller_layer": "controllers",
-      "legal": false,
-      "illegal_reason": "controllers may not depend on db.database"
     },
     {
       "caller": "controllers.security.permissions",
@@ -7907,7 +7902,7 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under db (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 195,
+      "fan_in": 194,
       "fan_out": 2,
       "instability": 0.0102,
       "is_entrypoint": true,
@@ -11077,7 +11072,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "logistics",
+      "domain_hint": "orders",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 3,
@@ -11428,7 +11423,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "logistics",
+      "domain_hint": "orders",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 4,
@@ -11740,7 +11735,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "supplier",
+      "domain_hint": "orders",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 5,
@@ -13450,6 +13445,19 @@
       "instability": 1.0,
       "is_entrypoint": false,
       "is_dead": true
+    },
+    {
+      "module": "services.database",
+      "layer": "services",
+      "domain": "_triage",
+      "domain_confidence": 0.0,
+      "domain_hint": "",
+      "triage_reason": "flat file under services (not in a domain sub-package; folder is the declaration)",
+      "fan_in": 2,
+      "fan_out": 1,
+      "instability": 0.3333,
+      "is_entrypoint": false,
+      "is_dead": false
     },
     {
       "module": "services.dei_auditor",
@@ -17239,7 +17247,7 @@
       "layer": "utils",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "security",
+      "domain_hint": "audit",
       "triage_reason": "flat file under utils (not in a domain sub-package; folder is the declaration)",
       "fan_in": 1,
       "fan_out": 2,
@@ -19250,13 +19258,6 @@
     },
     {
       "caller": "controllers.security.auth_controller",
-      "callee": "db.database",
-      "caller_layer": "controllers",
-      "legal": false,
-      "illegal_reason": "controllers may not depend on db.database"
-    },
-    {
-      "caller": "controllers.security.auth_controller",
       "callee": "db.schemas",
       "caller_layer": "controllers",
       "legal": true,
@@ -19272,6 +19273,13 @@
     {
       "caller": "controllers.security.auth_controller",
       "callee": "services",
+      "caller_layer": "controllers",
+      "legal": true,
+      "illegal_reason": ""
+    },
+    {
+      "caller": "controllers.security.auth_controller",
+      "callee": "services.database",
       "caller_layer": "controllers",
       "legal": true,
       "illegal_reason": ""
@@ -27873,6 +27881,13 @@
       "illegal_reason": ""
     },
     {
+      "caller": "services.database",
+      "callee": "db.database",
+      "caller_layer": "services",
+      "legal": true,
+      "illegal_reason": ""
+    },
+    {
       "caller": "services.dei_auditor",
       "callee": "models",
       "caller_layer": "services",
@@ -31605,14 +31620,14 @@
     },
     {
       "caller": "utils.dependencies",
-      "callee": "db.database",
+      "callee": "models",
       "caller_layer": "utils",
       "legal": true,
       "illegal_reason": ""
     },
     {
       "caller": "utils.dependencies",
-      "callee": "models",
+      "callee": "services.database",
       "caller_layer": "utils",
       "legal": true,
       "illegal_reason": ""

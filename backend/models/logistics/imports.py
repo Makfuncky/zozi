@@ -40,7 +40,7 @@ class ImportShipment(Base, AuditMixin, SoftDeleteMixin):
     currency = Column(String(10), default="OMR")
     exchange_rate = Column(Numeric(18, 6), default=1)
     warehouse_id = Column(Integer, ForeignKey("logistics.warehouses.id", ondelete="RESTRICT"), nullable=True, index=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     notes = Column(Text, nullable=True)
     created_by = Column(Integer, nullable=True)
     status = Column(String(20), default="draft")  # draft, in_transit, customs_cleared, landed
@@ -75,7 +75,7 @@ class ImportShipmentLine(Base, AuditMixin, SoftDeleteMixin):
     line_total_fx = Column(Numeric(18, 6), nullable=True)
     weight_kg = Column(Numeric(12, 4), nullable=True)
     volume_cbm = Column(Numeric(12, 4), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     allocated_freight = Column(Numeric(18, 2), default=0)
     allocated_insurance = Column(Numeric(18, 2), default=0)
     allocated_port = Column(Numeric(18, 2), default=0)
@@ -101,7 +101,7 @@ class LandedCostAllocation(Base, AuditMixin, SoftDeleteMixin):
     allocation_method = Column(String(20), default="by_value")  # by_value, by_weight, by_volume, by_quantity
     currency = Column(String(10), default="OMR")
     exchange_rate = Column(Numeric(18, 6), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     status = Column(String(20), default="allocated")
     created_at = Column(DateTime, default=_utcnow, nullable=False)
     created_by = Column(Integer, nullable=True)
@@ -126,7 +126,7 @@ class CustomsEntry(Base, AuditMixin, SoftDeleteMixin):
     total_customs_cost = Column(Numeric(18, 2), nullable=True)
     status = Column(String(20), default="cleared")
     notes = Column(Text, nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow, nullable=False)
     created_by = Column(Integer, nullable=True)
 
@@ -145,6 +145,6 @@ class ImportCostTemplate(Base, AuditMixin, SoftDeleteMixin):
     default_port_charges_percent = Column(Numeric(8, 4), nullable=True)
     default_bank_charges_percent = Column(Numeric(8, 4), nullable=True)
     allocation_method = Column(String(20), default="by_value")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=_utcnow, nullable=False)

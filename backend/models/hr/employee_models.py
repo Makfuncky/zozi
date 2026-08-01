@@ -27,7 +27,7 @@ class Office(Base):
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
-    country_code = Column(String(10), nullable=False)
+    country_code = Column(String(3), nullable=False)
     city = Column(String(100), nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
@@ -49,7 +49,7 @@ class PhysicalIDCard(Base):
     is_revoked = Column(Boolean, default=False)
     revoked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee")
 
@@ -66,7 +66,7 @@ class DynamicQRSession(Base):
     user_agent = Column(String(500), nullable=True)
     device_fingerprint = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="dynamic_qr_sessions")
 
@@ -81,7 +81,7 @@ class EmployeeBiometric(Base):
     biometric_type = Column(String(20), default="fingerprint")
     enrolled_at = Column(DateTime, default=_utcnow)
     is_active = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="biometrics", uselist=False)
 
@@ -96,7 +96,7 @@ class GeoFenceLog(Base):
     accuracy_meters = Column(Integer, nullable=True)
     scanned_at = Column(DateTime, default=_utcnow)
     is_within_fence = Column(Boolean, default=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="geo_fence_logs")
 
@@ -111,7 +111,7 @@ class EmployeeRole(Base):
     can_approve_leave = Column(Boolean, default=False)
     can_approve_expense = Column(Boolean, default=False)
     can_manage_users = Column(Boolean, default=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class OrgUnit(Base):
@@ -120,7 +120,7 @@ class OrgUnit(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     parent_id = Column(Integer, ForeignKey("hr.org_units.id"), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     level = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -144,7 +144,7 @@ class Employee(Base):
     employment_status = Column(String(30), default="active")
     salary = Column(Numeric(12, 2), nullable=True)
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     hire_date = Column(Date, nullable=False)
     termination_date = Column(Date, nullable=True)
     is_verified = Column(Boolean, default=False)
@@ -204,7 +204,7 @@ class EmployeeAttendance(Base):
     status = Column(String(20), default="present")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="attendance")
 
@@ -221,7 +221,7 @@ class EmployeeWorkLog(Base):
     location_long = Column(Float, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="work_logs")
 
@@ -241,7 +241,7 @@ class EmployeeLeaveRequest(Base):
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="leave_requests")
     approver = relationship("User", foreign_keys=[approved_by])
@@ -260,7 +260,7 @@ class EmployeeLeaveLedger(Base):
     carried_forward = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="leave_ledgers")
 
@@ -277,7 +277,7 @@ class EmployeeShiftRoster(Base):
     status = Column(String(20), default="scheduled")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="shift_rosters")
 
@@ -295,7 +295,7 @@ class EmployeeAsset(Base):
     status = Column(String(20), default="assigned")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="assets")
 
@@ -312,7 +312,7 @@ class EmployeeCertification(Base):
     is_valid = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="certifications")
 
@@ -329,7 +329,7 @@ class EmployeeDocument(Base):
     verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="documents")
     verifier = relationship("User", foreign_keys=[verified_by])
@@ -346,7 +346,7 @@ class EmployeeDependent(Base):
     is_insured = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="dependents")
 
@@ -362,7 +362,7 @@ class EmployeeRelation(Base):
     internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", back_populates="relations", foreign_keys=[employee_id])
     internal_employee = relationship("Employee", foreign_keys=[internal_employee_id])
@@ -378,7 +378,7 @@ class EmployeeAddress(Base):
     city = Column(String(100), nullable=False)
     state = Column(String(100), nullable=True)
     postal_code = Column(String(20), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     is_primary = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -401,7 +401,7 @@ class COIReport(Base):
     approved_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     employee = relationship("Employee", foreign_keys=[employee_id])
     internal_employee = relationship("Employee", foreign_keys=[internal_employee_id])
     approver = relationship("User", foreign_keys=[approved_by])
@@ -422,7 +422,7 @@ class TravelRequest(Base):
     per_diem_json = Column(JSON, nullable=True)
     total_cost = Column(Numeric(12, 2), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", backref="travel_requests")
     approver = relationship("User", foreign_keys=[approved_by])
@@ -438,7 +438,7 @@ class AlumniNetwork(Base):
     eligibility_expires_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", backref="alumni_record")
 
@@ -453,7 +453,7 @@ class DisciplinaryCase(Base):
     issued_at = Column(DateTime, default=_utcnow)
     status = Column(String(20), default="active")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", foreign_keys=[employee_id])
 
@@ -470,6 +470,6 @@ class OffboardingCase(Base):
     completed_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     employee = relationship("Employee", foreign_keys=[employee_id])

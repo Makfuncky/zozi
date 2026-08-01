@@ -20,7 +20,7 @@ class CountryFeatureFlag(Base):
         UniqueConstraint("country_code", "feature_key", name="uq_country_feature"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     feature_key = Column(String(100), nullable=False)
     feature_name = Column(String(200), nullable=True)
     is_enabled = Column(Boolean, default=True)
@@ -41,7 +41,7 @@ class CountryStaffAssignment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     role_in_country = Column(String(40), nullable=False, server_default="country_manager")
     is_active = Column(Boolean, default=True)
     assigned_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -61,8 +61,8 @@ class CrossCountryCustomerSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    source_country_code = Column(String(10), nullable=False)
-    target_country_code = Column(String(10), nullable=False)
+    source_country_code = Column(String(3), nullable=False)
+    target_country_code = Column(String(3), nullable=False)
     session_data = Column(Text, nullable=True)
     conversion = Column(Boolean, default=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
@@ -101,7 +101,7 @@ class CountryConfigVersion(Base):
         Index("ix_country_config_version_status", "status"), {"schema": "configuration"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     config_type = Column(String(50), nullable=False)
     version = Column(Integer, nullable=False)
     payload_json = Column(Text, nullable=False)
@@ -120,7 +120,7 @@ class SupplierKYCRequirement(Base):
     __tablename__ = 'supplier_kyc_requirements'
     __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
     kyc_tier_required = Column(String(20), nullable=False, default='standard')
     document_types_required = Column(Text, nullable=True)
     verification_wait_days = Column(Integer, default=3)
@@ -135,7 +135,7 @@ class LogisticsPartnerKYCRequirement(Base):
     __tablename__ = 'logistics_partner_kyc_requirements'
     __table_args__ = ({"schema": "country"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
     min_experience_months = Column(Integer, default=6)
     required_documents = Column(Text, nullable=True)
     insurance_required = Column(Boolean, default=True)
@@ -153,7 +153,7 @@ class CountryCommissionRate(Base):
     __table_args__ = (
         UniqueConstraint('country_code', 'supplier_tier', 'name', name='uq_country_commission'), {"schema": "configuration"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     supplier_tier = Column(String(20), nullable=False)
     name = Column(String(50), nullable=False)
     rate_percent = Column(Numeric(5, 2), nullable=False, default=0)
@@ -170,7 +170,7 @@ class CountryLocalization(Base):
         UniqueConstraint('country_code', name='uq_country_localization'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
     default_numeral_system = Column(String(20), default='western')
     hijri_calendar_enabled = Column(Boolean, default=False)
     rtl_layout_enabled = Column(Boolean, default=False)
@@ -187,7 +187,7 @@ class CountryPaymentAlias(Base):
         UniqueConstraint('country_code', 'alias_type', name='uq_country_payment_alias'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     alias_type = Column(String(50), nullable=False)
     alias_value = Column(String(200), nullable=False)
     is_active = Column(Boolean, default=True)
@@ -202,7 +202,7 @@ class CountryLegalContract(Base):
         UniqueConstraint('country_code', 'contract_type', name='uq_country_legal_contract'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     contract_type = Column(String(50), nullable=False)
     version = Column(String(20), default='1.0')
     content_html = Column(Text, nullable=False)
@@ -219,7 +219,7 @@ class CountryCategoryTaxRate(Base):
         UniqueConstraint('country_code', 'category_id', name='uq_country_category_tax'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     category_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=False)
     tax_rate = Column(Numeric(5, 4), nullable=True)
     tax_name = Column(String(50), nullable=True)
@@ -242,7 +242,7 @@ class CountryCity(Base):
     __table_args__ = ({"schema": "country"},)
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     name = Column(String(200), nullable=False)
     name_local = Column(String(200), nullable=True)
     population = Column(Integer, default=0)
@@ -267,7 +267,7 @@ class CountryHolidayCalendar(Base):
         Index('ix_country_holiday_date', 'holiday_date'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     holiday_date = Column(DateTime, nullable=False)
     name = Column(String(200), nullable=False)
     local_name = Column(String(200), nullable=True)
@@ -283,7 +283,7 @@ class CountryGatewayConfig(Base):
         UniqueConstraint('country_code', 'gateway_id', name='uq_country_gateway'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     gateway_id = Column(String(50), nullable=False)
     gateway_name = Column(String(100), nullable=False)
     is_enabled = Column(Boolean, default=True)
@@ -305,7 +305,7 @@ class CountryCommunicationThread(Base):
         Index('ix_comm_thread_entity', 'entity_type', 'entity_id'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer, nullable=False)
     participants = Column(Text, nullable=True)
@@ -322,7 +322,7 @@ class CountryCommissionRateHistory(Base):
         Index('ix_comm_rate_effective', 'effective_from'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     category_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True)
     supplier_tier = Column(String(20), nullable=False)
     rate_percent = Column(Numeric(5, 4), nullable=False)
@@ -342,7 +342,7 @@ class CountryLogisticsZone(Base):
         UniqueConstraint('country_code', 'zone_code', name='uq_zone_code'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     zone_code = Column(String(50), nullable=False)
     zone_name = Column(String(200), nullable=False)
     zone_type = Column(String(20), default='local')
@@ -360,7 +360,7 @@ class CountryPayoutRule(Base):
         Index('ix_payout_supplier', 'supplier_tier'), {"schema": "configuration"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
     supplier_tier = Column(String(20), nullable=True)
     min_amount = Column(Numeric(15, 3), nullable=True)
     max_amount = Column(Numeric(15, 3), nullable=True)

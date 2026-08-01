@@ -34,7 +34,7 @@ class Notification(Base):
     scheduled_at = Column(DateTime, nullable=True)
     status = Column(String, default="delivered")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User")
 
 
@@ -47,7 +47,7 @@ class TicketMessage(Base):
     message = Column(Text, nullable=False)
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     ticket = relationship("SupportTicket", back_populates="messages")
     sender = relationship("User")
 
@@ -75,7 +75,7 @@ class FAQ(Base):
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class HelpCategory(Base):
@@ -166,7 +166,7 @@ class EmployeeCommunicationThread(Base):
         Index("ix_emp_comm_entity", "entity_type", "entity_id"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer, nullable=False)
     participants = Column(Text, nullable=True)
@@ -220,7 +220,7 @@ class InternalChannel(Base):
         Index("ix_internal_channel_entity", "entity_type", "entity_id"), {"schema": "communication"})
     
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer, nullable=False)
     name = Column(String(200), nullable=False)
@@ -320,7 +320,7 @@ class InternalEmail(Base):
     thread_id = Column(String(64), nullable=True)
     is_external = Column(Boolean, default=False)
     external_message_id = Column(String(200), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     folder_id = Column(Integer, ForeignKey("communication.email_folders.id"), nullable=True)
     in_reply_to = Column(Integer, ForeignKey("communication.internal_emails.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)

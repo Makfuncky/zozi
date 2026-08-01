@@ -35,7 +35,7 @@ class FraudEvent(Base):
     reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User", foreign_keys=[user_id])
     reviewer = relationship("User", foreign_keys=[reviewed_by])
@@ -70,7 +70,7 @@ class FraudRule(Base):
     action = Column(String(50), default="alert")
     is_active = Column(Boolean, default=True)
     is_global = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -107,7 +107,7 @@ class IPReputation(Base):
     is_vpn = Column(Boolean, default=False)
     is_hosting = Column(Boolean, default=False)
     asn = Column(String, nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     last_seen_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
@@ -168,7 +168,7 @@ class SupplierFraudIndicator(Base):
     value = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class LogisticsFraudIndicator(Base):
@@ -180,7 +180,7 @@ class LogisticsFraudIndicator(Base):
     value = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class FraudAlert(Base):
@@ -197,7 +197,7 @@ class FraudAlert(Base):
     is_resolved = Column(Boolean, default=False)
     resolved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class IPAccountLinkage(Base):
@@ -247,7 +247,7 @@ class FraudScoringLog(Base):
     metadata_json = Column(JSON, nullable=True)
     action_taken = Column(String(50), default="logged")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User")
 
@@ -273,7 +273,7 @@ class FraudCase(Base):
     resolution_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     assignee = relationship("User", foreign_keys=[assigned_to])
     creator = relationship("User", foreign_keys=[created_by])

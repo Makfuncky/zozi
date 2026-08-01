@@ -36,7 +36,7 @@ class Payment(Base):
     status = Column(String, default="pending")
     intent_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     # Free-form canvas layout (shapes, colors, images, video, buttons) stored as
     # a JSON-encoded string. Drives the complete admin/employee banner editor.
     layout_json = Column(Text, nullable=True)
@@ -58,7 +58,7 @@ class PaymentReconciliationRun(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     status = Column(String, default="pending")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -87,7 +87,7 @@ class Coupon(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -122,7 +122,7 @@ class Banner(Base):
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     # Free-form canvas layout (shapes, colors, images, video, buttons) stored as a JSON-encoded string.
     layout_json = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -136,7 +136,7 @@ class PaymentGatewayConnection(Base):
     id = Column(Integer, primary_key=True, index=True)
     provider_code = Column(String(100), nullable=False)
     gateway_name = Column(String(100), nullable=False)
-    country_code = Column(String(10), nullable=False)
+    country_code = Column(String(3), nullable=False)
     environment = Column(String(20), default="test")
     is_active = Column(Boolean, default=True)
     credentials = Column(JSON, nullable=True)
@@ -194,7 +194,7 @@ class Payout(Base):
     provider_status = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     supplier = relationship("User", foreign_keys=[supplier_id])
@@ -213,7 +213,7 @@ class LogisticsPartnerPayout(Base):
     status = Column(String, default="pending")
     reference_id = Column(String, nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     method = Column(String, nullable=True)
     notes = Column(Text, nullable=True)

@@ -13,7 +13,7 @@ class CommissionAgreement(Base):
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     tier = Column(String(20), nullable=False)
     rate = Column(Numeric(5, 4), nullable=False)
     set_by_admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -34,7 +34,7 @@ class ProductCommissionOverride(Base):
     set_by_admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class CommissionLedgerEntry(Base):
@@ -67,7 +67,7 @@ class CommissionLedgerEntry(Base):
     status = Column(String, default="pending")
     credited_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class CommissionCategoryRate(Base):
@@ -78,7 +78,7 @@ class CommissionCategoryRate(Base):
     category_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True)
     category_slug = Column(String(100), nullable=True)
     category_display_name = Column(String(100), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     rate_percent = Column(Numeric(5, 2), nullable=False, default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -95,7 +95,7 @@ class CommissionRule(Base):
     tier = Column(String(20), nullable=True)
     rate_percent = Column(Numeric(5, 2), nullable=False)
     is_active = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

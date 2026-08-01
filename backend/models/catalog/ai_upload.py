@@ -60,7 +60,7 @@ class AIUploadJob(Base):
     source_media_json = Column(Text, nullable=True)
     created_product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
     error_log = Column(Text, nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -96,7 +96,7 @@ class AIStagingProduct(Base):
     attributes = Column(JSON, nullable=True)
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
     job = relationship("AIUploadJob", back_populates="staging_products")
@@ -130,7 +130,7 @@ class AIStagingVariant(Base):
     is_active = Column(Boolean, default=True)
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
     staging_product = relationship("AIStagingProduct", back_populates="staging_variants")
 
@@ -148,7 +148,7 @@ class AIGenerationLog(Base):
     tokens_used = Column(Numeric(12, 2), nullable=True)
     cost = Column(Numeric(12, 6), nullable=True)
     confidence = Column(Numeric(5, 4), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 

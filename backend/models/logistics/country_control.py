@@ -18,7 +18,7 @@ class ShiftHandoverLog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     shift_start = Column(DateTime, nullable=False)
     shift_end = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
@@ -38,7 +38,7 @@ class PaymentOrchestratorSync(Base):
         Index("ix_pos_status", "status"), {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     gateway_id = Column(String(60), nullable=False)
     gateway_name = Column(String(100), nullable=True)
     environment = Column(String(20), default="test")
@@ -61,7 +61,7 @@ class SupplierOnboardingSync(Base):
         Index("ix_sos_status", "status"), {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
     kyc_status = Column(String(30), default="pending")
     kyc_documents = Column(Text, nullable=True)
@@ -83,7 +83,7 @@ class LegalContractTemplate(Base):
         Index("ix_lct_type", "template_type"), {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     template_type = Column(String(50), nullable=False)
     version = Column(String(20), default="1.0")
     content = Column(Text, nullable=False)
@@ -101,7 +101,7 @@ class DataResidencyRecord(Base):
         Index("ix_drr_compliance", "compliance_status"), {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     data_type = Column(String(50), nullable=False)
     storage_location = Column(String(100), nullable=True)
     cross_border_allowed = Column(Boolean, default=False)
@@ -120,7 +120,7 @@ class CountryMapConfig(Base):
         UniqueConstraint("country_code", name="uq_cmc_country"), {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, unique=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True, index=True)
     map_provider = Column(String(30), default="google")
     api_key_ref = Column(String(100), nullable=True)
     default_zoom = Column(Integer, default=5)
@@ -138,7 +138,7 @@ class ShopWarehouseLocation(Base):
         Index("ix_swl_active", "is_active"), {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     name = Column(String(100), nullable=False)
     warehouse_code = Column(String(30), nullable=False)
     latitude = Column(Float, nullable=True)
@@ -157,7 +157,7 @@ class LogisticsPartnerLocation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=False, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     location_type = Column(String(30), default="warehouse")
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
@@ -177,7 +177,7 @@ class ParcelLocationTracker(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     parcel_id = Column(Integer, ForeignKey("logistics.shipments.id"), nullable=False, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     location_name = Column(String(200), nullable=True)

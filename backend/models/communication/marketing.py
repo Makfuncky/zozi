@@ -22,7 +22,7 @@ class FlashSale(Base):
     deleted_at = Column(DateTime, nullable=True)
     deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     product_ids = Column(JSON, nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
@@ -36,7 +36,7 @@ class FlashSaleItem(Base):
     original_price = Column(Numeric(10, 2), nullable=False)
     discounted_price = Column(Numeric(10, 2), nullable=False)
     quantity_limit = Column(Integer, nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     
     flash_sale = relationship("FlashSale", back_populates="items")
@@ -58,7 +58,7 @@ class EmailCampaign(Base):
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     from_email = Column(String(200), nullable=True)
     from_name = Column(String(200), nullable=True)
     target_audience = Column(Text, nullable=True)

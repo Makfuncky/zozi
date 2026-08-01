@@ -14,7 +14,7 @@ class MediaAsset(Base):
         Index("ix_media_assets_variant", "entity_id", "variant"), {"schema": "media"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), nullable=False, index=True)
+    country_code = Column(String(3), nullable=False, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True, index=True)
     
@@ -50,7 +50,7 @@ class MediaUploadSession(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(64), nullable=False, unique=True, index=True)
-    country_code = Column(String(10), nullable=False)
+    country_code = Column(String(3), nullable=False)
     entity_type = Column(String(20), nullable=False)
     entity_id = Column(Integer, nullable=True)
     filename = Column(String(255), nullable=False)

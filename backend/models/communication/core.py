@@ -34,7 +34,7 @@ class Address(Base):
     country = Column(String, default="US")
     is_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="addresses")
 
 
@@ -45,7 +45,7 @@ class Cart(Base):
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="cart")
 
 
@@ -60,7 +60,7 @@ class CartItem(Base):
     selected_color = Column(String(50), default="", nullable=False)
     variant_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="cart_items")
     product = relationship("Product", back_populates="cart_items")
 
@@ -90,7 +90,7 @@ class SupportTicket(Base):
     status = Column(String, default="open")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     replies = relationship("SupportTicketReply", back_populates="ticket")
     attachments = relationship("TicketAttachment", back_populates="ticket")
     messages = relationship("TicketMessage", back_populates="ticket", cascade="all, delete-orphan")
@@ -104,7 +104,7 @@ class SupportTicketReply(Base):
     sender_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     ticket = relationship("SupportTicket", back_populates="replies")
     attachments = relationship("TicketAttachment", back_populates="ticket_reply")
 
@@ -117,7 +117,7 @@ class TicketAttachment(Base):
     ticket_id = Column(Integer, ForeignKey("communication.support_tickets.id"), nullable=True)
     file_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     ticket_reply = relationship("SupportTicketReply", back_populates="attachments")
     ticket = relationship("SupportTicket", back_populates="attachments")
 
@@ -126,9 +126,9 @@ class CityDistanceMatrix(Base):
     __tablename__ = "city_distance_matrix"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
-    origin_country_code = Column(String(10), nullable=False)
+    origin_country_code = Column(String(3), nullable=False)
     origin_city_name = Column(String, nullable=False)
-    destination_country_code = Column(String(10), nullable=False)
+    destination_country_code = Column(String(3), nullable=False)
     destination_city_name = Column(String, nullable=False)
     distance_km = Column(Numeric(10, 2), nullable=True)
     notes = Column(Text, nullable=True)
@@ -147,7 +147,7 @@ class ExecutiveNews(Base):
     url = Column(String(500), nullable=True)
     category = Column(String(50), default="general")
     priority = Column(String(20), default="normal")
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     is_published = Column(Boolean, default=False)
     ai_sentiment = Column(String(20), default="neutral")
     published_at = Column(DateTime, nullable=True)
@@ -185,7 +185,7 @@ class UserSession(Base):
     is_active = Column(Boolean, default=True)
     last_activity = Column(DateTime, default=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     __table_args__ = (Index("ix_user_sessions_user_active", "user_id", "is_active"), {"schema": "customer"})
 
 
@@ -228,7 +228,7 @@ class NewsArticle(Base):
     url = Column(String(500), nullable=True)
     image_url = Column(String(500), nullable=True)
     published_at = Column(DateTime, nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     ai_sentiment = Column(String(20), default="neutral")
     ai_tags = Column(JSON, nullable=True)
     is_published = Column(Boolean, default=True)
@@ -306,7 +306,7 @@ class VideoRoom(Base):
     room_id = Column(String(64), unique=True, nullable=False, index=True)
     room_uuid = Column(String(32), unique=True, nullable=True)
     name = Column(String(200), nullable=False)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     is_boardroom = Column(Boolean, default=False)
     status = Column(String(20), default="waiting")
@@ -358,7 +358,7 @@ class DirectChatRoom(Base):
     chat_id = Column(String(64), unique=True, nullable=False, index=True)
     participant_one = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     participant_two = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     is_masked = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -387,7 +387,7 @@ class GroupChatRoom(Base):
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(String(64), unique=True, nullable=False, index=True)
     name = Column(String(200), nullable=False)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     is_encrypted = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=False)
@@ -430,7 +430,7 @@ class ShiftHandoverSession(Base):
         Index("ix_handover_incoming", "incoming_employee_id"),
         Index("ix_handover_status", "status"), {"schema": "customer"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     outgoing_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
     incoming_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
     shift_date = Column(DateTime, nullable=False)
@@ -459,7 +459,7 @@ class EscalationSLARule(Base):
     __tablename__ = "escalation_sla_rules"
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     priority = Column(String(20), nullable=False)
     escalate_after_minutes = Column(Integer, nullable=False)
     escalate_to_role = Column(String(40), nullable=False)

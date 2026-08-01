@@ -57,7 +57,7 @@ class User(Base):
     totp_secret = Column(String, nullable=True)
     last_seen_at = Column(DateTime, nullable=True)
     is_current = Column(Boolean, default=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
     # Encrypted at-rest JSON store for the customer's saved delivery profile(s).
     address_book = Column(EncryptedString(length=4000), nullable=True)
@@ -83,7 +83,7 @@ class UserLoginHistory(Base):
     user_agent = Column(String, nullable=True)
     timestamp = Column(DateTime, default=_utcnow)
     success = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User")
 
@@ -99,7 +99,7 @@ class UserDevice(Base):
     is_current = Column(Boolean, default=True)
     is_trusted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User", back_populates="devices")
 
@@ -113,7 +113,7 @@ class Referral(Base):
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     referrer = relationship("User", foreign_keys=[referrer_id], back_populates="referrals_given")
     referred = relationship("User", foreign_keys=[referred_id], back_populates="referred_by")
@@ -128,7 +128,7 @@ class ReferralPointEvent(Base):
     points = Column(Integer, nullable=False)
     referred_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User", foreign_keys=[user_id])
     referred_user = relationship("User", foreign_keys=[referred_user_id])
@@ -143,7 +143,7 @@ class PasswordResetToken(Base):
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User")
 
@@ -157,7 +157,7 @@ class EmailVerificationToken(Base):
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User")
 
@@ -170,6 +170,6 @@ class RevokedToken(Base):
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     expires_at = Column(DateTime, nullable=False)
     revoked_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     user = relationship("User")

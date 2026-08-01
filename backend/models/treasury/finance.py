@@ -23,7 +23,7 @@ class FiscalPeriod(Base):
         UniqueConstraint("country_code", "period_year", "period_month", name="uq_fiscal_period"),
         Index("ix_fiscal_period_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), nullable=False, index=True)
+    country_code = Column(String(3), nullable=False, index=True)
     period_year = Column(Integer, nullable=False)
     period_month = Column(Integer, nullable=False)
     period_start = Column(DateTime, nullable=False)
@@ -71,7 +71,7 @@ class TransactionLedger(Base):
     balance_after = Column(Numeric(12, 2), nullable=True)
     notes = Column(Text, nullable=True)
     amount = Column(Numeric(12, 2), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -101,7 +101,7 @@ class SupplierSettlement(Base):
     currency = Column(String(3), default="USD")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -118,7 +118,7 @@ class JournalEntry(Base):
     reference_number = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     source = Column(String(50), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     currency = Column(String(3), default="OMR")
     is_reconciled = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -150,7 +150,7 @@ class JournalEntryLine(Base):
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     entry = relationship("JournalEntry", back_populates="lines")
     account = relationship("Account")
 
@@ -168,7 +168,7 @@ class Account(Base):
     is_active = Column(Boolean, default=True)
     display_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     group = relationship("AccountGroup", back_populates="accounts")
     journal_lines = relationship("JournalEntryLine", back_populates="account")
 
@@ -184,7 +184,7 @@ class AccountGroup(Base):
     normal_side = Column(String(10), nullable=False)
     display_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     accounts = relationship("Account", back_populates="group")
 
 
@@ -203,7 +203,7 @@ class AccountBalance(Base):
     last_entry_at = Column(DateTime, nullable=True)
     last_updated = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     account = relationship("Account")
     user = relationship("User")
 
@@ -229,7 +229,7 @@ class ARLedgerEntry(Base):
     description = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
 
@@ -259,7 +259,7 @@ class APLedger(Base):
     description = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
 
@@ -275,7 +275,7 @@ class FinancialReport(Base):
     report_type = Column(String, nullable=False)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     data = Column(JSON, nullable=True)
     generated_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -307,7 +307,7 @@ class Invoice(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -329,7 +329,7 @@ class InvoiceItem(Base):
     tax_rate = Column(Numeric(5, 2), nullable=True)
     line_total = Column(Numeric(10, 2), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     
     invoice = relationship("Invoice", back_populates="items")
 
@@ -357,7 +357,7 @@ class RefundLedger(Base):
     currency = Column(String(3), default="OMR")
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -385,7 +385,7 @@ class BankTransaction(Base):
     transaction_date = Column(DateTime, nullable=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     flagged = Column(Boolean, nullable=True, default=False)
     flag_reason = Column(Text, nullable=True)
 
@@ -408,7 +408,7 @@ class VATRemittance(Base):
     notes = Column(Text, nullable=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class CashAccount(Base):
@@ -424,7 +424,7 @@ class CashAccount(Base):
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class CashTransaction(Base):
@@ -440,7 +440,7 @@ class CashTransaction(Base):
     category = Column(String, nullable=True)
     performed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class TreasuryAccount(Base):
@@ -456,7 +456,7 @@ class TreasuryAccount(Base):
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
     balance = Column(Numeric(12, 2), default=0)
     is_active = Column(Boolean, default=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -474,7 +474,7 @@ class TreasuryTransaction(Base):
     reference = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     posted_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
 
 class CashFlowForecast(Base):
@@ -487,7 +487,7 @@ class CashFlowForecast(Base):
     net_cash_flow = Column(Numeric(12, 2), default=0)
     opening_balance = Column(Numeric(12, 2), default=0)
     closing_balance = Column(Numeric(12, 2), default=0)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -499,7 +499,7 @@ class CashPositionSnapshot(Base):
     account_id = Column(Integer, ForeignKey("treasury.treasury_accounts.id"), nullable=False)
     balance = Column(Numeric(12, 2), default=0)
     currency = Column(String(3), default="USD")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -512,7 +512,7 @@ class GatewaySettlementSchedule(Base):
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")
     status = Column(String, default="pending")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -525,7 +525,7 @@ class PendingJournalEntry(Base):
     lines_json = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     source = Column(String(50), nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     entry_date = Column(DateTime, nullable=False)
     amount_threshold_triggered = Column(Boolean, default=False)
     status = Column(String(20), default="pending_approval")
@@ -548,7 +548,7 @@ class PayoutBatch(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), unique=True, nullable=False)
-    country_code = Column(String(10), nullable=False, index=True)
+    country_code = Column(String(3), nullable=False, index=True)
     total_amount = Column(Numeric(16, 4), default=0)
     item_count = Column(Integer, default=0)
     status = Column(String(20), default="draft")
@@ -576,7 +576,7 @@ class PayoutBatchItem(Base):
     currency = Column(String(3), default="USD")
     reference = Column(String(100), nullable=True)
     status = Column(String(20), default="pending")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
 
     batch = relationship("PayoutBatch", back_populates="items")
 
@@ -588,7 +588,7 @@ class BankMappingRule(Base):
         Index("ix_bank_mapping_country", "country_code"),
         Index("ix_bank_mapping_priority", "priority"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     name = Column(String(120), nullable=False)
     # Keywords matched (case-insensitive) against the statement description.
     match_pattern = Column(String(300), nullable=False)
@@ -618,7 +618,7 @@ class BankStatementImport(Base):
     unmatched_lines = Column(Integer, default=0)
     status = Column(String(20), default="imported")
     imported_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -642,7 +642,7 @@ class BankStatementLine(Base):
     status = Column(String(20), default="unmapped")  # unmapped, mapped, posted, reconciled
     posted_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reconciled_transaction_id = Column(Integer, ForeignKey("finance.bank_transactions.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 
 
@@ -664,7 +664,7 @@ class FixedAsset(Base):
     depreciation_account_code = Column(String(20), default="5070")
     accumulated_depr_account_code = Column(String(20), default="1190")
     status = Column(String(20), default="active")  # active, disposed, fully_depreciated
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -685,7 +685,7 @@ class Accrual(Base):
     status = Column(String(20), default="open")  # open, reversed, cleared
     journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reversal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
@@ -711,7 +711,7 @@ class ScannedExpense(Base):
     status = Column(String(20), default="scanned")  # scanned, reviewed, posted, rejected
     posted_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -726,7 +726,7 @@ class Vendor(Base):
     contact_email = Column(String(160), nullable=True)
     currency = Column(String(3), default="OMR")
     payment_terms_days = Column(Integer, default=30)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -743,7 +743,7 @@ class Customer(Base):
     currency = Column(String(3), default="OMR")
     payment_terms_days = Column(Integer, default=30)
     credit_limit = Column(Numeric(14, 2), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -756,7 +756,7 @@ class CostCenter(Base):
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(30), nullable=False)
     name = Column(String(160), nullable=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -782,7 +782,7 @@ class APBill(Base):
     status = Column(String(20), default="received")  # received, approved, paid, cancelled
     linked_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     paid_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -811,7 +811,7 @@ class ARInvoice(Base):
     paid_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reference_order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True, index=True)
     vat_amount = Column(Numeric(14, 2), default=0)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -831,7 +831,7 @@ class BankAccount(Base):
     swift_bic = Column(String(20), nullable=True)
     currency = Column(String(3), default="OMR")
     gl_account_code = Column(String(20), default="1010")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -848,7 +848,7 @@ class Budget(Base):
     fiscal_period_id = Column(Integer, ForeignKey("finance.fiscal_periods.id"), nullable=False)
     amount = Column(Numeric(16, 4), nullable=False)
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -871,7 +871,7 @@ class BankReconciliation(Base):
     note = Column(Text, nullable=True)
     matched_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     matched_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     statement_line = relationship("BankStatementLine", foreign_keys=[statement_line_id])
 
 
@@ -886,7 +886,7 @@ class RecurringTemplate(Base):
     description = Column(Text, nullable=True)
     lines = Column(JSON, nullable=False)  # list of {account_code, side, amount, description}
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
@@ -906,7 +906,7 @@ class FinanceAuditLog(Base):
     actor_role = Column(String(40), nullable=True)
     entity_type = Column(String(40), nullable=True)
     entity_id = Column(Integer, nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     detail = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
@@ -921,6 +921,6 @@ class FinanceAutomationLog(Base):
     records_changed = Column(Integer, default=0)
     detail = Column(JSON, nullable=True)
     run_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(3), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
 

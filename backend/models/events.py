@@ -29,7 +29,7 @@ class OutboxEvent(Base):
         Index("ix_outbox_status", "status", "created_at"),
         Index("ix_outbox_country", "country_code"),
         UniqueConstraint("uuid", name="uq_outbox_uuid"),
-        {"schema": "analytics"},
+        {"schema": "configuration"},
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -50,7 +50,7 @@ class OutboxEvent(Base):
     # Cross-ecosystem reference by user ID — NO foreign key (ADR-014:
     # cross-ecosystem communication uses services/events, not cross-FKs).
     # The integer is resolvable via the core.users service; the DB does not
-    # enforce the constraint so the analytics and core ecosystems stay decoupled.
+    # enforce the constraint so the configuration and core ecosystems stay decoupled.
     deleted_by_id = Column(Integer, nullable=True, index=True)
     created_by_id = Column(Integer, nullable=True, index=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
