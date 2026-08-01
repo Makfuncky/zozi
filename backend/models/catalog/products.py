@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, text as sa_text
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, foreign
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
@@ -44,6 +45,8 @@ class Category(Base):
     # Materialized path (Phase 3a): derived from parent_id. e.g. "/1/", "/1/15/",
     # "/1/15/42/". Enables O(1) sub-tree queries without recursive CTEs.
     path = Column(String(255), nullable=True, index=True)
+    lft = Column(Integer, nullable=False, default=0, index=True)
+    rgt = Column(Integer, nullable=False, default=0, index=True)
     depth = Column(Integer, default=0)
     products = relationship("Product", back_populates="category_rel")
 

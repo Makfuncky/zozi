@@ -68,7 +68,7 @@ class InboxEvent(Base):
         Index("ix_inbox_processed", "processed_at"),
         Index("ix_inbox_country", "country_code"),
         UniqueConstraint("idempotency_key", name="uq_inbox_idempotency_key"),
-        {"schema": "analytics"},
+        {"schema": "configuration"},
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -100,12 +100,12 @@ class EventRetryQueue(Base):
         Index("ix_retry_event", "event_id"),
         Index("ix_retry_next_attempt", "next_attempt_at"),
         Index("ix_retry_country", "country_code"),
-        {"schema": "analytics"},
+        {"schema": "configuration"},
     )
 
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), nullable=False, unique=True, index=True, default=lambda: str(_uuid.uuid4()))
-    event_id = Column(Integer, ForeignKey("analytics.outbox_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_id = Column(Integer, ForeignKey("configuration.outbox_events.id", ondelete="CASCADE"), nullable=False, index=True)
     attempt = Column(Integer, nullable=False, default=1)
     next_attempt_at = Column(DateTime, nullable=False)
     last_error = Column(Text, nullable=True)
@@ -134,12 +134,12 @@ class EventDeadLetter(Base):
         Index("ix_dlq_event", "event_id"),
         Index("ix_dlq_failed", "failed_at"),
         Index("ix_dlq_country", "country_code"),
-        {"schema": "analytics"},
+        {"schema": "configuration"},
     )
 
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), nullable=False, unique=True, index=True, default=lambda: str(_uuid.uuid4()))
-    event_id = Column(Integer, ForeignKey("analytics.outbox_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_id = Column(Integer, ForeignKey("configuration.outbox_events.id", ondelete="CASCADE"), nullable=False, index=True)
     payload_json = Column(Text, nullable=False)
     failed_at = Column(DateTime, default=_utcnow, nullable=False)
     reason = Column(String(255), nullable=True)
