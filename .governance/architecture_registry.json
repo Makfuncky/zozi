@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-01T19:28:02.993645+00:00",
+  "generated_at": "2026-08-01T19:47:06.199700+00:00",
   "repo": "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi",
-  "debt_score": 34098,
+  "debt_score": 34005,
   "counts": {
-    "red": 116,
-    "yellow": 918,
-    "nodes": 854,
+    "red": 115,
+    "yellow": 921,
+    "nodes": 855,
     "edges": 2095,
-    "illegal_edges": 30,
+    "illegal_edges": 31,
     "features": 538,
     "domains": 24,
-    "triage_modules": 624
+    "triage_modules": 625
   },
   "domains": {
     "ai": {
@@ -192,6 +192,7 @@
           "backend\\controllers\\security\\auth.py",
           "backend\\controllers\\security\\auth_controller.py",
           "backend\\dependencies\\auth.py",
+          "backend\\routers\\auth.py",
           "backend\\routers\\security\\auth.py",
           "backend\\services\\security\\auth_service.py",
           "backend\\utils\\auth.py"
@@ -299,12 +300,10 @@
     "country_rls": {
       "layers": {
         "backend": [
-          "dependencies",
           "services",
           "utils"
         ],
         "paths": [
-          "backend\\dependencies\\country_rls.py",
           "backend\\services\\country\\country_rls_service.py",
           "backend\\utils\\country_rls.py"
         ]
@@ -3789,6 +3788,22 @@
         ]
       }
     },
+    "employees": {
+      "layers": {
+        "backend": [
+          "controllers",
+          "routers"
+        ],
+        "paths": [
+          "backend\\controllers\\hr\\employees_controller.py",
+          "backend\\routers\\admin\\employees.py",
+          "backend\\routers\\employees.py"
+        ],
+        "surfaces": [
+          "admin"
+        ]
+      }
+    },
     "payout_approval": {
       "layers": {
         "backend": [
@@ -4884,21 +4899,6 @@
         ],
         "paths": [
           "backend\\routers\\admin\\country_versioning.py"
-        ],
-        "surfaces": [
-          "admin"
-        ]
-      }
-    },
-    "employees": {
-      "layers": {
-        "backend": [
-          "controllers",
-          "routers"
-        ],
-        "paths": [
-          "backend\\controllers\\hr\\employees_controller.py",
-          "backend\\routers\\admin\\employees.py"
         ],
         "surfaces": [
           "admin"
@@ -6198,6 +6198,13 @@
       "illegal_reason": "controller must not import another controller's internals"
     },
     {
+      "caller": "controllers.employee_controller",
+      "callee": "controllers.hr.hr_controller",
+      "caller_layer": "controllers",
+      "legal": false,
+      "illegal_reason": "controller must not import another controller's internals"
+    },
+    {
       "caller": "controllers.mobile_controller",
       "callee": "controllers.communication",
       "caller_layer": "controllers",
@@ -6613,7 +6620,7 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under controllers (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 46,
+      "fan_in": 45,
       "fan_out": 0,
       "instability": 0.0,
       "is_entrypoint": true,
@@ -7040,7 +7047,7 @@
       "layer": "controllers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "comms",
+      "domain_hint": "communication",
       "triage_reason": "flat file under controllers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 3,
@@ -7173,8 +7180,8 @@
       "domain_hint": "",
       "triage_reason": "flat file under controllers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
-      "fan_out": 0,
-      "instability": 0.0,
+      "fan_out": 1,
+      "instability": 1.0,
       "is_entrypoint": false,
       "is_dead": true
     },
@@ -7341,11 +7348,11 @@
       "domain_confidence": 0.0,
       "domain_hint": "hr",
       "triage_reason": "flat file under controllers (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 0,
+      "fan_in": 2,
       "fan_out": 2,
-      "instability": 1.0,
+      "instability": 0.5,
       "is_entrypoint": false,
-      "is_dead": true
+      "is_dead": false
     },
     {
       "module": "controllers.hr.lms_controller",
@@ -7562,9 +7569,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "auth",
       "triage_reason": "flat file under controllers (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 1,
+      "fan_in": 2,
       "fan_out": 15,
-      "instability": 0.9375,
+      "instability": 0.8824,
       "is_entrypoint": false,
       "is_dead": false
     },
@@ -7900,9 +7907,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under db (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 196,
+      "fan_in": 195,
       "fan_out": 2,
-      "instability": 0.0101,
+      "instability": 0.0102,
       "is_entrypoint": true,
       "is_dead": false
     },
@@ -8017,22 +8024,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "auth",
       "triage_reason": "flat file under dependencies (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 53,
+      "fan_in": 54,
       "fan_out": 7,
-      "instability": 0.1167,
-      "is_entrypoint": true,
-      "is_dead": false
-    },
-    {
-      "module": "dependencies.country_rls",
-      "layer": "dependencies",
-      "domain": "_triage",
-      "domain_confidence": 0.0,
-      "domain_hint": "country",
-      "triage_reason": "flat file under dependencies (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 0,
-      "fan_out": 4,
-      "instability": 1.0,
+      "instability": 0.1148,
       "is_entrypoint": true,
       "is_dead": false
     },
@@ -8485,9 +8479,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under models (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 429,
+      "fan_in": 428,
       "fan_out": 31,
-      "instability": 0.0674,
+      "instability": 0.0675,
       "is_entrypoint": true,
       "is_dead": false
     },
@@ -8979,9 +8973,9 @@
       "domain_confidence": 1.0,
       "domain_hint": "",
       "triage_reason": "",
-      "fan_in": 2,
+      "fan_in": 1,
       "fan_out": 2,
-      "instability": 0.5,
+      "instability": 0.6667,
       "is_entrypoint": false,
       "is_dead": false
     },
@@ -9367,7 +9361,7 @@
       "layer": "providers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "finance",
+      "domain_hint": "ai",
       "triage_reason": "flat file under providers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 1,
       "fan_out": 1,
@@ -9577,7 +9571,7 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 22,
+      "fan_in": 8,
       "fan_out": 0,
       "instability": 0.0,
       "is_entrypoint": true,
@@ -10091,6 +10085,19 @@
       "is_dead": false
     },
     {
+      "module": "routers.auth",
+      "layer": "routers",
+      "domain": "_triage",
+      "domain_confidence": 0.0,
+      "domain_hint": "auth",
+      "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
+      "fan_in": 13,
+      "fan_out": 2,
+      "instability": 0.1333,
+      "is_entrypoint": true,
+      "is_dead": false
+    },
+    {
       "module": "routers.catalog",
       "layer": "routers",
       "domain": "_triage",
@@ -10225,7 +10232,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "comms",
+      "domain_hint": "communication",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 3,
@@ -10585,6 +10592,19 @@
       "is_dead": false
     },
     {
+      "module": "routers.employees",
+      "layer": "routers",
+      "domain": "_triage",
+      "domain_confidence": 0.0,
+      "domain_hint": "",
+      "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
+      "fan_in": 0,
+      "fan_out": 1,
+      "instability": 1.0,
+      "is_entrypoint": true,
+      "is_dead": false
+    },
+    {
       "module": "routers.external",
       "layer": "routers",
       "domain": "_triage",
@@ -10721,9 +10741,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "hr",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 0,
+      "fan_in": 1,
       "fan_out": 5,
-      "instability": 1.0,
+      "instability": 0.8333,
       "is_entrypoint": true,
       "is_dead": false
     },
@@ -10953,7 +10973,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "finance",
+      "domain_hint": "ai",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 6,
@@ -11501,9 +11521,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "auth",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 1,
+      "fan_in": 2,
       "fan_out": 10,
-      "instability": 0.9091,
+      "instability": 0.8333,
       "is_entrypoint": true,
       "is_dead": false
     },
@@ -11655,7 +11675,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "analytics",
+      "domain_hint": "supplier",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 3,
@@ -11694,7 +11714,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "finance",
+      "domain_hint": "supplier",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 5,
@@ -11720,7 +11740,7 @@
       "layer": "routers",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "orders",
+      "domain_hint": "supplier",
       "triage_reason": "flat file under routers (not in a domain sub-package; folder is the declaration)",
       "fan_in": 0,
       "fan_out": 5,
@@ -12034,9 +12054,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under services (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 215,
-      "fan_out": 0,
-      "instability": 0.0,
+      "fan_in": 214,
+      "fan_out": 1,
+      "instability": 0.0047,
       "is_entrypoint": true,
       "is_dead": false
     },
@@ -12294,11 +12314,11 @@
       "domain_confidence": 1.0,
       "domain_hint": "",
       "triage_reason": "",
-      "fan_in": 0,
+      "fan_in": 1,
       "fan_out": 4,
-      "instability": 1.0,
+      "instability": 0.8,
       "is_entrypoint": false,
-      "is_dead": true
+      "is_dead": false
     },
     {
       "module": "services.audit.worm_audit",
@@ -13139,7 +13159,7 @@
       "domain_confidence": 1.0,
       "domain_hint": "",
       "triage_reason": "",
-      "fan_in": 4,
+      "fan_in": 5,
       "fan_out": 0,
       "instability": 0.0,
       "is_entrypoint": false,
@@ -13725,8 +13745,8 @@
       "domain_hint": "",
       "triage_reason": "",
       "fan_in": 1,
-      "fan_out": 2,
-      "instability": 0.6667,
+      "fan_out": 1,
+      "instability": 0.5,
       "is_entrypoint": false,
       "is_dead": false
     },
@@ -14530,9 +14550,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "logistics",
       "triage_reason": "flat file under services (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 16,
+      "fan_in": 15,
       "fan_out": 2,
-      "instability": 0.1111,
+      "instability": 0.1176,
       "is_entrypoint": false,
       "is_dead": false
     },
@@ -17156,9 +17176,9 @@
       "domain_confidence": 0.0,
       "domain_hint": "",
       "triage_reason": "flat file under utils (not in a domain sub-package; folder is the declaration)",
-      "fan_in": 25,
+      "fan_in": 24,
       "fan_out": 2,
-      "instability": 0.0741,
+      "instability": 0.0769,
       "is_entrypoint": false,
       "is_dead": false
     },
@@ -17219,7 +17239,7 @@
       "layer": "utils",
       "domain": "_triage",
       "domain_confidence": 0.0,
-      "domain_hint": "audit",
+      "domain_hint": "security",
       "triage_reason": "flat file under utils (not in a domain sub-package; folder is the declaration)",
       "fan_in": 1,
       "fan_out": 2,
@@ -18450,6 +18470,13 @@
       "caller_layer": "controllers",
       "legal": true,
       "illegal_reason": ""
+    },
+    {
+      "caller": "controllers.employee_controller",
+      "callee": "controllers.hr.hr_controller",
+      "caller_layer": "controllers",
+      "legal": false,
+      "illegal_reason": "controller must not import another controller's internals"
     },
     {
       "caller": "controllers.expense_controller",
@@ -19833,34 +19860,6 @@
     {
       "caller": "dependencies.auth",
       "callee": "utils.staff_permissions",
-      "caller_layer": "dependencies",
-      "legal": true,
-      "illegal_reason": ""
-    },
-    {
-      "caller": "dependencies.country_rls",
-      "callee": "db.database",
-      "caller_layer": "dependencies",
-      "legal": true,
-      "illegal_reason": ""
-    },
-    {
-      "caller": "dependencies.country_rls",
-      "callee": "models",
-      "caller_layer": "dependencies",
-      "legal": true,
-      "illegal_reason": ""
-    },
-    {
-      "caller": "dependencies.country_rls",
-      "callee": "services.logistics_partner_pricing",
-      "caller_layer": "dependencies",
-      "legal": true,
-      "illegal_reason": ""
-    },
-    {
-      "caller": "dependencies.country_rls",
-      "callee": "utils.rls_interceptor",
       "caller_layer": "dependencies",
       "legal": true,
       "illegal_reason": ""
@@ -22450,7 +22449,7 @@
     },
     {
       "caller": "routers.admin.cash_management",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -22660,7 +22659,7 @@
     },
     {
       "caller": "routers.admin.country_payouts",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -22821,7 +22820,7 @@
     },
     {
       "caller": "routers.admin.logistics_partner",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -22953,6 +22952,20 @@
       "illegal_reason": ""
     },
     {
+      "caller": "routers.auth",
+      "callee": "controllers.security.auth_controller",
+      "caller_layer": "routers",
+      "legal": true,
+      "illegal_reason": ""
+    },
+    {
+      "caller": "routers.auth",
+      "callee": "routers.security.auth",
+      "caller_layer": "routers",
+      "legal": true,
+      "illegal_reason": ""
+    },
+    {
       "caller": "routers.catalog.product_moderation",
       "callee": "db.database",
       "caller_layer": "routers",
@@ -22989,7 +23002,7 @@
     },
     {
       "caller": "routers.catalog.product_verification",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -23325,7 +23338,7 @@
     },
     {
       "caller": "routers.communication.push_notifications",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -23563,7 +23576,7 @@
     },
     {
       "caller": "routers.country.country_auto_populate",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -23654,7 +23667,7 @@
     },
     {
       "caller": "routers.country.currency",
-      "callee": "routers",
+      "callee": "dependencies.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -23828,6 +23841,13 @@
       "illegal_reason": ""
     },
     {
+      "caller": "routers.employees",
+      "callee": "routers.hr.hr",
+      "caller_layer": "routers",
+      "legal": true,
+      "illegal_reason": ""
+    },
+    {
       "caller": "routers.external.email_controller",
       "callee": "models",
       "caller_layer": "routers",
@@ -23843,7 +23863,7 @@
     },
     {
       "caller": "routers.external.email_controller",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -23997,7 +24017,7 @@
     },
     {
       "caller": "routers.finance.invoices",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -24074,7 +24094,7 @@
     },
     {
       "caller": "routers.hr.hr",
-      "callee": "controllers",
+      "callee": "controllers.hr.hr_controller",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -24277,7 +24297,7 @@
     },
     {
       "caller": "routers.internal.ai",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -24319,7 +24339,7 @@
     },
     {
       "caller": "routers.internal.country_research",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -24354,7 +24374,7 @@
     },
     {
       "caller": "routers.internal.ediscovery",
-      "callee": "services",
+      "callee": "services.audit.ediscovery",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -24382,7 +24402,7 @@
     },
     {
       "caller": "routers.internal.email",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -24725,7 +24745,7 @@
     },
     {
       "caller": "routers.internal.jobs",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -25047,7 +25067,7 @@
     },
     {
       "caller": "routers.logistics.logistics",
-      "callee": "routers",
+      "callee": "routers.auth",
       "caller_layer": "routers",
       "legal": true,
       "illegal_reason": ""
@@ -26491,6 +26511,13 @@
       "caller": "scripts.write_rls_interceptor",
       "callee": "models",
       "caller_layer": "scripts",
+      "legal": true,
+      "illegal_reason": ""
+    },
+    {
+      "caller": "services",
+      "callee": "services.core.write_helpers",
+      "caller_layer": "services",
       "legal": true,
       "illegal_reason": ""
     },
@@ -28289,13 +28316,6 @@
     {
       "caller": "services.finance.orphan_detector_service",
       "callee": "models",
-      "caller_layer": "services",
-      "legal": true,
-      "illegal_reason": ""
-    },
-    {
-      "caller": "services.finance.orphan_detector_service",
-      "callee": "models.orders.orders",
       "caller_layer": "services",
       "legal": true,
       "illegal_reason": ""
