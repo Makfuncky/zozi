@@ -16,6 +16,7 @@ class MediaAsset(Base, TenantMixin):
     id = Column(Integer, primary_key=True, index=True)
 
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True, index=True)
+    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
 
     entity_type = Column(String(20), nullable=False)  # product | supplier | user | article
     entity_id = Column(Integer, nullable=True, index=True)

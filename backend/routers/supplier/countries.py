@@ -7,11 +7,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from data.dependencies_auth import get_current_user
-from controllers import country_controller
 from controllers import employees_controller as ctrl
 from data.db import get_db
 from routers.country_versioning import router as versioning_router
 from data.middleware_rls_dependency import get_country_scope as _get_country_scope
+from controllers.country.country_controller import _require_admin, _require_full_admin, _require_country_access
 
 from services.supplier.supplier_countries_service import (
     archive_country as svc_archive_country,
@@ -29,6 +29,53 @@ from services.supplier.supplier_countries_service import (
     toggle_country_active as svc_toggle_country_active,
     update_city as svc_update_city,
     update_feature_flag as svc_update_feature_flag,
+    list_public_countries as svc_list_public_countries,
+    get_public_country_config as svc_get_public_country_config,
+    create_admin_country as svc_create_admin_country,
+    get_admin_country as svc_get_admin_country,
+    update_country_identity as svc_update_country_identity,
+    create_tax_draft as svc_create_tax_draft,
+    create_logistics_draft as svc_create_logistics_draft,
+    create_commission_draft as svc_create_commission_draft,
+    create_payment_and_flags_draft as svc_create_payment_and_flags_draft,
+    get_payment_gateways as svc_get_payment_gateways,
+    create_payment_gateways_draft as svc_create_payment_gateways_draft,
+    get_logistics_providers as svc_get_logistics_providers,
+    create_logistics_providers_draft as svc_create_logistics_providers_draft,
+    get_legal_rules as svc_get_legal_rules,
+    create_legal_rules_draft as svc_create_legal_rules_draft,
+    get_regions as svc_get_regions,
+    create_regions_draft as svc_create_regions_draft,
+    get_supplier_requirements as svc_get_supplier_requirements,
+    create_supplier_requirements_draft as svc_create_supplier_requirements_draft,
+    get_payout_settings as svc_get_payout_settings,
+    create_payout_settings_draft as svc_create_payout_settings_draft,
+    get_commission_tiers as svc_get_commission_tiers,
+    create_commission_tiers_draft as svc_create_commission_tiers_draft,
+    list_country_versions as svc_list_country_versions,
+    approve_country_version as svc_approve_country_version,
+    publish_country_version as svc_publish_country_version,
+    rollback_country_to_version as svc_rollback_country_to_version,
+    list_country_commissions as svc_list_country_commissions,
+    get_country_feature_flags as svc_get_country_feature_flags,
+    list_country_delivery_zones as svc_list_country_delivery_zones,
+    preview_country_tax as svc_preview_country_tax,
+    test_gateway_connection as svc_test_gateway_connection,
+    list_country_cities as svc_list_country_cities,
+    update_country_cities_bulk as svc_update_country_cities_bulk,
+    list_country_staff as svc_list_country_staff,
+    assign_staff_to_country as svc_assign_staff_to_country,
+    unassign_staff_from_country as svc_unassign_staff_from_country,
+    list_country_communications as svc_list_country_communications,
+    send_country_communication as svc_send_country_communication,
+    mark_communication_read as svc_mark_communication_read,
+    list_cross_country_sessions as svc_list_cross_country_sessions,
+    list_payout_rules_categories as svc_list_payout_rules_categories,
+    create_payout_rule_category as svc_create_payout_rule_category,
+    list_payout_rules_products as svc_list_payout_rules_products,
+    create_payout_rule_product as svc_create_payout_rule_product,
+    delete_payout_rule as svc_delete_payout_rule,
+    list_employees as svc_list_employees,
 )
 
 router = APIRouter()
@@ -263,18 +310,18 @@ class CommissionTiersDraftBody(BaseModel):
 
 @router.get("")
 def list_public_countries(db: Session = Depends(get_db)):
-    return country_controller.list_public_countries(db)
+    return svc_list_public_countries(db)
 
 
 @router.get("/{code}/config")
 def get_public_country_config(code: str, db: Session = Depends(get_db)):
-    return country_controller.get_public_country_config(code, db)
+    return svc_get_public_country_config(code, db)
 
 
 @router.get("/{code}/employees")
 def list_public_country_employees(code: str, db: Session = Depends(get_db)):
     """Public endpoint to list employees by country code."""
-    return ctrl.list_employees(code, db)
+    return svc_list_employees(code, db)
 
 
 # NOTE: The public GET /{code}/cities endpoint was removed — it was shadowed by
@@ -288,111 +335,152 @@ def list_public_country_employees(code: str, db: Session = Depends(get_db)):
 
 @router.post("")
 def create_admin_country(body: CountryCreateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_admin_country(body.model_dump(exclude_none=True), current_user, db)
+    _require_full_admin(current_user)
+    return svc_create_admin_country(body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.get("/{code}")
 def get_admin_country(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_admin_country(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_admin_country(code, current_user, db)
 
 
 @router.patch("/{code}")
 def update_admin_country_identity(code: str, body: CountryIdentityUpdateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.update_country_identity(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_update_country_identity(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 # ── Admin: Versioned Config Drafts ────────────────────────────────────────────
 
 @router.put("/{code}/tax")
 def create_tax_draft(code: str, body: TaxDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_tax_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_tax_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.put("/{code}/logistics")
 def create_logistics_draft(code: str, body: LogisticsDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_logistics_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_logistics_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.put("/{code}/commissions")
 def create_commission_draft(code: str, body: CommissionDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_commission_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_commission_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.put("/{code}/ops")
 def create_ops_draft(code: str, body: OpsDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_payment_and_flags_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_payment_and_flags_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 # ── Admin: New GCC Config Sections ───────────────────────────────────────────
 
 @router.get("/{code}/payment-gateways")
 def get_payment_gateways(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_payment_gateways(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_payment_gateways(code, current_user, db)
 
 
 @router.put("/{code}/payment-gateways")
 def create_payment_gateways_draft(code: str, body: PaymentGatewaysDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_payment_gateways_draft(code, body.model_dump(), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_payment_gateways_draft(code, body.model_dump(), current_user, db)
 
 
 @router.get("/{code}/logistics-providers")
 def get_logistics_providers(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_logistics_providers(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_logistics_providers(code, current_user, db)
 
 
 @router.put("/{code}/logistics-providers")
 def create_logistics_providers_draft(code: str, body: LogisticsProvidersDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_logistics_providers_draft(code, body.model_dump(), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_logistics_providers_draft(code, body.model_dump(), current_user, db)
 
 
 @router.get("/{code}/legal-rules")
 def get_legal_rules(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_legal_rules(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_legal_rules(code, current_user, db)
 
 
 @router.put("/{code}/legal-rules")
 def create_legal_rules_draft(code: str, body: LegalRulesDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_legal_rules_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_legal_rules_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.get("/{code}/regions")
 def get_regions(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_regions(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_regions(code, current_user, db)
 
 
 @router.put("/{code}/regions")
 def create_regions_draft(code: str, body: RegionsDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_regions_draft(code, body.model_dump(), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_regions_draft(code, body.model_dump(), current_user, db)
 
 
 @router.get("/{code}/supplier-requirements")
 def get_supplier_requirements(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_supplier_requirements(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_supplier_requirements(code, current_user, db)
 
 
 @router.put("/{code}/supplier-requirements")
 def create_supplier_requirements_draft(code: str, body: SupplierRequirementsDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_supplier_requirements_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_supplier_requirements_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.get("/{code}/payout-settings")
 def get_payout_settings(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_payout_settings(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_payout_settings(code, current_user, db)
 
 
 @router.put("/{code}/payout-settings")
 def create_payout_settings_draft(code: str, body: PayoutSettingsDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_payout_settings_draft(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_payout_settings_draft(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 @router.get("/{code}/commission-tiers")
 def get_commission_tiers(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_commission_tiers(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_commission_tiers(code, current_user, db)
 
 
 @router.put("/{code}/commission-tiers")
 def create_commission_tiers_draft(code: str, body: CommissionTiersDraftBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.create_commission_tiers_draft(code, body.model_dump(), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_commission_tiers_draft(code, body.model_dump(), current_user, db)
 
 
 # ── Admin: Versioning (approve / publish / rollback) ──────────────────────────
@@ -404,34 +492,46 @@ def list_country_versions(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return country_controller.list_country_versions(code, current_user, db, config_type=config_type)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_list_country_versions(code, current_user, db, config_type=config_type)
 
 
 @router.post("/{code}/versions/{version_id}/approve")
 def approve_country_version(code: str, version_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.approve_country_version(code, version_id, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_approve_country_version(code, version_id, current_user, db)
 
 
 @router.post("/{code}/versions/{version_id}/publish")
 def publish_country_version(code: str, version_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.publish_country_version(code, version_id, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_publish_country_version(code, version_id, current_user, db)
 
 
 @router.post("/{code}/versions/{version_id}/rollback")
 def rollback_country_to_version(code: str, version_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.rollback_country_to_version(code, version_id, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_rollback_country_to_version(code, version_id, current_user, db)
 
 
 # ── Admin: Supplementary Getters ──────────────────────────────────────────────
 
 @router.get("/{code}/commissions")
 def list_country_commissions(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.list_country_commissions(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_list_country_commissions(code, current_user, db)
 
 
 @router.get("/{code}/feature-flags")
 def get_country_feature_flags(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.get_country_feature_flags(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_get_country_feature_flags(code, current_user, db)
 
 
 @router.post("/{code}/feature-flags")
@@ -489,23 +589,29 @@ def update_country_localization(code: str, body: dict, current_user: dict = Depe
 
 @router.delete("/{code}/feature-flags/{key}")
 def delete_country_feature_flag(code: str, key: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
     return svc_delete_feature_flag(db, code, key)
 
 
 @router.get("/{code}/delivery-zones")
 def list_country_delivery_zones(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.list_country_delivery_zones(code, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_list_country_delivery_zones(code, current_user, db)
 
 
 @router.get("/om/zones")
 def list_oman_delivery_zones_compat(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Backward compatibility path for existing Oman admin tooling.
-    return country_controller.list_country_delivery_zones("OM", current_user, db)
+    _require_admin(current_user)
+    return svc_list_country_delivery_zones("OM", current_user, db)
 
 
 @router.post("/{code}/preview-tax")
 def preview_country_tax(code: str, body: TaxPreviewBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return country_controller.preview_country_tax(code, body.model_dump(exclude_none=True), current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_preview_country_tax(code, body.model_dump(exclude_none=True), current_user, db)
 
 
 class TestGatewayConnectionBody(BaseModel):
@@ -520,7 +626,9 @@ def test_gateway_connection(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return country_controller.test_gateway_connection(code, gateway_id, body.environment, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_test_gateway_connection(code, gateway_id, body.environment, current_user, db)
 
 
 class AutoPopulateBody(BaseModel):
@@ -530,9 +638,9 @@ class AutoPopulateBody(BaseModel):
 @router.post("/auto-populate")
 async def auto_populate_country(body: AutoPopulateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Fetch country data from external APIs and curated profiles."""
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    return await country_controller.auto_populate_async(body.search_term)
+    from services.country_auto_populate import auto_populate_country
+    return await auto_populate_country(body.search_term)
 
 
 @router.get("/{code}/cities")
@@ -548,9 +656,9 @@ def list_country_cities(
     Supports search (?q=muscat), pagination (?limit=10), and returns structured
     city objects from the normalized CountryCity table.
     """
-    return country_controller.list_country_cities(
-        code, current_user, db, query=q, limit=limit,
-    )
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_list_country_cities(code, current_user, db, query=q, limit=limit)
 
 
 @router.post("/{code}/cities")
@@ -560,8 +668,8 @@ def add_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
+    _require_country_access(code, current_user)
     return svc_create_city(db, code, body)
 
 
@@ -573,8 +681,8 @@ def patch_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
+    _require_country_access(code, current_user)
     return svc_update_city(db, code, city_id, body)
 
 
@@ -585,10 +693,11 @@ def delete_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
+    _require_country_access(code, current_user)
     svc_delete_city(db, code, city_id)
     return Response(status_code=204)
+
 
 @router.put("/{code}/cities")
 def update_country_cities_bulk(
@@ -602,7 +711,34 @@ def update_country_cities_bulk(
     Replaces all existing cities with the provided list.
     Expected body: {"cities": [{"name": "...", "region": "...", "latitude": ..., "longitude": ..., "population": ..., "is_active": true, "sort_order": 0}, ...]}
     """
-    return country_controller.update_country_cities_bulk(code, body, current_user, db)
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_update_country_cities_bulk(code, body, current_user, db)
+
+
+@router.post("/{code}/feature-flags")
+def create_country_feature_flag(
+    code: str,
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_create_feature_flag(db, code, body, current_user)
+
+
+@router.patch("/{code}/feature-flags/{key}")
+def update_country_feature_flag(
+    code: str,
+    key: str,
+    body: dict,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_admin(current_user)
+    _require_country_access(code, current_user)
+    return svc_update_feature_flag(db, code, key, body, current_user)
 
 
 class AssignStaffBody(BaseModel):

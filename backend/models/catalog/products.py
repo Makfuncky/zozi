@@ -88,6 +88,7 @@ class Product(Base, TenantMixin):
     meta_description = Column(Text, nullable=True)
     is_approved = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
+    is_featured = Column(Boolean, default=False)
     discount_starts_at = Column(DateTime, nullable=True)
     discount_ends_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)

@@ -470,7 +470,7 @@ def update_country_identity(code: str, payload: dict[str, Any], current_user: di
     if "legal_entity_required" in payload:
         country.legal_entity_required = bool(payload["legal_entity_required"])
     if "consumer_protection_days" in payload:
-        country.consumer_protection_days = int(payload["consumer_protection_days"]) -
+        country.consumer_protection_days = int(payload["consumer_protection_days"])
 
     if "max_package_weight_kg" in payload:
         country.max_package_weight_kg = payload["max_package_weight_kg"]
