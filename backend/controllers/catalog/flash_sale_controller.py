@@ -10,10 +10,10 @@ from sqlalchemy.orm import Session
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from services.catalog.product_utils import _bump_product_cache_version
-from models import FlashSale
-from db.schemas import FlashSaleCreate, FlashSaleOut
+from data.models import FlashSale
+from data.schemas import FlashSaleCreate, FlashSaleOut
 from utils.datetime_utils import utcnow as _utcnow
-from services.core.write_helpers import (
+from services.write_helpers import (
     add_and_flush,
     commit_and_refresh,
     commit_only,

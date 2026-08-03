@@ -1,9 +1,9 @@
 import json
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
-from db.database import get_db
+from data.db import get_db
 from utils.dependencies import get_current_user
 from utils.websocket_manager import manager
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get("/admin/countries/{country_code}/cross-border-sessions")
 async def list_cross_border_sessions(country_code: str, db: Session = Depends(get_db)):
-    from models import CrossCountryCustomerSession
+    from data.models import CrossCountryCustomerSession
     sessions = db.query(CrossCountryCustomerSession).filter(
         CrossCountryCustomerSession.target_country_code == country_code.upper()
     ).order_by(CrossCountryCustomerSession.created_at.desc()).limit(50).all()
@@ -31,12 +31,17 @@ async def list_cross_border_sessions(country_code: str, db: Session = Depends(ge
 
 
 @router.get("/admin/countries/{country_code}/legal-contracts")
-async def list_legal_contracts(country_code: str, db: Session = Depends(get_db)):
-    from db.models_country_control import LegalContractTemplate
+async def list_legal_contracts(
+    country_code: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    from data.db_models_country_control import LegalContractTemplate
     contracts = db.query(LegalContractTemplate).filter(
         LegalContractTemplate.country_code == country_code.upper(),
         LegalContractTemplate.is_active == True
-    ).order_by(LegalContractTemplate.created_at.desc()).all()
+    ).order_by(LegalContractTemplate.created_at.desc()).offset(skip).limit(limit).all()
     return [
         {
             "id": c.id,
@@ -52,12 +57,17 @@ async def list_legal_contracts(country_code: str, db: Session = Depends(get_db))
 
 
 @router.get("/admin/countries/{country_code}/warehouses")
-async def list_warehouses(country_code: str, db: Session = Depends(get_db)):
-    from db.models_country_control import ShopWarehouseLocation
+async def list_warehouses(
+    country_code: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    from data.db_models_country_control import ShopWarehouseLocation
     warehouses = db.query(ShopWarehouseLocation).filter(
         ShopWarehouseLocation.country_code == country_code.upper(),
         ShopWarehouseLocation.is_active == True
-    ).all()
+    ).offset(skip).limit(limit).all()
     return [
         {
             "id": w.id,
@@ -75,14 +85,19 @@ async def list_warehouses(country_code: str, db: Session = Depends(get_db)):
 
 
 @router.get("/admin/countries/{country_code}/partner-locations")
-async def list_partner_locations(country_code: str, db: Session = Depends(get_db)):
-    from db.models_country_control import LogisticsPartnerLocation
+async def list_partner_locations(
+    country_code: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    from data.db_models_country_control import LogisticsPartnerLocation
     locations = db.query(LogisticsPartnerLocation).join(
         db.Model("LogisticsPartner")
     ).filter(
         LogisticsPartnerLocation.country_code == country_code.upper(),
         LogisticsPartnerLocation.is_active == True
-    ).all()
+    ).offset(skip).limit(limit).all()
     return [
         {
             "id": p.id,

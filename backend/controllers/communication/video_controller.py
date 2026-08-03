@@ -7,7 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 
-from dependencies.db import get_db
+from data.dependencies_db import get_db
 from services.communication.video_conferencing import VideoConferenceRoom, get_video_conference
 
 logger = logging.getLogger("zozi.api.video")

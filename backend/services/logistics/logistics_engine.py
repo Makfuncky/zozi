@@ -7,8 +7,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, LogisticsPartner, LogisticsPricingProfile
-from services.logistics_partner_pricing import normalize_country_code
+from data.models import CountryConfig, LogisticsPartner, LogisticsPricingProfile
+from data.services_logistics_partner_pricing import normalize_country_code
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from typing import Any, Callable
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from db.database import engine
-from models import (
+from data.models import (
     Category,
     CountryConfig,
     EmailTemplate,
@@ -26,12 +26,12 @@ from models import (
     SupplierProfile,
     User,
 )
-from models.employee_models import (
+from data.models_employee_models import (
     Employee,
     Office,
     EmployeeRole,
 )
-from services.logistics_partner_pricing import quote_shipping_for_destination
+from data.services_logistics_partner_pricing import quote_shipping_for_destination
 from utils.auth import get_password_hash, verify_password
 from utils.datetime_utils import utcnow as _utcnow
 
@@ -706,7 +706,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
             {"name": "Beauty",       "slug": "beauty",       "icon": "💄", "sort_order": 4,
              "image_url": "https://picsum.photos/seed/beauty/600/400"},
             {"name": "Home & Living","slug": "home-living",  "icon": "🏠", "sort_order": 5,
-             "image_url": "https://picsum.photos/seed/home/600/400"},
+             "image_url": "https://picsum.photos/seed/homedecor/600/400"},
             {"name": "Sports",       "slug": "sports",       "icon": "⚽", "sort_order": 6,
              "image_url": "https://picsum.photos/seed/sports/600/400"},
             {"name": "Footwear",     "slug": "footwear",     "icon": "👟", "sort_order": 7,
@@ -1129,7 +1129,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
 
 def _seed_countries(db: Session) -> None:
     logger.info("Seeding countries...")
-    from models import CountryConfig
+    from data.models import CountryConfig
     
     existing_count = db.query(CountryConfig).count()
     if existing_count > 0:

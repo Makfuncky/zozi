@@ -33,8 +33,8 @@ from typing import Optional, List, Dict, Any, Set
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Employee, OrgUnit, User, EmployeeRole
-from models.employee_models import EmployeeRelation
+from data.models import Employee, OrgUnit, User, EmployeeRole
+from data.models_employee_models import EmployeeRelation
 
 
 # ════════════════════════════════════════════════════════════════

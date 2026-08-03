@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from services.ai_research_jobs import (
+from data.services_ai_research_jobs import (
     enqueue_job,
     get_job,
     mark_job_running,

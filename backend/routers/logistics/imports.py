@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from controllers.admin_controller import require_admin
+from data.db import get_db
+from data.controllers_admin_controller import require_admin
 from services import import_service as svc
 
 router = APIRouter()

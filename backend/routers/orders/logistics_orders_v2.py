@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from models import User, LogisticsPartner, Shipment
+from data.db import get_db
+from data.models import User, LogisticsPartner, Shipment
 from utils.dependencies import require_logistics, require_admin
 from services.order_tracking_service import (
     get_available_orders_for_logistics,
@@ -60,6 +60,8 @@ def list_available_orders(
 
 @router.get("/my")
 def list_my_pickups(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_logistics),
     db: Session = Depends(get_db),
 ):
@@ -73,6 +75,8 @@ def list_my_pickups(
         db.query(Shipment)
         .filter(Shipment.assigned_partner_id == partner.id)
         .order_by(Shipment.updated_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return [

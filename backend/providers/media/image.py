@@ -8,14 +8,28 @@ Test file: backend/tests/_test_provider/test_image.py
 """
 import io
 import logging
-import logging
 from typing import List, Dict, Any, Optional
 
-import numpy as np
-from PIL import Image
+from data.providers_bg_remover import remove_background as _bg_remover_remove_background
 
-from .bg_remover import remove_background as _bg_remover_remove_background, ProcessingConfig, _resize_image, _bytes_to_image, _image_to_bytes
-from .config import settings
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+np = _LazyNumpy()
+Image = _LazyPIL()
+
 
 logger = logging.getLogger(__name__)
 

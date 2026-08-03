@@ -4,9 +4,9 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = ["Payment", "Coupon", "Banner", "PaymentGatewayConnection", "Payout", "LogisticsPartnerPayout", "PaymentReconciliationRun"]
-
 
 def _get_table_args():
     import os
@@ -21,29 +21,27 @@ def _get_table_args():
         )
     return args
 
-
-class Payment(Base):
+class Payment(Base, TenantMixin):
     __tablename__ = "payments"
     __table_args__ = (
         CheckConstraint("amount >= 0", name="chk_payment_amount_non_negative"),
         CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded')", name="chk_payment_status_valid"),
         Index("ix_payments_order_id", "order_id"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
+    order_id = Column(Integer, nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     payment_method = Column(String, nullable=False)
     provider = Column(String, nullable=True)
     status = Column(String, default="pending")
     intent_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    # Free-form canvas layout (shapes, colors, images, video, buttons) stored as
+
     # a JSON-encoded string. Drives the complete admin/employee banner editor.
     layout_json = Column(Text, nullable=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+    country = relationship("CountryConfig", foreign_keys="Payment.country_code")
 
-
-class PaymentReconciliationRun(Base):
+class PaymentReconciliationRun(Base, TenantMixin):
     __tablename__ = "payment_reconciliation_runs"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -58,11 +56,8 @@ class PaymentReconciliationRun(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     status = Column(String, default="pending")
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class Coupon(Base):
+class Coupon(Base, TenantMixin):
     __tablename__ = "coupons"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -83,18 +78,16 @@ class Coupon(Base):
     allow_product_coupons = Column(Boolean, default=True)
     allow_category_coupons = Column(Boolean, default=True)
     allow_global_coupons = Column(Boolean, default=True)
-    is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
+
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    deleted_by_id = Column(Integer, nullable=True)
+
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="Coupon.country_code")
 
-
-class Banner(Base):
+class Banner(Base, TenantMixin):
     __tablename__ = "banners"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -103,10 +96,9 @@ class Banner(Base):
     image_url = Column(String, nullable=True)
     link = Column(String, nullable=True)
     banner_type = Column(String, default="hero")
-    is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
+
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    deleted_by_id = Column(Integer, nullable=True)
     sort_order = Column(Integer, default=0)
     bg_color = Column(String, nullable=True)
     text_color = Column(String, nullable=True)
@@ -121,25 +113,21 @@ class Banner(Base):
     cta_url = Column(String, nullable=True)
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    # Free-form canvas layout (shapes, colors, images, video, buttons) stored as a JSON-encoded string.
+    created_by = Column(Integer, nullable=True)
+
     layout_json = Column(Text, nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="Banner.country_code")
 
-
-class PaymentGatewayConnection(Base):
+class PaymentGatewayConnection(Base, TenantMixin):
     __tablename__ = "payment_gateway_connections"
     __table_args__ = _get_table_args() + ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     provider_code = Column(String(100), nullable=False)
     gateway_name = Column(String(100), nullable=False)
-    country_code = Column(String(3), nullable=False)
-    environment = Column(String(20), default="test")
-    is_active = Column(Boolean, default=True)
-    credentials = Column(JSON, nullable=True)
+
     fee_config = Column(JSON, nullable=True)
     supported_methods = Column(JSON, nullable=True)
     last_sync_at = Column(DateTime, nullable=True)
@@ -171,17 +159,17 @@ class PaymentGatewayConnection(Base):
     test_status = Column(String(20), nullable=False, default="untested")
     test_message = Column(String(500), nullable=True)
     last_tested_at = Column(DateTime, nullable=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    updated_by = Column(Integer, nullable=True)
     adapter_supported = Column(Boolean, default=False)
 
-
-class Payout(Base):
+class Payout(Base, TenantMixin):
     __tablename__ = "payouts"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), nullable=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
+    order_id = Column(Integer, nullable=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")
     method = Column(String, nullable=False)
@@ -194,14 +182,12 @@ class Payout(Base):
     provider_status = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     supplier = relationship("User", foreign_keys=[supplier_id])
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="Payout.country_code")
 
-
-class LogisticsPartnerPayout(Base):
+class LogisticsPartnerPayout(Base, TenantMixin):
     __tablename__ = "logistics_partner_payouts"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -213,9 +199,9 @@ class LogisticsPartnerPayout(Base):
     status = Column(String, default="pending")
     reference_id = Column(String, nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+
     method = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     partner = relationship("LogisticsPartner", back_populates="payouts")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="LogisticsPartnerPayout.country_code")

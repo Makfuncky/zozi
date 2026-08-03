@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from models.employee_models import (
+from data.models_employee_models import (
     EmployeeBiometric,
     GeoFenceLog,
     PhysicalIDCard,

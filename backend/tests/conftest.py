@@ -49,9 +49,9 @@ os.environ.setdefault("CSRF_DISABLED", "true")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
 os.environ.setdefault("SEED_ADMIN_PASSWORD", "admin123")
 
-from db.base import Base  # noqa: E402
+from data.base import Base  # noqa: E402
 
-import models  # noqa: E402
+import data.models  # noqa: E402
 
 
 def _patch_fk_schemas():
@@ -62,7 +62,7 @@ def _patch_fk_schemas():
     This patch rewrites every ForeignKey target to match the metadata table key
     so that configure_mappers() / create_all() can resolve the reference.
     """
-    metadata = models.Base.metadata
+    metadata = Base.metadata
 
     table_schemas: dict[str, str | None] = {}
     for t in metadata.tables.values():
@@ -98,6 +98,19 @@ def _patch_fk_schemas():
 
 _patch_fk_schemas()
 
+def _patch_types_for_sqlite() -> None:
+    from sqlalchemy import JSON, Uuid
+    from sqlalchemy.dialects.postgresql import JSONB, UUID
+    for table in Base.metadata.tables.values():
+        for column in table.columns:
+            current = column.type
+            if isinstance(current, JSONB):
+                column.type = JSON()
+            elif isinstance(current, UUID):
+                column.type = Uuid(native=False)
+
+_patch_types_for_sqlite()
+
 _SCHEMA_TRANSLATE_MAP = {
     "core": None,
     "commerce": None,
@@ -125,7 +138,7 @@ def _get_legacy_engine():
     if _legacy_engine is None:
         _legacy_engine = create_engine("sqlite://", echo=False, execution_options={"schema_translate_map": _SCHEMA_TRANSLATE_MAP})
         _legacy_engine.execution_options(isolation_level="AUTOCOMMIT")
-        models.Base.metadata.create_all(bind=_legacy_engine)
+        Base.metadata.create_all(bind=_legacy_engine)
     return _legacy_engine
 
 
@@ -158,7 +171,7 @@ def engine(db_file: str):
     )
     global _legacy_engine
     _legacy_engine = eng
-    models.Base.metadata.create_all(bind=eng)
+    Base.metadata.create_all(bind=eng)
     _create_gap_tables(eng)
     try:
         yield eng
@@ -172,21 +185,21 @@ def _TestSession():
 
 # Ensure all model modules are imported so that Base.metadata knows about every table
 # before create_all() runs. Import order matters for foreign-key tables.
-import models  # noqa: E402
-import models.user  # noqa: E402
-import models.upload_job  # noqa: E402
-import models.products  # noqa: E402
-import models.orders  # noqa: E402
-import models.payments  # noqa: E402
-import models.suppliers  # noqa: E402
-import models.logistics  # noqa: E402
-import models.countries  # noqa: E402
+import data.models  # noqa: E402
+import models.core.user  # noqa: E402
+import models.media.upload_job  # noqa: E402
+import models.catalog.products  # noqa: E402
+import models.orders.orders  # noqa: E402
+import models.finance.payments  # noqa: E402
+import models.communication.suppliers  # noqa: E402
+import models.logistics.logistics  # noqa: E402
+import models.country.countries  # noqa: E402
 import models.finance  # noqa: E402
-import models.admin  # noqa: E402
-import models.commission  # noqa: E402
-import models.permissions  # noqa: E402
+import models.logistics.admin  # noqa: E402
+import models.finance.commission  # noqa: E402
+import models.security.permissions  # noqa: E402
 import models.mixins  # noqa: E402
-import models.media_models  # noqa: E402
+import models.media.media_models  # noqa: E402
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -409,13 +422,14 @@ def app(engine, _seed_default_accounts):
     Depends on ``_seed_default_accounts`` so demo users (admin, supplier, etc.)
     exist in the DB before any test that uses the TestClient runs.
     """
-    from db.database import get_db as _real_get_db  # noqa: F401
+    from data.db import get_db as _real_get_db  # noqa: F401
+    from data.services_database import get_db as _services_get_db  # noqa: F401
 
-    import main as _main  # noqa: F401  (ensures routers are importable)
+    import main as _main  # noqa: E401  (ensures routers are importable)
 
     Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
-    def _override_get_db():
+    async def _override_get_db():
         db = Session()
         try:
             yield db
@@ -423,12 +437,13 @@ def app(engine, _seed_default_accounts):
             db.close()
 
     _main.app.dependency_overrides[_real_get_db] = _override_get_db
+    _main.app.dependency_overrides[_services_get_db] = _override_get_db
     yield _main.app
     _main.app.dependency_overrides.clear()
 
 
 def _set_email_verified(email: str) -> None:
-    from models import User as _User
+    from data.models import User as _User
 
     sess = _TestSession()
     try:
@@ -466,8 +481,8 @@ def _seed_default_accounts(engine):
     (which transitively seeds).  This saves ~6s per test file by running the
     seeding only once per pytest session.
     """
-    from db.seed import _ensure_demo_user
-    from models import CountryConfig, User as _UserModel
+    from data.db_seed import _ensure_demo_user
+    from data.models import CountryConfig, User as _UserModel
 
     TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = TestingSession()
@@ -490,7 +505,7 @@ def _seed_default_accounts(engine):
         session.flush()
 
         # ── Step 2a: seed WELCOME10 coupon for coupon validation tests ──
-        from models import Coupon as _Coupon
+        from data.models import Coupon as _Coupon
         existing_coupon = session.query(_Coupon).filter(_Coupon.code == "WELCOME10").first()
         if not existing_coupon:
             session.add(_Coupon(
@@ -557,7 +572,7 @@ def _auth_tokens(engine, _seed_default_accounts) -> dict[str, str]:
         "supplier": "eyJ...", "customer": "eyJ..."}``
     """
     from datetime import timedelta
-    from models import User as _User
+    from data.models import User as _User
     from utils.auth import create_access_token as _create_token
 
     _Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)

@@ -14,12 +14,12 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from models import (
+from data.models import (
     Customer, Vendor, APBill, ARInvoice, BankStatementLine, BankReconciliation,
     JournalEntry, JournalEntryLine, Account, AccountBalance, FiscalPeriod,
     Budget, FinanceAuditLog, BankMappingRule,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
+from data.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 

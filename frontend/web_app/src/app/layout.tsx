@@ -14,6 +14,7 @@ import ErrorHandlerInit from "@/components/ErrorHandlerInit";
 import LocaleInit from "@/components/LocaleInit";
 import UserRealtimeBridge from "@/components/UserRealtimeBridge";
 import { DeferredBackgroundEffect, DeferredChatbot } from "@/components/ClientDeferred";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const displayFont = Fraunces({
   subsets: ["latin"],
@@ -92,10 +93,11 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            {/* Skip to content link for keyboard users */}
+            <ErrorBoundary>
+              {/* Skip to content link for keyboard users */}
             <a
               href="#main-content"
-              className="absolute -top-10 left-0 z-[10000] mx-auto mt-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-on-brand shadow-lg transition-all duration-200 hover:bg-primary-light focus:top-0"
+              className="absolute -top-10 left-0 z-[999] mx-auto mt-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-on-brand shadow-lg transition-all duration-200 hover:bg-primary-light focus:top-0"
             >
               Skip to main content
             </a>
@@ -125,7 +127,7 @@ export default function RootLayout({
         </Suspense>
               </Suspense>
               <ToastContainer />
-            </div>
+            </ErrorBoundary>
           </AuthProvider>
         </ThemeProvider>
       </body>

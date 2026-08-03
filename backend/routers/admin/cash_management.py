@@ -12,8 +12,8 @@ from fastapi import APIRouter, Depends, Query, Body
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import (
+from data.db import get_db
+from data.schemas import (
     BadgeBillingOut,
     BankTransactionCreate,
     BankTransactionImportItem,
@@ -522,7 +522,7 @@ def logistics_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from models import LogisticsPartner
+    from data.models import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return {"error": "Logistics partner not found"}, 404
@@ -537,7 +537,7 @@ def logistics_list_settlements(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from models import LogisticsPartner
+    from data.models import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []
@@ -551,7 +551,7 @@ def logistics_list_ledger(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from models import LogisticsPartner
+    from data.models import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []

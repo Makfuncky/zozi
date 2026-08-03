@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import User, Employee, CountryStaffAssignment
+from data.models import User, Employee, CountryStaffAssignment
 
 
 from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP

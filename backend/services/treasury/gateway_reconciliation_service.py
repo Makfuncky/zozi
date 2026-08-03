@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     GatewaySettlementSchedule,
     Order,
     BankStatementLine,
@@ -14,8 +14,8 @@ from models import (
     FinanceAutomationLog,
     FinanceAuditLog,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance.general_ledger_service import create_journal_entry
+from data.schemas import JournalEntryCreate, JournalLineInput
+from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ def _auto_post_gateway_settlement(
         country_code=cc,
         lines=lines,
     )
-    result = create_journal_entry(db, entry_data)
+    result = gl.create_journal_entry(db, entry_data)
     return {"journal_entry_id": result.id, "status": "posted"}
 
 
@@ -171,7 +171,7 @@ def reconcile_cod_deposit(
                                  description=f"COD receivable cleared - Order #{order.id}"),
             ],
         )
-        result = create_journal_entry(db, entry_data)
+        result = gl.create_journal_entry(db, entry_data)
         _log_reconciliation(db, "cod_match", order_id, {
             "expected": float(expected), "deposited": float(deposited),
             "journal_entry_id": result.id,
@@ -250,7 +250,7 @@ def reconcile_all_cod_deposits(db: Session, country_code: str = None) -> dict:
                                      description=f"COD receivable cleared - Order #{order.id}"),
                 ],
             )
-            create_journal_entry(db, entry_data)
+            gl.create_journal_entry(db, entry_data)
             results["reconciled"] += 1
         except Exception as e:
             logger.warning("COD reconciliation failed for order %s: %s", order.id, e)

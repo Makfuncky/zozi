@@ -37,16 +37,18 @@ from sqlalchemy.orm import relationship
 
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = [
     "AIUploadJob",
     "AIStagingProduct",
     "AIStagingVariant",
     "AIGenerationLog",
+    "AIStagingImage",
+    "AIAuditLog",
 ]
 
-
-class AIUploadJob(Base):
+class AIUploadJob(Base, TenantMixin):
     __tablename__ = "ai_upload_jobs"
 
     __table_args__ = ({"schema": "ai"},)
@@ -60,8 +62,7 @@ class AIUploadJob(Base):
     source_media_json = Column(Text, nullable=True)
     created_product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
     error_log = Column(Text, nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     staging_products = relationship(
@@ -69,8 +70,7 @@ class AIUploadJob(Base):
         order_by="AIStagingProduct.id", cascade="all, delete-orphan",
     )
 
-
-class AIStagingProduct(Base):
+class AIStagingProduct(Base, TenantMixin):
     __tablename__ = "ai_staging_products"
 
     __table_args__ = ({"schema": "ai"},)
@@ -96,8 +96,6 @@ class AIStagingProduct(Base):
     attributes = Column(JSON, nullable=True)
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
     job = relationship("AIUploadJob", back_populates="staging_products")
     staging_variants = relationship(
@@ -105,8 +103,7 @@ class AIStagingProduct(Base):
         order_by="AIStagingVariant.id", cascade="all, delete-orphan",
     )
 
-
-class AIStagingVariant(Base):
+class AIStagingVariant(Base, TenantMixin):
     __tablename__ = "ai_staging_variants"
 
     __table_args__ = ({"schema": "ai"},)
@@ -127,15 +124,12 @@ class AIStagingVariant(Base):
     stock = Column(Integer, default=0)
     media_url = Column(String, nullable=True)
     attributes_json = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    confidence_score = Column(Numeric(5, 4), nullable=True)
+
     requires_human_review = Column(Boolean, default=False)
-    country_code = Column(String(3), nullable=True, index=True)
 
     staging_product = relationship("AIStagingProduct", back_populates="staging_variants")
 
-
-class AIGenerationLog(Base):
+class AIGenerationLog(Base, TenantMixin):
     __tablename__ = "ai_generation_logs"
 
     __table_args__ = ({"schema": "ai"},)
@@ -148,8 +142,54 @@ class AIGenerationLog(Base):
     tokens_used = Column(Numeric(12, 2), nullable=True)
     cost = Column(Numeric(12, 6), nullable=True)
     confidence = Column(Numeric(5, 4), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
+class AIStagingImage(Base, TenantMixin):
+    __tablename__ = "ai_staging_images"
+
+    __table_args__ = ({"schema": "ai"},)
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("ai.ai_upload_jobs.id"), nullable=False, index=True)
+    staging_product_id = Column(Integer, ForeignKey("ai.ai_staging_products.id"), nullable=True, index=True)
+    staging_variant_id = Column(Integer, ForeignKey("ai.ai_staging_variants.id"), nullable=True, index=True)
+    source_image_url = Column(String, nullable=False)
+    processed_image_url = Column(String, nullable=True)
+    operation = Column(String(50), nullable=False, index=True)
+    model_used = Column(String(100), nullable=True)
+    prompt = Column(Text, nullable=True)
+    confidence_score = Column(Numeric(5, 4), nullable=True)
+    requires_human_review = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=_utcnow, nullable=False)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
+
+    job = relationship("AIUploadJob")
+    staging_product = relationship("AIStagingProduct")
+    staging_variant = relationship("AIStagingVariant")
+
+
+class AIAuditLog(Base, TenantMixin):
+    __tablename__ = "ai_audit_log"
+
+    __table_args__ = ({"schema": "ai"},)
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("ai.ai_upload_jobs.id"), nullable=True, index=True)
+    operation = Column(String(50), nullable=False, index=True)
+    model_name = Column(String(100), nullable=False)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+    cost = Column(Numeric(12, 6), nullable=True)
+    status = Column(String(20), default="success", nullable=False, index=True)
+    error_message = Column(Text, nullable=True)
+    initiated_by = Column(Integer, nullable=True, index=True)
+    completed_at = Column(DateTime, default=_utcnow, nullable=True)
+    request_json = Column(Text, nullable=True)
+    response_json = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=_utcnow, nullable=False)
+
+    job = relationship("AIUploadJob")
 
 
 Index("ix_ai_staging_variants_job_staging", AIStagingVariant.job_id, AIStagingVariant.staging_product_id)

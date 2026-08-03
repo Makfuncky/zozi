@@ -4,7 +4,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee, EmployeeTraining, TrainingModule
+from data.models_employee_models import Employee, EmployeeTraining, TrainingModule
 
 
 def create_training_module(

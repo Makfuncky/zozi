@@ -13,7 +13,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 
-from models import (
+from data.models import (
     Account,
     AccountBalance,
     AccountGroup,
@@ -26,7 +26,7 @@ from utils.money import round_money
 logger = logging.getLogger(__name__)
 
 
-# ── Report output types ───────────────────────────────────────────────────
+# ── Report output types ───────────────────────────────────────────
 
 
 class IncomeStatementLine:
@@ -519,30 +519,28 @@ def generate_cash_flow_statement(
         bal = bal_q.first()
         if bal:
             closing_balance = bal.balance
-            cc_where = " AND je.country_code = :cc " if country_code else " "
-            cc_p = {"cc": country_code} if country_code else {}
             opening_balance = round_money(
                 Decimal(
-                    db.execute(text(f"""
+                    db.execute(text("""
                         SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)
                         FROM journal_entry_lines jel
                         JOIN journal_entries je ON jel.entry_id = je.id
                         WHERE jel.account_id = :aid
                           AND je.entry_date < :ps
-                          {cc_where if country_code else ''}
-                    """), {"aid": cash_acct.id, "ps": period_start, **cc_p}).scalar() or 0
+                          AND (:cc IS NULL OR je.country_code = :cc)
+                    """), {"aid": cash_acct.id, "ps": period_start, "cc": country_code}).scalar() or 0
                 )
             )
             opening_balance = round_money(closing_balance - (
-                db.execute(text(f"""
+                db.execute(text("""
                     SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)
                     FROM journal_entry_lines jel
                     JOIN journal_entries je ON jel.entry_id = je.id
                     WHERE jel.account_id = :aid
                       AND je.entry_date >= :ps
                       AND je.entry_date <= :pe
-                      {cc_where if country_code else ''}
-                """), {"aid": cash_acct.id, "ps": period_start, "pe": period_end, **cc_p}).scalar() or 0
+                      AND (:cc IS NULL OR je.country_code = :cc)
+                """), {"aid": cash_acct.id, "ps": period_start, "pe": period_end, "cc": country_code}).scalar() or 0
             ))
 
     operating_codes = {
@@ -562,23 +560,21 @@ def generate_cash_flow_statement(
         CashFlowLine(label="Net Income", amount=Decimal(str(net_income))),
     ]
 
-    cc_where = " AND je.country_code = :cc " if country_code else " "
-    cc_p = {"cc": country_code} if country_code else {}
     for code, (label, kind) in operating_codes.items():
         acct = db.query(Account).filter(Account.code == code).first()
         if not acct:
             continue
         change = Decimal(
             str(
-                db.execute(text(f"""
+                db.execute(text("""
                     SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)
                     FROM journal_entry_lines jel
                     JOIN journal_entries je ON jel.entry_id = je.id
                     WHERE jel.account_id = :aid
                       AND je.entry_date >= :ps
                       AND je.entry_date <= :pe
-                      {cc_where if country_code else ''}
-                """), {"aid": acct.id, "ps": period_start, "pe": period_end, **cc_p}).scalar() or 0
+                      AND (:cc IS NULL OR je.country_code = :cc)
+                """), {"aid": acct.id, "ps": period_start, "pe": period_end, "cc": country_code}).scalar() or 0
             )
         )
         if change != 0:
@@ -642,4 +638,3 @@ def get_saved_reports(
     if country_code:
         q = q.filter(FinancialReport.country_code == country_code)
     return q.limit(limit).all()
-

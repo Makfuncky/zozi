@@ -28,7 +28,16 @@ from typing import cast
 from typing import Optional
 
 import requests
-from PIL import Image
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+Image = _LazyPIL()
 
 
 class _ImageIOMissing:

@@ -6,15 +6,15 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee, AlumniNetwork
+from data.models_employee_models import Employee, AlumniNetwork
 from controllers.hr.hr_controller import (
     register_address, register_dependent, check_coi_conflict,
     create_coi_report, validate_gcc_compliance, get_employee_graph,
     create_disciplinary_case, get_disciplinary_cases,
     create_offboarding_case, get_offboarding_cases
 )
-from db.database import get_db
-from dependencies.auth import get_current_user
+from data.db import get_db
+from data.dependencies_auth import get_current_user
 
 from services.write_helpers import commit_only
 router = APIRouter()
@@ -76,11 +76,17 @@ def add_offboarding(case_data: dict, db: Session = Depends(get_db)):
 
 
 @router.get("/alumni")
-def list_alumni(db: Session = Depends(get_db)):
+def list_alumni(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
     """Return the alumni network records (employee offboarding rehire pool)."""
     rows = (
         db.query(AlumniNetwork, Employee)
         .join(Employee, Employee.id == AlumniNetwork.employee_id)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return [

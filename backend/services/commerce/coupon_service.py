@@ -13,8 +13,8 @@ from typing import List
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Coupon, Product
-from db.schemas import OrderItemBase
+from data.models import Coupon, Product
+from data.schemas import OrderItemBase
 from utils.datetime_utils import utcnow
 from utils.money import round_money, to_decimal
 

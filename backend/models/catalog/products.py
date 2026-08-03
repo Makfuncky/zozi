@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, foreign
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = [
     "Category", "Product", "ProductVariant", "ProductImage", "Review",
@@ -22,8 +23,7 @@ __all__ = [
     "LogisticsRate", "LogisticsZone", "LogisticsPricingRule",
 ]
 
-
-class Category(Base):
+class Category(Base, TenantMixin):
     __tablename__ = "categories"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -33,16 +33,14 @@ class Category(Base):
     parent_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True)
     icon = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True)
-    is_featured = Column(Boolean, default=False)
+
     sort_order = Column(Integer, default=0)
     commission_rate = Column(Numeric(5, 4), nullable=True)
     meta_title = Column(String, nullable=True)
     meta_description = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    # Materialized path (Phase 3a): derived from parent_id. e.g. "/1/", "/1/15/",
+
     # "/1/15/42/". Enables O(1) sub-tree queries without recursive CTEs.
     path = Column(String(255), nullable=True, index=True)
     lft = Column(Integer, nullable=False, default=0, index=True)
@@ -50,8 +48,7 @@ class Category(Base):
     depth = Column(Integer, default=0)
     products = relationship("Product", back_populates="category_rel")
 
-
-class Product(Base):
+class Product(Base, TenantMixin):
     __tablename__ = "products"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -69,17 +66,16 @@ class Product(Base):
     low_stock_threshold = Column(Integer, default=5)
     weight = Column(Numeric(10, 2), nullable=True)
     dimensions = Column(String, nullable=True)
-    materials = Column(JSON, nullable=True)
+    materials = Column(JSONB, nullable=True)
     image_url = Column(String, nullable=True)
-    images = Column(JSON, nullable=True)
+    images = Column(JSONB, nullable=True)
     category = Column(String, nullable=True)
     category_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True)
-    tags = Column(JSON, nullable=True)
-    attributes = Column(JSON, nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+    tags = Column(JSONB, nullable=True)
+    attributes = Column(JSONB, nullable=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
-    is_featured = Column(Boolean, default=False)
+
     is_digital = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=True)
     moderation_status = Column(String, default="approved")
@@ -96,10 +92,10 @@ class Product(Base):
     discount_ends_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    filter_attributes = Column(JSON, nullable=True)
-    search_vector = Column(JSON, nullable=True)
+    filter_attributes = Column(JSONB, nullable=True)
+    search_vector = Column(Text, nullable=True)
     video_count = Column(Integer, default=0)
-    variant_axes = Column(JSON, nullable=True)
+    variant_axes = Column(JSONB, nullable=True)
     bg_preset = Column(String, nullable=True)
     visibility_regions = Column(Text, nullable=True)
     slug_hash = Column(String(32), unique=True, nullable=True, index=True)
@@ -108,7 +104,7 @@ class Product(Base):
     is_new = Column(Boolean, default=False)
     supplier = relationship("User", back_populates="products")
     category_rel = relationship("Category", back_populates="products")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="Product.country_code")
     reviews = relationship("Review", back_populates="product")
     wishlist_items = relationship("WishlistItem", back_populates="product")
     wishlists = relationship("Wishlist", back_populates="product")
@@ -120,8 +116,7 @@ class Product(Base):
     videos = relationship("ProductVideo", back_populates="product", order_by="ProductVideo.created_at.desc()")
     images_rel = relationship("ProductImage", back_populates="product", order_by="ProductImage.sort_order")
 
-
-class Review(Base):
+class Review(Base, TenantMixin):
     __tablename__ = "reviews"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -135,36 +130,33 @@ class Review(Base):
     is_deleted = Column(Boolean, default=False)
     is_verified_purchase = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+
     user = relationship("User", back_populates="reviews")
     product = relationship("Product", back_populates="reviews")
 
-
-class WishlistItem(Base):
+class WishlistItem(Base, TenantMixin):
     __tablename__ = "wishlist_items"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="wishlist_items")
+
     product = relationship("Product", back_populates="wishlist_items")
 
-
-class Wishlist(Base):
+class Wishlist(Base, TenantMixin):
     __tablename__ = "wishlists"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
     user = relationship("User", back_populates="wishlists")
+    created_at = Column(DateTime, default=_utcnow)
+
     product = relationship("Product", back_populates="wishlists")
 
-
-class ProductVariant(Base):
+class ProductVariant(Base, TenantMixin):
     __tablename__ = "product_variants"
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
@@ -180,13 +172,11 @@ class ProductVariant(Base):
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
     media_url = Column(String, nullable=True)
-    attributes_json = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    sort_order = Column(Integer, default=0)
+    attributes_json = Column(JSONB, nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+
     # Deterministic variant identity (Phase 3b). sha256 of the normalized
     # product_id + axes. Enables idempotent upserts and prevents duplicate
     # rows on AI re-runs.
@@ -194,8 +184,9 @@ class ProductVariant(Base):
     product = relationship("Product", back_populates="variants")
 
     __table_args__ = (
-        UniqueConstraint("product_id", "variant_key", name="uq_product_variant_key"), {"schema": "commerce"})
-
+        UniqueConstraint("product_id", "variant_key", name="uq_product_variant_key"),
+        Index("ix_product_variant_attributes_gin", "attributes_json", postgresql_using="gin"),
+        {"schema": "commerce"})
 
 class ProductImage(Base):
     __tablename__ = "product_images"
@@ -209,8 +200,7 @@ class ProductImage(Base):
     created_at = Column(DateTime, default=_utcnow)
     product = relationship("Product", back_populates="images_rel")
 
-
-class ProductVideo(Base):
+class ProductVideo(Base, TenantMixin):
     __tablename__ = "product_videos"
     __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -225,12 +215,10 @@ class ProductVideo(Base):
     is_featured = Column(Boolean, default=False)
     upload_status = Column(String(50), default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
     product = relationship("Product", back_populates="videos")
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class VideoAnalytics(Base):
+class VideoAnalytics(Base, TenantMixin):
     __tablename__ = "video_analytics"
     __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -240,10 +228,8 @@ class VideoAnalytics(Base):
     watch_duration_seconds = Column(Integer, nullable=True)
     device_type = Column(String(50), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ProductFilterMetadata(Base):
+class ProductFilterMetadata(Base, TenantMixin):
     __tablename__ = "product_filter_metadata"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -251,14 +237,10 @@ class ProductFilterMetadata(Base):
     filter_name = Column(String(100), nullable=False)
     filter_type = Column(String(50), nullable=False)
     display_order = Column(Integer, nullable=False, server_default="0")
-    is_active = Column(Boolean, nullable=False, server_default=sa_text("true"))
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    category = relationship("Category")
+
     options = relationship("ProductFilterOption", back_populates="filter_metadata", order_by="ProductFilterOption.sort_order")
 
-
-class ProductFilterOption(Base):
+class ProductFilterOption(Base, TenantMixin):
     __tablename__ = "product_filter_options"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -266,21 +248,17 @@ class ProductFilterOption(Base):
     option_value = Column(String(255), nullable=False)
     option_display_name = Column(String(255), nullable=False)
     product_count = Column(Integer, nullable=False, server_default="0")
-    sort_order = Column(Integer, nullable=False, server_default="0")
-    country_code = Column(String(3), nullable=True, index=True)
     filter_metadata = relationship("ProductFilterMetadata", back_populates="options")
-
+    sort_order = Column(Integer, nullable=False, server_default="0")
 
 Product.variants = relationship(
     "ProductVariant", back_populates="product",
     order_by="ProductVariant.id", cascade="all, delete-orphan",
 )
 
-
 # ── Trading Models ──────────────────────────────────────────────────────────────
 
-
-class Warehouse(Base):
+class Warehouse(Base, TenantMixin):
     __tablename__ = "warehouses"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -288,14 +266,12 @@ class Warehouse(Base):
     code = Column(String(50), unique=True, nullable=False, index=True)
     address = Column(Text, nullable=True)
     city = Column(String(100), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+    country = relationship("CountryConfig", foreign_keys="Warehouse.country_code")
 
-
-class StockMovement(Base):
+class StockMovement(Base, TenantMixin):
     __tablename__ = "stock_movements"
     __table_args__ = (
         Index("ix_stock_movements_product_id", "product_id"),
@@ -311,14 +287,12 @@ class StockMovement(Base):
     quantity_after = Column(Numeric(14, 4), nullable=False)
     unit_cost = Column(Numeric(14, 4), nullable=True)
     total_cost = Column(Numeric(14, 4), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow, index=True)
     product = relationship("Product")
     warehouse = relationship("Warehouse")
 
-
-class PurchaseOrder(Base):
+class PurchaseOrder(Base, TenantMixin):
     __tablename__ = "purchase_orders"
     __table_args__ = (
         Index("ix_po_supplier", "supplier_id"),
@@ -343,17 +317,16 @@ class PurchaseOrder(Base):
     terms = Column(Text, nullable=True)
     shipping_address = Column(Text, nullable=True)
     status = Column(String(50), default="draft")
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     lines = relationship("PurchaseOrderLine", back_populates="purchase_order", cascade="all, delete-orphan")
     warehouse = relationship("Warehouse")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="PurchaseOrder.country_code")
     vendor = relationship("Vendor", foreign_keys=[supplier_id])
 
-
-class PurchaseOrderLine(Base):
+class PurchaseOrderLine(Base, TenantMixin):
     __tablename__ = "purchase_order_lines"
     __table_args__ = ({"schema": "trading"})
     id = Column(Integer, primary_key=True, index=True)
@@ -372,13 +345,11 @@ class PurchaseOrderLine(Base):
     line_total = Column(Numeric(14, 2), default=0)
     weight = Column(Numeric(10, 3), nullable=True)
     volume = Column(Numeric(10, 3), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     purchase_order = relationship("PurchaseOrder", back_populates="lines")
     product = relationship("Product")
 
-
-class GoodsReceiptNote(Base):
+class GoodsReceiptNote(Base, TenantMixin):
     __tablename__ = "goods_receipt_notes"
     __table_args__ = (
         Index("ix_grn_po_id", "po_id"),
@@ -393,15 +364,13 @@ class GoodsReceiptNote(Base):
     status = Column(String(50), default="draft")
     notes = Column(Text, nullable=True)
     received_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     purchase_order = relationship("PurchaseOrder")
     warehouse = relationship("Warehouse")
     lines = relationship("GoodsReceiptLine", back_populates="grn", cascade="all, delete-orphan")
 
-
-class GoodsReceiptLine(Base):
+class GoodsReceiptLine(Base, TenantMixin):
     __tablename__ = "goods_receipt_lines"
     __table_args__ = ({"schema": "trading"})
     id = Column(Integer, primary_key=True, index=True)
@@ -417,14 +386,12 @@ class GoodsReceiptLine(Base):
     lot_number = Column(String(100), nullable=True)
     expiry_date = Column(DateTime, nullable=True)
     unit_cost = Column(Numeric(14, 4), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     grn = relationship("GoodsReceiptNote", back_populates="lines")
     po_line = relationship("PurchaseOrderLine")
     product = relationship("Product")
 
-
-class SalesOrder(Base):
+class SalesOrder(Base, TenantMixin):
     __tablename__ = "sales_orders"
     __table_args__ = (
         Index("ix_so_customer", "customer_id"),
@@ -449,17 +416,16 @@ class SalesOrder(Base):
     notes = Column(Text, nullable=True)
     terms = Column(Text, nullable=True)
     status = Column(String(50), default="draft")
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     lines = relationship("SalesOrderLine", back_populates="sales_order", cascade="all, delete-orphan")
     warehouse = relationship("Warehouse")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="SalesOrder.country_code")
     customer = relationship("Customer", foreign_keys=[customer_id])
 
-
-class SalesOrderLine(Base):
+class SalesOrderLine(Base, TenantMixin):
     __tablename__ = "sales_order_lines"
     __table_args__ = ({"schema": "trading"})
     id = Column(Integer, primary_key=True, index=True)
@@ -478,16 +444,13 @@ class SalesOrderLine(Base):
     line_total = Column(Numeric(14, 2), default=0)
     weight = Column(Numeric(10, 3), nullable=True)
     volume = Column(Numeric(10, 3), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     sales_order = relationship("SalesOrder", back_populates="lines")
     product = relationship("Product")
 
-
 # ── Financial Trading & Reporting Models ────────────────────────────────────────
 
-
-class TradeDeal(Base):
+class TradeDeal(Base, TenantMixin):
     __tablename__ = "trade_deals"
     __table_args__ = (
         Index("ix_trade_deals_counterparty", "counterparty_id"),
@@ -507,8 +470,8 @@ class TradeDeal(Base):
     rate = Column(Numeric(14, 6), nullable=True)
     total_value = Column(Numeric(14, 2), default=0)
     description = Column(Text, nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     items = relationship("TradeDealItem", back_populates="deal", cascade="all, delete-orphan")
@@ -516,8 +479,7 @@ class TradeDeal(Base):
     counterparty = relationship("Vendor", foreign_keys=[counterparty_id])
     country = relationship("CountryConfig", primaryjoin="TradeDeal.country_code == foreign(CountryConfig.code)")
 
-
-class TradeDealItem(Base):
+class TradeDealItem(Base, TenantMixin):
     __tablename__ = "trade_deal_items"
     __table_args__ = ({"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
@@ -526,12 +488,10 @@ class TradeDealItem(Base):
     quantity = Column(Numeric(14, 4), nullable=False, default=0)
     unit_price = Column(Numeric(14, 4), nullable=False, default=0)
     total_value = Column(Numeric(14, 2), default=0)
-    country_code = Column(String(3), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     deal = relationship("TradeDeal", back_populates="items")
 
-
-class TradeSettlement(Base):
+class TradeSettlement(Base, TenantMixin):
     __tablename__ = "trade_settlements"
     __table_args__ = (
         Index("ix_trade_settlements_deal", "deal_id"),
@@ -545,14 +505,12 @@ class TradeSettlement(Base):
     reference_number = Column(String(100), nullable=True)
     payment_method = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     deal = relationship("TradeDeal", back_populates="settlements")
 
-
-class TradingConfig(Base):
+class TradingConfig(Base, TenantMixin):
     __tablename__ = "trading_configs"
     __table_args__ = (
         UniqueConstraint("config_key", "country_code", name="uq_trading_configs_key_country"),
@@ -562,13 +520,11 @@ class TradingConfig(Base):
     config_value = Column(Text, nullable=True)
     value_type = Column(String(20), default="string")
     description = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    country_code = Column(String(3), nullable=True, index=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class FinanceReport(Base):
+class FinanceReport(Base, TenantMixin):
     __tablename__ = "finance_reports"
     __table_args__ = (
         Index("ix_finance_reports_type", "report_type"),
@@ -583,12 +539,10 @@ class FinanceReport(Base):
     status = Column(String(50), default="generated")
     payload_json = Column(Text, nullable=True)
     file_url = Column(String(500), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class FinanceDashboardMetrics(Base):
+class FinanceDashboardMetrics(Base, TenantMixin):
     __tablename__ = "finance_dashboard_metrics"
     __table_args__ = (
         UniqueConstraint("metric_key", "country_code", name="uq_finance_metrics_key_country"),
@@ -599,12 +553,8 @@ class FinanceDashboardMetrics(Base):
     metric_label = Column(String(255), nullable=True)
     category = Column(String(50), nullable=True)
     computed_at = Column(DateTime, default=_utcnow, index=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-
 
 # ── Logistics Models ────────────────────────────────────────────────────────────
-
 
 class LogisticsZone(Base):
     __tablename__ = "logistics_zones"
@@ -614,13 +564,11 @@ class LogisticsZone(Base):
     zone_name = Column(String(255), nullable=False)
     zone_code = Column(String(50), unique=True, nullable=False, index=True)
     country_codes = Column(JSON, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     pricing_rules = relationship("LogisticsPricingRule", back_populates="zone", cascade="all, delete-orphan")
 
-
-class LogisticsRate(Base):
+class LogisticsRate(Base, TenantMixin):
     __tablename__ = "logistics_rates"
     __table_args__ = (
         Index("ix_logistics_rates_zone", "zone_id"),
@@ -634,12 +582,10 @@ class LogisticsRate(Base):
     currency = Column(String(3), default="OMR")
     estimated_days_min = Column(Integer, nullable=True)
     estimated_days_max = Column(Integer, nullable=True)
-    is_active = Column(Boolean, default=True)
-    country_code = Column(String(3), nullable=True, index=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     zone = relationship("LogisticsZone")
-
 
 class LogisticsPricingRule(Base):
     __tablename__ = "logistics_pricing_rules"
@@ -658,7 +604,6 @@ class LogisticsPricingRule(Base):
     per_kg_rate = Column(Numeric(14, 4), default=0)
     fuel_surcharge_percent = Column(Numeric(5, 2), default=0)
     currency = Column(String(3), default="OMR")
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     zone = relationship("LogisticsZone", back_populates="pricing_rules")

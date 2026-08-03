@@ -18,8 +18,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from sqlalchemy.orm import Session
 
-from db.database import SessionLocal
-from models import User, Employee, CountryStaffAssignment, Permission, RolePermissionAssignment, UserPermissionOverride
+from data.db import SessionLocal
+from data.models import User, Employee, CountryStaffAssignment, Permission, RolePermissionAssignment, UserPermissionOverride
 from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP, STAFF_PERMISSION_GROUPS
 
 logger = logging.getLogger(__name__)
@@ -513,7 +513,7 @@ def _apply_permission_change(
 def require_permission(permission_slug: str):
     """FastAPI dependency that checks a specific permission."""
     from fastapi import Depends, HTTPException
-    from dependencies.auth import get_current_user  # lazy import — avoids circular dep
+    from data.dependencies_auth import get_current_user  # lazy import — avoids circular dep
     # Re-homed to dependencies/auth.py so services stop importing the auth controller.
 
     def _checker(
@@ -533,5 +533,5 @@ def require_permission(permission_slug: str):
     return _checker
 
 
-from db.database import get_db
-from models.permissions import PermissionAuditLog
+from data.db import get_db
+from models.security.permissions import PermissionAuditLog

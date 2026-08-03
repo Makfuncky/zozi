@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
-from models import (
+from data.models import (
     ImportShipment, ImportShipmentLine, LandedCostAllocation,
     CustomsEntry, ImportCostTemplate,
     PurchaseOrder, PurchaseOrderLine,
@@ -16,7 +16,7 @@ from models import (
     Account, AccountGroup, AccountBalance,
     JournalEntry, JournalEntryLine,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
+from data.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 

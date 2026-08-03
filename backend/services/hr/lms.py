@@ -8,7 +8,7 @@ from typing import List, Optional, Dict
 
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee
+from data.models_employee_models import Employee
 
 logger = logging.getLogger("zozi.lms")
 

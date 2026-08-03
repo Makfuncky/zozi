@@ -1,6 +1,3 @@
-Below is the complete, single, ready-to-save file. One important governance note up front, because it's the whole point of what you're trying to fix: **this one file now *is* the database constitution — the five companion specs are embedded as Part II (§6–§10), not kept as separate files.** Keeping them in two places would re-create the exact two-sources-of-truth drift you're escaping (recorded as ADR-016). I also corrected two things against your actual codebase rather than my earlier drafts: the prod connection pool is **5 / 10** (per `DATABASE_SCOPE.md`, not 50/100), and the audit doc's claim of "0 migration files" is **stale** — `versions/` + `versions_archive/` already contain 100+ migrations incl. merge-heads; the real defect is the broken head + 3 ORM-only tables (ADR-018). Both are now encoded so a future session can't "re-discover" them wrongly.
-
-Save as `documents/scope/01_DATABASE.md`. Delete the old `DATABASE_*.md` files and any separate companion files after sign-off.
 
 <!-- FILE START: documents/scope/01_DATABASE.md -->
 
@@ -99,22 +96,22 @@ ZOZI Platform (PostgreSQL schemas)
 ### 2.3 System diagram (layered request → data flow)
 ```
                         ┌──────────────────────────────┐
-   HTTP / WS  ─────────►│  routers/   (entry, validate) │
+   HTTP / WS  ─────────►│  routers/   (entry, validate)│
                         └──────────────┬───────────────┘
                                        ▼
                         ┌──────────────────────────────┐
-                        │ controllers/ (orchestrate)    │
+                        │ controllers/ (orchestrate)   │
                         └──────────────┬───────────────┘
                                        ▼
         ┌──────────────────────────────────────────────────────┐
-        │ services/ (business logic — the ONLY writers)         │
-        │   • finance ledger service  • ai staging/commit       │
-        │   • advanced_filter/search  • country/RLS context     │
+        │ services/ (business logic — the ONLY writers)        │
+        │   • finance ledger service  • ai staging/commit      │
+        │   • advanced_filter/search  • country/RLS context    │
         └───────┬───────────────────────────────┬──────────────┘
                 ▼                               ▼
-   ┌────────────────────────┐      ┌────────────────────────────┐
-   │ providers/ (AI/external)│      │ models/ (SQLAlchemy, 27 files)│
-   └────────────────────────┘      └──────────────┬─────────────┘
+   ┌────────────────────────┐       ┌────────────────────────────┐
+   │ providers/(AI/external)│       │ models/ (SQLAlchemy, 27 files)│
+   └────────────────────────┘       └──────────────┬─────────────┘
                                                    ▼
                 ┌──────────────────────────────────────────────────────┐
                 │ PostgreSQL  (schemas §2.2 · RLS · partitioning · GIN) │

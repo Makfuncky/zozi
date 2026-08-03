@@ -8,11 +8,11 @@ async function loginSupplier(page: Page) {
   // Get token from API
   const loginRes = await page.request.post("http://localhost:8000/auth/login", {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    form: { username: "supplier@zozi.com", password: "supplier123" },
+    form: { username: "supplier@zozi.com", password: process.env.E2E_SUPPLIER_PASSWORD ?? "supplier123" },
   });
   const loginData = await loginRes.json();
   const token = loginData.access_token;
-  console.log("[login] Got token:", token?.slice(0, 20) + "...");
+  console.log("[login] Auth token received:", token?.slice(0, 20));
 
   // Step 1: Navigate to the target URL first (will redirect to login if no cookie)
   console.log("[login] Navigating to add product page...");

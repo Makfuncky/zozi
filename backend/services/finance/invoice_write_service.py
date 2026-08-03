@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from models import Invoice, InvoiceItem
+from data.models import Invoice, InvoiceItem
 
 
 def create_invoice_with_items(db: Session, invoice_data: dict, items: list) -> Invoice:

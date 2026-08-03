@@ -1,5 +1,6 @@
 import { DensityProvider } from "@/lib/densityContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function LogisticsPartnerRootLayout({ children }: { children: React.ReactNode }) {
-  return <DensityProvider>{children}</DensityProvider>;
+  return <DensityProvider><ErrorBoundary>{children}</ErrorBoundary></DensityProvider>;
 }

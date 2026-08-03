@@ -1,0 +1,1 @@
+from controllers.catalog.search_controller import *

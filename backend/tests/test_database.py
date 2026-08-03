@@ -15,27 +15,27 @@ class TestConnectionPool:
 
     def test_pool_size_is_explicit_literal(self):
         """Pool size must be explicitly set to 20, not derived from settings."""
-        from db.database import POOL_SIZE
+        from data.db import POOL_SIZE
         assert POOL_SIZE == 20, f"POOL_SIZE must be 20, got {POOL_SIZE}"
 
     def test_pool_max_overflow_is_explicit_literal(self):
         """Max overflow must be explicitly set."""
-        from db.database import MAX_OVERFLOW
+        from data.db import MAX_OVERFLOW
         assert MAX_OVERFLOW == 30, f"MAX_OVERFLOW must be 30, got {MAX_OVERFLOW}"
 
     def test_pool_recycle_is_explicit_literal(self):
         """Pool recycle must be explicitly set."""
-        from db.database import POOL_RECYCLE
+        from data.db import POOL_RECYCLE
         assert POOL_RECYCLE == 1800, f"POOL_RECYCLE must be 1800, got {POOL_RECYCLE}"
 
     def test_pool_timeout_is_explicit_literal(self):
         """Pool timeout must be explicitly set."""
-        from db.database import POOL_TIMEOUT
+        from data.db import POOL_TIMEOUT
         assert POOL_TIMEOUT == 10, f"POOL_TIMEOUT must be 10, got {POOL_TIMEOUT}"
 
     def test_engine_pool_size_matches_literal(self, engine):
         """Engine pool size must match the explicit literal."""
-        from db.database import POOL_SIZE, MAX_OVERFLOW
+        from data.db import POOL_SIZE, MAX_OVERFLOW
         pool = engine.pool
         if hasattr(pool, 'size'):
             assert pool.size() == POOL_SIZE, f"Pool size {pool.size()} != {POOL_SIZE}"
@@ -48,7 +48,7 @@ class TestMigrationDrift:
 
     def test_upload_jobs_table_exists(self, db_session):
         """upload_jobs table must exist (ORM-only table)."""
-        from models import UploadJob
+        from data.models import UploadJob
         result = db_session.execute(
             text("SELECT name FROM sqlite_master WHERE type='table' AND name='upload_jobs'")
         ).fetchone()
@@ -99,9 +99,9 @@ class TestCreateAllGating:
         original_url = os.environ.get('DATABASE_URL')
         try:
             os.environ['DATABASE_URL'] = 'postgresql://test:test@localhost/test'
-            import db.database
+            import data.db
             importlib.reload(db.database)
-            from db.database import create_tables
+            from data.db import create_tables
             with pytest.raises(RuntimeError, match="disabled on PostgreSQL"):
                 create_tables()
         finally:
@@ -109,14 +109,14 @@ class TestCreateAllGating:
                 os.environ['DATABASE_URL'] = original_url
             else:
                 os.environ.pop('DATABASE_URL', None)
-            import db.database
+            import data.db
             importlib.reload(db.database)
 
     def test_create_tables_raises_on_production(self):
         """create_tables must raise RuntimeError in production environment."""
         import importlib
         import os
-        import db.database as db_module
+        import data.db as db_module
         original_url = os.environ.get('DATABASE_URL')
         original_env = os.environ.get('APP_ENV')
         try:

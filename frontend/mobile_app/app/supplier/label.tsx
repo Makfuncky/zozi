@@ -115,25 +115,28 @@ function buildLabelHtml(label: SupplierLabelPayload): string {
     )
     .join("");
 
+  const LABEL_CSS = [
+  "body { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 24px; max-width: 720px; margin: 0 auto; }",
+  "h1 { font-size: 18px; margin: 0 0 4px; }",
+  ".meta { color: #666; font-size: 11px; margin-bottom: 18px; }",
+  "table.info { width: 100%; border-collapse: collapse; margin-bottom: 16px; }",
+  "table.info td { padding: 5px 8px; vertical-align: top; }",
+  "table.info td:first-child { font-weight: bold; width: 170px; color: #444; }",
+  "table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }",
+  "table.items th { background: #f0f0f0; padding: 7px 8px; text-align: left; font-size: 12px; }",
+  ".totals td { padding: 4px 8px; }",
+  ".totals td:first-child { text-align: right; color: #555; }",
+  ".totals td:last-child { text-align: right; font-weight: bold; }",
+  ".qr-section { text-align: center; margin: 18px 0 8px; }",
+  ".scan-code { font-family: monospace; font-size: 14px; margin-top: 6px; }",
+  "@media print { body { padding: 12px; } }",
+].join("\n");
+  const encodedLabelCss = btoa(LABEL_CSS);
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><title>${sheetTitle} – Order #${label.order_id}</title>
-<style>
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 24px; max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  .meta { color: #666; font-size: 11px; margin-bottom: 18px; }
-  table.info { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  table.info td { padding: 5px 8px; vertical-align: top; }
-  table.info td:first-child { font-weight: bold; width: 170px; color: #444; }
-  table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  table.items th { background: #f0f0f0; padding: 7px 8px; text-align: left; font-size: 12px; }
-  .totals td { padding: 4px 8px; }
-  .totals td:first-child { text-align: right; color: #555; }
-  .totals td:last-child { text-align: right; font-weight: bold; }
-  .qr-section { text-align: center; margin: 18px 0 8px; }
-  .scan-code { font-family: monospace; font-size: 14px; margin-top: 6px; }
-  @media print { body { padding: 12px; } }
-</style></head>
+<link rel="stylesheet" href="data:text/css;base64,${encodedLabelCss}" /></head>
 <body>
   <h1>${sheetTitle} – ${label.invoice_number}</h1>
   <div class="meta">Order #${label.order_id} &nbsp;|&nbsp; ${shipmentMeta} &nbsp;|&nbsp; Status: ${label.has_shipment ? label.shipment_status_label || label.shipment_status : "awaiting shipment"}</div>

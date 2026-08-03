@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
-from models import Product, ProductVideo, VideoAnalytics
+from data.models import Product, ProductVideo, VideoAnalytics
 from services.media_service import save_product_media
 
 logger = logging.getLogger(__name__)

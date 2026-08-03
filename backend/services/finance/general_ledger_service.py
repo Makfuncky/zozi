@@ -8,7 +8,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from models import (
+from data.models import (
     Account,
     AccountBalance,
     AccountGroup,
@@ -24,7 +24,7 @@ from models import (
     CommissionLedgerEntry,
     TreasuryAccount,
 )
-from db.schemas import (
+from data.schemas import (
     AccountBalanceOut,
     AccountOut,
     JournalEntryCreate,

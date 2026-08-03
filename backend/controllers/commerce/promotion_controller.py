@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from utils.audit_log import audit_log
-from models import PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier
+from data.models import PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier
 from utils.money import to_decimal
 from services.promotion_engine_service import ensure_promotion_tables
 from services.write_helpers import (

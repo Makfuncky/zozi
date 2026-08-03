@@ -19,6 +19,3 @@ __all__ = [
     "_event_publisher",
     "_order_holds_inventory",
 ]
-
-# NOTE: The imported functions currently re-export from controllers.payments_controller.
-# See services/orders/order_payment_functions.py for the W3 violation TODO.

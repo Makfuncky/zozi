@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
-from db.database import get_db
+from data.db import get_db
 from routers.auth import get_current_user
 import controllers.product_verification_controller as ctrl
 from utils.constants import MAX_BULK_ITEMS

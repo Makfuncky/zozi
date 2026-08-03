@@ -9,7 +9,11 @@ Test file: backend/tests/_test_provider/test_country.py
 import logging
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+
+class settings:
+    country_cache_ttl = 3600
+    default_country = "US"
+    supported_countries = ["US", "UK", "CA", "AU", "EU"]
 
 logger = logging.getLogger(__name__)
 

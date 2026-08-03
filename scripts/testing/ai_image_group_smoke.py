@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import argparse
 import importlib.util
 import json
@@ -469,7 +470,7 @@ def main() -> None:
     run_tag = str(int(time.time()))
     email = f"ai.image.smoke.{run_tag}@zozi.test"
     username = f"ai_image_smoke_{run_tag}"
-    password = "AiImageSmoke123!"
+    password = os.environ.get("ZOZI_SMOKE_PASSWORD", "AiImageSmoke123!")
 
     groups = build_groups()
     if args.limit > 0:

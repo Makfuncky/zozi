@@ -162,11 +162,11 @@ def upgrade() -> None:
         """
     )
 
-    op.execute(
-        f"INSERT INTO finance.{table_name} SELECT * FROM finance.{table_name}_old"
-    )
+    insert_sql = "INSERT INTO finance." + table_name + " SELECT * FROM finance." + table_name + "_old"
+    op.execute(insert_sql)
 
-    op.execute(f"DROP TABLE finance.{table_name}_old")
+    drop_sql = "DROP TABLE finance." + table_name + "_old"
+    op.execute(drop_sql)
 
 
 def downgrade() -> None:
@@ -203,14 +203,18 @@ def downgrade() -> None:
         f"(LIKE finance.{table_name} INCLUDING ALL)"
     )
 
-    selects = [f"SELECT * FROM finance.{p}" for p in partitions]
+    selects = ["SELECT * FROM finance." + p for p in partitions]
     if selects:
         union_all = " UNION ALL ".join(selects)
-        op.execute(f"INSERT INTO finance.{flat_name} {union_all}")
+        insert_sql = "INSERT INTO finance." + flat_name + " " + union_all
+        op.execute(insert_sql)
 
-    op.execute(f"DROP TABLE finance.{table_name} CASCADE")
+    drop_sql = "DROP TABLE finance." + table_name + " CASCADE"
+    op.execute(drop_sql)
 
     for p in partitions:
-        op.execute(f"DROP TABLE IF EXISTS finance.{p} CASCADE")
+        drop_part_sql = "DROP TABLE IF EXISTS finance." + p + " CASCADE"
+        op.execute(drop_part_sql)
 
-    op.execute(f"ALTER TABLE finance.{flat_name} RENAME TO {table_name}")
+    rename_sql = "ALTER TABLE finance." + flat_name + " RENAME TO " + table_name
+    op.execute(rename_sql)

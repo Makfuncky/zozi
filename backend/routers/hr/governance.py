@@ -12,9 +12,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
-from db.database import get_db
-from models import Employee, EmployeeExpense, EmployeeLeaveLedger
+from data.dependencies_auth import get_current_user
+from data.db import get_db
+from data.models import Employee, EmployeeExpense, EmployeeLeaveLedger
 from services.asset_tracking import AssetTrackingService
 from services.compliance_engine import GCCComplianceEngine, get_compliance_engine
 from services.expense_processing import ExpenseProcessingService

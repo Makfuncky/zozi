@@ -41,7 +41,7 @@ def _warmup_models() -> None:
     """Pre-load common ML models on startup so the first request doesn't pay a
     cold-start penalty."""
     try:
-        from services.bg_removal_service import remove_background
+        from data.services_bg_removal_service import remove_background
 
         logger.info("Warming up background-removal model (u2net)...")
         dummy = b""

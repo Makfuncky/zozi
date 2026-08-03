@@ -10,7 +10,7 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig
+from data.models import CountryConfig
 
 logger = logging.getLogger(__name__)
 

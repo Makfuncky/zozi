@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from dependencies.auth import get_current_user
-from db.database import get_db
+from data.dependencies_auth import get_current_user
+from data.db import get_db
 from utils.country_rls import enforce_country_access
 from utils.datetime_utils import utcnow as _utcnow
 from utils.websocket_manager import manager as ws_manager, ACTIVITY_ROOM
@@ -26,7 +26,7 @@ router = APIRouter()
 @router.websocket("/ws/hr/activity")
 async def websocket_hr_activity(websocket: WebSocket, token: str = Query(...)):
     """WebSocket endpoint for real-time HR activity feed.
-    
+
     Clients connect with a JWT token. Events are broadcast to all
     connected clients whenever `log_activity()` is called.
     """
@@ -64,47 +64,57 @@ async def websocket_hr_activity(websocket: WebSocket, token: str = Query(...)):
 def get_hr_dashboard(
     country_code: Optional[str] = Query(None, description="Filter by country code"),
     days: int = Query(7, ge=1, le=90, description="Recent activity window in days"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     """Return HR dashboard data: onboarding pipeline, performance health, activity feed."""
     result = {}
-    country_filter = ""
-    params: dict = {"days": days}
+    country_clause = ""
+    params: dict = {"days": days, "skip": skip, "limit": limit}
 
     if country_code:
         enforce_country_access(country_code, db=db)
-        country_filter = " AND country_code = :country_code"
+        country_clause = " AND country_code = :country_code"
         params["country_code"] = country_code
 
     now = _utcnow()
 
     # ── Onboarding Pipeline Stats ──
     try:
-        pipeline_counts = db.execute(
-            text(f"""
+        pipeline_sql = (
+            """
                 SELECT
                     SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as active,
                     SUM(CASE WHEN status = 'in_progress' AND due_date < :now THEN 1 ELSE 0 END) as overdue,
                     SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
                     SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
                 FROM onboarding_pipelines
-                WHERE 1=1 {country_filter}
-            """),
+                WHERE 1=1 """
+            + country_clause
+        )
+        pipeline_counts = db.execute(
+            text(pipeline_sql),
             {**params, "now": now},
         ).mappings().first()
 
-        overdue_items = db.execute(
-            text(f"""
+        overdue_sql = (
+            """
                 SELECT p.id, p.employee_id, p.current_step, p.total_steps,
                        p.completed_steps, p.due_date,
                        e.employee_code, e.department, e.position
                 FROM onboarding_pipelines p
                 LEFT JOIN employees e ON e.id = p.employee_id
-                WHERE p.status = 'in_progress' AND p.due_date < :now {country_filter}
+                WHERE p.status = 'in_progress' AND p.due_date < :now """
+            + country_clause
+            + """
                 ORDER BY p.due_date ASC
                 LIMIT 20
-            """),
+            """
+        )
+        overdue_items = db.execute(
+            text(overdue_sql),
             {**params, "now": now},
         ).mappings().all()
 
@@ -118,8 +128,8 @@ def get_hr_dashboard(
 
     # ── Performance Health Board ──
     try:
-        health_data = db.execute(
-            text(f"""
+        health_sql = (
+            """
                 SELECT
                     SUM(CASE WHEN performance_score >= 4.0 THEN 1 ELSE 0 END) as green,
                     SUM(CASE WHEN performance_score >= 2.5 AND performance_score < 4.0 THEN 1 ELSE 0 END) as amber,
@@ -127,32 +137,45 @@ def get_hr_dashboard(
                     SUM(CASE WHEN performance_score IS NULL THEN 1 ELSE 0 END) as not_scored,
                     ROUND(AVG(performance_score), 2) as avg_score
                 FROM employees
-                WHERE employment_status = 'active' {country_filter}
-            """),
+                WHERE employment_status = 'active' """
+            + country_clause
+        )
+        health_data = db.execute(
+            text(health_sql),
             params,
         ).mappings().first()
 
-        top_performers = db.execute(
-            text(f"""
+        top_sql = (
+            """
                 SELECT e.id, e.employee_code, e.department, e.position, e.performance_score
                 FROM employees e
                 WHERE e.employment_status = 'active'
-                  AND e.performance_score IS NOT NULL {country_filter}
+                  AND e.performance_score IS NOT NULL """
+            + country_clause
+            + """
                 ORDER BY e.performance_score DESC
                 LIMIT 10
-            """),
+            """
+        )
+        top_performers = db.execute(
+            text(top_sql),
             params,
         ).mappings().all()
 
-        bottom_performers = db.execute(
-            text(f"""
+        bottom_sql = (
+            """
                 SELECT e.id, e.employee_code, e.department, e.position, e.performance_score
                 FROM employees e
                 WHERE e.employment_status = 'active'
-                  AND e.performance_score IS NOT NULL {country_filter}
+                  AND e.performance_score IS NOT NULL """
+            + country_clause
+            + """
                 ORDER BY e.performance_score ASC
                 LIMIT 5
-            """),
+            """
+        )
+        bottom_performers = db.execute(
+            text(bottom_sql),
             params,
         ).mappings().all()
 
@@ -170,8 +193,8 @@ def get_hr_dashboard(
         since_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
         params["since"] = since_date
 
-        activity = db.execute(
-            text(f"""
+        activity_sql = (
+            """
                 SELECT al.id, al.actor_employee_id, al.action, al.entity_type,
                        al.entity_id, al.target_employee_id, al.metadata_json,
                        al.created_at,
@@ -180,10 +203,15 @@ def get_hr_dashboard(
                 FROM employee_activity_logs al
                 LEFT JOIN employees ae ON ae.id = al.actor_employee_id
                 LEFT JOIN employees te ON te.id = al.target_employee_id
-                WHERE al.created_at >= :since {country_filter}
+                WHERE al.created_at >= :since """
+            + country_clause
+            + """
                 ORDER BY al.created_at DESC
-                LIMIT 50
-            """),
+                LIMIT :limit OFFSET :skip
+            """
+        )
+        activity = db.execute(
+            text(activity_sql),
             params,
         ).mappings().all()
 
@@ -216,16 +244,19 @@ def get_hr_dashboard(
 
     # ── Employee Counts ──
     try:
-        emp_counts = db.execute(
-            text(f"""
+        emp_sql = (
+            """
                 SELECT
                     COUNT(*) as total,
                     SUM(CASE WHEN employment_status = 'active' THEN 1 ELSE 0 END) as active,
                     SUM(CASE WHEN employment_status = 'terminating' THEN 1 ELSE 0 END) as terminating,
                     SUM(CASE WHEN employment_status = 'terminated' THEN 1 ELSE 0 END) as terminated
                 FROM employees
-                WHERE 1=1 {country_filter}
-            """),
+                WHERE 1=1 """
+            + country_clause
+        )
+        emp_counts = db.execute(
+            text(emp_sql),
             params,
         ).mappings().first()
         result["employees"] = dict(emp_counts) if emp_counts else {"total": 0, "active": 0, "terminating": 0, "terminated": 0}

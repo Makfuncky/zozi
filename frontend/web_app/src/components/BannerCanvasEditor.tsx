@@ -434,7 +434,7 @@ const shapeSvg = (el: CanvasElement): ReactNode => {
 
 /* ── Celebration / season background effect layer ──────────────────────────
    These are generated once (module scope) so they stay stable across renders.
-   Pure CSS animations + a single injected <style> block. ─────────────────── */
+   Pure CSS animations + a single injected stylesheet. ─────────────────── */
 
 type Deco = { left: number; delay: number; dur: number; color: string; size: number; rot?: number };
 
@@ -485,29 +485,6 @@ const LANTERNS = [
   { left: 86, delay: 0.9 },
 ];
 
-const EFFECT_CSS = `
-@keyframes bcu-fall { 0%{ transform: translateY(-12%) rotate(0deg); opacity:0 } 8%{opacity:1} 100%{ transform: translateY(112%) rotate(360deg); opacity:.9 } }
-@keyframes bcu-snow { 0%{ transform: translateY(-12%); opacity:0 } 10%{opacity:1} 100%{ transform: translateY(112%); opacity:.8 } }
-@keyframes bcu-twinkle { 0%,100%{ transform: scale(.4); opacity:.2 } 50%{ transform: scale(1); opacity:1 } }
-@keyframes bcu-balloon { 0%{ transform: translateY(8%) rotate(-4deg); opacity:0 } 12%{opacity:1} 50%{ transform: translateY(-30%) rotate(4deg) } 100%{ transform: translateY(-118%) rotate(-3deg); opacity:.95 } }
-@keyframes bcu-fw { 0%{ transform: scale(0); opacity:0 } 16%{ transform: scale(1.15); opacity:1 } 55%{ transform: scale(1); opacity:.9 } 100%{ transform: scale(1.25); opacity:0 } }
-@keyframes bcu-aurora { 0%{ transform: translateX(-12%) skewX(8deg); opacity:.5 } 50%{ transform: translateX(12%) skewX(-8deg); opacity:.85 } 100%{ transform: translateX(-12%) skewX(8deg); opacity:.5 } }
-@keyframes bcu-glow { 0%,100%{ filter: drop-shadow(0 0 4px rgba(253,224,71,.5)) } 50%{ filter: drop-shadow(0 0 14px rgba(253,224,71,.95)) } }
-@keyframes bcu-anim-float { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-8px) } }
-@keyframes bcu-anim-pulse { 0%,100%{ transform: scale(1) } 50%{ transform: scale(1.05) } }
-@keyframes bcu-anim-bounce { 0%,100%{ transform: translateY(0) } 40%{ transform: translateY(-10px) } 60%{ transform: translateY(0) } 80%{ transform: translateY(-4px) } }
-@keyframes bcu-anim-fade { 0%{ opacity:0 } 100%{ opacity:1 } }
-.bcu-confetti{ position:absolute; top:0; border-radius:1px; animation: bcu-fall linear infinite; }
-.bcu-snow{ position:absolute; top:0; border-radius:999px; animation: bcu-snow linear infinite; }
-.bcu-spark{ position:absolute; border-radius:999px; animation: bcu-twinkle ease-in-out infinite; }
-.bcu-balloon{ position:absolute; bottom:0; width:42px; height:54px; border-radius:50% 50% 48% 48%; animation: bcu-balloon ease-in infinite; box-shadow: inset -6px -8px 12px rgba(0,0,0,.18); }
-.bcu-balloon::after{ content:""; position:absolute; left:50%; top:100%; width:1px; height:26px; background: rgba(255,255,255,.5); transform: translateX(-50%); }
-.bcu-fw{ position:absolute; border-radius:999px; animation: bcu-fw ease-out infinite; }
-.bcu-aurora{ position:absolute; top:-20%; height:140%; width:60%; filter: blur(26px); opacity:.7; animation: bcu-aurora ease-in-out infinite; mix-blend-mode: screen; }
-.bcu-lantern{ position:absolute; top:8%; width:26px; height:34px; border-radius:40% 40% 46% 46%; background: linear-gradient(#f59e0b,#b45309); box-shadow:0 0 18px rgba(245,158,11,.8); animation: bcu-glow ease-in-out infinite; }
-.bcu-lantern::before{ content:""; position:absolute; left:50%; top:-22%; width:2px; height:30%; background:#92400e; transform: translateX(-50%); }
-.bcu-crescent{ position:absolute; border-radius:999px; background: radial-gradient(circle at 35% 35%, #fff7d6, #fde68a); box-shadow:0 0 30px rgba(253,230,138,.9); }
-`;
 
 function BannerEffectLayer({ effect }: { effect: CanvasEffect }) {
   if (!effect) return null;
@@ -698,7 +675,6 @@ export function BannerCanvasView({ layout, resolve }: { layout: BannerLayout; re
   const els = [...layout.elements].sort((a, b) => a.z - b.z);
   return (
     <div className="absolute inset-0" style={bgStyle}>
-      <style>{EFFECT_CSS}</style>
       {bg.videoUrl && (
         <video className="absolute inset-0 h-full w-full object-cover" autoPlay muted loop playsInline src={resolve ? resolve(bg.videoUrl) : bg.videoUrl} />
       )}
@@ -1373,8 +1349,7 @@ export default function BannerCanvasEditor({
   }, [selectedEls]);
 
   return (
-    <div className="space-y-3">
-      <style>{EFFECT_CSS}</style>
+      <div className="space-y-3">
       {/* Add toolbar */}
       <div className="flex flex-wrap items-center gap-1.5">
         <button type="button" onClick={() => addElement("rect")} className="theme-btn-secondary rounded-lg px-2 py-1.5 text-[11px] font-semibold flex items-center gap-1"><Square className="w-3.5 h-3.5" /> Shape</button>
@@ -1520,13 +1495,13 @@ export default function BannerCanvasEditor({
                     {!preview && selectedIds.includes(el.id) && selectedEls.length === 1 && (
                       <div
                         className="pointer-events-none absolute"
-                        style={{ left: `${el.x}%`, top: `${el.y}%`, width: `${el.w}%`, height: `${el.h}%`, zIndex: 1000 }}
+                        style={{ left: `${el.x}%`, top: `${el.y}%`, width: `${el.w}%`, height: `${el.h}%`, zIndex: 999 }}
                       >
                         {HANDLES.map((h) => (
                           <span
                             key={h}
                             onPointerDown={(e) => onPointerDownHandle(e, el, h)}
-                            className="absolute z-[1001] h-3 w-3 rounded-full border border-primary bg-white shadow"
+                            className="absolute z-[999] h-3 w-3 rounded-full border border-primary bg-white shadow"
                             style={{ ...handlePos(h), pointerEvents: "auto", cursor: h.includes("n") && h.includes("w") ? "nwse-resize" : h.includes("n") && h.includes("e") ? "nesw-resize" : h === "n" || h === "s" ? "ns-resize" : h === "e" || h === "w" ? "ew-resize" : "nwse-resize" }}
                           />
                         ))}

@@ -23,8 +23,8 @@ from typing import Any, Optional, List, Dict, Any as _Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from models import User
-from models.employee_models import (
+from data.models import User
+from data.models_employee_models import (
     Employee, EmployeeAsset, EmployeeDocument, DynamicQRSession,
     EmployeeBiometric, PhysicalIDCard,
 )
@@ -505,8 +505,8 @@ def _handle_background_check_step(
         BACKGROUND_CHECK_FLAGGED,
         BACKGROUND_CHECK_CLEAR,
     )
-    from models.employee_models import Employee
-    from models import User
+    from data.models_employee_models import Employee
+    from data.models import User
 
     # Look up the employee's full name (stored on the User model)
     employee = db.query(Employee).filter(Employee.id == pipeline["employee_id"]).first()

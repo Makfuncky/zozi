@@ -8,7 +8,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Notification, SupplierDispute, SupplierNotificationPreference
+from data.models import Notification, SupplierDispute, SupplierNotificationPreference
 from services.write_helpers import (
     add_and_flush,
     commit_and_refresh,

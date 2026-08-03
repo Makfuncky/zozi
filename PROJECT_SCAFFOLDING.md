@@ -8,6 +8,7 @@ zozi/
 │   ├── alembic/
 │   │   ├── versions/
 │   │   │   ├── 20260730_0008_split_country_configs_into_domain_tables.py
+│   │   │   ├── 20260731_0012_partition_journal_entries.py
 │   │   │   ├── 2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py
 │   │   │   ├── 2026_07_26_20_27-837e1e29bd49_add_banner_layout_json.py
 │   │   │   ├── 2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py
@@ -29,8 +30,11 @@ zozi/
 │   │   │   ├── 2026_07_30_0007-20260730_0007_fix_country_code_width.py
 │   │   │   ├── 2026_07_30_0009-20260730_0009_create_analytics_snapshot_tables.py
 │   │   │   ├── 2026_07_31_0010_create_canonical_platform_tables.py
-│   │   │   └── 2026_07_31_0011_add_composite_indexes.py
+│   │   │   ├── 2026_07_31_0011_add_composite_indexes.py
+│   │   │   ├── 2026_08_01_0013-20260801_0013_drop_cross_ecosystem_fks.py
+│   │   │   └── 2026_08_01_0014_fix_event_schema_and_country_code_width.py
 │   │   ├── env.py
+│   │   ├── migration_helpers.py
 │   │   └── script.py.mako
 │   ├── controllers/
 │   │   ├── admin/
@@ -48,11 +52,65 @@ zozi/
 │   │   │   ├── suppliers.py
 │   │   │   ├── tickets.py
 │   │   │   └── users.py
+│   │   ├── ai/
+│   │   │   ├── __init__.py
+│   │   │   └── chatbot_controller.py
+│   │   ├── catalog/
+│   │   │   ├── __init__.py
+│   │   │   ├── flash_sale_controller.py
+│   │   │   ├── product_verification_controller.py
+│   │   │   ├── products.py
+│   │   │   ├── products_controller.py
+│   │   │   └── search_controller.py
 │   │   ├── commerce/
 │   │   │   ├── __init__.py
-│   │   │   └── package.py
+│   │   │   ├── coupons_controller.py
+│   │   │   ├── package.py
+│   │   │   └── promotion_controller.py
+│   │   ├── communication/
+│   │   │   ├── __init__.py
+│   │   │   ├── comm_controller.py
+│   │   │   ├── email_controller.py
+│   │   │   ├── invoice_controller.py
+│   │   │   ├── notifications_controller.py
+│   │   │   └── video_controller.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   └── banner_controller.py
+│   │   ├── country/
+│   │   │   ├── __init__.py
+│   │   │   └── country_controller.py
+│   │   ├── finance/
+│   │   │   ├── __init__.py
+│   │   │   ├── accounting_controller.py
+│   │   │   ├── commission_controller.py
+│   │   │   ├── payments_controller.py
+│   │   │   └── sub_ledger_controller.py
+│   │   ├── hr/
+│   │   │   ├── __init__.py
+│   │   │   ├── command_center.py
+│   │   │   ├── employees_controller.py
+│   │   │   ├── hr_controller.py
+│   │   │   └── lms_controller.py
+│   │   ├── logistics/
+│   │   │   ├── __init__.py
+│   │   │   ├── logistics_controller.py
+│   │   │   └── logistics_partner_controller.py
+│   │   ├── orders/
+│   │   │   ├── __init__.py
+│   │   │   ├── cart_controller.py
+│   │   │   ├── disputes_controller.py
+│   │   │   ├── orders_controller.py
+│   │   │   └── returns_controller.py
 │   │   ├── products/
 │   │   │   └── __init__.py
+│   │   ├── security/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py
+│   │   │   ├── auth_controller.py
+│   │   │   ├── iam_controller.py
+│   │   │   ├── permissions.py
+│   │   │   └── risk_controller.py
 │   │   ├── supplier/
 │   │   │   ├── __init__.py
 │   │   │   ├── analytics.py
@@ -61,59 +119,33 @@ zozi/
 │   │   │   ├── orders.py
 │   │   │   ├── payouts.py
 │   │   │   ├── products.py
-│   │   │   └── profile.py
+│   │   │   ├── profile.py
+│   │   │   ├── supplier_controller.py
+│   │   │   └── supplier_document_controller.py
+│   │   ├── treasury/
+│   │   │   ├── __init__.py
+│   │   │   ├── cash_management_controller.py
+│   │   │   └── payouts.py
 │   │   ├── __init__.py
-│   │   ├── accounting_controller.py
 │   │   ├── address_controller.py
 │   │   ├── admin_controller.py
 │   │   ├── ai_controller.py
 │   │   ├── audit_controller.py
-│   │   ├── auth_controller.py
-│   │   ├── banner_controller.py
-│   │   ├── cart_controller.py
-│   │   ├── cash_management_controller.py
 │   │   ├── categories_controller.py
-│   │   ├── chatbot_controller.py
-│   │   ├── comm_controller.py
-│   │   ├── commission_controller.py
 │   │   ├── compliance_controller.py
-│   │   ├── country_controller.py
-│   │   ├── coupons_controller.py
-│   │   ├── disputes_controller.py
 │   │   ├── employee_controller.py
-│   │   ├── employees_controller.py
 │   │   ├── expense_controller.py
 │   │   ├── export_controller.py
 │   │   ├── financial_controller.py
 │   │   ├── flash_sale_controller.py
-│   │   ├── hr_controller.py
-│   │   ├── iam_controller.py
-│   │   ├── invoice_controller.py
-│   │   ├── lms_controller.py
-│   │   ├── logistics_controller.py
-│   │   ├── logistics_partner_controller.py
+│   │   ├── mobile_controller.py
 │   │   ├── operational_controller.py
-│   │   ├── orders_controller.py
-│   │   ├── payments_controller.py
-│   │   ├── product_verification_controller.py
 │   │   ├── products_controller.py
-│   │   ├── promotion_controller.py
-│   │   ├── returns_controller.py
 │   │   ├── reviews_controller.py
-│   │   ├── risk_controller.py
-│   │   ├── search_controller.py
-│   │   ├── sub_ledger_controller.py
-│   │   ├── supplier_controller.py
-│   │   ├── supplier_document_controller.py
 │   │   └── wishlist_controller.py
-│   ├── data/
-│   │   ├── __init__.py
-│   │   ├── category_tax_profiles.py
-│   │   ├── country_curated.py
-│   │   ├── curated_cities.py
-│   │   ├── pg_rls_policies.sql
-│   │   └── vat_rates.py
 │   ├── db/
+│   │   ├── sql/
+│   │   │   └── pg_rls_policies.sql
 │   │   ├── __init__.py
 │   │   ├── base.py
 │   │   ├── create_tables.py
@@ -128,23 +160,7 @@ zozi/
 │   ├── dependencies/
 │   │   ├── __init__.py
 │   │   ├── auth.py
-│   │   ├── country_rls.py
 │   │   └── db.py
-│   ├── docs/
-│   │   ├── connection-pooling.md
-│   │   └── schema_mapping.json
-│   ├── events/
-│   │   ├── __init__.py
-│   │   ├── event_publisher.py
-│   │   └── payment_events.py
-│   ├── jobs/
-│   │   ├── __init__.py
-│   │   ├── ghost_order_detector.py
-│   │   └── threat_feed_updater.py
-│   ├── location_service/
-│   │   ├── __init__.py
-│   │   ├── geo_resolver.py
-│   │   └── main.py
 │   ├── middleware/
 │   │   ├── __init__.py
 │   │   ├── api_version_middleware.py
@@ -168,47 +184,96 @@ zozi/
 │   │   ├── webhook_ip_whitelist.py
 │   │   └── webhook_verification.py
 │   ├── models/
+│   │   ├── analytics/
+│   │   │   ├── __init__.py
+│   │   │   └── analytics.py
+│   │   ├── audit/
+│   │   │   ├── __init__.py
+│   │   │   └── platform.py
+│   │   ├── catalog/
+│   │   │   ├── __init__.py
+│   │   │   ├── ai_upload.py
+│   │   │   └── products.py
+│   │   ├── communication/
+│   │   │   ├── __init__.py
+│   │   │   ├── communication.py
+│   │   │   ├── core.py
+│   │   │   ├── marketing.py
+│   │   │   └── suppliers.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   └── user.py
+│   │   ├── country/
+│   │   │   ├── __init__.py
+│   │   │   ├── countries.py
+│   │   │   ├── country_basics.py
+│   │   │   ├── country_economics.py
+│   │   │   ├── country_enhancements.py
+│   │   │   └── country_legal.py
+│   │   ├── finance/
+│   │   │   ├── __init__.py
+│   │   │   ├── commission.py
+│   │   │   └── payments.py
+│   │   ├── hr/
+│   │   │   ├── __init__.py
+│   │   │   └── employee_models.py
+│   │   ├── logistics/
+│   │   │   ├── __init__.py
+│   │   │   ├── admin.py
+│   │   │   ├── country_control.py
+│   │   │   ├── imports.py
+│   │   │   └── logistics.py
+│   │   ├── media/
+│   │   │   ├── __init__.py
+│   │   │   ├── media_models.py
+│   │   │   └── upload_job.py
+│   │   ├── orders/
+│   │   │   ├── __init__.py
+│   │   │   └── orders.py
+│   │   ├── security/
+│   │   │   ├── __init__.py
+│   │   │   ├── fraud.py
+│   │   │   ├── incident.py
+│   │   │   └── permissions.py
+│   │   ├── supplier/
+│   │   │   ├── __init__.py
+│   │   │   └── onboarding.py
+│   │   ├── treasury/
+│   │   │   ├── __init__.py
+│   │   │   └── finance.py
 │   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── ai_upload.py
-│   │   ├── analytics.py
-│   │   ├── commission.py
-│   │   ├── communication.py
-│   │   ├── core.py
-│   │   ├── countries.py
-│   │   ├── country_basics.py
-│   │   ├── country_control.py
-│   │   ├── country_economics.py
-│   │   ├── country_enhancements.py
-│   │   ├── country_legal.py
 │   │   ├── country_tax.py
-│   │   ├── employee_models.py
 │   │   ├── events.py
-│   │   ├── finance.py
-│   │   ├── fraud.py
-│   │   ├── incident.py
-│   │   ├── logistics.py
-│   │   ├── marketing.py
-│   │   ├── media_models.py
-│   │   ├── mixins.py
-│   │   ├── onboarding.py
-│   │   ├── orders.py
-│   │   ├── payments.py
-│   │   ├── permissions.py
-│   │   ├── platform.py
-│   │   ├── products.py
-│   │   ├── suppliers.py
-│   │   ├── upload_job.py
-│   │   └── user.py
-│   ├── monitoring/
-│   │   ├── __init__.py
-│   │   ├── docker-compose.monitoring.yml
-│   │   └── prometheus.yml
+│   │   └── mixins.py
 │   ├── providers/
 │   │   ├── ai/
-│   │   │   ├── __init__.py
+│   │   │   ├── async_workers.py
+│   │   │   ├── chatbot.py
+│   │   │   ├── mcp_client_example.py
+│   │   │   ├── mcp_server.py
+│   │   │   ├── ocr.py
 │   │   │   ├── text.py
-│   │   │   └── vision.py
+│   │   │   ├── vision.py
+│   │   │   └── voice_to_text.py
+│   │   ├── analytics/
+│   │   │   ├── __init__.py
+│   │   │   └── analytics.py
+│   │   ├── catalog/
+│   │   │   ├── __init__.py
+│   │   │   ├── parcel_verification.py
+│   │   │   └── search.py
+│   │   ├── configuration/
+│   │   │   ├── __init__.py
+│   │   │   └── config.py
+│   │   ├── country/
+│   │   │   ├── __init__.py
+│   │   │   └── country.py
+│   │   ├── finance/
+│   │   │   ├── __init__.py
+│   │   │   └── finance_ai.py
+│   │   ├── hr/
+│   │   │   ├── __init__.py
+│   │   │   └── bg_remover.py
 │   │   ├── legacy/
 │   │   │   ├── __init__.py
 │   │   │   ├── br_05.py
@@ -218,396 +283,477 @@ zozi/
 │   │   │   ├── br_12.py
 │   │   │   ├── br_13.py
 │   │   │   └── check_BiRefNet.py
+│   │   ├── logistics/
+│   │   │   ├── __init__.py
+│   │   │   ├── geo.py
+│   │   │   └── map.py
+│   │   ├── media/
+│   │   │   ├── __init__.py
+│   │   │   └── image.py
 │   │   ├── __init__.py
-│   │   ├── _base.py
-│   │   ├── analytics.py
-│   │   ├── async_workers.py
-│   │   ├── bg_remover.py
-│   │   ├── chatbot.py
-│   │   ├── config.py
-│   │   ├── country.py
-│   │   ├── finance_ai.py
-│   │   ├── geo.py
-│   │   ├── image.py
-│   │   ├── map.py
-│   │   ├── ocr.py
-│   │   ├── parcel_verification.py
-│   │   ├── search.py
-│   │   ├── text.py
-│   │   ├── vision.py
-│   │   └── voice_to_text.py
+│   │   └── _base.py
 │   ├── routers/
+│   │   ├── admin/
+│   │   │   ├── __init__.py
+│   │   │   ├── admin.py
+│   │   │   ├── admin_banners.py
+│   │   │   ├── admin_cash.py
+│   │   │   ├── admin_categories.py
+│   │   │   ├── admin_chat.py
+│   │   │   ├── admin_commission.py
+│   │   │   ├── admin_email.py
+│   │   │   ├── admin_fallback.py
+│   │   │   ├── admin_logistics.py
+│   │   │   ├── admin_orders.py
+│   │   │   ├── admin_payouts.py
+│   │   │   ├── admin_products.py
+│   │   │   ├── admin_promotions.py
+│   │   │   ├── admin_settings.py
+│   │   │   ├── admin_suppliers.py
+│   │   │   ├── admin_treasury.py
+│   │   │   ├── admin_users.py
+│   │   │   ├── admin_video.py
+│   │   │   ├── cash_management.py
+│   │   │   ├── categories.py
+│   │   │   ├── command_center.py
+│   │   │   ├── command_center_api.py
+│   │   │   ├── country_admin.py
+│   │   │   ├── country_communications.py
+│   │   │   ├── country_payouts.py
+│   │   │   ├── country_versioning.py
+│   │   │   ├── cross_border.py
+│   │   │   ├── employees.py
+│   │   │   ├── logistics_partner.py
+│   │   │   ├── payments.py
+│   │   │   └── proxy_communication.py
+│   │   ├── ai/
+│   │   │   ├── __init__.py
+│   │   │   ├── ai_research.py
+│   │   │   └── chatbot.py
+│   │   ├── analytics/
+│   │   │   ├── __init__.py
+│   │   │   └── csp_reporting.py
+│   │   ├── audit/
+│   │   │   ├── __init__.py
+│   │   │   └── audit.py
+│   │   ├── catalog/
+│   │   │   ├── __init__.py
+│   │   │   ├── product_moderation.py
+│   │   │   ├── product_verification.py
+│   │   │   └── products.py
+│   │   ├── commerce/
+│   │   │   ├── __init__.py
+│   │   │   └── coupons.py
+│   │   ├── communication/
+│   │   │   ├── __init__.py
+│   │   │   ├── chat.py
+│   │   │   ├── chat_api.py
+│   │   │   ├── chat_enrichment.py
+│   │   │   ├── comm.py
+│   │   │   ├── comms_unified.py
+│   │   │   ├── email_enrichment.py
+│   │   │   ├── email_router.py
+│   │   │   ├── entity_chat.py
+│   │   │   ├── entity_communication.py
+│   │   │   ├── notifications.py
+│   │   │   ├── push_notifications.py
+│   │   │   ├── tickets.py
+│   │   │   ├── video.py
+│   │   │   ├── video_controller.py
+│   │   │   ├── video_router.py
+│   │   │   └── ws_chat.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   ├── banners.py
+│   │   │   ├── users.py
+│   │   │   └── workflows.py
+│   │   ├── country/
+│   │   │   ├── __init__.py
+│   │   │   ├── country_auto_populate.py
+│   │   │   ├── country_dropdown.py
+│   │   │   ├── country_maps.py
+│   │   │   ├── country_staff.py
+│   │   │   ├── currency.py
+│   │   │   └── hierarchy.py
+│   │   ├── customer/
+│   │   │   ├── __init__.py
+│   │   │   ├── addresses.py
+│   │   │   ├── automation.py
+│   │   │   └── customer_health.py
+│   │   ├── external/
+│   │   │   ├── __init__.py
+│   │   │   └── email_controller.py
+│   │   ├── finance/
+│   │   │   ├── __init__.py
+│   │   │   ├── accounting.py
+│   │   │   ├── finance_erp.py
+│   │   │   └── invoices.py
+│   │   ├── hr/
+│   │   │   ├── __init__.py
+│   │   │   ├── command_center_router.py
+│   │   │   ├── ess.py
+│   │   │   ├── governance.py
+│   │   │   ├── hr.py
+│   │   │   ├── lms.py
+│   │   │   ├── payroll.py
+│   │   │   ├── performance.py
+│   │   │   ├── shift_handover.py
+│   │   │   ├── succession.py
+│   │   │   └── travel.py
+│   │   ├── internal/
+│   │   │   ├── __init__.py
+│   │   │   ├── ai.py
+│   │   │   ├── compliance.py
+│   │   │   ├── contact.py
+│   │   │   ├── country_research.py
+│   │   │   ├── ediscovery.py
+│   │   │   ├── email.py
+│   │   │   ├── escalation.py
+│   │   │   ├── expenses.py
+│   │   │   ├── export.py
+│   │   │   ├── finance_automation.py
+│   │   │   ├── finance_domain.py
+│   │   │   ├── flash_sales.py
+│   │   │   ├── frontend_errors.py
+│   │   │   ├── geo.py
+│   │   │   ├── health.py
+│   │   │   ├── hr_dashboard.py
+│   │   │   ├── internal_channels.py
+│   │   │   ├── jobs.py
+│   │   │   ├── logistics_orders.py
+│   │   │   ├── messaging.py
+│   │   │   ├── okr.py
+│   │   │   ├── product_videos.py
+│   │   │   ├── referrals.py
+│   │   │   ├── reviews.py
+│   │   │   ├── shop_locations.py
+│   │   │   ├── trading.py
+│   │   │   ├── translate.py
+│   │   │   ├── treasury_api.py
+│   │   │   └── wishlist.py
+│   │   ├── logistics/
+│   │   │   ├── __init__.py
+│   │   │   ├── imports.py
+│   │   │   ├── location_api.py
+│   │   │   ├── logistics.py
+│   │   │   ├── logistics_health.py
+│   │   │   ├── logistics_locations.py
+│   │   │   ├── parcel_tracking.py
+│   │   │   └── shipments.py
+│   │   ├── media/
+│   │   │   ├── __init__.py
+│   │   │   ├── ai_image.py
+│   │   │   ├── ai_upload.py
+│   │   │   ├── batch_upload.py
+│   │   │   ├── upload.py
+│   │   │   └── upload_jobs.py
+│   │   ├── orders/
+│   │   │   ├── __init__.py
+│   │   │   ├── cart.py
+│   │   │   ├── logistics_orders_v2.py
+│   │   │   ├── orders.py
+│   │   │   └── returns.py
+│   │   ├── public/
+│   │   │   ├── __init__.py
+│   │   │   ├── public_suppliers.py
+│   │   │   └── search.py
+│   │   ├── security/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py
+│   │   │   ├── fraud_detection.py
+│   │   │   ├── iam.py
+│   │   │   ├── incident.py
+│   │   │   ├── permissions.py
+│   │   │   └── risk.py
+│   │   ├── supplier/
+│   │   │   ├── __init__.py
+│   │   │   ├── commission.py
+│   │   │   ├── countries.py
+│   │   │   ├── finance.py
+│   │   │   ├── onboarding.py
+│   │   │   ├── supplier.py
+│   │   │   ├── supplier_analytics.py
+│   │   │   ├── supplier_bg_ab_test.py
+│   │   │   ├── supplier_documents.py
+│   │   │   ├── supplier_finance.py
+│   │   │   ├── supplier_health.py
+│   │   │   ├── supplier_orders.py
+│   │   │   ├── supplier_payouts.py
+│   │   │   ├── supplier_products.py
+│   │   │   ├── supplier_profile.py
+│   │   │   └── treasury.py
+│   │   ├── treasury/
+│   │   │   ├── __init__.py
+│   │   │   └── payout_approval.py
 │   │   ├── __init__.py
-│   │   ├── accounting.py
-│   │   ├── addresses.py
-│   │   ├── admin.py
-│   │   ├── admin_banners.py
-│   │   ├── admin_cash.py
-│   │   ├── admin_categories.py
-│   │   ├── admin_chat.py
-│   │   ├── admin_commission.py
-│   │   ├── admin_email.py
-│   │   ├── admin_fallback.py
-│   │   ├── admin_logistics.py
-│   │   ├── admin_orders.py
-│   │   ├── admin_payouts.py
-│   │   ├── admin_products.py
-│   │   ├── admin_promotions.py
-│   │   ├── admin_settings.py
-│   │   ├── admin_suppliers.py
-│   │   ├── admin_treasury.py
-│   │   ├── admin_users.py
-│   │   ├── admin_video.py
-│   │   ├── ai.py
-│   │   ├── ai_image.py
-│   │   ├── ai_research.py
-│   │   ├── ai_upload.py
-│   │   ├── audit.py
+│   │   ├── admin_countries.py
 │   │   ├── auth.py
-│   │   ├── automation.py
-│   │   ├── banners.py
-│   │   ├── batch_upload.py
-│   │   ├── cart.py
-│   │   ├── cash_management.py
-│   │   ├── categories.py
-│   │   ├── chat.py
-│   │   ├── chat_api.py
-│   │   ├── chat_enrichment.py
-│   │   ├── chatbot.py
-│   │   ├── comm.py
-│   │   ├── command_center.py
-│   │   ├── command_center_api.py
-│   │   ├── commission.py
-│   │   ├── comms_unified.py
-│   │   ├── compliance.py
-│   │   ├── contact.py
 │   │   ├── countries.py
-│   │   ├── country_admin.py
-│   │   ├── country_auto_populate.py
-│   │   ├── country_communications.py
-│   │   ├── country_dropdown.py
-│   │   ├── country_maps.py
-│   │   ├── country_payouts.py
-│   │   ├── country_research.py
-│   │   ├── country_staff.py
-│   │   ├── country_versioning.py
-│   │   ├── coupons.py
-│   │   ├── cross_border.py
-│   │   ├── csp_reporting.py
-│   │   ├── currency.py
-│   │   ├── customer_health.py
-│   │   ├── ediscovery.py
-│   │   ├── effective_permissions.py
-│   │   ├── email.py
-│   │   ├── email_controller.py
-│   │   ├── email_enrichment.py
-│   │   ├── employees.py
-│   │   ├── entity_chat.py
-│   │   ├── entity_communication.py
-│   │   ├── escalation.py
-│   │   ├── ess.py
-│   │   ├── expenses.py
-│   │   ├── export.py
-│   │   ├── finance.py
-│   │   ├── finance_automation.py
-│   │   ├── finance_domain.py
-│   │   ├── finance_erp.py
-│   │   ├── flash_sales.py
-│   │   ├── fraud_detection.py
-│   │   ├── frontend_errors.py
-│   │   ├── geo.py
-│   │   ├── governance.py
-│   │   ├── health.py
-│   │   ├── hierarchy.py
-│   │   ├── hr.py
-│   │   ├── hr_dashboard.py
-│   │   ├── iam.py
-│   │   ├── imports.py
-│   │   ├── incident.py
-│   │   ├── internal_channels.py
-│   │   ├── invoices.py
-│   │   ├── jobs.py
-│   │   ├── lms.py
-│   │   ├── location_api.py
-│   │   ├── logistics.py
-│   │   ├── logistics_health.py
-│   │   ├── logistics_locations.py
-│   │   ├── logistics_orders.py
-│   │   ├── logistics_orders_v2.py
-│   │   ├── logistics_partner.py
-│   │   ├── messaging.py
-│   │   ├── notifications.py
-│   │   ├── okr.py
-│   │   ├── onboarding.py
-│   │   ├── orders.py
-│   │   ├── parcel_tracking.py
-│   │   ├── payments.py
-│   │   ├── payout_approval.py
-│   │   ├── payroll.py
-│   │   ├── performance.py
-│   │   ├── permissions.py
-│   │   ├── product_moderation.py
-│   │   ├── product_verification.py
-│   │   ├── product_videos.py
-│   │   ├── products.py
-│   │   ├── proxy_communication.py
-│   │   ├── public_suppliers.py
-│   │   ├── push_notifications.py
-│   │   ├── referrals.py
-│   │   ├── returns.py
-│   │   ├── reviews.py
-│   │   ├── risk.py
-│   │   ├── search.py
-│   │   ├── shift_handover.py
-│   │   ├── shipments.py
-│   │   ├── shop_locations.py
-│   │   ├── succession.py
-│   │   ├── supplier.py
-│   │   ├── supplier_analytics.py
-│   │   ├── supplier_bg_ab_test.py
-│   │   ├── supplier_documents.py
-│   │   ├── supplier_finance.py
-│   │   ├── supplier_health.py
-│   │   ├── supplier_orders.py
-│   │   ├── supplier_payouts.py
-│   │   ├── supplier_products.py
-│   │   ├── supplier_profile.py
-│   │   ├── tickets.py
-│   │   ├── trading.py
-│   │   ├── translate.py
-│   │   ├── travel.py
-│   │   ├── treasury.py
-│   │   ├── treasury_api.py
-│   │   ├── upload.py
-│   │   ├── upload_jobs.py
-│   │   ├── users.py
-│   │   ├── video.py
-│   │   ├── video_controller.py
-│   │   ├── wishlist.py
-│   │   ├── workflows.py
-│   │   └── ws_chat.py
+│   │   └── employees.py
 │   ├── scripts/
 │   │   ├── __init__.py
 │   │   ├── check_tables.py
+│   │   ├── compare_orm_migration_schemas.py
+│   │   ├── derive_rls_registry.py
+│   │   ├── gen_rls.py
 │   │   ├── generate_data_dictionary.py
+│   │   ├── generate_registry_final.py
 │   │   ├── generate_rls_policies.py
+│   │   ├── generate_schema_migration.py
 │   │   ├── lint_rls_coverage.py
 │   │   ├── migrate_media_to_s3.py
 │   │   ├── partition_maintenance.sql
-│   │   └── safe_structure_migration.py
+│   │   ├── safe_structure_migration.py
+│   │   ├── update_rls_registry.py
+│   │   ├── write_full_rls.py
+│   │   ├── write_rls_final.py
+│   │   └── write_rls_interceptor.py
 │   ├── services/
+│   │   ├── admin/
+│   │   │   ├── __init__.py
+│   │   │   └── admin_operations.py
+│   │   ├── ai/
+│   │   │   ├── __init__.py
+│   │   │   ├── ai_automation_service.py
+│   │   │   ├── ai_copy_jobs.py
+│   │   │   ├── ai_research_jobs.py
+│   │   │   ├── ai_service.py
+│   │   │   ├── ai_variant_config.py
+│   │   │   ├── bg_removal_presets.py
+│   │   │   ├── bg_removal_service.py
+│   │   │   └── ocr_parser.py
+│   │   ├── analytics/
+│   │   │   ├── __init__.py
+│   │   │   ├── admin_analytics_service.py
+│   │   │   └── financial_reports_service.py
 │   │   ├── audit/
 │   │   │   ├── __init__.py
-│   │   │   └── audit_service.py
-│   │   ├── chat/
-│   │   │   └── __init__.py
+│   │   │   ├── audit_service.py
+│   │   │   ├── audit_trail_service.py
+│   │   │   ├── ediscovery.py
+│   │   │   └── worm_audit.py
+│   │   ├── catalog/
+│   │   │   ├── __init__.py
+│   │   │   ├── advanced_filter_service.py
+│   │   │   ├── advanced_search_engine.py
+│   │   │   ├── ai_search_service.py
+│   │   │   ├── product_utils.py
+│   │   │   ├── product_verification_service.py
+│   │   │   ├── products_write_service.py
+│   │   │   ├── search_service.py
+│   │   │   └── variant_config_service.py
+│   │   ├── commerce/
+│   │   │   ├── __init__.py
+│   │   │   ├── admin_analytics_service.py
+│   │   │   ├── banner_write_service.py
+│   │   │   ├── cart_write_service.py
+│   │   │   ├── commerce_write_service.py
+│   │   │   ├── coupon_service.py
+│   │   │   ├── coupons_write_service.py
+│   │   │   ├── cross_border_tracker.py
+│   │   │   ├── customer_health_engine.py
+│   │   │   ├── disputes_write_service.py
+│   │   │   ├── promotion_bogo_service.py
+│   │   │   ├── promotion_engine_service.py
+│   │   │   ├── promotion_points_service.py
+│   │   │   ├── promotions_write_service.py
+│   │   │   ├── retention_service.py
+│   │   │   └── reviews_service.py
+│   │   ├── communication/
+│   │   │   ├── __init__.py
+│   │   │   ├── chat_enrichment.py
+│   │   │   ├── communication_audit.py
+│   │   │   ├── communication_write_service.py
+│   │   │   ├── content_service.py
+│   │   │   ├── email_enrichment.py
+│   │   │   ├── email_event_service.py
+│   │   │   ├── email_gateway.py
+│   │   │   ├── email_reputation.py
+│   │   │   ├── email_write_service.py
+│   │   │   ├── entity_chat_service.py
+│   │   │   ├── escalation_sla.py
+│   │   │   ├── external_contact.py
+│   │   │   ├── internal_communication.py
+│   │   │   ├── notification_engine.py
+│   │   │   ├── notification_service.py
+│   │   │   ├── notification_worker.py
+│   │   │   ├── payout_notification_service.py
+│   │   │   ├── proxy_communication.py
+│   │   │   ├── tickets_write_service.py
+│   │   │   ├── transactional_email_service.py
+│   │   │   ├── translation_service.py
+│   │   │   ├── video_conferencing.py
+│   │   │   ├── video_service.py
+│   │   │   ├── websocket_chat.py
+│   │   │   └── websocket_manager.py
+│   │   ├── core/
+│   │   │   ├── __init__.py
+│   │   │   ├── approval_matrix_service.py
+│   │   │   ├── chat_system.py
+│   │   │   ├── command_center_service.py
+│   │   │   ├── event_publisher.py
+│   │   │   ├── misc_write_service.py
+│   │   │   ├── rbac_service.py
+│   │   │   ├── transaction_service.py
+│   │   │   ├── users_write_service.py
+│   │   │   ├── workflow_engine.py
+│   │   │   └── write_helpers.py
+│   │   ├── country/
+│   │   │   ├── __init__.py
+│   │   │   ├── confidence_scoring.py
+│   │   │   ├── country_admin.py
+│   │   │   ├── country_ai_research.py
+│   │   │   ├── country_auto_populate.py
+│   │   │   ├── country_data_orchestrator.py
+│   │   │   ├── country_detection.py
+│   │   │   ├── country_heuristic_engine.py
+│   │   │   ├── country_research.py
+│   │   │   ├── country_rls_service.py
+│   │   │   ├── country_write_service.py
+│   │   │   ├── cross_border_detection.py
+│   │   │   ├── cross_border_service.py
+│   │   │   ├── downstream_hooks.py
+│   │   │   ├── legal_contract_service.py
+│   │   │   ├── localization_service.py
+│   │   │   ├── map_service.py
+│   │   │   └── product_restrictions.py
+│   │   ├── finance/
+│   │   │   ├── __init__.py
+│   │   │   ├── erp_finance_service.py
+│   │   │   ├── finance_automation.py
+│   │   │   ├── finance_transfer_service.py
+│   │   │   ├── financial_reporting.py
+│   │   │   ├── financial_reports_service.py
+│   │   │   ├── gateway_auto_enable.py
+│   │   │   ├── general_ledger_service.py
+│   │   │   ├── ghost_order_detector.py
+│   │   │   ├── invoice_service.py
+│   │   │   ├── invoice_write_service.py
+│   │   │   ├── je_reversal_service.py
+│   │   │   ├── orphan_detector_service.py
+│   │   │   ├── payment_orchestrator.py
+│   │   │   ├── payments_service.py
+│   │   │   ├── payments_write_service.py
+│   │   │   ├── refund_posting_service.py
+│   │   │   ├── sub_ledger_service.py
+│   │   │   └── tax_service.py
+│   │   ├── hr/
+│   │   │   ├── __init__.py
+│   │   │   ├── asset_tracking.py
+│   │   │   ├── attendance_service.py
+│   │   │   ├── background_check.py
+│   │   │   ├── coi_engine.py
+│   │   │   ├── coi_service.py
+│   │   │   ├── compliance_engine.py
+│   │   │   ├── dei_auditor.py
+│   │   │   ├── employee_activity_logger.py
+│   │   │   ├── employee_communication_service.py
+│   │   │   ├── employee_lifecycle_service.py
+│   │   │   ├── employee_write_service.py
+│   │   │   ├── expense_processing.py
+│   │   │   ├── expense_routing.py
+│   │   │   ├── hierarchy_service.py
+│   │   │   ├── hr_write_service.py
+│   │   │   ├── hse_manager.py
+│   │   │   ├── iam_service.py
+│   │   │   ├── leave_accrual.py
+│   │   │   ├── lms.py
+│   │   │   ├── lms_permission_lock.py
+│   │   │   ├── lms_write_service.py
+│   │   │   ├── offboarding.py
+│   │   │   ├── okr_engine.py
+│   │   │   ├── payroll_engine.py
+│   │   │   ├── payroll_service.py
+│   │   │   ├── performance_service.py
+│   │   │   ├── shift_handover.py
+│   │   │   ├── shift_roster_service.py
+│   │   │   ├── shift_scheduling.py
+│   │   │   ├── succession_service.py
+│   │   │   ├── travel_detector.py
+│   │   │   └── travel_service.py
+│   │   ├── location/
+│   │   │   ├── geo_resolver.py
+│   │   │   └── main.py
+│   │   ├── logistics/
+│   │   │   ├── __init__.py
+│   │   │   ├── geo_fence_service.py
+│   │   │   ├── live_tracking_service.py
+│   │   │   ├── logistics_engine.py
+│   │   │   ├── logistics_health_engine.py
+│   │   │   ├── logistics_partner_pricing.py
+│   │   │   ├── logistics_partner_write_service.py
+│   │   │   ├── logistics_sla_service.py
+│   │   │   ├── logistics_write_service.py
+│   │   │   └── shipping_tier.py
+│   │   ├── media/
+│   │   │   ├── __init__.py
+│   │   │   ├── free_image_tools.py
+│   │   │   ├── image_ai_service.py
+│   │   │   ├── media_service.py
+│   │   │   ├── media_storage.py
+│   │   │   ├── storage.py
+│   │   │   └── upload_job_service.py
+│   │   ├── orders/
+│   │   │   ├── __init__.py
+│   │   │   ├── cart_shipping_service.py
+│   │   │   ├── fulfillment_service.py
+│   │   │   ├── import_service.py
+│   │   │   ├── order_payment_functions.py
+│   │   │   ├── order_tracking_service.py
+│   │   │   ├── orders_write_service.py
+│   │   │   ├── qr_service.py
+│   │   │   ├── returns_write_service.py
+│   │   │   └── trading_service.py
 │   │   ├── payments/
-│   │   │   └── payments_service.py
-│   │   ├── __init__.py
-│   │   ├── admin_analytics_service.py
-│   │   ├── advanced_filter_service.py
-│   │   ├── advanced_search_engine.py
-│   │   ├── ai_automation_service.py
-│   │   ├── ai_copy_jobs.py
-│   │   ├── ai_research_jobs.py
-│   │   ├── ai_search_service.py
-│   │   ├── ai_service.py
-│   │   ├── ai_variant_config.py
-│   │   ├── approval_matrix_service.py
-│   │   ├── asset_tracking.py
-│   │   ├── attendance_service.py
-│   │   ├── audit_service.py
-│   │   ├── audit_trail_service.py
-│   │   ├── auth_service.py
-│   │   ├── auth_write_service.py
-│   │   ├── auto_payout_scheduler.py
-│   │   ├── automation_scheduler.py
-│   │   ├── background_check.py
-│   │   ├── bank_transaction_service.py
-│   │   ├── banner_write_service.py
-│   │   ├── bg_removal_presets.py
-│   │   ├── bg_removal_service.py
-│   │   ├── biometric_auth.py
-│   │   ├── cart_write_service.py
-│   │   ├── cash_flow_forecast_service.py
-│   │   ├── cash_management_service.py
-│   │   ├── cash_management_write_service.py
-│   │   ├── chat_enrichment.py
-│   │   ├── chat_system.py
-│   │   ├── coi_engine.py
-│   │   ├── coi_service.py
-│   │   ├── command_center_background.py
-│   │   ├── command_center_service.py
-│   │   ├── commerce_write_service.py
-│   │   ├── commission_engine.py
-│   │   ├── commission_write_service.py
-│   │   ├── communication_audit.py
-│   │   ├── communication_write_service.py
-│   │   ├── compliance_engine.py
-│   │   ├── confidence_scoring.py
-│   │   ├── content_service.py
-│   │   ├── country_ai_research.py
-│   │   ├── country_auto_populate.py
-│   │   ├── country_data_orchestrator.py
-│   │   ├── country_detection.py
-│   │   ├── country_heuristic_engine.py
-│   │   ├── country_research.py
-│   │   ├── country_rls_service.py
-│   │   ├── country_write_service.py
-│   │   ├── coupons_write_service.py
-│   │   ├── credit_control_service.py
-│   │   ├── cross_border_detection.py
-│   │   ├── cross_border_service.py
-│   │   ├── cross_border_tracker.py
-│   │   ├── customer_health_engine.py
-│   │   ├── data_residency.py
-│   │   ├── data_residency_service.py
-│   │   ├── dei_auditor.py
-│   │   ├── disputes_write_service.py
-│   │   ├── downstream_hooks.py
-│   │   ├── downstream_wiring.py
-│   │   ├── ediscovery.py
-│   │   ├── effective_permissions.py
-│   │   ├── email_enrichment.py
-│   │   ├── email_event_service.py
-│   │   ├── email_gateway.py
-│   │   ├── email_reputation.py
-│   │   ├── email_write_service.py
-│   │   ├── employee_activity_logger.py
-│   │   ├── employee_communication_service.py
-│   │   ├── employee_lifecycle_service.py
-│   │   ├── employee_write_service.py
-│   │   ├── entity_chat_service.py
-│   │   ├── erp_finance_service.py
-│   │   ├── escalation_sla.py
-│   │   ├── expense_processing.py
-│   │   ├── expense_routing.py
-│   │   ├── external_contact.py
-│   │   ├── finance_automation.py
-│   │   ├── finance_transfer_service.py
-│   │   ├── financial_reporting.py
-│   │   ├── financial_reports_service.py
-│   │   ├── fix_chat.py
-│   │   ├── fraud_detection.py
-│   │   ├── fraud_detection_service.py
-│   │   ├── fraud_service.py
-│   │   ├── free_image_tools.py
-│   │   ├── fulfillment_service.py
-│   │   ├── gateway_auto_enable.py
-│   │   ├── gateway_reconciliation_service.py
-│   │   ├── general_ledger_service.py
-│   │   ├── geo_fence_service.py
-│   │   ├── ghost_watchdog.py
-│   │   ├── hierarchy_service.py
-│   │   ├── hr_write_service.py
-│   │   ├── hse_manager.py
-│   │   ├── iam_service.py
-│   │   ├── iam_write_service.py
-│   │   ├── image_ai_service.py
-│   │   ├── import_service.py
-│   │   ├── incident_service.py
-│   │   ├── internal_communication.py
-│   │   ├── invoice_write_service.py
-│   │   ├── je_reversal_service.py
-│   │   ├── kms_encryption.py
-│   │   ├── leave_accrual.py
-│   │   ├── legal_contract_service.py
-│   │   ├── live_tracking_service.py
-│   │   ├── lms.py
-│   │   ├── lms_permission_lock.py
-│   │   ├── lms_write_service.py
-│   │   ├── localization_service.py
-│   │   ├── logistics_engine.py
-│   │   ├── logistics_health_engine.py
-│   │   ├── logistics_partner_pricing.py
-│   │   ├── logistics_partner_write_service.py
-│   │   ├── logistics_sla_service.py
-│   │   ├── logistics_write_service.py
-│   │   ├── maker.py
-│   │   ├── map_service.py
-│   │   ├── media_service.py
-│   │   ├── media_storage.py
-│   │   ├── misc_write_service.py
-│   │   ├── mobile_auth_service.py
-│   │   ├── notification_engine.py
-│   │   ├── notification_service.py
-│   │   ├── ocr_parser.py
-│   │   ├── offboarding.py
-│   │   ├── okr_engine.py
-│   │   ├── onboarding_pipeline.py
-│   │   ├── order_tracking_service.py
-│   │   ├── orders_write_service.py
-│   │   ├── payment_engine.py
-│   │   ├── payment_orchestrator.py
-│   │   ├── payments_write_service.py
-│   │   ├── payout_batch_service.py
-│   │   ├── payout_engine.py
-│   │   ├── payout_notification_service.py
-│   │   ├── payroll_engine.py
-│   │   ├── payroll_service.py
-│   │   ├── performance_service.py
-│   │   ├── period_close_service.py
-│   │   ├── permission_service.py
-│   │   ├── permissions_write_service.py
-│   │   ├── products_write_service.py
-│   │   ├── promotion_bogo_service.py
-│   │   ├── promotion_engine_service.py
-│   │   ├── promotion_points_service.py
-│   │   ├── promotions_write_service.py
-│   │   ├── proxy_communication.py
-│   │   ├── qr_service.py
-│   │   ├── rbac_service.py
-│   │   ├── refund_posting_service.py
-│   │   ├── retention_service.py
-│   │   ├── returns_write_service.py
-│   │   ├── reviews_service.py
-│   │   ├── run_py.py
-│   │   ├── script1.py
-│   │   ├── shift_handover.py
-│   │   ├── shift_roster_service.py
-│   │   ├── shift_scheduling.py
-│   │   ├── shipping_tier.py
-│   │   ├── storage.py
-│   │   ├── sub_ledger_service.py
-│   │   ├── succession_service.py
-│   │   ├── supplier_badge_service.py
-│   │   ├── supplier_health_engine.py
-│   │   ├── supplier_onboarding_service.py
-│   │   ├── suppliers_write_service.py
-│   │   ├── tax_service.py
-│   │   ├── template.py
-│   │   ├── tickets_write_service.py
-│   │   ├── trading_service.py
-│   │   ├── transactional_email_service.py
-│   │   ├── translation_service.py
-│   │   ├── travel_detector.py
-│   │   ├── travel_service.py
-│   │   ├── treasurer.py
-│   │   ├── treasury_adapter.py
-│   │   ├── treasury_engine.py
-│   │   ├── treasury_service.py
-│   │   ├── triple_auth.py
-│   │   ├── upload_job_service.py
-│   │   ├── users_write_service.py
-│   │   ├── variant_config_service.py
-│   │   ├── video_conferencing.py
-│   │   ├── video_service.py
-│   │   ├── webhook_processor.py
-│   │   ├── websocket_chat.py
-│   │   ├── websocket_manager.py
-│   │   ├── workflow_engine.py
-│   │   ├── worm_audit.py
-│   │   ├── write_chat.py
-│   │   ├── write_files_script.py
-│   │   └── write_helpers.py
-│   ├── settings/
-│   │   ├── __init__.py
-│   │   └── notification_worker.py
-│   ├── static/
-│   ├── tasks/
-│   │   ├── __init__.py
-│   │   ├── background_tasks.py
-│   │   └── fraud_monitoring.py
+│   │   │   ├── events/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── payment_events.py
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   ├── base_models.py
+│   │   │   ├── payment_engine.py
+│   │   │   ├── registry.py
+│   │   │   ├── webhook_models.py
+│   │   │   └── webhook_processor.py
+│   │   ├── security/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth_service.py
+│   │   │   ├── auth_write_service.py
+│   │   │   ├── biometric_auth.py
+│   │   │   ├── data_residency.py
+│   │   │   ├── data_residency_service.py
+│   │   │   ├── effective_permissions.py
+│   │   │   ├── fraud_detection.py
+│   │   │   ├── fraud_detection_service.py
+│   │   │   ├── fraud_monitoring.py
+│   │   │   ├── fraud_service.py
+│   │   │   ├── ghost_watchdog.py
+│   │   │   ├── iam_write_service.py
+│   │   │   ├── incident_service.py
+│   │   │   ├── kms_encryption.py
+│   │   │   ├── mobile_auth_service.py
+│   │   │   ├── permission_service.py
+│   │   │   ├── permissions_write_service.py
+│   │   │   ├── threat_feed_updater.py
+│   │   │   └── triple_auth.py
+│   │   ├── supplier/
+│   │   │   ├── __init__.py
+│   │   │   ├── onboarding_pipeline.py
+│   │   │   ├── supplier_badge_service.py
+│   │   │   ├── supplier_health_engine.py
+│   │   │   ├── supplier_onboarding_service.py
+│   │   │   └── suppliers_write_service.py
+│   │   ├── treasury/
+│   │   │   ├── __init__.py
+│   │   │   ├── gateway_reconciliation_service.py
+│   │   │   ├── payout_batch_service.py
+│   │   │   ├── payout_engine.py
+│   │   │   ├── period_close_service.py
+│   │   │   ├── treasurer.py
+│   │   │   ├── treasury_adapter.py
+│   │   │   ├── treasury_engine.py
+│   │   │   └── treasury_service.py
+│   │   └── __init__.py
 │   ├── tests/
 │   │   ├── playwright/
 │   │   │   ├── e2e/
@@ -622,9 +768,10 @@ zozi/
 │   │   │   ├── package.json
 │   │   │   └── playwright.config.ts
 │   │   ├── provider_test/
-│   │   │   └── visual_regression/
-│   │   │       ├── metrics.json
-│   │   │       └── report_index.html
+│   │   │   ├── visual_regression/
+│   │   │   │   ├── metrics.json
+│   │   │   │   └── report_index.html
+│   │   │   └── __init__.py
 │   │   ├── __init__.py
 │   │   ├── _add_models.py
 │   │   ├── _check_fk.py
@@ -682,14 +829,12 @@ zozi/
 │   │   ├── test_users.py
 │   │   ├── test_versioning.py
 │   │   └── test_wishlist.py
-│   ├── tools/
-│   │   ├── mcp/
-│   │   │   ├── mcp_client_example.py
-│   │   │   └── mcp_server.py
-│   │   └── __init__.py
 │   ├── utils/
 │   │   ├── __init__.py
 │   │   ├── analytics_service.py
+│   │   ├── analyze_fk_detailed.py
+│   │   ├── analyze_fk_refs.py
+│   │   ├── analyze_fks.py
 │   │   ├── api_docs.py
 │   │   ├── audit.py
 │   │   ├── audit_log.py
@@ -697,14 +842,18 @@ zozi/
 │   │   ├── background_jobs.py
 │   │   ├── backup.py
 │   │   ├── cache.py
+│   │   ├── category_tax_profiles.py
 │   │   ├── category_tree.py
 │   │   ├── circuit_breaker.py
 │   │   ├── config.py
 │   │   ├── constant_time.py
 │   │   ├── constants.py
+│   │   ├── country_curated.py
 │   │   ├── country_detection_middleware.py
 │   │   ├── country_rls.py
+│   │   ├── curated_cities.py
 │   │   ├── currency.py
+│   │   ├── database_logging.py
 │   │   ├── datetime_utils.py
 │   │   ├── db_backup.py
 │   │   ├── dependencies.py
@@ -743,11 +892,13 @@ zozi/
 │   │   ├── secrets_manager.py
 │   │   ├── security_audit.py
 │   │   ├── security_metrics.py
+│   │   ├── seed_all.py
 │   │   ├── slug.py
 │   │   ├── soft_delete.py
 │   │   ├── staff_permissions.py
 │   │   ├── tracing.py
 │   │   ├── variant_key.py
+│   │   ├── vat_rates.py
 │   │   ├── vault.py
 │   │   ├── versioning.py
 │   │   └── websocket_manager.py
@@ -756,9 +907,7 @@ zozi/
 │   ├── __init__.py
 │   ├── _import_test_out.txt
 │   ├── alembic.ini
-│   ├── alembic_test.json
-│   ├── database.py
-│   ├── database_logging.py
+│   ├── cross_schema_fk_analysis.json
 │   ├── lifespan.py
 │   ├── main.py
 │   ├── pyproject.toml
@@ -767,20 +916,26 @@ zozi/
 │   ├── run_server.py
 │   ├── run_tests.ps1
 │   ├── run_tests.sh
-│   ├── schema-audit-report.json
-│   ├── schema_mapping.json
-│   ├── schemas.py
-│   ├── seed_all.py
 │   ├── start_backend.ps1
-│   ├── test_probe.db
 │   ├── zozi.db-shm
 │   └── zozi.db-wal
 ├── browser-tests/
 │   └── scaling_audit.spec.ts
 ├── docs/
+│   ├── architecture/
+│   │   ├── erd.mmd
+│   │   └── schema_mermaid.mmd
+│   ├── monitoring/
+│   │   ├── docker-compose.monitoring.yml
+│   │   └── prometheus.yml
+│   ├── ARCHITECTURE_LAYER_RULES.md
 │   ├── GENERATED_DATA_DICTIONARY.md
 │   ├── SCALING_PLAN.md
-│   └── pgbouncer.md
+│   ├── connection-pooling.md
+│   ├── data-dictionary.json
+│   ├── data-dictionary.md
+│   ├── pgbouncer.md
+│   └── schema_mapping.json
 ├── document/
 │   ├── BANNER_PROMOTION_DISCOUNT_CODE.md
 │   ├── DISCOUNT_SYSTEM.md
@@ -789,51 +944,66 @@ zozi/
 │   └── PROMOTION_ADDENDUM.md
 ├── documents/
 │   ├── archive/
-│   │   └── snap/
-│   │       ├── Logo/
-│   │       │   └── zozi-logo-app/
-│   │       └── snap/
-│   │           └── Logo/
-│   │               ├── stitch_zozi/
-│   │               │   ├── code copy 2.html
-│   │               │   ├── code copy.html
-│   │               │   ├── code.html
-│   │               │   ├── screen.png
-│   │               │   ├── screen_1.png
-│   │               │   └── screen_2.png
-│   │               ├── zozi-logo-app/
-│   │               │   ├── recordings/
-│   │               │   │   ├── WhatsApp Video 2026-04-03 at 15.43.18.mp4
-│   │               │   │   ├── page@0bde5035c7c3ed04ad399d0876f59789.webm
-│   │               │   │   └── page@ef9d054f22c85c1c7c6cd7d152691197.webm
-│   │               │   ├── scripts/
-│   │               │   │   └── record-wordmark.mjs
-│   │               │   ├── src/
-│   │               │   │   ├── zozi-logo/
-│   │               │   │   │   ├── README.md
-│   │               │   │   │   ├── ZoziLockup.tsx
-│   │               │   │   │   ├── ZoziLogo.tsx
-│   │               │   │   │   └── index.ts
-│   │               │   │   ├── AnimatedLogo.tsx
-│   │               │   │   ├── App.tsx
-│   │               │   │   ├── Logo.tsx
-│   │               │   │   ├── main.tsx
-│   │               │   │   └── styles.css
-│   │               │   ├── zozi-logo/
-│   │               │   │   ├── README.md
-│   │               │   │   ├── ZoziLogo.tsx
-│   │               │   │   ├── ZoziWordmark.tsx
-│   │               │   │   ├── index.ts
-│   │               │   │   └── shared.ts
-│   │               │   ├── README.md
-│   │               │   ├── index.html
-│   │               │   ├── package.json
-│   │               │   ├── tsconfig.json
-│   │               │   └── vite.config.ts
-│   │               ├── stitch_zozi.zip
-│   │               └── zozi-logo-app.zip
+│   │   ├── snap/
+│   │   │   ├── Logo/
+│   │   │   │   └── zozi-logo-app/
+│   │   │   └── snap/
+│   │   │       └── Logo/
+│   │   │           ├── stitch_zozi/
+│   │   │           │   ├── code copy 2.html
+│   │   │           │   ├── code copy.html
+│   │   │           │   ├── code.html
+│   │   │           │   ├── screen.png
+│   │   │           │   ├── screen_1.png
+│   │   │           │   └── screen_2.png
+│   │   │           ├── zozi-logo-app/
+│   │   │           │   ├── recordings/
+│   │   │           │   │   ├── WhatsApp Video 2026-04-03 at 15.43.18.mp4
+│   │   │           │   │   ├── page@0bde5035c7c3ed04ad399d0876f59789.webm
+│   │   │           │   │   └── page@ef9d054f22c85c1c7c6cd7d152691197.webm
+│   │   │           │   ├── scripts/
+│   │   │           │   │   └── record-wordmark.mjs
+│   │   │           │   ├── src/
+│   │   │           │   │   ├── zozi-logo/
+│   │   │           │   │   │   ├── README.md
+│   │   │           │   │   │   ├── ZoziLockup.tsx
+│   │   │           │   │   │   ├── ZoziLogo.tsx
+│   │   │           │   │   │   └── index.ts
+│   │   │           │   │   ├── AnimatedLogo.tsx
+│   │   │           │   │   ├── App.tsx
+│   │   │           │   │   ├── Logo.tsx
+│   │   │           │   │   ├── main.tsx
+│   │   │           │   │   └── styles.css
+│   │   │           │   ├── zozi-logo/
+│   │   │           │   │   ├── README.md
+│   │   │           │   │   ├── ZoziLogo.tsx
+│   │   │           │   │   ├── ZoziWordmark.tsx
+│   │   │           │   │   ├── index.ts
+│   │   │           │   │   └── shared.ts
+│   │   │           │   ├── README.md
+│   │   │           │   ├── index.html
+│   │   │           │   ├── package.json
+│   │   │           │   ├── tsconfig.json
+│   │   │           │   └── vite.config.ts
+│   │   │           ├── stitch_zozi.zip
+│   │   │           └── zozi-logo-app.zip
+│   │   ├── ARCHITECTURE_AUDIT_REPORT.md
+│   │   ├── DATABASE_AUDIT_REPORT.md
+│   │   ├── DESIGN_AUDIT_REPORT.md
+│   │   ├── FEATURES_LIST.md
+│   │   ├── HEALTH_AUDIT_REPORT.md
+│   │   ├── PROJECT_SCAFFOLDING.md
+│   │   ├── correction_plan.md
+│   │   ├── cross_schema_fk_analysis.json
+│   │   ├── findings.md
+│   │   ├── login_form.yml
+│   │   ├── login_rsp.json
+│   │   ├── progress.md
+│   │   └── task_plan.md
 │   ├── scope/
 │   │   ├── 01_DATABASE.md
+│   │   ├── APPENDIX_C_TABLE_ECOSYSTEM_MAP.md
+│   │   ├── ORPHAN_TABLES_REPORT.md
 │   │   ├── governance.yaml
 │   │   ├── layer_rules.yaml
 │   │   └── repo_structure.yaml
@@ -850,10 +1020,7 @@ zozi/
 │   ├── CODEBASE_STATUS_MATRIX.md
 │   ├── COMMISSION_STRUCTURE.md
 │   ├── COUNTRY_DETAILS.md
-│   ├── DATABASE_IMPLEMENTATION_PLAN.md
-│   ├── DATABASE_REFERENCE.md
 │   ├── DESIGN_SYSTEM.md
-│   ├── DIR_AUDIT.md
 │   ├── DIR_AUDIT_FILE_WORKING.md
 │   ├── DISCOUNT_SYSTEM.md
 │   ├── DOCUMENTATION_INDEX.md
@@ -861,8 +1028,6 @@ zozi/
 │   ├── EMAIL_SYSTEM_AUDIT.md
 │   ├── Employee_Chat_Video_Email_System.md
 │   ├── Error_Handling_System.txt
-│   ├── FEATURES_LIST.md
-│   ├── FEATURE_MATRIX.md
 │   ├── FILE_ORGANIZATION_RULES.md
 │   ├── Finance_Treasury_System.txt
 │   ├── Fraud_Detection_System.txt
@@ -879,12 +1044,10 @@ zozi/
 │   ├── PLAN_financial_ledger_treasury.md
 │   ├── PRODUCTION_DEPLOYMENT.md
 │   ├── PROJECT-ROADMAP.md
-│   ├── PROJECT_SCAFFOLDING.md
 │   ├── PROMOTION.md
 │   ├── PROMPT.md
 │   ├── Payment_Gateway_System.md
 │   ├── Prompt_1.md
-│   ├── REPO_LAYOUT_AUDIT_VERIFICATION.md
 │   ├── RETURN_POLICY_FLOW.md
 │   ├── RUNTIME_FILE_MAP.md
 │   ├── SECURITY_AUDIT_REPORT.md
@@ -1691,21 +1854,6 @@ zozi/
 │   ├── web_app/
 │   │   ├── __tests__/
 │   │   │   └── browser.spec.ts
-│   │   ├── coverage/
-│   │   │   ├── lcov-report/
-│   │   │   │   ├── base.css
-│   │   │   │   ├── block-navigation.js
-│   │   │   │   ├── favicon.png
-│   │   │   │   ├── index.html
-│   │   │   │   ├── prettify.css
-│   │   │   │   ├── prettify.js
-│   │   │   │   ├── sort-arrow-sprite.png
-│   │   │   │   ├── sorter.js
-│   │   │   │   ├── useAuth.ts.html
-│   │   │   │   └── useAuth.tsx.html
-│   │   │   ├── clover.xml
-│   │   │   ├── coverage-final.json
-│   │   │   └── lcov.info
 │   │   ├── e2e/
 │   │   │   ├── helpers/
 │   │   │   │   ├── api.ts
@@ -1744,7 +1892,6 @@ zozi/
 │   │   │   ├── debug4.spec.ts
 │   │   │   ├── debug5.spec.ts
 │   │   │   ├── debug6.spec.ts
-│   │   │   ├── debug_test6.js
 │   │   │   ├── diag-console.spec.ts
 │   │   │   ├── diag-logistics.spec.ts
 │   │   │   ├── diag-perf.spec.ts
@@ -1786,8 +1933,6 @@ zozi/
 │   │   │   └── window.svg
 │   │   ├── scripts/
 │   │   │   ├── check_pages.py
-│   │   │   ├── diag_checkout.cjs
-│   │   │   ├── diag_login.cjs
 │   │   │   ├── e2e_payment_gateway.cjs
 │   │   │   ├── e2e_storefront_checkout.cjs
 │   │   │   ├── extract_tabs.py
@@ -2637,22 +2782,19 @@ zozi/
 │   └── threat_feed_updater.py
 ├── nginx/
 │   └── nginx.conf
-├── plans/
-│   ├── DATABASE_ALIGNMENT_PLAN.md
-│   └── DATABASE_CHANGES_PLAN.md
+├── out/
+│   └── governance/
+│       ├── architecture_audit.json
+│       ├── audit.json
+│       ├── combined.json
+│       ├── combined_audit.json
+│       ├── database_audit.json
+│       ├── design_audit.json
+│       ├── health_audit.json
+│       ├── metrics.json
+│       └── move_map.json
 ├── scripts/
 │   ├── frontend/
-│   │   ├── balance.js
-│   │   ├── countDivs.js
-│   │   ├── countDivs2.js
-│   │   ├── linenums.js
-│   │   ├── listDivs.js
-│   │   ├── parse.js
-│   │   ├── patch-vars.js
-│   │   ├── patch-vars2.js
-│   │   ├── printLines.js
-│   │   ├── stackDivs.js
-│   │   └── tailwind.config.js
 │   ├── maintenance/
 │   │   ├── cleanup-bak.sh
 │   │   ├── convert-fontsize-to-theme.js
@@ -2709,11 +2851,15 @@ zozi/
 │   ├── database_audit.py
 │   ├── deploy.sh
 │   ├── design_audit.py
+│   ├── extract_db06.py
+│   ├── find_w1_writes.py
 │   ├── free_country_ecommerce_research.py
 │   ├── generate_codebase.py
 │   ├── generate_scaffolding.py
 │   ├── health-check.sh
+│   ├── health_audit.py
 │   ├── migrate_to_target_structure.py
+│   ├── run_all_audits.py
 │   └── system_architecture_audit.py
 ├── AGENTS.md
 ├── ARCHITECTURE_AUDIT_REPORT.md
@@ -2721,18 +2867,20 @@ zozi/
 ├── DATABASE_AUDIT_REPORT.md
 ├── DESIGN_AUDIT_REPORT.md
 ├── FEATURES_LIST.md
+├── GOVERNANCE_REPORT.md
+├── HEALTH_AUDIT_REPORT.md
 ├── Makefile
 ├── PROJECT_SCAFFOLDING.md
 ├── README.md
 ├── SECURITY.md
-├── correction_plan.md
+├── _extract_findings.py
 ├── docker-compose.override.yml
 ├── docker-compose.prod.yml
 ├── docker-compose.yml
-├── findings.md
 ├── list_create_tables.py
 ├── login_form.yml
 ├── login_rsp.json
+├── null
 ├── package.json
 ├── patch_deltas.py
 ├── patch_idempotent_migrations.py

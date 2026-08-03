@@ -2,8 +2,8 @@ import os
 os.environ['APP_ENV'] = 'test'
 os.environ['SECRET_KEY'] = 'test-secret-key-for-pytest-only'
 
-from db.base import Base
-import models
+from data.base import Base
+import data.models
 
 metadata = Base.metadata
 

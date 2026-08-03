@@ -63,12 +63,15 @@ from middleware.country_context import (
 )
 
 # ── Dependencies (FastAPI per-route level) ────────────────────────────────
-from middleware.rls_dependency import (
+from data.middleware_rls_dependency import (
     check_country_access,
     get_country_scope,
     get_current_country_code,
     require_country_access,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     # Interceptor

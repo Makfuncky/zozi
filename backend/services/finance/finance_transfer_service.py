@@ -13,7 +13,7 @@ import requests
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, FinanceBankAccount, LogisticsPartnerBankAccount, LogisticsPartnerPayout, LogisticsSettlement, Payout, SupplierBankAccount
+from data.models import CountryConfig, FinanceBankAccount, LogisticsPartnerBankAccount, LogisticsPartnerPayout, LogisticsSettlement, Payout, SupplierBankAccount
 from utils.config import settings
 from utils.money import round_money, to_decimal
 
@@ -1113,7 +1113,7 @@ def get_country_payout_settings(country_code: str, db: Session) -> dict[str, Any
 
     Returns default values if the country or its settings are not configured.
     """
-    from services.logistics_partner_pricing import normalize_country_code
+    from data.services_logistics_partner_pricing import normalize_country_code
 
     code = normalize_country_code(country_code)
     if not code:

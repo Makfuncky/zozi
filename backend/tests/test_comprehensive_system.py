@@ -121,7 +121,7 @@ def logistics_partner_client(client):
 @pytest.fixture
 def test_product(client, db_session, supplier_headers):
     """Create a test product for testing."""
-    from models import User, Product
+    from data.models import User, Product
     from utils.auth import get_password_hash
 
     email = f"prodowner_{uuid.uuid4().hex[:8]}@zozi.test"
@@ -178,7 +178,7 @@ class TestOrderPlacement:
 
     def test_create_order_insufficient_stock(self, client, customer_client, test_product, db_session):
         """Test order creation with insufficient stock."""
-        from models import Product
+        from data.models import Product
         test_product.stock = 0
         db_session.commit()
         resp = client.post(
@@ -630,7 +630,7 @@ class TestPaymentAndReconciliation:
 
     def test_payment_status_transitions(self, client, customer_client, test_product, db_session):
         """Test payment status transitions."""
-        from models import Order
+        from data.models import Order
         create_resp = client.post(
             "/api/v1/orders",
             headers=customer_client,
@@ -725,13 +725,13 @@ class TestDatabase:
 
     def test_database_connection(self, db_session):
         """Test database connection is working."""
-        from models import User
+        from data.models import User
         result = db_session.query(User).first()
         assert result is not None or True  # DB is accessible
 
     def test_database_transaction_rollback(self, db_session):
         """Test that transactions are properly rolled back."""
-        from models import User
+        from data.models import User
         from utils.auth import get_password_hash
 
         initial_count = db_session.query(User).count()
@@ -749,7 +749,7 @@ class TestDatabase:
 
     def test_foreign_key_constraints(self, client, customer_client, db_session):
         """Test foreign key constraints work correctly."""
-        from models import Order
+        from data.models import Order
         # Try to create order for non-existent product
         resp = client.post(
             "/api/v1/orders",
@@ -802,7 +802,7 @@ class TestHierarchy:
 
     def test_supplier_has_products(self, client, supplier_headers, db_session):
         """Test supplier-product relationship."""
-        from models import Product
+        from data.models import Product
         create_resp = client.post(
             "/api/v1/products/",
             headers=supplier_headers,
@@ -818,7 +818,7 @@ class TestHierarchy:
 
     def test_order_has_items(self, client, customer_client, test_product, db_session):
         """Test order-item relationship."""
-        from models import Order, OrderItem
+        from data.models import Order, OrderItem
         create_resp = client.post(
             "/api/v1/orders",
             headers=customer_client,

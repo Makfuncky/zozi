@@ -1,62 +1,7 @@
 from __future__ import annotations
 
-import os
+from db.base import Base, _GuardedMetaData
 
-from sqlalchemy import MetaData
-from sqlalchemy.orm import DeclarativeBase
-
-
-class _GuardedMetaData(MetaData):
-    """MetaData that forbids ``create_all`` / ``drop_all`` outside dev/test.
-
-    Implements Constitution §2.7 / ADR-012: ``Base.metadata.create_all()`` is
-    for development and test only.  Production schema changes MUST go through
-    reviewed Alembic migrations.
-
-    The guard passes through when:
-      * ``ALEMBIC_MODE=true`` (sanctioned migration context), **or**
-      * the target bind is SQLite (dev / in-memory test), **or**
-      * ``APP_ENV`` is not ``production``.
-
-    Every other combination raises ``RuntimeError`` so there is no code path
-    that can accidentally ``create_all`` against a PostgreSQL production
-    database.
-    """
-
-    def _guard(self, operation: str, bind) -> None:
-        if os.getenv("ALEMBIC_MODE") == "true":
-            return
-        env = os.getenv("APP_ENV", "development").lower()
-        if env == "production":
-            raise RuntimeError(
-                f"{operation} is forbidden in production (APP_ENV=production). "
-                f"Use a reviewed Alembic migration instead of Base.metadata."
-                f"{operation}."
-            )
-        if bind is not None and bind.dialect.name == "postgresql":
-            raise RuntimeError(
-                f"{operation} is disabled on PostgreSQL. "
-                f"Use a reviewed Alembic migration instead of Base.metadata."
-                f"{operation}."
-            )
-
-    def create_all(self, *args, **kwargs):
-        bind = kwargs.get("bind")
-        if bind is None and args:
-            bind = args[0]
-        self._guard("create_all", bind)
-        return super().create_all(*args, **kwargs)
-
-    def drop_all(self, *args, **kwargs):
-        bind = kwargs.get("bind")
-        if bind is None and args:
-            bind = args[0]
-        self._guard("drop_all", bind)
-        return super().drop_all(*args, **kwargs)
-
-
-class Base(DeclarativeBase):
-    metadata = _GuardedMetaData()
 
 from .core.user import *
 from .catalog.products import *
@@ -81,14 +26,16 @@ from .supplier.onboarding import *
 from .security.incident import *
 from .security.permissions import *
 from .catalog.ai_upload import *
+from .logistics.imports import *
 from .country.country_basics import *
 from .country.country_economics import *
 from .country.country_legal import *
-from .country_tax import *
+from .country.country_tax import *
 from .events import *
 from .analytics.analytics import *
 from .media.upload_job import *
 from .audit.platform import *
+from .ai.ai_models import *
 
 __all__ = [
     "User", "UserDevice", "Referral", "ReferralPointEvent", "UserLoginHistory",
@@ -170,7 +117,7 @@ __all__ = [
     "ShiftHandoverSession", "ShiftHandoverTask",
     "VideoRoom", "VideoRoomParticipant", "VideoRoomRecording",
     "PermissionCategory", "Permission", "RolePermissionAssignment", "UserPermissionOverride", "PermissionAuditLog",
-    "AIUploadJob", "AIStagingProduct", "AIStagingVariant", "AIGenerationLog",
+    "AIUploadJob", "AIStagingProduct", "AIStagingVariant", "AIGenerationLog", "AIStagingImage", "AIAuditLog", "AIEmbedding", "AIRequest", "AIResult",
     "CountryBasics", "CountryEconomics", "CountryLegal", "CountryTax",
     "ChatAttachment", "InternalEmail", "EmailFolder",
     "OutboxEvent", "InboxEvent", "EventRetryQueue", "EventDeadLetter",
@@ -178,3 +125,87 @@ __all__ = [
     "UploadJob",
     "FeatureFlag", "WormAudit",
 ]
+
+
+def _apply_legacy_import_shims() -> None:
+    """Transitional compat for pre-domain reorganisation model imports.
+
+    The models/ package was split into domain sub-packages, but many call
+    sites still import via legacy flat paths (``from models.employee_models
+    import Employee``) or legacy package paths (``from data.models_core import
+    AuditLog``) that never existed after the reorg.  This registers
+    ``models.<leaf>`` aliases for the real ``models.<domain>.<leaf>`` modules
+    and copies each submodule's public names onto its domain package so
+    those imports resolve.  Canonical style remains ``from data.models import X``
+    or ``models/<domain>/<module>.py``.
+    """
+    import sys as _sys
+    _ns = __name__
+    _leaf_aliases = {
+        "employee_models": "hr.employee_models",
+        "user": "core.user",
+        "products": "catalog.products",
+        "fraud": "security.fraud",
+        "countries": "country.countries",
+        "country_tax": "country.country_tax",
+        "country_enhancements": "country.country_enhancements",
+        "country_control": "logistics.country_control",
+        "payments": "finance.payments",
+        "upload_job": "media.upload_job",
+        "media_models": "media.media_models",
+        "admin": "logistics.admin",
+    }
+    for _flat, _dotted in _leaf_aliases.items():
+        _real = _sys.modules.get(f"{_ns}.{_dotted}")
+        if _real is None:
+            continue
+        _sys.modules[f"{_ns}.{_flat}"] = _real
+        globals()[_flat] = _real
+    _pkg_subs = (
+        ("core", ("user",)),
+        ("catalog", ("products", "ai_upload")),
+        ("orders", ("orders",)),
+        ("finance", ("payments", "commission")),
+        ("security", ("permissions", "incident", "fraud")),
+        ("logistics", ("logistics", "admin", "imports", "country_control")),
+        ("communication", ("suppliers", "core", "marketing", "communication")),
+        ("country", ("countries", "country_basics", "country_economics", "country_enhancements", "country_legal", "country_tax")),
+        ("media", ("upload_job", "media_models")),
+        ("hr", ("employee_models",)),
+        ("treasury", ("finance",)),
+        ("supplier", ("onboarding",)),
+        ("analytics", ("analytics",)),
+         ("audit", ("platform",)),
+     )
+    for _pkg, _subs in _pkg_subs:
+        _pkgmod = _sys.modules.get(f"{_ns}.{_pkg}")
+        if _pkgmod is None:
+            continue
+        for _sub in _subs:
+            _submod = _sys.modules.get(f"{_ns}.{_pkg}.{_sub}")
+            if _submod is None:
+                continue
+            _exported = getattr(_submod, "__all__", None)
+            if _exported is None:
+                _exported = [n for n in dir(_submod) if not n.startswith("_")]
+            for _n in _exported:
+                setattr(_pkgmod, _n, getattr(_submod, _n))
+    _cross_exports = (
+        ("core", ("communication.core",)),
+    )
+    for _dest_pkg, _src_pkgs in _cross_exports:
+        _pkgmod = _sys.modules.get(f"{_ns}.{_dest_pkg}")
+        if _pkgmod is None:
+            continue
+        for _src in _src_pkgs:
+            _submod = _sys.modules.get(f"{_ns}.{_src}")
+            if _submod is None:
+                continue
+            _exported = getattr(_submod, "__all__", None)
+            if _exported is None:
+                _exported = [n for n in dir(_submod) if not n.startswith("_")]
+            for _n in _exported:
+                setattr(_pkgmod, _n, getattr(_submod, _n))
+
+
+_apply_legacy_import_shims()

@@ -31,8 +31,8 @@ from sqlalchemy.orm import sessionmaker
 # ── Shared helpers (mirror test_ems_lifecycle.py) ─────────────────────
 
 def _create_test_user(db_session, role: str = "admin", email_suffix: str = None) -> int:
-    from utils.auth import get_password_hash
-    from models import User
+    from data.utils_auth import get_password_hash
+    from data.models import User
 
     suffix = email_suffix or uuid.uuid4().hex[:8]
     user = User(
@@ -55,7 +55,7 @@ def _create_test_employee(
     hire_date: date = None,
     performance_score: float = None,
 ) -> int:
-    from models.employee_models import Employee
+    from data.models_employee_models import Employee
 
     code = f"EDGE{uuid.uuid4().hex[:6].upper()}"
     emp = Employee(
@@ -76,7 +76,7 @@ def _create_test_employee(
 
 
 def _ensure_country_config(db_session):
-    from models import CountryConfig
+    from data.models import CountryConfig
     existing = db_session.query(CountryConfig).filter(CountryConfig.code == "OM").first()
     if not existing:
         cfg = CountryConfig(code="OM", name="Oman", currency="OMR", currency_symbol="﷼")
@@ -98,7 +98,7 @@ class TestDuplicateOnboarding:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import create_onboarding_pipeline
+        from data.services_employee_lifecycle_service import create_onboarding_pipeline
 
         # First pipeline succeeds
         first = create_onboarding_pipeline(db=db_session, employee_id=emp_id)
@@ -113,7 +113,7 @@ class TestDuplicateOnboarding:
     def test_onboarding_nonexistent_employee_raises(self, db_session):
         """Creating a pipeline for a non-existent employee must raise."""
         _ensure_country_config(db_session)
-        from services.employee_lifecycle_service import create_onboarding_pipeline
+        from data.services_employee_lifecycle_service import create_onboarding_pipeline
 
         with pytest.raises(ValueError, match="not found"):
             create_onboarding_pipeline(db=db_session, employee_id=99999)
@@ -122,7 +122,7 @@ class TestDuplicateOnboarding:
     def test_complete_step_nonexistent_pipeline_raises(self, db_session):
         """Completing a step on a pipeline that does not exist must raise."""
         _ensure_country_config(db_session)
-        from services.employee_lifecycle_service import complete_onboarding_step
+        from data.services_employee_lifecycle_service import complete_onboarding_step
 
         with pytest.raises((ValueError, KeyError)):
             complete_onboarding_step(
@@ -148,7 +148,7 @@ class TestDoubleCancelOffboarding:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             initiate_offboarding, cancel_offboarding,
         )
 
@@ -163,7 +163,7 @@ class TestDoubleCancelOffboarding:
         assert result["status"] == "cancelled"
 
         # Employee should be active again
-        from models.employee_models import Employee
+        from data.models_employee_models import Employee
         emp = db_session.query(Employee).filter(Employee.id == emp_id).first()
         assert emp.employment_status == "active"
 
@@ -178,7 +178,7 @@ class TestDoubleCancelOffboarding:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             initiate_offboarding, complete_offboarding_step, cancel_offboarding,
         )
 
@@ -197,7 +197,7 @@ class TestDoubleCancelOffboarding:
             complete_offboarding_step(db=db_session, case_id=case_id, step_name=step)
 
         # Verify completed
-        from services.employee_lifecycle_service import get_offboarding_status
+        from data.services_employee_lifecycle_service import get_offboarding_status
         status = get_offboarding_status(db=db_session, case_id=case_id)
         assert status["status"] == "completed"
 
@@ -208,7 +208,7 @@ class TestDoubleCancelOffboarding:
     @pytest.mark.integration
     def test_cancel_nonexistent_case_raises(self, db_session):
         """Cancelling a case that doesn't exist must raise."""
-        from services.employee_lifecycle_service import cancel_offboarding
+        from data.services_employee_lifecycle_service import cancel_offboarding
 
         with pytest.raises(ValueError, match="not found"):
             cancel_offboarding(db=db_session, case_id=99999, reason="No such case")
@@ -229,7 +229,7 @@ class TestOffboardingTerminatedEmployee:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # First offboarding
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             initiate_offboarding, complete_offboarding_step,
         )
 
@@ -242,12 +242,12 @@ class TestOffboardingTerminatedEmployee:
         for step in ["exit_interview", "asset_reclamation", "access_revocation", "session_invalidation"]:
             complete_offboarding_step(db=db_session, case_id=case["id"], step_name=step)
 
-        from models.employee_models import Employee
+        from data.models_employee_models import Employee
         emp = db_session.query(Employee).filter(Employee.id == emp_id).first()
         assert emp.employment_status == "terminated"
 
         # Second offboarding for the same (now terminated) employee must raise
-        from services.employee_lifecycle_service import initiate_offboarding as init_off
+        from data.services_employee_lifecycle_service import initiate_offboarding as init_off
         with pytest.raises((ValueError, KeyError)):
             init_off(
                 db=db_session, employee_id=emp_id,
@@ -257,7 +257,7 @@ class TestOffboardingTerminatedEmployee:
     @pytest.mark.integration
     def test_get_status_nonexistent_case_raises(self, db_session):
         """Getting offboarding status for a non-existent case must raise."""
-        from services.employee_lifecycle_service import get_offboarding_status
+        from data.services_employee_lifecycle_service import get_offboarding_status
 
         with pytest.raises(ValueError, match="not found"):
             get_offboarding_status(db=db_session, case_id=99999)
@@ -280,7 +280,7 @@ class TestZeroSalaryPayroll:
             salary=Decimal("0.00"),
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp_id)
 
@@ -305,7 +305,7 @@ class TestZeroSalaryPayroll:
         _create_test_employee(db_session, user_id=user1, salary=Decimal("2000.00"))
         _create_test_employee(db_session, user_id=user2, salary=Decimal("0.00"))
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         result = engine.process_payroll_batch(country_code="OM")
 
@@ -326,7 +326,7 @@ class TestZeroSalaryPayroll:
             performance_score=4.5,
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         bonus = engine.calculate_performance_bonus(emp_id)
 
@@ -343,7 +343,7 @@ class TestZeroSalaryPayroll:
             hire_date=date.today() - timedelta(days=1825),  # 5 years
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         eosb = engine.calculate_eosb(emp_id)
 
@@ -368,7 +368,7 @@ class TestLongTenureAndHighSalary:
             hire_date=date.today() - timedelta(days=4380),  # 12 years
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         eosb = engine.calculate_eosb(emp_id)
 
@@ -390,7 +390,7 @@ class TestLongTenureAndHighSalary:
             hire_date=date.today() - timedelta(days=3650),  # 10 years
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         eosb = engine.calculate_eosb(emp_id)
 
@@ -410,7 +410,7 @@ class TestLongTenureAndHighSalary:
             salary=Decimal("25000.00"),  # 25k OMR/month
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         overtime = engine.calculate_overtime(emp_id)
 
@@ -429,7 +429,7 @@ class TestLongTenureAndHighSalary:
             hire_date=date.today() - timedelta(days=30),  # Just started
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp_id)
 
@@ -493,7 +493,7 @@ class TestPayrollInvariantsHypothesis:
             performance_score=score,
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp_id)
 
@@ -587,7 +587,7 @@ class TestPayrollInvariantsHypothesis:
             performance_score=4.2,  # Fixed score → 3% bonus
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp_id)
 
@@ -626,7 +626,7 @@ class TestPayrollInvariantsHypothesis:
             performance_score=score,
         )
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp_id)
 
@@ -650,7 +650,7 @@ class TestAlreadyCompletedSteps:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import create_onboarding_pipeline, complete_onboarding_step
+        from data.services_employee_lifecycle_service import create_onboarding_pipeline, complete_onboarding_step
         pipeline = create_onboarding_pipeline(db=db_session, employee_id=emp_id)
         pipeline_id = pipeline["id"]
 
@@ -668,7 +668,7 @@ class TestAlreadyCompletedSteps:
             step_name="document_collection", completed_by=user_id,
         )
         # The UPDATE matches zero rows, so completed_steps should NOT increment
-        from services.employee_lifecycle_service import get_onboarding_progress
+        from data.services_employee_lifecycle_service import get_onboarding_progress
         progress = get_onboarding_progress(db=db_session, pipeline_id=pipeline_id)
         assert progress["pipeline"]["completed_steps"] == 1, (
             f"Expected 1 completed step, got {progress['pipeline']['completed_steps']}"
@@ -681,7 +681,7 @@ class TestAlreadyCompletedSteps:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import create_onboarding_pipeline, complete_onboarding_step
+        from data.services_employee_lifecycle_service import create_onboarding_pipeline, complete_onboarding_step
         pipeline = create_onboarding_pipeline(db=db_session, employee_id=emp_id)
         pipeline_id = pipeline["id"]
 
@@ -708,7 +708,7 @@ class TestPayrollWithoutBankAccount:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.payroll_engine import PayrollEngine
+        from data.services_payroll_engine import PayrollEngine
         engine = PayrollEngine(db_session)
         accounts = engine.get_employee_bank_accounts(emp_id)
 
@@ -730,7 +730,7 @@ class TestOvernightSLA:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import create_onboarding_pipeline, complete_onboarding_step
+        from data.services_employee_lifecycle_service import create_onboarding_pipeline, complete_onboarding_step
 
         # Custom steps with very short SLAs (1 hour each)
         tight_steps = [
@@ -755,7 +755,7 @@ class TestOvernightSLA:
             )
             assert result["completed"] is True
 
-        from services.employee_lifecycle_service import get_onboarding_progress
+        from data.services_employee_lifecycle_service import get_onboarding_progress
         progress = get_onboarding_progress(db=db_session, pipeline_id=pipeline_id)
         assert progress["pipeline"]["status"] == "completed"
         assert progress["pipeline"]["completed_steps"] == 2
@@ -775,7 +775,7 @@ class TestOffboardingOutOfOrder:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             initiate_offboarding, complete_offboarding_step, get_offboarding_status,
         )
 
@@ -815,7 +815,7 @@ class TestBackgroundCheckStep:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             create_onboarding_pipeline, complete_onboarding_step, get_onboarding_progress,
         )
 
@@ -856,12 +856,12 @@ class TestBackgroundCheckStep:
         user_id = _create_test_user(db_session)
 
         # Set the user's full_name to a watchlist match
-        from models import User
+        from data.models import User
         user = db_session.query(User).filter(User.id == user_id).first()
         user.full_name = "John Doe Flagged"  # In _KNOWN_FLAGGED_NAMES
         db_session.flush()
 
-        from models.employee_models import Employee
+        from data.models_employee_models import Employee
         from decimal import Decimal
 
         code = f"FLAG{uuid.uuid4().hex[:6].upper()}"
@@ -880,7 +880,7 @@ class TestBackgroundCheckStep:
         db_session.flush()
         emp_id = emp.id
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             create_onboarding_pipeline, complete_onboarding_step, get_onboarding_progress,
         )
 
@@ -916,7 +916,7 @@ class TestBackgroundCheckStep:
         """An employee from a sanctions-flagged country should still pass (advisory, not block)."""
         _ensure_country_config(db_session)
         # Add Iran to country configs for the FK constraint
-        from models import CountryConfig
+        from data.models import CountryConfig
         existing = db_session.query(CountryConfig).filter(CountryConfig.code == "IR").first()
         if not existing:
             db_session.add(CountryConfig(code="IR", name="Iran", currency="IRR", currency_symbol="﷼"))
@@ -925,7 +925,7 @@ class TestBackgroundCheckStep:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id, country_code="IR")
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             create_onboarding_pipeline, complete_onboarding_step, get_onboarding_progress,
         )
 
@@ -955,7 +955,7 @@ class TestBackgroundCheckStep:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             create_onboarding_pipeline, complete_onboarding_step, get_onboarding_progress,
         )
 
@@ -983,7 +983,7 @@ class TestBackgroundCheckStep:
         _ensure_country_config(db_session)
         user_id = _create_test_user(db_session)
 
-        from models.employee_models import Employee
+        from data.models_employee_models import Employee
         from decimal import Decimal
 
         emp = Employee(
@@ -1001,7 +1001,7 @@ class TestBackgroundCheckStep:
         db_session.flush()
         emp_id = emp.id
 
-        from services.employee_lifecycle_service import (
+        from data.services_employee_lifecycle_service import (
             create_onboarding_pipeline, complete_onboarding_step,
         )
 
@@ -1024,7 +1024,7 @@ class TestBackgroundCheckStep:
     @pytest.mark.integration
     def test_background_check_export_to_dict(self, db_session):
         """The BackgroundCheckResult dataclass can be serialized to dict."""
-        from services.background_check import BackgroundCheckResult, BACKGROUND_CHECK_CLEAR
+        from data.services_background_check import BackgroundCheckResult, BACKGROUND_CHECK_CLEAR
 
         r = BackgroundCheckResult(
             status=BACKGROUND_CHECK_CLEAR,
@@ -1134,10 +1134,10 @@ class TestRedTeamOnboarding:
 
         def _worker(idx: int) -> dict:
             """Worker: create own engine → User → Employee → Pipeline."""
-            from utils.auth import get_password_hash
-            from models import User, CountryConfig
-            from models.employee_models import Employee
-            from services.employee_lifecycle_service import create_onboarding_pipeline
+            from data.utils_auth import get_password_hash
+            from data.models import User, CountryConfig
+            from data.models_employee_models import Employee
+            from data.services_employee_lifecycle_service import create_onboarding_pipeline
             from decimal import Decimal
             from datetime import date, timedelta
 
@@ -1224,7 +1224,7 @@ class TestRedTeamOnboarding:
                 step_count = conn.execute(
                     sa_text("SELECT COUNT(*) FROM onboarding_steps")
                 ).scalar()
-                from services.employee_lifecycle_service import DEFAULT_ONBOARDING_STEPS
+                from data.services_employee_lifecycle_service import DEFAULT_ONBOARDING_STEPS
                 expected_steps = n * len(DEFAULT_ONBOARDING_STEPS)
                 assert step_count == expected_steps, (
                     f"Expected {expected_steps} steps, found {step_count}"
@@ -1247,9 +1247,9 @@ class TestRedTeamOnboarding:
         """Fire 10 concurrent threads all trying to create a pipeline for
         the *same* employee.  Exactly one must succeed; the rest must
         fail with ``IntegrityError`` (UNIQUE constraint)."""
-        from utils.auth import get_password_hash
-        from models import User, CountryConfig
-        from models.employee_models import Employee
+        from data.utils_auth import get_password_hash
+        from data.models import User, CountryConfig
+        from data.models_employee_models import Employee
         from decimal import Decimal
         from datetime import date, timedelta
 
@@ -1298,7 +1298,7 @@ class TestRedTeamOnboarding:
 
         def _worker(idx: int) -> dict:
             """Try to create a pipeline for the pre-created employee."""
-            from services.employee_lifecycle_service import create_onboarding_pipeline
+            from data.services_employee_lifecycle_service import create_onboarding_pipeline
             eng = TestRedTeamOnboarding._make_worker_engine(db_file)
             s = sessionmaker(bind=eng)()
             try:
@@ -1367,10 +1367,10 @@ class TestRedTeamOnboarding:
         - The pipeline status is valid (``in_progress`` or ``completed``)
         - ``completed_steps`` is at least 1 (progress was made)
         """
-        from utils.auth import get_password_hash
-        from models import User, CountryConfig
-        from models.employee_models import Employee
-        from services.employee_lifecycle_service import (
+        from data.utils_auth import get_password_hash
+        from data.models import User, CountryConfig
+        from data.models_employee_models import Employee
+        from data.services_employee_lifecycle_service import (
             create_onboarding_pipeline,
         )
         main_engine = create_engine(
@@ -1428,7 +1428,7 @@ class TestRedTeamOnboarding:
 
         def _worker(idx: int) -> dict:
             """Complete one onboarding step."""
-            from services.employee_lifecycle_service import complete_onboarding_step
+            from data.services_employee_lifecycle_service import complete_onboarding_step
             eng = TestRedTeamOnboarding._make_worker_engine(db_file)
             s = sessionmaker(bind=eng)()
             try:

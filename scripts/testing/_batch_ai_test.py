@@ -3,7 +3,7 @@ import os
 
 import requests
 
-BASE = r"D:\Projects\10- E-COMMERCE WEBSITE\zozi\documents\snap\Product"
+BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'documents', 'snap', 'Product')
 
 GROUPS = {
     "bar_bra": ["bar_1.jpg", "bar_2.webp"],

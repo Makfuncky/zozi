@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { toast } from "@/lib/toastStore";
 import type { Product } from "@shared/types";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const createStyles = (theme: AppTheme) => StyleSheet.create({
   list: {
@@ -80,6 +81,14 @@ const createStyles = (theme: AppTheme) => StyleSheet.create({
 });
 
 export default function SupplierProductsScreen() {
+  return (
+    <ErrorBoundary>
+      <SupplierProductsScreenInner />
+    </ErrorBoundary>
+  );
+}
+
+function SupplierProductsScreenInner() {
   const { theme } = useThemeStore();
   const styles = createStyles(theme);
   const s = makeStyles(theme);

@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy.orm import Session
 
-from models import Notification, SystemSetting
+from data.models import Notification, SystemSetting
 
 
 class NotificationChannel(str, Enum):
@@ -153,8 +153,8 @@ def _enqueue_notification_delivery(
         from utils.background_jobs import enqueue_job, JobKind
 
         def _deliver() -> dict:
-            from db.database import SessionLocal
-            from models import User
+            from data.db import SessionLocal
+            from data.models import User
 
             db = SessionLocal()
             try:

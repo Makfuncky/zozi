@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
-from db.database import get_db
-from models import Employee, OrgUnit, EmployeeRelation, EmployeeRole
+from data.dependencies_auth import get_current_user
+from data.db import get_db
+from data.models import Employee, OrgUnit, EmployeeRelation, EmployeeRole
 from services.hierarchy_service import (
     get_org_chart,
     get_org_unit_subtree,
@@ -32,8 +32,8 @@ from services.hierarchy_service import (
     get_approval_chain,
 )
 from utils.country_rls import enforce_country_access, get_country_scope_from_db
-from models import CountryStaffAssignment, CountryConfig, CountryHolidayCalendar
-from models.country_enhancements import CountryLocalization
+from data.models import CountryStaffAssignment, CountryConfig, CountryHolidayCalendar
+from data.models_country_enhancements import CountryLocalization
 
 from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, flush_only
 logger = logging.getLogger(__name__)
@@ -86,13 +86,15 @@ class ApprovalChainQuery(BaseModel):
 @router.get("/org-units", response_model=dict)
 def list_org_units(
     country_code: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     q = db.query(OrgUnit).filter(OrgUnit.is_active == True)
     if country_code:
         q = q.filter(OrgUnit.country_code == country_code)
-    units = q.order_by(OrgUnit.path, OrgUnit.name).all()
+    units = q.order_by(OrgUnit.path, OrgUnit.name).offset(skip).limit(limit).all()
     return {
         "units": [
             {
@@ -357,6 +359,8 @@ def approval_chain(
 @router.get("/country-scope/{user_id}")
 def user_country_scope(
     user_id: int = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -367,6 +371,8 @@ def user_country_scope(
             CountryStaffAssignment.user_id == user_id,
             CountryStaffAssignment.is_active == True,
         )
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return {
@@ -415,6 +421,8 @@ def switch_country_scope(
 @router.get("/localization/{country_code}")
 def country_localization(
     country_code: str = Path(..., min_length=2, max_length=10),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -428,11 +436,15 @@ def country_localization(
         db.query(CountryHolidayCalendar)
         .filter(CountryHolidayCalendar.country_code == normalized)
         .order_by(CountryHolidayCalendar.date)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     localization = (
         db.query(CountryLocalization)
         .filter(CountryLocalization.country_code == normalized)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 

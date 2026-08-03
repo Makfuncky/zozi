@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, CountryCity
+from data.models import CountryConfig, CountryCity
 from models.country_control import CountryMapConfig, ShopWarehouseLocation
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class MapService:
         self, country_code: str, zone_type: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Get delivery zones for a country."""
-        from models.country_enhancements import OmanDeliveryZone
+        from data.models_country_enhancements import OmanDeliveryZone
 
         query = self.db.query(OmanDeliveryZone).filter(
             OmanDeliveryZone.is_active == True
@@ -176,7 +176,7 @@ class MapService:
         }
 
         if include_parcels:
-            from models import Shipment
+            from data.models import Shipment
             from models.country_control import ParcelLocationTracker
 
             shipments = (

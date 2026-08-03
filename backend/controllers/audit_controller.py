@@ -24,3 +24,6 @@ Usage (anywhere in the backend):
 
 # Re-export from the shared module (single source of truth)
 from utils.audit_log import AuditAction, audit_log, get_audit_logs, get_unique_actions  # noqa: F401
+import logging
+
+logger = logging.getLogger(__name__)

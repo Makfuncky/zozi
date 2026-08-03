@@ -4,44 +4,37 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = ["CommissionAgreement", "ProductCommissionOverride", "CommissionLedgerEntry", "CommissionCategoryRate", "CommissionRule"]
 
-
-class CommissionAgreement(Base):
+class CommissionAgreement(Base, TenantMixin):
     __tablename__ = "commission_agreements"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(3), nullable=True)
-    tier = Column(String(20), nullable=False)
+    supplier_id = Column(Integer, nullable=False)
+
     rate = Column(Numeric(5, 4), nullable=False)
-    set_by_admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    effective_from = Column(DateTime, default=_utcnow)
+    set_by_admin_id = Column(Integer, nullable=True)
+
     effective_to = Column(DateTime, nullable=True)
     note = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
-
-class ProductCommissionOverride(Base):
+class ProductCommissionOverride(Base, TenantMixin):
     __tablename__ = "product_commission_overrides"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    supplier_id = Column(Integer, nullable=False)
     rate_percent = Column(Numeric(5, 2), nullable=False)
-    set_by_admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+    set_by_admin_id = Column(Integer, nullable=True)
 
-
-class CommissionLedgerEntry(Base):
+class CommissionLedgerEntry(Base, TenantMixin):
     __tablename__ = "commission_ledger_entries"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    supplier_id = Column(Integer, nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
     order_item_id = Column(Integer, ForeignKey("commerce.order_items.id"), nullable=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
@@ -63,14 +56,12 @@ class CommissionLedgerEntry(Base):
     is_adjusted = Column(Boolean, default=False)
     currency = Column(String(3), default="OMR")
     amount = Column(Numeric(12, 2), nullable=True)
-    adjusted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    adjusted_by = Column(Integer, nullable=True)
     status = Column(String, default="pending")
     credited_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CommissionCategoryRate(Base):
+class CommissionCategoryRate(Base, TenantMixin):
     __tablename__ = 'commission_category_rates'
     __table_args__ = (
         UniqueConstraint('category_id', 'category_slug', name='uq_commission_category_rate'), {"schema": "commerce"})
@@ -79,14 +70,10 @@ class CommissionCategoryRate(Base):
     category_slug = Column(String(100), nullable=True)
     category_display_name = Column(String(100), nullable=True)
     country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
-    rate_percent = Column(Numeric(5, 2), nullable=False, default=0)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    
-    country = relationship('CountryConfig', foreign_keys=[country_code])
 
+    country = relationship('CountryConfig', foreign_keys="CommissionCategoryRate.country_code")
 
-class CommissionRule(Base):
+class CommissionRule(Base, TenantMixin):
     __tablename__ = "commission_rules"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -94,8 +81,7 @@ class CommissionRule(Base):
     rule_type = Column(String(50), nullable=False)
     tier = Column(String(20), nullable=True)
     rate_percent = Column(Numeric(5, 2), nullable=False)
-    is_active = Column(Boolean, default=True)
-    country_code = Column(String(3), nullable=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
+    created_by = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

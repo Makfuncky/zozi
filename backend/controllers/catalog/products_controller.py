@@ -17,10 +17,10 @@ from fastapi.responses import Response
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from models import (
+from data.models import (
     CartItem, Category, FlashSale, Notification, Order, OrderItem, Product, ProductVariant, Review, SupplierProfile, User, Wishlist, CountryConfig
 )
-from db.schemas import Product as ProductSchema, ProductCreate
+from data.schemas import Product as ProductSchema, ProductCreate
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import cache_or_compute, cache_get_json, cache_set_json, build_versioned_cache_key
 from services.core.write_helpers import (
@@ -849,7 +849,7 @@ def patch_product_stock(
     supplier_id = cast(int | None, getattr(product, "supplier_id"))
     if new_stock <= _LOW_STOCK_THRESHOLD and supplier_id:
         try:
-            from models import User as UserModel
+            from data.models import User as UserModel
             from utils.email_service import send_email
             supplier = db.query(UserModel).filter(UserModel.id == supplier_id).first()
             supplier_email = cast(str | None, getattr(supplier, "email")) if supplier else None

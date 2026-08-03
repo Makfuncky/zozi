@@ -14,7 +14,7 @@ from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from location_service.geo_resolver import resolve_ip_location, reverse_geocode
+from services.location.geo_resolver import resolve_ip_location, reverse_geocode
 
 router = APIRouter()
 

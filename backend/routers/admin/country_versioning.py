@@ -8,8 +8,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
-from models import CountryConfig, CountryConfigVersion
+from data.dependencies_auth import get_current_user
+from data.models import CountryConfig, CountryConfigVersion
 from services.country_write_service import (
     create_country_config_version as create_draft_version,
     update_country_config_version_status as update_version_status,

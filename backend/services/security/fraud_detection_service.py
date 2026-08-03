@@ -17,7 +17,7 @@ import redis
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue,
     IPReputation, DeviceFingerprint, User, Order,
     OrderItem, ReturnRequest, PaymentReconciliationRun, SupplierBankAccount,
@@ -386,7 +386,7 @@ class GraphAnalysisService:
     
     def check_session_anomaly(self, user_id: int, ip_address: str) -> dict[str, Any]:
         """Check for session anomalies like impossible travel."""
-        from models import UserLoginHistory
+        from data.models import UserLoginHistory
         last_login = self.db.query(UserLoginHistory).filter(
             UserLoginHistory.user_id == user_id
         ).order_by(UserLoginHistory.timestamp.desc()).first()
@@ -579,7 +579,7 @@ class FraudScoringEngine:
     
     def check_impossible_travel(self, user_id: int, ip_address: str) -> dict[str, Any]:
         """Check if user has logged in from geographically impossible locations."""
-        from models import UserLoginHistory
+        from data.models import UserLoginHistory
         last_login = self.db.query(UserLoginHistory).filter(
             UserLoginHistory.user_id == user_id
         ).order_by(UserLoginHistory.timestamp.desc()).first()

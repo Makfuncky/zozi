@@ -11,7 +11,7 @@ from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
 from models.products import Product
-from db.schemas import _normalize_image_path
+from data.schemas import _normalize_image_path
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
 
 # ── Price-range keyword map ────────────────────────────────────────────────

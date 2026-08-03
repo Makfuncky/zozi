@@ -1,14 +1,12 @@
-"""
-Entity Chat API
-"""
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+"""Entity-Attached Contextual Chat Router."""
+from typing import Optional
 
-from models import EntityChatThread, User
-from services.entity_chat_service import get_chat_service, EntityChatService
-from db.database import get_db
-from dependencies.auth import get_current_user
+from fastapi import APIRouter, Depends, HTTPException
+
+from data.dependencies_auth import get_current_user
+from data.services_communication_entity_chat_service import (
+    get_chat_service,
+)
 
 router = APIRouter()
 
@@ -19,9 +17,8 @@ async def create_thread(
     entity_id: int,
     title: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
-    service = get_chat_service(db)
+    service = get_chat_service()
     thread = service.create_or_get_thread(entity_type, entity_id, title)
     return {
         "id": thread.id,
@@ -36,13 +33,16 @@ async def send_message(
     thread_id: int,
     message: str,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
-    user = db.query(User).filter(User.id == int(current_user["sub"])).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    service = get_chat_service(db)
+    from data.db import get_db_context
+    from data.models import User
+
+    with get_db_context() as db:
+        user = db.query(User).filter(User.id == int(current_user["sub"])).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+    service = get_chat_service()
     msg = service.send_message(thread_id, user.id, message)
     return {
         "id": msg.id,
@@ -58,9 +58,8 @@ async def get_messages(
     limit: int = 50,
     offset: int = 0,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
-    service = get_chat_service(db)
+    service = get_chat_service()
     messages = service.get_thread_messages(thread_id, limit, offset)
     return {"messages": messages}
 
@@ -70,8 +69,7 @@ async def get_entity_thread(
     entity_type: str,
     entity_id: int,
     current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
-    service = get_chat_service(db)
+    service = get_chat_service()
     thread = service.get_entity_thread(entity_type, entity_id)
     return thread or {"exists": False}

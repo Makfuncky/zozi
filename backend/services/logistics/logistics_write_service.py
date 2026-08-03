@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     Notification,
     Shipment,
     ShipmentEvent,

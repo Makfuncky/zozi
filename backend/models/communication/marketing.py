@@ -4,11 +4,11 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = ["FlashSale", "FlashSaleItem", "EmailCampaign", "EmailTemplate", "NewsletterSubscriber", "EmailCampaignLog", "CampaignRecipient", "EmailDeliveryEvent", "EmailSuppression", "EmailRuntimeConfig"]
 
-
-class FlashSale(Base):
+class FlashSale(Base, TenantMixin):
     __tablename__ = "flash_sales"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -17,17 +17,16 @@ class FlashSale(Base):
     starts_at = Column(DateTime, nullable=False)
     ends_at = Column(DateTime, nullable=False)
     discount_pct = Column(Numeric(5, 2), default=0)
-    is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
+
     deleted_at = Column(DateTime, nullable=True)
     deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     product_ids = Column(JSON, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
 
+    country = relationship("CountryConfig", foreign_keys="FlashSale.country_code")
+    items = relationship("FlashSaleItem", back_populates="flash_sale")
 
-class FlashSaleItem(Base):
+class FlashSaleItem(Base, TenantMixin):
     __tablename__ = "flash_sale_items"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -35,19 +34,16 @@ class FlashSaleItem(Base):
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     original_price = Column(Numeric(10, 2), nullable=False)
     discounted_price = Column(Numeric(10, 2), nullable=False)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     quantity_limit = Column(Integer, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    
+
     flash_sale = relationship("FlashSale", back_populates="items")
     product = relationship("Product")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
-
+    country = relationship("CountryConfig", foreign_keys="FlashSaleItem.country_code")
 
 FlashSale.items = relationship("FlashSaleItem", back_populates="flash_sale", cascade="all, delete-orphan")
 
-
-class EmailCampaign(Base):
+class EmailCampaign(Base, TenantMixin):
     __tablename__ = "email_campaigns"
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -58,8 +54,7 @@ class EmailCampaign(Base):
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    from_email = Column(String(200), nullable=True)
+
     from_name = Column(String(200), nullable=True)
     target_audience = Column(Text, nullable=True)
     scheduled_at = Column(DateTime, nullable=True)
@@ -67,7 +62,7 @@ class EmailCampaign(Base):
     sent_count = Column(Integer, default=0)
     open_count = Column(Integer, default=0)
     click_count = Column(Integer, default=0)
-
+    recipients = relationship("CampaignRecipient", back_populates="campaign")
 
 class EmailTemplate(Base):
     __tablename__ = "email_templates"
@@ -82,17 +77,14 @@ class EmailTemplate(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
 class NewsletterSubscriber(Base):
     __tablename__ = "newsletter_subscribers"
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    is_active = Column(Boolean, default=True)
-    subscribed_at = Column(DateTime, default=_utcnow)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-
 
 class EmailCampaignLog(Base):
     __tablename__ = "email_campaign_logs"
@@ -105,7 +97,6 @@ class EmailCampaignLog(Base):
     delivered_at = Column(DateTime, nullable=True)
     opened_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-
 
 class CampaignRecipient(Base):
     __tablename__ = "campaign_recipients"
@@ -121,13 +112,11 @@ class CampaignRecipient(Base):
     clicked_at = Column(DateTime, nullable=True)
     bounced_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    
+
     campaign = relationship("EmailCampaign", back_populates="recipients")
     user = relationship("User")
 
-
 EmailCampaign.recipients = relationship("CampaignRecipient", back_populates="campaign", cascade="all, delete-orphan")
-
 
 class EmailDeliveryEvent(Base):
     __tablename__ = "email_delivery_events"
@@ -139,7 +128,6 @@ class EmailDeliveryEvent(Base):
     status = Column(String, default="sent")
     details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-
 
 class EmailSuppression(Base):
     __tablename__ = "email_suppressions"
@@ -154,7 +142,6 @@ class EmailSuppression(Base):
     suppressed_at = Column(DateTime, nullable=True)
     last_event_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-
 
 class EmailRuntimeConfig(Base):
     __tablename__ = "email_runtime_config"

@@ -86,7 +86,7 @@ describe("Admin exports panel backup controls", () => {
       database: {
         engine: "sqlite",
         driver: "pysqlite",
-        location: "D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/zozi.db",
+        location: "backend/zozi.db",
         connected: true,
         health: "ok",
         app_env: "development",
@@ -109,7 +109,7 @@ describe("Admin exports panel backup controls", () => {
           configured: true,
           role: "Primary relational database for local file-backed runtime when DATABASE_URL uses sqlite:///.",
           detail: "This runtime is currently backed by a local SQLite database file.",
-          location: "D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/zozi.db",
+        location: "sqlite:///zozi.db",
           exists: true,
           backup_format: ".sqlite",
           backup_strategy: "sqlite online backup API",

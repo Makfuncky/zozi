@@ -14,7 +14,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import Employee
+from data.models import Employee
 from services.hierarchy_service import (
     get_authority_level,
     get_user_chain,

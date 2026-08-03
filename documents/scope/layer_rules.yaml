@@ -35,44 +35,62 @@ ownership_layers:
 
 domains:
   core:
-    may_import: []
+    may_import:
+      - mixins
 
   auth:
     may_import:
       - core
+      - mixins
 
   users:
     may_import:
       - core
       - auth
+      - mixins
 
   catalog:
     may_import:
       - core
+      - mixins
 
   supplier:
     may_import:
       - core
       - catalog
+      - finance
+      - treasury
+      - mixins
 
   logistics:
     may_import:
       - core
       - supplier
+      - cash_management_service
+      - mixins
 
   finance:
     may_import:
       - core
+      - communication
+      - gateways
+      - payments
+      - catalog
+      - cash_management_service
+      - mixins
 
   payments:
     may_import:
       - core
       - finance
+      - mixins
 
   treasury:
     may_import:
       - core
       - finance
+      - orders
+      - mixins
 
   orders:
     may_import:
@@ -83,25 +101,38 @@ domains:
       - logistics
       - finance
       - payments
-      - comms
-
-  comms:
+      - communication
+      - mixins
+ 
+  communication:
     may_import:
       - core
       - users
+      - logistics
+      - orders
+      - mixins
 
   hr:
     may_import:
       - core
       - users
+      - communication
+      - mixins
 
   ai:
     may_import:
       - core
       - catalog
-      - comms
+      - communication
+      - mixins
+
+  gateways:
+    may_import:
+      - core
+      - mixins
 
   fraud:
     may_import:
       - core
+      - mixins
       - payments

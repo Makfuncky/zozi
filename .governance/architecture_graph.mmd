@@ -1,66 +1,30 @@
 %% AUTO-GENERATED dependency graph — DO NOT HAND-EDIT.
 graph LR
-    ai --> finance
+    admin --> write_helpers
+    ai --> mixins
     audit --> core
     audit --> finance
-    automation_scheduler --> ai_automation_service
-    automation_scheduler --> credit_control_service
-    automation_scheduler --> finance_automation
-    automation_scheduler --> gateway_reconciliation_service
-    automation_scheduler --> import_service
-    automation_scheduler --> payout_batch_service
-    automation_scheduler --> period_close_service
-    automation_scheduler --> trading_service
-    automation_scheduler --> transactional_email_service
-    automation_scheduler --> treasury_engine
+    cash_management_service --> database
     catalog --> core
-    commission_engine --> logistics_partner_pricing
+    commission_engine --> write_helpers
     communication --> core
     communication --> logistics
-    communication --> orders
     country --> logistics
     country --> payments
-    external_contact --> communication
-    finance --> admin_analytics_service
-    finance --> bank_transaction_service
+    finance --> cash_management_service
+    finance --> catalog
     finance --> communication
     finance --> core
-    finance --> finance_transfer_service
-    finance --> general_ledger_service
-    finance --> logistics_partner_pricing
-    finance --> ocr_parser
-    finance --> retention_service
-    finance --> supplier_badge_service
-    finance --> transactional_email_service
-    finance --> treasury_engine
-    finance_automation --> ocr_parser
-    finance_automation --> treasury_engine
-    finance_transfer_service --> logistics_partner_pricing
+    finance --> payments
     hr --> communication
     hr --> core
-    logistics --> finance_transfer_service
-    logistics --> logistics_partner_pricing
-    logistics --> treasury_service
+    logistics --> cash_management_service
     orders --> catalog
-    orders --> communication
+    orders --> finance
     orders --> logistics
-    payout_batch_service --> transactional_email_service
-    period_close_service --> general_ledger_service
-    sub_ledger_service --> finance
+    security --> communication
+    security --> write_helpers
     supplier --> finance
-    supplier --> finance_transfer_service
     supplier --> treasury
-    supplier_badge_service --> audit
-    supplier_badge_service --> bank_transaction_service
-    trading_service --> transactional_email_service
-    treasury --> ai
-    treasury --> analytics
-    treasury --> commerce
-    treasury --> communication
-    treasury --> finance
-    treasury --> hr
-    treasury --> logistics
     treasury --> orders
-    treasury --> supplier
-    treasury_engine --> general_ledger_service
-    treasury_engine --> orders
+    write_helpers --> core

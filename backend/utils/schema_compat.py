@@ -58,7 +58,7 @@ def patch_fk_schemas(metadata: MetaData | None = None) -> int:
     Returns the number of patched references. Idempotent.
     """
     if metadata is None:
-        from db.base import Base
+        from data.base import Base
 
         metadata = Base.metadata
 
@@ -95,7 +95,7 @@ def bind_metadata(metadata: MetaData | None = None) -> MetaData:
     """Apply the SQLite FK patch and configure mappers so the metadata is
     safe to ``create_all`` / reflect on SQLite."""
     if metadata is None:
-        from db.base import Base
+        from data.base import Base
 
         metadata = Base.metadata
     patch_fk_schemas(metadata)

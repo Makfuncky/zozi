@@ -121,8 +121,8 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
     Returns a dict with rotation status and counts.
     """
     global _vault_instance
-    from db.database import get_db
-    from models import PaymentGatewayConnection
+    from data.db import get_db
+    from data.models import PaymentGatewayConnection
     from cryptography.fernet import Fernet
     import json as _json
     

@@ -7,6 +7,7 @@ from sqlalchemy import Boolean, Column, Date, DateTime, Float, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 if TYPE_CHECKING:
     from . import User
@@ -21,24 +22,20 @@ __all__ = [
     "OrgUnit"
 ]
 
-
-class Office(Base):
+class Office(Base, TenantMixin):
     __tablename__ = "offices"
-    __table_args__ = ({"schema": "logistics"},)
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
-    country_code = Column(String(3), nullable=False)
-    city = Column(String(100), nullable=True)
+
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
     geo_fence_radius_meters = Column(Integer, default=100)
     address = Column(Text, nullable=True)
     phone = Column(String(50), nullable=True)
     email = Column(String(200), nullable=True)
-    is_active = Column(Boolean, default=True)
 
-
-class PhysicalIDCard(Base):
+class PhysicalIDCard(Base, TenantMixin):
     __tablename__ = "physical_id_cards"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -49,16 +46,14 @@ class PhysicalIDCard(Base):
     is_revoked = Column(Boolean, default=False)
     revoked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee")
 
-
-class DynamicQRSession(Base):
+class DynamicQRSession(Base, TenantMixin):
     __tablename__ = "dynamic_qr_sessions"
-    __table_args__ = (Index("ix_qr_session_employee_expires", "employee_id", "expires_at"), {"schema": "logistics"})
+    __table_args__ = (Index("ix_qr_session_employee_expires", "employee_id", "expires_at"), {"schema": "hr"})
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=False)
     qr_token = Column(String(255), unique=True, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False)
     used_at = Column(DateTime, nullable=True)
@@ -66,12 +61,10 @@ class DynamicQRSession(Base):
     user_agent = Column(String(500), nullable=True)
     device_fingerprint = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="dynamic_qr_sessions")
 
-
-class EmployeeBiometric(Base):
+class EmployeeBiometric(Base, TenantMixin):
     __tablename__ = "employee_biometrics"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -80,28 +73,23 @@ class EmployeeBiometric(Base):
     face_encoding = Column(Text, nullable=True)
     biometric_type = Column(String(20), default="fingerprint")
     enrolled_at = Column(DateTime, default=_utcnow)
-    is_active = Column(Boolean, default=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="biometrics", uselist=False)
 
-
-class GeoFenceLog(Base):
+class GeoFenceLog(Base, TenantMixin):
     __tablename__ = "geo_fence_logs"
-    __table_args__ = ({"schema": "logistics"},)
+    __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     accuracy_meters = Column(Integer, nullable=True)
     scanned_at = Column(DateTime, default=_utcnow)
     is_within_fence = Column(Boolean, default=False)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="geo_fence_logs")
 
-
-class EmployeeRole(Base):
+class EmployeeRole(Base, TenantMixin):
     __tablename__ = "employee_roles"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -111,41 +99,33 @@ class EmployeeRole(Base):
     can_approve_leave = Column(Boolean, default=False)
     can_approve_expense = Column(Boolean, default=False)
     can_manage_users = Column(Boolean, default=False)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class OrgUnit(Base):
+class OrgUnit(Base, TenantMixin):
     __tablename__ = "org_units"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     parent_id = Column(Integer, ForeignKey("hr.org_units.id"), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    level = Column(Integer, default=1)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
 
     parent = relationship("OrgUnit", remote_side=[id], backref="children")
 
-
-class Employee(Base):
+class Employee(Base, TenantMixin):
     __tablename__ = "employees"
     __table_args__ = (
         UniqueConstraint("employee_code", name="uq_employees_code"),
         Index("ix_employees_user_id", "user_id"),
-        Index("ix_employees_office", "office_id"), {"schema": "logistics"})
+        Index("ix_employees_office", "office_id"), {"schema": "hr"})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id", ondelete="CASCADE"), unique=True)
     employee_code = Column(String(20), unique=True, nullable=False)
-    office_id = Column(Integer, ForeignKey("logistics.offices.id", ondelete="SET NULL"), nullable=True)
+    office_id = Column(Integer, ForeignKey("hr.offices.id", ondelete="SET NULL"), nullable=True)
     department = Column(String(100), nullable=True)
     position = Column(String(100), nullable=True)
     employment_type = Column(String(30), default="full_time")
     employment_status = Column(String(30), default="active")
     salary = Column(Numeric(12, 2), nullable=True)
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
-    hire_date = Column(Date, nullable=False)
+
     termination_date = Column(Date, nullable=True)
     is_verified = Column(Boolean, default=False)
     gender = Column(String(20), nullable=True)
@@ -153,16 +133,17 @@ class Employee(Base):
     performance_score = Column(Integer, nullable=True)
     education_level = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
-    reporting_manager_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    reporting_manager_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=True)
     hiring_manager_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     authority_level = Column(Integer, nullable=True)
     org_unit_id = Column(Integer, ForeignKey("hr.org_units.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+
     user = relationship("User", foreign_keys=[user_id], backref="employee_profile")
     office = relationship("Office", backref="employees")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="Employee.country_code")
     reports_to = relationship("Employee", remote_side=[id], backref="subordinates")
     hiring_manager = relationship("User", foreign_keys=[hiring_manager_id])
     org_unit = relationship("OrgUnit", backref="employees")
@@ -182,17 +163,16 @@ class Employee(Base):
     biometrics = relationship("EmployeeBiometric", back_populates="employee", uselist=False, cascade="all, delete-orphan")
     geo_fence_logs = relationship("GeoFenceLog", back_populates="employee", cascade="all, delete-orphan")
 
-
-class EmployeeAttendance(Base):
+class EmployeeAttendance(Base, TenantMixin):
     __tablename__ = "employee_attendance"
     __table_args__ = (
         UniqueConstraint("employee_id", "date", name="uq_attendance_employee_date"),
         Index("ix_attendance_employee", "employee_id"),
         Index("ix_attendance_date", "date"),
-        {"schema": "logistics"})
+        {"schema": "hr"})
 
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False)
     scan_in_time = Column(DateTime, nullable=True)
     scan_out_time = Column(DateTime, nullable=True)
@@ -204,16 +184,14 @@ class EmployeeAttendance(Base):
     status = Column(String(20), default="present")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="attendance")
 
-
-class EmployeeWorkLog(Base):
+class EmployeeWorkLog(Base, TenantMixin):
     __tablename__ = "employee_work_logs"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False)
     hours_worked = Column(Numeric(5, 2), default=0)
     task_description = Column(Text, nullable=True)
@@ -221,16 +199,14 @@ class EmployeeWorkLog(Base):
     location_long = Column(Float, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="work_logs")
 
-
-class EmployeeLeaveRequest(Base):
+class EmployeeLeaveRequest(Base, TenantMixin):
     __tablename__ = "employee_leave_requests"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     leave_type = Column(String(50), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
@@ -241,18 +217,16 @@ class EmployeeLeaveRequest(Base):
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="leave_requests")
     approver = relationship("User", foreign_keys=[approved_by])
 
-
-class EmployeeLeaveLedger(Base):
+class EmployeeLeaveLedger(Base, TenantMixin):
     __tablename__ = "employee_leave_ledgers"
     __table_args__ = (
-        UniqueConstraint("employee_id", "leave_type", "year", name="uq_leave_ledger_employee_type_year"), {"schema": "logistics"})
+        UniqueConstraint("employee_id", "leave_type", "year", name="uq_leave_ledger_employee_type_year"), {"schema": "hr"})
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     leave_type = Column(String(50), nullable=False)
     year = Column(Integer, nullable=False)
     allocated_days = Column(Integer, default=0)
@@ -260,16 +234,14 @@ class EmployeeLeaveLedger(Base):
     carried_forward = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="leave_ledgers")
 
-
-class EmployeeShiftRoster(Base):
+class EmployeeShiftRoster(Base, TenantMixin):
     __tablename__ = "employee_shift_rosters"
-    __table_args__ = (UniqueConstraint("employee_id", "shift_date", name="uq_shift_employee_date"), {"schema": "logistics"})
+    __table_args__ = (UniqueConstraint("employee_id", "shift_date", name="uq_shift_employee_date"), {"schema": "hr"})
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     shift_date = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
@@ -277,16 +249,14 @@ class EmployeeShiftRoster(Base):
     status = Column(String(20), default="scheduled")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="shift_rosters")
 
-
-class EmployeeAsset(Base):
+class EmployeeAsset(Base, TenantMixin):
     __tablename__ = "employee_assets"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     asset_type = Column(String(50), nullable=False)
     asset_id = Column(String(100), nullable=False)
     serial_no = Column(String(100), nullable=True)
@@ -295,16 +265,14 @@ class EmployeeAsset(Base):
     status = Column(String(20), default="assigned")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="assets")
 
-
-class EmployeeCertification(Base):
+class EmployeeCertification(Base, TenantMixin):
     __tablename__ = "employee_certifications"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     cert_type = Column(String(100), nullable=False)
     cert_name = Column(String(200), nullable=False)
     issued_date = Column(Date, nullable=True)
@@ -312,16 +280,14 @@ class EmployeeCertification(Base):
     is_valid = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="certifications")
 
-
-class EmployeeDocument(Base):
+class EmployeeDocument(Base, TenantMixin):
     __tablename__ = "employee_documents"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     doc_type = Column(String(50), nullable=False)
     file_url = Column(String(500), nullable=False)
     expiry_date = Column(Date, nullable=True)
@@ -329,65 +295,58 @@ class EmployeeDocument(Base):
     verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="documents")
     verifier = relationship("User", foreign_keys=[verified_by])
 
-
-class EmployeeDependent(Base):
+class EmployeeDependent(Base, TenantMixin):
     __tablename__ = "employee_dependents"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(160), nullable=False)
     relation = Column(String(50), nullable=False)
     dob = Column(Date, nullable=True)
     is_insured = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="dependents")
 
-
-class EmployeeRelation(Base):
+class EmployeeRelation(Base, TenantMixin):
     __tablename__ = "employee_relations"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     related_person_name = Column(String(160), nullable=False)
     relation_type = Column(String(30), nullable=False)
     is_internal_employee = Column(Boolean, default=False)
     internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", back_populates="relations", foreign_keys=[employee_id])
     internal_employee = relationship("Employee", foreign_keys=[internal_employee_id])
 
-
-class EmployeeAddress(Base):
+class EmployeeAddress(Base, TenantMixin):
     __tablename__ = "employee_addresses"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     address_type = Column(String(30), nullable=False)
     street = Column(String(200), nullable=False)
     city = Column(String(100), nullable=False)
     state = Column(String(100), nullable=True)
     postal_code = Column(String(20), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False)
-    is_primary = Column(Boolean, default=False)
+
     created_at = Column(DateTime, default=_utcnow)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    
+
     employee = relationship("Employee", back_populates="addresses")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="EmployeeAddress.country_code")
 
-
-class COIReport(Base):
+class COIReport(Base, TenantMixin):
     __tablename__ = "coi_reports"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -401,13 +360,11 @@ class COIReport(Base):
     approved_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    employee = relationship("Employee", foreign_keys=[employee_id])
+
     internal_employee = relationship("Employee", foreign_keys=[internal_employee_id])
     approver = relationship("User", foreign_keys=[approved_by])
 
-
-class TravelRequest(Base):
+class TravelRequest(Base, TenantMixin):
     __tablename__ = "employee_travel_requests"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -422,13 +379,11 @@ class TravelRequest(Base):
     per_diem_json = Column(JSON, nullable=True)
     total_cost = Column(Numeric(12, 2), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", backref="travel_requests")
     approver = relationship("User", foreign_keys=[approved_by])
 
-
-class AlumniNetwork(Base):
+class AlumniNetwork(Base, TenantMixin):
     __tablename__ = "alumni_network"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -438,11 +393,10 @@ class AlumniNetwork(Base):
     eligibility_expires_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", backref="alumni_record")
 
-class DisciplinaryCase(Base):
+class DisciplinaryCase(Base, TenantMixin):
     __tablename__ = "disciplinary_cases"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -453,12 +407,10 @@ class DisciplinaryCase(Base):
     issued_at = Column(DateTime, default=_utcnow)
     status = Column(String(20), default="active")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", foreign_keys=[employee_id])
 
-
-class OffboardingCase(Base):
+class OffboardingCase(Base, TenantMixin):
     __tablename__ = "offboarding_cases"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -470,6 +422,5 @@ class OffboardingCase(Base):
     completed_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     employee = relationship("Employee", foreign_keys=[employee_id])

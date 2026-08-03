@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import {
   ActivityIndicator,
   Image,
@@ -78,6 +79,14 @@ const createStyles = (theme: AppTheme) =>
   });
 
 export default function LogisticsPartnersScreen() {
+  return (
+    <ErrorBoundary>
+      <LogisticsPartnersScreenInner />
+    </ErrorBoundary>
+  );
+}
+
+function LogisticsPartnersScreenInner() {
   const router = useRouter();
   const theme = useThemeStore((state) => state.theme);
   const styles = createStyles(theme);

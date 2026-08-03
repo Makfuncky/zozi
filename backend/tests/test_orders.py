@@ -24,7 +24,7 @@ def customer_headers(client):
 
 @pytest.fixture
 def product_in_db(client, db_session):
-    from models import User, Product
+    from data.models import User, Product
     from utils.auth import get_password_hash
     email = f"prodowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
@@ -69,7 +69,7 @@ def test_create_order(client, customer_headers, product_in_db):
 
 @pytest.mark.integration
 def test_create_order_insufficient_stock(client, customer_headers, product_in_db, db_session):
-    from models import Product
+    from data.models import Product
     product_in_db.stock = 0
     db_session.commit()
     resp = client.post(
@@ -143,7 +143,7 @@ def test_cancel_order(client, customer_headers, product_in_db):
 
 @pytest.mark.integration
 def test_cancel_already_shipped_order(client, customer_headers, product_in_db, db_session):
-    from models import Order
+    from data.models import Order
     create_resp = client.post(
         "/api/v1/orders",
         headers=customer_headers,
@@ -179,7 +179,7 @@ def test_order_validation_empty_items(client, customer_headers):
 
 @pytest.mark.integration
 def test_order_payment_status_transitions(client, customer_headers, product_in_db, db_session):
-    from models import Order
+    from data.models import Order
     create_resp = client.post(
         "/api/v1/orders",
         headers=customer_headers,

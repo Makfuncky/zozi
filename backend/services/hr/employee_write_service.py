@@ -1,9 +1,10 @@
 """Employee write service — DB write operations for HR and employee entities."""
 from datetime import datetime
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     DynamicQRSession,
     Employee,
     EmployeeAttendance,
@@ -37,6 +38,25 @@ def update_office(db: Session, office: Office, updates: dict) -> Office:
 def delete_office(db: Session, office: Office) -> None:
     db.delete(office)
     db.commit()
+
+
+def list_employees_public(db: Session) -> list[dict]:
+    query = "SELECT id, employee_code, department, position, employment_status, salary, currency, country_code, hire_date, created_at FROM employees ORDER BY created_at DESC LIMIT 50"
+    result = db.execute(text(query))
+    employees = []
+    for row in result:
+        employees.append({
+            "id": row[0],
+            "employee_code": row[1],
+            "department": row[2],
+            "position": row[3],
+            "employment_status": row[4],
+            "salary": float(row[5]) if row[5] else None,
+            "currency": row[6],
+            "country_code": row[7],
+            "hire_date": row[8].isoformat() if row[8] else None,
+        })
+    return employees
 
 
 def create_employee(db: Session, **employee_data) -> Employee:

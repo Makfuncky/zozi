@@ -9,7 +9,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from models import (
+from data.models import (
     BankStatementLine,
     BankReconciliation,
     ScannedExpense,
@@ -18,14 +18,14 @@ from models import (
     FinanceAutomationLog,
     FinanceAuditLog,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance.general_ledger_service import create_journal_entry
+from data.schemas import JournalEntryCreate, JournalLineInput
+from services import general_ledger_service as gl
 from providers.finance.finance_ai import (
     suggest_reconciliation_match,
     parse_email_to_ledger,
     extract_bill_fields,
 )
-from providers.ai.ocr import parse_bill_text
+from providers.ocr import parse_bill_text
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -236,7 +236,7 @@ def process_email_invoice(
                 lines=lines,
             )
 
-            create_journal_entry(db, entry_data)
+            gl.create_journal_entry(db, entry_data)
             posted += 1
         except Exception as e:
             logger.warning("Failed to post email invoice entry: %s", e)
@@ -411,7 +411,7 @@ def process_mobile_scan(
             lines=lines,
         )
 
-        create_journal_entry(db, entry_data)
+        gl.create_journal_entry(db, entry_data)
 
         # Create scanned expense record
         scanned = ScannedExpense(
@@ -600,7 +600,7 @@ def _auto_post_expense(db: Session, expense: ScannedExpense, category: str, coun
         country_code=country_code,
         lines=lines,
     )
-    create_journal_entry(db, entry_data)
+    gl.create_journal_entry(db, entry_data)
 
 
 def _log_automation(db: Session, kind: str, processed: int, changed: int,

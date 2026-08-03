@@ -160,4 +160,5 @@ def downgrade() -> None:
             "ix_commission_ledger_entries_country_created_at",
         ]
         for idx in indexes_to_drop:
-            op.execute(f"DROP INDEX IF EXISTS {idx}")
+            drop_sql = "DROP INDEX IF EXISTS " + idx
+            op.execute(drop_sql)

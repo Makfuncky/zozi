@@ -22,11 +22,20 @@ from pathlib import Path
 from typing import Any, Optional
 
 import requests
-from PIL import Image
 
 from utils.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+Image = _LazyPIL()
 
 HF_API_TOKEN: str = settings.hf_api_token  # resolved once at import; empty string → unauthenticated
 HF_API_BASE = "https://api-inference.huggingface.co/models"

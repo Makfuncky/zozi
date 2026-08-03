@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
-from db.database import get_db
+from data.dependencies_auth import get_current_user
+from data.db import get_db
 from utils.country_rls import enforce_country_access
 
 logger = logging.getLogger(__name__)
@@ -243,13 +243,15 @@ def compute_health_endpoint(
 @router.get("/hr/{employee_id}/coi-check", summary="Run a conflict-of-interest check for an employee")
 def coi_check_endpoint(
     employee_id: int = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     """Run a simple conflict-of-interest check by examining employee relations
     and shared departments. Returns any detected conflicts."""
     try:
-        from models.employee_models import Employee, EmployeeRelation
+        from data.models_employee_models import Employee, EmployeeRelation
     except Exception as exc:
         logger.warning("EmployeeRelation model not available: %s", exc)
         return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}
@@ -272,6 +274,8 @@ def coi_check_endpoint(
                     EmployeeRelation.internal_employee_id == employee_id,
                 )
             )
+            .offset(skip)
+            .limit(limit)
             .all()
         )
     except Exception as exc:

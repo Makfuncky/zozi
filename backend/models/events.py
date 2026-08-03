@@ -11,7 +11,6 @@ from __future__ import annotations
 import uuid as _uuid
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from utils.datetime_utils import utcnow as _utcnow
@@ -46,6 +45,7 @@ class OutboxEvent(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
     deleted_at = Column(DateTime, nullable=True)
+    delete_reason = Column(Text, nullable=True)
 
     # Cross-ecosystem reference by user ID — NO foreign key (ADR-014:
     # cross-ecosystem communication uses services/events, not cross-FKs).
@@ -55,9 +55,9 @@ class OutboxEvent(Base):
     created_by_id = Column(Integer, nullable=True, index=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
 
-    deleted_by = relationship("User", foreign_keys=[deleted_by_id])
-    created_by = relationship("User", foreign_keys=[created_by_id])
-    updated_by = relationship("User", foreign_keys=[updated_by_id])
+    deleted_by = relationship("User", foreign_keys=[deleted_by_id], primaryjoin="OutboxEvent.deleted_by_id==User.id")
+    created_by = relationship("User", foreign_keys=[created_by_id], primaryjoin="OutboxEvent.created_by_id==User.id")
+    updated_by = relationship("User", foreign_keys=[updated_by_id], primaryjoin="OutboxEvent.updated_by_id==User.id")
 
 
 class InboxEvent(Base):
@@ -83,14 +83,15 @@ class InboxEvent(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
     deleted_at = Column(DateTime, nullable=True)
+    delete_reason = Column(Text, nullable=True)
 
     deleted_by_id = Column(Integer, nullable=True, index=True)
     created_by_id = Column(Integer, nullable=True, index=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
 
-    deleted_by = relationship("User", foreign_keys=[deleted_by_id])
-    created_by = relationship("User", foreign_keys=[created_by_id])
-    updated_by = relationship("User", foreign_keys=[updated_by_id])
+    deleted_by = relationship("User", foreign_keys=[deleted_by_id], primaryjoin="InboxEvent.deleted_by_id==User.id")
+    created_by = relationship("User", foreign_keys=[created_by_id], primaryjoin="InboxEvent.created_by_id==User.id")
+    updated_by = relationship("User", foreign_keys=[updated_by_id], primaryjoin="InboxEvent.updated_by_id==User.id")
 
 
 class EventRetryQueue(Base):
@@ -115,6 +116,7 @@ class EventRetryQueue(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
     deleted_at = Column(DateTime, nullable=True)
+    delete_reason = Column(Text, nullable=True)
 
     # Cross-ecosystem user references — no FK (ADR-014).
     deleted_by_id = Column(Integer, nullable=True, index=True)
@@ -122,9 +124,9 @@ class EventRetryQueue(Base):
     updated_by_id = Column(Integer, nullable=True, index=True)
 
     event = relationship("OutboxEvent", foreign_keys=[event_id])
-    deleted_by = relationship("User", foreign_keys=[deleted_by_id])
-    created_by = relationship("User", foreign_keys=[created_by_id])
-    updated_by = relationship("User", foreign_keys=[updated_by_id])
+    deleted_by = relationship("User", foreign_keys=[deleted_by_id], primaryjoin="EventRetryQueue.deleted_by_id==User.id")
+    created_by = relationship("User", foreign_keys=[created_by_id], primaryjoin="EventRetryQueue.created_by_id==User.id")
+    updated_by = relationship("User", foreign_keys=[updated_by_id], primaryjoin="EventRetryQueue.updated_by_id==User.id")
 
 
 class EventDeadLetter(Base):
@@ -150,6 +152,7 @@ class EventDeadLetter(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
     is_deleted = Column(Boolean, nullable=False, default=False)
     deleted_at = Column(DateTime, nullable=True)
+    delete_reason = Column(Text, nullable=True)
 
     # Cross-ecosystem user references — no FK (ADR-014).
     deleted_by_id = Column(Integer, nullable=True, index=True)
@@ -157,7 +160,7 @@ class EventDeadLetter(Base):
     updated_by_id = Column(Integer, nullable=True, index=True)
 
     event = relationship("OutboxEvent", foreign_keys=[event_id])
-    resolver = relationship("User", foreign_keys=[resolved_by])
-    deleted_by = relationship("User", foreign_keys=[deleted_by_id])
-    created_by = relationship("User", foreign_keys=[created_by_id])
-    updated_by = relationship("User", foreign_keys=[updated_by_id])
+    resolver = relationship("User", foreign_keys=[resolved_by], primaryjoin="EventDeadLetter.resolved_by==User.id")
+    deleted_by = relationship("User", foreign_keys=[deleted_by_id], primaryjoin="EventDeadLetter.deleted_by_id==User.id")
+    created_by = relationship("User", foreign_keys=[created_by_id], primaryjoin="EventDeadLetter.created_by_id==User.id")
+    updated_by = relationship("User", foreign_keys=[updated_by_id], primaryjoin="EventDeadLetter.updated_by_id==User.id")

@@ -17,7 +17,7 @@ from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
-from sqlalchemy import text, func
+from sqlalchemy import text, func, select, or_, table, column
 
 from utils.datetime_utils import utcnow as _utcnow
 
@@ -142,19 +142,26 @@ def get_employee_activity(
         conditions.append("created_at <= :until")
         params["until"] = until
 
-    where_clause = " AND ".join(conditions)
-    rows = db.execute(
-        text(f"""
-            SELECT id, actor_employee_id, action, entity_type, entity_id,
-                   target_employee_id, country_code, metadata_json, ip_address,
-                   device_fingerprint, session_id, created_at
-            FROM employee_activity_logs
-            WHERE {where_clause}
-            ORDER BY created_at DESC
-            LIMIT :limit OFFSET :offset
-        """),
-        params,
-    ).mappings().all()
+    act_table = table('employee_activity_logs',
+        column('id'), column('actor_employee_id'), column('action'),
+        column('entity_type'), column('entity_id'), column('target_employee_id'),
+        column('country_code'), column('metadata_json'), column('ip_address'),
+        column('device_fingerprint'), column('session_id'), column('created_at'),
+    )
+    q = select(act_table).where(
+        or_(
+            act_table.c.actor_employee_id == employee_id,
+            act_table.c.target_employee_id == employee_id,
+        )
+    )
+    if action_filter:
+        q = q.where(act_table.c.action.like(f"%{action_filter}%"))
+    if since:
+        q = q.where(act_table.c.created_at >= since)
+    if until:
+        q = q.where(act_table.c.created_at <= until)
+    q = q.order_by(act_table.c.created_at.desc()).limit(limit).offset(offset)
+    rows = db.execute(q).mappings().all()
 
     return [_serialize_activity(r) for r in rows]
 
@@ -167,7 +174,7 @@ def get_team_activity(
 ) -> List[Dict[str, Any]]:
     """Get activity log for all employees under a manager's subtree."""
     from services.hierarchy_service import get_all_subordinates as get_subs
-    from models.employee_models import Employee
+    from data.models_employee_models import Employee
     mgr_emp = db.query(Employee).filter(Employee.id == manager_employee_id).first()
     if not mgr_emp:
         return []
@@ -178,24 +185,19 @@ def get_team_activity(
     if not sub_ids:
         return []
 
-    params: Dict[str, Any] = {"limit": limit}
-    placeholders = ", ".join([f":eid_{i}" for i in sub_ids])
-    for i, sid in enumerate(sub_ids):
-        params[f"eid_{i}"] = sid
-
-    query = f"""
-        SELECT id, actor_employee_id, action, entity_type, entity_id,
-               target_employee_id, country_code, metadata_json, created_at
-        FROM employee_activity_logs
-        WHERE actor_employee_id IN ({placeholders})
-    """
+    act_table = table('employee_activity_logs',
+        column('id'), column('actor_employee_id'), column('action'),
+        column('entity_type'), column('entity_id'),
+        column('target_employee_id'), column('country_code'),
+        column('metadata_json'), column('created_at'),
+    )
+    q = select(act_table).where(
+        act_table.c.actor_employee_id.in_(sub_ids)
+    )
     if since:
-        query += " AND created_at >= :since"
-        params["since"] = since
-
-    query += " ORDER BY created_at DESC LIMIT :limit"
-
-    rows = db.execute(text(query), params).mappings().all()
+        q = q.where(act_table.c.created_at >= since)
+    q = q.order_by(act_table.c.created_at.desc()).limit(limit)
+    rows = db.execute(q).mappings().all()
     return [_serialize_activity(r) for r in rows]
 
 
@@ -226,7 +228,7 @@ def get_collaboration_heatmap(
     target_ids = list(set(r["target_employee_id"] for r in rows if r["target_employee_id"]))
     target_names: Dict[int, str] = {}
     if target_ids:
-        from models.employee_models import Employee
+        from data.models_employee_models import Employee
         emps = db.query(Employee).filter(Employee.id.in_(target_ids)).all()
         for emp in emps:
             target_names[emp.id] = emp.employee_code
@@ -264,23 +266,22 @@ def get_activity_stats(
         conditions.append("created_at >= :since")
         params["since"] = since
 
-    where_clause = " AND ".join(conditions) if conditions else "1=1"
+    act_table = table('employee_activity_logs',
+        column('action'), column('country_code'), column('created_at'),
+    )
+    q = select(act_table.c.action, func.count().label('count')).group_by(act_table.c.action).order_by(func.count().desc())
+    if country_code:
+        q = q.where(act_table.c.country_code == country_code)
+    if since:
+        q = q.where(act_table.c.created_at >= since)
+    rows = db.execute(q).mappings().all()
 
-    rows = db.execute(
-        text(f"""
-            SELECT action, COUNT(*) as count
-            FROM employee_activity_logs
-            WHERE {where_clause}
-            GROUP BY action
-            ORDER BY count DESC
-        """),
-        params,
-    ).mappings().all()
-
-    total = db.execute(
-        text(f"SELECT COUNT(*) as total FROM employee_activity_logs WHERE {where_clause}"),
-        params,
-    ).scalar()
+    total_q = select(func.count().label('total')).select_from(act_table)
+    if country_code:
+        total_q = total_q.where(act_table.c.country_code == country_code)
+    if since:
+        total_q = total_q.where(act_table.c.created_at >= since)
+    total = db.execute(total_q).scalar()
 
     return {
         "total_events": total,

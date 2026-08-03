@@ -198,12 +198,12 @@ def upgrade() -> None:
 
         # ── 5. Migrate existing data into the new partitioned table ───────
         #    INSERT INTO ... SELECT routes each row to the correct partition.
-        op.execute(
-            f"INSERT INTO public.{table_name} SELECT * FROM public.{table_name}_old"
-        )
+        insert_sql = "INSERT INTO public." + table_name + " SELECT * FROM public." + table_name + "_old"
+        op.execute(insert_sql)
 
         # ── 6. Drop the shadow table ──────────────────────────────────────
-        op.execute(f"DROP TABLE public.{table_name}_old")
+        drop_sql = "DROP TABLE public." + table_name + "_old"
+        op.execute(drop_sql)
 
 
 def _ensure_missing_months(
@@ -270,18 +270,22 @@ def downgrade() -> None:
         )
 
         # ── 3. Reassemble data into the flat table ─────────────────────────
-        selects = [f"SELECT * FROM public.{p}" for p in partitions]
+        selects = ["SELECT * FROM public." + p for p in partitions]
         if selects:
             union_all = " UNION ALL ".join(selects)
-            op.execute(f"INSERT INTO public.{flat_name} {union_all}")
+            insert_sql = "INSERT INTO public." + flat_name + " " + union_all
+            op.execute(insert_sql)
 
         # ── 4. Drop the now-empty partitioned parent (default partition
         #        is dropped via CASCADE) ────────────────────────────────────
-        op.execute(f"DROP TABLE public.{table_name} CASCADE")
+        drop_sql = "DROP TABLE public." + table_name + " CASCADE"
+        op.execute(drop_sql)
 
         # ── 5. Drop the now-empty detached partitions ──────────────────────
         for p in partitions:
-            op.execute(f"DROP TABLE IF EXISTS public.{p} CASCADE")
+            drop_part_sql = "DROP TABLE IF EXISTS public." + p + " CASCADE"
+            op.execute(drop_part_sql)
 
         # ── 6. Rename the reassembled flat table to the original name ──────
-        op.execute(f"ALTER TABLE public.{flat_name} RENAME TO {table_name}")
+        rename_sql = "ALTER TABLE public." + flat_name + " RENAME TO " + table_name
+        op.execute(rename_sql)

@@ -13,8 +13,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body as FastAPIBod
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 
-from db.database import get_db
-from models import (
+from data.db import get_db
+from data.models import (
     JournalEntry, JournalEntryLine, Account, AccountBalance, User,
     PayoutBatch, PayoutBatchItem, TreasuryAccount, VATRemittance,
     GatewaySettlementSchedule, CashPositionSnapshot, CashFlowForecast,
@@ -24,11 +24,12 @@ from models.admin import LogisticsCODRemittanceReceipt
 from models.payments import Payout, Payment, LogisticsPartnerPayout
 from models.logistics import LogisticsPartner
 from models.orders import Order as OrderModel
-from models.employee_models import Employee
+from data.models_employee_models import Employee
 from services.treasury_engine import TreasuryEngine
 from controllers.auth_controller import get_current_user
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
+from utils.pagination import cursor_paginate_desc, build_cursor_pagination_payload
 from utils.constants import (
     DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE,
     TREASURY_ROLES, PAYOUT_STATUSES, SETTLEMENT_STATUSES,
@@ -146,11 +147,13 @@ def admin_trial_balance(
 
 @router.get("/cash-position")
 def admin_cash_position(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
     accounts = db.execute(
-        select(TreasuryAccount).where(TreasuryAccount.is_active == True)
+        select(TreasuryAccount).where(TreasuryAccount.is_active == True).offset(skip).limit(limit)
     ).scalars().all()
 
     return [
@@ -607,7 +610,7 @@ def consolidated_cod_remittances(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from models import Shipment as ShipmentModel
+    from data.models import Shipment as ShipmentModel
     receipts = db.query(LogisticsCODRemittanceReceipt).order_by(LogisticsCODRemittanceReceipt.created_at.desc()).limit(limit).all()
     return [
         {
@@ -782,16 +785,18 @@ def country_trial_balance(
 @router.get("/{country_code}/cash-position")
 def country_cash_position(
     country_code: str = Path(..., description="ISO country code"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
     cc = country_code.upper()
     accounts = db.execute(
-        select(TreasuryAccount).where(TreasuryAccount.is_active == True, TreasuryAccount.country_code == cc)
+        select(TreasuryAccount).where(TreasuryAccount.is_active == True, TreasuryAccount.country_code == cc).offset(skip).limit(limit)
     ).scalars().all()
     if not accounts:
         accounts = db.execute(
-            select(TreasuryAccount).where(TreasuryAccount.is_active == True, TreasuryAccount.country_code.is_(None))
+            select(TreasuryAccount).where(TreasuryAccount.is_active == True, TreasuryAccount.country_code.is_(None)).offset(skip).limit(limit)
         ).scalars().all()
     return [
         {"account_name": a.name, "balance": float(a.balance), "gl_code": a.gl_account_code or a.slug}
@@ -964,7 +969,7 @@ def admin_reconciliation_pipeline(
                 PaymentModel.order_id == order.id
             ).first()
 
-            from models import Shipment
+            from data.models import Shipment
             shipment = db.query(Shipment).filter(
                 Shipment.order_id == order.id
             ).first()
@@ -1068,7 +1073,7 @@ def admin_record_cod_remittance(
     cc = country_code.upper()
     try:
         from models.orders import Order as OrderModel
-        from models import Shipment as ShipmentModel
+        from data.models import Shipment as ShipmentModel
         shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
         receipt = LogisticsCODRemittanceReceipt(
             shipment_id=shipment.id if shipment else None,
@@ -1453,6 +1458,8 @@ def country_logistics_payouts(
 
 @router.get("/reports/supplier-earnings")
 def admin_supplier_earnings(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
@@ -1462,7 +1469,7 @@ def admin_supplier_earnings(
             func.sum(SupplierSettlement.gross_amount).label("gross"),
             func.sum(SupplierSettlement.commission_amount).label("commission"),
             func.sum(SupplierSettlement.net_amount).label("net"),
-        ).group_by(SupplierSettlement.supplier_id)
+        ).group_by(SupplierSettlement.supplier_id).offset(skip).limit(limit)
     ).all()
     return [
         {
@@ -1478,6 +1485,8 @@ def admin_supplier_earnings(
 @router.get("/{country_code}/reports/supplier-earnings")
 def country_supplier_earnings(
     country_code: str = Path(..., description="ISO country code"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
@@ -1491,7 +1500,7 @@ def country_supplier_earnings(
                 func.sum(SupplierSettlement.commission_amount).label("commission"),
                 func.sum(SupplierSettlement.net_amount).label("net"),
             ).where(SupplierSettlement.country_code == country_code.upper())
-            .group_by(SupplierSettlement.supplier_id)
+            .group_by(SupplierSettlement.supplier_id).offset(skip).limit(limit)
         ).all()
         return [
             {
@@ -1732,7 +1741,11 @@ def country_detect_orphans(
 
 
 @router.get("/payroll/equity")
-def payroll_equity(db: Session = Depends(get_db)):
+def payroll_equity(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
     """Pay-equity snapshot by department (avg male vs female salary)."""
     rows = (
         db.query(
@@ -1741,6 +1754,7 @@ def payroll_equity(db: Session = Depends(get_db)):
             func.avg(Employee.salary),
         ).filter(Employee.salary.isnot(None), Employee.department.isnot(None))
         .group_by(Employee.department, Employee.gender)
+        .offset(skip).limit(limit)
         .all()
     )
     by_dept = {}
@@ -1765,7 +1779,7 @@ def payroll_equity(db: Session = Depends(get_db)):
 
 
 @router.get("/{country_code}/payroll")
-def country_payroll(country_code: str, db: Session = Depends(get_db)):
+def country_payroll(country_code: str, skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db)):
     """Aggregate payroll totals for a country (employee headcount + gross/tax/net)."""
     rows = (
         db.query(func.count(Employee.id), func.coalesce(func.sum(Employee.salary), 0))

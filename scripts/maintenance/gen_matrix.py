@@ -1,4 +1,5 @@
 """Generate the clean CODEBASE_STATUS_MATRIX_DETAILED.md file."""
+import os
 
 content = """\
 # ZOZI E-Commerce — Master Project Index
@@ -248,7 +249,7 @@ ZOZI/
 | 🟢 Low | Accessibility (a11y) audit | Full WCAG 2.1 audit on shared component library + web app key flows |
 """
 
-out_path = r"D:\Projects\10- E-COMMERCE WEBSITE\zozi\documents\CODEBASE_STATUS_MATRIX_DETAILED.md"
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'documents', 'CODEBASE_STATUS_MATRIX_DETAILED.md')
 with open(out_path, "w", encoding="utf-8") as f:
     f.write(content)
 

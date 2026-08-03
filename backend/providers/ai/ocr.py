@@ -10,10 +10,29 @@ import io
 import logging
 from typing import Dict, Any, Optional
 
-import numpy as np
-from PIL import Image
 
-from .config import settings
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+np = _LazyNumpy()
+Image = _LazyPIL()
+
+
+class settings:
+    ollama_text_model = "gpt-4o-mini"
+    ollama_base_url = "http://localhost:11434"
+    ocr_timeout = 30
 
 logger = logging.getLogger(__name__)
 

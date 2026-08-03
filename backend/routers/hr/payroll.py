@@ -9,9 +9,9 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
-from db.database import get_db
-from models import Employee, EmployeeDocument
+from data.dependencies_auth import get_current_user
+from data.db import get_db
+from data.models import Employee, EmployeeDocument
 from services.payroll_engine import PayrollEngine
 from services.effective_permissions import check_permission
 from utils.country_rls import enforce_country_access
@@ -120,6 +120,8 @@ def approve_payroll_batch(
 @router.get("/payroll/payslips/{employee_id}")
 def get_employee_payslips(
     employee_id: int = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -130,6 +132,8 @@ def get_employee_payslips(
             EmployeeDocument.doc_type == "payslip",
         )
         .order_by(EmployeeDocument.created_at.desc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
     return {

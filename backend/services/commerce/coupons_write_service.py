@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from models import Coupon, CouponUsage
+from data.models import Coupon, CouponUsage
 
 
 def create_coupon(db: Session, **coupon_data) -> Coupon:

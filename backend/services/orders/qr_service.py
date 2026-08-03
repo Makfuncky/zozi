@@ -9,8 +9,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee
-from models import User
+from data.models_employee_models import Employee
+from data.models import User
 from utils.config import settings
 
 

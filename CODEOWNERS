@@ -27,6 +27,8 @@ backend/services/hr/   @zozi/hr
 backend/models/hr/   @zozi/hr
 backend/services/legacy/   @zozi/legacy
 backend/models/legacy/   @zozi/legacy
+backend/services/location/   @zozi/location
+backend/models/location/   @zozi/location
 backend/services/logistics/   @zozi/logistics
 backend/models/logistics/   @zozi/logistics
 backend/services/media/   @zozi/media
@@ -35,8 +37,6 @@ backend/services/orders/   @zozi/orders
 backend/models/orders/   @zozi/orders
 backend/services/payments/   @zozi/payments
 backend/models/payments/   @zozi/payments
-backend/services/products/   @zozi/products
-backend/models/products/   @zozi/products
 backend/services/security/   @zozi/security
 backend/models/security/   @zozi/security
 backend/services/treasury/   @zozi/treasury

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any, List, Optional, Generic, TypeVar
 from fastapi.responses import JSONResponse
 
-from db.schemas import PaginatedResponse as SchemaPaginatedResponse
+from data.schemas import PaginatedResponse as SchemaPaginatedResponse
 T = TypeVar("T")
 
 

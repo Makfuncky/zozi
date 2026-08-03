@@ -30,9 +30,15 @@ Thumbs.db
 dist/
 build/
 *.tsbuildinfo
+**/.pytest_cache/
+**/.ruff_cache/
+**/test-output/
+**/web-dist/
+**/android/build/
+**/android/app/build/
+**/.expo/
 
 # Expo
-.expo/
 
 # Logs (regeneratable)
 *.log

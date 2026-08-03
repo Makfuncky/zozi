@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback, useRef } from "react";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { View, Text, FlatList, Modal, TouchableOpacity, TextInput, StyleSheet, RefreshControl, useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -238,6 +239,14 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 
 export default function ProductsScreen() {
+  return (
+    <ErrorBoundary>
+      <ProductsScreenInner />
+    </ErrorBoundary>
+  );
+}
+
+function ProductsScreenInner() {
   const { theme } = useThemeStore();
   const styles = createStyles(theme);
   const s = makeStyles(theme);

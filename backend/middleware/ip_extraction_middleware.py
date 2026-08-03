@@ -8,6 +8,9 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from utils.ip_utils import set_request_ip
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class IPExtractionMiddleware(BaseHTTPMiddleware):

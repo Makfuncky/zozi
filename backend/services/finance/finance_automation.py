@@ -19,12 +19,12 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     Account, ScannedExpense, BankMappingRule,
     BankStatementImport, BankStatementLine, FixedAsset, Accrual,
     FinanceAutomationLog, JournalEntry,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
+from data.schemas import JournalEntryCreate, JournalLineInput
 from utils.money import round_money
 from utils.audit_log import AuditAction, audit_log
 
@@ -484,7 +484,7 @@ def run_daily_automation(
     # 1. Depreciation
     dep = run_depreciation(db, as_of=as_of, country_code=country_code, run_by=run_by)
     # 2. Reverse accruals whose reversal date has passed
-    from models import Accrual
+    from data.models import Accrual
 
     due = db.query(Accrual).filter(
         Accrual.status == "open",
@@ -521,7 +521,7 @@ def trigger_recurring(
     run_by: Optional[int] = None,
 ) -> dict:
     """Generate a journal entry from a recurring template."""
-    from models import RecurringTemplate
+    from data.models import RecurringTemplate
 
     tpl = db.query(RecurringTemplate).filter(RecurringTemplate.id == template_id).first()
     if not tpl or not tpl.is_active:

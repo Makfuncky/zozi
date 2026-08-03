@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from models import JournalEntry, JournalEntryLine, TreasuryAccount, TreasuryTransaction
-from services.audit.audit_service import AuditAction, audit_log
+from data.models import JournalEntry, JournalEntryLine, TreasuryAccount, TreasuryTransaction
+from utils.audit_log import AuditAction, audit_log
 
 from services.write_helpers import add_and_flush, commit_and_refresh, commit_only
 router = APIRouter()

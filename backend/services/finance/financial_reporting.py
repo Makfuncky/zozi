@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models import JournalEntry, TreasuryAccount, AuditLog
+from data.models import JournalEntry, TreasuryAccount, AuditLog
 from utils.datetime_utils import utcnow as _utcnow
 from services.financial_reports_service import (
     generate_income_statement as _generate_income_statement,

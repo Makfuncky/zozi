@@ -23,19 +23,19 @@ from typing import Any, Optional, Set
 from fastapi import Request, Response, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from jose import JWTError, jwt
-from sqlalchemy import event, text
+from sqlalchemy import bindparam, event, text
 from sqlalchemy.orm import Session, Query
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from db.database import get_db
-from models import User, CountryStaffAssignment, CountryConfig
+from data.db import get_db
+from data.models import User, CountryStaffAssignment, CountryConfig
 from utils.auth import decode_token, verify_token, SECRET_KEY, ALGORITHM
 from utils.config import settings
 from utils.rls_interceptor import set_rls_context, clear_rls_context as _clear_rls_context
 from utils.redis_client import redis_client
 from utils.ip_utils import get_request_ip
-from services.coi_service import check_approval_blocked
+from data.services_hr_coi_service import check_approval_blocked
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
 
     def _get_country_detection_service(self):
         if self._country_detection_service is None:
-            from services.country_detection import CountryDetectionService
+            from data.services_country_detection import CountryDetectionService
             self._country_detection_service = CountryDetectionService()
         return self._country_detection_service
 
@@ -151,7 +151,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
         if not client_ip:
             return None
         try:
-            from services.country_detection import CountryDetectionService
+            from data.services_country_detection import CountryDetectionService
             svc = CountryDetectionService()
             ip = svc._extract_ip(dict(request.headers), client_ip)
             if ip and not svc._is_private_ip(ip):
@@ -179,14 +179,14 @@ def _set_pg_rls_context(scope: Optional[set[str]]) -> None:
         return
     
     try:
-        from db.database import SessionLocal, _IS_POSTGRES
+        from data.db import SessionLocal, _IS_POSTGRES
         
         if not _IS_POSTGRES:
             return
         
         db = SessionLocal()
         try:
-            db.execute(text(f"SET LOCAL app.current_country_code = '{country_code}'"))
+            db.execute(text("SET LOCAL app.current_country_code = :country_code"), bindparam("country_code", country_code))
         except Exception:
             logger.debug(
                 "RLS context not set in PostgreSQL session (SQLite or unsupported dialect). "
@@ -290,8 +290,10 @@ def set_session_rls(session: Session, transaction: Any, *args: Any, **kwargs: An
     """Set RLS context at database session level"""
     if rls_context.is_restricted and rls_context.country_scope:
         country_list = list(rls_context.country_scope)
+        safe_scope = ','.join(country_list)
         session.execute(
-            text(f"SET LOCAL app.country_scope = '{','.join(country_list)}'")
+            text('SET LOCAL app.country_scope = :scope'),
+            {'scope': safe_scope}
         )
 
 

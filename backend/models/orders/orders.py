@@ -4,14 +4,14 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship, synonym
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = [
     "Order", "OrderItem", "OrderLogisticsAllocation",
     "ReturnRequest", "OrderNotification"
 ]
 
-
-class Order(Base):
+class Order(Base, TenantMixin):
     __tablename__ = "orders"
     __table_args__ = (
         Index("ix_orders_user_id", "user_id"),
@@ -58,27 +58,26 @@ class Order(Base):
     payment_gateway_fee_passed_to_customer = Column(Numeric(10, 2), nullable=True)
     paid_at = Column(DateTime, nullable=True)
     invoice_id = Column(Integer, ForeignKey("finance.ar_invoices.id"), nullable=True, index=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     user = relationship("User", foreign_keys=[user_id])
     customer = relationship("User", foreign_keys=[customer_id])
     items = relationship("OrderItem", back_populates="order")
     shipments = relationship("Shipment", back_populates="order")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="Order.country_code")
     invoice = relationship("ARInvoice", foreign_keys=[invoice_id], overlaps="order")
 
-
-class OrderItem(Base):
+class OrderItem(Base, TenantMixin):
     __tablename__ = "order_items"
     __table_args__ = (
         Index("ix_order_items_order_id", "order_id"),
         Index("ix_order_items_product_id", "product_id"), {"schema": "commerce"})
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete="RESTRICT"), nullable=False, index=True)
     variant_id = Column(Integer, nullable=True)
     supplier_id = Column(Integer, nullable=True)
     quantity = Column(Integer, default=1)
@@ -90,17 +89,15 @@ class OrderItem(Base):
     selected_size = Column(String, nullable=True)
     selected_color = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+
     order = relationship("Order", back_populates="items")
     product = relationship("Product", foreign_keys=[product_id])
 
-
-class OrderLogisticsAllocation(Base):
+class OrderLogisticsAllocation(Base, TenantMixin):
     __tablename__ = "order_logistics_allocations"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="CASCADE"), nullable=False, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     shipment_id = Column(Integer, ForeignKey("logistics.shipments.id"), nullable=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=True)
@@ -125,17 +122,16 @@ class OrderLogisticsAllocation(Base):
     currency = Column(String, default="USD")
     pricing_breakdown_json = Column(Text, nullable=True)
     accepted_pricing_breakdown_json = Column(Text, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="OrderLogisticsAllocation.country_code")
 
-
-class ReturnRequest(Base):
+class ReturnRequest(Base, TenantMixin):
     __tablename__ = "return_requests"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="CASCADE"), nullable=False, index=True)
     order_item_id = Column(Integer, nullable=True)
     customer_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     user_id = synonym("customer_id")
@@ -152,19 +148,18 @@ class ReturnRequest(Base):
     delivered_at = Column(DateTime, nullable=True)
     return_deadline = Column(DateTime, nullable=True)
     resolution_notes = Column(Text, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
-    order = relationship("Order")
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
 
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    country = relationship("CountryConfig", foreign_keys="ReturnRequest.country_code")
+    order = relationship("Order")
 
 class OrderNotification(Base):
     __tablename__ = "order_notifications"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete="CASCADE"), nullable=False, index=True)
     notification_type = Column(String(50), nullable=False)
     is_read = Column(Boolean, default=False)
     metadata_json = Column(Text, nullable=True)

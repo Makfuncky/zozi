@@ -48,7 +48,7 @@ from middleware.impossible_travel_middleware import ImpossibleTravelMiddleware
 from middleware.rate_limit_middleware import RateLimitMiddleware
 from middleware.pci_dss_compliance import PCIDSSMiddleware
 from middleware.request_id_middleware import RequestIDMiddleware
-from middleware.csrf_middleware import CSRFMiddleware
+from middleware.csrf_middleware import CSRFMiddleware  # same-layer import avoids data-shim self-cycle
 from middleware.logging_middleware import RequestLoggingMiddleware
 from middleware.api_version_middleware import ApiVersionMiddleware
 

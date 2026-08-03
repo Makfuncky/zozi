@@ -9,7 +9,7 @@ concurrent model inference. Memory is managed with LRU caches and automatic
 model unloading when memory pressure is detected.
 
 Usage:
-    from providers.async_workers import (
+    from data.providers_async_workers import (
         remove_background_async,
         analyze_product_image_async,
         embed_text_async,
@@ -70,7 +70,7 @@ async def _run_in_thread(func: Callable[..., T], *args: Any, **kwargs: Any) -> T
 # ---------------------------------------------------------------------------
 
 def _get_bg_remover():
-    from providers.bg_remover import remove_background
+    from data.providers_bg_remover import remove_background
     return remove_background
 
 

@@ -320,24 +320,6 @@ export default function PhotoEditorModal({ src, fileName, onApply, onClose }: Ph
           </Button>
         </div>
       </div>
-
-      <style jsx>{`
-        :global(.editor-btn) {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.35rem;
-          padding: 0.4rem 0.75rem;
-          border-radius: 0.5rem;
-          border: 1px solid rgba(120, 120, 120, 0.3);
-          font-size: 0.8rem;
-          background: var(--surface-2, #f3f4f6);
-        }
-        :global(.editor-btn-active) {
-          background: var(--primary, #2563eb);
-          color: #fff;
-          border-color: var(--primary, #2563eb);
-        }
-      `}</style>
     </div>
   );
 }

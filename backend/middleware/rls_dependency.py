@@ -6,6 +6,9 @@ from typing import Callable, TypeVar
 
 from fastapi import HTTPException, Request, Depends, status
 from sqlalchemy.orm import Session
+import logging
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 

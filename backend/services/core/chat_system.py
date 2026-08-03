@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMember, GroupChatMessage
-from models import User, ChatAttachment
+from data.models_core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMember, GroupChatMessage
+from data.models import User, ChatAttachment
 from services.storage import storage as _storage
 
 logger = logging.getLogger("zozi.chat")
@@ -39,7 +39,7 @@ class ChatSystem:
         is_external: bool = False,
         country_code: Optional[str] = None,
     ) -> dict:
-        from models.core import EntityChatThread
+        from data.models_core import EntityChatThread
         thread = EntityChatThread(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -186,7 +186,7 @@ class ChatSystem:
                 message_type=message_type,
             )
         else:
-            from models.core import EntityChatThread, EntityChatMessage
+            from data.models_core import EntityChatThread, EntityChatMessage
             thread = self.db.query(EntityChatThread).filter(
                 EntityChatThread.id == int(chat_id)
             ).first()
@@ -278,7 +278,7 @@ class ChatSystem:
         message_type = "text" if not files else "file"
 
         if chat_type == "entity":
-            from models.core import EntityChatThread, EntityChatMessage
+            from data.models_core import EntityChatThread, EntityChatMessage
             thread = self.db.query(EntityChatThread).filter(
                 EntityChatThread.id == int(chat_id)
             ).first()
@@ -290,7 +290,7 @@ class ChatSystem:
                 message=content or f"{len(files)} file(s)",
             )
         elif chat_type == "dm" or chat_type == "direct":
-            from models.core import DirectChatRoom, DirectChatMessage
+            from data.models_core import DirectChatRoom, DirectChatMessage
             room = self.db.query(DirectChatRoom).filter(
                 DirectChatRoom.chat_id == chat_id,
                 DirectChatRoom.is_active == True,
@@ -304,7 +304,7 @@ class ChatSystem:
                 message_type=message_type,
             )
         elif chat_type == "group":
-            from models.core import GroupChatRoom, GroupChatMessage
+            from data.models_core import GroupChatRoom, GroupChatMessage
             room = self.db.query(GroupChatRoom).filter(
                 GroupChatRoom.chat_id == chat_id,
                 GroupChatRoom.is_active == True,
@@ -415,7 +415,7 @@ class ChatSystem:
                 msg.read_at = now
                 count += 1
         else:
-            from models.core import EntityChatMessage
+            from data.models_core import EntityChatMessage
             messages = self.db.query(EntityChatMessage).filter(
                 EntityChatMessage.thread_id == int(chat_id),
                 EntityChatMessage.sender_id != user_id,
@@ -429,7 +429,7 @@ class ChatSystem:
         return {"chat_id": chat_id, "marked_read": count}
 
     def create_thread(self, title: str, entity_type: Optional[str] = None, entity_id: Optional[int] = None) -> dict:
-        from models.core import EntityChatThread
+        from data.models_core import EntityChatThread
         thread = EntityChatThread(
             title=title,
             entity_type=entity_type or "admin",
@@ -458,8 +458,8 @@ class ChatSystem:
                 "next_cursor": int | None,
             }
         """
-        from models.core import EntityChatThread, EntityChatMessage
-        from models import User
+        from data.models_core import EntityChatThread, EntityChatMessage
+        from data.models import User
         thread = self.db.query(EntityChatThread).filter(
             EntityChatThread.id == thread_id
         ).first()
@@ -508,7 +508,7 @@ class ChatSystem:
         }
 
     def list_threads(self) -> list:
-        from models.core import EntityChatThread, EntityChatMessage
+        from data.models_core import EntityChatThread, EntityChatMessage
         from sqlalchemy import func, desc
         subq = (
             self.db.query(

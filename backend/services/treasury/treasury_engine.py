@@ -13,12 +13,12 @@ from contextlib import contextmanager
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
-from models import (
+from data.models import (
     Account, AccountGroup, JournalEntry, JournalEntryLine,
     AccountBalance, PendingJournalEntry,
 )
-from services.finance.general_ledger_service import seed_chart_of_accounts as gl_seed_chart_of_accounts
-from services.finance.general_ledger_service import get_trial_balance as gl_get_trial_balance
+from services.general_ledger_service import seed_chart_of_accounts as gl_seed_chart_of_accounts
+from services.general_ledger_service import get_trial_balance as gl_get_trial_balance
 
 logger = logging.getLogger(__name__)
 
@@ -356,7 +356,66 @@ class TreasuryEngine:
             for e in entries
         ]
 
+    # ── Orphan Detector ─────────────────────────────────────────────
+
+    def run_orphan_detector(self) -> list[dict]:
+        """Daily cron: scan orders for missing journal entries.
+
+        Flags any delivered/paid order that lacks a corresponding
+        JournalEntry with matching reference_type/reference_id.
+        """
+        from models.orders import Order
+
+        alerts = []
+
+        # Check delivered orders for missing delivery JE
+        delivered_orders = self.db.execute(
+            select(Order).where(
+                Order.status.in_(["delivered", "completed"]),
+                ~Order.id.in_(
+                    select(JournalEntry.reference_id).where(
+                        JournalEntry.reference_type == "order_delivery",
+                        JournalEntry.reference_id.isnot(None),
+                    )
+                ),
+            )
+        ).scalars().all()
+
+        for o in delivered_orders:
+            alerts.append({
+                "type": "missing_delivery_entry",
+                "order_id": o.id,
+                "order_number": o.order_number,
+                "country_code": o.country_code,
+                "severity": "critical",
+            })
+
+        # Check paid orders for missing payment JE
+        paid_orders = self.db.execute(
+            select(Order).where(
+                Order.payment_status.in_(["paid", "captured"]),
+                ~Order.id.in_(
+                    select(JournalEntry.reference_id).where(
+                        JournalEntry.reference_type == "order_payment",
+                        JournalEntry.reference_id.isnot(None),
+                    )
+                ),
+            )
+        ).scalars().all()
+
+        for o in paid_orders:
+            alerts.append({
+                "type": "missing_payment_entry",
+                "order_id": o.id,
+                "order_number": o.order_number,
+                "country_code": o.country_code,
+                "severity": "high",
+            })
+
+        return alerts
+
 
 def seed_chart_of_accounts(db: Session):
     """Seed the GCC Chart of Accounts — delegates to canonical GL service version."""
     gl_seed_chart_of_accounts(db)
+

@@ -6,8 +6,11 @@ from typing import Optional
 from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from services.coi_service import COIService
+from data.db import get_db
+from data.services_hr_coi_service import COIService
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def coi_check_dependency(

@@ -9,7 +9,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig
+from data.models import CountryConfig
 
 
 def is_product_restricted_for_country(

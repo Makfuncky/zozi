@@ -128,7 +128,7 @@ class SupplierKYCRequirement(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     
-    country = relationship('CountryConfig', foreign_keys=[country_code])
+    country = relationship('CountryConfig', foreign_keys="SupplierKYCRequirement.country_code")
 
 
 class LogisticsPartnerKYCRequirement(Base):
@@ -145,7 +145,7 @@ class LogisticsPartnerKYCRequirement(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     
-    country = relationship('CountryConfig', foreign_keys=[country_code])
+    country = relationship('CountryConfig', foreign_keys="LogisticsPartnerKYCRequirement.country_code")
 
 
 class CountryCommissionRate(Base):
@@ -161,7 +161,7 @@ class CountryCommissionRate(Base):
     effective_from = Column(DateTime, default=_utcnow)
     effective_to = Column(DateTime, nullable=True)
     
-    country = relationship('CountryConfig', foreign_keys=[country_code])
+    country = relationship('CountryConfig', foreign_keys="CountryCommissionRate.country_code")
 
 
 class CountryLocalization(Base):

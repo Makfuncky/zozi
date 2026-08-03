@@ -12,7 +12,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from models import JournalEntry, Order
+from data.models import JournalEntry, Order
 
 
 def run_orphan_detector(db: Session, country_code: Optional[str] = None) -> list[dict]:

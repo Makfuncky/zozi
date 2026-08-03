@@ -5,7 +5,7 @@ from decimal import Decimal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     Promotion,
     PromotionEngineConfig,
     PromotionLedgerEntry,

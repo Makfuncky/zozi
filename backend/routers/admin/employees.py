@@ -6,12 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
+from data.dependencies_auth import get_current_user
 from controllers import employees_controller as ctrl
-from db.database import get_db
-from models.employee_models import Employee
+from data.db import get_db
+from data.models_employee_models import Employee
 from utils.country_rls import enforce_country_access, get_country_or_404
 from utils.datetime_utils import utcnow as _utcnow
+from services.hr.employee_write_service import list_employees_public
 
 from services.write_helpers import commit_only
 router = APIRouter()
@@ -247,16 +248,18 @@ def list_employee_documents(
 @router.get("/employees/{employee_id}/addresses")
 def list_employee_addresses(
     employee_id: int = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.core import Address
-    from models.employee_models import Employee
+    from data.models_core import Address
+    from data.models_employee_models import Employee
 
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if not employee:
         return []
-    addresses = db.query(Address).filter(Address.user_id == employee.user_id).all()
+    addresses = db.query(Address).filter(Address.user_id == employee.user_id).offset(skip).limit(limit).all()
     return [
         {
             "id": a.id,
@@ -278,13 +281,15 @@ def list_employee_addresses(
 @router.get("/employees/{employee_id}/dependents")
 def list_employee_dependents(
     employee_id: int = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.employee_models import EmployeeDependent
+    from data.models_employee_models import EmployeeDependent
 
     dependents = (
-        db.query(EmployeeDependent).filter(EmployeeDependent.employee_id == employee_id).all()
+        db.query(EmployeeDependent).filter(EmployeeDependent.employee_id == employee_id).offset(skip).limit(limit).all()
     )
     return [
         {
@@ -520,12 +525,14 @@ def delete_employee(
 @router.get("/admin/{code}/employees/leave-requests")
 def list_leave_requests(
     code: str = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     enforce_country_access(code, db=db)
-    from models.employee_models import EmployeeLeaveRequest
-    requests = db.query(EmployeeLeaveRequest).order_by(EmployeeLeaveRequest.created_at.desc()).all()
+    from data.models_employee_models import EmployeeLeaveRequest
+    requests = db.query(EmployeeLeaveRequest).order_by(EmployeeLeaveRequest.created_at.desc()).offset(skip).limit(limit).all()
     result = []
     for r in requests:
         employee_name = None
@@ -567,7 +574,7 @@ def update_leave_request_status(
     current_user: dict = Depends(get_current_user),
 ):
     enforce_country_access(code, db=db)
-    from models.employee_models import EmployeeLeaveRequest
+    from data.models_employee_models import EmployeeLeaveRequest
     r = db.query(EmployeeLeaveRequest).filter(EmployeeLeaveRequest.id == leave_id).first()
     if not r:
         raise HTTPException(status_code=404, detail="Leave request not found")
@@ -584,12 +591,14 @@ def update_leave_request_status(
 @router.get("/admin/{code}/employees/shifts")
 def list_shifts(
     code: str = Path(...),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     enforce_country_access(code, db=db)
-    from models.employee_models import EmployeeShiftRoster
-    shifts = db.query(EmployeeShiftRoster).order_by(EmployeeShiftRoster.shift_date.desc()).all()
+    from data.models_employee_models import EmployeeShiftRoster
+    shifts = db.query(EmployeeShiftRoster).order_by(EmployeeShiftRoster.shift_date.desc()).offset(skip).limit(limit).all()
     result = []
     for s in shifts:
         employee_name = None
@@ -621,26 +630,8 @@ def create_shift_roster(
 
 
 @router.get("/public")
-def list_employees_public(db: Session = Depends(get_db)):
-    try:
-        query = "SELECT id, employee_code, department, position, employment_status, salary, currency, country_code, hire_date, created_at FROM employees ORDER BY created_at DESC LIMIT 50"
-        result = db.execute(query)
-        employees = []
-        for row in result:
-            employees.append({
-                "id": row[0],
-                "employee_code": row[1],
-                "department": row[2],
-                "position": row[3],
-                "employment_status": row[4],
-                "salary": float(row[5]) if row[5] else None,
-                "currency": row[6],
-                "country_code": row[7],
-                "hire_date": row[8].isoformat() if row[8] else None,
-            })
-        return employees
-    except Exception as e:
-        return {"error": str(e)}
+def list_employees_public_route(db: Session = Depends(get_db)):
+    return list_employees_public(db)
 
 
 @router.post("/employees/{employee_id}/kill-switch")

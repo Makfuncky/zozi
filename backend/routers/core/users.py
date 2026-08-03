@@ -1,9 +1,9 @@
 """Users router — profile CRUD, admin user management."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from models import User
-from db.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse, CursorPage
+from data.db import get_db
+from data.models import User
+from data.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse, CursorPage
 from utils.dependencies import get_current_user, require_admin
 from utils.pagination import cursor_paginate_desc
 

@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Sequence, cast
 
-from models import Order, OrderLogisticsAllocation, RefundLedger, ReturnRequest, Shipment, ShipmentConfirmation, ShipmentEvent, TransactionLedger, User
+from data.models import Order, OrderLogisticsAllocation, RefundLedger, ReturnRequest, Shipment, ShipmentConfirmation, ShipmentEvent, TransactionLedger, User
 from sqlalchemy.orm import object_session
 from utils.config import settings
 

@@ -6,15 +6,15 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from utils.datetime_utils import utcnow as _utcnow
 
-from models import Base
+from . import Base
+from ..mixins import TenantMixin
 
 __all__ = [
     "ImportShipment", "ImportShipmentLine", "LandedCostAllocation",
     "CustomsEntry", "ImportCostTemplate",
 ]
 
-
-class ImportShipment(Base, AuditMixin, SoftDeleteMixin):
+class ImportShipment(Base, AuditMixin, SoftDeleteMixin, TenantMixin):
     __tablename__ = "import_shipments"
     __table_args__ = (
         Index("ix_import_shipments_status", "status"),
@@ -40,8 +40,7 @@ class ImportShipment(Base, AuditMixin, SoftDeleteMixin):
     currency = Column(String(10), default="OMR")
     exchange_rate = Column(Numeric(18, 6), default=1)
     warehouse_id = Column(Integer, ForeignKey("logistics.warehouses.id", ondelete="RESTRICT"), nullable=True, index=True)
-    country_code = Column(String(3), nullable=True)
-    notes = Column(Text, nullable=True)
+
     created_by = Column(Integer, nullable=True)
     status = Column(String(20), default="draft")  # draft, in_transit, customs_cleared, landed
     product_cost_total = Column(Numeric(18, 2), nullable=True)
@@ -58,8 +57,7 @@ class ImportShipment(Base, AuditMixin, SoftDeleteMixin):
     lines = relationship("ImportShipmentLine", back_populates="shipment",
                          cascade="all, delete-orphan", lazy="selectin")
 
-
-class ImportShipmentLine(Base, AuditMixin, SoftDeleteMixin):
+class ImportShipmentLine(Base, AuditMixin, SoftDeleteMixin, TenantMixin):
     __tablename__ = "import_shipment_lines"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -75,8 +73,7 @@ class ImportShipmentLine(Base, AuditMixin, SoftDeleteMixin):
     line_total_fx = Column(Numeric(18, 6), nullable=True)
     weight_kg = Column(Numeric(12, 4), nullable=True)
     volume_cbm = Column(Numeric(12, 4), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    allocated_freight = Column(Numeric(18, 2), default=0)
+
     allocated_insurance = Column(Numeric(18, 2), default=0)
     allocated_port = Column(Numeric(18, 2), default=0)
     allocated_other = Column(Numeric(18, 2), default=0)
@@ -85,8 +82,7 @@ class ImportShipmentLine(Base, AuditMixin, SoftDeleteMixin):
 
     shipment = relationship("ImportShipment", back_populates="lines")
 
-
-class LandedCostAllocation(Base, AuditMixin, SoftDeleteMixin):
+class LandedCostAllocation(Base, AuditMixin, SoftDeleteMixin, TenantMixin):
     __tablename__ = "landed_cost_allocations"
     __table_args__ = (
         Index("ix_landed_cost_alloc_shipment", "shipment_id"),
@@ -101,13 +97,11 @@ class LandedCostAllocation(Base, AuditMixin, SoftDeleteMixin):
     allocation_method = Column(String(20), default="by_value")  # by_value, by_weight, by_volume, by_quantity
     currency = Column(String(10), default="OMR")
     exchange_rate = Column(Numeric(18, 6), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    status = Column(String(20), default="allocated")
+
     created_at = Column(DateTime, default=_utcnow, nullable=False)
     created_by = Column(Integer, nullable=True)
 
-
-class CustomsEntry(Base, AuditMixin, SoftDeleteMixin):
+class CustomsEntry(Base, AuditMixin, SoftDeleteMixin, TenantMixin):
     __tablename__ = "customs_entries"
     __table_args__ = (
         Index("ix_customs_entries_shipment", "shipment_id"),
@@ -126,12 +120,10 @@ class CustomsEntry(Base, AuditMixin, SoftDeleteMixin):
     total_customs_cost = Column(Numeric(18, 2), nullable=True)
     status = Column(String(20), default="cleared")
     notes = Column(Text, nullable=True)
-    country_code = Column(String(3), nullable=True)
-    created_at = Column(DateTime, default=_utcnow, nullable=False)
+
     created_by = Column(Integer, nullable=True)
 
-
-class ImportCostTemplate(Base, AuditMixin, SoftDeleteMixin):
+class ImportCostTemplate(Base, AuditMixin, SoftDeleteMixin, TenantMixin):
     __tablename__ = "import_cost_templates"
     __table_args__ = (
         UniqueConstraint("name", "country_code", name="uq_import_cost_template_name_country"),
@@ -145,6 +137,5 @@ class ImportCostTemplate(Base, AuditMixin, SoftDeleteMixin):
     default_port_charges_percent = Column(Numeric(8, 4), nullable=True)
     default_bank_charges_percent = Column(Numeric(8, 4), nullable=True)
     allocation_method = Column(String(20), default="by_value")
-    country_code = Column(String(3), nullable=True, index=True)
-    is_active = Column(Boolean, default=True, nullable=False)
+
     created_at = Column(DateTime, default=_utcnow, nullable=False)

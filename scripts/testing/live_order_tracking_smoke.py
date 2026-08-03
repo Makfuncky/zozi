@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import argparse
 import json
 import subprocess
@@ -197,7 +198,7 @@ def main() -> None:
     wait_for_health(client)
 
     run_tag = str(int(time.time()))
-    partner_password = "PartnerSmoke123!"
+    partner_password = os.environ.get("ZOZI_PARTNER_PASSWORD", "PartnerSmoke123!")
 
     admin = login(client, "admin@zozi.com", "admin123")
     supplier = login(client, "supplier@zozi.com", "supplier123")

@@ -18,8 +18,8 @@ except ImportError:
     TwilioRestException = Exception
     TWILIO_AVAILABLE = False
 
-from models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User
-from db.database import get_service_session
+from data.models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User, Order
+from data.db import get_service_session
 from utils.config import settings
 
 logger = logging.getLogger("zozi.proxy")
@@ -142,7 +142,6 @@ class ProxyCommunicationService:
         order_id: int
     ) -> ProxyChannel:
         """Get or create proxy channel for customer communication via order."""
-        from models.orders import Order
         order = self.db.query(Order).filter_by(id=order_id).first()
         if not order:
             return None

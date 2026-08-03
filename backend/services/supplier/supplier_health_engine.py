@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from models import SupplierProfile, Order, SupplierDispute, SupplierCountryCommission
+from data.models import SupplierProfile, Order, SupplierDispute, SupplierCountryCommission
 
 
 class SupplierHealthEngine:
@@ -69,7 +69,7 @@ class SupplierHealthEngine:
         }
     
     def _get_orders(self, supplier_id: int, country_code: Optional[str], start: datetime, end: datetime):
-        from models import OrderItem
+        from data.models import OrderItem
         order_ids = [
             r[0]
             for r in self.db.query(OrderItem.order_id)
@@ -113,7 +113,7 @@ class SupplierHealthEngine:
     def _calculate_return_rate(self, orders) -> float:
         if not orders:
             return 0.0
-        from models import ReturnRequest
+        from data.models import ReturnRequest
         returns = self.db.query(ReturnRequest).filter(
             ReturnRequest.order_id.in_([o.id for o in orders])
         ).count()

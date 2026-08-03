@@ -28,9 +28,29 @@ import gc
 from typing import Tuple, Dict, Any
 from pathlib import Path
 from dataclasses import dataclass
-from PIL import Image
-import numpy as np
-import cv2
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+Image = _LazyPIL()
+np = _LazyNumpy()
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
 
 # ========================== LOGGING ==========================
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

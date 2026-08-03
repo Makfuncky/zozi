@@ -14,7 +14,7 @@ from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from models import SupplierDocument, SupplierProfile, User, Notification
+from data.models import SupplierDocument, SupplierProfile, User, Notification
 from utils.audit_log import AuditAction, audit_log
 from services.write_helpers import (
     add_and_flush,

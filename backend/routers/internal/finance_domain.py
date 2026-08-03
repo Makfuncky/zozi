@@ -14,8 +14,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from utils.audit_log import AuditAction, audit_log
-from dependencies.auth import get_current_user
-from db.database import get_db
+from data.dependencies_auth import get_current_user
+from data.db import get_db
 from services.expense_routing import ExpenseRoutingEngine, get_expense_router
 from services.financial_reporting import FinancialReportingService
 from services.payroll_engine import PayrollEngine

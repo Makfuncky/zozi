@@ -3,14 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user
-# TODO: These imports from controllers.payments_controller violate W3.
-# They should be moved to services/finance/ in a proper refactoring:
-# - Pydantic models should be in db/schemas.py or services/finance/
-# - Business logic functions should be in services/finance/payments_service.py
-# - Order-related functions are now in services/orders/ (see order_payment_functions.py)
-# Payments controller should become a thin shim that re-exports from services.
-from controllers.payments_controller import (
+from data.dependencies_auth import get_current_user
+from services.finance.payments_gateway_service import (
     ConfirmCardPaymentRequest,
     ConfirmPayTabsPaymentRequest,
     ConfirmTapPaymentRequest,
@@ -57,8 +51,9 @@ from controllers.payments_controller import (
     update_payment_provider_runtime_config,
     upsert_payment_gateway_connection,
 )
-from db.database import get_db
+from data.db import get_db
 from models.payments import Payment
+from utils.pagination import cursor_paginate_desc, build_cursor_pagination_payload
 
 router = APIRouter()
 public_router = APIRouter()

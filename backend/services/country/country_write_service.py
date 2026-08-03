@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     AdminChangeAuditLog,
     CountryCity,
     CountryConfig,
@@ -20,7 +20,7 @@ from models import (
 )
 
 try:
-    from models import Country, CountryTranslation
+    from data.models import Country, CountryTranslation
 except ImportError:
     Country = None
     CountryTranslation = None
@@ -314,7 +314,7 @@ def create_country_feature_flag(
     rollout_audience: str | None = None,
     notes: str | None = None,
 ) -> "CountryFeatureFlag":
-    from models import CountryFeatureFlag
+    from data.models import CountryFeatureFlag
     flag = CountryFeatureFlag(
         country_code=country_code,
         feature_key=feature_key,
@@ -331,7 +331,7 @@ def create_country_feature_flag(
 def update_country_feature_flag(
     db: Session, flag: "CountryFeatureFlag", updates: dict
 ) -> "CountryFeatureFlag":
-    from models import CountryFeatureFlag
+    from data.models import CountryFeatureFlag
     for key, value in updates.items():
         setattr(flag, key, value)
     db.commit()
@@ -349,7 +349,7 @@ def create_country_communication(
     priority: str = "normal",
     category: str | None = None,
 ) -> "CountryCommunication":
-    from models import CountryCommunication
+    from data.models import CountryCommunication
     comm = CountryCommunication(
         country_code=country_code.upper(),
         from_user_id=from_user_id,
@@ -379,7 +379,7 @@ def create_country_staff_assignment(
     role_in_country: str,
     assigned_by: int,
 ) -> "CountryStaffAssignment":
-    from models import CountryStaffAssignment
+    from data.models import CountryStaffAssignment
     assignment = CountryStaffAssignment(
         user_id=user_id,
         country_code=country_code.upper(),
@@ -393,7 +393,7 @@ def create_country_staff_assignment(
 
 
 def deactivate_country_staff_assignment(db: Session, assignment: "CountryStaffAssignment") -> None:
-    from models import CountryStaffAssignment
+    from data.models import CountryStaffAssignment
     assignment.is_active = False
     db.commit()
 
@@ -541,7 +541,7 @@ def create_rollback_version(
     draft_by: int | None = None,
     approved_by: int | None = None,
 ) -> CountryConfigVersion:
-    from models import CountryConfigVersion
+    from data.models import CountryConfigVersion
     from utils.datetime_utils import utcnow
     rollback_row = CountryConfigVersion(
         country_code=country_code,

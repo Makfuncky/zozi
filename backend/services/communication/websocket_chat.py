@@ -10,9 +10,9 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from models.core import EntityChatThread, EntityChatMessage
-from models.employee_models import Employee
-from db.database import get_service_session
+from data.models_core import EntityChatThread, EntityChatMessage
+from data.models_employee_models import Employee
+from data.db import get_service_session
 
 logger = logging.getLogger("zozi.websocket_chat")
 

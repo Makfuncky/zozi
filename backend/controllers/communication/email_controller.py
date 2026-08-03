@@ -8,9 +8,9 @@ from fastapi import Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from dependencies.db import get_db
-from models import User
-from routers.security.auth import get_current_user
+from data.dependencies_db import get_db
+from data.models import User
+from data.routers_security_auth import get_current_user
 from utils.dependencies import require_admin
 from services.communication.email_gateway import EmailGateway, get_email_gateway
 from services.communication.email_write_service import (

@@ -1,202 +1,142 @@
 ZOZI Platform Features (Investor Version)	
 
 # _____________________________________________________________________________________________ Database Work.
-Do the complete audit of the database, SQL, alembic and connection with the backend of all table and make sure the database optimized for performance and find out how to make it faster to work.
-The biggest problem is that when all the 294 database will work and we will have tones of data the system will take heavy load and the performance will drop, additionally it can be shutdown also.
-Tons of order per day, tones of user per day, heavy traffic, 1000000+ images, videos, 500,000+ products. 
-The system will crash, performance will drop, heavy load, system will be down.
 
+### 1. SYSTEM CONSTITUTION (BULLET POINTS)
 
-You want the full written plan first, and to plan for infra you don't have provisioned yet. That's the right call — decide the architecture before touching code.
+**Core Philosophy & Governance**
+*   **Single Source of Truth:** Treat DB as an Enterprise Data Platform. Never duplicate transactional data; reference it.
+*   **No Table Drops/Merges:** Optimize for domain clarity, not table count. Hundreds of tables are correct.
+*   **Alembic ONLY:** `Base.metadata.create_all()` is strictly forbidden in Production. All changes require reviewed migrations with downgrades and contract tests.
+*   **Machine-Documented:** Data dictionary and ERDs are generated via CI scripts, never hand-maintained.
+*   **Versioning & Ownership:** Every schema has a designated team owner. Every release maps to a specific DB schema version.
 
-Here is the complete production-scaling plan. It is grounded in what I actually found in your codebase (cited), not generic advice.
+**16 Bounded Contexts (PostgreSQL Schemas)**
+*   `core` (Identity), `commerce` (Catalog/Orders), `supplier` (Ops/KYC), `customer` (Profiles/Points), `logistics` (Fleet/POD), `finance` (Ledger/AR/AP), `treasury` (Cash/Payouts), `hr` (Employees), `country` (Configs/Rules), `media` (Metadata), `ai` (Staging/Embeddings), `communication` (Chat/Notify), `audit` (WORM logs), `security` (Risk/MFA), `analytics` (Snapshots), `configuration` (Toggles).
+*   *Future Reserved:* Ads, Affiliate, B2B, POS, ERP, CRM, BI.
+
+**Canonical Data Patterns**
+*   **Categories:** Materialized paths (`/1/15/42/`) + `lft/rgt`, no recursive CTEs.
+*   **Variants:** JSONB `attributes` + GIN index + `variant_key` hash.
+*   **Finance:** Immutable double-entry ledger chain. No direct `UPDATE` on posted entries.
+*   **AI/ML:** Writes to `ai_staging_*` tables first; explicit commit to business tables; audit in `ai_upload_jobs`.
+*   **Search:** `tsvector` + GIN + `pgvector` (HNSW). No `LIKE '%...%'`.
+*   **Analytics:** Materialized views and daily/monthly snapshots. No live heavy aggregates.
+*   **Files:** Metadata in PostgreSQL; Bytes in S3/CDN (Cloudflare R2).
+
+**Security, Multi-Tenancy & Lifecycle**
+*   **Country Isolation:** 100% of country-scoped tables carry `country_code` and enforce Row-Level Security (RLS).
+*   **Soft Deletes:** Business tables use `is_deleted`, `deleted_at`, `deleted_by`. No hard deletes.
+*   **Data Lifecycle:** Created → Active → Archived (Partition Detach) → Cold Storage → Destroyed (Crypto-shred for GDPR).
+*   **DB Limits:** Enforce strict limits (e.g., Max 20 product images, 200MB video, 50MB chat attachments, 5000 char notes).
+
+**Performance & Infrastructure Targets**
+*   **Targets:** Hot-list p95 < 300ms, Search < 300ms, Checkout < 500ms.
+*   **Query Rules:** Cursor pagination only (no `OFFSET`), max 3 JOINs, mandatory `selectinload` to prevent N+1.
+*   **Cross-Ecosystem:** Strictly via Transactional Outbox (Events/Services). **Zero cross-ecosystem Foreign Keys.**
+*   **Scaling:** PgBouncer (Transaction mode), Redis (Cache/Queue), Read Replicas for Analytics, Partitioning (Monthly Range for logs/orders, Hash for variants >10M).
 
 ---
 
-	# Zozi Production Scaling Plan
-	**Target load:** 500k+ products, 1M+ images/videos, tons of orders/users/day, heavy sustained traffic.
-	**Goal:** eliminate crash/downtime causes; keep performance flat as data grows.
+### 2. ARCHITECTURE DIAGRAMS
 
-	---
+**Diagram A: Layered Request & Data Flow**
+```text
+[Client / UI]
+      │
+      ▼
+[API / Routers] ──► (Validation, Rate-Limit, RLS Context Injection)
+      │
+      ▼
+[Controllers] ────► (Orchestration)
+      │
+      ▼
+[Services] ───────► (Business Logic, THE ONLY WRITERS)
+      │
+      ├────────────────────────────────────────┐
+      ▼                                        ▼
+[Providers (AI/Ext)]                   [Models (SQLAlchemy)]
+                                               │
+      ┌────────────────────────────────────────┴──────────────────────────────┐
+      ▼                                                                       ▼
+[Transactional Outbox] ◄────────────── [PostgreSQL 15 Primary] ──────► [Redis Cache/Queue]
+(Events/DLQ)                           (16 Schemas, RLS, Triggers)
+                                               │
+                                               ▼
+                                     [Read Replicas] ──► [Analytics / Dashboards]
+```
 
-	## 0. Executive summary — why it crashes today
+**Diagram B: Storage Tiers & Media Architecture**
+```text
+[HOT TIER: PostgreSQL Primary]
+  └─ Active Transactions, Master Data, Config, Media Metadata, AI Staging
+       │
+[WARM TIER: Redis & Read Replicas]
+  └─ Session Cache, Facet Counts, Materialized Views, Dashboards
+       │
+[COLD TIER: Object Storage (S3 / Cloudflare R2)]
+  └─ Media Bytes (Images/Video), Document Attachments, DB Backups
+       │
+[ARCHIVE TIER: Detached Partitions / Glacier]
+  └─ Aged Audit Logs, Old Chats, Historical Orders (> Retention Period)
+```
 
-	Your indexing/FTS/migration work (done last session) is real but only helps *query speed on small data*. It does **not** address the three things that actually take a system down under the load you described:
+**Diagram C: Cross-Ecosystem Event Flow (Order to Finance)**
+```text
+[Commerce: Order Created] 
+       │ (Publishes to Outbox)
+       ▼
+[Inventory Reserved] ──► [Payment Success] ──► [Supplier Notified]
+                                                 │
+[Analytics Snapshot] ◄── [Ledger Updated] ◄──────┴── [Delivery Assigned]
+```
 
-	1. **Media is stored on local disk and served by the API** → disk fills, bandwidth saturates, horizontal scaling is impossible.
-	2. **Heavy CPU/RAM work (900 MB ML models, AI, bulk import) runs inside HTTP requests** → a burst of uploads exhausts workers and freezes the whole API.
-	3. **You develop on SQLite but ship Postgres** → the search engine you built (SQLite FTS5) *does not exist on Postgres*, and query plans differ. Search silently breaks at scale.
+---
 
-	Everything below is prioritized by **downtime-prevention impact**, not effort.
+### 3. STEP-BY-STEP CONSTRUCTION PLAN
 
-	---
+*AI Builder Directive: Execute these phases sequentially. Do not proceed to the next phase until the "Done When" condition is met.*
 
-	## P0 — The two changes that prevent actual downtime
+#### **Phase 0: Freeze, Inventory & Governance Setup**
+1.  **Generate Inventory:** Run `generate_data_dictionary.py` to map all ~310 ORM models to the 16 bounded contexts.
+2.  **Define Ownership & Limits:** Assign team owners to all 16 schemas. Document hard limits (e.g., max file sizes, max array lengths) in the configuration schema.
+3.  **Done When:** A unified, machine-generated inventory exists with zero orphan tables and mapped ownership.
 
-	### P0-A. Move all media to object storage + CDN
+#### **Phase 1: Migration Pipeline Hardening**
+1.  **Block `create_all`:** Enforce environment guard raising an exception if `Base.metadata.create_all()` is called outside `APP_ENV=development`.
+2.  **Fix Alembic Chain:** Repair the broken `Union` import head. Generate missing migrations for `points_transactions`, `upload_jobs`, `user_points`.
+3.  **CI Gates:** Implement `alembic check` for schema drift and require contract tests for every new migration.
+4.  **Done When:** Production schema can *only* be altered via Alembic; CI fails on un-migrated model changes.
 
-	**Evidence in your code:**
-	- `main.py:470` — `app.mount("/uploads", StaticFiles(directory=uploads_dir))` — the API process serves image/video bytes.
-	- Direct disk writes everywhere: `supplier_controller.py` (`open("uploads/...", "wb")` at lines 1572, 1613, 1625, 3030, 3047, 3067, 3121, 4133), `media_service.py:111/171`, `auth_controller.py:1646`, `ai_upload.py:64`.
-	- S3 client already exists (`utils/backup.py:299-325`, `boto3`) — so the dependency and credentials pattern are already in the project.
+#### **Phase 2: Bounded-Context Schemas**
+1.  **Create Schemas:** Execute `CREATE SCHEMA` for all 16 contexts.
+2.  **Move Tables:** Run `ALTER TABLE ... SET SCHEMA ...` for all existing tables.
+3.  **Update ORM:** Add `__table_args__ = {"schema": "<context>"}` to all SQLAlchemy models and update `search_path`.
+4.  **Done When:** All models resolve under their specific namespace; application tests pass.
 
-	**Why it kills you:** At 1M+ files, one server can't hold or serve them. Every image request steals CPU/bandwidth from order processing. Two API servers = two different disks = broken images. Disk-full = hard crash.
+#### **Phase 3: Security & Multi-Tenancy (RLS)**
+1.  **Standardize Country Code:** Resolve `VARCHAR(3)` vs `VARCHAR(10)` mismatches. Ensure every tenant table has `country_code`.
+2.  **Apply RLS:** Execute `data/pg_rls_policies.sql`. Inject `SET app.current_country_code` via middleware.
+3.  **Partitioning:** Apply Monthly Range partitioning to `journal_entries`, `audit_logs`, `chat_messages`, `shipment_events`.
+4.  **Done When:** Cross-country read attempts return 0 rows; security tests pass.
 
-	**The plan:**
-	1. Create a single storage abstraction `services/storage.py` with a `StorageBackend` interface:
-	- `save(key, bytes, content_type) -> url`
-	- `delete(key)`
-	- `url(key) -> str` (public CDN URL or presigned)
-	- Two implementations: `LocalStorage` (dev, keeps `/uploads`) and `ObjectStorage` (S3/R2/Spaces, prod). Selected by config — mirrors how `database.py` already switches SQLite vs Postgres.
-	2. Route **every** existing `open(...wb)` / `_save_upload` / `save_product_media` / `save_supplier_media` through this abstraction. No controller writes to disk directly.
-	3. **Uploads for big files use presigned PUT** — client uploads *directly to S3/R2*, never through your API. The API only issues a presigned URL and records the resulting key. This removes upload bandwidth from your servers entirely.
-	4. Serve reads via **CDN** (CloudFront / Cloudflare in front of R2). DB stores keys/URLs only.
-	5. Stop mounting `/uploads` in production (keep it only when `LocalStorage` is active).
-	6. **Migration for existing files:** one-off script walks `uploads/`, pushes to bucket, rewrites stored URLs in `products`, `product_variants`, `users.profile_image`, supplier media columns. Run in batches.
+#### **Phase 4: Canonical Pattern Enforcement**
+1.  **Catalog:** Migrate categories to materialized paths; convert variant attributes to JSONB + GIN.
+2.  **Finance:** Route all financial writes through the Ledger Service. Add immutability triggers to posted journal entries.
+3.  **AI & Events:** Implement `ai_staging` commit flows. Build Transactional Outbox (`outbox_events`, `inbox_events`, `event_retry_queue`, `event_dead_letter`).
+4.  **Done When:** Anti-patterns (e.g., cross-FK chains, live aggregates, direct AI writes) are eradicated and blocked by tests.
 
-	**Recommended provider (since you have none yet):** **Cloudflare R2** — S3-compatible (your `boto3` code works unchanged via `endpoint_url`, already supported at `utils/backup.py:323-324`), **zero egress fees** (critical for 1M+ media served heavily), built-in CDN. Alternative: AWS S3 + CloudFront.
+#### **Phase 5: Normalization, Storage & Indexing**
+1.  **Split Wide Tables:** Break the 85-column `country_configs` into `basics`, `economics`, `tax`, `legal`.
+2.  **Media Offload:** Ensure 100% of file bytes are routed to S3/R2; DB holds only metadata.
+3.  **Index & FK Backlog:** Add the 62 missing composite indexes and 44 missing FK constraints (PostgreSQL only).
+4.  **Done When:** No table exceeds ~40 columns without ADR justification; `EXPLAIN ANALYZE` shows no sequential scans on hot paths.
 
-	---
-
-	### P0-B. Offload heavy work to a task queue (Celery/RQ on your existing Redis)
-
-	**Evidence in your code:**
-	- `bg_removal_service.py` — loads **900 MB rembg models** (lines 19, 329, 348); LRU-caches up to 2 = potentially ~1.8 GB RAM per worker.
-	- AI analysis, `bulk_upload_products`, `import_products_csv`, background removal, angle generation — invoked from request handlers (`routers/supplier.py:189-770`).
-	- You **already have the pattern**: `enqueue_copy_job` + polling `GET /supplier/upload/ai-copy/{job_id}` (`routers/supplier.py:559, 664`). And Redis is already a dependency (`utils/redis_client.py`, `utils/auth._get_redis`).
-
-	**Why it kills you:** ML inference and bulk imports hold a worker (and ~1 GB RAM) for seconds-to-minutes. Under an upload burst, all API workers are stuck doing image processing → **customers can't check out** → looks like the site is down.
-
-	**The plan:**
-	1. Introduce **Celery** (or RQ if you prefer lighter) with Redis as broker+backend (already running).
-	2. Dedicated worker pool/containers for: background removal, AI image/copy analysis, CSV/bulk import, angle generation, video transcode, email/notification fan-out.
-	3. Request handlers **enqueue and return a `job_id` immediately** (extend the pattern you already use for AI copy). Frontend polls or gets a webhook/websocket.
-	4. ML worker containers get more RAM; API containers stay lean → you can scale them independently.
-	5. Add **backpressure**: cap queue depth; reject/queue-later when saturated instead of crashing.
-
-	---
-
-	## P1 — Make the database survive Postgres at scale
-
-	### P1-A. Develop and audit against real Postgres
-
-	**Evidence:** `database.py:22-28` blocks SQLite in production; but all last-session tuning (FTS5, `EXPLAIN`) was on SQLite. **SQLite FTS5 ≠ Postgres.** The `fts_products` table and `services/product_fts.py` I built **will not work on Postgres**.
-
-	**The plan:**
-	1. Local Postgres via Docker; point `DATABASE_URL` at it; run the full app + migrations there.
-	2. **Re-run the perf audit on Postgres** — index effectiveness and plans differ from SQLite.
-	3. Ensure all 3 live Alembic migrations apply cleanly on Postgres (the FTS5 migration `perf20260717a1` must be made Postgres-aware or split).
-
-	### P1-B. Port product search to Postgres-native full-text
-
-	**The plan:**
-	- Replace SQLite FTS5 with **`tsvector` + GIN index** for full-text, and **`pg_trgm` + GIN** for the substring/`ILIKE '%term%'` cases that are currently unindexable (the ones flagged last session: `supplier_controller.py:524` Category.name, `905-907` User email/username, `4390` SupplierProfile.business_name).
-	- Make `advanced_search_engine.py` backend-aware: FTS5 on SQLite (dev), tsvector on Postgres (prod), ILIKE fallback last. Keep the same public `search()` signature so nothing else changes.
-	- Maintain the search vector via a Postgres trigger (auto-updates on product insert/update) instead of app-side upsert.
-
-	### P1-C. Connection pooling for many concurrent requests
-
-	**Evidence:** `database.py:54-61` uses QueuePool with `pool_size`/`max_overflow` from settings — good, but per-process. Under many gunicorn/uvicorn workers × pool_size, you can exceed Postgres `max_connections` → connection storms → refusals.
-
-	**The plan:**
-	- Put **PgBouncer** (transaction pooling) between the app and Postgres. App points at PgBouncer.
-	- Right-size: `pool_size` small per worker; PgBouncer aggregates. Document the math (workers × pool_size ≤ Postgres limit via PgBouncer).
-	- Keep `pool_pre_ping=True` (already set).
-
-	---
-
-	## P2 — Keep queries fast as data grows
-
-	### P2-A. Partition / archive high-growth tables
-
-	**Evidence:** last session's inventory — `audit_logs` already the largest table (730 rows in dev). In prod it grows unbounded; `notifications`, `orders`, `shipment_events` are time-series too.
-
-	**The plan:**
-	- **Partition by time** (Postgres native declarative partitioning, monthly) for `audit_logs`, `notifications`, `shipment_events`.
-	- Retention/archival job (move old partitions to cold storage / drop). Ties into your existing S3 backup (`utils/backup.py`).
-	- Consider partitioning `orders` by month once volume justifies it.
-
-	### P2-B. Kill N+1 queries and unbounded result sets
-
-	**The plan:**
-	- Audit list endpoints (products, orders, supplier catalogs) for lazy-loaded relationships → convert to `selectinload`/`joinedload`.
-	- Enforce **hard pagination limits** on every list endpoint (cap page size). At 500k products, an unbounded list query = OOM.
-	- Extend the `_db_profile.py` profiler from last session to run on Postgres and flag N+1 automatically.
-
-	### P2-C. Cache the hot read paths harder
-
-	**Evidence:** you already cache public supplier/product reads (`cache_utils`, `_bump_product_cache_version`, `_PUBLIC_SUPPLIER_CACHE_TTL`).
-
-	**The plan:**
-	- Extend the same versioned-cache pattern to product listing/search result pages and category facets (highest-traffic reads).
-	- Add cache stampede protection (lock/jitter) so a cache expiry under heavy traffic doesn't hammer Postgres simultaneously.
-
-	### P2-D. Schema hygiene (low risk, do last)
-
-	**Evidence:** 294 tables, 206 empty, 6 with no ORM model (`employee_risk_scores`, `hse_incidents`, `masked_messages`, `okr_objectives`, `training_modules`, `search_logs`, `employee_trainings`).
-
-	**The plan:**
-	- Confirm which empty tables are truly unused vs. future-feature; **park** genuinely dead ones behind an Alembic migration (don't silently drop — reversible migration).
-	- Bring the 6 modelless tables under ORM or drop them, so `Base.metadata` matches the DB.
-
-	---
-
-	## Deployment architecture (target state)
-
-	```
-							┌─────────────┐
-			Users ──────────▶│     CDN     │◀── media (images/videos)
-							│ (R2/CF/CFront)
-							└──────┬──────┘
-									│ (static reads only)
-							┌──────▼──────┐        ┌──────────────┐
-	  API requests ───────▶│ Load Balancer│──────▶│ API workers  │ (lean, no ML)
-    						└──────────────┘        │  N replicas  │
-													└───┬───┬──────┘
-							enqueue job ───────────────┘   │ SQL (via PgBouncer)
-						    		│                          ▼
-							┌──────▼──────┐            ┌──────────────┐
-							│    Redis    │            │  PgBouncer   │
-							│ broker+cache│            └──────┬───────┘
-							└──────┬──────┘                   │
-									│ pull job          ┌──────▼───────┐
-							┌──────▼──────┐            │  Postgres    │
-							│ ML/bulk     │───SQL─────▶│  primary     │
-							│ workers     │            │  + read replica(s)
-							│ (high RAM)  │            └──────────────┘
-							└─────────────┘
-									│ presigned PUT / write
-							┌──────▼──────┐
-							│ Object store│ (S3 / R2)
-							└─────────────┘
-	```
-
-	---
-
-	## Recommended execution order
-
-	| Phase | Work | Downtime risk removed |
-	|---|---|---|
-	| 1 | **P0-A media→object storage/CDN** + storage abstraction + migration script | Disk-full, bandwidth saturation, no horizontal scaling |
-	| 2 | **P0-B task queue** for ML/bulk/AI | Worker exhaustion / API freeze under upload bursts |
-	| 3 | **P1-A/B** Postgres validation + Postgres-native search | Search collapse, wrong plans at scale |
-	| 4 | **P1-C** PgBouncer + pool sizing | Connection storms |
-	| 5 | **P2-A/B** partitioning + N+1/pagination | Slow queries as data grows |
-	| 6 | **P2-C/D** cache hardening + schema hygiene | Cache stampede, schema bloat |
-
-	---
-
-	## Infra you'll need to provision (you said "none yet")
-
-	1. **PostgreSQL** (managed: RDS / Cloud SQL / Neon / Supabase) — primary + at least one read replica.
-	2. **Object storage + CDN** — recommend **Cloudflare R2** (S3-compatible, zero egress, works with your existing `boto3`+`endpoint_url` code).
-	3. **Redis** (managed) — you already use it; production instance for broker + cache + rate limiting.
-	4. **Container platform** — separate scaling for API vs ML/worker pools (ECS/Fargate, Kubernetes, or Render/Railway to start).
-	5. **PgBouncer** — sidecar or managed.
-
-	---
-
-	This is the plan. Nothing has been changed in code. When you're ready, tell me which phase to start (I recommend Phase 1: the media/storage abstraction, since it's the #1 downtime cause and the S3 dependency is already in your repo), and I'll implement it step by step through Alembic-safe, low-risk changes.
+#### **Phase 6: Analytics, Monitoring & Automation**
+1.  **Snapshots:** Create materialized views (`mv_daily_sales`, `kpi_supplier`, etc.) with cron-based refresh.
+2.  **Monitoring:** Deploy Prometheus/Grafana. Alert on slow queries, replication lag, autovacuum failures, and outbox DLQ size.
+3.  **Auto-Docs:** Hook `generate_data_dictionary.py` and ERD generator into the CI/CD pipeline to run on every merged migration.
+4.  **Done When:** Dashboards read exclusively from replicas/snapshots; documentation auto-updates on merge; monitoring alerts are active.
 
 
 # _____________________________________________________________________________________________ Database Work.
@@ -3372,3 +3312,318 @@ read all the folders and files in detail, make plan in detail for alignment and 
 ---
 
 
+delete router stubs - They are required for dynamic import mechanism and do complete proper wiring. a
+delete dependencies/db.py or dependencies/auth.py - Used by 71+ files; would require widespread changes	
+
+`db → models → services → controllers → routers → frontend`
+
+"""
+	Database
+		↓ (db.database, db.base, db.schemas)
+	Models
+		↓
+	Services  (business logic, database access)
+		↘
+	Controllers  (business logic orchestration, uses Services + Models directly)
+		↓
+	Routers  (HTTP endpoints, use Controllers)
+		↓
+	Frontend
+"""
+
+"""
+	Database
+		↓ (db.database, db.base, db.schemas)
+	Models
+		↓
+	Providers (ai, automation process, bg removal, serach engine, vectorization, )
+		↓
+	Services  (business logic, database access)
+		↘
+	Controllers  (business logic orchestration, uses Services + Models directly)
+		↓
+	Routers  (HTTP endpoints, use Controllers)
+		↓
+	Frontend
+"""
+
+
+Read all the files of services and controllers and make a proper domain wise plan.
+
+1:
+`Domin list` | `Sub-Domain list` | `Sub-Sub-Domain list`.
+
+2: 
+`services` available and make changes of domain wise.
+`services` not available and create services.
+
+3: 
+`controllers` available and make changes of domain wise.
+`controllers` not available and create services.
+
+
+
+							HTTP/WebSocket Request
+										│
+										▼
+					┌──────────────────────────────────┐
+					│    FastAPI/ASGI Server (uvicorn) │
+					└──────────────────────────────────┘
+										│
+										▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ MIDDLEWARE LAYER  ←  `backend/middleware/`                					  │
+│                                                           				  	  │
+│  Layer 1  FOUNDATION:  GZip → CORS → IP Extraction →RequestID → ApiVersion      │
+│  Layer 2  SECURITY:    SecurityHeaders → ImpossibleTravel → CSRF   			  │
+│  Layer 3  RATE LIMIT:  RateLimit                          					  │
+│  Layer 4  GEO/CCOUNTRY: CountryContext                    					  │
+│  Layer 5  OBSERVABILITY: RequestLogging                   					  │
+│  Layer 6  COMPLIANCE:  PCI-DSS (prod only)                					  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+										│
+										▼
+			┌────────────────────────────────────────────────────────┐
+			│ ROUTERS (by surface: admin/supplier/customer/internal) │
+			│  `backend/routers/{surface}/{feature}.py`              │
+			│  → Validates request                                   │
+			│  → Calls controller                                    │
+			└────────────────────────────────────────────────────────┘
+										│
+										▼
+			┌────────────────────────────────────────────────────────┐
+			│ CONTROLLERS (by domain)  ← `backend/controllers/`      │
+			│  `backend/controllers/{domain}/{name}_controller.py`   │
+			│  → Orchestrates business logic                         │
+			│  → Calls services                                      │
+			│  → Uses models directly                                │
+			└────────────────────────────────────────────────────────┘
+										│
+										▼
+			┌────────────────────────────────────────────────────────┐
+			│ SERVICES (by domain)  ← `backend/services/`            │
+			│  `backend/services/{domain}/{name}_service.py`         │
+			│  → Executes database operations                        │
+			│  → Contains business rules                             │
+			│  → Returns model objects                               │
+			└────────────────────────────────────────────────────────┘
+										│
+										▼
+					DB MODELS + SQLAlchemy   ←  `backend/models/`
+										│
+										▼
+						DATABASE (PostgreSQL/SQLite)
+
+"""
+
+## ====================================================================================================
+
+Let's refine the plan first in detail. 
+---
+
+Right now, I don't know what is the architecture audit is doing or is that working correctly or not, creating file, distributing functions and etc. should be completely into the organize way.
+---
+
+First of all, we must to draw a `grid line` what `aligned structure/circuit` we need.
+Secondly, which files are crossing our architecture structured line and why and how to make changes to put into our `aligned structure`
+Third, Recommendation for changes.
+---
+
+Am I correct or not ?
+---
+
+Right Now, our project backend architecture is not properly defined, all files are created by AI randomly, running all the functions of the website but what is working at where we don't know.
+
+---
+
+First of all, we must to draw a `grid line` what `aligned structure/circuit` we need.
+
+---
+
+I asked to AI what is our Architecture it said first below:
+
+```
+`db → models → services → controllers → routers → frontend`
+
+"""
+	Database
+		↓ (db.database, db.base, db.schemas)
+	Models
+		↓
+	Services  (business logic, database access)
+		↘
+	Controllers  (business logic orchestration, uses Services + Models directly)
+		↓
+	Routers  (HTTP endpoints, use Controllers)
+		↓
+	Frontend
+"""
+
+"""
+	Database
+		↓ (db.database, db.base, db.schemas)
+	Models
+		↓
+	Providers (ai, automation process, bg removal, serach engine, vectorization, )
+		↓
+	Services  (business logic, database access)
+		↘
+	Controllers  (business logic orchestration, uses Services + Models directly)
+		↓
+	Routers  (HTTP endpoints, use Controllers)
+		↓
+	Frontend
+"""
+```
+
+then I asked (Where `middleware` is fitting into the circuit of flow of backend ?)
+then I got reply below:
+
+```
+## Middleware Position in the Backend Circuit
+
+Based on the codebase analysis, here is exactly where middleware fits:
+
+### The Complete Backend Circuit Flow
+
+```
+HTTP/WebSocket Request
+        │
+        ▼
+  ┌──────────────────────────────────┐
+  │    FastAPI/ASGI Server (uvicorn) │
+  └──────────────────────────────────┘
+        │
+        ▼
+┌────────────────────────────────────────────────────────┐
+│ MIDDLEWARE LAYER  ←  `backend/middleware/`              │
+│                                                          │
+│  Layer 1  FOUNDATION:  GZip → CORS → IP Extraction →     │
+│                         RequestID → ApiVersion           │
+│  Layer 2  SECURITY:    SecurityHeaders → ImpossibleTravel │
+│                         → CSRF                           │
+│  Layer 3  RATE LIMIT:  RateLimit                         │
+│  Layer 4  GEO/CCOUNTRY: CountryContext                  │
+│  Layer 5  OBSERVABILITY: RequestLogging                │
+│  Layer 6  COMPLIANCE:  PCI-DSS (prod only)             │
+└────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌────────────────────────────────────────────────────────┐
+│ ROUTERS (by surface: admin/supplier/customer/internal)│
+│  `backend/routers/{surface}/{feature}.py`             │
+│  → Validates request                                   │
+│  → Calls controller                                    │
+└────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌────────────────────────────────────────────────────────┐
+│ CONTROLLERS (by domain)  ← `backend/controllers/`     │
+│  `backend/controllers/{domain}/{name}_controller.py`  │
+│  → Orchestrates business logic                         │
+│  → Calls services                                      │
+│  → Uses models directly                                │
+└────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌────────────────────────────────────────────────────────┐
+│ SERVICES (by domain)  ← `backend/services/`             │
+│  `backend/services/{domain}/{name}_service.py`         │
+│  → Executes database operations                         │
+│  → Contains business rules                            │
+│  → Returns model objects                              │
+└────────────────────────────────────────────────────────┘
+        │
+        ▼
+DB MODELS + SQLAlchemy   ←  `backend/models/`
+        │
+        ▼
+   DATABASE (PostgreSQL/SQLite)
+```
+
+### Middleware's Role in the Circuit
+
+Middleware operates as the **request preprocessing pipeline** that runs *before* any router, controller, or service code. It is the **outermost layer** of the backend logic (after the ASGI server's network handling).
+
+### Key Integration Points
+
+1. **Entry Point**: `main.py:65` → `setup_middleware(app)` registers all middleware on the FastAPI app
+2. **Request Context**: Middleware populates `request.state` with:
+   - `client_ip` (from `IPExtractionMiddleware`)
+   - `country_code` / `country_scope` (from `CountryContextMiddleware`)
+   - `request_id` (from `RequestIDMiddleware`)
+3. **Downstream Consumption**: Routers read country context via `from middleware.rls_dependency import get_country_scope` (used in `routers/supplier/countries.py:15`)
+4. **Service Integration**: `CountryContextMiddleware` calls `from services.hr.coi_service import check_approval_blocked` (line 38 of `country_context.py`) — **this is a cross-layer violation** where middleware reaches into HR service domain directly
+
+### Architectural Problem
+
+The circuit as documented has **no middleware layer**, but the actual code has a critical middleware layer that:
+- Sets up RLS country scoping before any router runs
+- Handles security headers, CSRF, rate limiting, PCI compliance
+- Extracts and forwards context (IP, country, request ID) to downstream layers
+- **Directly imports from `services.hr.coi_service`** and `utils.rls_interceptor` — coupling security middleware to HR domain logic and utility-level RLS interceptors
+
+This means the **documented circuit is incomplete**. The real backend circuit includes middleware as the **first processing layer** before routers.
+
+```
+---
+
+It is not clearly defined what is the architecture we have and what AI have to do?
+
+---
+
+The Audit Purpose is to Grid everything line and all code properly.
+List down, First what will be the backend circuit for large project workable and be specific and according to the destroyed structure.
+
+Secondly, we must to draw a `grid line` what `aligned structure/circuit` we need.
+Third, which files are crossing our architecture structured line and why and how to make changes to put into our `aligned structure`
+Forth, Recommendation for changes.
+
+---
+
+Am I correct ?
+
+
+
+## ====================================================================================================
+
+Middleware
+    ↓
+Routers
+    ↓
+Controllers
+    ↓
+Services
+    ↓
+Providers
+    ↓
+Models
+    ↓
+Database
+
+
+
+**Goal** 
+- Align all the folder, Sub-folder, files, file name, code quality, code distribution, code & file wiring, and etc. properly for scaling, handling, and need complete accuracy of code because it is big project and it is not easy task to make it porduction ready.
+
+**Procee**
+- Read complete backend and frontend.
+- Read all reports in details `.\ARCHITECTURE_AUDIT_REPORT.md`, `.\DESIGN_AUDIT_REPORT.md`, `.\DATABASE_AUDIT_REPORT.md`, `.\HEALTH_AUDIT_REPORT.md`,
+- evaluate all the aligation are correct or not of the reports.
+- evaluate everything in detail make a pipeline properly module to module to resolve the correct problem.
+- take one module and start working to resolve all the problem of 
+	alignment, file name, shifting the file, folder creation, code betterment, proper router, proper controllers, 
+	proper services code, proper database, if any provider using then keep in to providers folder and calling, 
+	keep the test files into test folder and check everything with into the test, keep playwright file also and keep into test folder, 
+	follow all the protocol properly, 
+- implement to resolve everything in detail & do the test.
+- regenerate the reports by running the 
+	`scripts\system_architecture_audit.py`,
+	`scripts\design_audit.py`,
+	`scripts\health_audit.py`,
+	`scripts\database_audit.py`.
+- Do not use the hardcode and do the complete wiring and connections.
+- Do not damage the to run the application, right now already is not running properly.
+
+**Note**
+- Do not make changes in scripts, you are not allowed.

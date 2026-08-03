@@ -200,7 +200,7 @@ def derive_country_aware_tables_from_db(engine=None) -> dict[str, str]:
     from sqlalchemy import inspect
 
     if engine is None:
-        from db.database import engine as engine
+        from data.db import engine as engine
 
     try:
         insp = inspect(engine)
@@ -231,7 +231,7 @@ def validate_rls_coverage(engine=None) -> list[str]:
     from sqlalchemy import inspect
 
     if engine is None:
-        from db.database import engine as engine
+        from data.db import engine as engine
 
     issues: list[str] = []
     try:
@@ -248,7 +248,7 @@ def validate_rls_coverage(engine=None) -> list[str]:
             issues.append(f"{table_name}: registry references missing column '{column_name}'")
 
     try:
-        from models import Base
+        from data.models import Base
     except Exception:
         return issues
 

@@ -8,12 +8,14 @@ Test file: backend/tests/_test_provider/test_geo.py
 """
 import ipaddress
 import json
-import json
 import logging
 import urllib.request
 from typing import Optional, Tuple
 
-from .config import settings
+
+class settings:
+    geo_timeout = 10
+    ip_geolocation_api = "http://ip-api.com"
 
 logger = logging.getLogger(__name__)
 

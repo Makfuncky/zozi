@@ -7,6 +7,7 @@ from sqlalchemy import event
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = [
     "AdminAnalyticsSnapshot", "RolePermissionSetting", "SystemAlert", "AdminChangeAuditLog",
@@ -24,8 +25,7 @@ __all__ = [
     "EmployeeExpense", "RetentionJobRun"
 ]
 
-
-class AdminAnalyticsSnapshot(Base):
+class AdminAnalyticsSnapshot(Base, TenantMixin):
     __tablename__ = "admin_analytics_snapshots"
     __table_args__ = (
         UniqueConstraint("snapshot_key", name="uq_admin_analytics_snapshots_key"),
@@ -38,20 +38,16 @@ class AdminAnalyticsSnapshot(Base):
     payload_json = Column(Text, nullable=False)
     computed_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False, index=True)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class RolePermissionSetting(Base):
+class RolePermissionSetting(Base, TenantMixin):
     __tablename__ = "role_permission_settings"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     role = Column(String, nullable=False)
     permissions_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class SystemAlert(Base):
+class SystemAlert(Base, TenantMixin):
     __tablename__ = "system_alerts"
     __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -63,10 +59,8 @@ class SystemAlert(Base):
     acknowledged_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class AdminChangeAuditLog(Base):
+class AdminChangeAuditLog(Base, TenantMixin):
     __tablename__ = "admin_change_audit_logs"
     __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -78,12 +72,10 @@ class AdminChangeAuditLog(Base):
     after_json = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     admin = relationship("User", foreign_keys=[admin_id])
 
-
-class AdminActivityLog(Base):
+class AdminActivityLog(Base, TenantMixin):
     __tablename__ = "admin_activity_logs"
     __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -92,10 +84,8 @@ class AdminActivityLog(Base):
     details = Column(JSON, nullable=True)
     ip_address = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class SystemSetting(Base):
+class SystemSetting(Base, TenantMixin):
     __tablename__ = "system_settings"
     __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -105,24 +95,19 @@ class SystemSetting(Base):
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class APIKey(Base):
+class APIKey(Base, TenantMixin):
     __tablename__ = "api_keys"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     key_hash = Column(String, nullable=False)
     permissions = Column(JSON, nullable=True)
-    is_active = Column(Boolean, default=True)
-    expires_at = Column(DateTime, nullable=True)
+
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class BadgeBillingRecord(Base):
+class BadgeBillingRecord(Base, TenantMixin):
     __tablename__ = "badge_billing_records"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -147,12 +132,10 @@ class BadgeBillingRecord(Base):
     bank_transaction_id = Column(Integer, ForeignKey("finance.bank_transactions.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    supplier = relationship("User", foreign_keys=[supplier_id])
+
     bank_transaction = relationship("BankTransaction")
 
-
-class BadgeTransaction(Base):
+class BadgeTransaction(Base, TenantMixin):
     __tablename__ = "badge_transactions"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -161,10 +144,8 @@ class BadgeTransaction(Base):
     transaction_type = Column(String, nullable=False)
     reference_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class BadgeTier(Base):
+class BadgeTier(Base, TenantMixin):
     __tablename__ = "badge_tiers"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -172,10 +153,8 @@ class BadgeTier(Base):
     min_points = Column(Integer, nullable=False)
     benefits = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CommissionBadgeTier(Base):
+class CommissionBadgeTier(Base, TenantMixin):
     __tablename__ = "commission_badge_tiers"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -189,14 +168,11 @@ class CommissionBadgeTier(Base):
     min_fulfilled_orders = Column(Integer, nullable=True)
     min_monthly_revenue = Column(Numeric(15, 2), nullable=True)
     sort_order = Column(Integer, default=0)
-    is_active = Column(Boolean, default=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CommissionGlobalConfig(Base):
+class CommissionGlobalConfig(Base, TenantMixin):
     __tablename__ = "commission_global_configs"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -209,10 +185,8 @@ class CommissionGlobalConfig(Base):
     updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class TicketReply(Base):
+class TicketReply(Base, TenantMixin):
     __tablename__ = "ticket_replies"
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -220,26 +194,22 @@ class TicketReply(Base):
     sender_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CouponUsage(Base):
+class CouponUsage(Base, TenantMixin):
     __tablename__ = "coupon_usage"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     coupon_id = Column(Integer, ForeignKey("commerce.coupons.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
 
     coupon = relationship("Coupon", backref="usages")
     user = relationship("User", foreign_keys=[user_id])
     order = relationship("Order", foreign_keys=[order_id])
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="CouponUsage.country_code")
 
-
-class PaymentProviderConfig(Base):
+class PaymentProviderConfig(Base, TenantMixin):
     __tablename__ = "payment_provider_configs"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -251,14 +221,13 @@ class PaymentProviderConfig(Base):
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     country_code = Column(String(3), nullable=True, index=True)
 
-
-class EmailProviderConfig(Base):
+class EmailProviderConfig(Base, TenantMixin):
     __tablename__ = "email_provider_configs"
     __table_args__ = ({"schema": "configuration"},)
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String, nullable=True)
-    is_active = Column(Boolean, default=True)
     updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     email_from_default = Column(String, nullable=True)
@@ -278,36 +247,28 @@ class EmailProviderConfig(Base):
     smtp_use_tls = Column(Boolean, default=True)
     smtp_use_ssl = Column(Boolean, default=False)
     smtp_timeout_seconds = Column(Integer, default=10)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ShippingCarrier(Base):
+class ShippingCarrier(Base, TenantMixin):
     __tablename__ = "shipping_carriers"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     name = Column(String, nullable=False)
     code = Column(String, unique=True, nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ShippingZone(Base):
+class ShippingZone(Base, TenantMixin):
     __tablename__ = "shipping_zones"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     name = Column(String, nullable=False)
     countries = Column(JSON, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class FinanceBankAccount(Base):
+class FinanceBankAccount(Base, TenantMixin):
     __tablename__ = "finance_bank_accounts"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -324,21 +285,17 @@ class FinanceBankAccount(Base):
     support_phone = Column(String, nullable=True)
     remittance_reference_prefix = Column(String, nullable=True)
     instructions = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    scope = Column(String, nullable=True, default="zozi_primary")
+
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class PromotionEngineConfig(Base):
+class PromotionEngineConfig(Base, TenantMixin):
     __tablename__ = "promotion_engine_configs"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    engine_enabled = Column(Boolean, default=False)
+
     allow_product_coupons = Column(Boolean, default=True)
     allow_category_coupons = Column(Boolean, default=True)
     allow_order_tier_discounts = Column(Boolean, default=True)
@@ -360,12 +317,12 @@ class PromotionEngineConfig(Base):
     allow_partial_points_redemption = Column(Boolean, default=True)
     updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="PromotionEngineConfig.country_code")
 
-
-class PromotionLedgerEntry(Base):
+class PromotionLedgerEntry(Base, TenantMixin):
     __tablename__ = "promotion_ledger_entries"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -374,10 +331,8 @@ class PromotionLedgerEntry(Base):
     amount = Column(Numeric(12, 2), nullable=False)
     entry_type = Column(String, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class PromotionOrderTier(Base):
+class PromotionOrderTier(Base, TenantMixin):
     __tablename__ = "promotion_order_tiers"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -389,16 +344,13 @@ class PromotionOrderTier(Base):
     discount_amount = Column(Numeric(10, 2), nullable=True)
     discount_value = Column(Numeric(10, 2), nullable=True)
     stacking_allowed = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=True)
-    sort_order = Column(Integer, nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
+
     updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="PromotionOrderTier.country_code")
 
-
-class LogisticsCODRemittanceReceipt(Base):
+class LogisticsCODRemittanceReceipt(Base, TenantMixin):
     __tablename__ = "logistics_cod_remittance_receipts"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -414,12 +366,10 @@ class LogisticsCODRemittanceReceipt(Base):
     status = Column(String, default="pending")
     currency = Column(String(3), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    settlement = relationship("LogisticsSettlement", foreign_keys=[settlement_id])
+
     partner = relationship("LogisticsPartner", foreign_keys=[partner_id])
 
-
-class LogisticsPartnerBankAccount(Base):
+class LogisticsPartnerBankAccount(Base, TenantMixin):
     __tablename__ = "logistics_partner_bank_accounts"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -441,13 +391,10 @@ class LogisticsPartnerBankAccount(Base):
     provider_last_synced_at = Column(DateTime, nullable=True)
     verified_at = Column(DateTime, nullable=True)
     verified_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class LogisticsPartnerDocument(Base):
+class LogisticsPartnerDocument(Base, TenantMixin):
     __tablename__ = "logistics_partner_documents"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -458,10 +405,8 @@ class LogisticsPartnerDocument(Base):
     is_verified = Column(Boolean, default=False)
     verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class LogisticsSettlement(Base):
+class LogisticsSettlement(Base, TenantMixin):
     __tablename__ = "logistics_settlements"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -483,10 +428,8 @@ class LogisticsSettlement(Base):
     payout_id = Column(Integer, ForeignKey("treasury.payouts.id"), nullable=True)
     bank_transaction_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ShipmentConfirmation(Base):
+class ShipmentConfirmation(Base, TenantMixin):
     __tablename__ = "shipment_confirmations"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -512,10 +455,8 @@ class ShipmentConfirmation(Base):
     delivery_signature_captured_at = Column(DateTime, nullable=True)
     response_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ChatbotQueryEvent(Base):
+class ChatbotQueryEvent(Base, TenantMixin):
     __tablename__ = "chatbot_query_events"
     __table_args__ = (
         Index("ix_chatbot_events_user_created", "user_id", "created_at"),
@@ -539,14 +480,12 @@ class ChatbotQueryEvent(Base):
     product_ids_json = Column(Text, nullable=True)
     clicked_product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow, nullable=False)
-    country_code = Column(String(3), nullable=True, index=True)
 
     __constraints__ = (
         CheckConstraint("result_count >= 0", name="ck_chatbot_events_result_count_nonnegative"),
     )
 
-
-class PushNotificationToken(Base):
+class PushNotificationToken(Base, TenantMixin):
     __tablename__ = "push_notification_tokens"
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -554,10 +493,8 @@ class PushNotificationToken(Base):
     token = Column(String, nullable=False)
     device_type = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ProductVerification(Base):
+class ProductVerification(Base, TenantMixin):
     __tablename__ = "product_verifications"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -575,10 +512,8 @@ class ProductVerification(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class SupplierBankAccount(Base):
+class SupplierBankAccount(Base, TenantMixin):
     __tablename__ = "supplier_bank_accounts"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -600,13 +535,10 @@ class SupplierBankAccount(Base):
     provider_last_synced_at = Column(DateTime, nullable=True)
     verified_at = Column(DateTime, nullable=True)
     verified_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class ProcessedWebhookEvent(Base):
+class ProcessedWebhookEvent(Base, TenantMixin):
     __tablename__ = "processed_webhook_events"
     __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -615,8 +547,6 @@ class ProcessedWebhookEvent(Base):
     payload_hash = Column(String, nullable=False)
     processed_at = Column(DateTime, default=_utcnow)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-
 
 @event.listens_for(ProcessedWebhookEvent, "before_insert")
 def _populate_processed_webhook_payload_hash(mapper, connection, target):
@@ -627,8 +557,7 @@ def _populate_processed_webhook_payload_hash(mapper, connection, target):
         seed = f"{target.processor}:{target.event_id}".encode("utf-8")
         target.payload_hash = hashlib.sha256(seed).hexdigest()
 
-
-class NormalizedWebhookEvent(Base):
+class NormalizedWebhookEvent(Base, TenantMixin):
     __tablename__ = "normalized_webhook_events"
     __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -650,10 +579,8 @@ class NormalizedWebhookEvent(Base):
     avs_result = Column(String, nullable=True)
     raw_payload = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class EmployeeExpense(Base):
+class EmployeeExpense(Base, TenantMixin):
     __tablename__ = "employee_expenses"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -667,12 +594,10 @@ class EmployeeExpense(Base):
     receipt_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    employee = relationship("Employee", backref="expenses")
+
     approver = relationship("User", foreign_keys=[approved_by])
 
-
-class SupplierDispute(Base):
+class SupplierDispute(Base, TenantMixin):
     __tablename__ = "supplier_disputes"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -698,23 +623,17 @@ class SupplierDispute(Base):
     resolution_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class SupplierCountryCommission(Base):
+class SupplierCountryCommission(Base, TenantMixin):
     __tablename__ = "supplier_country_commissions"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(3), nullable=False)
-    commission_rate = Column(Numeric(5, 2), nullable=False)
+
     category_slug = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class RetentionJobRun(Base):
+class RetentionJobRun(Base, TenantMixin):
     __tablename__ = "retention_job_runs"
     __table_args__ = ({"schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -731,4 +650,4 @@ class RetentionJobRun(Base):
     completed_at = Column(DateTime, nullable=True)
     status = Column(String(20), default="pending")
     error_message = Column(Text, nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
+

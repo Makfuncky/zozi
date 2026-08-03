@@ -28,6 +28,8 @@ class CountryEconomics(Base):
         Index("ix_country_economics_code", "country_code", unique=True), {"schema": "country"}
     )
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), nullable=True, unique=True, index=True)
+    version = Column(Integer, nullable=False, default=1, server_default="1")
     country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
@@ -48,7 +50,7 @@ class CountryEconomics(Base):
     cod_remittance_days = Column(Integer, nullable=True)
     settlement_hold_days = Column(Integer, default=3)
     minimum_payout_amount = Column(Numeric(12, 2), nullable=True)
-    payout_currency = Column(String(10), nullable=True)
+    payout_currency = Column(String(3), nullable=True)
     supplier_kyc_tier = Column(String(20), nullable=True)
     supplier_onboarding_fee = Column(Numeric(12, 2), nullable=True)
     supplier_monthly_fee = Column(Numeric(12, 2), nullable=True)

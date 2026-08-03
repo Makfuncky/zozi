@@ -12,10 +12,10 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import User
+from data.models import User
 from models.communication import Notification, InternalEmail, EmailFolder
-from models.employee_models import Employee
-from models.fraud import DLPViolation
+from data.models_employee_models import Employee
+from data.models_fraud import DLPViolation
 from utils.email_service import send_email, get_email_sender_address, build_email_open_tracking_url
 
 
@@ -299,7 +299,7 @@ class EmailGateway:
     def get_email_history(
         self, user_id: int, limit: int = 50, offset: int = 0
     ) -> dict:
-        from models import User
+        from data.models import User
         from models.communication import Notification
         
         user = self.db.query(User).filter(User.id == user_id).first()
@@ -336,7 +336,7 @@ def _enqueue_email_delivery(email_id: int, body_html: str, subject: str) -> None
         from utils.background_jobs import enqueue_job, JobKind
 
         def _deliver() -> dict:
-            from db.database import SessionLocal
+            from data.db import SessionLocal
             from models.communication import InternalEmail
             from utils.email_service import send_email, get_email_sender_address
 
@@ -346,7 +346,7 @@ def _enqueue_email_delivery(email_id: int, body_html: str, subject: str) -> None
                 if not email:
                     return {"status": "skipped", "reason": "email_not_found"}
 
-                from models import User
+                from data.models import User
                 recipients = email.recipients or []
                 if isinstance(recipients, str):
                     import json

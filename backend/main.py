@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 
 from middleware.orchestrator import setup_middleware
 from utils.ip_utils import set_request_ip
-from db.database import engine
-from db.base import Base
+from data.db import engine
+from data.base import Base
 # RLS is auto-registered via @event.listens_for(Engine, ...) in rls_interceptor.py
 from utils.config import settings
 from utils.logging_config import setup_structlog, get_request_id
@@ -29,7 +29,7 @@ from utils.versioning import VERSION_PREFIX, get_version_path, versioned_prefix,
 setup_structlog(log_level=logging.INFO if settings.debug else logging.WARNING)
 
 # Instrument SQLAlchemy engine for query timing (enables db_query_time_ms in logs)
-from database_logging import instrument_database_engine
+from utils.database_logging import instrument_database_engine
 instrument_database_engine(engine)
 
 import structlog
@@ -71,7 +71,7 @@ setup_prometheus(app)
 # Initialize OpenTelemetry tracing (requires OTEL_EXPORTER_OTLP_ENDPOINT env var)
 try:
     from utils.tracing import setup_tracing
-    from db.database import engine
+    from data.db import engine
     setup_tracing(app, db_engine=engine)
 except Exception:
     logger.info("OpenTelemetry tracing skipped (packages not installed or no endpoint configured)")
@@ -91,7 +91,7 @@ async def health_check():
 async def health_deps():
     from utils.config import settings
     from utils.auth import _get_redis
-    from db.database import check_connection_health
+    from data.db import check_connection_health
     
     redis_status = "ok" if _get_redis() else "unavailable"
     email_status = get_email_delivery_status()
@@ -113,8 +113,8 @@ async def health_deps():
 async def health_ready():
     from utils.config import settings
     from utils.auth import _get_redis
-    from db.database import check_connection_health
-    from controllers import payments_controller
+    from data.db import check_connection_health
+    from data.controllers_finance import payments_controller
     from types import SimpleNamespace
     
     db_ok = check_connection_health()
@@ -166,7 +166,7 @@ def get_email_delivery_status():
 # Backwards-compatible alias for the user realtime socket. The ws_chat router is
 # mounted under the "/ws-chat" prefix (=> /ws-chat/ws/user), but mobile/web
 # clients connect to the bare "/ws/user" path. Keep both working.
-from routers.ws_chat import websocket_user  # noqa: E402
+from routers.communication.ws_chat import websocket_user  # noqa: E402
 
 app.add_api_websocket_route("/ws/user", websocket_user)
 

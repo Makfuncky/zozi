@@ -26,7 +26,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import String, func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from models import BadgeBillingRecord, BankTransaction, CommissionBadgeTier, LogisticsPartner, Order, OrderItem, Payout, Product, ProductVariant, Shipment, ShipmentEvent, SupplierProfile, SupplierBankAccount, SupplierSettlement, User
+from data.models import BadgeBillingRecord, BankTransaction, CommissionBadgeTier, LogisticsPartner, Order, OrderItem, Payout, Product, ProductVariant, Shipment, ShipmentEvent, SupplierProfile, SupplierBankAccount, SupplierSettlement, User
 from services import ai_service
 from services.suppliers_write_service import (
     add_and_flush,
@@ -40,7 +40,7 @@ from services.suppliers_write_service import (
     stage_notification,
     update_supplier_bank_account,
 )
-from services.logistics_partner_pricing import normalize_country_code
+from data.services_logistics_partner_pricing import normalize_country_code
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from services.catalog.product_utils import _bump_product_cache_version
@@ -258,7 +258,7 @@ def _persist_supplier_product(
     )
     add_and_flush(db, new_product)
     if video_url:
-        from models import ProductVideo
+        from data.models import ProductVideo
         add_to_session(db, ProductVideo(product_id=new_product.id, video_url=video_url, upload_status="completed"))
     if parsed_variants:
         _replace_product_variants(new_product, parsed_variants, db)
@@ -519,7 +519,7 @@ def _resolve_category_id(category: Optional[str], db: Session) -> Optional[int]:
     text = str(category).strip()
     if not text:
         return None
-    from models import Category
+    from data.models import Category
 
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     row = (
@@ -1550,7 +1550,7 @@ def _process_image_with_tools(data: bytes, tools: dict, bg_preset: Optional[str]
         return data
     if bg_preset:
         try:
-            from services.bg_removal_service import remove_background
+            from data.services_bg_removal_service import remove_background
             data = remove_background(data, strategy=bg_preset)
         except Exception as exc:
             logger.warning("bg_preset application failed, using original: %s", exc)
@@ -2249,7 +2249,7 @@ def get_supplier_profile(current_user: dict, db: Session) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
 
     total_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).count()
@@ -2289,7 +2289,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
@@ -2332,7 +2332,7 @@ def request_verification(current_user: dict, db: Session) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
@@ -3183,7 +3183,7 @@ def _public_supplier_slug(profile, user: User) -> str:
 
 
 def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
@@ -3191,7 +3191,7 @@ def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
 
 
 def update_supplier_profile_business(body: dict, current_user: dict, db: Session) -> dict:
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
@@ -3230,7 +3230,7 @@ def upload_supplier_profile_business_media(
     db: Session,
     index: Optional[int] = None,
 ) -> dict:
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
 
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
@@ -3275,7 +3275,7 @@ def upload_supplier_profile_business_media(
 
 
 def accept_supplier_terms(current_user: dict, db: Session) -> dict:
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"])
@@ -3287,7 +3287,7 @@ def accept_supplier_terms(current_user: dict, db: Session) -> dict:
 
 
 def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     products_count = db.query(Product).filter(
         Product.supplier_id == current_user["id"],
@@ -3306,7 +3306,7 @@ def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
 
 def get_supplier_regions(current_user: dict, db: Session) -> dict:
     """Return the supplier's configured operating regions."""
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
@@ -3324,7 +3324,7 @@ def get_supplier_regions(current_user: dict, db: Session) -> dict:
 
 def update_supplier_regions(body: dict, current_user: dict, db: Session) -> dict:
     """Save the supplier's list of operating countries/regions."""
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
@@ -3838,7 +3838,7 @@ def compute_credibility_score(supplier_id: int, db: Session) -> int:
       - Account age in days          (max 10 pts)
       - Number of approved products  (max 10 pts)
     """
-    from models import SupplierProfile as SP, Product, Order, OrderItem, Review
+    from data.models import SupplierProfile as SP, Product, Order, OrderItem, Review
 
     # 1. Fulfilment rate
     total_orders = (
@@ -4020,7 +4020,7 @@ async def upload_verification_documents(
     Upload KYC/verification documents for the supplier.
     Stores file paths in SupplierProfile.verified_documents (JSON).
     """
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     from utils.file_validation import validate_upload_image
     from utils.config import settings as _settings
 
@@ -4120,7 +4120,7 @@ def admin_set_supplier_badge(
     db: Session,
 ) -> dict:
     """Admin: manually override badge level for a supplier."""
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     normalized_badge_level = str(badge_level or "").strip().lower()
@@ -4166,7 +4166,7 @@ def _get_public_supplier_aggregates(supplier_ids: list[int], db: Session) -> dic
     if not supplier_ids:
         return {}
 
-    from models import Review as ReviewModel
+    from data.models import Review as ReviewModel
 
     aggregates: dict[int, dict[str, float | int]] = {
         supplier_id: {
@@ -4252,7 +4252,7 @@ def _supplier_lookup_sql_expression(column):
     )
 
 def _get_public_supplier_record(supplier_id: int, db: Session):
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
 
     row = (
         db.query(User, SP)
@@ -4296,7 +4296,7 @@ def list_public_suppliers(
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
 
     base_query = db.query(SP, User).join(User, User.id == SP.user_id).filter(
         User.is_active == 1,
@@ -4365,7 +4365,7 @@ def resolve_public_supplier_slug(slug: str, db: Session) -> dict:
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
 
     normalized_slug = _normalize_supplier_lookup_token(slug)
     if not normalized_slug:
@@ -4425,7 +4425,7 @@ def get_public_supplier_profile(supplier_id: int, db: Session) -> dict:
         {"product_count": 0, "avg_rating": 0.0, "total_reviews": 0, "total_sales": 0},
     )
 
-    from models import Review as ReviewModel
+    from data.models import Review as ReviewModel
 
     recent_reviews = [
         {

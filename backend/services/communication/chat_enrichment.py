@@ -7,13 +7,24 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import text, table, column, select, update, delete
 
 from models.employee_models import Employee
 from utils.datetime_utils import utcnow as _utcnow
 from utils.websocket_manager import ws_manager
 
 logger = logging.getLogger(__name__)
+
+_ALLOWED_TABLES = frozenset({
+    "direct_chat_messages",
+    "group_chat_messages",
+    "internal_messages",
+})
+
+
+def _validate_table_name(table_name: str) -> None:
+    if table_name not in _ALLOWED_TABLES:
+        raise ValueError(f"Invalid table name: {table_name}")
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -62,14 +73,13 @@ def add_reaction(
             VALUES (:msg_id, :msg_type, :emp_id, :emoji, :now)
             ON CONFLICT (message_id, message_type, employee_id, emoji)
             DO UPDATE SET created_at = EXCLUDED.created_at
-        """),
-        {
-            "msg_id": message_id,
-            "msg_type": message_type,
-            "emp_id": employee_id,
-            "emoji": emoji,
-            "now": _utcnow(),
-        },
+        """).bindparams(
+            msg_id=message_id,
+            msg_type=message_type,
+            emp_id=employee_id,
+            emoji=emoji,
+            now=_utcnow(),
+        ),
     )
     db.commit()
     _log_activity(db, employee_id, "chat_reaction_added", f"chat_{message_type}", str(message_id))
@@ -91,8 +101,12 @@ def remove_reaction(
               AND message_type = :msg_type
               AND employee_id = :emp_id
               AND emoji = :emoji
-        """),
-        {"msg_id": message_id, "msg_type": message_type, "emp_id": employee_id, "emoji": emoji},
+        """).bindparams(
+            msg_id=message_id,
+            msg_type=message_type,
+            emp_id=employee_id,
+            emoji=emoji,
+        ),
     )
     db.commit()
     _log_activity(db, employee_id, "chat_reaction_removed", f"chat_{message_type}", str(message_id))
@@ -111,8 +125,10 @@ def get_reactions(
             FROM chat_reactions
             WHERE message_id = :msg_id AND message_type = :msg_type
             ORDER BY created_at ASC
-        """),
-        {"msg_id": message_id, "msg_type": message_type},
+        """).bindparams(
+            msg_id=message_id,
+            msg_type=message_type,
+        ),
     ).mappings().all()
 
     grouped: Dict[str, List[Dict[str, Any]]] = {}
@@ -141,18 +157,25 @@ def edit_message(
 ) -> Dict[str, Any]:
     """Edit a message (only within edit window). Store original in audit."""
     tables = {
-        "direct": "direct_chat_messages",
-        "group": "group_chat_messages",
-        "channel": "internal_messages",
+        "direct": table("direct_chat_messages",
+            column("id"), column("sender_id"), column("body"),
+        ),
+        "group": table("group_chat_messages",
+            column("id"), column("sender_id"), column("body"),
+        ),
+        "channel": table("internal_messages",
+            column("id"), column("sender_id"), column("body"),
+        ),
     }
-    table = tables.get(message_type)
-    if not table:
+    tbl = tables.get(message_type)
+    if not tbl:
         raise ValueError(f"Unknown message type: {message_type}")
+
+    _validate_table_name(tbl.name)
 
     # Get original
     original = db.execute(
-        text(f"SELECT id, sender_id, body FROM {table} WHERE id = :id"),
-        {"id": message_id},
+        select(tbl.c.id, tbl.c.sender_id, tbl.c.body).where(tbl.c.id == message_id),
     ).mappings().first()
     if not original:
         raise ValueError("Message not found")
@@ -167,21 +190,19 @@ def edit_message(
             VALUES
                 (:entity_type, :entity_id, :user_id, 'message_edited',
                  :preview, :metadata, :now)
-        """),
-        {
-            "entity_type": f"{message_type}_message",
-            "entity_id": message_id,
-            "user_id": employee_id,
-            "preview": original["body"][:200],
-            "metadata": json.dumps({"original_body": original["body"], "new_body": new_body}),
-            "now": _utcnow(),
-        },
+        """).bindparams(
+            entity_type=f"{message_type}_message",
+            entity_id=message_id,
+            user_id=employee_id,
+            preview=original["body"][:200],
+            metadata=json.dumps({"original_body": original["body"], "new_body": new_body}),
+            now=_utcnow(),
+        ),
     )
 
     # Update
     db.execute(
-        text(f"UPDATE {table} SET body = :body WHERE id = :id"),
-        {"body": new_body, "id": message_id},
+        update(tbl).where(tbl.c.id == message_id).values(body=new_body),
     )
     db.commit()
     _log_activity(db, employee_id, "chat_message_edited", f"chat_{message_type}", str(message_id))
@@ -197,17 +218,24 @@ def delete_message(
 ) -> Dict[str, Any]:
     """Soft-delete (default) or hard-delete a message. Audit logged."""
     tables = {
-        "direct": "direct_chat_messages",
-        "group": "group_chat_messages",
-        "channel": "internal_messages",
+        "direct": table("direct_chat_messages",
+            column("id"), column("sender_id"), column("body"),
+        ),
+        "group": table("group_chat_messages",
+            column("id"), column("sender_id"), column("body"),
+        ),
+        "channel": table("internal_messages",
+            column("id"), column("sender_id"), column("body"),
+        ),
     }
-    table = tables.get(message_type)
-    if not table:
+    tbl = tables.get(message_type)
+    if not tbl:
         raise ValueError(f"Unknown message type: {message_type}")
 
+    _validate_table_name(tbl.name)
+
     original = db.execute(
-        text(f"SELECT id, sender_id, body FROM {table} WHERE id = :id"),
-        {"id": message_id},
+        select(tbl.c.id, tbl.c.sender_id, tbl.c.body).where(tbl.c.id == message_id),
     ).mappings().first()
     if not original:
         raise ValueError("Message not found")
@@ -220,23 +248,23 @@ def delete_message(
             VALUES
                 (:entity_type, :entity_id, :user_id, 'message_deleted',
                  :preview, :metadata, :now)
-        """),
-        {
-            "entity_type": f"{message_type}_message",
-            "entity_id": message_id,
-            "user_id": employee_id,
-            "preview": original["body"][:200],
-            "metadata": json.dumps({"deleted_by": employee_id, "hard_delete": hard_delete}),
-            "now": _utcnow(),
-        },
+        """).bindparams(
+            entity_type=f"{message_type}_message",
+            entity_id=message_id,
+            user_id=employee_id,
+            preview=original["body"][:200],
+            metadata=json.dumps({"deleted_by": employee_id, "hard_delete": hard_delete}),
+            now=_utcnow(),
+        ),
     )
 
     if hard_delete:
-        db.execute(text(f"DELETE FROM {table} WHERE id = :id"), {"id": message_id})
+        db.execute(delete(tbl).where(tbl.c.id == message_id))
     else:
         db.execute(
-            text(f"UPDATE {table} SET body = '[deleted]', is_deleted = TRUE WHERE id = :id"),
-            {"id": message_id},
+            update(tbl).where(tbl.c.id == message_id).values(
+                body="[deleted]", is_deleted=True,
+            ),
         )
     db.commit()
     _log_activity(db, employee_id, "chat_message_deleted", f"chat_{message_type}", str(message_id))
@@ -262,14 +290,13 @@ def apply_legal_hold(
             VALUES (:room_id, :room_type, :placed_by, :reason, :now)
             ON CONFLICT (room_id, room_type) WHERE is_active = true
             DO NOTHING
-        """),
-        {
-            "room_id": room_id,
-            "room_type": room_type,
-            "placed_by": placed_by,
-            "reason": reason,
-            "now": _utcnow(),
-        },
+        """).bindparams(
+            room_id=room_id,
+            room_type=room_type,
+            placed_by=placed_by,
+            reason=reason,
+            now=_utcnow(),
+        ),
     )
     db.commit()
     _log_activity(db, placed_by, "legal_hold_applied", f"chat_{room_type}_room", str(room_id))
@@ -287,8 +314,11 @@ def release_legal_hold(
             UPDATE chat_legal_holds
             SET is_active = false, released_at = :now
             WHERE room_id = :room_id AND room_type = :room_type AND is_active = true
-        """),
-        {"room_id": room_id, "room_type": room_type, "now": _utcnow()},
+        """).bindparams(
+            room_id=room_id,
+            room_type=room_type,
+            now=_utcnow(),
+        ),
     )
     db.commit()
     return {"room_id": room_id, "room_type": room_type, "legal_hold": False}
@@ -300,8 +330,10 @@ def is_legal_hold_active(db: Session, room_id: int, room_type: str) -> bool:
         text("""
             SELECT 1 FROM chat_legal_holds
             WHERE room_id = :room_id AND room_type = :room_type AND is_active = true
-        """),
-        {"room_id": room_id, "room_type": room_type},
+        """).bindparams(
+            room_id=room_id,
+            room_type=room_type,
+        ),
     ).scalar()
     return bool(result)
 
@@ -331,16 +363,15 @@ def create_voice_note_attachment(
                 (:msg_id, :msg_type, 'voice', :file_url, :file_name,
                  :file_size, 'audio/ogg', :duration, :waveform, TRUE)
             RETURNING id
-        """),
-        {
-            "msg_id": message_id,
-            "msg_type": message_type,
-            "file_url": file_url,
-            "file_name": file_name,
-            "file_size": file_size_bytes,
-            "duration": duration_seconds,
-            "waveform": json.dumps(waveform_json) if waveform_json else None,
-        },
+        """).bindparams(
+            msg_id=message_id,
+            msg_type=message_type,
+            file_url=file_url,
+            file_name=file_name,
+            file_size=file_size_bytes,
+            duration=duration_seconds,
+            waveform=json.dumps(waveform_json) if waveform_json else None,
+        ),
     )
     attachment_id = result.scalar()
     db.commit()
@@ -373,20 +404,19 @@ def upload_attachment(
                  :file_size, :mime, :duration, :thumb,
                  :width, :height, FALSE)
             RETURNING id
-        """),
-        {
-            "msg_id": message_id,
-            "msg_type": message_type,
-            "att_type": attachment_type,
-            "file_url": file_url,
-            "file_name": file_name,
-            "file_size": file_size_bytes,
-            "mime": mime_type,
-            "duration": duration_seconds,
-            "thumb": thumbnail_url,
-            "width": width,
-            "height": height,
-        },
+        """).bindparams(
+            msg_id=message_id,
+            msg_type=message_type,
+            att_type=attachment_type,
+            file_url=file_url,
+            file_name=file_name,
+            file_size=file_size_bytes,
+            mime=mime_type,
+            duration=duration_seconds,
+            thumb=thumbnail_url,
+            width=width,
+            height=height,
+        ),
     )
     attachment_id = result.scalar()
     db.commit()

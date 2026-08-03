@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Product, Review
+from data.models import Product, Review
 
 
 def get_review_by_id(db: Session, review_id: int) -> Review | None:

@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
-from models import (
+from data.models import (
     PurchaseOrder, PurchaseOrderLine,
     GoodsReceiptNote, GoodsReceiptLine,
     SalesOrder, SalesOrderLine,
@@ -16,7 +16,7 @@ from models import (
     Vendor, Customer, Product, ProductVariant,
     APBill, ARInvoice, JournalEntry, Account, JournalEntryLine,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
+from data.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
@@ -44,7 +44,7 @@ def _next_number(db: Session, prefix: str, table_column) -> str:
     return f"{prefix}-{seq:05d}"
 
 
-# â”€â”€ Purchase Order â”€â”€
+# ── Purchase Order ──
 
 
 def create_purchase_order(
@@ -221,7 +221,7 @@ def _post_grn_inventory_journal(db: Session, grn: GoodsReceiptNote, po: Purchase
         gl.create_journal_entry(db, JournalEntryCreate(
             entry_date=grn.receipt_date,
             reference_type="grn", reference_id=grn.id,
-            description=f"GRN {grn.grn_number} â€” inventory receipt & AP accrual",
+            description=f"GRN {grn.grn_number} — inventory receipt & AP accrual",
             currency=po.currency, country_code=po.country_code,
             lines=lines,
         ))
@@ -273,7 +273,7 @@ def three_way_match(
     return results
 
 
-# â”€â”€ Sales Order â”€â”€
+# ── Sales Order ──
 
 
 def create_sales_order(
@@ -479,7 +479,7 @@ def dispatch_sales_order(db: Session, so_id: int, dispatch_data: dict,
     return so
 
 
-# â”€â”€ Dunning Engine â”€â”€
+# ── Dunning Engine ──
 
 
 def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
@@ -497,15 +497,15 @@ def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
         elif days_overdue == 0:
             reminders.append({"type": "reminder_2", "message": f"Payment due today for invoice {inv.invoice_number}"})
         elif 1 <= days_overdue <= 7:
-            reminders.append({"type": "reminder_3", "message": f"Invoice {inv.invoice_number} is {days_overdue} day(s) overdue â€” late fee may apply"})
+            reminders.append({"type": "reminder_3", "message": f"Invoice {inv.invoice_number} is {days_overdue} day(s) overdue — late fee may apply"})
         elif 8 <= days_overdue <= 30:
-            reminders.append({"type": "reminder_4", "message": f"Invoice {inv.invoice_number} is {days_overdue} day(s) overdue â€” credit hold risk"})
+            reminders.append({"type": "reminder_4", "message": f"Invoice {inv.invoice_number} is {days_overdue} day(s) overdue — credit hold risk"})
         elif 31 <= days_overdue <= 60:
-            reminders.append({"type": "escalation_1", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days â€” management alert"})
+            reminders.append({"type": "escalation_1", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days — management alert"})
         elif 61 <= days_overdue <= 90:
-            reminders.append({"type": "escalation_2", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days â€” legal warning"})
+            reminders.append({"type": "escalation_2", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days — legal warning"})
         elif days_overdue > 90:
-            reminders.append({"type": "write_off_recommendation", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days â€” recommend write-off"})
+            reminders.append({"type": "write_off_recommendation", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days — recommend write-off"})
         if reminders:
             triggered.append({
                 "invoice_id": inv.id, "invoice_number": inv.invoice_number,
@@ -514,7 +514,7 @@ def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
             })
             # Send dunning emails
             try:
-                from services.communication.transactional_email_service import enqueue_dunning_email
+                from services.transactional_email_service import enqueue_dunning_email
                 for reminder in reminders:
                     enqueue_dunning_email(inv.id, reminder["type"], reminder["message"])
             except Exception as e:
@@ -522,7 +522,7 @@ def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
     return triggered
 
 
-# â”€â”€ Stock â”€â”€
+# ── Stock ──
 
 
 def _get_product_cost(db: Session, product_id: int) -> Optional[Decimal]:
@@ -588,7 +588,7 @@ def get_stock_level(db: Session, product_id: int = None, warehouse_id: int = Non
     return results
 
 
-# â”€â”€ Warehouse â”€â”€
+# ── Warehouse ──
 
 
 def create_warehouse(db: Session, *, name: str, code: str, address: str = None,
@@ -610,7 +610,7 @@ def list_warehouses(db: Session, country_code: str = None) -> list[Warehouse]:
     return q.order_by(Warehouse.name).all()
 
 
-# â”€â”€ PO / SO Listing â”€â”€
+# ── PO / SO Listing ──
 
 
 def list_purchase_orders(db: Session, status: str = None, supplier_id: int = None,
@@ -655,7 +655,7 @@ def list_goods_receipts(db: Session, po_id: int = None, status: str = None,
     return {"total": total, "items": rows}
 
 
-# â”€â”€ 3-Way Match Scanner â”€â”€
+# ── 3-Way Match Scanner ──
 
 
 def scan_unmatched_pos(db: Session, country_code: str = None) -> dict:
@@ -703,7 +703,7 @@ def scan_unmatched_pos(db: Session, country_code: str = None) -> dict:
     return results
 
 
-# â”€â”€ E-commerce Auto-Invoice on Delivery (#11) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── E-commerce Auto-Invoice on Delivery (#11) ──────────
 
 
 def auto_invoice_ecommerce_orders(db: Session, country_code: str = None) -> dict:
@@ -711,7 +711,7 @@ def auto_invoice_ecommerce_orders(db: Session, country_code: str = None) -> dict
     Auto-generate AR invoices for delivered e-commerce orders.
     Called daily by the automation scheduler.
     """
-    from models import Order, ARInvoice, Account
+    from data.models import Order, ARInvoice, Account
 
     results = {"scanned": 0, "invoiced": 0, "skipped": 0, "errors": 0}
 

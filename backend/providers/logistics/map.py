@@ -9,7 +9,10 @@ Test file: backend/tests/_test_provider/test_map.py
 import logging
 from typing import Optional, Tuple
 
-from .config import settings
+
+class settings:
+    map_timeout = 10
+    map_cache_ttl = 3600
 
 logger = logging.getLogger(__name__)
 

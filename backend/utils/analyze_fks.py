@@ -2,7 +2,7 @@ import sys
 import json
 sys.path.insert(0, '.')
 from sqlalchemy import inspect
-from db.database import engine
+from data.db import engine
 
 inspector = inspect(engine)
 schemas = [s for s in inspector.get_schema_names() if not s.startswith('_') and s not in ['pg_catalog', 'information_schema']]

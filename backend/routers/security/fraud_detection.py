@@ -4,12 +4,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from models import (
+from data.db import get_db
+from data.models import (
     FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue,
     IPReputation, DeviceFingerprint, User
 )
-from db.schemas import (
+from data.schemas import (
     FraudScoreRequest, FraudScoreResponse, FraudEventOut,
     FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut,
     ManualReviewOut, ManualReviewAssign, ManualReviewResolve,
@@ -88,6 +88,8 @@ def list_fraud_events(
 def list_blacklist(
     entity_type: Optional[str] = None,
     status: str = Query("active"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -96,7 +98,7 @@ def list_blacklist(
     if entity_type:
         q = q.filter(FraudBlacklist.entity_type == entity_type)
     q = q.filter(FraudBlacklist.status == status)
-    return q.order_by(FraudBlacklist.created_at.desc()).all()
+    return q.order_by(FraudBlacklist.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.post("/blacklist", response_model=FraudBlacklistOut)
@@ -137,11 +139,13 @@ def remove_from_blacklist(entry_id: int, _: User = Depends(require_admin), db: S
 @router.get("/rules", response_model=list[FraudRuleOut])
 def list_rules(
     is_active: bool = True,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """List fraud detection rules."""
-    return db.query(FraudRule).filter(FraudRule.is_active == is_active).all()
+    return db.query(FraudRule).filter(FraudRule.is_active == is_active).offset(skip).limit(limit).all()
 
 
 @router.post("/rules", response_model=FraudRuleOut)
@@ -166,6 +170,8 @@ def create_rule(payload: FraudRuleCreate, _: User = Depends(require_admin), db: 
 def list_review_queue(
     status: str = Query("pending"),
     priority: Optional[str] = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -173,7 +179,7 @@ def list_review_queue(
     q = db.query(ManualReviewQueue).filter(ManualReviewQueue.status == status)
     if priority:
         q = q.filter(ManualReviewQueue.priority == priority)
-    return q.order_by(ManualReviewQueue.priority.desc(), ManualReviewQueue.created_at.desc()).all()
+    return q.order_by(ManualReviewQueue.priority.desc(), ManualReviewQueue.created_at.desc()).offset(skip).limit(limit).all()
 
 
 @router.post("/review/{review_id}/assign")

@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
-from routers.ai_research import router as ai_research_router
+from data.routers_ai_research import router as ai_research_router
 
 app = FastAPI()
 app.include_router(ai_research_router)
@@ -65,7 +65,7 @@ class TestGetAIResearchJob:
         assert response.status_code == 404
 
     def test_get_job_returns_queued_status(self):
-        from services.ai_research_jobs import enqueue_job
+        from data.services_ai_research_jobs import enqueue_job
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")
         assert response.status_code == 200
@@ -75,7 +75,7 @@ class TestGetAIResearchJob:
         assert data["country_code"] == "IN"
 
     def test_get_job_returns_completed_status_with_result(self):
-        from services.ai_research_jobs import enqueue_job, mark_job_completed
+        from data.services_ai_research_jobs import enqueue_job, mark_job_completed
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         mark_job_completed(job["job_id"], {"module_01_country_identity": {"official_name": "India"}}, ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")
@@ -85,7 +85,7 @@ class TestGetAIResearchJob:
         assert data["result"] is not None
 
     def test_get_job_returns_failed_status(self):
-        from services.ai_research_jobs import enqueue_job, mark_job_failed
+        from data.services_ai_research_jobs import enqueue_job, mark_job_failed
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         mark_job_failed(job["job_id"], "Test error", ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")

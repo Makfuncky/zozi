@@ -41,28 +41,32 @@ export async function getInvoiceData(orderId: number): Promise<InvoiceData> {
 /**
  * Generate PDF HTML from invoice data
  */
+const INVOICE_CSS = [
+  "body { font-family: 'Helvetica', sans-serif; margin: 0; padding: 20px; }",
+  ".header { text-align: center; margin-bottom: 20px; }",
+  ".logo { font-size: 24px; font-weight: bold; color: #32CD32; }",
+  ".invoice-title { font-size: 18px; margin: 10px 0; }",
+  ".section { margin: 20px 0; }",
+  ".section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; }",
+  "table { width: 100%; border-collapse: collapse; }",
+  "th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }",
+  "th { background-color: #f5f5f5; }",
+  ".total-row { font-weight: bold; }",
+  ".footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 12px; color: #666; }",
+].join("\n");
+
 function generateInvoiceHtml(invoice: InvoiceData): string {
-  const formatCurrency = (amount: number) => 
+  const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+
+  const encodedCss = btoa(INVOICE_CSS);
 
   return `
     <!DOCTYPE html>
     <html>
       <head>
         <meta charset="UTF-8" />
-        <style>
-          body { font-family: 'Helvetica', sans-serif; margin: 0; padding: 20px; }
-          .header { text-align: center; margin-bottom: 20px; }
-          .logo { font-size: 24px; font-weight: bold; color: #32CD32; }
-          .invoice-title { font-size: 18px; margin: 10px 0; }
-          .section { margin: 20px 0; }
-          .section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; }
-          th { background-color: #f5f5f5; }
-          .total-row { font-weight: bold; }
-          .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ccc; font-size: 12px; color: #666; }
-        </style>
+        <link rel="stylesheet" href="data:text/css;base64,${encodedCss}" />
       </head>
       <body>
         <div class="header">

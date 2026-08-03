@@ -366,7 +366,7 @@ test.describe("admin supplier and logistics sanity", () => {
 
     await loginForSanity(page, {
       username: "logistics",
-      password: "logistics123",
+      password: process.env.E2E_LOGISTICS_PASSWORD ?? "logistics123",
       landingRoute: "/logistics-partner/dashboard",
       expectedUrl: /\/logistics-partner\/dashboard(?:\?|$)/,
     });

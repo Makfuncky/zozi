@@ -5,7 +5,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from models.employee_models import (
+from data.models_employee_models import (
     COIReport,
     DisciplinaryCase,
     EmployeeAddress,

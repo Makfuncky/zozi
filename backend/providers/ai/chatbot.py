@@ -9,7 +9,14 @@ Test file: backend/tests/_test_provider/test_chatbot.py
 import logging
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+
+class settings:
+    ollama_text_model = "gpt-4o-mini"
+    ollama_model = "gpt-4o-mini"
+    ollama_base_url = "http://localhost:11434"
+    chatbot_vector_model = "nomic-embed-text"
+    chatbot_top_k = 10
+    chatbot_timeout = 30
 
 logger = logging.getLogger(__name__)
 

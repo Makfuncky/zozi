@@ -29,8 +29,27 @@ from typing import Tuple, Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
-import numpy as np
-from PIL import Image
+from .config import settings
+
+logger = logging.getLogger(__name__)
+
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+np = _LazyNumpy()
+Image = _LazyPIL()
 
 try:
     import cv2
@@ -38,10 +57,6 @@ try:
 except ImportError:
     _HAS_CV2 = False
     cv2 = None
-
-from .config import settings
-
-logger = logging.getLogger(__name__)
 
 _HEAVY_MODELS = {"birefnet-massive", "birefnet-hrsod", "birefnet-general", "u2net_cloth_seg"}
 

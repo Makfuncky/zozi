@@ -23,8 +23,24 @@ from typing import Tuple, Dict, Any, List, Optional
 from pathlib import Path
 from dataclasses import dataclass, field
 from enum import Enum
-from PIL import Image
-import numpy as np
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+Image = _LazyPIL()
+np = _LazyNumpy()
 
 # ========================== MEMORY MANAGER ==========================
 class MemoryManager:
@@ -373,7 +389,7 @@ class MultiModelSegmenter:
             gc.collect()
         
         if best_prob_map is not None:
-            logger.info(f"✓ Selected best model: {best_model} (score: {best_score:.3f}, tested {models_tried} models)")
+            logger.info(f"✓ Chosen best model: {best_model} (score: {best_score:.3f}, tested {models_tried} models)")
             return best_prob_map, best_model
         
         return None, ""

@@ -7,9 +7,9 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import TreasuryAccount, JournalEntry, AuditLog, Account, FinanceAuditLog
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
+from data.models import TreasuryAccount, JournalEntry, AuditLog, Account, FinanceAuditLog
+from data.schemas import JournalEntryCreate, JournalLineInput
+from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

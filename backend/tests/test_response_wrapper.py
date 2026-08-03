@@ -7,7 +7,7 @@ from utils.response_wrapper import (
     PaginatedResponseWrapper,
     create_paginated_response,
 )
-from db.schemas import PaginatedResponse
+from data.schemas import PaginatedResponse
 
 
 class TestPaginatedResponseWrapper:

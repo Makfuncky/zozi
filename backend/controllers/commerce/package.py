@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from db.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
-from models import Address, Category, Order, OrderItem, Product, Review, Wishlist
+from data.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
+from data.models import Address, Category, Order, OrderItem, Product, Review, Wishlist
 
 from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
 

@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 from utils.audit_log import audit_log, AuditAction
-from models import Coupon, CouponUsage, Product
-from db.schemas import CouponValidate, OrderItemBase
+from data.models import Coupon, CouponUsage, Product
+from data.schemas import CouponValidate, OrderItemBase
 from utils.datetime_utils import utcnow
 from utils.money import round_money, to_decimal
 from services.write_helpers import (

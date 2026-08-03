@@ -237,7 +237,7 @@ def _load_models() -> None:
     """Idempotently import the models package so ``Base.metadata`` is populated."""
     if "models" in sys.modules:
         return
-    import models  # noqa: F401
+    import data.models  # noqa: F401
 
 
 def _get_orm_type_str(orm_col: Any) -> str:
@@ -330,7 +330,7 @@ def check_alembic(
     # ── Read DB stamp ─────────────────────────────────────────────────
     if engine is None:
         try:
-            from db.database import engine as _engine
+            from data.db import engine as _engine
             engine = _engine
         except Exception:
             pass
@@ -436,7 +436,7 @@ def audit_schema(
     """
     import time
     from sqlalchemy import inspect
-    from db.base import Base
+    from data.base import Base
 
     t0 = time.time()
     _load_models()
@@ -444,7 +444,7 @@ def audit_schema(
     patch_fk_schemas(Base.metadata)
 
     if engine is None:
-        from db.database import engine as _engine
+        from data.db import engine as _engine
         engine = _engine
 
     report = AuditReport()
@@ -961,7 +961,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  {stmt}")
             print()
             if args.apply:
-                from db.database import engine
+                from data.db import engine
                 from sqlalchemy import text
                 print("  Applying fixes...")
                 with engine.connect() as conn:

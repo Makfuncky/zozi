@@ -39,10 +39,25 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
-import numpy as np
-from PIL import Image
-
 logger = logging.getLogger(__name__)
+
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+np = _LazyNumpy()
+Image = _LazyPIL()
 
 # ── OpenCV (imported safely; ximgproc resolved at module level) ────────────
 try:

@@ -9,8 +9,8 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import IncidentWarRoom, IncidentThread, IncidentActionItem, User
-from db.database import get_service_session
+from data.models import IncidentWarRoom, IncidentThread, IncidentActionItem, User
+from data.db import get_service_session
 
 logger = logging.getLogger("zozi.incident")
 

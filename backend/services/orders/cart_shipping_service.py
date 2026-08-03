@@ -7,21 +7,21 @@ from typing import TYPE_CHECKING, Any, Dict, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from db.schemas import OrderCreate
+from data.schemas import OrderCreate
 from services.logistics.logistics_partner_pricing import normalize_country_code
 from services.catalog.product_utils import resolve_product_variant
 from utils.audit_log import audit_log
 from utils.money import round_money, to_decimal
 
 if TYPE_CHECKING:
-    from models import Product, ShippingZone, Shipment, LogisticsPartner
+    from data.models import Product, ShippingZone, Shipment, LogisticsPartner
 
 
 def _load_products_for_order(order: OrderCreate, db: Session) -> Tuple[Dict[int, "Product"], Dict[int, int]]:
     if not order.items:
         raise HTTPException(status_code=422, detail="Order must include at least one item")
 
-    from models import Product
+    from data.models import Product
     from typing import Dict, Tuple, cast, Any
 
     requested_quantities: Dict[int, int] = {}
@@ -77,7 +77,7 @@ def _group_supplier_totals(
 ) -> Dict[int, Dict[str, Any]]:
     from decimal import Decimal
     from typing import Dict, Any, cast
-    from models import SupplierProfile, Product
+    from data.models import SupplierProfile, Product
     from utils.money import round_money, to_decimal
 
     supplier_totals: Dict[int, Dict[str, Any]] = {}
@@ -166,7 +166,7 @@ def _quote_supplier_groups(
     if not supplier_totals:
         return 0.0, []
 
-    from models import ShippingZone, SupplierProfile
+    from data.models import ShippingZone, SupplierProfile
     from utils import settings
     from utils.money import round_money, to_decimal
 

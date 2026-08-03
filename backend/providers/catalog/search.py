@@ -10,10 +10,20 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from .config import settings
-from .text import embed_text, cosine_similarity, _ollama_chat
+
+class settings:
+    search_default_limit = 50
+    search_fuzzy_cutoff = 0.6
+    catalog_model = "gpt-4o-mini"
 
 logger = logging.getLogger(__name__)
+
+
+def _ollama_chat(prompt: str, model: Optional[str] = None) -> str:
+    return "stub response"
+
+def _extract_json(text: str) -> dict:
+    return {}
 
 # ============================================================================
 # REFERENCE

@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy import func, or_, text, case
 from sqlalchemy.orm import Session
 
-from models import Product
+from data.models import Product
 
 # Hard limits to prevent OOM under heavy traffic.
 _MAX_PAGE_SIZE = 100

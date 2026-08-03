@@ -15,8 +15,8 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import PaginatedResponse
+from data.db import get_db
+from data.schemas import PaginatedResponse
 from utils.pagination import paginated_query, safe_page
 from utils.error_handler import ErrorCategory, _build_problem_response
 from utils.logging_config import get_request_id

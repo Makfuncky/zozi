@@ -1,10 +1,4 @@
-from services.payments.base import BasePaymentGateway, PaymentResult, ConnectionTestResult, RefundResult
-from services.payments.registry import PaymentGatewayRegistry
+"""Payment services for Zozi."""
+from services.payments.events.payment_events import PaymentConfirmedEvent
 
-__all__ = [
-    "BasePaymentGateway",
-    "PaymentResult",
-    "ConnectionTestResult",
-    "RefundResult",
-    "PaymentGatewayRegistry",
-]
+__all__ = ["PaymentConfirmedEvent"]

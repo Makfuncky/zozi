@@ -11,7 +11,7 @@ from fastapi import WebSocket
 from sqlalchemy import and_, event, inspect as sa_inspect
 from sqlalchemy.orm import Session as OrmSession
 
-from models import AuditLog, Notification, Payout, Product, SupplierDispute, SupportTicket, SupplierProfile, TicketReply, User, InternalEmail
+from data.models import AuditLog, Notification, Payout, Product, SupplierDispute, SupportTicket, SupplierProfile, TicketReply, User, InternalEmail
 from utils.config import settings
 
 

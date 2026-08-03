@@ -11,10 +11,10 @@ import stripe
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from models import Notification, Order, OrderItem, Product, ReturnRequest, Shipment, User
-from db.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
+from data.models import Notification, Order, OrderItem, Product, ReturnRequest, Shipment, User
+from data.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
 from utils.audit_log import audit_log, AuditAction
-from services.orders import _order_holds_inventory, apply_order_status_change
+from data.services_orders import _order_holds_inventory, apply_order_status_change
 from utils.config import settings
 from services.write_helpers import (
     add_and_flush,

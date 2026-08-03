@@ -22,17 +22,17 @@ from typing import Any, Dict, List, Tuple, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from controllers.coupons_controller import build_coupon_quote
-from controllers.promotion_controller import calculate_order_tier_discount, record_order_tier_ledger
+from controllers.commerce.coupons_controller import build_coupon_quote
+from controllers.commerce.promotion_controller import calculate_order_tier_discount, record_order_tier_ledger
 from services.catalog.product_utils import resolve_product_variant
-from services.orders import (
+from data.services_orders import (
     apply_order_status_change,
     build_order_payment_snapshot,
     confirm_cash_on_delivery_order,
     is_checkout_payment_method_allowed,
     normalize_checkout_payment_method,
 )
-from models import (
+from data.models import (
     LogisticsPartner,
     Notification,
     Order,
@@ -46,9 +46,9 @@ from models import (
     SupplierProfile,
     User,
 )
-from db.schemas import OrderCreate
+from data.schemas import OrderCreate
 from utils.audit_log import audit_log, AuditAction
-from services.logistics_partner_pricing import normalize_country_code, normalize_pricing_breakdown_payload, parse_dimensions_to_volume_cm3, quote_shipping_for_destination
+from data.services_logistics_partner_pricing import normalize_country_code, normalize_pricing_breakdown_payload, parse_dimensions_to_volume_cm3, quote_shipping_for_destination
 from services.tax_service import calculate_tax, get_country_config
 from utils.config import settings
 from utils.constants import STAFF_ROLES
@@ -636,7 +636,7 @@ def _calculate_order_amounts(
             )
             # Persist cross-country session
             try:
-                from models.country_enhancements import CrossCountryCustomerSession
+                from data.models_country_enhancements import CrossCountryCustomerSession
                 session = CrossCountryCustomerSession(
                     user_id=user_id,
                     source_country_code=home_country,

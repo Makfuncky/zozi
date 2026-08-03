@@ -11,8 +11,8 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from models import AuditLog
-from db.database import get_service_session
+from data.models import AuditLog
+from data.db import get_service_session
 
 logger = logging.getLogger("zozi.worm_audit")
 

@@ -9,7 +9,7 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session, Query
 from contextvars import ContextVar
 
-from models import (
+from data.models import (
     CountryCommunication,
     CountryConfig,
     CountryConfigVersion,
@@ -20,7 +20,7 @@ from models import (
     OmanDeliveryZone,
     SupplierCountryCommission,
 )
-from services.logistics_partner_pricing import normalize_country_code
+from data.services_logistics_partner_pricing import normalize_country_code
 from services.tax_service import calculate_tax
 from utils.datetime_utils import utcnow as _utcnow
 from services.country_write_service import (
@@ -1445,10 +1445,10 @@ def list_country_cities(
             "source": "database",
         }
 
-    # 2. Fallback: CITY_SUGGESTIONS + open-meteo (for seeding new countries)
-    from data.vat_rates import CITY_SUGGESTIONS
+    # 2. Fallback: CURATED_CITIES + open-meteo (for seeding new countries)
+    from data.curated_cities import CURATED_CITIES
 
-    cities = list(CITY_SUGGESTIONS.get(cc, []))
+    cities = list(CURATED_CITIES.get(cc, []))
     if not cities:
         import httpx
         try:
@@ -1482,7 +1482,7 @@ def list_country_cities(
 
 def assign_staff_to_country(country_code: str, user_id: int, role_in_country: str, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    from models import User
+    from data.models import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1512,7 +1512,7 @@ def list_country_staff(country_code: str, current_user: dict, db: Session) -> li
         CountryStaffAssignment.country_code == country_code.upper(),
         CountryStaffAssignment.is_active == True,
     ).order_by(CountryStaffAssignment.created_at.desc()).all()
-    from models import User
+    from data.models import User
     user_ids = [r.user_id for r in rows]
     users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     return [
@@ -1641,7 +1641,7 @@ def is_product_restricted_for_country(
     """Check if a product category is restricted in a given country."""
     if not country_code:
         return False
-    from services.logistics_partner_pricing import normalize_country_code
+    from data.services_logistics_partner_pricing import normalize_country_code
     code = normalize_country_code(country_code)
     if not code:
         return False

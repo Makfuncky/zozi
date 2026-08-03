@@ -7,7 +7,7 @@ from typing import Any, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import RolePermissionSetting
+from data.models import RolePermissionSetting
 from utils.staff_permissions import (
     DEFAULT_ROLE_PERMISSION_MAP,
     KNOWN_ROLE_PERMISSIONS,

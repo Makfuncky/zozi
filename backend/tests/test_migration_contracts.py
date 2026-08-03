@@ -133,8 +133,8 @@ def test_fresh_db_upgrade_head_creates_all_orm_tables(alembic_cfg):
     """Full fresh-DB contract: the migration chain initialises every table the
     ORM defines (0 missing). Migration-only (gap) tables are expected and
     excluded from this assertion."""
-    from db.base import Base
-    import models  # noqa: F401
+    from data.base import Base
+    import data.models  # noqa: F401
     from sqlalchemy import create_engine, inspect
 
     command.upgrade(alembic_cfg, "head")

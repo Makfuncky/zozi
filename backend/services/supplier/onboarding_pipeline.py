@@ -9,20 +9,25 @@ from typing import Optional, List, Dict, Any
 import io
 
 from sqlalchemy.orm import Session
-from PIL import Image
 
-try:
-    import pytesseract
-    import cv2
-    import numpy as np
-    OCR_AVAILABLE = True
-except ImportError:
-    OCR_AVAILABLE = False
-
-from models import OnboardingPipeline, OnboardingStep, DocumentVerification, OCRResult, KYCVerification, User
-from db.database import get_service_session
+from data.models import OnboardingPipeline, OnboardingStep, DocumentVerification, OCRResult, KYCVerification, User
+from data.db import get_service_session
 
 logger = logging.getLogger("zozi.onboarding")
+
+
+def _check_ocr_available():
+    """Check if OCR dependencies are available."""
+    try:
+        import pytesseract
+        import cv2
+        import numpy as np
+        return True
+    except ImportError:
+        return False
+
+
+OCR_AVAILABLE = _check_ocr_available()
 
 
 class OCRProcessor:
@@ -33,6 +38,8 @@ class OCRProcessor:
         """Preprocess image for better OCR results."""
         if not OCR_AVAILABLE:
             raise ImportError("OCR dependencies (pytesseract, cv2, numpy) not installed")
+        import cv2
+        import numpy as np
         nparr = np.frombuffer(image_data, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -46,6 +53,7 @@ class OCRProcessor:
         if not OCR_AVAILABLE:
             return {"text": "", "confidence": 0, "fields": {}, "error": "OCR not available"}
         try:
+            import pytesseract
             processed_img = cls.preprocess_image(image_data)
             text = pytesseract.image_to_string(processed_img)
             confidence = pytesseract.image_to_data(processed_img, output_boxes=True)

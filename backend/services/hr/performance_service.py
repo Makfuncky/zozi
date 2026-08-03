@@ -24,7 +24,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func, desc
 
-from models import Employee, User
+from data.models import Employee, User
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 
-from models.employee_models import Employee, EmployeeAttendance, EmployeeWorkLog, EmployeeLeaveRequest, EmployeeLeaveLedger
+from data.models_employee_models import Employee, EmployeeAttendance, EmployeeWorkLog, EmployeeLeaveRequest, EmployeeLeaveLedger
 
 
 def calculate_monthly_payroll(employee_id: int, month: int, year: int, db: Session) -> dict:

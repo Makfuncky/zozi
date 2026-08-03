@@ -29,7 +29,7 @@ from typing import Callable, Generator, TypeVar
 
 from sqlalchemy.orm import Session
 
-from dependencies.db import SessionLocal
+from data.dependencies_db import SessionLocal
 
 logger = logging.getLogger(__name__)
 

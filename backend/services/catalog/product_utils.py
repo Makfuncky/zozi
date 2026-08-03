@@ -12,7 +12,7 @@ import json
 import logging
 from typing import Any, Optional
 
-from models import Product, ProductVariant
+from data.models import Product, ProductVariant
 
 logger = logging.getLogger(__name__)
 

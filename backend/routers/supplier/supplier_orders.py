@@ -1,201 +1,62 @@
-"""Supplier orders sub-router."""
+"""Supplier orders sub-router.
+
+All DB work is delegated to ``services/supplier/supplier_orders_service.py``
+so this router stays a thin delegator (layering: LC1/W1).
+"""
 from __future__ import annotations
 
 import json
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from models import Order, OrderItem, SupplierProfile, User
+from data.db import get_db
+from data.models import User
 from utils.dependencies import require_supplier
 from services.storage import storage as _storage
 
 # AI analysis for parcel-photo matching (uses the vision provider)
-import logging
 ai_logger = logging.getLogger(__name__)
-from services.write_helpers import commit_only
+
+from services.supplier.supplier_orders_service import (
+    get_order_for_parcel_verification,
+    get_parcel_item_descriptions,
+    get_supplier_order_for_user,
+    get_supplier_order_label,
+    get_user_id,
+    list_orders_for_supplier,
+    list_supplier_order_ids,
+    mark_order_prepared_if_processing,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-# ── Helper: extract user ID from either a dict or a User ORM model ─────
-def _get_user_id(current_user: User | dict) -> int:
-    """`require_supplier` may return a dict or a User ORM model.
-    This helper normalises both to an int ID."""
-    if isinstance(current_user, dict):
-        uid = current_user.get("id") or current_user.get("user_id")
-        if not uid:
-            raise HTTPException(status_code=401, detail="Invalid user session: missing user ID")
-        return int(uid)
-    return current_user.id
-
-
-def _get_user_attr(current_user: User | dict, attr: str, default: Any = "") -> Any:
-    """Safe attribute access for both dict and ORM current_user."""
-    if isinstance(current_user, dict):
-        return current_user.get(attr, default)
-    return getattr(current_user, attr, default)
-
-
 @router.get("")
 def list_supplier_orders(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
-    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == _get_user_id(current_user)).first()
-    if not supplier:
-        raise HTTPException(404)
-    orders = (
-        db.query(Order)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .distinct()
-        .all()
-    )
-    return orders
+    return list_orders_for_supplier(db, current_user, skip=skip, limit=limit)
 
 
 @router.get("/{order_id}/label")
 def get_supplier_label(
     order_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
     """Return packing sheet / label data for a supplier order."""
-    user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
-
-    items = (
-        db.query(OrderItem)
-        .filter(
-            OrderItem.order_id == order_id,
-            OrderItem.supplier_id == supplier.id,
-        )
-        .all()
-    )
-
-    subtotal = float(sum((item.price or 0) * item.quantity for item in items))
-    vat = float(order.tax_amount or 0)
-    shipping = float(order.shipping_fee or 0)
-    discount = float(order.discount_amount or 0)
-    total = subtotal + vat + shipping - discount
-
-    # Resolve shipment info if available
-    shipment_info = _resolve_shipment_info(db, order_id, supplier.id)
-
-    return {
-        "order_id": order.id,
-        "order_number": order.order_number or f"ORD-{order.id}",
-        "invoice_number": order.order_number or f"INV-{order.id}",
-        "order_status": order.status,
-        "payment_method": order.payment_method,
-        "scan_code": f"ZOZI-{order.id}-{supplier.id}",
-        "ordered_at": order.created_at.isoformat() if order.created_at else None,
-        "paid_at": order.confirmed_at.isoformat() if order.confirmed_at else None,
-        "customer_name": getattr(order, "customer_name", _get_user_attr(current_user, "username", "Customer") or "Customer"),
-        "customer_email": getattr(order, "customer_email", ""),
-        "customer_phone": getattr(order, "customer_phone", ""),
-        "shipping_address": getattr(order, "shipping_address", None),
-        "delivery_location": getattr(order, "delivery_location", None),
-        "delivery_note": getattr(order, "delivery_note", None),
-        "supplier_name": supplier.business_name or _get_user_attr(current_user, "username", "Supplier"),
-        "supplier_email": _get_user_attr(current_user, "email", ""),
-        "supplier_phone": getattr(supplier, "phone_business", None),
-        "supplier_address": getattr(supplier, "address", None),
-        "supplier_website": getattr(supplier, "website", None),
-        "supplier_tax_id": getattr(supplier, "tax_id", None),
-        "supplier_logo_url": getattr(supplier, "logo_url", None),
-        "subtotal": subtotal,
-        "vat": vat,
-        "shipping": shipping,
-        "discount": discount,
-        "total": total,
-        "currency": getattr(order, "currency", "OMR"),
-        "has_shipment": shipment_info.get("has_shipment", False),
-        "shipment_id": shipment_info.get("shipment_id"),
-        "shipment_status": shipment_info.get("shipment_status", "pending"),
-        "shipment_status_label": shipment_info.get("shipment_status_label", "Pending"),
-        "tracking_number": shipment_info.get("tracking_number"),
-        "carrier_name": shipment_info.get("carrier_name"),
-        "current_hub": shipment_info.get("current_hub"),
-        "package_count": shipment_info.get("package_count"),
-        "package_weight_kg": shipment_info.get("package_weight_kg"),
-        "package_dimensions": shipment_info.get("package_dimensions"),
-        "packaging_notes": shipment_info.get("packaging_notes"),
-        "packaged_at": shipment_info.get("packaged_at"),
-        "items": [
-            {
-                "order_item_id": item.id,
-                "product_id": item.product_id,
-                "product_name": item.product_name,
-                "quantity": item.quantity,
-                "unit_price": float(item.price or 0),
-                "line_total": float((item.price or 0) * item.quantity),
-            }
-            for item in items
-        ],
-    }
-
-
-def _resolve_shipment_info(
-    db: Session, order_id: int, supplier_id: int
-) -> dict[str, Any]:
-    """Resolve shipment info from the logistics models if available."""
-    try:
-        from models import Shipment
-
-        shipment = (
-            db.query(Shipment)
-            .filter(
-                Shipment.order_id == order_id,
-            )
-            .first()
-        )
-        if not shipment:
-            return {"has_shipment": False}
-
-        return {
-            "has_shipment": True,
-            "shipment_id": shipment.id,
-            "shipment_status": getattr(shipment, "status", "pending"),
-            "shipment_status_label": getattr(shipment, "status", "pending").replace("_", " ").title(),
-            "tracking_number": getattr(shipment, "tracking_number", None),
-            "carrier_name": getattr(shipment, "carrier", None),
-            "current_hub": getattr(shipment, "current_hub", None),
-            "package_count": getattr(shipment, "package_count", None),
-            "package_weight_kg": getattr(shipment, "package_weight_kg", None),
-            "package_dimensions": getattr(shipment, "package_dimensions", None),
-            "packaging_notes": getattr(shipment, "packaging_notes", None),
-            "packaged_at": getattr(shipment, "packaged_at", None),
-        }
-    except Exception:
-        logger.warning("Could not resolve shipment info for order %s", order_id)
-        return {"has_shipment": False}
+    return get_supplier_order_label(db, current_user, order_id)
 
 
 @router.post("/{order_id}/parcel-proof")
@@ -207,24 +68,7 @@ async def upload_parcel_proof(
     db: Session = Depends(get_db),
 ):
     """Upload a packed parcel photo as proof of packaging."""
-    user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    supplier, order = get_supplier_order_for_user(db, current_user, order_id)
 
     # Validate file type
     allowed_types = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
@@ -268,9 +112,7 @@ async def upload_parcel_proof(
     }
 
     # Update order status to prepared if currently processing
-    if order.status == "processing":
-        order.status = "prepared"
-        commit_only(db)
+    mark_order_prepared_if_processing(db, order)
 
     return {
         "status": "success",
@@ -292,28 +134,8 @@ async def verify_parcel_proof(
     verify that it matches the expected items from the order's packing sheet.
     Returns a match score and any discrepancies found.
     """
-    user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .join(OrderItem.product)
-        .filter(OrderItem.product.has(supplier_id=user_id))
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
-
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    user_id = get_user_id(current_user)
+    order = get_order_for_parcel_verification(db, current_user, order_id)
 
     prefix = f"parcel_proofs/{order_id}/"
     proof_keys = sorted(
@@ -332,18 +154,7 @@ async def verify_parcel_proof(
     image_bytes = _storage.read(latest_key)
 
     # Get packing sheet items for comparison context
-    items = (
-        db.query(OrderItem)
-        .join(OrderItem.product)
-        .filter(
-            OrderItem.order_id == order_id,
-            OrderItem.product.has(supplier_id=user_id),
-        )
-        .all()
-    )
-    item_descriptions = [
-        f"{item.product_name} x{item.quantity}" for item in items
-    ]
+    item_descriptions = get_parcel_item_descriptions(db, current_user, order_id)
 
     # Check for a reference image to pass to the homography engine
     reference_image_bytes: bytes | None = None
@@ -362,7 +173,7 @@ async def verify_parcel_proof(
 
     # Use the parcel verification provider (multi-engine: SSIM + feature match + homography + vision AI)
     try:
-        from providers.parcel_verification import verify_parcel_photo, verify_parcel_fast
+        from data.providers_parcel_verification import verify_parcel_photo, verify_parcel_fast
 
         # Try full verification first (with vision AI); fall back to fast on failure
         try:
@@ -480,24 +291,7 @@ async def replace_reference_image(
     reference.  Future calls to the verify endpoint will compare parcel photos
     against this new reference.
     """
-    user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    get_supplier_order_for_user(db, current_user, order_id)
 
     # Validate file type
     allowed_types = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
@@ -543,24 +337,7 @@ def get_reference_image(
     Returns the image file directly (JPEG/PNG/WebP) or 404 if no reference
     has been set yet.
     """
-    user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    get_supplier_order_for_user(db, current_user, order_id)
 
     prefix = f"parcel_proofs/{order_id}/"
     refs = sorted(
@@ -599,24 +376,9 @@ def get_parcel_verification_history(
     - image_url for the thumbnail of the uploaded proof
     - order_number, order_id, items summary, analyzed_at
     """
-    user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
     # Collect all verification results across this supplier's orders
     all_entries: list[dict] = []
-    supplier_order_ids = [
-        row[0] for row in db.query(Order.id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .distinct()
-        .all()
-    ]
+    supplier_order_ids = list_supplier_order_ids(db, current_user)
 
     for order_id in supplier_order_ids:
         prefix = f"parcel_proofs/{order_id}/"
@@ -652,4 +414,3 @@ def get_parcel_verification_history(
     items = all_entries[:limit]
 
     return {"items": items, "total": len(all_entries)}
-

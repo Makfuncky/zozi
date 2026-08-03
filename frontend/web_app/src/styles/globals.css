@@ -559,7 +559,7 @@ video {
 }
 
 .\!container {
-  width: 100% !important;
+  width: 100%;
 }
 
 .container {
@@ -568,7 +568,7 @@ video {
 
 @media (min-width: 640px) {
   .\!container {
-    max-width: 640px !important;
+    max-width: 640px;
   }
 
   .container {
@@ -578,7 +578,7 @@ video {
 
 @media (min-width: 768px) {
   .\!container {
-    max-width: 768px !important;
+    max-width: 768px;
   }
 
   .container {
@@ -588,7 +588,7 @@ video {
 
 @media (min-width: 1024px) {
   .\!container {
-    max-width: 1024px !important;
+    max-width: 1024px;
   }
 
   .container {
@@ -598,7 +598,7 @@ video {
 
 @media (min-width: 1280px) {
   .\!container {
-    max-width: 1280px !important;
+    max-width: 1280px;
   }
 
   .container {
@@ -608,7 +608,7 @@ video {
 
 @media (min-width: 1536px) {
   .\!container {
-    max-width: 1536px !important;
+    max-width: 1536px;
   }
 
   .container {
@@ -1011,11 +1011,7 @@ video {
   z-index: 60;
 }
 
-.z-\[10000\] {
-  z-index: 10000;
-}
-
-.z-\[150\] {
+.z-100 {
   z-index: 150;
 }
 
@@ -5209,8 +5205,8 @@ video {
 /* Ensure high contrast in light theme (overrides any accidental opacity/overlay) */
 
 .light .theme-btn-primary {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 16%, var(--color-brand-light)) 0%, color-mix(in srgb, var(--color-accent) 10%, var(--color-brand)) 58%, var(--color-brand-dark) 100%) !important;
-  color: var(--color-on-brand) !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 16%, var(--color-brand-light)) 0%, color-mix(in srgb, var(--color-accent) 10%, var(--color-brand)) 58%, var(--color-brand-dark) 100%);
+  color: var(--color-on-brand);
   box-shadow: 0 20px 34px -20px color-mix(in srgb, var(--color-brand) 35%, transparent), 0 12px 24px -20px color-mix(in srgb, var(--color-accent) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
@@ -5238,9 +5234,9 @@ video {
 
 :where(.\!supplier, .logistics-partner, .admin) .theme-btn-primary,
 :where(.\!supplier, .logistics-partner, .admin) .theme-btn {
-  background-color: var(--color-brand) !important;
-  color: var(--color-on-brand) !important;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+  background-color: var(--color-brand);
+  color: var(--color-on-brand);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 :where(.supplier, .logistics-partner, .admin) .theme-btn-primary,
@@ -5252,7 +5248,7 @@ video {
 
 :where(.\!supplier, .logistics-partner, .admin) .theme-btn-primary:hover,
 :where(.\!supplier, .logistics-partner, .admin) .theme-btn:hover {
-  background-color: var(--color-brand-dark) !important;
+  background-color: var(--color-brand-dark);
 }
 
 :where(.supplier, .logistics-partner, .admin) .theme-btn-primary:hover,
@@ -5266,8 +5262,8 @@ video {
   .\!supplier .theme-panel,
   .\!supplier .theme-elevated,
   .\!supplier form {
-  background-color: var(--color-glass-base) !important;
-  border-color: var(--color-glass-border-mid) !important;
+  background-color: var(--color-glass-base);
+  border-color: var(--color-glass-border-mid);
 }
 
 .supplier .theme-card,
@@ -5282,22 +5278,22 @@ video {
   .admin .theme-panel,
   .admin .theme-elevated,
   .admin form {
-  background-color: var(--color-glass-base) !important;
-  border-color: var(--color-glass-border-mid) !important;
+  background-color: var(--color-glass-base);
+  border-color: var(--color-glass-border-mid);
 }
 
 .\!supplier .theme-card,
   .\!supplier .theme-panel,
   .\!supplier .theme-elevated,
   .\!supplier form {
-  background-color: var(--color-glass-base) !important;
-  border-color: var(--color-glass-border-mid) !important;
+  background-color: var(--color-glass-base);
+  border-color: var(--color-glass-border-mid);
 }
 
 .\!supplier .theme-card:hover,
   .\!supplier .theme-panel:hover,
   .\!supplier .theme-elevated:hover {
-  background-color: var(--color-glass-mid) !important;
+  background-color: var(--color-glass-mid);
 }
 
 .supplier .theme-card:hover,
@@ -5309,13 +5305,13 @@ video {
   .admin .theme-card:hover,
   .admin .theme-panel:hover,
   .admin .theme-elevated:hover {
-  background-color: var(--color-glass-mid) !important;
+  background-color: var(--color-glass-mid);
 }
 
 .\!supplier .theme-card:hover,
   .\!supplier .theme-panel:hover,
   .\!supplier .theme-elevated:hover {
-  background-color: var(--color-glass-mid) !important;
+  background-color: var(--color-glass-mid);
 }
 
 /* Ensure form elements match the glass style in all panels */
@@ -5323,9 +5319,9 @@ video {
 .\!supplier input,
   .\!supplier select,
   .\!supplier textarea {
-  background-color: var(--color-glass-base) !important;
-  border-color: var(--color-glass-border-mid) !important;
-  color: var(--color-text) !important;
+  background-color: var(--color-glass-base);
+  border-color: var(--color-glass-border-mid);
+  color: var(--color-text);
 }
 
 .supplier input,
@@ -5345,16 +5341,16 @@ video {
 .\!supplier input,
   .\!supplier select,
   .\!supplier textarea {
-  background-color: var(--color-glass-base) !important;
-  border-color: var(--color-glass-border-mid) !important;
-  color: var(--color-text) !important;
+  background-color: var(--color-glass-base);
+  border-color: var(--color-glass-border-mid);
+  color: var(--color-text);
 }
 
 .\!supplier input:focus,
   .\!supplier select:focus,
   .\!supplier textarea:focus {
-  border-color: var(--color-brand) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent) !important;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent);
 }
 
 .supplier input:focus,
@@ -5373,8 +5369,8 @@ video {
 .\!supplier input:focus,
   .\!supplier select:focus,
   .\!supplier textarea:focus {
-  border-color: var(--color-brand) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent) !important;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent);
 }
 
 .theme-btn-secondary {
@@ -5394,7 +5390,7 @@ video {
 
 .theme-btn-accent {
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand-light) 12%, var(--color-accent-light)) 0%, var(--color-accent) 54%, color-mix(in srgb, var(--color-brand) 12%, var(--color-accent-dark)) 100%);
-  color: var(--color-on-accent) !important;
+  color: var(--color-on-accent);
   border: 1px solid color-mix(in srgb, var(--color-accent-light) 42%, rgba(255, 255, 255, 0.14));
   box-shadow: 0 18px 30px -22px color-mix(in srgb, var(--color-accent) 50%, transparent), 0 10px 22px -22px color-mix(in srgb, var(--color-brand) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24);
   transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
@@ -6866,14 +6862,14 @@ button.bg-accent {
 }
 
 .light .products-search-shell {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(247, 250, 243, 0.7)) !important;
-  backdrop-filter: blur(18px) saturate(126%) !important;
-  border-color: rgba(74, 93, 53, 0.14) !important;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(247, 250, 243, 0.7));
+  backdrop-filter: blur(18px) saturate(126%);
+  border-color: rgba(74, 93, 53, 0.14);
   box-shadow:
     0 18px 34px -22px rgba(15, 23, 42, 0.12),
     0 10px 18px -16px rgba(47, 180, 61, 0.1),
     inset 0 1.5px 0 rgba(255, 255, 255, 1),
-    inset 0 -1px 0 rgba(74, 93, 53, 0.06) !important;
+    inset 0 -1px 0 rgba(74, 93, 53, 0.06);
 }
 
 .theme-nav-item {
@@ -7244,14 +7240,14 @@ button.bg-accent {
 
 .light .theme-btn-primary {
   background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 18%, var(--color-brand-light)) 0%, color-mix(in srgb, var(--color-accent) 11%, var(--color-brand)) 58%, var(--color-brand-dark));
-  color: var(--color-on-brand) !important;
+  color: var(--color-on-brand);
   border-color: rgba(35, 129, 44, 0.18);
   box-shadow: 0 18px 32px -18px rgba(47, 180, 61, 0.48), 0 10px 20px -20px rgba(242, 201, 76, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 
 .light .theme-btn-accent {
   background: linear-gradient(135deg, var(--color-accent-light) 0%, var(--color-accent) 55%, color-mix(in srgb, var(--color-brand) 8%, var(--color-accent)) 100%);
-  color: var(--color-on-accent) !important;
+  color: var(--color-on-accent);
   border-color: rgba(163, 126, 14, 0.22);
   box-shadow: 0 20px 36px -14px rgba(242, 201, 76, 0.68), 0 10px 22px -18px rgba(47, 180, 61, 0.22), inset 0 1.5px 0 rgba(255, 255, 255, 0.56), inset 0 -1px 0 rgba(163, 126, 14, 0.1);
 }
@@ -9594,4 +9590,94 @@ textarea:focus-visible,
 
 .\[\&_svg\]\:w-4 svg {
   width: 1rem;
+}
+
+
+/* ── Component-scoped styles (moved from <style> tags in components) ─── */
+/* TickerBar.tsx marquee */
+.animate-marquee {
+  animation: marquee 50s linear infinite;
+}
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Editor buttons (ProductImageCanvas + PhotoEditorModal) */
+.editor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(120, 120, 120, 0.3);
+  font-size: 0.75rem;
+  background: var(--surface-2, #f3f4f6);
+  color: var(--text, #1f2937);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.editor-btn:hover {
+  background: var(--primary, #2563eb);
+  color: #fff;
+  border-color: var(--primary, #2563eb);
+}
+.editor-btn-active {
+  background: var(--primary, #2563eb);
+  color: #fff;
+  border-color: var(--primary, #2563eb);
+}
+
+/* Command Center HUD animations */
+@keyframes cc-scan { 0% { transform: translateY(-20px); opacity: 0 } 10% { opacity: .8 } 90% { opacity: .8 } 100% { transform: translateY(100vh); opacity: 0 } }
+@keyframes cc-pulse { 0% { transform: scale(0.9); opacity: .7 } 50% { transform: scale(1.8); opacity: 0 } 100% { transform: scale(0.9); opacity: .7 } }
+@keyframes cc-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes cc-marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+
+/* BannerCanvasEditor effects */
+@keyframes bcu-fall { 0% { transform: translateY(-12%) rotate(0deg); opacity: 0 } 8% { opacity: 1 } 100% { transform: translateY(112%) rotate(360deg); opacity: .9 } }
+@keyframes bcu-snow { 0% { transform: translateY(-12%); opacity: 0 } 10% { opacity: 1 } 100% { transform: translateY(112%); opacity: .8 } }
+@keyframes bcu-twinkle { 0%, 100% { transform: scale(.4); opacity: .2 } 50% { transform: scale(1); opacity: 1 } }
+@keyframes bcu-balloon { 0% { transform: translateY(8%) rotate(-4deg); opacity: 0 } 12% { opacity: 1 } 50% { transform: translateY(-30%) rotate(4deg) } 100% { transform: translateY(-118%) rotate(-3deg); opacity: .95 } }
+@keyframes bcu-fw { 0% { transform: scale(0); opacity: 0 } 16% { transform: scale(1.15); opacity: 1 } 55% { transform: scale(1); opacity: .9 } 100% { transform: scale(1.25); opacity: 0 } }
+@keyframes bcu-aurora { 0% { transform: translateX(-12%) skewX(8deg); opacity: .5 } 50% { transform: translateX(12%) skewX(-8deg); opacity: .85 } 100% { transform: translateX(-12%) skewX(8deg); opacity: .5 } }
+@keyframes bcu-glow { 0%, 100% { filter: drop-shadow(0 0 4px rgba(253,224,71,.5)) } 50% { filter: drop-shadow(0 0 14px rgba(253,224,71,.95)) } }
+@keyframes bcu-anim-float { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+@keyframes bcu-anim-pulse { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.05) } }
+@keyframes bcu-anim-bounce { 0%, 100% { transform: translateY(0) } 40% { transform: translateY(-10px) } 60% { transform: translateY(0) } 80% { transform: translateY(-4px) } }
+@keyframes bcu-anim-fade { 0% { opacity: 0 } 100% { opacity: 1 } }
+.bcu-confetti { position: absolute; top: 0; border-radius: 1px; animation: bcu-fall linear infinite; }
+.bcu-snow { position: absolute; top: 0; border-radius: 999px; animation: bcu-snow linear infinite; }
+.bcu-spark { position: absolute; border-radius: 999px; animation: bcu-twinkle ease-in-out infinite; }
+.bcu-balloon { position: absolute; bottom: 0; width: 42px; height: 54px; border-radius: 50% 50% 48% 48%; animation: bcu-balloon ease-in infinite; box-shadow: inset -6px -8px 12px rgba(0,0,0,.18); }
+.bcu-balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 26px; background: rgba(255,255,255,.5); transform: translateX(-50%); }
+.bcu-fw { position: absolute; border-radius: 999px; animation: bcu-fw ease-out infinite; }
+.bcu-aurora { position: absolute; top: -20%; height: 140%; width: 60%; filter: blur(26px); opacity: .7; animation: bcu-aurora ease-in-out infinite; mix-blend-mode: screen; }
+.bcu-lantern { position: absolute; top: 8%; width: 26px; height: 34px; border-radius: 40% 40% 46% 46%; background: linear-gradient(#f59e0b, #b45309); box-shadow: 0 0 18px rgba(245,158,11,.8); animation: bcu-glow ease-in-out infinite; }
+.bcu-lantern::before { content: ""; position: absolute; left: 50%; top: -22%; width: 2px; height: 30%; background: #92400e; transform: translateX(-50%); }
+.bcu-crescent { position: absolute; border-radius: 999px; background: radial-gradient(circle at 35% 35%, #fff7d6, #fde68a); box-shadow: 0 0 30px rgba(253,230,138,.9); }
+
+/* Print styles (labels page) */
+@media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
+  html, body {
+    background: #ffffff;
+  }
+  body.supplier-label-print [data-app-header],
+  body.supplier-label-print [data-app-footer],
+  body.supplier-label-print .theme-layout-shell,
+  body.supplier-label-print [data-app-body] > :not(.supplier-label-print-root) {
+    display: none;
+  }
+  body.supplier-label-print [data-app-body],
+  body.supplier-label-print [data-app-frame] {
+    display: block;
+    background: #ffffff;
+  }
+  body.supplier-label-print .supplier-label-print-root {
+    display: block;
+  }
 }

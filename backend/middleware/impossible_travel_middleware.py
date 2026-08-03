@@ -148,8 +148,8 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
         except Exception:
             pass
         try:
-            from db.database import get_service_session
-            from models.fraud import FraudEvent
+            from data.db import get_service_session
+            from data.models_fraud import FraudEvent
             db = get_service_session()
             event = FraudEvent(
                 user_id=user_id,

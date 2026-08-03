@@ -1,7 +1,7 @@
 """Overwrite all null-byte router files with real implementations."""
 import os, sys
 
-BACKEND = r"D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend"
+BACKEND = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend')
 sys.path.insert(0, BACKEND)
 ROUTER_DIR = os.path.join(BACKEND, "routers")
 

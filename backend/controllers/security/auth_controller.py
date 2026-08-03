@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     User,
     UserDevice,
     UserBrowsingHistory,
@@ -33,7 +33,7 @@ from models import (
     LogisticsPartner,
     ReferralPointEvent,
 )
-from db.schemas import (
+from data.schemas import (
     UserCreate,
     User as UserSchema,
     ChangePasswordRequest,
@@ -42,7 +42,7 @@ from db.schemas import (
     ReferralPointEventSchema,
     ReferralShareRequest,
 )
-from services.database import get_db
+from data.services_database import get_db
 from utils.cache import cache_get_json, cache_set_json, cache_delete
 from utils.auth import (
     verify_password,
@@ -228,7 +228,7 @@ def _user_effective_permissions(user: User) -> list[str]:
     assigned_permissions = sanitize_staff_permissions(getattr(user, "staff_permissions", None))
     if assigned_permissions:
         return assigned_permissions
-    from controllers.admin_controller import ROLE_PERMISSION_MAP
+    from data.controllers_admin_controller import ROLE_PERMISSION_MAP
 
     return sorted(ROLE_PERMISSION_MAP.get(role, set()))
 

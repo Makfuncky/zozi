@@ -3,7 +3,7 @@ from typing import Optional, cast
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     CartItem,
     Category,
     Coupon,
@@ -143,7 +143,7 @@ def delete_coupon(db: Session, coupon: Coupon) -> None:
 
 
 def mark_coupon_as_used(order: "Order", db: Session) -> None:
-    from models import Coupon
+    from data.models import Coupon
     coupon_code = cast(Optional[str], getattr(order, "coupon_code", None))
     if not coupon_code:
         return

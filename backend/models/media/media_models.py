@@ -4,9 +4,9 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, St
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
-
-class MediaAsset(Base):
+class MediaAsset(Base, TenantMixin):
     """Tracks all uploaded media assets with 3-tier path structure."""
     __tablename__ = "media_assets"
     __table_args__ = (
@@ -14,13 +14,12 @@ class MediaAsset(Base):
         Index("ix_media_assets_variant", "entity_id", "variant"), {"schema": "media"})
 
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(3), nullable=False, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
+
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True, index=True)
-    
+
     entity_type = Column(String(20), nullable=False)  # product | supplier | user | article
     entity_id = Column(Integer, nullable=True, index=True)
-    
+
     variant = Column(String(20), nullable=False)  # original | main | gallery | thumbnail | small
     file_path = Column(String(500), nullable=False)
     file_url = Column(String(500), nullable=False)
@@ -28,30 +27,28 @@ class MediaAsset(Base):
     mime_type = Column(String(100), nullable=False)
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
-    
+
     is_primary = Column(Boolean, default=False)
     alt_text = Column(String(255), nullable=True)
     caption = Column(Text, nullable=True)
-    
+
     uploaded_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     uploaded_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
-    
-    supplier = relationship("User", foreign_keys=[supplier_id])
+
+    supplier = relationship("User", foreign_keys="MediaAsset.supplier_id")
     product = relationship("Product")
     uploader = relationship("User", foreign_keys=[uploaded_by])
 
-
-class MediaUploadSession(Base):
+class MediaUploadSession(Base, TenantMixin):
     """Tracks multipart upload sessions for large files."""
     __tablename__ = "media_upload_sessions"
     __table_args__ = ({"schema": "media"},)
-    
+
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(64), nullable=False, unique=True, index=True)
-    country_code = Column(String(3), nullable=False)
-    entity_type = Column(String(20), nullable=False)
+
     entity_id = Column(Integer, nullable=True)
     filename = Column(String(255), nullable=False)
     file_size = Column(Integer, nullable=False)
@@ -64,5 +61,5 @@ class MediaUploadSession(Base):
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     completed_at = Column(DateTime, nullable=True)
-    
+
     uploader = relationship("User", foreign_keys=[created_by])

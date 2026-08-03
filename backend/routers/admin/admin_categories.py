@@ -1,16 +1,16 @@
 """Admin categories router."""
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from db.schemas import CursorPage
-from models import Category, User
-from db.schemas import ArchiveRequest, BulkActionRequest
+from data.db import get_db
+from data.schemas import CursorPage
+from data.models import Category, User
+from data.schemas import ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.pagination import cursor_paginate_desc
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.category_tree import rebuild_category_paths
-from services.admin.admin_operations import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities
+from services.core.admin_operations_service import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities
 from services.products_write_service import (
     create_category as create_category_db,
     update_category as update_category_db,

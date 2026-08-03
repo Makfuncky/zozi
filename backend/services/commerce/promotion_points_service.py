@@ -24,7 +24,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import User, UserPoints, PointsTransaction, PromotionEngineConfig
+from data.models import User, UserPoints, PointsTransaction, PromotionEngineConfig
 from services.promotion_engine_service import get_or_create_config as _get_promotion_config
 from utils.money import to_decimal
 

@@ -1632,12 +1632,6 @@ class UserCreate(BaseModel):
     tax_reg_no: Optional[str] = None
     instagram_handle: Optional[str] = None
     terms_accepted: bool = False
-    business_type: Optional[str] = None
-    country: Optional[str] = None
-    website_url: Optional[str] = None
-    trade_license_no: Optional[str] = None
-    tax_reg_no: Optional[str] = None
-    instagram_handle: Optional[str] = None
 
 
 class ProfileUpdate(_PermissiveBase):
@@ -2014,6 +2008,7 @@ class FraudScoreRequest(BaseModel):
     event_type: str
     amount: Optional[float] = None
     headers: Optional[dict[str, str]] = None
+    additional_signals: Optional[dict[str, Any]] = None
 
 
 class FraudScoreResponse(BaseModel):
@@ -2022,6 +2017,26 @@ class FraudScoreResponse(BaseModel):
     is_blocked: bool = False
     is_review: bool = False
     action: str
+
+
+class IPAccountCheck(BaseModel):
+    account_count: int
+    device_count: int
+    user_device_count: int
+    is_suspicious: bool
+
+
+class BINCheck(BaseModel):
+    is_blacklisted: bool
+    bin_info: Optional[dict[str, str]] = None
+    country_mismatch: bool
+
+
+class LogisticsFraudCheck(BaseModel):
+    gps_mismatch: bool
+    time_anomaly: bool
+    missing_proof: bool
+    score: int
 
 
 class FraudEventOut(OrmBase):
@@ -2165,42 +2180,245 @@ class ReturnAbuseCheck(BaseModel):
     is_abuse: bool
 
 
-class FraudScoreRequest(BaseModel):
-    user_id: Optional[int] = None
-    ip_address: str
-    device_hash: Optional[str] = None
+# ── AI Suggestion ───────────────────────────────────────────────────────────────
+
+class AISuggestionsRequest(BaseModel):
+    name: str = Field(description="Product name")
+    description: Optional[str] = Field(None, description="Product description")
+    image_url: Optional[str] = Field(None, description="Image URL")
+    image_urls: Optional[list[str]] = Field(default_factory=list, description="Additional image URLs")
+
+
+class AISuggestionsResponse(BaseModel):
+    name: str = Field(description="AI-inferred product name")
+    category: str = Field(description="Suggested category")
+    color: Optional[str] = Field(None, description="Primary color")
+    color_candidates: Optional[list[str]] = Field(default_factory=list, description="Alternative color suggestions")
+    tags: list[str] = Field(default_factory=list, description="Suggested tags")
+    tags_string: Optional[str] = Field(None, description="Tags as comma-separated string")
+    material_suggestions: list[str] = Field(default_factory=list, description="Suggested materials")
+    variant_template: str = Field(default="universal", description="Variant template type")
+    variant_options: list[str] = Field(default_factory=list, description="Variant options")
+    description: str = Field(description="AI-generated product description")
+    caption: Optional[str] = Field(None, description="Image caption")
+    ai_powered: bool = Field(default=False, description="Whether AI was actually used")
+
+
+class AIProductAnglesRequest(BaseModel):
+    name: str = Field(description="Product name")
+    category: Optional[str] = Field(None, description="Product category")
+    image_url: Optional[str] = Field(None, description="Image URL")
+
+
+class AIProductAnglesResponse(BaseModel):
+    angles: list[str] = Field(default_factory=list, description="Suggested shooting angles")
+    ai_powered: bool = Field(default=False, description="Whether AI was actually used")
+    total: int = Field(default=0, description="Total number of angles")
+
+
+# ── Compliance / Audit Events ───────────────────────────────────────────────────
+
+class ComplianceEventCreate(BaseModel):
+    event_type: str = Field(description="Type of compliance event")
+    resource_type: str = Field(description="Resource type affected")
+    resource_id: Optional[int] = Field(None, description="Resource ID")
+    details: Optional[dict[str, Any]] = Field(None, description="Event details")
+    related_event_ids: Optional[list[int]] = Field(default_factory=list, description="Related event IDs")
+
+
+class ComplianceEventOut(OrmBase):
+    id: int
     event_type: str
-    amount: Optional[float] = None
-    headers: Optional[dict[str, str]] = None
-    additional_signals: Optional[dict[str, Any]] = None
+    resource_type: str
+    resource_id: Optional[int] = None
+    user_id: Optional[int] = None
+    username: Optional[str] = None
+    user_role: Optional[str] = None
+    ip_address: Optional[str] = None
+    details: Optional[dict[str, Any]] = None
+    related_event_ids: list[int] = Field(default_factory=list)
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
 
 
-class FraudScoreResponse(BaseModel):
-    score: int
-    triggered_rules: List[str] = []
-    is_blocked: bool = False
-    is_review: bool = False
+class ComplianceAuditLogCreate(BaseModel):
+    action: str = Field(description="Audit action type")
+    resource_type: str = Field(description="Type of resource")
+    resource_id: Optional[int] = Field(None, description="Resource identifier")
+    details: Optional[dict[str, Any]] = Field(None, description="Additional details")
+
+
+class ComplianceAuditLogOut(OrmBase):
+    id: int
     action: str
+    resource_type: str
+    resource_id: Optional[int] = None
+    user_id: Optional[int] = None
+    username: Optional[str] = None
+    user_role: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    details: Optional[dict[str, Any]] = None
+    created_at: datetime
 
 
-class IPAccountCheck(BaseModel):
-    account_count: int
-    device_count: int
-    user_device_count: int
-    is_suspicious: bool
+class DataRetentionConfigCreate(BaseModel):
+    data_type: str = Field(description="Type of data")
+    retention_days: int = Field(ge=1, description="Days to retain data")
+    legal_basis: Optional[str] = Field(None, description="Legal basis for retention")
 
 
-class BINCheck(BaseModel):
-    is_blacklisted: bool
-    bin_info: Optional[dict[str, str]] = None
-    country_mismatch: bool
+class DataRetentionConfigOut(OrmBase):
+    id: int
+    data_type: str
+    retention_days: int
+    legal_basis: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime
+    updated_at: datetime
 
 
-class LogisticsFraudCheck(BaseModel):
-    gps_mismatch: bool
-    time_anomaly: bool
-    missing_proof: bool
-    score: int
+class PrivacyConsentCreate(BaseModel):
+    user_id: int = Field(description="User ID")
+    consent_type: str = Field(description="Type of consent")
+    granted: bool = Field(description="Whether consent was granted")
+    version: Optional[str] = Field(None, description="Terms version")
+
+
+class PrivacyConsentOut(OrmBase):
+    id: int
+    user_id: int
+    consent_type: str
+    granted: bool
+    version: Optional[str] = None
+    consent_at: Optional[datetime] = None
+    withdrawn_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class DataExportRequest(BaseModel):
+    user_id: int = Field(description="User ID for data export")
+    formats: Optional[list[str]] = Field(default_factory=lambda: ["json"], description="Export formats")
+
+
+class DataExportOut(OrmBase):
+    id: int
+    user_id: int
+    status: str
+    format: str
+    file_url: Optional[str] = None
+    error_message: Optional[str] = None
+    requested_at: datetime
+    completed_at: Optional[datetime] = None
+
+
+class DataDeletionRequest(BaseModel):
+    user_id: int = Field(description="User ID for deletion")
+    hard_delete: bool = Field(default=False, description="Whether to hard delete")
+
+
+class DataDeletionOut(OrmBase):
+    user_id: int
+    status: str
+    deleted_records: int
+    error_message: Optional[str] = None
+    requested_at: datetime
+    completed_at: Optional[datetime] = None
+
+
+class ComplianceDashboardStats(BaseModel):
+    total_audit_events: int = 0
+    pending_compliance_actions: int = 0
+    data_exports_count: int = 0
+    data_deletions_count: int = 0
+    privacy_consents_granted: int = 0
+    privacy_consents_denied: int = 0
+
+
+class DataTransferRequest(BaseModel):
+    from_user_id: int = Field(description="Source user ID")
+    to_user_id: int = Field(description="Destination user ID")
+    data_types: Optional[list[str]] = Field(default_factory=list, description="Types of data to transfer")
+
+
+class DataTransferOut(OrmBase):
+    id: int
+    from_user_id: int
+    to_user_id: int
+    data_types: list[str] = Field(default_factory=list)
+    status: str
+    transferred_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    created_at: datetime
+
+
+class RiskAssessmentCreate(BaseModel):
+    entity_type: str = Field(description="Type of entity being assessed")
+    entity_id: Optional[int] = Field(None, description="Entity ID")
+    assessment_type: str = Field(description="Type of assessment")
+    risk_score: int = Field(ge=0, le=100, description="Risk score 0-100")
+    factors: Optional[dict[str, Any]] = Field(None, description="Risk factors")
+
+
+class RiskAssessmentOut(OrmBase):
+    id: int
+    entity_type: str
+    entity_id: Optional[int] = None
+    assessment_type: str
+    risk_score: int
+    factors: Optional[dict[str, Any]] = None
+    assessed_by: Optional[int] = None
+    created_at: datetime
+    reviewed_at: Optional[datetime] = None
+
+
+class PolicyViolationCreate(BaseModel):
+    rule_key: str = Field(description="Policy rule violated")
+    entity_type: str = Field(description="Type of violating entity")
+    entity_id: Optional[int] = Field(None, description="Entity ID")
+    details: Optional[dict[str, Any]] = Field(None, description="Violation details")
+
+
+class PolicyViolationOut(OrmBase):
+    id: int
+    rule_key: str
+    entity_type: str
+    entity_id: Optional[int] = None
+    details: Optional[dict[str, Any]] = None
+    status: str = "pending"
+    resolved_by: Optional[int] = None
+    resolution_notes: Optional[str] = None
+    created_at: datetime
+    resolved_at: Optional[datetime] = None
+
+
+class ModerationQueueItemOut(OrmBase):
+    id: int
+    entity_type: str
+    entity_id: int
+    entity_name: str
+    entity_snapshot: Optional[dict[str, Any]] = None
+    violation_type: Optional[str] = None
+    status: str = "pending"
+    priority: str = "normal"
+    assigned_to: Optional[int] = None
+    created_at: datetime
+    due_at: Optional[datetime] = None
+
+
+class TicketCreate(BaseModel):
+    subject: str
+    body: str
+    category: Optional[str] = None
+    priority: str = "normal"
+
+
+class TicketReplyCreate(BaseModel):
+    body: str
+    attachments: Optional[list[str]] = Field(default_factory=list)
+    is_internal: bool = False
 
 
 

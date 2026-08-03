@@ -8,7 +8,7 @@ from controllers.comm_controller import (
     create_video_room, create_chat_thread, send_masked_message,
     create_incident_room, get_command_center_metrics
 )
-from db.database import get_db
+from data.db import get_db
 from utils.websocket_manager import manager
 
 router = APIRouter()

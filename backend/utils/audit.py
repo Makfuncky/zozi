@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import Session
 import structlog
 
-from models.core import AuditLog
+from data.models_core import AuditLog
 from utils.logging_config import get_request_id
 
 logger = structlog.get_logger(__name__)

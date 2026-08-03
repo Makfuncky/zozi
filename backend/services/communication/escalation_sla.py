@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models.core import EscalationSLARule, EscalationSLALog
+from data.models_core import EscalationSLARule, EscalationSLALog
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger("zozi.escalation_sla")

@@ -205,7 +205,7 @@
   .collapsible-panel,
   .panel-stagger-enter,
   .panel-live-dot::before {
-    animation: none !important;
-    transition: none !important;
+    animation: none;
+    transition: none;
   }
 }

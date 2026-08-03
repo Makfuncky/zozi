@@ -14,7 +14,7 @@ from typing import Any, Set
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import CountryConfig
+from data.models import CountryConfig
 
 
 # ── Authorization guards ──────────────────────────────────────────────────

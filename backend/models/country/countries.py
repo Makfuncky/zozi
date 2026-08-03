@@ -113,6 +113,7 @@ class CountryConfig(Base):
     payout_methods_json = Column(Text, default="[]")
     logistics_zones_json = Column(Text, default="[]")
 
+    country_code = Column(String(3), nullable=True, unique=True, index=True)
     communications = relationship("CountryCommunication", back_populates="country")
     gateway_credentials = relationship("CountryGatewayCredentials", back_populates="country")
     tax_rules = relationship("TaxRule", back_populates="country")

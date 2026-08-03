@@ -27,7 +27,7 @@ def _setup_db():
     isolation. Tests are only run in APP_ENV=test or development environments.
     Production deployments use Alembic migrations only.
     """
-    from models import Base
+    from data.models import Base
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -47,7 +47,7 @@ def db_session():
 def client(db_session):
     """FastAPI TestClient with dependency overrides."""
     from main import app
-    from db.database import get_db
+    from data.db import get_db
 
     app.dependency_overrides[get_db] = lambda: db_session
     with TestClient(app) as c:
@@ -57,7 +57,7 @@ def client(db_session):
 
 def _seed_test_products(db_session):
     """Insert sample products for search tests."""
-    from models import Product
+    from data.models import Product
     import random
     from datetime import datetime, timezone
 

@@ -12,7 +12,7 @@ from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
 from models.catalog.products import Product
-from db.schemas import _normalize_image_path
+from data.schemas import _normalize_image_path
 from utils.cache import cache_or_compute
 
 

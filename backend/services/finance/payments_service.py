@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from events import EventPublisher, PaymentConfirmedEvent, _event_publisher
-from models import (
+from data.models import (
     Order,
     Payment,
     ProcessedWebhookEvent,

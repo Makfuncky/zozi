@@ -100,7 +100,7 @@ class AnomalyDetector:
             self.redis.lpush(key, value)
             self.redis.ltrim(key, 0, self.window_size - 1)
         except Exception as e:
-            logger.warning(f"Risk score update failed: {e}")
+            logger.warning(f"Risk score refresh failed: {e}")
             pass
 
     def _calculate_z_score(self, value: float, history: List[float]) -> float:
@@ -133,7 +133,7 @@ class AnomalyDetector:
             new_score = min(1.0, current_score + 0.1)
             self.redis.setex(risk_key, 3600, new_score)
         except Exception as e:
-            logger.warning(f"Risk score update failed: {e}")
+            logger.warning(f"Risk score refresh failed: {e}")
             pass
 
 
@@ -219,7 +219,7 @@ class BehavioralAnalyzer:
             self.redis.hset(profile_key, "last_analysis", str(analysis))
             self.redis.expire(profile_key, 86400)
         except Exception as e:
-            logger.warning(f"Risk score update failed: {e}")
+            logger.warning(f"Risk score refresh failed: {e}")
             pass
 
 
@@ -299,7 +299,7 @@ class ImpossibleTravelDetector:
             })
             self.redis.expire(key, 86400)
         except Exception as e:
-            logger.warning(f"Risk score update failed: {e}")
+            logger.warning(f"Risk score refresh failed: {e}")
             pass
 
 
@@ -348,6 +348,6 @@ class RiskScoringEngine:
             key = f"risk:{user_id}"
             self.redis.setex(key, 3600, score)
         except Exception as e:
-            logger.warning(f"Risk score update failed: {e}")
+            logger.warning(f"Risk score refresh failed: {e}")
             pass
 

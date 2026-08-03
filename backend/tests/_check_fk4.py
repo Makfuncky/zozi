@@ -2,9 +2,9 @@ import os
 os.environ['APP_ENV'] = 'test'
 os.environ['SECRET_KEY'] = 'test-secret-key-for-pytest-only'
 
-from db.base import Base as DbBase
-import models
-from models import Base as ModelsBase
+from data.base import Base as DbBase
+import data.models
+from data.models import Base as ModelsBase
 
 print(f"db.base.Base is models.Base: {DbBase is ModelsBase}")
 print(f"db.base.Base id: {id(DbBase)}")

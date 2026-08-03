@@ -7,8 +7,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 
-from db.database import get_db_context
-from models import CountryConfig
+from data.db import get_db_context
+from data.models import CountryConfig
 
 logger = logging.getLogger(__name__)
 

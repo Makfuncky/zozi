@@ -10,13 +10,13 @@ import httpx
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     User, LogisticsPartner, Order, CountryConfig,
     SystemHealthEvent, FraudAlert, NewsSource, NewsArticle,
     InternalNotice, PredictiveSimulation, AlertEscalationRule,
     ExecutiveNews
 )
-from models.employee_models import Employee
+from data.models_employee_models import Employee
 from utils.config import settings
 from utils.redis_client import redis_client
 

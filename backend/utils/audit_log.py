@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional, Union
 
 from sqlalchemy.orm import Session
 
-from models import AuditLog
+from data.models import AuditLog
 
 logger = logging.getLogger(__name__)
 

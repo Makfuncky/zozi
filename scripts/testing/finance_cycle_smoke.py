@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import argparse
 import io
 import importlib
@@ -102,7 +103,7 @@ def configure_smoke_transfer_provider() -> None:
     if not finance_transfer_service.settings.bank_api_batch_path.strip():
         finance_transfer_service.settings.bank_api_batch_path = "/v1/payout-batches"
     if not finance_transfer_service.settings.bank_api_auth_token.strip():
-        finance_transfer_service.settings.bank_api_auth_token = "smoke-bank-token"
+        finance_transfer_service.settings.bank_api_auth_token = os.environ.get("BANK_API_AUTH_TOKEN", "smoke-bank-token")
     if not finance_transfer_service.settings.bank_api_source_account_id.strip():
         finance_transfer_service.settings.bank_api_source_account_id = "zozi-smoke-main"
 
@@ -262,7 +263,7 @@ def main() -> None:
 
     app = load_app()
     run_tag = str(int(time.time()))
-    partner_password = "PartnerSmoke123!"
+    partner_password = os.environ.get("ZOZI_PARTNER_PASSWORD", "PartnerSmoke123!")
     partner_email = f"finance.partner.{run_tag}@zozi.test"
     partner_username = f"finance_partner_{run_tag}"
 

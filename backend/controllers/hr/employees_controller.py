@@ -9,12 +9,12 @@ import secrets
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from models.employee_models import (
+from data.models_employee_models import (
     Office, Employee, EmployeeDocument, EmployeeAttendance,
     EmployeeWorkLog, EmployeeRelation,
     DynamicQRSession
 )
-from models import User
+from data.models import User
 from utils.datetime_utils import utcnow as _utcnow
 import services.employee_write_service as ew
 
@@ -69,7 +69,7 @@ def list_employees(code: str, db: Session, department: Optional[str] = None,
     if status and status != "all":
         q = q.filter(Employee.employment_status == status)
     if query:
-        from models import User
+        from data.models import User
         q = q.join(Employee.user).filter(
             Employee.employee_code.ilike(f"%{query}%") |
             Employee.position.ilike(f"%{query}%") |
@@ -265,13 +265,13 @@ def validate_qr_login(token: str, db: Session) -> dict:
 
 
 def list_employee_roles(code: str, db: Session) -> list[dict]:
-    from models.employee_models import EmployeeRole
+    from data.models_employee_models import EmployeeRole
     roles = db.query(EmployeeRole).all()
     return [{"id": r.id, "name": r.role_name, "permissions": r.permissions} for r in roles]
 
 
 def create_employee_role(code: str, data: dict, db: Session) -> dict:
-    from models.employee_models import EmployeeRole
+    from data.models_employee_models import EmployeeRole
     if "name" in data:
         data["role_name"] = data.pop("name")
     role = ew.create_employee_role(db, **data)

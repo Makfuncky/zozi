@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from sqlalchemy.orm import Session
 
-from db.database import get_service_session
+from data.db import get_service_session
 
 logger = logging.getLogger("zozi.kms")
 

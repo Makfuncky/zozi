@@ -1,11 +1,18 @@
 """Returns write service — DB write operations for return requests and notifications."""
 
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     Notification,
     ReturnRequest,
 )
+
+
+def get_return_by_id(db: Session, return_id: int) -> Optional[ReturnRequest]:
+    """Fetch a single ReturnRequest by ID."""
+    return db.query(ReturnRequest).filter(ReturnRequest.id == return_id).first()
 
 
 def create_return_request(db: Session, **return_request_data) -> ReturnRequest:

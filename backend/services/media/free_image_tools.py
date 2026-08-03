@@ -23,9 +23,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Callable
 
-import numpy as np
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
-
 logger = logging.getLogger(__name__)
 
 # ── Dependency check ─────────────────────────────────────────────
@@ -143,6 +140,8 @@ def _remove_background_rembg(raw: bytes) -> Optional[bytes]:
 def _remove_background_pillow(raw: bytes) -> Optional[bytes]:
     """Fallback: threshold-based removal for white/light backgrounds."""
     try:
+        import numpy as np
+        from PIL import Image
         img = Image.open(io.BytesIO(raw)).convert("RGBA")
         arr = np.array(img)
         if arr.shape[2] < 4:
@@ -170,13 +169,15 @@ def magic_erase(data: bytes, max_dim: int = MAX_DIMENSION) -> bytes:
     unavailable. Never raises — returns ``data`` unchanged on failure.
     """
     try:
-        from services.bg_removal_service import magic_erase as _svc_magic_erase
+        from data.services_bg_removal_service import magic_erase as _svc_magic_erase
         return _svc_magic_erase(data)
     except Exception as exc:
         logger.warning("magic_erase: service unavailable (%s), using local path", exc)
 
     # ── Local fallback (legacy, self-contained) ──
     try:
+        import numpy as np
+        from PIL import Image
         img = Image.open(io.BytesIO(data)).convert("RGB")
         img_np = np.array(img)
         h, w = img_np.shape[:2]

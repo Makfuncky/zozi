@@ -7,7 +7,7 @@ import uuid
 
 @pytest.fixture
 def user_with_product(client, db_session):
-    from models import User, Product
+    from data.models import User, Product
     from utils.auth import get_password_hash
     supplier_email = f"cartsupplier_{uuid.uuid4().hex[:8]}@zozi.test"
     supplier = User(
@@ -118,7 +118,7 @@ def test_clear_cart(client, user_with_product):
 
 @pytest.mark.integration
 def test_add_inactive_product_to_cart(client, user_with_product, db_session):
-    from models import Product
+    from data.models import Product
     headers, _ = user_with_product
     bad_product = Product(
         name="Inactive Product",

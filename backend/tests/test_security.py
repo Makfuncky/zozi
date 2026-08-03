@@ -1,6 +1,7 @@
 """Tests for security utilities and RBAC."""
 from __future__ import annotations
 
+import os
 import time
 import pytest
 from jose import jwt, JWTError
@@ -21,7 +22,7 @@ from utils.config import settings
 
 @pytest.mark.integration
 def test_password_hash_and_verify():
-    password = "SecurePass1!"
+    password = os.environ.get("ZOZI_TEST_PASSWORD", "SecurePass1!")
     hashed = get_password_hash(password)
     assert hashed != password
     assert verify_password(password, hashed) is True

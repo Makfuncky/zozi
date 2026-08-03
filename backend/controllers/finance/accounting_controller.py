@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from utils.audit_log import AuditAction, audit_log
-from models import User
-from db.schemas import (
+from data.models import User
+from data.schemas import (
     JournalEntryCreate,
     JournalLineInput,
 )

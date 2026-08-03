@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func, and_, or_, case, cast, String
 from sqlalchemy.orm import Session
 
-from models import Product, Category, ProductVideo, ProductFilterMetadata, ProductFilterOption
+from data.models import Product, Category, ProductVideo, ProductFilterMetadata, ProductFilterOption
 
 
 class AdvancedFilterService:

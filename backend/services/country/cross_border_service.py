@@ -10,8 +10,8 @@ import json
 
 import httpx
 
-from db.database import get_db_context
-from models import CountryConfig
+from data.db import get_db_context
+from data.models import CountryConfig
 
 logger = logging.getLogger(__name__)
 

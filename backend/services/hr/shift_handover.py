@@ -8,8 +8,8 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models.core import ShiftHandoverSession, ShiftHandoverTask
-from models.employee_models import Employee
+from data.models_core import ShiftHandoverSession, ShiftHandoverTask
+from data.models_employee_models import Employee
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger("zozi.shift_handover")

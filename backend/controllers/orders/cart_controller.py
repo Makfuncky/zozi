@@ -5,17 +5,23 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-import controllers.orders_controller as orders_ctrl
-from models import CartItem, Product
-from db.schemas import OrderCreate
-from services.catalog.product_utils import resolve_product_variant
-from services.logistics_partner_pricing import quote_shipping_for_destination
-from utils.config import settings
-from services.write_helpers import (
-    add_and_flush,
-    commit_only,
-    delete_only,
+from services.orders.cart_shipping_service import (
+    _load_products_for_order,
+    _group_supplier_totals,
+    _quote_supplier_groups,
+    _resolve_order_level_logistics_fields,
 )
+from services.commerce.cart_write_service import (
+    delete_cart_items_by_user,
+    delete_cart_item_by_variant,
+    upsert_cart_item,
+    sync_cart_items,
+)
+from data.models import CartItem, Product
+from data.schemas import OrderCreate
+from services.catalog.product_utils import resolve_product_variant
+from data.services_logistics_partner_pricing import quote_shipping_for_destination
+from utils.config import settings
 
 
 
@@ -116,8 +122,7 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> List[dict]:
     """
     if not body.items:
         # Empty sync — clear the server cart
-        db.query(CartItem).filter(CartItem.user_id == user_id).delete(synchronize_session=False)
-        commit_only(db)
+        delete_cart_items_by_user(db, user_id)
         return []
 
     # Validate all product IDs exist and have stock
@@ -144,9 +149,11 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> List[dict]:
         for item in existing_items
     }
 
+    actions: list[dict] = []
+
     for existing in existing_items:
         if _variant_key(cast(Any, existing).product_id, cast(Any, existing).selected_size, cast(Any, existing).selected_color) not in incoming_keys:
-            delete_only(db, existing)
+            actions.append({"op": "delete", "item": existing})
 
     for variant_key, item in normalized_items.items():
         if item.product_id not in products:
@@ -160,18 +167,18 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> List[dict]:
         existing = existing_by_key.get(variant_key)
         if existing:
             cast(Any, existing).quantity = qty
+            actions.append({"op": "upsert", "item": existing})
         else:
-            add_and_flush(db, 
-                CartItem(
-                    user_id=user_id,
-                    product_id=item.product_id,
-                    quantity=qty,
-                    selected_size=selected_size,
-                    selected_color=selected_color,
-                )
+            new_item = CartItem(
+                user_id=user_id,
+                product_id=item.product_id,
+                quantity=qty,
+                selected_size=selected_size,
+                selected_color=selected_color,
             )
+            actions.append({"op": "upsert", "item": new_item})
 
-    commit_only(db)
+    sync_cart_items(db, user_id, actions)
     return get_cart(user_id, db)
 
 
@@ -205,37 +212,17 @@ def upsert_cart_item(user_id: int, product_id: int, quantity: int, selected_size
         )
         .first()
     )
-    if existing:
-        cast(Any, existing).quantity = qty
-    else:
-        add_and_flush(db, 
-            CartItem(
-                user_id=user_id,
-                product_id=product_id,
-                quantity=qty,
-                selected_size=normalized_size,
-                selected_color=normalized_color,
-            )
-        )
-
-    commit_only(db)
+    upsert_cart_item(db, user_id, product_id, qty, normalized_size, normalized_color, existing)
     return get_cart(user_id, db)
 
 
 def remove_cart_item(user_id: int, product_id: int, selected_size: str | None, selected_color: str | None, db: Session) -> List[dict]:
-    db.query(CartItem).filter(
-        CartItem.user_id == user_id,
-        CartItem.product_id == product_id,
-        CartItem.selected_size == _normalize_variant(selected_size),
-        CartItem.selected_color == _normalize_variant(selected_color),
-    ).delete()
-    commit_only(db)
+    delete_cart_item_by_variant(db, user_id, product_id, selected_size, selected_color)
     return get_cart(user_id, db)
 
 
 def clear_cart(user_id: int, db: Session) -> dict:
-    db.query(CartItem).filter(CartItem.user_id == user_id).delete()
-    commit_only(db)
+    delete_cart_items_by_user(db, user_id)
     return {"detail": "Cart cleared"}
 
 
@@ -254,16 +241,16 @@ def get_cart_shipping_quote(body: CartShippingQuoteRequest, db: Session) -> dict
             shipping_address=None,
             save_to_profile=False,
         )
-        products, _ = orders_ctrl._load_products_for_order(preview_order, db)
-        supplier_totals = orders_ctrl._group_supplier_totals(preview_order, products, db)
+        products, _ = _load_products_for_order(preview_order, db)
+        supplier_totals = _group_supplier_totals(preview_order, products, db)
         if supplier_totals:
-            shipping_amount, shipment_groups = orders_ctrl._quote_supplier_groups(
+            shipping_amount, shipment_groups = _quote_supplier_groups(
                 supplier_totals=supplier_totals,
                 destination_country=country,
                 destination_city=city,
                 db=db,
             )
-            partner_id, _, estimated_delivery_min, estimated_delivery_max = orders_ctrl._resolve_order_level_logistics_fields(shipment_groups)
+            partner_id, _, estimated_delivery_min, estimated_delivery_max = _resolve_order_level_logistics_fields(shipment_groups)
             partner_name = None
             if partner_id is not None:
                 matching_quote = next((quote for quote in shipment_groups if quote.get("partner_id") == partner_id), None)

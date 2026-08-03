@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from models.employee_models import Employee
+from data.models_employee_models import Employee
 from utils.datetime_utils import utcnow as _utcnow
 from services.write_helpers import (
     commit_only,

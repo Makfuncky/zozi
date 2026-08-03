@@ -1,0 +1,1 @@
+"""Payment domain events for Zozi."""

@@ -13,15 +13,15 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from db.base import Base
-from models import PromotionEngineConfig, PromotionOrderTier
+from data.base import Base
+from data.models import PromotionEngineConfig, PromotionOrderTier
 
 
 def _is_safe_to_create_tables() -> bool:
     """Check if it's safe to create tables (dev/SQLite only)."""
     if os.getenv("APP_ENV", "development").lower() == "production":
         return False
-    from db.database import _IS_POSTGRES
+    from data.db import _IS_POSTGRES
     if _IS_POSTGRES:
         return False
     return True

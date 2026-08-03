@@ -52,7 +52,7 @@ const supplierLogin: LoginConfig = {
 
 const logisticsLogin: LoginConfig = {
   username: "logistics",
-  password: "logistics123",
+  password: process.env.E2E_LOGISTICS_PASSWORD ?? "logistics123",
   landingRoute: "/logistics-partner/dashboard",
   expectedUrl: /\/logistics-partner\/dashboard(?:\?|$)/,
 };

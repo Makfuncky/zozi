@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """
 Finance AI Provider
-===================
+==================
 AI analysis for finance tasks including email parsing, bill extraction, and reconciliation.
 Test file: backend/tests/_test_provider/test_finance_ai.py
 """
@@ -10,7 +10,11 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+
+class settings:
+    finance_ai_timeout = 60
+    finance_text_model = "gpt-4o-mini"
+    finance_vision_model = "gpt-4o-mini"
 
 logger = logging.getLogger(__name__)
 

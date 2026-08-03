@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from sqlalchemy import selectinload
 from sqlalchemy.orm import Session
 
-from models import Order, OrderItem, Invoice, InvoiceItem
+from data.models import Order, OrderItem, Invoice, InvoiceItem
 from utils.audit_log import AuditAction, audit_log
 from services.core.write_helpers import (
     add_and_flush,

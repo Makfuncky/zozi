@@ -2,7 +2,7 @@
 import os, re
 from collections import defaultdict
 
-base_dir = 'D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend'
+base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend')
 write_patterns = [
     r'session\.add\(',
     r'db\.add\(',
@@ -42,4 +42,4 @@ sorted_files = sorted(file_writes.items(), key=lambda x: -len(x[1]))
 for path, writes in sorted_files[:20]:
     print(f'{path}: {len(writes)} writes')
     for line_num, line_text in writes[:5]:
-        print(f'  Line {line_num}: {line_text[:60]}...')')
+        print(f'  Line {line_num}: {line_text[:60]}...')

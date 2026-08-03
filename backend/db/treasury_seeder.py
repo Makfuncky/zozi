@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from models import Account, AccountGroup, TreasuryAccount
+from data.models import Account, AccountGroup, TreasuryAccount
 
 logger = logging.getLogger(__name__)
 

@@ -82,11 +82,7 @@ export function HudBackground() {
           background: "linear-gradient(90deg, transparent, color-mix(in srgb, #22d3ee 60%, transparent) 50%, transparent)",
           boxShadow: "0 0 16px #22d3ee30",
         }} />
-      <style>{`
-        @keyframes cc-scan{0%{transform:translateY(-20px);opacity:0}10%{opacity:.8}90%{opacity:.8}100%{transform:translateY(100vh);opacity:0}}
-        @keyframes cc-pulse{0%{transform:scale(0.9);opacity:.7}50%{transform:scale(1.8);opacity:0}100%{transform:scale(0.9);opacity:.7}}
-        @keyframes cc-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-      `}</style>
+      </div>
     </div>
   );
 }
@@ -427,7 +423,6 @@ export function Ticker({ items, loading = false }: {
           </span>
         ))}
       </div>
-      <style>{`@keyframes cc-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}`}</style>
     </div>
   );
 }

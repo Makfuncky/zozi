@@ -6,26 +6,25 @@ from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
 from utils.encryption import EncryptedString
+from ..mixins import TenantMixin
 
 __all__ = [
     "User", "UserDevice", "Referral", "ReferralPointEvent",
     "PasswordResetToken", "EmailVerificationToken", "RevokedToken", "UserLoginHistory"
 ]
 
-
-class User(Base):
+class User(Base, TenantMixin):
     __tablename__ = "users"
     __table_args__ = (
         Index("ix_users_role", "role"), {"schema": "core"})
-    
+
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=True)
     username = Column(String, unique=True, nullable=True)
     full_name = Column(String(160), nullable=True)
     hashed_password = Column(String)
     role = Column(String, default="customer")
-    is_active = Column(Boolean, default=True)
-    phone = Column(String, nullable=True)
+
     profile_image = Column(String, nullable=True)
     preferred_language = Column(String, default="en")
     preferred_currency = Column(String(10), default="OMR")
@@ -57,11 +56,10 @@ class User(Base):
     totp_secret = Column(String, nullable=True)
     last_seen_at = Column(DateTime, nullable=True)
     is_current = Column(Boolean, default=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+
     # Encrypted at-rest JSON store for the customer's saved delivery profile(s).
     address_book = Column(EncryptedString(length=4000), nullable=True)
-    
+
     devices = relationship("UserDevice", back_populates="user", cascade="all, delete-orphan")
     products = relationship("Product", back_populates="supplier", cascade="all, delete-orphan")
     referrals_given = relationship("Referral", foreign_keys="Referral.referrer_id", back_populates="referrer", cascade="all, delete-orphan")
@@ -73,8 +71,7 @@ class User(Base):
     wishlist_items = relationship("WishlistItem", back_populates="user", cascade="all, delete-orphan")
     wishlists = relationship("Wishlist", back_populates="user", cascade="all, delete-orphan")
 
-
-class UserLoginHistory(Base):
+class UserLoginHistory(Base, TenantMixin):
     __tablename__ = "user_login_history"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -83,12 +80,10 @@ class UserLoginHistory(Base):
     user_agent = Column(String, nullable=True)
     timestamp = Column(DateTime, default=_utcnow)
     success = Column(Boolean, default=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     user = relationship("User")
 
-
-class UserDevice(Base):
+class UserDevice(Base, TenantMixin):
     __tablename__ = "user_devices"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -99,12 +94,10 @@ class UserDevice(Base):
     is_current = Column(Boolean, default=True)
     is_trusted = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     user = relationship("User", back_populates="devices")
 
-
-class Referral(Base):
+class Referral(Base, TenantMixin):
     __tablename__ = "referrals"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -113,13 +106,11 @@ class Referral(Base):
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     referrer = relationship("User", foreign_keys=[referrer_id], back_populates="referrals_given")
     referred = relationship("User", foreign_keys=[referred_id], back_populates="referred_by")
 
-
-class ReferralPointEvent(Base):
+class ReferralPointEvent(Base, TenantMixin):
     __tablename__ = "referral_point_events"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -128,13 +119,11 @@ class ReferralPointEvent(Base):
     points = Column(Integer, nullable=False)
     referred_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     user = relationship("User", foreign_keys=[user_id])
     referred_user = relationship("User", foreign_keys=[referred_user_id])
 
-
-class PasswordResetToken(Base):
+class PasswordResetToken(Base, TenantMixin):
     __tablename__ = "password_reset_tokens"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -143,12 +132,10 @@ class PasswordResetToken(Base):
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     user = relationship("User")
 
-
-class EmailVerificationToken(Base):
+class EmailVerificationToken(Base, TenantMixin):
     __tablename__ = "email_verification_tokens"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -157,12 +144,10 @@ class EmailVerificationToken(Base):
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     user = relationship("User")
 
-
-class RevokedToken(Base):
+class RevokedToken(Base, TenantMixin):
     __tablename__ = "revoked_tokens"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -170,6 +155,5 @@ class RevokedToken(Base):
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     expires_at = Column(DateTime, nullable=False)
     revoked_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     user = relationship("User")

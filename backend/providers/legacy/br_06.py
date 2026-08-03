@@ -25,8 +25,23 @@ from typing import Tuple, Dict, Any, List
 from pathlib import Path
 from dataclasses import dataclass, field
 
-import numpy as np
-from PIL import Image
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+np = _LazyNumpy()
+Image = _LazyPIL()
 
 # ========================== LOGGING ==========================
 class ColoredFormatter(logging.Formatter):

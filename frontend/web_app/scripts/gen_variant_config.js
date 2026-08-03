@@ -1,5 +1,6 @@
 const fs = require('fs');
-const json = JSON.parse(fs.readFileSync(process.argv[2] || 'D:/Projects/10- E-COMMERCE WEBSITE/zozi/Working_API/zozi_ai_upload_session/zozi_variant_config.json', 'utf8'));
+const path = require('path');
+const json = JSON.parse(fs.readFileSync(process.argv[2] || path.resolve(__dirname, '../../../Working_API/zozi_ai_upload_session/zozi_variant_config.json'), 'utf8'));
 const variants = json.variants;
 
 const catMap = {};
@@ -138,7 +139,7 @@ out += `export function getSuggestedVariants(category: string): Array<{ key: str
 }
 `;
 
-const outPath = process.argv[3] || 'D:/Projects/10- E-COMMERCE WEBSITE/zozi/frontend/web_app/src/lib/variantConfig.ts';
+const outPath = process.argv[3] || path.join(__dirname, '../src/lib/variantConfig.ts');
 fs.writeFileSync(outPath, out);
 console.log('Written to ' + outPath);
 console.log('Total variant types:', keys.length);

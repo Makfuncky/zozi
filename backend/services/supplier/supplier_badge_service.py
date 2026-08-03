@@ -18,7 +18,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
-from models import (
+from data.models import (
     BadgeBillingRecord,
     CommissionBadgeTier,
     Order,
@@ -530,8 +530,8 @@ def compute_credibility_score(supplier_id: int, db: Session) -> int:
       - Account age in days          (max 10 pts)
       - Number of approved products  (max 10 pts)
     """
-    from models import Order, OrderItem, Product, Review
-    from models import SupplierProfile as SP
+    from data.models import Order, OrderItem, Product, Review
+    from data.models import SupplierProfile as SP
 
     total_orders = (
         db.query(func.count(func.distinct(Order.id)))
@@ -705,7 +705,7 @@ def admin_set_supplier_badge(
     db: Session,
 ) -> dict:
     """Admin: manually override badge level for a supplier."""
-    from models import SupplierProfile as SP
+    from data.models import SupplierProfile as SP
 
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")

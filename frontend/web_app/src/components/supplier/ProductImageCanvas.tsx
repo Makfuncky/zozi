@@ -307,32 +307,6 @@ export default function ProductImageCanvas({ src, fileName, onApply, onClose }: 
           </Button>
         </div>
       </div>
-
-      <style jsx>{`
-        :global(.editor-btn) {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.3rem;
-          padding: 0.35rem 0.6rem;
-          border-radius: 0.5rem;
-          border: 1px solid rgba(120, 120, 120, 0.3);
-          font-size: 0.75rem;
-          background: var(--surface-2, #f3f4f6);
-          color: var(--text, #1f2937);
-          transition: all 0.15s ease;
-          white-space: nowrap;
-        }
-        :global(.editor-btn:hover) {
-          background: var(--primary, #2563eb);
-          color: #fff;
-          border-color: var(--primary, #2563eb);
-        }
-        :global(.editor-btn-active) {
-          background: var(--primary, #2563eb);
-          color: #fff;
-          border-color: var(--primary, #2563eb);
-        }
-      `}</style>
     </div>
   );
 }

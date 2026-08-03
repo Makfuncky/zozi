@@ -14,14 +14,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
-from db.database import get_db
-from models import (
+from data.db import get_db
+from data.models import (
     JournalEntry, JournalEntryLine, Account, User, AccountBalance, Payout,
     TreasuryAccount, GatewaySettlementSchedule, CashPositionSnapshot,
     PendingJournalEntry, PayoutBatch,
 )
 from services.treasury_engine import TreasuryEngine, seed_chart_of_accounts
-from dependencies.auth import get_current_user
+from data.dependencies_auth import get_current_user
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 
@@ -94,6 +94,8 @@ def get_ledger(
     end_date: date = Query(...),
     account_code: Optional[str] = None,
     country_code: str = Query(None, max_length=3),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     """Get journal entries with optional filters (optionally country-scoped)."""
@@ -111,7 +113,7 @@ def get_ledger(
                 Account.code == account_code
             )
 
-        entries = db.execute(query.order_by(JournalEntry.entry_date.desc())).scalars().all()
+        entries = db.execute(query.order_by(JournalEntry.entry_date.desc()).offset(skip).limit(limit)).scalars().all()
 
         return [
             {
@@ -176,6 +178,8 @@ def get_trial_balance(
 def get_vat_liability(
     period: str = Query(...),
     country_code: str = Query(None, max_length=3),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     """Calculate VAT liability for a period (optionally country-scoped)."""
@@ -187,6 +191,7 @@ def get_vat_liability(
             select(AccountBalance)
             .join(Account, AccountBalance.account_id == Account.id)
             .where(Account.code.in_(["2040", "2050"]))
+            .offset(skip).limit(limit)
         ).scalars().all()
 
         output_vat = sum(b.balance for b in accounts if b.account_id and
@@ -235,6 +240,8 @@ def approve_payout_batch(
 @router.get("/payouts/batches")
 def get_payout_batches(
     country_code: str = Query(None, max_length=3),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     """List all payout batches (optionally country-scoped)."""
@@ -243,7 +250,7 @@ def get_payout_batches(
         set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         batches = db.execute(
-            select(Payout).order_by(Payout.created_at.desc())
+            select(Payout).order_by(Payout.created_at.desc()).offset(skip).limit(limit)
         ).scalars().all()
 
         return [
@@ -267,6 +274,8 @@ def get_payout_batches(
 @router.get("/cash-position")
 def get_cash_position(
     country_code: str = Query(None, max_length=3),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
     """Breakdown of cash by treasury account (optionally country-scoped)."""
@@ -276,6 +285,7 @@ def get_cash_position(
     try:
         accounts = db.execute(
             select(TreasuryAccount).where(TreasuryAccount.is_active == True)
+            .offset(skip).limit(limit)
         ).scalars().all()
 
         buckets = []
@@ -352,18 +362,20 @@ def manual_adjustment(
 
 @router.get("/reports/supplier-earnings")
 def supplier_earnings_report(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     """Exportable supplier earnings summary."""
-    from models import SupplierSettlement
+    from data.models import SupplierSettlement
     rows = db.execute(
         select(
             SupplierSettlement.supplier_id,
             func.sum(SupplierSettlement.gross_amount).label("gross"),
             func.sum(SupplierSettlement.commission_amount).label("commission"),
             func.sum(SupplierSettlement.net_amount).label("net"),
-        ).group_by(SupplierSettlement.supplier_id)
+        ).group_by(SupplierSettlement.supplier_id).offset(skip).limit(limit)
     ).all()
     return [
         {"supplier_id": r.supplier_id, "gross": float(r.gross), "commission": float(r.commission), "net": float(r.net)}

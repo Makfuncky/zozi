@@ -3,9 +3,9 @@ import { expect, test, type Page } from "@playwright/test";
 test.describe.configure({ timeout: 60_000 });
 
 const USERS: Record<string, { email: string; password: string; loginPage: string; landing: string }> = {
-  admin: { email: "admin@zozi.com", password: "admin123", loginPage: "/admin/login", landing: "/admin/dashboard" },
-  supplier: { email: "supplier@zozi.com", password: "supplier123", loginPage: "/supplier/login", landing: "/supplier/dashboard" },
-  logistics: { email: "logistics@zozi.com", password: "logistics123", loginPage: "/logistics-partner/login", landing: "/logistics-partner/dashboard" },
+  admin: { email: "admin@zozi.com", password: process.env.E2E_ADMIN_PASSWORD ?? "admin123", loginPage: "/admin/login", landing: "/admin/dashboard" },
+  supplier: { email: "supplier@zozi.com", password: process.env.E2E_SUPPLIER_PASSWORD ?? "supplier123", loginPage: "/supplier/login", landing: "/supplier/dashboard" },
+  logistics: { email: "logistics@zozi.com", password: process.env.E2E_LOGISTICS_PASSWORD ?? "logistics123", loginPage: "/logistics-partner/login", landing: "/logistics-partner/dashboard" },
 };
 
 /** Log in via the panel-specific login form (most reliable auth setup). */

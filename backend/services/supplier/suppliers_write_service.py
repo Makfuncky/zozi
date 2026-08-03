@@ -3,7 +3,7 @@ from typing import Optional, cast
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     Payout,
     Shipment,
     ShipmentEvent,
@@ -175,7 +175,7 @@ def add_and_flush(db: Session, model) -> None:
 
 
 def add_notification(db: Session, **notification_data) -> "Notification":
-    from models import Notification
+    from data.models import Notification
     notification = Notification(**notification_data)
     db.add(notification)
     db.commit()
@@ -204,7 +204,7 @@ def commit_and_refresh(db: Session, *objects) -> None:
 
 def stage_notification(db: Session, **notification_data) -> "Notification":
     """Queue a Notification in the session WITHOUT committing (caller owns the transaction)."""
-    from models import Notification
+    from data.models import Notification
 
     notification = Notification(**notification_data)
     db.add(notification)

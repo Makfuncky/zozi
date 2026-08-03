@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = ["FiscalPeriod", "TransactionLedger", "SupplierSettlement", "JournalEntry", "JournalEntryLine",
            "Account", "AccountGroup", "AccountBalance", "FinancialReport",
@@ -16,15 +17,15 @@ __all__ = ["FiscalPeriod", "TransactionLedger", "SupplierSettlement", "JournalEn
            "Vendor", "Customer", "CostCenter", "APBill", "ARInvoice", "BankAccount",
            "Budget", "BankReconciliation", "RecurringTemplate", "FinanceAuditLog"]
 
-
-class FiscalPeriod(Base):
+class FiscalPeriod(Base, TenantMixin):
     __tablename__ = "fiscal_periods"
     __table_args__ = (
         UniqueConstraint("country_code", "period_year", "period_month", name="uq_fiscal_period"),
         Index("ix_fiscal_period_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(3), nullable=False, index=True)
+
     period_year = Column(Integer, nullable=False)
+
     period_month = Column(Integer, nullable=False)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
@@ -36,8 +37,7 @@ class FiscalPeriod(Base):
     created_at = Column(DateTime, default=_utcnow)
     closed_by_user = relationship("User", foreign_keys=[closed_by])
 
-
-class TransactionLedger(Base):
+class TransactionLedger(Base, TenantMixin):
     __tablename__ = "transaction_ledgers"
     __table_args__ = (
         CheckConstraint("amount >= 0", name="chk_transaction_ledger_amount_non_negative"),
@@ -71,12 +71,10 @@ class TransactionLedger(Base):
     balance_after = Column(Numeric(12, 2), nullable=True)
     notes = Column(Text, nullable=True)
     amount = Column(Numeric(12, 2), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class SupplierSettlement(Base):
+class SupplierSettlement(Base, TenantMixin):
     __tablename__ = "supplier_settlements"
     __table_args__ = (
         CheckConstraint("gross_amount >= 0", name="chk_supplier_settlement_gross_non_negative"),
@@ -85,7 +83,7 @@ class SupplierSettlement(Base):
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    ledger_id = Column(Integer, ForeignKey("finance.transaction_ledgers.id"), nullable=True)
+    ledger_id = Column(Integer, ForeignKey("finance.transaction_ledgers.id", ondelete="SET NULL"), nullable=True, index=True)
     payout_id = Column(Integer, ForeignKey("treasury.payouts.id"), nullable=True)
     shipment_id = Column(Integer, ForeignKey("logistics.shipments.id"), nullable=True)
     gross_amount = Column(Numeric(12, 2), nullable=False)
@@ -101,14 +99,14 @@ class SupplierSettlement(Base):
     currency = Column(String(3), default="USD")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, index=True)
+
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
 
-
-class JournalEntry(Base):
+class JournalEntry(Base, TenantMixin):
     __tablename__ = "journal_entries"
+    __partition_by__ = "range"
+    __partition_key__ = "entry_date"
     __table_args__ = (
         Index("ix_journal_entry_date", "entry_date"),
         Index("ix_journal_entry_ref", "reference_number"),
@@ -118,14 +116,13 @@ class JournalEntry(Base):
     reference_number = Column(String(50), unique=True, nullable=False)
     description = Column(Text, nullable=True)
     source = Column(String(50), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    currency = Column(String(3), default="OMR")
+
     is_reconciled = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     reference_type = Column(String(50), nullable=True)
     reference_id = Column(Integer, nullable=True)
-    period_id = Column(Integer, ForeignKey("finance.fiscal_periods.id"), nullable=True, index=True)
-    reversal_of_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True, index=True)
+    period_id = Column(Integer, ForeignKey("finance.fiscal_periods.id", ondelete="SET NULL"), nullable=True, index=True)
+    reversal_of_id = Column(Integer, ForeignKey("finance.journal_entries.id", ondelete="SET NULL"), nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -134,46 +131,41 @@ class JournalEntry(Base):
     period = relationship("FiscalPeriod", foreign_keys=[period_id])
     reversal_of = relationship("JournalEntry", remote_side=[id], foreign_keys=[reversal_of_id])
 
-
-class JournalEntryLine(Base):
+class JournalEntryLine(Base, TenantMixin):
     __tablename__ = "journal_entry_lines"
     __table_args__ = (Index("ix_jel_entry", "entry_id"), Index("ix_jel_account", "account_id"),
         CheckConstraint("amount >= 0", name="chk_jel_amount_non_negative"),
         CheckConstraint("side IN ('debit', 'credit')", name="chk_jel_side_valid"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=False)
-    account_id = Column(Integer, ForeignKey("finance.accounts.id"), nullable=False)
-    cost_center_id = Column(Integer, ForeignKey("finance.cost_centers.id"), nullable=True, index=True)
+    entry_id = Column(Integer, ForeignKey("finance.journal_entries.id", ondelete="CASCADE"), nullable=False, index=True)
+    account_id = Column(Integer, ForeignKey("finance.accounts.id", ondelete="RESTRICT"), nullable=False, index=True)
+    cost_center_id = Column(Integer, ForeignKey("finance.cost_centers.id", ondelete="SET NULL"), nullable=True, index=True)
     amount = Column(Numeric(12, 2), nullable=False)
     side = Column(String(10), nullable=False)
     description = Column(Text, nullable=True)
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+
     entry = relationship("JournalEntry", back_populates="lines")
     account = relationship("Account")
 
-
-class Account(Base):
+class Account(Base, TenantMixin):
     __tablename__ = "accounts"
     __table_args__ = (Index("ix_accounts_code", "code"), Index("ix_accounts_group", "group_id"),
         CheckConstraint("normal_side IN ('debit', 'credit')", name="chk_account_normal_side_valid"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    group_id = Column(Integer, ForeignKey("finance.account_groups.id"), nullable=True)
+    group_id = Column(Integer, ForeignKey("finance.account_groups.id", ondelete="SET NULL"), nullable=True, index=True)
     code = Column(String(20), unique=True, nullable=False)
     name = Column(String(200), nullable=False)
     normal_side = Column(String(10), nullable=False)
     currency = Column(String(3), default="USD")
-    is_active = Column(Boolean, default=True)
-    display_order = Column(Integer, default=0)
+
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    group = relationship("AccountGroup", back_populates="accounts")
+
     journal_lines = relationship("JournalEntryLine", back_populates="account")
 
-
-class AccountGroup(Base):
+class AccountGroup(Base, TenantMixin):
     __tablename__ = "account_groups"
     __table_args__ = (Index("ix_account_groups_code", "code"), Index("ix_account_groups_order", "display_order"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
@@ -184,11 +176,8 @@ class AccountGroup(Base):
     normal_side = Column(String(10), nullable=False)
     display_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    accounts = relationship("Account", back_populates="group")
 
-
-class AccountBalance(Base):
+class AccountBalance(Base, TenantMixin):
     __tablename__ = "account_balances"
     __table_args__ = (
         Index("ix_account_balance_account", "account_id"),
@@ -203,12 +192,10 @@ class AccountBalance(Base):
     last_entry_at = Column(DateTime, nullable=True)
     last_updated = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    account = relationship("Account")
+
     user = relationship("User")
 
-
-class ARLedgerEntry(Base):
+class ARLedgerEntry(Base, TenantMixin):
     __tablename__ = "ar_ledger_entries"
     __table_args__ = (
         Index("ix_ar_ledger_user", "customer_id"),
@@ -229,15 +216,13 @@ class ARLedgerEntry(Base):
     description = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, index=True)
+
     deleted_at = Column(DateTime, nullable=True)
 
     customer = relationship("User", foreign_keys=[customer_id])
     invoice = relationship("Invoice", foreign_keys=[invoice_id])
 
-
-class APLedger(Base):
+class APLedger(Base, TenantMixin):
     __tablename__ = "ap_ledger_entries"
     __table_args__ = (
         Index("ix_ap_ledger_supplier", "supplier_id"),
@@ -259,30 +244,26 @@ class APLedger(Base):
     description = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, index=True)
+
     deleted_at = Column(DateTime, nullable=True)
 
     supplier = relationship("User", foreign_keys=[supplier_id])
     invoice = relationship("Invoice", foreign_keys=[invoice_id])
     settlement = relationship("SupplierSettlement", foreign_keys=[settlement_id])
 
-
-class FinancialReport(Base):
+class FinancialReport(Base, TenantMixin):
     __tablename__ = "financial_reports"
     __table_args__ = ({"schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
     report_type = Column(String, nullable=False)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
-    country_code = Column(String(3), nullable=True, index=True)
-    data = Column(JSON, nullable=True)
+
     generated_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False, index=True)
     deleted_at = Column(DateTime, nullable=True)
 
-
-class Invoice(Base):
+class Invoice(Base, TenantMixin):
     __tablename__ = "invoices"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -307,16 +288,14 @@ class Invoice(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, index=True)
+
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    
+
     supplier = relationship("User", foreign_keys=[supplier_id], backref="invoices")
     items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
 
-
-class InvoiceItem(Base):
+class InvoiceItem(Base, TenantMixin):
     __tablename__ = "invoice_items"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -329,12 +308,10 @@ class InvoiceItem(Base):
     tax_rate = Column(Numeric(5, 2), nullable=True)
     line_total = Column(Numeric(10, 2), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     invoice = relationship("Invoice", back_populates="items")
 
-
-class RefundLedger(Base):
+class RefundLedger(Base, TenantMixin):
     __tablename__ = "refund_ledger"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -357,13 +334,11 @@ class RefundLedger(Base):
     currency = Column(String(3), default="OMR")
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_deleted = Column(Boolean, default=False, index=True)
+
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
 
-
-class BankTransaction(Base):
+class BankTransaction(Base, TenantMixin):
     __tablename__ = "bank_transactions"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -385,12 +360,10 @@ class BankTransaction(Base):
     transaction_date = Column(DateTime, nullable=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    flagged = Column(Boolean, nullable=True, default=False)
+
     flag_reason = Column(Text, nullable=True)
 
-
-class VATRemittance(Base):
+class VATRemittance(Base, TenantMixin):
     __tablename__ = "vat_remittances"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -408,10 +381,8 @@ class VATRemittance(Base):
     notes = Column(Text, nullable=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CashAccount(Base):
+class CashAccount(Base, TenantMixin):
     __tablename__ = "cash_accounts"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -420,14 +391,11 @@ class CashAccount(Base):
     currency = Column(String(3), default="USD")
     balance = Column(Numeric(12, 2), default=0)
     description = Column(Text, nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CashTransaction(Base):
+class CashTransaction(Base, TenantMixin):
     __tablename__ = "cash_transactions"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -440,10 +408,8 @@ class CashTransaction(Base):
     category = Column(String, nullable=True)
     performed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class TreasuryAccount(Base):
+class TreasuryAccount(Base, TenantMixin):
     __tablename__ = "treasury_accounts"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -455,13 +421,10 @@ class TreasuryAccount(Base):
     description = Column(Text, nullable=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
     balance = Column(Numeric(12, 2), default=0)
-    is_active = Column(Boolean, default=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class TreasuryTransaction(Base):
+class TreasuryTransaction(Base, TenantMixin):
     __tablename__ = "treasury_transactions"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -474,10 +437,8 @@ class TreasuryTransaction(Base):
     reference = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     posted_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
 
-
-class CashFlowForecast(Base):
+class CashFlowForecast(Base, TenantMixin):
     __tablename__ = "cash_flow_forecasts"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -487,11 +448,8 @@ class CashFlowForecast(Base):
     net_cash_flow = Column(Numeric(12, 2), default=0)
     opening_balance = Column(Numeric(12, 2), default=0)
     closing_balance = Column(Numeric(12, 2), default=0)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class CashPositionSnapshot(Base):
+class CashPositionSnapshot(Base, TenantMixin):
     __tablename__ = "cash_position_snapshots"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -499,11 +457,8 @@ class CashPositionSnapshot(Base):
     account_id = Column(Integer, ForeignKey("treasury.treasury_accounts.id"), nullable=False)
     balance = Column(Numeric(12, 2), default=0)
     currency = Column(String(3), default="USD")
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class GatewaySettlementSchedule(Base):
+class GatewaySettlementSchedule(Base, TenantMixin):
     __tablename__ = "gateway_settlement_schedules"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -512,11 +467,8 @@ class GatewaySettlementSchedule(Base):
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")
     status = Column(String, default="pending")
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class PendingJournalEntry(Base):
+class PendingJournalEntry(Base, TenantMixin):
     """Maker-Checker: pending journal entries awaiting second approval."""
     __tablename__ = "pending_journal_entries"
     __table_args__ = (Index("ix_pending_je_status", "status"), Index("ix_pending_je_maker", "created_by"), Index("ix_pending_je_country", "country_code"), {"schema": "finance"})
@@ -525,8 +477,7 @@ class PendingJournalEntry(Base):
     lines_json = Column(Text, nullable=False)
     description = Column(Text, nullable=True)
     source = Column(String(50), nullable=True)
-    country_code = Column(String(3), nullable=True)
-    entry_date = Column(DateTime, nullable=False)
+
     amount_threshold_triggered = Column(Boolean, default=False)
     status = Column(String(20), default="pending_approval")
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=False)
@@ -540,16 +491,14 @@ class PendingJournalEntry(Base):
     creator = relationship("User", foreign_keys=[created_by])
     approver = relationship("User", foreign_keys=[approved_by])
 
-
-class PayoutBatch(Base):
+class PayoutBatch(Base, TenantMixin):
     """Payout batch for supplier/logistics payouts with state machine."""
     __tablename__ = "payout_batches"
     __table_args__ = ({"schema": "treasury"},)
 
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), unique=True, nullable=False)
-    country_code = Column(String(3), nullable=False, index=True)
-    total_amount = Column(Numeric(16, 4), default=0)
+
     item_count = Column(Integer, default=0)
     status = Column(String(20), default="draft")
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=False)
@@ -564,8 +513,7 @@ class PayoutBatch(Base):
     approver = relationship("User", foreign_keys=[approved_by])
     items = relationship("PayoutBatchItem", back_populates="batch", cascade="all, delete-orphan")
 
-
-class PayoutBatchItem(Base):
+class PayoutBatchItem(Base, TenantMixin):
     __tablename__ = "payout_batch_items"
     __table_args__ = ({"schema": "treasury"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -576,20 +524,17 @@ class PayoutBatchItem(Base):
     currency = Column(String(3), default="USD")
     reference = Column(String(100), nullable=True)
     status = Column(String(20), default="pending")
-    country_code = Column(String(3), nullable=True, index=True)
 
     batch = relationship("PayoutBatch", back_populates="items")
 
-
-class BankMappingRule(Base):
+class BankMappingRule(Base, TenantMixin):
     """Configurable mapping: bank-statement description pattern -> GL account + side."""
     __tablename__ = "bank_mapping_rules"
     __table_args__ = (
         Index("ix_bank_mapping_country", "country_code"),
         Index("ix_bank_mapping_priority", "priority"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    name = Column(String(120), nullable=False)
+
     # Keywords matched (case-insensitive) against the statement description.
     match_pattern = Column(String(300), nullable=False)
     description_contains = Column(String(300), nullable=True)
@@ -597,13 +542,11 @@ class BankMappingRule(Base):
     normal_side = Column(String(10), nullable=False)  # debit / credit
     category = Column(String(40), nullable=True)
     priority = Column(Integer, default=100)
-    is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class BankStatementImport(Base):
+class BankStatementImport(Base, TenantMixin):
     """Header record for one uploaded bank statement file."""
     __tablename__ = "bank_statement_imports"
     __table_args__ = (Index("ix_bsi_country", "country_code"), {"schema": "finance"})
@@ -618,11 +561,8 @@ class BankStatementImport(Base):
     unmatched_lines = Column(Integer, default=0)
     status = Column(String(20), default="imported")
     imported_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class BankStatementLine(Base):
+class BankStatementLine(Base, TenantMixin):
     """A single line from an imported bank statement awaiting mapping/reconciliation."""
     __tablename__ = "bank_statement_lines"
     __table_args__ = (
@@ -642,11 +582,8 @@ class BankStatementLine(Base):
     status = Column(String(20), default="unmapped")  # unmapped, mapped, posted, reconciled
     posted_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reconciled_transaction_id = Column(Integer, ForeignKey("finance.bank_transactions.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 
-
-class FixedAsset(Base):
+class FixedAsset(Base, TenantMixin):
     """Fixed asset register with straight-line depreciation schedule."""
     __tablename__ = "fixed_assets"
     __table_args__ = (Index("ix_fa_country", "country_code"), {"schema": "finance"})
@@ -664,13 +601,11 @@ class FixedAsset(Base):
     depreciation_account_code = Column(String(20), default="5070")
     accumulated_depr_account_code = Column(String(20), default="1190")
     status = Column(String(20), default="active")  # active, disposed, fully_depreciated
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class Accrual(Base):
+class Accrual(Base, TenantMixin):
     """Accrued expense / revenue recognized before cash movement."""
     __tablename__ = "accruals"
     __table_args__ = (Index("ix_accrual_country", "country_code"), Index("ix_accrual_status", "status"), {"schema": "finance"})
@@ -685,12 +620,10 @@ class Accrual(Base):
     status = Column(String(20), default="open")  # open, reversed, cleared
     journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reversal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
 
-
-class ScannedExpense(Base):
+class ScannedExpense(Base, TenantMixin):
     """Bill scanned via OCR that becomes an expense + GL posting after approval."""
     __tablename__ = "scanned_expenses"
     __table_args__ = (Index("ix_se_country", "country_code"), Index("ix_se_status", "status"), {"schema": "finance"})
@@ -711,12 +644,10 @@ class ScannedExpense(Base):
     status = Column(String(20), default="scanned")  # scanned, reviewed, posted, rejected
     posted_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class Vendor(Base):
+class Vendor(Base, TenantMixin):
     """Vendor master (entity we receive bills from / owe money to)."""
     __tablename__ = "vendors"
     __table_args__ = (Index("ix_vendors_country", "country_code"), {"schema": "finance"})
@@ -726,13 +657,11 @@ class Vendor(Base):
     contact_email = Column(String(160), nullable=True)
     currency = Column(String(3), default="OMR")
     payment_terms_days = Column(Integer, default=30)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class Customer(Base):
+class Customer(Base, TenantMixin):
     """Customer master for B2B / trade receivables (distinct from platform User)."""
     __tablename__ = "customers"
     __table_args__ = (Index("ix_customers_country", "country_code"), {"schema": "finance"})
@@ -743,26 +672,22 @@ class Customer(Base):
     currency = Column(String(3), default="OMR")
     payment_terms_days = Column(Integer, default=30)
     credit_limit = Column(Numeric(14, 2), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class CostCenter(Base):
+class CostCenter(Base, TenantMixin):
     """Cost center / department used to tag journal lines for reporting."""
     __tablename__ = "cost_centers"
     __table_args__ = (Index("ix_cost_centers_country", "country_code"), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(30), nullable=False)
     name = Column(String(160), nullable=False)
-    country_code = Column(String(3), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class APBill(Base):
+class APBill(Base, TenantMixin):
     """Accounts-Payable bill received from a vendor (dr expense/asset, cr AP)."""
     __tablename__ = "ap_bills"
     __table_args__ = (
@@ -782,14 +707,12 @@ class APBill(Base):
     status = Column(String(20), default="received")  # received, approved, paid, cancelled
     linked_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     paid_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     vendor = relationship("Vendor", foreign_keys=[vendor_id])
 
-
-class ARInvoice(Base):
+class ARInvoice(Base, TenantMixin):
     """Accounts-Receivable invoice issued to a customer (dr AR, cr Revenue)."""
     __tablename__ = "ar_invoices"
     __table_args__ = (
@@ -811,15 +734,13 @@ class ARInvoice(Base):
     paid_journal_entry_id = Column(Integer, ForeignKey("finance.journal_entries.id"), nullable=True)
     reference_order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True, index=True)
     vat_amount = Column(Numeric(14, 2), default=0)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     customer = relationship("Customer", foreign_keys=[customer_id])
     order = relationship("Order", foreign_keys=[reference_order_id], overlaps="invoice")
 
-
-class BankAccount(Base):
+class BankAccount(Base, TenantMixin):
     """Company bank-account registry mapped to a GL cash account."""
     __tablename__ = "bank_accounts"
     __table_args__ = (Index("ix_bank_accounts_country", "country_code"), {"schema": "finance"})
@@ -831,13 +752,11 @@ class BankAccount(Base):
     swift_bic = Column(String(20), nullable=True)
     currency = Column(String(3), default="OMR")
     gl_account_code = Column(String(20), default="1010")
-    country_code = Column(String(3), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
+
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class Budget(Base):
+class Budget(Base, TenantMixin):
     """Period budget per GL account for variance reporting."""
     __tablename__ = "budgets"
     __table_args__ = (
@@ -848,15 +767,13 @@ class Budget(Base):
     fiscal_period_id = Column(Integer, ForeignKey("finance.fiscal_periods.id"), nullable=False)
     amount = Column(Numeric(16, 4), nullable=False)
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(3), nullable=True, index=True)
-    notes = Column(Text, nullable=True)
+
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     period = relationship("FiscalPeriod", foreign_keys=[fiscal_period_id])
 
-
-class BankReconciliation(Base):
+class BankReconciliation(Base, TenantMixin):
     """Human-reviewed match between a bank statement line and a GL journal entry."""
     __tablename__ = "bank_reconciliations"
     __table_args__ = (
@@ -871,11 +788,8 @@ class BankReconciliation(Base):
     note = Column(Text, nullable=True)
     matched_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     matched_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    statement_line = relationship("BankStatementLine", foreign_keys=[statement_line_id])
 
-
-class RecurringTemplate(Base):
+class RecurringTemplate(Base, TenantMixin):
     """Template that generates a journal entry on trigger (e.g. monthly rent)."""
     __tablename__ = "recurring_templates"
     __table_args__ = (Index("ix_recurring_country", "country_code"), {"schema": "finance"})
@@ -886,14 +800,12 @@ class RecurringTemplate(Base):
     description = Column(Text, nullable=True)
     lines = Column(JSON, nullable=False)  # list of {account_code, side, amount, description}
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(3), nullable=True, index=True)
-    is_active = Column(Boolean, default=True)
+
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
-
-class FinanceAuditLog(Base):
+class FinanceAuditLog(Base, TenantMixin):
     """Scoped audit trail of finance actions (posts, reversals, approvals, automations)."""
     __tablename__ = "finance_audit_logs"
     __table_args__ = (
@@ -906,12 +818,10 @@ class FinanceAuditLog(Base):
     actor_role = Column(String(40), nullable=True)
     entity_type = Column(String(40), nullable=True)
     entity_id = Column(Integer, nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    detail = Column(JSON, nullable=True)
+
     created_at = Column(DateTime, default=_utcnow)
 
-
-class FinanceAutomationLog(Base):
+class FinanceAutomationLog(Base, TenantMixin):
     """Audit trail for automation runs (OCR, reconciliation, depreciation, mapping)."""
     __tablename__ = "finance_automation_logs"
     __table_args__ = (Index("ix_fal_kind", "kind"), Index("ix_fal_country", "country_code"), {"schema": "finance"})
@@ -921,6 +831,4 @@ class FinanceAutomationLog(Base):
     records_changed = Column(Integer, default=0)
     detail = Column(JSON, nullable=True)
     run_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
 

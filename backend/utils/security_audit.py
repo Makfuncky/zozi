@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from models import AuditLog
+from data.models import AuditLog
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ def log_security_event(
     if action not in SECURITY_EVENTS:
         logger.warning("Unknown security event type: %s", action)
 
-    from db.database import get_service_session
+    from data.db import get_service_session
     try:
         with get_service_session() as db:
             entry = AuditLog(

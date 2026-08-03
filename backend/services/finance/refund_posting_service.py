@@ -20,7 +20,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     RefundLedger,
     Order,
     SupplierSettlement,
@@ -28,7 +28,7 @@ from models import (
     FinanceAutomationLog,
     FinanceAuditLog,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
+from data.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 

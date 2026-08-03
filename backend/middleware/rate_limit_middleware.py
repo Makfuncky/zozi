@@ -222,7 +222,7 @@ class TokenBucket:
                 current -= tokens
                 redis.mset({
                     bucket_key: current,
-                    f"last_update:{bucket_key}": now
+                    "last_update:" + bucket_key: now
                 })
                 redis.expire(bucket_key, int(self.config.window_size))
                 return True, int(current), 0

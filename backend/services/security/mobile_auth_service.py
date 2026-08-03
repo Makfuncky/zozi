@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import User, Employee, UserDevice
+from data.models import User, Employee, UserDevice
 from services.iam_service import generate_qr_code
 from utils.datetime_utils import utcnow as _utcnow
 

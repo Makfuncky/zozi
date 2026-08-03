@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import or_, func, String, cast as sql_cast
 from sqlalchemy.orm import Session, selectinload
 
-from models import (
+from data.models import (
     Product, Order, OrderItem, CartItem, Wishlist, Review,
     Notification, User, AuditLog
 )

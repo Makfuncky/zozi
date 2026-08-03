@@ -1,5 +1,5 @@
-import sys
-sys.path.insert(0, r'd:\Projects\10- E-COMMERCE WEBSITE\zozi\backend')
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'backend'))
 from fastapi.testclient import TestClient
 from main import app
 

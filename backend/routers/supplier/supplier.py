@@ -7,13 +7,14 @@ from fastapi import APIRouter, Body, Depends, UploadFile, File, Form, HTTPExcept
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from db.database import get_db
-from db.schemas import ListPage, Product as ProductSchema, SupplierReturnReviewUpdate
-from controllers.admin_controller import require_roles
+from data.db import get_db
+from data.schemas import ListPage, Product as ProductSchema, SupplierReturnReviewUpdate
+from data.controllers_admin_controller import require_roles
 from controllers import commission_controller
 import controllers.supplier_controller as ctrl
 import controllers.returns_controller as returns_ctrl
 import controllers.disputes_controller as disputes_ctrl
+from utils.pagination import cursor_paginate_desc, build_cursor_pagination_payload
 
 router = APIRouter()
 
@@ -601,7 +602,7 @@ async def analyze_async(
 
     def _run_analysis() -> dict:
         import asyncio
-        from services.bg_removal_service import remove_background
+        from data.services_bg_removal_service import remove_background
         from services.ai_variant_config import analyze_product_image
         from services.storage import storage as _store
 
@@ -691,7 +692,7 @@ async def remove_background(
     _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
 
     def _run_remove_background() -> dict:
-        from services.bg_removal_service import (
+        from data.services_bg_removal_service import (
             remove_background_model,
             AVAILABLE_MODELS,
             VALID_STRATEGIES,
@@ -702,7 +703,7 @@ async def remove_background(
             processed = remove_background_model(raw, model, fast_mode=fast_mode)
         else:
             preset_effective = preset if preset in VALID_STRATEGIES else "general"
-            from services.bg_removal_service import remove_background
+            from data.services_bg_removal_service import remove_background
             processed = remove_background(raw, strategy=preset_effective, fast_mode=fast_mode)
 
         out_key = f"supplier_uploads/{uuid.uuid4().hex}_nobg.png"

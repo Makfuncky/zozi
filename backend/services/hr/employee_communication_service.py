@@ -27,8 +27,8 @@ import json
 from sqlalchemy.orm import Session
 from sqlalchemy import text, or_, and_
 
-from models import User
-from models.employee_models import Employee
+from data.models import User
+from data.models_employee_models import Employee
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -385,9 +385,9 @@ def send_internal_email(
     """Send an internal email. If recipients are internal employees,
     deliver in-database. If external, route to SMTP.
     """
-    from models import User
+    from data.models import User
     from models.communication import InternalEmail, EmailFolder
-    from models.employee_models import Employee
+    from data.models_employee_models import Employee
 
     now = _utcnow()
     recipients_json = [{"user_id": uid} for uid in recipient_ids]

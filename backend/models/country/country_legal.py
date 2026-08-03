@@ -28,6 +28,8 @@ class CountryLegal(Base):
         Index("ix_country_legal_code", "country_code", unique=True), {"schema": "country"}
     )
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(String(36), nullable=True, unique=True, index=True)
+    version = Column(Integer, nullable=False, default=1, server_default="1")
     country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=False, unique=True)
 
     is_active = Column(Boolean, default=True)

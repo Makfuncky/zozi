@@ -19,7 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import controllers.search_controller as search_ctrl
-from models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
+from data.models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
 from services.write_helpers import (
     add_and_flush,
     commit_only,

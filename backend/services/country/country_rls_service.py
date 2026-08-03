@@ -6,8 +6,8 @@ from typing import Dict, Any, Optional
 from decimal import Decimal
 from functools import lru_cache
 
-from db.database import get_db
-from models import CountryConfig
+from data.db import get_db
+from data.models import CountryConfig
 
 
 class CountryRLSService:

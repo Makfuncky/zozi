@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models.permissions import (
+from models.security.permissions import (
     Permission,
     PermissionAuditLog,
     PermissionCategory,
@@ -74,7 +74,7 @@ def update_category(category_id: int, data: dict, actor_id: int, db: Session) ->
             setattr(category, key, data[key])
     db.commit()
     db.refresh(category)
-    _log_audit(actor_id, "category_updated", target_role=None, permission_id=None, country_code=None, details=f"Updated category '{category.name}'", db=db)
+    _log_audit(actor_id, "category_updated", target_role=None, permission_id=None, country_code=None, details=f"Category modified: '{category.name}'", db=db)
     return category
 
 
@@ -82,7 +82,7 @@ def delete_category(category_id: int, actor_id: int, db: Session) -> bool:
     category = db.query(PermissionCategory).filter(PermissionCategory.id == category_id).first()
     if not category:
         return False
-    _log_audit(actor_id, "category_deleted", target_role=None, permission_id=None, country_code=None, details=f"Deleted category '{category.name}'", db=db)
+    _log_audit(actor_id, "category_deleted", target_role=None, permission_id=None, country_code=None, details=f"Category removed: '{category.name}'", db=db)
     db.delete(category)
     db.commit()
     return True
@@ -130,7 +130,7 @@ def delete_permission(permission_id: int, actor_id: int, db: Session) -> bool:
     permission = db.query(Permission).filter(Permission.id == permission_id).first()
     if not permission:
         return False
-    _log_audit(actor_id, "permission_deleted", target_role=None, permission_id=permission_id, country_code=None, details=f"Deleted permission '{permission.name}'", db=db)
+    _log_audit(actor_id, "permission_deleted", target_role=None, permission_id=permission_id, country_code=None, details=f"Permission '{permission.name}' removed", db=db)
     permission.is_active = False
     db.commit()
     return True

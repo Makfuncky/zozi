@@ -1,5 +1,5 @@
 """
-Payout Batch Service â€” Smart automated payout generation.
+Payout Batch Service — Smart automated payout generation.
 
 Handles:
   - #14: Smart Payout Batch Generation (nightly cron gathers eligible settlements)
@@ -16,7 +16,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from models import (
+from data.models import (
     PayoutBatch,
     PayoutBatchItem,
     SupplierSettlement,
@@ -26,8 +26,8 @@ from models import (
     FinanceAutomationLog,
     FinanceAuditLog,
 )
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
+from data.schemas import JournalEntryCreate, JournalLineInput
+from services import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ MIN_PAYOUT_AMOUNT = Decimal("10.00")  # Minimum payout threshold
 BATCH_LIMIT = 200             # Max items per batch
 
 
-# â”€â”€ #14: Smart Payout Batch Generation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── #14: Smart Payout Batch Generation ─────────────────────────────────────
 
 
 def generate_supplier_payout_batches(
@@ -102,7 +102,7 @@ def generate_supplier_payout_batches(
         
         # Send approval email to supplier
         try:
-            from services.communication.transactional_email_service import enqueue_supplier_approval_email
+            from services.transactional_email_service import enqueue_supplier_approval_email
             enqueue_supplier_approval_email(
                 supplier_id, batch.id, batch.batch_number, float(total_amount)
             )
@@ -221,7 +221,7 @@ def _create_payout_batch(
     return batch
 
 
-# â”€â”€ #15: Supplier Self-Approval â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── #15: Supplier Self-Approval ────────────────────────────────────────────
 
 
 def get_pending_batches_for_supplier(
@@ -300,7 +300,7 @@ def supplier_approve_batch(
     }
 
 
-# â”€â”€ Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Helper ─────────────────────────────────────────────────────────────────
 
 
 def _log_automation(db: Session, kind: str, processed: int, changed: int,

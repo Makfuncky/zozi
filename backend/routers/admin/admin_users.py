@@ -1,14 +1,14 @@
 """Admin users router."""
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from models import User
-from db.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
+from data.db import get_db
+from data.models import User
+from data.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.pagination import paginated_response
-from services.admin.admin_operations import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_user_role, toggle_user_active, force_reset_password_admin, delete_user_admin
+from services.core.admin_operations_service import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_user_role, toggle_user_active, force_reset_password_admin, delete_user_admin
 
 from services.write_helpers import commit_only, refresh_only
 router = APIRouter()

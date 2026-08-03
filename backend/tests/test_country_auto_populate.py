@@ -17,7 +17,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from services.country_auto_populate import (
+from data.services_country_auto_populate import (
     _first_currency,
     _normalize_rest_country,
     _phone_code,
@@ -336,7 +336,7 @@ class TestCountryAutoPopulateIntegration:
 
     @pytest.mark.asyncio
     async def test_auto_populate_empty_code(self):
-        from services.country_auto_populate import auto_populate_country
+        from data.services_country_auto_populate import auto_populate_country
         result = await auto_populate_country("")
         assert result.get("error") == "Empty search term"
         assert result.get("degraded") is True
@@ -394,7 +394,7 @@ class TestCountryAutoPopulateIntegration:
              patch("services.country_auto_populate.fetch_vat_rate", AsyncMock(return_value=mock_vat)), \
              patch("services.country_auto_populate.api_breaker.call", mock_breaker_call):
 
-            from services.country_auto_populate import auto_populate_country
+            from data.services_country_auto_populate import auto_populate_country
             result = await auto_populate_country("SA")
 
             assert result is not None
@@ -433,7 +433,7 @@ class TestCountryAutoPopulateIntegration:
              patch("services.country_auto_populate.fetch_vat_rate", AsyncMock(return_value=None)), \
              patch("services.country_auto_populate.api_breaker.call", mock_breaker_call):
 
-            from services.country_auto_populate import auto_populate_country
+            from data.services_country_auto_populate import auto_populate_country
             result = await auto_populate_country("XX")
             assert "error" in result or result.get("degraded") is True
 
@@ -474,7 +474,7 @@ class TestCountryAutoPopulateIntegration:
              patch("services.country_auto_populate.fetch_vat_rate", AsyncMock(return_value=0.05)), \
              patch("services.country_auto_populate.api_breaker.call", mock_breaker_call):
 
-            from services.country_auto_populate import auto_populate_country
+            from data.services_country_auto_populate import auto_populate_country
             result = await auto_populate_country("AE")
 
             required_fields = [
@@ -518,7 +518,7 @@ class TestCountryAutoPopulateIntegration:
              patch("services.country_auto_populate.fetch_vat_rate", AsyncMock(return_value=None)), \
              patch("services.country_auto_populate.api_breaker.call", mock_breaker_call):
 
-            from services.country_auto_populate import auto_populate_country
+            from data.services_country_auto_populate import auto_populate_country
             result = await auto_populate_country("US")
             assert result["confidence_score"] >= 0.5
 

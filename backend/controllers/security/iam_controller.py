@@ -12,8 +12,8 @@ from math import asin, cos, radians, sin, sqrt
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
-from models import User
+from data.models_employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
+from data.models import User
 from utils.datetime_utils import utcnow as _utcnow
 from services.write_helpers import (
     add_and_flush,

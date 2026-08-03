@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from utils.audit_log import AuditAction, audit_log
-from models import (
+from data.models import (
     LogisticsPartner,
     Notification,
     Order,
@@ -688,7 +688,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
     # Auto-create invoice for this shipment if one doesn't exist yet (non-blocking)
     try:
-        from models import Invoice
+        from data.models import Invoice
         from controllers.invoice_controller import create_invoice_from_order
         has_invoice = db.query(Invoice).filter(
             Invoice.order_id == order_id,

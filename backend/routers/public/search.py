@@ -7,14 +7,14 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Response, UploadFile
 from sqlalchemy.orm import Session
 
-from dependencies.auth import get_current_user, get_optional_user
+from data.dependencies_auth import get_current_user, get_optional_user
 from controllers.search_controller import get_recommendations, smart_search
-from db.database import get_db
+from data.db import get_db
 from services.advanced_filter_service import AdvancedFilterService
 from services.advanced_search_engine import AdvancedSearchEngine
 from services.ai_search_service import AISearchService
-from providers.image import process_image_search
-from providers.voice_to_text import transcribe_audio
+from data.providers_image import process_image_search
+from data.providers_voice_to_text import transcribe_audio
 
 logger = logging.getLogger(__name__)
 

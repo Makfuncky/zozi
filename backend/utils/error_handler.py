@@ -146,11 +146,14 @@ class ErrorHandler:
                 if country_code:
                     scope.set_tag("country_code", country_code)
                 scope.set_tag("error_category", category)
-                scope.set_context("request", {
-                    "path": str(request.url.path) if request else "",
-                    "method": request.method if request else "",
-                    "client_ip": get_request_ip(request) if request else "",
-                })
+                scope.set_context(
+                    "request",
+                    {
+                        "path": str(request.url.path) if request else "",
+                        "method": request.method if request else "",
+                        "client_ip": get_request_ip(request) if request else "",
+                    },
+                )
                 sentry_sdk.capture_exception(exc, **kwargs)
 
     def capture_message(self, message: str, level: str = "info", **kwargs):

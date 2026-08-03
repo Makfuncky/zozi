@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from models import ProductVerification, Product
+from data.models import ProductVerification, Product
 from services.core.write_helpers import add_and_flush, commit_and_refresh, commit_only
 
 

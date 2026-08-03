@@ -1,7 +1,8 @@
 import re
+import os
 
 # Fix countries.py relationships
-fpath = r'D:\Projects/10- E-COMMERCE WEBSITE/zozi/backend/models/countries.py'.replace('/', '\\')
+fpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'models', 'countries.py')
 with open(fpath, 'r') as f:
     content = f.read()
 

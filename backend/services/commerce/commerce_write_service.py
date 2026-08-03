@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import Address, Review, Wishlist
+from data.models import Address, Review, Wishlist
 
 
 def create_wishlist_item(db: Session, user_id: int, product_id: int) -> Wishlist:

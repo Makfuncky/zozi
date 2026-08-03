@@ -1,5 +1,2 @@
-"""Backward-compatible re-exports from the governance domain package.
-
-All business logic lives in controllers.governance.package.
-"""
-from routers.governance import *  # noqa: F401, F403
+"""Flat shim: re-export compliance router from routers.hr.governance."""
+from data.routers_hr_governance import router

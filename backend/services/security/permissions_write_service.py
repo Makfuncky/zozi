@@ -1,7 +1,7 @@
 """Permissions write service — DB write operations for permission entities."""
 from sqlalchemy.orm import Session
 
-from models import RolePermissionSetting
+from data.models import RolePermissionSetting
 
 
 def upsert_role_permission_setting(

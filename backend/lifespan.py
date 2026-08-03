@@ -34,19 +34,19 @@ def _ensure_tables_exist() -> bool:
     Returns ``False`` if tables already existed or creation failed.
     """
     try:
-        import models  # noqa: F401 — register ORM tables in Base.metadata
+        import data.models  # noqa: F401 — register ORM tables in Base.metadata
     except Exception as exc:
         logger.warning("Could not import ORM models: %s", exc)
         return False
     try:
         from sqlalchemy import inspect
 
-        from db.database import engine
+        from data.db import engine
         existing = set(inspect(engine).get_table_names()) - {"alembic_version"}
         if existing:
             logger.info("DB tables already exist (%d found), skipping schema creation", len(existing))
             return False
-        from db.database import create_tables
+        from data.db import create_tables
         create_tables()
         logger.info("DB tables freshly created")
         return True
@@ -84,8 +84,8 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
 def _startup_load_role_permissions() -> None:
     try:
-        from controllers.admin_controller import load_role_permission_settings
-        from db.database import SessionLocal
+        from data.controllers_admin_controller import load_role_permission_settings
+        from data.db import SessionLocal
 
         db = SessionLocal()
         try:
@@ -98,12 +98,12 @@ def _startup_load_role_permissions() -> None:
 
 def _startup_register_event_listeners() -> None:
     try:
-        from services.orders import _event_publisher
-        from events import PaymentConfirmedEvent
-        from services.fulfillment_service import FulfillmentService
+        from data.services_orders import _event_publisher
+        from data.events import PaymentConfirmedEvent
+        from data.services_fulfillment_service import FulfillmentService
 
         fulfillment = FulfillmentService()
-        from db.database import SessionLocal
+        from data.db import SessionLocal
 
         def _handle_fulfillment(event: PaymentConfirmedEvent) -> None:
             db = SessionLocal()
@@ -122,7 +122,7 @@ def _startup_register_event_listeners() -> None:
 
 def _startup_seed_treasury() -> None:
     try:
-        from db.database import SessionLocal
+        from data.db import SessionLocal
         from db.treasury_seeder import seed_treasury_system
 
         db = SessionLocal()
@@ -145,7 +145,7 @@ def _seed_demo_data() -> None:
         logger.debug("Skipping demo data seed — SEED_DATA_ON_STARTUP is disabled")
         return
     try:
-        from db.database import SessionLocal
+        from data.db import SessionLocal
         from db.seed import seed_data
 
         seed_data(SessionLocal)
@@ -168,7 +168,7 @@ def _ensure_default_accounts() -> None:
         return
 
     try:
-        from db.database import SessionLocal
+        from data.db import SessionLocal
         from db.seed import _ensure_demo_user
 
         db = SessionLocal()
@@ -202,14 +202,14 @@ def _startup_background_jobs() -> list:
         return stoppers
 
     try:
-        from services.command_center_background import start_background_jobs, stop_background_jobs
+        from data.services_command_center_background import start_background_jobs, stop_background_jobs
         start_background_jobs()
         stoppers.append(("command_center_background", stop_background_jobs))
     except Exception:
         logger.exception("Failed to start background jobs")
 
     try:
-        from services.auto_payout_scheduler import (
+        from data.services_auto_payout_scheduler import (
             start_auto_payout_background_job,
             stop_auto_payout_background_job,
         )

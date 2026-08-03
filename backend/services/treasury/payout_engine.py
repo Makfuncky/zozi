@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, PayoutRule, PayoutRuleCategory, PayoutRuleProduct, CountryCommissionRate
+from data.models import CountryConfig, PayoutRule, PayoutRuleCategory, PayoutRuleProduct, CountryCommissionRate
 
 logger = logging.getLogger(__name__)
 

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from models.core import VideoRoom, VideoRoomParticipant, VideoRoomRecording
+from data.models_core import VideoRoom, VideoRoomParticipant, VideoRoomRecording
 from utils.config import settings
 
 logger = logging.getLogger("zozi.video_conferencing")

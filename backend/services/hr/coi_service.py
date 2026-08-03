@@ -7,7 +7,7 @@ from typing import List, Optional, Set
 
 from sqlalchemy.orm import Session
 
-from models import User, AuditLog, Employee
+from data.models import User, AuditLog, Employee
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

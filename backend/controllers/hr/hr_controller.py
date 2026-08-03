@@ -7,8 +7,8 @@ from collections import defaultdict
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee, EmployeeRelation, EmployeeAddress, EmployeeDependent, COIReport
-from models import User
+from data.models_employee_models import Employee, EmployeeRelation, EmployeeAddress, EmployeeDependent, COIReport
+from data.models import User
 from services.write_helpers import (
     add_and_flush,
     commit_and_refresh,
@@ -18,7 +18,7 @@ from services.write_helpers import (
 
 def register_address(employee_id: int, address_data: dict, db: Session) -> dict:
     """Register a multi-dimensional address for an employee."""
-    from models.employee_models import EmployeeAddress
+    from data.models_employee_models import EmployeeAddress
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -31,7 +31,7 @@ def register_address(employee_id: int, address_data: dict, db: Session) -> dict:
 
 def register_dependent(employee_id: int, dependent_data: dict, db: Session) -> dict:
     """Register a dependent for an employee."""
-    from models.employee_models import EmployeeDependent
+    from data.models_employee_models import EmployeeDependent
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -122,7 +122,7 @@ def get_employee_graph(employee_id: int, db: Session) -> dict:
 
 def create_disciplinary_case(employee_id: int, case_data: dict, db: Session) -> dict:
     """Create a disciplinary case for an employee."""
-    from models.employee_models import DisciplinaryCase, Employee
+    from data.models_employee_models import DisciplinaryCase, Employee
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -140,14 +140,14 @@ def create_disciplinary_case(employee_id: int, case_data: dict, db: Session) -> 
 
 def get_disciplinary_cases(db: Session) -> list[dict]:
     """Get all disciplinary cases."""
-    from models.employee_models import DisciplinaryCase
+    from data.models_employee_models import DisciplinaryCase
     cases = db.query(DisciplinaryCase).all()
     return [{"id": c.id, "employee_id": c.employee_id, "employee_name": c.employee_name, "stage": c.stage, "description": c.description, "issued_at": str(c.issued_at), "status": c.status} for c in cases]
 
 
 def create_offboarding_case(employee_id: int, case_data: dict, db: Session) -> dict:
     """Initiate offboarding for an employee."""
-    from models.employee_models import OffboardingCase, Employee
+    from data.models_employee_models import OffboardingCase, Employee
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -165,7 +165,7 @@ def create_offboarding_case(employee_id: int, case_data: dict, db: Session) -> d
 
 def get_offboarding_cases(db: Session) -> list[dict]:
     """Get all offboarding cases."""
-    from models.employee_models import OffboardingCase
+    from data.models_employee_models import OffboardingCase
     cases = db.query(OffboardingCase).all()
     return [{"id": c.id, "employee_id": c.employee_id, "employee_name": c.employee_name, "reason": c.reason, "status": c.status, "initiated_at": str(c.initiated_at), "completed_at": str(c.completed_at) if c.completed_at else None} for c in cases]
 

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import Category
+from data.models import Category
 
 
 def _chain_for(category: Category, by_id: dict[int, Category]) -> list[str]:

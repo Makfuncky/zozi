@@ -4,14 +4,14 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = [
     "LogisticsPartner", "LogisticsPartnerProfile", "LogisticsPartnerServiceArea", "LogisticsPricingProfile",
     "LogisticsVehicleRule", "Shipment", "ShipmentEvent", "LogisticsCategoryPricingRule"
 ]
 
-
-class LogisticsPartner(Base):
+class LogisticsPartner(Base, TenantMixin):
     __tablename__ = "logistics_partners"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -29,8 +29,7 @@ class LogisticsPartner(Base):
     verification_note = Column(String, nullable=True)
     verified_by = Column(Integer, nullable=True)
     verified_at = Column(DateTime, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     business_type = Column(String, nullable=True)
     region = Column(String, nullable=True)
     city = Column(String, nullable=True)
@@ -48,16 +47,16 @@ class LogisticsPartner(Base):
     is_terms_accepted = Column(Boolean, default=False)
     terms_version = Column(String, nullable=True)
     terms_accepted_at = Column(DateTime, nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
     profile = relationship("LogisticsPartnerProfile", back_populates="partner", cascade="all, delete-orphan")
     service_areas = relationship("LogisticsPartnerServiceArea", back_populates="partner")
     pricing_profiles = relationship("LogisticsPricingProfile", back_populates="partner")
     vehicle_rules = relationship("LogisticsVehicleRule", back_populates="partner")
     category_pricing_rules = relationship("LogisticsCategoryPricingRule", back_populates="partner")
     payouts = relationship("LogisticsPartnerPayout", back_populates="partner")
-    country = relationship("CountryConfig", foreign_keys=[country_code])
+    country = relationship("CountryConfig", foreign_keys="LogisticsPartner.country_code")
 
-
-class LogisticsPartnerProfile(Base):
+class LogisticsPartnerProfile(Base, TenantMixin):
     __tablename__ = "logistics_partner_profiles"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -71,19 +70,15 @@ class LogisticsPartnerProfile(Base):
     insurance_expiry = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    country = relationship("CountryConfig", foreign_keys=[country_code])
-    
+
     partner = relationship("LogisticsPartner", back_populates="profile")
 
-
-class LogisticsPartnerServiceArea(Base):
+class LogisticsPartnerServiceArea(Base, TenantMixin):
     __tablename__ = "logistics_partner_service_areas"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=False)
-    country_code = Column(String(3), nullable=False)
-    country_name = Column(String, nullable=False)
+
     origin_city = Column(String, nullable=False)
     city_name = Column(String, nullable=False)
     zone_label = Column(String, nullable=True)
@@ -96,8 +91,7 @@ class LogisticsPartnerServiceArea(Base):
     currency = Column(String(3), default="USD")
     delivery_days_min = Column(Integer, nullable=True)
     delivery_days_max = Column(Integer, nullable=True)
-    is_active = Column(Boolean, default=True)
-    approval_status = Column(String, default="pending")
+
     review_note = Column(String, nullable=True)
     reviewed_by = Column(Integer, nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
@@ -108,8 +102,7 @@ class LogisticsPartnerServiceArea(Base):
     vehicle_rules = relationship("LogisticsVehicleRule", back_populates="service_area", cascade="all, delete-orphan")
     category_pricing_rules = relationship("LogisticsCategoryPricingRule", back_populates="service_area", cascade="all, delete-orphan")
 
-
-class LogisticsPricingProfile(Base):
+class LogisticsPricingProfile(Base, TenantMixin):
     __tablename__ = "logistics_pricing_profiles"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -126,19 +119,17 @@ class LogisticsPricingProfile(Base):
     bulk_discount_threshold_kg = Column(Numeric(10, 2), nullable=True)
     bulk_discount_percent = Column(Numeric(5, 4), nullable=True)
     currency = Column(String(3), default="USD")
-    is_active = Column(Boolean, default=True)
-    approval_status = Column(String, default="pending")
+
     review_note = Column(String, nullable=True)
     reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+
     partner = relationship("LogisticsPartner", back_populates="pricing_profiles")
     service_area = relationship("LogisticsPartnerServiceArea", back_populates="pricing_profiles")
 
-
-class LogisticsVehicleRule(Base):
+class LogisticsVehicleRule(Base, TenantMixin):
     __tablename__ = "logistics_vehicle_rules"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -150,19 +141,17 @@ class LogisticsVehicleRule(Base):
     priority_rank = Column(Integer, default=0)
     route_scope = Column(String, nullable=True)
     max_volume_cm3 = Column(Numeric(12, 2), nullable=True)
-    is_active = Column(Boolean, default=True)
-    approval_status = Column(String, default="pending")
+
     review_note = Column(String, nullable=True)
     reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+
     partner = relationship("LogisticsPartner", back_populates="vehicle_rules")
     service_area = relationship("LogisticsPartnerServiceArea", back_populates="vehicle_rules")
 
-
-class LogisticsCategoryPricingRule(Base):
+class LogisticsCategoryPricingRule(Base, TenantMixin):
     __tablename__ = "logistics_category_pricing_rules"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -172,19 +161,17 @@ class LogisticsCategoryPricingRule(Base):
     flat_fee_override = Column(Numeric(10, 2), nullable=True)
     special_handling_fee = Column(Numeric(10, 2), nullable=True)
     currency = Column(String(3), default="USD")
-    is_active = Column(Boolean, default=True)
-    approval_status = Column(String, default="pending")
+
     review_note = Column(String, nullable=True)
     reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+
     partner = relationship("LogisticsPartner", back_populates="category_pricing_rules")
     service_area = relationship("LogisticsPartnerServiceArea", back_populates="category_pricing_rules")
 
-
-class Shipment(Base):
+class Shipment(Base, TenantMixin):
     __tablename__ = "shipments"
     __table_args__ = (
         Index("ix_shipments_order_id", "order_id"), {"schema": "logistics"})
@@ -218,16 +205,16 @@ class Shipment(Base):
     accepted_vehicle_selected_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
-    
+
     order = relationship("Order", back_populates="shipments")
     supplier = relationship("User", backref="shipments")
     assigned_partner = relationship("LogisticsPartner", backref="shipments")
     carrier = relationship("ShippingCarrier", backref="shipments")
 
-
-class ShipmentEvent(Base):
+class ShipmentEvent(Base, TenantMixin):
     __tablename__ = "shipment_events"
+    __partition_by__ = "range"
+    __partition_key__ = "created_at"
     __table_args__ = (
         Index("ix_shipment_events_shipment_id", "shipment_id"),
         Index("ix_shipment_events_order_id", "order_id"), {"schema": "logistics"})
@@ -246,4 +233,4 @@ class ShipmentEvent(Base):
     scan_code = Column(String, nullable=True)
     notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+

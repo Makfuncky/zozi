@@ -2,9 +2,9 @@ import os
 os.environ['APP_ENV'] = 'test'
 os.environ['SECRET_KEY'] = 'test-secret-key-for-pytest-only'
 
-from db.base import Base
-import models
-from models import User
+from data.base import Base
+import data.models
+from data.models import User
 
 for col in User.__table__.columns:
     for fk in col.foreign_keys:

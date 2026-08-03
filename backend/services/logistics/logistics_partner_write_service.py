@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
 
-from models import (
+from data.models import (
     LogisticsPartner,
     LogisticsPartnerBankAccount,
     LogisticsPartnerDocument,

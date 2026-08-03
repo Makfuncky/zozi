@@ -2,44 +2,52 @@
 
 Verifies that:
 - controllers.supplier subpackage re-exports all expected functions
-- controllers.admin_controller backward-compat wrapper works
-- controllers.admin subpackage is importable
+- controllers.domain folders contain admin-prefixed controllers
+- controllers.admin_controller backward-compat wrapper exists
 """
 from __future__ import annotations
 import pytest
 
 
 class TestAdminControllerBackwardCompat:
-    """Verifies controllers.admin_controller file exists as a re-export wrapper.
+    """Verifies controllers.admin_controller backward-compat wrapper exists.
 
-    NOTE: The admin subpackage (controllers/admin/*.py) has pre-existing import
-    bugs (missing symbols in utils.auth, utils.constants, etc.) that are outside
-    our scope.  We verify the wrapper file structure instead of deep-importing.
+    NOTE: The admin subpackage (controllers/admin/*.py) was reorganized into
+    domain folders (controllers/{domain}/admin_*_controller.py) to comply with
+    the architecture governance contract.  The admin_controller.py wrapper
+    is preserved as a backward-compat shim.
     """
 
     def test_admin_controller_file_exists(self):
         import os
-        assert os.path.isfile(os.path.join("controllers", "admin_controller.py"))
+        assert os.path.isfile(os.path.join(os.path.dirname(os.path.dirname(__file__)), "controllers", "admin_controller.py"))
 
-    def test_admin_controller_has_reexport(self):
-        with open("controllers/admin_controller.py") as f:
-            content = f.read()
-        assert "from controllers.admin import *" in content
-
-    def test_admin_init_file_exists(self):
+    def test_admin_controller_has_deprecation_notice(self):
         import os
-        assert os.path.isfile(os.path.join("controllers", "admin", "__init__.py"))
-
-    def test_admin_init_imports_modules(self):
-        with open("controllers/admin/__init__.py") as f:
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), "controllers", "admin_controller.py")) as f:
             content = f.read()
-        assert ".users" in content or ".orders" in content or ".products" in content
+        assert "deprecated" in content.lower() or "domain folders" in content.lower()
 
-    def test_admin_controller_module_file_structure(self):
-        with open("controllers/admin_controller.py") as f:
-            content = f.read()
-        assert "__all__" not in content  # uses * re-export instead
-        assert "from controllers.admin import" in content
+    def test_admin_domain_controllers_exist(self):
+        import os
+        base = os.path.dirname(os.path.dirname(__file__))
+        expected = [
+            "analytics/admin_analytics_controller.py",
+            "security/admin_auth_controller.py",
+            "core/admin_bulk_ops_controller.py",
+            "commerce/admin_coupons_controller.py",
+            "core/admin_database_controller.py",
+            "orders/admin_orders_controller.py",
+            "treasury/admin_payouts_controller.py",
+            "security/admin_permissions_controller.py",
+            "catalog/admin_products_controller.py",
+            "supplier/admin_suppliers_controller.py",
+            "communication/admin_tickets_controller.py",
+            "core/admin_users_controller.py",
+        ]
+        for relpath in expected:
+            path = os.path.join(base, "controllers", relpath)
+            assert os.path.isfile(path), f"Missing admin controller: {relpath}"
 
 
 class TestSupplierSubpackage:
@@ -151,45 +159,38 @@ class TestSupplierSubpackage:
 
 
 class TestAdminSubpackage:
-    """Verifies controllers.admin subpackage has the expected file structure.
+    """Verifies admin controllers were reorganized into domain folders.
 
-    NOTE: The admin subpackage modules have pre-existing import bugs (missing
-    symbols in utils.auth, utils.constants, etc.) that are outside our scope.
-    We verify the file structure instead of deep-importing.
+    NOTE: The admin subpackage (controllers/admin/*.py) was reorganized into
+    domain folders (controllers/{domain}/admin_*_controller.py) to comply with
+    the architecture governance contract (forbidden surface folders in domain layers).
     """
 
-    def test_admin_init_file_exists(self):
+    def test_admin_subpackage_removed(self):
         import os
-        assert os.path.isfile(os.path.join("controllers", "admin", "__init__.py"))
+        assert not os.path.isdir(os.path.join("controllers", "admin")), \
+            "controllers/admin/ should be removed after reorganization"
 
-    def test_admin_init_lists_modules(self):
-        with open("controllers/admin/__init__.py") as f:
-            content = f.read()
-        assert ".users" in content
-        assert ".orders" in content
-        assert ".products" in content
-
-    def test_admin_init_all_modules_referenced(self):
-        with open("controllers/admin/__init__.py") as f:
-            content = f.read()
-        expected_modules = [
-            ".auth", ".users", ".orders", ".products",
-            ".suppliers", ".payouts", ".coupons", ".tickets",
-            ".database", ".permissions", ".analytics", ".bulk_ops",
-        ]
-        for mod in expected_modules:
-            assert mod in content, f"Missing {mod} in admin __init__.py"
-
-    def test_admin_domain_module_files_exist(self):
+    def test_admin_controllers_in_domain_folders(self):
         import os
+        base = os.path.dirname(os.path.dirname(__file__))
         expected = [
-            "auth.py", "users.py", "orders.py", "products.py",
-            "suppliers.py", "payouts.py", "coupons.py", "tickets.py",
-            "database.py", "permissions.py", "analytics.py", "bulk_ops.py",
+            "analytics/admin_analytics_controller.py",
+            "security/admin_auth_controller.py",
+            "core/admin_bulk_ops_controller.py",
+            "commerce/admin_coupons_controller.py",
+            "core/admin_database_controller.py",
+            "orders/admin_orders_controller.py",
+            "treasury/admin_payouts_controller.py",
+            "security/admin_permissions_controller.py",
+            "catalog/admin_products_controller.py",
+            "supplier/admin_suppliers_controller.py",
+            "communication/admin_tickets_controller.py",
+            "core/admin_users_controller.py",
         ]
-        for fname in expected:
-            path = os.path.join("controllers", "admin", fname)
-            assert os.path.isfile(path), f"Missing admin module: {fname}"
+        for relpath in expected:
+            path = os.path.join(base, "controllers", relpath)
+            assert os.path.isfile(path), f"Missing admin controller: {relpath}"
 
 
 class TestUtilsPackage:

@@ -29,8 +29,8 @@ def check_schema_drift() -> bool:
     
     script = ScriptDirectory.from_config(cfg)
     
-    from db.base import Base
-    from db.database import engine
+    from data.base import Base
+    from data.db import engine
     from sqlalchemy import inspect
     
     inspector = inspect(engine)

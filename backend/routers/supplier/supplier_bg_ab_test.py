@@ -15,18 +15,34 @@ import time
 from typing import Dict, Optional
 
 import base64
-import numpy as np
-from PIL import Image
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from controllers.admin_controller import require_roles
-from services.bg_removal_service import (
+from data.controllers_admin_controller import require_roles
+from data.services_bg_removal_service import (
     VALID_STRATEGIES,
     remove_background,
     _HAS_CV2,
 )
-from providers.bg_remover import _bytes_to_image
+from data.providers_bg_remover import _bytes_to_image
+
+
+class _LazyNumpy:
+    """Lazy proxy for numpy to avoid top-level import."""
+    def __getattr__(self, name):
+        import numpy as np
+        return getattr(np, name)
+
+
+class _LazyPIL:
+    """Lazy proxy for PIL.Image to avoid top-level import."""
+    def __getattr__(self, name):
+        from PIL import Image
+        return getattr(Image, name)
+
+
+np = _LazyNumpy()
+Image = _LazyPIL()
 
 
 
@@ -144,8 +160,8 @@ async def ab_test_bg_strategies(
     _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
 
     def _run_ab_test() -> dict:
-        from services.bg_removal_service import remove_background, VALID_STRATEGIES
-        from providers.bg_remover import _bytes_to_image, _compute_quality_score
+        from data.services_bg_removal_service import remove_background, VALID_STRATEGIES
+        from data.providers_bg_remover import _bytes_to_image, _compute_quality_score
         from PIL import Image
         import base64, time, gc
 
@@ -278,7 +294,7 @@ async def get_bg_recommendations(
     metrics only change when a new comparison run is executed.
     """
     import time
-    from services.bg_removal_service import _get_category_recommendations
+    from data.services_bg_removal_service import _get_category_recommendations
 
     now = time.time()
     cache_key = "bg_category_recommendations"

@@ -7,4 +7,4 @@ All definitions are now in ``models/`` so that they share the unified
 """
 from __future__ import annotations
 
-from models.country_enhancements import *  # noqa: F401, F403
+from data.models_country_enhancements import *  # noqa: F401, F403

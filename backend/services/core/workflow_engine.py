@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy.orm import Session
 
-from models import SystemSetting
+from data.models import SystemSetting
 
 
 class WorkflowStatus(str, Enum):

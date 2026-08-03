@@ -12,7 +12,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from models import ParcelLocationTracker, Shipment, LogisticsPartner
+from data.models import ParcelLocationTracker, Shipment, LogisticsPartner
 from models.country_control import ShopWarehouseLocation
 
 logger = logging.getLogger(__name__)

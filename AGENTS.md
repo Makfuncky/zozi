@@ -32,3 +32,12 @@ ZOZI is an e-commerce marketplace platform with:
 - Rate limiting is configured per-path in `rate_limit_middleware.py`
 - All passwords are bcrypt-hashed (72-char truncation caveat)
 - File uploads are limited to 10MB by default
+
+## MANDATORY: Before creating or moving ANY file
+
+1. Read `.governance/scaffolding_contract.json`
+2. Read `.governance/AI_AGENT_PROTOCOL.md`
+3. If the file doesn't fit any defined pattern → put it in `backend/_triage/`
+4. NEVER create folders that aren't in the contract
+5. Run `python scripts/system_architecture_audit.py --ci` after changes
+6. If RED count increases → your changes are WRONG, revert them

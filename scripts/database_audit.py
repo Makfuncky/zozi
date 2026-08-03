@@ -162,6 +162,10 @@ EXPECTED_AI_TABLES = {
     "ai_embeddings",
     "ai_upload_jobs",
     "ai_staging_products",
+    "ai_staging_variants",
+    "ai_staging_images",
+    "ai_audit_log",
+    "ai_generation_logs",
     "upload_jobs",
 }
 

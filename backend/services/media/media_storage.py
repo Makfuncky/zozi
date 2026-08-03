@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from models import MediaAsset, MediaUploadSession
+from data.models import MediaAsset, MediaUploadSession
 from utils.config import settings
 
 

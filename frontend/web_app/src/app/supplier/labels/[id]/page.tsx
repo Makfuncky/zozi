@@ -375,38 +375,7 @@ export default function SupplierLabelPrintPage({ params }: PageProps) {
   if (printMode) {
     return (
       <>
-        <style jsx global>{`
-          @media print {
-            @page {
-              margin: 12mm;
-              size: auto;
-            }
-
-            html,
-            body {
-              background: #ffffff;
-            }
-
-            body.supplier-label-print [data-app-header],
-            body.supplier-label-print [data-app-footer],
-            body.supplier-label-print .theme-layout-shell,
-            body.supplier-label-print [data-app-body] > :not(.supplier-label-print-root) {
-              display: none !important;
-            }
-
-            body.supplier-label-print [data-app-body],
-            body.supplier-label-print [data-app-frame] {
-              display: block !important;
-              background: #ffffff !important;
-            }
-
-            body.supplier-label-print .supplier-label-print-root {
-              display: block !important;
-            }
-          }
-        `}</style>
-        <div className="supplier-label-print-root min-h-screen bg-white px-4 py-5 text-black print:min-h-0 print:px-0 print:py-0">
-          {sheet}
+        <div className="supplier-label-print-root min-h-screen bg-white px-4 py-5 text-black print:min-h-0 print:px-0 print:py-0">{sheet}
         </div>
       </>
     );

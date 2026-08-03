@@ -14,8 +14,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from controllers.admin_controller import require_roles
+from data.db import get_db
+from data.controllers_admin_controller import require_roles
 from services.upload_job_service import (
     create_job,
     get_supplier_jobs,

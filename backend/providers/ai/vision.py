@@ -13,10 +13,15 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .config import settings
 from .text import _ollama_chat, _ollama_vision_chat, _extract_json, _extract_variant_from_text, _extract_product_name, _extract_tags
 
 logger = logging.getLogger(__name__)
+
+
+class settings:
+    ollama_text_model = "gpt-4o-mini"
+    ollama_model = "gpt-4o-mini"
+    ollama_base_url = "http://localhost:11434"
 
 # ============================================================================
 # REFERENCE

@@ -1,7 +1,7 @@
 """Smoke test: get_all_users enrichment with last_login + verification."""
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-os.environ.setdefault("DATABASE_URL", "sqlite:///D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/zozi.db")
+os.environ.setdefault("DATABASE_URL", f"sqlite:///{os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend', 'zozi.db')}")
 os.environ.setdefault("SECRET_KEY", "smoke-test-key-not-for-prod")
 os.environ.setdefault("ALGORITHM", "HS256")
 

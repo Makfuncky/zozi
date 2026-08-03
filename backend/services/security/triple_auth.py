@@ -11,8 +11,8 @@ from typing import Optional, Dict, Any, Tuple
 
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee, GeoFenceLog, EmployeeBiometric
-from db.database import get_service_session
+from data.models_employee_models import Employee, GeoFenceLog, EmployeeBiometric
+from data.db import get_service_session
 
 logger = logging.getLogger("zozi.triple_auth")
 

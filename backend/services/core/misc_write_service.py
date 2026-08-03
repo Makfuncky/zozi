@@ -65,10 +65,14 @@ def reset_demo_data(db: Session) -> dict[str, int]:
         "audit_logs",
         "notifications",
     ]
+    _ALLOWED_TABLES = set(tables_to_clear)
     deleted_counts: dict[str, int] = {}
     for table in tables_to_clear:
+        if table not in _ALLOWED_TABLES:
+            continue
         try:
-            result = db.execute(text(f"DELETE FROM {table}"))
+            delete_stmt = text(f"DELETE FROM {table}")
+            result = db.execute(delete_stmt)
             deleted_counts[table] = result.rowcount or 0
         except Exception:
             deleted_counts[table] = -1

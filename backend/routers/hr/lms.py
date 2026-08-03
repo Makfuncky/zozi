@@ -4,11 +4,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from controllers.lms_controller import (
+from controllers.hr.lms_controller import (
     create_training_module, assign_training, verify_training_completion,
     check_permission_lock, get_training_progress
 )
-from db.database import get_db
+from data.db import get_db
 
 router = APIRouter()
 

@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from models import AuditLog, CampaignRecipient, ChatbotQueryEvent, RetentionJobRun, ShipmentEvent
+from data.models import AuditLog, CampaignRecipient, ChatbotQueryEvent, RetentionJobRun, ShipmentEvent
 from utils.datetime_utils import utcnow as _utcnow
 
 

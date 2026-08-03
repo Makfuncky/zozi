@@ -4,7 +4,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     Coupon,
     Order,
     OrderItem,

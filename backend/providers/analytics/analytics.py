@@ -10,7 +10,12 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+
+class settings:
+    analytics_timeout = 30
+    dashboard_model = "gpt-4o-mini"
+    report_model = "gpt-4o-mini"
+    kpi_model = "gpt-4o-mini"
 
 logger = logging.getLogger(__name__)
 

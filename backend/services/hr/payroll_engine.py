@@ -21,7 +21,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text, and_
 
-from models import Employee, AuditLog
+from data.models import Employee, AuditLog
 from utils.datetime_utils import utcnow as _utcnow
 from services.leave_accrual import LeaveAccrualEngine
 
@@ -302,7 +302,7 @@ class PayrollEngine:
         """Generate a payslip record and store it as an employee document."""
         try:
             # Store payslip data in employee_documents
-            from models.employee_models import EmployeeDocument
+            from data.models_employee_models import EmployeeDocument
 
             next_month = (month.replace(day=28) + timedelta(days=4)).replace(day=1)
             existing = (
@@ -534,7 +534,7 @@ def generate_payroll_batch(db: Session) -> dict:
 
 def get_payslip(db: Session, payslip_id: int) -> Optional[Dict[str, Any]]:
     """Get a specific payslip document."""
-    from models.employee_models import EmployeeDocument
+    from data.models_employee_models import EmployeeDocument
     doc = db.query(EmployeeDocument).filter(
         EmployeeDocument.id == payslip_id,
         EmployeeDocument.doc_type == "payslip",

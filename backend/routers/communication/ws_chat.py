@@ -11,9 +11,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from db.database import get_db, get_db_session
-from models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
-from models import User, Notification, SupportTicket, TicketReply
+from data.db import get_db, get_db_session
+from data.models_core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
+from data.models import User, Notification, SupportTicket, TicketReply
 from utils.config import settings
 
 # Canonical user connection manager lives in services (single source of truth)

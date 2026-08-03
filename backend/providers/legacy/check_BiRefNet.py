@@ -1,4 +1,7 @@
 from rembg import new_session
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Try to load BiRefNet model
 try:

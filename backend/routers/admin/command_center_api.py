@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     ExecutiveNews,
     FraudAlert,
     LogisticsPartner,
@@ -30,8 +30,9 @@ from models import (
     User,
     UserSession,
 )
+from data.services_database import get_db_sync
 from services.command_center_service import CommandCenterService
-from utils.dependencies import SessionLocal, get_current_user, get_db, require_admin
+from utils.dependencies import get_current_user, get_db, require_admin
 
 from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
 _ALLOWED_TABLES = {
@@ -65,9 +66,23 @@ def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool =
         return 0 if scalar else []
 
 
+def _validate_where_clause(where: str) -> str:
+    """Validate WHERE clause contains only safe SQL patterns."""
+    allowed_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ =<>!()',:/.%+-*")
+    if not all(c in allowed_chars for c in where):
+        raise ValueError(f"Unsafe characters in WHERE clause")
+    return where
+
 def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
     validated_table = _validate_table_name(table)
-    return safe_fetch(db, f"SELECT COUNT(*) FROM {validated_table} WHERE {where}", params, scalar=True)
+    validated_where = _validate_where_clause(where)
+    query = text(f"SELECT COUNT(*) FROM {validated_table} WHERE {validated_where}")
+    if params:
+        query = query.bindparams(**params)
+    try:
+        return db.execute(query).scalar() or 0
+    except Exception:
+        return 0
 
 
 def _get_user_country_codes(current_user: User | None) -> list[str]:
@@ -155,11 +170,16 @@ active_connections: List[WebSocket] = []
 
 
 @router.get("/admin/command-center/metrics/system", response_model=SystemMetricsResponse)
-def get_system_metrics(db: Session = Depends(get_db)) -> SystemMetricsResponse:
+def get_system_metrics(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> SystemMetricsResponse:
     try:
         health_events = (
             db.query(SystemHealthEvent)
             .filter(SystemHealthEvent.created_at >= datetime.now(timezone.utc).replace(hour=0))
+            .offset(skip).limit(limit)
             .all()
         )
         latencies = [float(e.metric_value) for e in health_events if e.metric_name == "api_latency"]
@@ -512,8 +532,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             try:
-                db = SessionLocal()
-                try:
+                with get_db_sync() as db:
                     now = datetime.now(timezone.utc)
                     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
                     one_hour_ago = now - timedelta(hours=1)
@@ -539,8 +558,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     }
 
                     await websocket.send_json({"type": "heartbeat", "data": heartbeat, "timestamp": now.isoformat()})
-                finally:
-                    db.close()
             except Exception:
                 pass
             await asyncio.sleep(15)

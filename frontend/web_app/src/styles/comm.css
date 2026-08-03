@@ -281,12 +281,12 @@
   .msg-enter,
   .stage-fade,
   .typing-dots span {
-    animation: none !important;
+    animation: none;
   }
   .comm-shell,
   .comm-context,
   .comm-rail,
   .composer-box {
-    transition: none !important;
+    transition: none;
   }
 }

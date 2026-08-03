@@ -14,9 +14,9 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from models import User, UserLoginHistory
-from db.schemas import RegisterRequest, TokenResponse, UserOut
+from data.db import get_db
+from data.models import User, UserLoginHistory
+from data.schemas import RegisterRequest, TokenResponse, UserOut
 from utils.auth import (
     blacklist_token,
     create_access_token,
@@ -29,7 +29,7 @@ from utils.audit_log import audit_log, AuditAction
 from utils.config import settings
 from utils.dependencies import get_current_user
 from utils.ip_utils import get_request_ip
-from middleware.csrf_middleware import generate_csrf_token
+from data.middleware_csrf_middleware import generate_csrf_token
 
 from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, rollback_only
 router = APIRouter()
@@ -172,7 +172,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
                 detail=f"Invalid role '{payload.role}'. Allowed roles: {', '.join(sorted(valid_roles))}",
             )
 
-        from db.schemas import _validate_password_complexity
+        from data.schemas import _validate_password_complexity
         try:
             _validate_password_complexity(payload.password)
         except ValueError as exc:

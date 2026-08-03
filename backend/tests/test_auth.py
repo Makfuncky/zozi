@@ -1,17 +1,21 @@
 """Tests for authentication endpoints."""
 from __future__ import annotations
 
+import os
 import time
 import uuid
 
 import pytest
 
 
+TEST_PASSWORD = os.environ.get("ZOZI_TEST_PASSWORD", "SecurePass1!")
+
+
 @pytest.fixture
 def auth_headers(client):
     """Return authorization headers for a registered customer."""
     email = f"authtest_{uuid.uuid4().hex[:8]}@zozi.test"
-    password = "SecurePass1!"
+    password = TEST_PASSWORD
     resp = client.post(
         "/api/v1/auth/register",
         json={
@@ -31,7 +35,7 @@ def auth_headers(client):
     return {"Authorization": f"Bearer {token}"}
 
 
-def _register_and_login(client, email=None, username=None, password="SecurePass1!", role="customer"):
+def _register_and_login(client, email=None, username=None, password=TEST_PASSWORD, role="customer"):
     email = email or f"user_{uuid.uuid4().hex[:8]}@zozi.test"
     username = username or f"user_{uuid.uuid4().hex[:8]}"
     reg = client.post(
@@ -209,7 +213,7 @@ def test_login_nonexistent_user(client):
 
 @pytest.mark.integration
 def test_login_inactive_user(client, db_session):
-    from models import User
+    from data.models import User
     from utils.auth import get_password_hash
     user = User(
         email=f"inactive_{uuid.uuid4().hex[:8]}@zozi.test",

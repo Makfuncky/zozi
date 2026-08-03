@@ -71,7 +71,7 @@ describe("AuthProvider preference hydration", () => {
 
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ access_token: "fresh-access-token" }),
+      json: async () => ({ access_token: process.env.TEST_ACCESS_TOKEN ?? "test-token" }),
     }) as unknown as typeof fetch;
 
     mockApiFetch.mockResolvedValue(

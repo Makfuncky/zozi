@@ -6,7 +6,7 @@ from typing import Any, Optional, cast
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from models import (
+from data.models import (
     CityDistanceMatrix,
     CountryConfig,
     LogisticsCategoryPricingRule,
@@ -629,53 +629,7 @@ def _build_service_area_pricing_breakdown(
     })
 
 
-_COUNTRY_CODE_ALIASES: dict[str, str] = {
-    "AE": "AE",
-    "UAE": "AE",
-    "UNITEDARABEMIRATES": "AE",
-    "EMIRATES": "AE",
-    "PK": "PK",
-    "PAKISTAN": "PK",
-    "OM": "OM",
-    "OMAN": "OM",
-    "SA": "SA",
-    "SAUDIARABIA": "SA",
-    "KSA": "SA",
-    "IN": "IN",
-    "INDIA": "IN",
-    "US": "US",
-    "USA": "US",
-    "UNITEDSTATES": "US",
-    "UNITEDSTATESOFAMERICA": "US",
-    "GB": "GB",
-    "UK": "GB",
-    "UNITEDKINGDOM": "GB",
-    "KW": "KW",
-    "KUWAIT": "KW",
-    "QA": "QA",
-    "QATAR": "QA",
-    "BH": "BH",
-    "BAHRAIN": "BH",
-}
-
-
-def normalize_country_code(value: str | None) -> str:
-    if not value:
-        return ""
-
-    letters = "".join(ch for ch in str(value).upper() if ch.isalpha())
-    if not letters:
-        return ""
-
-    aliased = _COUNTRY_CODE_ALIASES.get(letters)
-    if aliased:
-        return aliased
-
-    if len(letters) == 2:
-        return letters
-
-    # Preserve backward compatibility for unknown country names/codes.
-    return letters[:2]
+from utils.country_utils import normalize_country_code, _COUNTRY_CODE_ALIASES
 
 
 def calculate_per_km_delivery(

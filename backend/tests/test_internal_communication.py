@@ -7,8 +7,8 @@ from datetime import date
 import pytest
 
 from models.communication import InternalEmail, EmailFolder
-from models.employee_models import Employee
-from models import User
+from data.models_employee_models import Employee
+from data.models import User
 
 
 @pytest.fixture

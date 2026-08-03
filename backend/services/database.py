@@ -10,7 +10,8 @@ from __future__ import annotations
 from typing import Generator
 from sqlalchemy.orm import Session
 
-from db.database import get_db as _get_db_impl
+from data.db import get_db as _get_db_impl
+from data.db import get_service_session
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -21,7 +22,7 @@ def get_db() -> Generator[Session, None, None]:
     importing directly from db.database.
     
     Usage:
-        from services.database import get_db
+        from data.services_database import get_db
         from fastapi import Depends
         
         @app.get("/endpoint")

@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from models import Notification, SupportTicket, TicketMessage
+from data.models import Notification, SupportTicket, TicketMessage
 
 
 def create_ticket_reply(

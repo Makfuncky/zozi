@@ -12,7 +12,12 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+
+class settings:
+    ollama_text_model = "gpt-4o-mini"
+    ollama_model = "gpt-4o-mini"
+    ollama_base_url = "http://localhost:11434"
+    whisper_model = "whisper:small"
 
 logger = logging.getLogger(__name__)
 

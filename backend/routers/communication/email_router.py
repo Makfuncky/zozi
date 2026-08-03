@@ -1,3 +1,5 @@
+from fastapi import Query
+
 router = APIRouter()
 
 
@@ -117,6 +119,8 @@ class RenameFolderPayload(BaseModel):
 def list_folders(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
 ):
     """List all email folders for the current user, with email counts."""
     emp = db.query(Employee).filter(Employee.user_id == current_user.id).first()
@@ -127,6 +131,8 @@ def list_folders(
         db.query(EmailFolder)
         .filter(EmailFolder.employee_id == emp.id)
         .order_by(EmailFolder.sort_order, EmailFolder.name)
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 

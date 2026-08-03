@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from services.country_ai_research import (
+from data.services_country_ai_research import (
     CountryAIResearchService,
     AI_SCHEMA,
     QUAL_MODULES,

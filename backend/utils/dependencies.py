@@ -7,8 +7,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from services.database import get_db
-from models import User
+from data.services_database import get_db
+from data.models import User
 from utils.auth import decode_token
 
 logger = logging.getLogger(__name__)
@@ -90,3 +90,10 @@ def require_logistics(current_user: User = Depends(get_current_user)) -> User:
 
 def require_staff(current_user: User = Depends(get_current_user)) -> User:
     return _require_role(current_user, "admin", "super_admin", "employee", "staff")
+
+
+def require_roles(*roles: str):
+    """Factory that creates a role-checking dependency."""
+    def _checker(current_user: User = Depends(get_current_user)) -> User:
+        return _require_role(current_user, *roles)
+    return _checker

@@ -17,7 +17,10 @@ from middleware.request_id_middleware import RequestIDMiddleware
 from middleware.webhook_verification import WebhookVerificationMiddleware
 from middleware.webhook_ip_whitelist import WebhookIPWhitelistMiddleware
 from middleware.pci_dss_compliance import PCIDSSMiddleware
-from middleware.csrf_middleware import CSRFMiddleware
+from middleware.csrf_middleware import CSRFMiddleware  # noqa: E402  (same-layer import avoids data-shim self-cycle)
+import logging
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "setup_middleware",

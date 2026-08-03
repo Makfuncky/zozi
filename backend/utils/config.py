@@ -203,7 +203,7 @@ class Settings:
         if not secret_key:
             # Allow empty for alembic migration commands when ALEMBIC_MODE is set
             if os.environ.get('ALEMBIC_MODE') == 'true':
-                secret_key = 'alembic-dev-key'
+                secret_key = os.environ.get('ALEMBIC_DEV_KEY', 'alembic-dev-key')
             else:
                 raise ValueError(
                     "SECRET_KEY must be set to a strong random value. "

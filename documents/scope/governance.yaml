@@ -113,7 +113,6 @@ policy:
       first: documents
     infra:
       first:
-        - monitoring
         - nginx
         - infra
     backend:
@@ -135,6 +134,15 @@ policy:
       threshold_key: frontend_flat_threshold
     - path: frontend/shared/src
       threshold_key: frontend_flat_threshold
+
+  # --------------------------------------------------
+  # Circuit call-graph (CG2) exemptions
+  # Tests legitimately call upward (seed/factory helpers); exempt them.
+  # --------------------------------------------------
+  circuit_exempt_modules:
+    - tests.conftest
+  circuit_exempt_patterns:
+    - tests.
 
   # --------------------------------------------------
   # CODEOWNERS generation

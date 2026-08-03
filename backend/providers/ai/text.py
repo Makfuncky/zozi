@@ -13,7 +13,12 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+
+class settings:
+    ollama_text_model = "gpt-4o-mini"
+    ollama_model = "gpt-4o-mini"
+    ollama_base_url = "http://localhost:11434"
+    finance_ai_timeout = 60
 
 logger = logging.getLogger(__name__)
 

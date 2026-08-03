@@ -4,11 +4,11 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Foreign
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
+from ..mixins import TenantMixin
 
 __all__ = ["SupplierProfile", "SupplierDocument", "SupplierNotificationPreference"]
 
-
-class SupplierProfile(Base):
+class SupplierProfile(Base, TenantMixin):
     __tablename__ = "supplier_profiles"
     __table_args__ = (
         CheckConstraint("verification_status IN ('pending', 'documents_submitted', 'under_review', 'approved', 'rejected')", name="chk_supplier_verification_status_valid"),
@@ -18,8 +18,7 @@ class SupplierProfile(Base):
     business_name = Column(String, nullable=False, default="")
     slug = Column(String, unique=True, index=True)
     business_type = Column(String, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    phone_business = Column(String, nullable=True)
+
     website = Column(String, nullable=True)
     address = Column(Text, nullable=True)
     city = Column(String, nullable=True)
@@ -31,8 +30,7 @@ class SupplierProfile(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
     bio = Column(Text, nullable=True)
@@ -52,9 +50,10 @@ class SupplierProfile(Base):
     badge_level = Column(String, nullable=True)
     credibility_score = Column(Integer, nullable=True)
     badge_granted_at = Column(DateTime, nullable=True)
+    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
 
-    country = relationship("CountryConfig", foreign_keys=[country_code])
-
+    country = relationship("CountryConfig", foreign_keys="SupplierProfile.country_code")
+    documents = relationship("SupplierDocument", back_populates="supplier")
 
 class SupplierDocument(Base):
     __tablename__ = "supplier_documents"
@@ -78,11 +77,9 @@ class SupplierDocument(Base):
     verifier = relationship("User", foreign_keys=[verified_by])
     reviewer = relationship("User", foreign_keys=[reviewed_by])
 
-
 SupplierProfile.documents = relationship("SupplierDocument", back_populates="supplier", cascade="all, delete-orphan")
 
-
-class SupplierNotificationPreference(Base):
+class SupplierNotificationPreference(Base, TenantMixin):
     __tablename__ = "supplier_notification_preferences"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
@@ -98,4 +95,4 @@ class SupplierNotificationPreference(Base):
     push_enabled = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+

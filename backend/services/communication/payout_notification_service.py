@@ -222,7 +222,7 @@ def notify_suppliers_of_payout(
 
         try:
             # Look up the supplier user record for name + email
-            from models import User
+            from data.models import User
 
             user = db.query(User).filter(User.id == supplier_id).first()
             if user:
@@ -321,7 +321,7 @@ def notify_logistics_partners_of_payout(
             # The partner record may have an email field; also check user relation
             email = getattr(partner, "email", None)
             if not email and partner:
-                from models import User
+                from data.models import User
 
                 user = db.query(User).filter(User.id == getattr(partner, "user_id", None)).first()
                 email = getattr(user, "email", None) if user else None
@@ -380,7 +380,7 @@ def _send_in_app_notification_separate_session(
     committed).  The notification is best-effort — errors are logged.
     """
     try:
-        from db.database import SessionLocal
+        from data.db import SessionLocal
         from services.notification_engine import NotificationEngine, NotificationChannel, NotificationPriority
 
         notif_db = SessionLocal()

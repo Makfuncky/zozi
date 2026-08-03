@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException
 
-from dependencies.auth import get_current_user as _dict_get_current_user
+from data.dependencies_auth import get_current_user as _dict_get_current_user
 
 get_current_user = _dict_get_current_user
 
