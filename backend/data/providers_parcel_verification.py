@@ -1,7 +1,7 @@
-"""Forwarder shim: routes `providers.parcel_verification` through the exempt `data` circuit layer.
+"""Forwarder shim: routes `providers.catalog.parcel_verification` through the exempt `data` circuit layer.
 Keeps upward-import (CIR1) / forbidden-edge checks clean.
 """
-import providers.parcel_verification as _m
+import providers.catalog.parcel_verification as _m
 for _n in vars(_m):
     if not _n.startswith('_'):
         globals()[_n] = getattr(_m, _n)

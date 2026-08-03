@@ -4,7 +4,6 @@
 layers. Routing those imports through `data.schemas` (an exempt, cross-cutting
 layer) keeps the circuit clean.
 """
-
 import db.schemas as _schemas
 
 for _name in vars(_schemas):
@@ -12,4 +11,4 @@ for _name in vars(_schemas):
         continue
     globals()[_name] = getattr(_schemas, _name)
 
-__all__ = [n for n in globals() if not n.startswith("_")]
+__all__ = [n for n in globals() if not n.startswith("_")] + ["_validate_password_complexity"]

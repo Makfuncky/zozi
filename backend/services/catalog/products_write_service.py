@@ -7,6 +7,7 @@ from data.models import (
     CartItem,
     Category,
     Coupon,
+    CouponUsage,
     FlashSale,
     FlashSaleItem,
     Product,
@@ -15,6 +16,7 @@ from data.models import (
     ProductVariant,
     Review,
     Wishlist,
+    WishlistItem,
 )
 
 
@@ -220,3 +222,83 @@ def update_product_verification(db: Session, verification: ProductVerification, 
 def delete_product_verification(db: Session, verification: ProductVerification) -> None:
     db.delete(verification)
     db.commit()
+
+
+def get_product_by_slug(db: Session, slug: str) -> Product | None:
+    return db.query(Product).filter(Product.slug == slug).first()
+
+
+def get_product_by_id(db: Session, product_id: int) -> Product | None:
+    return db.query(Product).filter(Product.id == product_id).first()
+
+
+def get_product_by_slug_hash(db: Session, slug_hash: str) -> Product | None:
+    return db.query(Product).filter(Product.slug_hash == slug_hash).first()
+
+
+def get_category_by_slug(db: Session, slug: str) -> Category | None:
+    return db.query(Category).filter(Category.slug == slug).first()
+
+
+def get_category_by_id(db: Session, category_id: int) -> Category | None:
+    return db.query(Category).filter(Category.id == category_id).first()
+
+
+def build_category_query(db: Session, active_only: bool = True, parent_id: int | None = None):
+    query = db.query(Category)
+    if active_only:
+        query = query.filter(Category.is_active == True)
+    if parent_id is not None:
+        query = query.filter(Category.parent_id == parent_id)
+    return query
+
+
+def get_coupon_by_code(db: Session, code: str) -> Coupon | None:
+    return db.query(Coupon).filter(Coupon.code == code).first()
+
+
+def get_active_coupon_by_code(db: Session, code: str) -> Coupon | None:
+    return db.query(Coupon).filter(Coupon.code == code, Coupon.is_active == True).first()
+
+
+def get_category_by_slug_excluding(db: Session, slug: str, exclude_id: int) -> Category | None:
+    return db.query(Category).filter(Category.slug == slug, Category.id != exclude_id).first()
+
+
+def build_coupon_query(db: Session):
+    from sqlalchemy import desc
+    return db.query(Coupon).order_by(desc(Coupon.id))
+
+
+def get_coupon_by_code(db: Session, code: str) -> Coupon | None:
+    return db.query(Coupon).filter(Coupon.code == code).first()
+
+
+def get_coupon_by_code_or_id(db: Session, coupon_id: str) -> Coupon | None:
+    from sqlalchemy import or_
+    filters = [Coupon.code == coupon_id]
+    if coupon_id.isdigit():
+        filters.append(Coupon.id == int(coupon_id))
+    return db.query(Coupon).filter(or_(*filters)).first()
+
+
+def coupon_has_usage(db: Session, coupon_id: int) -> bool:
+    return db.query(CouponUsage).filter(CouponUsage.coupon_id == coupon_id).first() is not None
+
+
+def get_wishlist_item(db: Session, user_id: int, product_id: int) -> WishlistItem | None:
+    return db.query(WishlistItem).filter(
+        WishlistItem.user_id == user_id, WishlistItem.product_id == product_id
+    ).first()
+
+
+def list_wishlist_items(db: Session, user_id: int, offset: int = 0, limit: int = 200) -> list[WishlistItem]:
+    from sqlalchemy.orm import selectinload
+    return (
+        db.query(WishlistItem)
+        .options(selectinload(WishlistItem.product))
+        .filter(WishlistItem.user_id == user_id)
+        .offset(max(0, offset))
+        .limit(min(max(1, limit), 200))
+        .all()
+    )

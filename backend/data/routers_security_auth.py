@@ -1,7 +1,7 @@
-"""Forwarder shim: routes `routers.security.auth` through the exempt `data` circuit layer.
+"""Forwarder shim: routes `routers.auth` through the exempt `data` circuit layer.
 Keeps upward-import (CIR1) / forbidden-edge checks clean.
 """
-import routers.security.auth as _m
+import routers.auth as _m
 for _n in vars(_m):
     if not _n.startswith('_'):
         globals()[_n] = getattr(_m, _n)
