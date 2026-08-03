@@ -11,6 +11,12 @@ from sqlalchemy.orm import Session
 from data.db import get_db
 from data.controllers_admin_controller import require_admin
 from services import trading_service as trading
+from services.core.internal_router_service import (
+    get_purchase_order,
+    get_goods_receipt_note,
+    get_sales_order,
+    get_stock_movements as get_stock_movements_from_db,
+)
 
 router = APIRouter()
 
@@ -164,12 +170,7 @@ def list_pos(status: str = None, supplier_id: int = None,
 @router.get("/purchase-orders/{po_id}", summary="Get a purchase order")
 def get_po(po_id: int, db: Session = Depends(get_db),
            _admin: dict = Depends(require_admin)):
-    po = db.query(trading.PurchaseOrder).filter(
-        trading.PurchaseOrder.id == po_id
-    ).first()
-    if not po:
-        raise HTTPException(404, "Purchase order not found")
-    return po
+    return get_purchase_order(db, po_id=po_id)
 
 
 @router.post("/purchase-orders/{po_id}/confirm", summary="Confirm a purchase order")
@@ -206,12 +207,7 @@ def list_grns(po_id: int = None, status: str = None,
 @router.get("/goods-receipts/{grn_id}", summary="Get a goods receipt note")
 def get_grn(grn_id: int, db: Session = Depends(get_db),
             _admin: dict = Depends(require_admin)):
-    grn = db.query(trading.GoodsReceiptNote).filter(
-        trading.GoodsReceiptNote.id == grn_id
-    ).first()
-    if not grn:
-        raise HTTPException(404, "Goods receipt note not found")
-    return grn
+    return get_goods_receipt_note(db, grn_id=grn_id)
 
 
 # â”€â”€ 3-Way Match â”€â”€
@@ -266,12 +262,7 @@ def list_sos(status: str = None, customer_id: int = None,
 @router.get("/sales-orders/{so_id}", summary="Get a sales order")
 def get_so(so_id: int, db: Session = Depends(get_db),
            _admin: dict = Depends(require_admin)):
-    so = db.query(trading.SalesOrder).filter(
-        trading.SalesOrder.id == so_id
-    ).first()
-    if not so:
-        raise HTTPException(404, "Sales order not found")
-    return so
+    return get_sales_order(db, so_id=so_id)
 
 
 @router.post("/sales-orders/{so_id}/confirm", summary="Confirm a sales order")
@@ -344,12 +335,7 @@ def stock_levels(product_id: int = None, warehouse_id: int = None,
 def stock_movements(product_id: int = None, limit: int = 100, offset: int = 0,
                     db: Session = Depends(get_db),
                     _admin: dict = Depends(require_admin)):
-    q = db.query(trading.StockMovement)
-    if product_id:
-        q = q.filter(trading.StockMovement.product_id == product_id)
-    total = q.count()
-    rows = q.order_by(trading.StockMovement.id.desc()).offset(offset).limit(limit).all()
-    return {"total": total, "items": rows}
+    return get_stock_movements_from_db(db, product_id=product_id, warehouse_id=None, limit=limit, offset=offset)
 
 
 # â”€â”€ Dunning â”€â”€

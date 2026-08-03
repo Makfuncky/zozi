@@ -3,13 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from data.db import get_db
 from data.models import Order, User
-from data.schemas import CursorPage, OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
+from data.schemas import CursorPage, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
 from utils.dependencies import require_admin, require_super_admin
 from utils.country_rls import enforce_country_access, get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.pagination import cursor_paginate_desc
 from services.core.admin_operations_service import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_order_status
-from utils.audit_log import audit_log
+from services.core.admin_router_service import (
+    list_orders_by_country, update_order_status_in_db, bulk_update_order_status_in_db
+)
 from services.orders_write_service import update_order
 
 router = APIRouter()
@@ -26,18 +26,16 @@ def list_all_orders(
     db: Session = Depends(get_db),
 ):
     if country_code == "*":
+        from utils.rls_interceptor import set_rls_context
         set_rls_context(None, is_restricted=False)
     else:
         get_country_or_404(country_code.upper(), db)
+        from utils.rls_interceptor import set_rls_context
         set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(Order)
-        if status:
-            q = q.filter(Order.status == status)
-        if not include_deleted:
-            q = q.filter(Order.is_deleted == False)
-        return cursor_paginate_desc(q.order_by(Order.id.desc()), cursor=cursor, page_size=limit)
+        return list_orders_by_country(db, country_code, cursor=cursor, limit=limit, status=status, include_deleted=include_deleted)
     finally:
+        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -51,6 +49,7 @@ def update_status(
     current_user: User = Depends(require_admin),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         acting_user = {
@@ -65,7 +64,6 @@ def update_status(
             "to": result.get("new_status", payload.status),
         }
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -79,6 +77,7 @@ def archive_order(
     current_user: User = Depends(require_admin),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         return archive_entity(
@@ -89,7 +88,6 @@ def archive_order(
             payload.reason if payload else None,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -102,6 +100,7 @@ def restore_order(
     current_user: User = Depends(require_admin),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         return restore_entity(
@@ -111,7 +110,6 @@ def restore_order(
             db,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -124,6 +122,7 @@ def bulk_archive_orders(
     current_user: User = Depends(require_admin),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         return bulk_archive_entities(
@@ -134,7 +133,6 @@ def bulk_archive_orders(
             payload.reason,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -147,6 +145,7 @@ def bulk_restore_orders(
     current_user: User = Depends(require_admin),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         return bulk_restore_entities(
@@ -156,29 +155,22 @@ def bulk_restore_orders(
             db,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
 @router.post("/orders/{country_code}/bulk/status")
-def bulk_update_order_status(
+def bulk_update_order_status_route(
     country_code: str = Path(..., description="ISO country code"),
     payload: BulkStatusUpdateRequest = ...,
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        updated = 0
-        for oid in payload.ids:
-            o = db.query(Order).filter(Order.id == oid).first()
-            if o:
-                update_order(db, o, {"status": payload.status})
-                updated += 1
-        return {"message": f"Status updated for {updated} orders", "updated": updated}
+        return bulk_update_order_status_in_db(db, country_code, payload.ids, payload.status)
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -191,6 +183,7 @@ def delete_order_permanent(
     current_user: User = Depends(require_super_admin),
 ):
     get_country_or_404(country_code.upper(), db)
+    from utils.rls_interceptor import set_rls_context, clear_rls_context
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
         return hard_delete_entity(
@@ -200,5 +193,4 @@ def delete_order_permanent(
             db,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
