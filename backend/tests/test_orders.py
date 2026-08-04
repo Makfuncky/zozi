@@ -1,5 +1,4 @@
 """Tests for order lifecycle."""
-from __future__ import annotations
 
 import pytest
 import uuid

@@ -3,7 +3,7 @@
 Handles opening/closing accounting periods, transferring P&L balances
 to retained earnings, and locking periods against further edits.
 """
-from __future__ import annotations
+from typing import List
 
 import logging
 from datetime import datetime

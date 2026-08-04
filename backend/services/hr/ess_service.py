@@ -1,5 +1,4 @@
 """Service methods for Employee Self-Service (ESS) data access."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import Any, Optional

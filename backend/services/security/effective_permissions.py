@@ -8,7 +8,6 @@ Layer 3 — Hierarchy-Derived: Approval rights over subordinates via can_manage(
 Precedence: Country Role > Hierarchy > Global Role
 Results cached in Redis (invalidated on role/hierarchy/assignment change).
 """
-from __future__ import annotations
 
 import hashlib
 import json

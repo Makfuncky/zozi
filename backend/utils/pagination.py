@@ -2,7 +2,7 @@
 
 Enforces hard caps so an unbounded query never OOMs the server.
 """
-from __future__ import annotations
+from typing import Dict, List
 
 import base64
 import json

@@ -1,5 +1,5 @@
 """Supplier badge/credibility operations."""
-from controllers.supplier_controller import (  # noqa: F401
+from controllers.supplier.supplier_controller import (  # noqa: F401
     compute_credibility_score,
     list_supplier_badge_catalog,
     list_supplier_badge_billing_history,

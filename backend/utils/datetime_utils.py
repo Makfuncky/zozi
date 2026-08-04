@@ -1,5 +1,4 @@
 """Timezone-aware "now" helpers used across routers."""
-from __future__ import annotations
 
 from datetime import datetime, timezone
 

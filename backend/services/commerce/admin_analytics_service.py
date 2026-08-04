@@ -4,7 +4,6 @@ Admin Analytics Service.
 Moved out of controllers/admin/analytics.py to break the
 services -> controllers forbidden dependency edge (DG violation).
 """
-from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta, timezone

@@ -12,7 +12,6 @@ for safe, reproducible deployments:
 * A fresh database initialised via ``alembic upgrade head`` alone exposes
   every table the ORM defines (zero missing).
 """
-from __future__ import annotations
 
 import os
 from pathlib import Path

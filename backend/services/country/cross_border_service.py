@@ -1,5 +1,4 @@
 """Service methods for country cross-border analytics."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from typing import Any
 

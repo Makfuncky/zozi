@@ -30,6 +30,7 @@ that were able to run.
 Test file: ``backend/tests/_test_provider/test_parcel_verification.py``
 """
 from __future__ import annotations
+from typing import List, Optional
 
 import io
 import logging

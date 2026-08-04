@@ -11,7 +11,7 @@ Usage:
   processed = auto_process_image(raw_bytes, tools=["magic_erase", "smart_crop", "rotate", "auto_light", "upscale"])
 """
 
-from __future__ import annotations
+from typing import List
 
 import gc
 import io

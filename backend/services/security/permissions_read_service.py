@@ -1,7 +1,6 @@
 """
 Automatic service for permissions_read_service - DB read operations delegated from controllers.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 from sqlalchemy.orm import Session
@@ -100,15 +99,15 @@ def get_physicalidcard_by_id(db: Session, record_id: int) -> Optional[PhysicalID
     return db.query(PhysicalIDCard).filter(PhysicalIDCard.id == record_id).first()
 
 def _db_logisticspartner_first_0(db: Session, candidate: Any, code: Any) -> Optional[Any]:
-    return while db.query(LogisticsPartner).filter(LogisticsPartner.code == candidate).first(): suffix += 1
+    while db.query(LogisticsPartner).filter(LogisticsPartner.code == candidate).first(): suffix += 1
     """Read-only query delegated from controller."""
 
 def _db_user_first_1(db: Session, id: Any, int: Any, subject: Any) -> Optional[Any]:
-    return return db.query(User).filter(User.id == int(subject)).first()
+    return db.query(User).filter(User.id == int(subject)).first()
     """Read-only query delegated from controller."""
 
 def _db_user_first_2(db: Session, str: Any, subject: Any, username: Any) -> Optional[Any]:
-    return return db.query(User).filter(User.username == str(subject)).first()
+    return db.query(User).filter(User.username == str(subject)).first()
     """Read-only query delegated from controller."""
 
 def _db_user_first_3(db: Session, lower: Any, referral_code: Any) -> Optional[Any]:
@@ -129,11 +128,11 @@ def _db_userdevice_query_6(db: Session, fingerprint_hash: Any, fp: Any, user_id:
     """Read-only query delegated from controller."""
 
 def _db_user_first_7(db: Session, lower: Any, username: Any) -> Optional[Any]:
-    return if not db.query(User).filter(func.lower(User.username) == candidate.lower()).first(): return candidate
+    if not db.query(User).filter(func.lower(User.username) == username.lower()).first(): return username
     """Read-only query delegated from controller."""
 
 def _db_user_first_8(db: Session, lower: Any, username: Any) -> Optional[Any]:
-    return if not db.query(User).filter(func.lower(User.username) == next_candidate.lower()).first(): return next_candidate
+    if not db.query(User).filter(func.lower(User.username) == next_candidate.lower()).first(): return next_candidate
     """Read-only query delegated from controller."""
 
 def _db_user_first_9(db: Session, email: Any, lower: Any) -> Optional[Any]:
@@ -142,11 +141,11 @@ def _db_user_first_9(db: Session, email: Any, lower: Any) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_user_first_10(db: Session, email: Any, user: Any) -> Optional[Any]:
-    return if db.query(User).filter(User.email == user.email).first(): raise HTTPException(status_code=400, detail="Email already registered")
+    if db.query(User).filter(User.email == user.email).first(): raise HTTPException(status_code=400, detail="Email already registered")
     """Read-only query delegated from controller."""
 
 def _db_user_first_11(db: Session, user: Any, username: Any) -> Optional[Any]:
-    return if db.query(User).filter(User.username == user.username).first(): raise HTTPException(status_code=400, detail="Username already taken")
+    if db.query(User).filter(User.username == user.username).first(): raise HTTPException(status_code=400, detail="Username already taken")
     """Read-only query delegated from controller."""
 
 def _db_user_query_12(db: Session) -> Optional[Any]:
@@ -204,11 +203,11 @@ def _db_user_first_23(db: Session, current_user: Any, id: Any) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_user_first_24(db: Session, username: Any) -> Optional[Any]:
-    return if db.query(User).filter(User.username == username).first(): raise HTTPException(status_code=409, detail="Username already taken")
+    if db.query(User).filter(User.username == username).first(): raise HTTPException(status_code=409, detail="Username already taken")
     """Read-only query delegated from controller."""
 
 def _db_user_first_25(db: Session, email: Any) -> Optional[Any]:
-    return if db.query(User).filter(User.email == email).first(): raise HTTPException(status_code=409, detail="Email already in use")
+    if db.query(User).filter(User.email == email).first(): raise HTTPException(status_code=409, detail="Email already in use")
     """Read-only query delegated from controller."""
 
 def _db_user_first_26(db: Session, current_user: Any, id: Any) -> Optional[Any]:

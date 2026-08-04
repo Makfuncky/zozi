@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import json
 import os
 from decimal import Decimal
@@ -9,7 +8,7 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session, Query
 from contextvars import ContextVar
 
-from data.models import (
+from models import (
     CountryCommunication,
     CountryConfig,
     CountryConfigVersion,
@@ -20,11 +19,10 @@ from data.models import (
     OmanDeliveryZone,
     SupplierCountryCommission,
 )
-from data.services_logistics_partner_pricing import normalize_country_code
+from services.logistics_partner_pricing import normalize_country_code
 from services.tax_service import calculate_tax
 from utils.datetime_utils import utcnow as _utcnow
 from services.country_write_service import (
-from services.country.country_read_service import get_user_by_id
     add_country_communication,
     add_country_city,
     add_feature_flag,
@@ -141,7 +139,7 @@ def _to_decimal(value: Any, *, field: str) -> Decimal:
 
 def _get_country_or_404(code: str, db: Session) -> CountryConfig:
     normalized = normalize_country_code(code)
-    country = _db_countryconfig_first_0(db, code, normalized)
+    country = db.query(CountryConfig).filter(CountryConfig.code == normalized).first()
     if not country:
         raise HTTPException(status_code=404, detail="Country config not found")
     return country
@@ -172,7 +170,7 @@ def _record_admin_change(
 
 def _next_version(db: Session, country_code: str, config_type: str) -> int:
     latest = (
-        _db_countryconfigversion_query_1(db)
+        db.query(CountryConfigVersion)
         .filter(
             CountryConfigVersion.country_code == country_code,
             CountryConfigVersion.config_type == config_type,
@@ -208,9 +206,10 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
     city_count = 0
     if db is not None:
         try:
-            city_count = _db_countrycity_count_2(db, True, code, country, country_code, is_active)
-
-
+            city_count = db.query(CountryCity).filter(
+                CountryCity.country_code == country.code,
+                CountryCity.is_active == True,
+            ).count()
         except Exception:
             city_count = 0
 
@@ -248,20 +247,20 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
         "commission_tiers": _from_json(country.commission_tiers_json, default=[]),
         "is_active": bool(country.is_active),
         "city_count": city_count,
-        # â”€â”€ Phase 1: Heuristic fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Heuristic fields Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "economic_tier": country.economic_tier,
         "fraud_risk_tier": country.fraud_risk_tier,
         "suggested_logistics_model": country.suggested_logistics_model,
         "suggested_commission_ranges": _from_json(country.suggested_commission_ranges_json, default={}),
         "suggested_gateway_rankings": _from_json(country.suggested_gateway_rankings_json, default=[]),
         "consumer_behavior_profile": _from_json(country.consumer_behavior_profile_json, default={}),
-        # â”€â”€ Phase 1: Expanded identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Expanded identity Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "official_name": country.official_name,
         "alpha3": country.alpha3,
         "flag_url": country.flag_url,
         "currency_name": country.currency_name,
         "exchange_rate_to_usd": float(country.exchange_rate_to_usd) if country.exchange_rate_to_usd is not None else None,
-        # â”€â”€ Phase 1: COD / settlement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: COD / settlement Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "cod_enabled": bool(country.cod_enabled) if country.cod_enabled is not None else True,
         "cod_max_amount": float(country.cod_max_amount) if country.cod_max_amount is not None else None,
         "cod_verification_required": bool(country.cod_verification_required) if country.cod_verification_required is not None else False,
@@ -269,28 +268,29 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
         "settlement_hold_days": country.settlement_hold_days,
         "minimum_payout_amount": float(country.minimum_payout_amount) if country.minimum_payout_amount is not None else None,
         "payout_currency": country.payout_currency,
-        # â”€â”€ Phase 1: Supplier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Supplier Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "supplier_kyc_tier": country.supplier_kyc_tier,
         "supplier_onboarding_fee": float(country.supplier_onboarding_fee) if country.supplier_onboarding_fee is not None else None,
         "supplier_monthly_fee": float(country.supplier_monthly_fee) if country.supplier_monthly_fee is not None else None,
         "supplier_rating_threshold": float(country.supplier_rating_threshold) if country.supplier_rating_threshold is not None else None,
-        # â”€â”€ Phase 1: Legal / consumer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Legal / consumer Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "legal_entity_required": bool(country.legal_entity_required) if country.legal_entity_required is not None else False,
         "consumer_protection_days": country.consumer_protection_days,
         "data_privacy_framework": country.data_privacy_framework,
-        # â”€â”€ Phase 1: Logistics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Logistics Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "max_package_weight_kg": float(country.max_package_weight_kg) if country.max_package_weight_kg is not None else None,
         "max_package_dimensions_cm": country.max_package_dimensions_cm,
         "signature_required_threshold": float(country.signature_required_threshold) if country.signature_required_threshold is not None else None,
-        # â”€â”€ Phase 1: Locale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Locale Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         "measurement_system": country.measurement_system or "metric",
         "working_days": _from_json(country.working_days_json, default=[]),
     }
 
 
+
 def list_public_countries(db: Session) -> list[dict[str, Any]]:
     rows = (
-        _db_countryconfig_query_3(db)
+        db.query(CountryConfig)
         .filter(CountryConfig.is_active == True)  # noqa: E712
         .order_by(CountryConfig.code.asc())
         .all()
@@ -299,16 +299,17 @@ def list_public_countries(db: Session) -> list[dict[str, Any]]:
 
 
 def list_public_cities(code: str, db: Session) -> dict[str, Any]:
-    """Public cities list â€” no auth, active cities only, for dropdowns."""
+    """Public cities list Ã¢â‚¬â€� no auth, active cities only, for dropdowns."""
     cc = code.upper()
-    country = _db_countryconfig_first_4(db, True, cc, code, is_active, noqa)
-
-
+    country = db.query(CountryConfig).filter(
+        CountryConfig.code == cc,
+        CountryConfig.is_active == True,  # noqa: E712
+    ).first()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found or inactive")
 
     cities = (
-        _db_countrycity_query_5(db)
+        db.query(CountryCity)
         .filter(CountryCity.country_code == cc, CountryCity.is_active == True)
         .order_by(CountryCity.population.desc().nullslast(), CountryCity.name.asc())
         .all()
@@ -338,7 +339,7 @@ def get_public_country_config(code: str, db: Session) -> dict[str, Any]:
 
 def list_admin_countries(current_user: dict, db: Session) -> list[dict[str, Any]]:
     _require_admin(current_user)
-    query = _db_countryconfig_query_6(db)
+    query = db.query(CountryConfig)
     role = str(current_user.get("role") or "").lower()
     if role in ("country_head", "country_manager"):
         assigned = [str(c).strip().upper() for c in (current_user.get("staff_country_codes") or [])]
@@ -360,7 +361,7 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
     if not normalized_code:
         raise HTTPException(status_code=422, detail="Invalid country code")
 
-    existing = _db_countryconfig_first_7(db, code, normalized_code)
+    existing = db.query(CountryConfig).filter(CountryConfig.code == normalized_code).first()
     if existing:
         raise HTTPException(status_code=409, detail="Country already exists")
 
@@ -417,20 +418,20 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
         mobile_subs_per_100=payload.get("mobile_subs_per_100"),
         public_holidays_json=_to_json(payload.get("public_holidays")),
         macro_indicators_json=_to_json(payload.get("macro_indicators")),
-        # â”€â”€ Phase 1: Heuristic fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Heuristic fields Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         economic_tier=str(payload.get("economic_tier") or "").strip() or None,
         fraud_risk_tier=str(payload.get("fraud_risk_tier") or "").strip() or None,
         suggested_logistics_model=str(payload.get("suggested_logistics_model") or "").strip() or None,
         suggested_commission_ranges_json=_to_json(payload.get("suggested_commission_ranges")),
         suggested_gateway_rankings_json=_to_json(payload.get("suggested_gateway_rankings")),
         consumer_behavior_profile_json=_to_json(payload.get("consumer_behavior_profile")),
-        # â”€â”€ Phase 1: Expanded identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Expanded identity Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         official_name=str(payload.get("official_name") or "").strip() or None,
         alpha3=str(payload.get("alpha3") or "").strip().upper() or None,
         flag_url=str(payload.get("flag_url") or "").strip() or None,
         currency_name=str(payload.get("currency_name") or "").strip() or None,
         exchange_rate_to_usd=payload.get("exchange_rate_to_usd"),
-        # â”€â”€ Phase 1: COD / settlement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: COD / settlement Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         cod_enabled=payload.get("cod_enabled"),
         cod_max_amount=payload.get("cod_max_amount"),
         cod_verification_required=payload.get("cod_verification_required"),
@@ -438,20 +439,20 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
         settlement_hold_days=payload.get("settlement_hold_days") or 3,
         minimum_payout_amount=payload.get("minimum_payout_amount"),
         payout_currency=str(payload.get("payout_currency") or "").strip().upper() or None,
-        # â”€â”€ Phase 1: Supplier defaults â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Supplier defaults Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         supplier_kyc_tier=str(payload.get("supplier_kyc_tier") or "").strip() or None,
         supplier_onboarding_fee=payload.get("supplier_onboarding_fee"),
         supplier_monthly_fee=payload.get("supplier_monthly_fee"),
         supplier_rating_threshold=payload.get("supplier_rating_threshold"),
-        # â”€â”€ Phase 1: Legal / consumer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Legal / consumer Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         legal_entity_required=payload.get("legal_entity_required"),
         consumer_protection_days=payload.get("consumer_protection_days") or 14,
         data_privacy_framework=str(payload.get("data_privacy_framework") or "").strip() or None,
-        # â”€â”€ Phase 1: Logistics expansion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Logistics expansion Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         max_package_weight_kg=payload.get("max_package_weight_kg"),
         max_package_dimensions_cm=str(payload.get("max_package_dimensions_cm") or "").strip() or None,
         signature_required_threshold=payload.get("signature_required_threshold"),
-        # â”€â”€ Phase 1: Locale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1: Locale Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
         measurement_system=str(payload.get("measurement_system") or "metric").strip().lower(),
         working_days_json=_to_json(payload.get("working_days")),
     )
@@ -507,7 +508,7 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
     if payload.get("mobile_subs_per_100") is not None:
         country.mobile_subs_per_100 = Decimal(str(payload["mobile_subs_per_100"]))
 
-    # â”€â”€ Persist heuristic engine metadata â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Persist heuristic engine metadata Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if payload.get("suggested_gateways"):
         country.suggested_gateway_rankings_json = _to_json(payload["suggested_gateways"])
     if payload.get("suggested_commission_tiers"):
@@ -529,6 +530,7 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
 
     commit_and_refresh_obj(db, country)
     return _country_public_payload(country, db)
+
 
 
 def create_tax_draft(code: str, payload: dict[str, Any], current_user: dict, db: Session) -> dict[str, Any]:
@@ -682,7 +684,7 @@ def list_country_versions(code: str, current_user: dict, db: Session, config_typ
     _require_admin(current_user)
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
-    query = _db_countryconfigversion_query_8(db, country_code, normalized_code)
+    query = db.query(CountryConfigVersion).filter(CountryConfigVersion.country_code == normalized_code)
     if config_type:
         query = query.filter(CountryConfigVersion.config_type == config_type)
     rows = query.order_by(CountryConfigVersion.created_at.desc(), CountryConfigVersion.version.desc()).all()
@@ -709,7 +711,7 @@ def approve_country_version(code: str, version_id: int, current_user: dict, db: 
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     row = (
-        _db_countryconfigversion_query_9(db)
+        db.query(CountryConfigVersion)
         .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == normalized_code)
         .first()
     )
@@ -761,7 +763,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if zones is None:
             zones = payload.get("oman_zones")
         if isinstance(zones, list) and country.logistics_model == "zone":
-            existing = _db_omandeliveryzone_all_10(db)
+            existing = {zone.zone_code: zone for zone in db.query(OmanDeliveryZone).all()}
             for zone_payload in zones:
                 if not isinstance(zone_payload, dict):
                     continue
@@ -786,7 +788,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if isinstance(rates, list):
             existing_rows = {
                 (entry.country_code, entry.category_slug): entry
-                _db_suppliercountrycommission_query_11(db)
+                for entry in db.query(SupplierCountryCommission)
                 .filter(SupplierCountryCommission.country_code == row.country_code)
                 .all()
             }
@@ -812,7 +814,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if isinstance(feature_flags, dict):
             existing_flags = {
                 flag.feature_key: flag
-                _db_countryfeatureflag_query_12(db)
+                for flag in db.query(CountryFeatureFlag)
                 .filter(CountryFeatureFlag.country_code == row.country_code)
                 .all()
             }
@@ -883,12 +885,13 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
     country.updated_at = _utcnow()
 
 
+
 def publish_country_version(code: str, version_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     row = (
-        _db_countryconfigversion_query_13(db)
+        db.query(CountryConfigVersion)
         .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == normalized_code)
         .first()
     )
@@ -920,7 +923,7 @@ def rollback_country_to_version(code: str, version_id: int, current_user: dict, 
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     row = (
-        _db_countryconfigversion_query_14(db)
+        db.query(CountryConfigVersion)
         .filter(
             CountryConfigVersion.id == version_id,
             CountryConfigVersion.country_code == normalized_code,
@@ -967,7 +970,7 @@ def list_country_commissions(code: str, current_user: dict, db: Session) -> list
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     rows = (
-        _db_suppliercountrycommission_query_15(db)
+        db.query(SupplierCountryCommission)
         .filter(SupplierCountryCommission.country_code == normalized_code)
         .order_by(SupplierCountryCommission.category_slug.asc())
         .all()
@@ -1008,7 +1011,7 @@ def get_country_feature_flags(code: str, current_user: dict, db: Session) -> lis
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     rows = (
-        _db_countryfeatureflag_query_16(db)
+        db.query(CountryFeatureFlag)
         .filter(CountryFeatureFlag.country_code == normalized_code)
         .order_by(CountryFeatureFlag.feature_key.asc())
         .all()
@@ -1034,7 +1037,7 @@ def list_country_delivery_zones(code: str, current_user: dict, db: Session) -> l
     if str(country.logistics_model or "").lower() != "zone":
         return []
 
-    rows = _db_omandeliveryzone_all_17(db)
+    rows = db.query(OmanDeliveryZone).order_by(OmanDeliveryZone.sort_order.asc(), OmanDeliveryZone.zone_code.asc()).all()
     return [
         {
             "zone_code": row.zone_code,
@@ -1053,7 +1056,7 @@ def list_country_delivery_zones(code: str, current_user: dict, db: Session) -> l
     ]
 
 
-# â”€â”€ New GCC Config Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ New GCC Config Sections Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 
 def update_country_identity(code: str, payload: dict[str, Any], current_user: dict, db: Session) -> dict[str, Any]:
     """Update non-versioned identity fields (name, currency_symbol, phone_code, language, is_active)."""
@@ -1074,7 +1077,7 @@ def update_country_identity(code: str, payload: dict[str, Any], current_user: di
         country.date_format = str(payload["date_format"] or "DD/MM/YYYY").strip()
     if "is_active" in payload:
         country.is_active = bool(payload["is_active"])
-    # â”€â”€ Phase 1 identity fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 identity fields Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "official_name" in payload:
         country.official_name = str(payload["official_name"] or "").strip() or None
     if "alpha3" in payload:
@@ -1085,7 +1088,7 @@ def update_country_identity(code: str, payload: dict[str, Any], current_user: di
         country.currency_name = str(payload["currency_name"] or "").strip() or None
     if "exchange_rate_to_usd" in payload:
         country.exchange_rate_to_usd = payload["exchange_rate_to_usd"]
-    # â”€â”€ Phase 1 COD fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 COD fields Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "cod_enabled" in payload:
         country.cod_enabled = bool(payload["cod_enabled"])
     if "cod_max_amount" in payload:
@@ -1100,14 +1103,14 @@ def update_country_identity(code: str, payload: dict[str, Any], current_user: di
         country.minimum_payout_amount = payload["minimum_payout_amount"]
     if "payout_currency" in payload:
         country.payout_currency = str(payload["payout_currency"] or "").strip().upper() or None
-    # â”€â”€ Phase 1 locale â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 locale Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "measurement_system" in payload:
         country.measurement_system = str(payload["measurement_system"] or "metric").strip().lower()
     if "working_days" in payload:
         country.working_days_json = _to_json(payload["working_days"])
     if "data_privacy_framework" in payload:
         country.data_privacy_framework = str(payload["data_privacy_framework"] or "").strip() or None
-    # â”€â”€ Phase 1 supplier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 supplier Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "supplier_kyc_tier" in payload:
         country.supplier_kyc_tier = str(payload["supplier_kyc_tier"] or "").strip() or None
     if "supplier_onboarding_fee" in payload:
@@ -1116,19 +1119,19 @@ def update_country_identity(code: str, payload: dict[str, Any], current_user: di
         country.supplier_monthly_fee = payload["supplier_monthly_fee"]
     if "supplier_rating_threshold" in payload:
         country.supplier_rating_threshold = payload["supplier_rating_threshold"]
-    # â”€â”€ Phase 1 legal / consumer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 legal / consumer Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "legal_entity_required" in payload:
         country.legal_entity_required = bool(payload["legal_entity_required"])
     if "consumer_protection_days" in payload:
         country.consumer_protection_days = int(payload["consumer_protection_days"])
-    # â”€â”€ Phase 1 logistics expansion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 logistics expansion Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "max_package_weight_kg" in payload:
         country.max_package_weight_kg = payload["max_package_weight_kg"]
     if "max_package_dimensions_cm" in payload:
         country.max_package_dimensions_cm = str(payload["max_package_dimensions_cm"] or "").strip() or None
     if "signature_required_threshold" in payload:
         country.signature_required_threshold = payload["signature_required_threshold"]
-    # â”€â”€ Phase 1 heuristic fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Ã¢â€�â‚¬Ã¢â€�â‚¬ Phase 1 heuristic fields Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
     if "economic_tier" in payload:
         country.economic_tier = str(payload["economic_tier"] or "").strip() or None
     if "fraud_risk_tier" in payload:
@@ -1413,7 +1416,7 @@ def list_country_cities(
     cc = code.upper()
 
     # 1. Try the normalized CountryCity table first
-    q = _db_countrycity_query_18(db, cc, country_code)
+    q = db.query(CountryCity).filter(CountryCity.country_code == cc)
     if not include_inactive:
         q = q.filter(CountryCity.is_active == True)
     if query:
@@ -1441,10 +1444,10 @@ def list_country_cities(
             "source": "database",
         }
 
-    # 2. Fallback: CURATED_CITIES + open-meteo (for seeding new countries)
-    from data.curated_cities import CURATED_CITIES
+    # 2. Fallback: CITY_SUGGESTIONS + open-meteo (for seeding new countries)
+    from data.vat_rates import CITY_SUGGESTIONS
 
-    cities = list(CURATED_CITIES.get(cc, []))
+    cities = list(CITY_SUGGESTIONS.get(cc, []))
     if not cities:
         import httpx
         try:
@@ -1467,25 +1470,26 @@ def list_country_cities(
                             "longitude": r.get("longitude"),
                             "population": r.get("population") or 0,
                         })
-                        seen |= {name}
+                        seen.add(name)
         except Exception:
             pass
 
     return {"code": cc, "cities": cities, "source": "fallback"}
 
 
-# â”€â”€ Staff Assignments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ Staff Assignments Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 
 def assign_staff_to_country(country_code: str, user_id: int, role_in_country: str, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    from data.models import User
-    user = get_user_by_id(db, user_id)
+    from models import User
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     _get_country_or_404(country_code, db)
-    existing = _db_countrystaffassignment_first_19(db, country_code, upper, user_id)
-
-
+    existing = db.query(CountryStaffAssignment).filter(
+        CountryStaffAssignment.user_id == user_id,
+        CountryStaffAssignment.country_code == country_code.upper(),
+    ).first()
     if existing:
         raise HTTPException(status_code=409, detail="Staff already assigned to this country")
     assignment = CountryStaffAssignment(
@@ -1503,12 +1507,13 @@ def assign_staff_to_country(country_code: str, user_id: int, role_in_country: st
 def list_country_staff(country_code: str, current_user: dict, db: Session) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
-    rows = _db_countrystaffassignment_all_20(db, True, country_code, upper)
-
-
-    from data.models import User
+    rows = db.query(CountryStaffAssignment).filter(
+        CountryStaffAssignment.country_code == country_code.upper(),
+        CountryStaffAssignment.is_active == True,
+    ).order_by(CountryStaffAssignment.created_at.desc()).all()
+    from models import User
     user_ids = [r.user_id for r in rows]
-    users = _db_user_all_21(db, id, in_, user_ids)
+    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     return [
         {
             "id": r.id,
@@ -1528,9 +1533,10 @@ def list_country_staff(country_code: str, current_user: dict, db: Session) -> li
 
 def unassign_staff_from_country(country_code: str, user_id: int, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    a = _db_countrystaffassignment_first_22(db, country_code, upper, user_id)
-
-
+    a = db.query(CountryStaffAssignment).filter(
+        CountryStaffAssignment.user_id == user_id,
+        CountryStaffAssignment.country_code == country_code.upper(),
+    ).first()
     if not a:
         raise HTTPException(status_code=404, detail="Assignment not found")
     a.is_active = False
@@ -1539,7 +1545,7 @@ def unassign_staff_from_country(country_code: str, user_id: int, current_user: d
     return {"message": "Staff unassigned"}
 
 
-# â”€â”€ Communications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ Communications Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 
 def send_country_communication(country_code: str, payload: dict, current_user: dict, db: Session) -> dict:
     _require_admin(current_user)
@@ -1563,7 +1569,7 @@ def send_country_communication(country_code: str, payload: dict, current_user: d
 def list_country_communications(country_code: str, current_user: dict, db: Session, category: str | None = None) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
-    q = _db_countrycommunication_query_23(db, country_code, upper)
+    q = db.query(CountryCommunication).filter(CountryCommunication.country_code == country_code.upper())
     if category:
         q = q.filter(CountryCommunication.category == category)
     rows = q.order_by(CountryCommunication.created_at.desc()).limit(100).all()
@@ -1586,7 +1592,7 @@ def list_country_communications(country_code: str, current_user: dict, db: Sessi
 
 def mark_communication_read(comm_id: int, current_user: dict, db: Session) -> dict:
     _require_admin(current_user)
-    comm = _db_countrycommunication_first_24(db, comm_id, id)
+    comm = db.query(CountryCommunication).filter(CountryCommunication.id == comm_id).first()
     if not comm:
         raise HTTPException(status_code=404, detail="Communication not found")
     if comm.to_user_id and comm.to_user_id != current_user.get("id"):
@@ -1598,14 +1604,14 @@ def mark_communication_read(comm_id: int, current_user: dict, db: Session) -> di
     return {"message": "Marked as read"}
 
 
-# â”€â”€ Cross-Country Customer Sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ Cross-Country Customer Sessions Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 
 def list_cross_country_sessions(country_code: str, current_user: dict, db: Session) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
-    q = _db_crosscountrycustomersession_all_25(db, country_code, target_country_code, upper)
-
-
+    q = db.query(CrossCountryCustomerSession).filter(
+        CrossCountryCustomerSession.target_country_code == country_code.upper(),
+    ).order_by(CrossCountryCustomerSession.created_at.desc()).limit(50).all()
     return [
         {
             "id": r.id,
@@ -1620,11 +1626,11 @@ def list_cross_country_sessions(country_code: str, current_user: dict, db: Sessi
     ]
 
 
-# â”€â”€ Auto-populate country data from external API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ Auto-populate country data from external API Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 # (delegated to services.country_auto_populate.auto_populate via auto_populate_async)
 
 
-# â”€â”€ Product restriction checking (used by product & admin controllers) â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ Product restriction checking (used by product & admin controllers) Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 
 def is_product_restricted_for_country(
     category_slug: str,
@@ -1634,13 +1640,14 @@ def is_product_restricted_for_country(
     """Check if a product category is restricted in a given country."""
     if not country_code:
         return False
-    from data.services_logistics_partner_pricing import normalize_country_code
+    from services.logistics_partner_pricing import normalize_country_code
     code = normalize_country_code(country_code)
     if not code:
         return False
-    country = _db_countryconfig_first_26(db, True, code, is_active)
-
-
+    country = db.query(CountryConfig).filter(
+        CountryConfig.code == code,
+        CountryConfig.is_active == True,
+    ).first()
     if not country:
         return False
     raw = country.product_restrictions_json
@@ -1656,13 +1663,13 @@ def is_product_restricted_for_country(
     return any(str(r).strip().lower() == slug for r in restricted)
 
 
-# â”€â”€ Payout Rules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Ã¢â€�â‚¬Ã¢â€�â‚¬ Payout Rules Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬Ã¢â€�â‚¬
 
 def list_payout_rules_categories(country_code: str, current_user: dict, db: Session) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
     normalized_code = normalize_country_code(country_code)
-    country = _db_countryconfig_first_27(db, code, normalized_code)
+    country = db.query(CountryConfig).filter(CountryConfig.code == normalized_code).first()
     if not country:
         return []
     payout_rules_raw = _from_json(country.payout_settings_json, default=[])
@@ -1746,7 +1753,7 @@ def update_country_cities_bulk(code: str, payload: dict, current_user: dict, db)
             source=str(city_data.get('source', 'bulk_update')),
         ))
     bulk_replace_country_cities(db, cc, cities_to_save)
-    all_cities = _db_countrycity_all_28(db, cc, country_code)
+    all_cities = db.query(CountryCity).filter(CountryCity.country_code == cc).order_by(CountryCity.sort_order.asc(), CountryCity.name.asc()).all()
     return {
         'code': cc,
         'updated_count': len(all_cities),

@@ -3,7 +3,6 @@
 Uses historical patterns, pending payouts, and expected settlements
 to project daily cash balances.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta

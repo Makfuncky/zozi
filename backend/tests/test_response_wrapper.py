@@ -1,5 +1,4 @@
 """Tests for the standardized API response wrapper."""
-from __future__ import annotations
 import pytest
 from fastapi.responses import JSONResponse
 

@@ -1,5 +1,5 @@
 """Service methods for catalog read operations."""
-from __future__ import annotations
+from typing import Any, Optional
 from sqlalchemy.orm import Session
 from data.models import Product, Category
 
@@ -132,11 +132,6 @@ def get_usermodel_by_id(db: Session, record_id: int) -> Optional[UserModel]:
     return db.query(UserModel).filter(UserModel.id == record_id).first()
 
 
-def list_unknown(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Unknown]:
-    query = db.query(Unknown)
-    for key, value in filters.items():
-        query = query.filter(getattr(Unknown, key) == value)
-    return query.offset(skip).limit(limit).all()
 
 
 def get_unknown_first(db: Session, **filters) -> Optional[Unknown]:
@@ -233,28 +228,29 @@ def _db_category_first_0(db: Session, lookup_tokens: Any, lower: Any, name: Any)
     return result
     """Read-only query delegated from controller."""
 
-def _db_flashsale_query_1(db: Session, True: Any, ends_at: Any, is_active: Any, noqa: Any, now: Any, starts_at: Any) -> Optional[Any]:
-    result = db.query(FlashSale).filter( FlashSale.is_active == True,  # noqa: E712 FlashSale.starts_at <= now, FlashSale.ends_at >= now, )
+def _db_flashsale_query_1(db: Session, true_val: Any, ends_at: Any, is_active: Any, noqa: Any, now: Any, starts_at: Any) -> Optional[Any]:
+    result = db.query(FlashSale).filter( FlashSale.is_active == True,  # noqa: E712
+        FlashSale.starts_at <= now, FlashSale.ends_at >= now, ).first()
     return result
     """Read-only query delegated from controller."""
 
-def _db_countryconfig_first_2(db: Session, True: Any, code: Any, is_active: Any) -> Optional[Any]:
+def _db_countryconfig_first_2(db: Session, true_val: Any, code: Any, is_active: Any) -> Optional[Any]:
     result = db.query(CountryConfig).filter( CountryConfig.code == code, CountryConfig.is_active == True, ).first()
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_query_3(db: Session, False: Any, is_active: Any, is_deleted: Any, isnot: Any, noqa: Any) -> Optional[Any]:
-    result = db.query(Product).options( selectinload(Product.variants), ).filter( Product.is_deleted == False,           # noqa: E712 Product.is_active.isnot(False),        # NULL â†’ active Product.is_approved.isnot(False),      # NULL â†’ approved )
+def _db_product_query_3(db: Session, false_val: Any, is_active: Any, is_deleted: Any, is_not_val: Any, noqa: Any) -> Optional[Any]:
+    result = db.query(Product).options(selectinload(Product.variants)).filter(Product.is_deleted == False, Product.is_active.isnot(False), Product.is_approved.isnot(False)).all() == False, Product.is_active.isnot(False),
     return result
     """Read-only query delegated from controller."""
 
-def _db_countryconfig_first_4(db: Session, True: Any, code: Any, is_active: Any) -> Optional[Any]:
+def _db_countryconfig_first_4(db: Session, true_val: Any, code: Any, is_active: Any) -> Optional[Any]:
     result = db.query(CountryConfig).filter( CountryConfig.code == code, CountryConfig.is_active == True, ).first()
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_first_7(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
-    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).first()
+def _db_product_first_7(db: Session, false_val: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], Product.is_deleted == False, ).first()
     return result
     """Read-only query delegated from controller."""
 
@@ -262,8 +258,8 @@ def _db_order_query_8(db: Session) -> Optional[Any]:
     return db.query(Order)
     """Read-only query delegated from controller."""
 
-def _db_product_first_9(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
-    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).first()
+def _db_product_first_9(db: Session, false_val: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], Product.is_deleted == False, ).first()
     return result
     """Read-only query delegated from controller."""
 
@@ -272,8 +268,8 @@ def _db_supplierprofile_first_10(db: Session, current_user: Any, id: Any, user_i
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_query_11(db: Session, False: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any) -> Optional[Any]:
-    result = db.query(Product).filter( Product.id == product_id, Product.is_deleted == False,  # noqa: E712 )
+def _db_product_query_11(db: Session, false_val: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.is_deleted == False, )
     return result
     """Read-only query delegated from controller."""
 
@@ -282,8 +278,8 @@ def _db_usermodel_first_12(db: Session, id: Any, supplier_id: Any) -> Optional[A
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_all_13(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> list[Any]:
-    return return db.query(Product).filter( Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).all()
+def _db_product_all_13(db: Session, false_val: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> list[Any]:
+    return db.query(Product).filter( Product.supplier_id == current_user["id"], Product.is_deleted == False, ).all()
     """Read-only query delegated from controller."""
 
 def _db_category_first_14(db: Session, lower: Any, name: Any) -> Optional[Any]:
@@ -291,8 +287,8 @@ def _db_category_first_14(db: Session, lower: Any, name: Any) -> Optional[Any]:
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_first_15(db: Session, False: Any, True: Any, id: Any, is_active: Any, is_approved: Any, is_deleted: Any, noqa: Any, product_id: Any) -> Optional[Any]:
-    result = db.query(Product).options(selectinload(Product.variants)).filter( Product.id == product_id, Product.is_deleted == False,   # noqa: E712 Product.is_active == True,     # noqa: E712 Product.is_approved == True,   # noqa: E712 ).first()
+def _db_product_first_15(db: Session, false_val: Any, true_val: Any, id: Any, is_active: Any, is_approved: Any, is_deleted: Any, noqa: Any, product_id: Any) -> Optional[Any]:
+    result = db.query(Product).options(selectinload(Product.variants)).filter( Product.id == product_id, Product.is_deleted == False, Product.is_active == True, ).first()
     return result
     """Read-only query delegated from controller."""
 
@@ -308,25 +304,25 @@ def _db_product_query_18(db: Session) -> Optional[Any]:
     return db.query(Product)
     """Read-only query delegated from controller."""
 
-def _db_product_query_19(db: Session, False: Any, True: Any, is_active: Any, is_approved: Any, is_deleted: Any, noqa: Any) -> Optional[Any]:
-    result = db.query(Product).filter( Product.is_deleted == False,   # noqa: E712 Product.is_active == True,     # noqa: E712 Product.is_approved == True,   # noqa: E712 )
+def _db_product_query_19(db: Session, false_val: Any, true_val: Any, is_active: Any, is_approved: Any, is_deleted: Any, noqa: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.is_deleted == False, Product.is_active == True, ).first()
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_query_0(db: Session, False: Any, is_active: Any, is_deleted: Any, isnot: Any) -> Optional[Any]:
+def _db_product_query_0(db: Session, false_val: Any, is_active: Any, is_deleted: Any, is_not_val: Any) -> Optional[Any]:
     result = db.query(Product).filter( Product.is_deleted == False, Product.is_active.isnot(False), Product.is_approved.isnot(False), Product.stock > 0, )
     return result
     """Read-only query delegated from controller."""
 
 
 def autocomplete_product_names(db: Session, term: str, limit: int = 10) -> list[str]:
-    """Return product names matching a search term � delegated from controller."""
+    """Return product names matching a search term — delegated from controller."""
     results = db.query(Product.name).filter(Product.name.ilike(term)).limit(limit).all()
     return [r[0] for r in results]
 
 
 def get_supplier_name_choices(db: Session) -> list[tuple]:
-    """Return supplier usernames and storefront business names for filtering � delegated from controller."""
+    """Return supplier usernames and storefront business names for filtering — delegated from controller."""
     results = (
         db.query(User.username, SupplierProfile.business_name)
         .join(Product, Product.supplier_id == User.id)

@@ -1,6 +1,6 @@
 """Country Research endpoint — returns the full 20-module e-commerce research report."""
-
 from __future__ import annotations
+
 
 import logging
 from typing import Optional

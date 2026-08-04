@@ -7,7 +7,6 @@ weight (L*W*H / 5000) when it exceeds the actual weight, matching common GCC
 courier conventions (Aramex, SMSA, etc.).
 """
 
-from __future__ import annotations
 
 import re
 from typing import Optional, Dict

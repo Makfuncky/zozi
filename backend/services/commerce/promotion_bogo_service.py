@@ -14,7 +14,6 @@ Rules:
   - Can stack with other promotions if stacking is enabled
   - Inventory check: free item must be in stock
 """
-from __future__ import annotations
 
 import logging
 from decimal import Decimal

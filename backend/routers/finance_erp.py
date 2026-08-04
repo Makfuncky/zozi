@@ -6,6 +6,7 @@ endpoints enforce finance permission delegation via `require_finance_permission`
 All data access is delegated to the service layer (LC1: routers stay thin).
 """
 from __future__ import annotations
+from typing import List, Set
 
 import logging
 from datetime import datetime, date

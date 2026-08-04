@@ -13,7 +13,7 @@ Every login writes a user_devices row, enforces concurrent-session policy,
 sets the RLS country context, risk-scores the request, and writes to the
 activity ledger.
 """
-from __future__ import annotations
+from typing import Set
 
 import hashlib
 import hmac

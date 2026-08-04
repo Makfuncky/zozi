@@ -3,6 +3,7 @@
 All data access is delegated to the service layer (LC1: routers stay thin).
 """
 from __future__ import annotations
+from typing import List
 
 import logging
 from datetime import datetime, date

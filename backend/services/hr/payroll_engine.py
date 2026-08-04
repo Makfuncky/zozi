@@ -2,7 +2,6 @@
 performance bonus multiplier, payslip generation, and auto-disbursement pipeline.
 Integrates with employee_bank_accounts (gap migration) and performance_service bonus.
 """
-from __future__ import annotations
 
 __all__ = [
     "PayrollEngine",

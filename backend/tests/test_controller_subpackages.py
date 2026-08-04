@@ -5,7 +5,6 @@ Verifies that:
 - controllers.domain folders contain admin-prefixed controllers
 - controllers.admin_controller backward-compat wrapper exists
 """
-from __future__ import annotations
 import pytest
 
 

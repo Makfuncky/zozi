@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 """Standard API response wrapper for Zozi backend.
 
 Provides PaginatedResponse base model and response wrapper utilities to standardize
 API responses across all endpoints. Ensures consistent response format across the
 platform with pagination support and error handling.
 """
-from __future__ import annotations
 
 from typing import Any, List, Optional, Generic, TypeVar
 from fastapi.responses import JSONResponse

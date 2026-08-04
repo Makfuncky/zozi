@@ -3,7 +3,6 @@
 This service provides real-time fraud scoring, IP intelligence, velocity checks,
 and threat feed management for the marketplace.
 """
-from __future__ import annotations
 
 import hashlib
 import json

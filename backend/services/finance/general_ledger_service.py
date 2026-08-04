@@ -1,5 +1,4 @@
 """General Ledger — double-entry accounting core."""
-from __future__ import annotations
 
 import uuid
 from datetime import datetime

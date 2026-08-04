@@ -30,7 +30,7 @@ Usage::
     #       print(issue)
     #
 """
-from __future__ import annotations
+from typing import Optional, Union
 
 import argparse
 import fnmatch

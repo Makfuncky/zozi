@@ -1,5 +1,4 @@
 """Product Verification Service — business logic for supply chain verification."""
-from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone

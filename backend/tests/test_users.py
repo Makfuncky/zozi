@@ -1,5 +1,4 @@
 """Tests for user profile and address management."""
-from __future__ import annotations
 
 import pytest
 import uuid

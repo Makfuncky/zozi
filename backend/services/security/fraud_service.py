@@ -1,5 +1,4 @@
 """Comprehensive fraud detection and prevention service."""
-from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any

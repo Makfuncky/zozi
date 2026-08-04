@@ -6,7 +6,6 @@ transaction rolled back at the end — tests never leak data to one another.
 Gap tables (onboarding_pipelines, offboarding_cases, etc.) are created once
 at session scope by the ``engine`` fixture in ``conftest.py``.
 """
-from __future__ import annotations
 
 import uuid
 import pytest

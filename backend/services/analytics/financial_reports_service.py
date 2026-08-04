@@ -3,7 +3,6 @@
 Generates standard accounting reports from the double-entry ledger (AccountBalance,
 JournalEntry, JournalEntryLine) and persists them to the FinancialReport table.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime

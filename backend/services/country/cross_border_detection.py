@@ -1,5 +1,4 @@
 """Cross-Border Detection Middleware for Customer Sessions."""
-from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from typing import Dict, Optional, Tuple

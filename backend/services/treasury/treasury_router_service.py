@@ -2,7 +2,6 @@
 Treasury Router Service - Database operations for treasury and payout approval routers.
 All SQLAlchemy DB access is centralized here.
 """
-from __future__ import annotations
 
 import logging
 from decimal import Decimal

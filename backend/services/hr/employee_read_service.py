@@ -1,5 +1,5 @@
 """Service methods for employee read operations."""
-from __future__ import annotations
+from typing import Any, Optional
 from sqlalchemy.orm import Session
 from data.models_employee_models import Employee
 from data.models import User, ActivityLog, ApprovalRequest

@@ -1,7 +1,6 @@
 """Performance Management Service — OKR/KPI cascade, 360° reviews, performance health scoring.
 Leverages the gap-table migration: okr_objectives, kpi_metrics, performance_reviews.
 """
-from __future__ import annotations
 
 __all__ = [
     "create_objective",

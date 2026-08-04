@@ -4,7 +4,6 @@ WebSocket Connection Manager Service.
 Moved out of routers/ws_chat.py to break the
 services -> routers forbidden dependency edge.
 """
-from __future__ import annotations
 
 from fastapi import WebSocket
 

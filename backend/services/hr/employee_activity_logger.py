@@ -2,7 +2,6 @@
 Every service writes events here so the system always answers "who did what, with whom, when."
 Leverages the employee_activity_logs table from the gap migration.
 """
-from __future__ import annotations
 
 __all__ = [
     "log_activity",

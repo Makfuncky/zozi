@@ -1,5 +1,4 @@
 """Service methods for wishlist read operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models import WishlistItem
 

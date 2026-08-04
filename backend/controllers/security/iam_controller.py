@@ -15,12 +15,11 @@ from sqlalchemy.orm import Session
 from data.models_employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
 from data.models import User
 from utils.datetime_utils import utcnow as _utcnow
-from data.services_write_helpers import (
-from services.security.permissions_read_service import get_employee_by_id
-    add_and_flush,
+from data.services_write_helpers import (    add_and_flush,
     commit_and_refresh,
     commit_only,
 )
+from services.security.permissions_read_service import get_employee_by_id
 
 
 _QR_SECRET_KEY = os.getenv("EMPLOYEE_QR_SECRET_KEY", "")

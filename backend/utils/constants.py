@@ -1,10 +1,10 @@
+
 """
 Shared application constants.
 
 Import from here instead of defining values in individual modules
 to give a single source of truth and avoid silent divergence.
 """
-from __future__ import annotations
 
 # ── Country codes ─────────────────────────────────────────────────────────────
 

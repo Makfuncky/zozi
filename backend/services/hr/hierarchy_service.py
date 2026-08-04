@@ -2,7 +2,6 @@
 Supports materialized path for org_units, dotted-line/matrix management,
 circular reference prevention, and hierarchical subtree operations.
 """
-from __future__ import annotations
 
 __all__ = [
     "get_authority_level",

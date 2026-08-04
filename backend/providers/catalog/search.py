@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Search Provider
 ===============
 Advanced AI-powered search engine with filtering and vectorization.
 Test file: backend/tests/_test_provider/test_search.py
 """
+from __future__ import annotations
 import logging
 import re
 from typing import Any, Dict, List, Optional

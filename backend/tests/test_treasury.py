@@ -1,5 +1,4 @@
 """Tests for treasury and finance modules."""
-from __future__ import annotations
 
 import pytest
 import uuid

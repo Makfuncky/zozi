@@ -9,7 +9,6 @@ Verifies the full pipeline:
   5. Assert the sweep result dict contains expected keys and values
 """
 
-from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal

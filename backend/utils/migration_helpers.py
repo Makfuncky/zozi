@@ -13,7 +13,6 @@ Invocation style (produced by the idempotency patcher)::
     op.add_column("t", col)         ->  safe_add_column(op, "t", col)
     op.create_index("i", "t", ...)  ->  safe_create_index(op, "i", "t", ...)
 """
-from __future__ import annotations
 
 from sqlalchemy import inspect
 

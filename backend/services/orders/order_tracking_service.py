@@ -14,7 +14,6 @@ Fault states:
   Shipment Delayed, Shipment Failed, Shipment Rescheduled,
   Shipment Cancelled, Shipment Returned
 """
-from __future__ import annotations
 
 import hashlib
 import hmac

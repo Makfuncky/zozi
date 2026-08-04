@@ -4,7 +4,7 @@ AES-256-GCM Vault Service for Payment Gateway Credentials.
 Provides transparent application-level encryption for sensitive data like
 API keys, webhook secrets, and other credentials stored in the database.
 """
-from __future__ import annotations
+from typing import Set
 
 import base64
 import hashlib

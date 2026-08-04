@@ -6,7 +6,6 @@ Each entry in ``CURATED_COUNTRIES`` is the full country payload that
 
 Add new countries here as the platform expands into new markets.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 

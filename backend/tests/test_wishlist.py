@@ -1,5 +1,4 @@
 """Tests for wishlist functionality."""
-from __future__ import annotations
 
 import pytest
 import uuid

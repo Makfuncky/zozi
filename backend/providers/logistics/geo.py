@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Geo Provider
 ============
 IP address detection for customer location and country detection.
 Test file: backend/tests/_test_provider/test_geo.py
 """
+from __future__ import annotations
 import ipaddress
 import json
 import logging

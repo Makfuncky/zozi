@@ -1,5 +1,4 @@
 """Service methods for admin dashboard and fallback stats."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 from data.models import User as UserModel, Order as OrderModel, Payment, Payout as PayoutModel, Category as CategoryModel, CommissionGlobalConfig, Employee, Product as ProductModel

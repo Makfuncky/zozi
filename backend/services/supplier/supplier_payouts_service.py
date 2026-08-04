@@ -6,7 +6,6 @@ so the router stays a thin delegator (layering: LC1/W1).
 
 Routers must not perform ``db.query``/writes directly; they delegate here.
 """
-from __future__ import annotations
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session

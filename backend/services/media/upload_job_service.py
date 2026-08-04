@@ -6,7 +6,6 @@ Each upload gets a UploadJob record that progresses through:
 
 Every status change pushes a real-time update via WebSocket to the supplier's    connected clients (using the canonical UserConnectionManager from services.websocket_manager).
 """
-from __future__ import annotations
 
 import json
 import logging

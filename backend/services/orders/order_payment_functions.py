@@ -5,7 +5,6 @@ All payment functions are now imported from the service layer
 W3-compliant — no controller imports.
 """
 
-from __future__ import annotations
 
 from services.finance.payments_gateway_service import (  # noqa: TID252
     apply_order_status_change,

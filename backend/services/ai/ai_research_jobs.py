@@ -1,5 +1,4 @@
 """In-memory lightweight job tracker for async country AI research."""
-from __future__ import annotations
 
 import logging
 import time

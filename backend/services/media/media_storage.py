@@ -1,5 +1,4 @@
 """Media storage service for handling uploads, processing, and CDN integration."""
-from __future__ import annotations
 
 import hashlib
 import os

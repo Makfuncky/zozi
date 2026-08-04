@@ -11,7 +11,6 @@ Auth guards (``_require_admin`` / ``_require_full_admin`` /
 in-memory checks on ``current_user`` and moving them here would introduce an
 upward ``services -> controllers`` import.
 """
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, Optional

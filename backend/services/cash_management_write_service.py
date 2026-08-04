@@ -1,3 +1,4 @@
+from typing import List
 """Cash management service — DB read and write operations for cash accounts and transactions."""
 
 from typing import Optional

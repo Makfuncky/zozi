@@ -1,7 +1,6 @@
 """
 Logistics Partner Health Engine - Calculates performance scores for logistics partners.
 """
-from __future__ import annotations
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session

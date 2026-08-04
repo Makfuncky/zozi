@@ -3,6 +3,7 @@ Logistics Partner Controller — external logistics partner management.
 Partners get limited dashboard access to manage their assigned shipments.
 """
 from __future__ import annotations
+from typing import List, Set
 import json
 import logging
 import os
@@ -72,10 +73,10 @@ from utils.order_tracking import (
 from utils.auth import get_password_hash
 from utils.realtime import logistics_realtime_hub
 from data.services_write_helpers import (
-from services.logistics.logistics_read_service import get_logistics_partner_by_id, get_shipment_by_id, get_user_by_id
     commit_and_refresh,
     rollback_only,
 )
+from services.logistics.logistics_read_service import get_logistics_partner_by_id, get_shipment_by_id, get_user_by_id
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
@@ -104,8 +105,7 @@ def _next_partner_code(db: Session, user_id: int) -> str:
     candidate = base_code
     suffix = 1
     _db_logisticspartner_first_0(db, candidate, code)
-
-        candidate = f"{base_code}_{suffix}"
+    candidate = f"{base_code}_{suffix}"
     return candidate
 
 
@@ -1541,7 +1541,7 @@ def _partner_dashboard_shipments_query(current_user: dict, db: Session) -> tuple
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         return (
-            _db_shipment_query_32(db, assigned_partner_id, id, in_, partner, status)
+            _db_shipment_query_32(db, assigned_partner_id, id, in_, partner, status).all())
 
 
     raise HTTPException(status_code=403, detail="Logistics partner access required")
@@ -2628,7 +2628,7 @@ def get_partner_shipments(
     if partner_obj is not None and visible_order_ids:
         _lp_settlements: dict[int, LogisticsSettlement] = {
             cast(int, ls.order_id): ls
-            _db_logisticssettlement_all_52(db, cast, id, int, partner_id, partner_obj, visible_order_ids)
+            for ls in _db_logisticssettlement_all_52(db, cast, id, int, partner_id, partner_obj, visible_order_ids)
 
 
         }

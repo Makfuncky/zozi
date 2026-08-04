@@ -5,7 +5,6 @@ Provides decorators and utility functions that routers can use to:
 - Catch and format errors using the RFC 7807 Problem Details format
 - Standardize exception-to-status-code mapping
 """
-from __future__ import annotations
 
 import functools
 import logging

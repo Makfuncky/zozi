@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Image Provider
 ==============
 Image processing pipeline, delegates background removal to bg_remover.
 Test file: backend/tests/_test_provider/test_image.py
 """
+from __future__ import annotations
 import io
 import logging
 from typing import List, Dict, Any, Optional

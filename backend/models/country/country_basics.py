@@ -1,6 +1,4 @@
 from __future__ import annotations
-
-
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
 

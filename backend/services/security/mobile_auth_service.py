@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import secrets
 from datetime import datetime, timedelta

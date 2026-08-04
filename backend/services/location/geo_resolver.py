@@ -10,7 +10,6 @@ network lookup fails the caller gets a clear error so the UI can fall back to th
 browser Geolocation API rather than trusting a fabricated location.
 """
 
-from __future__ import annotations
 
 import json
 import logging

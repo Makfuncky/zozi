@@ -1,5 +1,4 @@
 """Tests for API versioning utilities."""
-from __future__ import annotations
 import pytest
 
 from utils.versioning import (

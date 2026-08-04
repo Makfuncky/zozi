@@ -7,7 +7,6 @@ stable ``variant_key`` so uploads are idempotent: re-running the same payload
 neither creates duplicate rows nor churns primary-key ids (which would orphan
 ``order_items.variant_id`` references).
 """
-from __future__ import annotations
 
 import hashlib
 

@@ -1,5 +1,4 @@
 """Money utilities."""
-from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any

@@ -1,5 +1,4 @@
 """Service methods for coupon read operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models import Coupon, CouponUsage
 
@@ -38,5 +37,5 @@ def apply_coupon_to_order(db: Session, coupon_id: int, user_id: int, order_id: i
 
 
 def count_coupon_usage(db: Session, coupon_id: int) -> int:
-    """Count how many times a coupon has been used — delegated from controller."""
+    """Count how many times a coupon has been used â€” delegated from controller."""
     return db.query(func.count(CouponUsage.id)).filter(CouponUsage.coupon_id == coupon_id).scalar() or 0

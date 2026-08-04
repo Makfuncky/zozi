@@ -25,7 +25,6 @@ Columns touched:
     media_assets.file_url
     chat_attachments.url
 """
-from __future__ import annotations
 
 import argparse
 import logging

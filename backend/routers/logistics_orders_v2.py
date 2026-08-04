@@ -2,6 +2,7 @@
 Logistics Partner Order Management Router — full lifecycle.
 """
 from __future__ import annotations
+from typing import List
 
 import logging
 from typing import Optional

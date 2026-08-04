@@ -10,7 +10,6 @@ Orchestrates periodic finance automation tasks:
 
 All functions are thin orchestration layers over domain services.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, date, timedelta

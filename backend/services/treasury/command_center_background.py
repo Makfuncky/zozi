@@ -2,7 +2,6 @@
 
 This module provides background job execution for the Command Center dashboard.
 """
-from __future__ import annotations
 
 from typing import Any
 

@@ -16,7 +16,6 @@ the SQLite/Postgres switch in ``db/database.py``:
 Nothing in the recovered codebase imports this module yet; it is the
 infrastructure the media/P0-A refactor is meant to route through.
 """
-from __future__ import annotations
 
 import abc
 import os

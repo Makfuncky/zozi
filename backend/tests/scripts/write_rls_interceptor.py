@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Generate and write the complete rls_interceptor.py file."""
-from __future__ import annotations
+from typing import Any
 
 import sys
 from pathlib import Path

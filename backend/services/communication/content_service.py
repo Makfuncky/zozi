@@ -1,3 +1,4 @@
+
 """
 Content services for the Dynamic Supplier Upload flow (Step 6):
 
@@ -10,7 +11,6 @@ Content services for the Dynamic Supplier Upload flow (Step 6):
 Both are intentionally dependency-free and safe to call from the request path.
 """
 
-from __future__ import annotations
 
 import logging
 import re

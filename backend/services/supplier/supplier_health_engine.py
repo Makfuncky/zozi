@@ -1,7 +1,6 @@
 """
 Supplier Health Engine - Calculates trust scores and health metrics for suppliers.
 """
-from __future__ import annotations
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from decimal import Decimal

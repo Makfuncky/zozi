@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Finance AI Provider
 ==================
 AI analysis for finance tasks including email parsing, bill extraction, and reconciliation.
 Test file: backend/tests/_test_provider/test_finance_ai.py
 """
+from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional

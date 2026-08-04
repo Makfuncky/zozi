@@ -16,7 +16,6 @@ Copy source of the config asset:
 ``Working_API/zozi_ai_upload_session/zozi_variant_config.json``
 """
 
-from __future__ import annotations
 
 import io
 import json

@@ -1,7 +1,6 @@
 """
 Notification Engine 2.0 - Multi-channel notification system with templates and localization.
 """
-from __future__ import annotations
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from enum import Enum

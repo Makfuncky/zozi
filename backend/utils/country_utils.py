@@ -4,7 +4,6 @@ Pure helper functions for country code normalization.
 This module provides country code utilities without any DB or service dependencies.
 """
 
-from __future__ import annotations
 
 
 _COUNTRY_CODE_ALIASES: dict[str, str] = {

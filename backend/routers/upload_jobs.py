@@ -8,6 +8,7 @@ Provides endpoints for:
   - WS   /ws/upload-jobs       — real-time WebSocket stream of job updates
 """
 from __future__ import annotations
+from typing import List
 
 from typing import Optional
 

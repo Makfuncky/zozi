@@ -14,7 +14,6 @@ Sub-tree queries use a LIKE on the leading path, e.g. descendants of id=1:
     WHERE path LIKE '/1/%'
 No recursive CTE required.
 """
-from __future__ import annotations
 
 from sqlalchemy.orm import Session
 

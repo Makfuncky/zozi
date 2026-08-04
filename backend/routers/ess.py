@@ -21,6 +21,7 @@ from data.models_employee_models import Employee
 from services.employee_activity_logger import log_activity
 from services.hr.employee_write_service import get_employee_by_user_id, update_employee
 
+from services.write_helpers import commit_only
 logger = logging.getLogger(__name__)
 router = APIRouter()
 

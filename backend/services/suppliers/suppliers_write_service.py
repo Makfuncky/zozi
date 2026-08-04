@@ -1,5 +1,5 @@
 """Service methods for supplier write operations."""
-from __future__ import annotations
+from typing import List
 from sqlalchemy.orm import Session
 from data.models import SupplierProfile
 from services.core.users_write_service import get_user_by_id

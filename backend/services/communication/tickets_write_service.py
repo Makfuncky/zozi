@@ -1,3 +1,6 @@
+from data.models import Order
+from data.models import Invoice
+from typing import Any, List
 """Tickets write service — DB write operations for ticket entities."""
 
 from typing import Optional
@@ -190,11 +193,6 @@ def count_invoice(db: Session, **filters) -> int:
     return query.count()
 
 
-def list_unknown(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Unknown]:
-    query = db.query(Unknown)
-    for key, value in filters.items():
-        query = query.filter(getattr(Unknown, key) == value)
-    return query.offset(skip).limit(limit).all()
 
 
 def list_invoice(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Invoice]:

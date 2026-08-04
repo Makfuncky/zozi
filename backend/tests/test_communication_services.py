@@ -1,5 +1,4 @@
 """Service-layer tests for internal communication, email gateway, and audit trail."""
-from __future__ import annotations
 
 import uuid
 from datetime import date

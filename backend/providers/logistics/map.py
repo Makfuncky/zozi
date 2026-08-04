@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Map Provider
 ============
 Map and location provider system.
 Test file: backend/tests/_test_provider/test_map.py
 """
+from __future__ import annotations
 import logging
 from typing import Optional, Tuple
 

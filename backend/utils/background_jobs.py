@@ -1,10 +1,10 @@
+
 """Lightweight background job execution with Redis-backed status storage.
 
 Supports per-kind concurrency limits, retry, dedicated ML worker pools,
 backpressure, job deduplication (idempotency keys), and distributed locking
 so heavy CPU/RAM work never starves the HTTP request path.
 """
-from __future__ import annotations
 
 import hashlib
 import json

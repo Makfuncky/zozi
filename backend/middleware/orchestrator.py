@@ -32,8 +32,8 @@ Usage:
     app = FastAPI()
     setup_middleware(app)
 """
-
 from __future__ import annotations
+
 
 import logging
 

@@ -12,7 +12,6 @@ fails fast whenever a country-aware table is added without an RLS mapping.
 Exit code is non-zero when gaps are found (use ``--info`` to downgrade gaps to
 advisory output without failing the run).
 """
-from __future__ import annotations
 
 import argparse
 import json

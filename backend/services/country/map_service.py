@@ -2,7 +2,6 @@
 
 Provides map rendering, city markers, zone management, and geographic data.
 """
-from __future__ import annotations
 
 import logging
 from typing import Optional, List, Dict, Any

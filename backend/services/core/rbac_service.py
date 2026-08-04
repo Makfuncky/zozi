@@ -1,5 +1,4 @@
 """Role-Based Access Control service with delegation workflows."""
-from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional, List, Dict, Any

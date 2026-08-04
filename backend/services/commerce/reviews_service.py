@@ -5,7 +5,6 @@ Controllers/routers delegate all ``db.query(...)`` reads and
 ``session.add()/commit()`` writes here so the layer contract
 (reads/writes via services) is honoured by the architecture audit.
 """
-from __future__ import annotations
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -85,7 +84,7 @@ def delete_review(db: Session, review_id: int) -> Review:
 
 
 def list_review_ratings(db: Session, product_id: int) -> list:
-    """Return all rating values for a product — delegated from controller."""
+    """Return all rating values for a product â€” delegated from controller."""
     return (
         db.query(Review.rating)
         .filter(Review.product_id == product_id, Review.is_deleted == False)  # noqa: E712

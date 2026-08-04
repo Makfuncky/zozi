@@ -2,7 +2,6 @@
 Prometheus metrics instrumentation for Zozi API.
 Exposes /metrics endpoint and auto-instruments FastAPI endpoints.
 """
-from __future__ import annotations
 
 from fastapi import FastAPI
 try:

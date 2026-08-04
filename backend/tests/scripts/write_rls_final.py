@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Generate rls_interceptor.py directly using Python."""
-from __future__ import annotations
 import sys
 import os
 from pathlib import Path

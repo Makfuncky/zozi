@@ -1,5 +1,4 @@
 """Service methods for ticket read operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models import Ticket, TicketReply
 

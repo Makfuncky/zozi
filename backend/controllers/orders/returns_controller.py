@@ -16,11 +16,10 @@ from data.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierRetur
 from utils.audit_log import audit_log, AuditAction
 from data.services_orders import _order_holds_inventory, apply_order_status_change
 from utils.config import settings
-from data.services_write_helpers import (
-from services.orders.orders_router_service import get_return_request_by_id
-    add_and_flush,
+from data.services_write_helpers import (    add_and_flush,
     commit_and_refresh,
 )
+from services.orders.orders_router_service import get_return_by_id as get_return_request_by_id
 
 
 logger = logging.getLogger(__name__)

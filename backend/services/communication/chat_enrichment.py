@@ -1,5 +1,4 @@
 """Chat Enrichment — typing indicators, emoji reactions, legal hold, voice notes, message edit/delete."""
-from __future__ import annotations
 
 import json
 import logging

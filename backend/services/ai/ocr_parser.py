@@ -10,7 +10,6 @@ This keeps the "scan bill -> expense" automation functional offline while still
 producing a confident, reviewable result. The UI shows the extracted values for
 the admin to confirm before posting.
 """
-from __future__ import annotations
 
 import logging
 import re

@@ -2,7 +2,7 @@
 
 Provides consistent versioned API routing and versioning utilities.
 """
-from __future__ import annotations
+from typing import List
 
 import logging
 from typing import Dict, Any, Optional

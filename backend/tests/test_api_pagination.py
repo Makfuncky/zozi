@@ -3,7 +3,6 @@
 Verifies that the admin and supplier list endpoints return
 consistent paginated response envelopes after our refactoring.
 """
-from __future__ import annotations
 import pytest
 
 pytestmark = pytest.mark.integration

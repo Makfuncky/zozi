@@ -3,7 +3,6 @@
 This service detects orders that lack corresponding journal entries in the GL.
 Moved from treasury_engine to finance domain as it's finance reconciliation functionality.
 """
-from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal

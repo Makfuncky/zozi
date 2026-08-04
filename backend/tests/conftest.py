@@ -23,7 +23,7 @@ These fixtures intentionally avoid importing ``main`` at collection time (the
 app eagerly loads every router); ``app`` / ``client`` import lazily so that
 ``pytest --co`` stays fast and resilient to unrelated router failures.
 """
-from __future__ import annotations
+from typing import Set
 
 import os
 import tempfile

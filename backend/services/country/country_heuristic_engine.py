@@ -10,7 +10,6 @@ economic indicators and regional rules. Matches the scoring formulas from
 the Multi_Country_System.txt blueprint exactly.
 """
 
-from __future__ import annotations
 
 import logging
 from typing import Any

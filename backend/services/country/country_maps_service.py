@@ -1,5 +1,5 @@
 """Service methods for country maps and staff data access."""
-from __future__ import annotations
+from typing import List
 import json
 from sqlalchemy.orm import Session
 from data.models import CountryCity, CountryStaffAssignment

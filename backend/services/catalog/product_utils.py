@@ -5,7 +5,6 @@ Canonical home for product-related utilities that were previously scattered
 in controllers/products_controller.py. Other controllers and routers now
 import from here instead of crossing the controller→controller boundary.
 """
-from __future__ import annotations
 
 import hashlib
 import json

@@ -1,3 +1,4 @@
+from typing import List
 """
 Admin Fallback Router — non-country-scoped route aliases.
 

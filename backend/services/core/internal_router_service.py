@@ -2,7 +2,6 @@
 
 Service functions accept db: Session as first parameter for FastAPI dependency injection.
 """
-from __future__ import annotations
 
 import csv
 import io

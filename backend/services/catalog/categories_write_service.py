@@ -1,5 +1,4 @@
 """Service methods for category write operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models import Category
 from data.services_write_helpers import add_and_flush, delete_and_flush, commit_and_refresh

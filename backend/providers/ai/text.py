@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Text Provider
 =============
 Text processing, embedding, and Ollama chat integration.
 Test file: backend/tests/_test_provider/test_text.py
 """
+from __future__ import annotations
 import base64
 import json
 import logging

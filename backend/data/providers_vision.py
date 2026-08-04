@@ -1,4 +1,4 @@
-﻿import providers.vision as _m
+import providers.vision as _m
 for _n in vars(_m):
     if not _n.startswith('_'):
         globals()[_n] = getattr(_m, _n)

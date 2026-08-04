@@ -8,7 +8,6 @@ minimum order age, return windows, and product restrictions.
 
 Add entries here as new countries are onboarded.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 

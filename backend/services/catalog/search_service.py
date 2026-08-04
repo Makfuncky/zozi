@@ -1,4 +1,4 @@
-"""Search Service — natural-language query parsing and smart product search logic.
+"""Search Service â€” natural-language query parsing and smart product search logic.
 
 Service layer for search functionality to avoid controller imports in other controllers.
 """
@@ -432,7 +432,7 @@ def smart_search_from_parsed(
     }
 
 def fetch_brands_for_search(db: Session) -> list[str]:
-    """Fetch distinct product brands for search autocomplete � delegated from controller."""
+    """Fetch distinct product brands for search autocomplete — delegated from controller."""
     brand_rows = (
         db.query(Product.brand)
         .filter(
@@ -453,7 +453,7 @@ def fetch_brands_for_search(db: Session) -> list[str]:
 
 
 def compute_category_weights(db: Session, user_id: int, normalized_recent_categories: list[str]) -> tuple[dict, Optional[float], Optional[float], set]:
-    """Compute weighted categories from purchase history � delegated from controller."""
+    """Compute weighted categories from purchase history — delegated from controller."""
     from sqlalchemy import func
     from catalog.models import Order, OrderItem, Wishlist, Product as ProdModel
     

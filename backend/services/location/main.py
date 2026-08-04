@@ -19,7 +19,6 @@ No coordinates are ever fabricated. When a lookup is impossible a 502 with a cle
 message is returned so the frontend can rely on the browser Geolocation API.
 """
 
-from __future__ import annotations
 
 import logging
 import os

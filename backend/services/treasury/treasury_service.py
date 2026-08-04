@@ -1,5 +1,4 @@
 """Treasury Controller for EOSB, Payroll, and Double-Entry Accounting."""
-from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Dict, Any

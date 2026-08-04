@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Country Provider
 ================
 Country details search AI work and system.
 Test file: backend/tests/_test_provider/test_country.py
 """
+from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 

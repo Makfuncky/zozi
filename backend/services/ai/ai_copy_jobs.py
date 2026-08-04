@@ -10,7 +10,6 @@ after ``_JOB_TTL_SECONDS`` so memory stays bounded even with many suppliers.
 For a multi-worker / multi-process deployment this should be swapped for Redis,
 but the public API (enqueue / get) stays the same.
 """
-from __future__ import annotations
 
 import asyncio
 import logging

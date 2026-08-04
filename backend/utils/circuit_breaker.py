@@ -3,7 +3,6 @@
 Provides circuit breaker functionality for external dependencies
 and service integration points.
 """
-from __future__ import annotations
 
 import asyncio
 import logging

@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Voice to Text Provider
 ======================
 Voice processing for product and finance commands.
 Test file: backend/tests/_test_provider/test_voice_to_text.py
 """
+from __future__ import annotations
 import base64
 import json
 import logging

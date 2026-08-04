@@ -5,7 +5,7 @@ Handles:
   - #14: Smart Payout Batch Generation (nightly cron gathers eligible settlements)
   - #15: Supplier Self-Approval (SMS/email link for supplier approval)
 """
-from __future__ import annotations
+from typing import Any
 
 import logging
 import uuid
@@ -366,11 +366,11 @@ def _db_transactionledger_all_1(db: Session, order_id: Any) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_suppliersettlement_query_2(db: Session) -> Optional[Any]:
-    return for row in db.query(SupplierSettlement)
+    return db.query(SupplierSettlement).all()
     """Read-only query delegated from controller."""
 
 def _db_logisticssettlement_query_3(db: Session) -> Optional[Any]:
-    return for row in db.query(LogisticsSettlement)
+    return db.query(LogisticsSettlement).all()
     """Read-only query delegated from controller."""
 
 def _db_suppliersettlement_all_4(db: Session, payout_id: Any) -> Optional[Any]:

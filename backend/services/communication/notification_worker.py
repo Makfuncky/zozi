@@ -15,7 +15,6 @@ NOTIFICATION_WORKER_POLL_INTERVAL : int
 NOTIFICATION_WORKER_IDLE_SHUTDOWN : int
     Seconds of idle time before the worker exits (default 0 = never).
 """
-from __future__ import annotations
 
 import logging
 import os

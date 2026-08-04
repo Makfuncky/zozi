@@ -8,7 +8,6 @@ checkpointed rows, and restoring such a copy silently drops data.
 This helper checkpoints the WAL into the main database and copies the WAL/SHM
 companions too, so every script backup is consistent.
 """
-from __future__ import annotations
 
 import datetime as _dt
 import os

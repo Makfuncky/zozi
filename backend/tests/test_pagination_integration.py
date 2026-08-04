@@ -1,5 +1,4 @@
 """Tests for paginated response integration in routers and utilities."""
-from __future__ import annotations
 import pytest
 
 from utils.pagination import (

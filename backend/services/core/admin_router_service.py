@@ -2,7 +2,6 @@
 Admin Router Service — Database operations for admin routers.
 All SQLAlchemy DB access is centralized here.
 """
-from __future__ import annotations
 
 from typing import Optional, List, Any
 

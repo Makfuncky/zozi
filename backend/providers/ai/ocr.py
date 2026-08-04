@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 OCR Provider
 ============
 Bill/receipt OCR and CSV statement parsing.
 Test file: backend/tests/_test_provider/test_ocr.py
 """
+from __future__ import annotations
 import io
 import logging
 from typing import Dict, Any, Optional

@@ -1,5 +1,4 @@
 """Async AI enrichment service for country research qualitative modules."""
-from __future__ import annotations
 
 import json
 import logging

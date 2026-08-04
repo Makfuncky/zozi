@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from typing import Any
 import sys
 import os
 sys.path.insert(0, '.')

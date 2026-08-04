@@ -1,3 +1,4 @@
+from typing import Set
 """
 WebSocket Real-Time Chat Service
 Features: Entity-scoped rooms, live messaging, typing indicators, read receipts

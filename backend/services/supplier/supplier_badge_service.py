@@ -5,7 +5,6 @@ Moved out of controllers/supplier_controller.py to break the
 services -> controllers forbidden dependency edge (DG violation).
 All badge/credibility DB-write logic now lives here in the service layer.
 """
-from __future__ import annotations
 
 import json
 import logging

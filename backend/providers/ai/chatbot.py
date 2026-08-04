@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Chatbot Provider
 ================
 AI-powered chatbot with vectorization for product search and customer chat.
 Test file: backend/tests/_test_provider/test_chatbot.py
 """
+from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 

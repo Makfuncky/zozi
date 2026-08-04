@@ -1,5 +1,4 @@
 """Service methods for user write operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models import User, Referral
 from data.models import ReferralPointEvent

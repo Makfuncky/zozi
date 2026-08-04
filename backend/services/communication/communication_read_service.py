@@ -1,5 +1,4 @@
 """Service methods for unified inbox communication queries."""
-from __future__ import annotations
 from sqlalchemy import Row, text
 from sqlalchemy.orm import Session
 from typing import Any

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON
 from sqlalchemy.orm import relationship, synonym
 from . import Base

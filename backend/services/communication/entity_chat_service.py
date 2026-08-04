@@ -1,5 +1,4 @@
 """Service methods for entity chat data access."""
-from __future__ import annotations
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from data.models_core import EntityChatThread, EntityChatMessage

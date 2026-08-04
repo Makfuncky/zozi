@@ -4,7 +4,6 @@ All postings go through the canonical immutable ledger
 (`general_ledger_service.create_journal_entry`) so balances and the audit trail
 stay consistent.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, date

@@ -1,5 +1,4 @@
 """Tests for shopping cart."""
-from __future__ import annotations
 
 import pytest
 import uuid

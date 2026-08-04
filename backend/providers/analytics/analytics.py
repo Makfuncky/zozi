@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Analytics Provider
 ==================
 AI analysis for Admin analytics.
 Test file: backend/tests/_test_provider/test_analytics.py
 """
+from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional

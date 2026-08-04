@@ -5,7 +5,7 @@ Canonical home for entity lifecycle operations that were previously in
 controllers/admin/misc.py. Routers and controllers now import from here
 instead of crossing the controller→controller boundary.
 """
-from __future__ import annotations
+from typing import Any
 
 from datetime import datetime
 from typing import Optional
@@ -348,11 +348,6 @@ def get_auditlog_first(db: Session, **filters) -> Optional[AuditLog]:
     return query.limit(1).first()
 
 
-def list_unknown(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Unknown]:
-    query = db.query(Unknown)
-    for key, value in filters.items():
-        query = query.filter(getattr(Unknown, key) == value)
-    return query.offset(skip).limit(limit).all()
 
 
 def get_user_first(db: Session, **filters) -> Optional[User]:
@@ -510,7 +505,7 @@ def _db_user_query_1(db: Session) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_supplierprofile_all_2(db: Session, in_: Any, user_id: Any, user_ids: Any) -> list[Any]:
-    return for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(user_ids)).all()
+    return db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(user_ids)).all()
     """Read-only query delegated from controller."""
 
 def _db_order_all_3(db: Session, user_id: Any) -> Optional[Any]:
@@ -519,11 +514,11 @@ def _db_order_all_3(db: Session, user_id: Any) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_user_first_4(db: Session, email: Any, payload: Any) -> Optional[Any]:
-    return if db.query(User).filter(User.email == payload.email).first(): raise HTTPException(status_code=400, detail="Email already registered")
+    if db.query(User).filter(User.email == payload.email).first(): raise HTTPException(status_code=400, detail="Email already registered")
     """Read-only query delegated from controller."""
 
 def _db_user_first_5(db: Session, payload: Any, username: Any) -> Optional[Any]:
-    return if db.query(User).filter(User.username == payload.username).first(): raise HTTPException(status_code=400, detail="Username already taken")
+    if db.query(User).filter(User.username == payload.username).first(): raise HTTPException(status_code=400, detail="Username already taken")
     """Read-only query delegated from controller."""
 
 def _db_user_first_6(db: Session, id: Any, in_: Any, role: Any, tuple: Any, user_id: Any) -> Optional[Any]:

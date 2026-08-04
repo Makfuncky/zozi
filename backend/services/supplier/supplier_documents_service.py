@@ -6,7 +6,6 @@ Read/write helpers for the supplier KYC document endpoints.
 This module owns the DB work that previously lived in ``routers/supplier/
 supplier_documents.py`` so the router stays a thin delegator (layering: LC1/W1).
 """
-from __future__ import annotations
 
 from fastapi import HTTPException
 

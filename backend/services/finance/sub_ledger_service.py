@@ -4,7 +4,6 @@ Bridges GL account balances to entity-level outstanding amounts.
 Allows drill-down from GL account 1030 (AR) and 2010 (AP) to individual
 customer/supplier sub-ledger entries.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime

@@ -18,7 +18,6 @@ Design decisions:
     notification via NotificationEngine.
 """
 
-from __future__ import annotations
 
 import logging
 from decimal import Decimal

@@ -1,5 +1,5 @@
 """Supplier order operations."""
-from controllers.supplier_controller import (  # noqa: F401
+from controllers.supplier.supplier_controller import (  # noqa: F401
     get_supplier_orders,
     update_supplier_order_status,
     get_supplier_order_detail,

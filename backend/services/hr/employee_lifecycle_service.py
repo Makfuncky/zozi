@@ -2,7 +2,6 @@
 Leverages existing employee_models and the gap-table migration for
 onboarding_pipelines, onboarding_steps, and offboarding_cases.
 """
-from __future__ import annotations
 
 __all__ = [
     "create_onboarding_pipeline",

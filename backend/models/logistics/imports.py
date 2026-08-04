@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from db.mixins import AuditMixin, SoftDeleteMixin
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index

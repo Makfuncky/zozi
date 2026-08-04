@@ -1,5 +1,5 @@
 """FastAPI auth dependencies: resolve the current user from the bearer token."""
-from __future__ import annotations
+from typing import Dict
 
 import logging
 from datetime import datetime

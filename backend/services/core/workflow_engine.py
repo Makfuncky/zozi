@@ -1,7 +1,6 @@
 """
 Workflow Automation Engine - Configurable business process workflows.
 """
-from __future__ import annotations
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from enum import Enum

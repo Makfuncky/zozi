@@ -1,5 +1,4 @@
 """Service methods for user read operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 from data.models import User

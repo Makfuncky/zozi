@@ -7,7 +7,6 @@ product categories (e.g. 5 % on food in SA, 0 % on books).  This
 module provides those overrides so the auto-populate engine can
 apply them during country configuration.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 

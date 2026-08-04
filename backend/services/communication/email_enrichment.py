@@ -1,5 +1,4 @@
 """Email Enrichment — smart addressing, DLP scanning, threading, notifications."""
-from __future__ import annotations
 
 import json
 import logging

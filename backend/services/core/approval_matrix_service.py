@@ -1,5 +1,4 @@
 """Employee hierarchy approval matrix service."""
-from __future__ import annotations
 
 __all__ = [
     "APPROVAL_RULES",

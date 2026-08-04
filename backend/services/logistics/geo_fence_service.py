@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from typing import Optional, List, Tuple
 from math import radians, cos, sin, sqrt, atan2

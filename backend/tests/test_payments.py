@@ -1,5 +1,4 @@
 """Tests for payment processing and webhooks."""
-from __future__ import annotations
 
 import hmac
 import hashlib

@@ -9,12 +9,11 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from data.models import Notification, SupplierDispute, SupplierNotificationPreference
-from data.services_write_helpers import (
-from services.orders.orders_router_service import get_supplier_dispute_by_id
-    add_and_flush,
+from data.services_write_helpers import (    add_and_flush,
     commit_and_refresh,
     commit_only,
 )
+from services.orders.orders_router_service import get_supplierdispute_by_id as get_supplier_dispute_by_id
 
 
 _ALLOWED_DISPUTE_TYPES = {"return", "verification", "invoice", "payout", "other"}

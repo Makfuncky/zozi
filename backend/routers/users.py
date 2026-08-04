@@ -1,3 +1,4 @@
+from typing import List
 """Users router â€” profile CRUD, admin user management."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session

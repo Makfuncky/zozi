@@ -3,7 +3,6 @@
 Moved from db/treasury_seeder.py to services/treasury/ to fix CIR1 violation.
 The seeding logic is business functionality, not db infrastructure.
 """
-from __future__ import annotations
 
 import logging
 from decimal import Decimal

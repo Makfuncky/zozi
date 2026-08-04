@@ -8,7 +8,6 @@ All SQLAlchemy DB access is centralized here for the routers:
 - incident
 - risk
 """
-from __future__ import annotations
 
 import hashlib
 import json

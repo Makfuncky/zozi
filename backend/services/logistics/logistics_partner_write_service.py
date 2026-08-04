@@ -1,3 +1,4 @@
+from typing import List
 """Logistics partner service — DB read and write operations for logistics partner entities."""
 import logging
 from datetime import datetime, timezone

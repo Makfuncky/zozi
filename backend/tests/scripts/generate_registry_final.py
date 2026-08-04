@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Generate COUNTRY_AWARE_TABLES from ORM models."""
-from __future__ import annotations
 
 import sys
 from pathlib import Path

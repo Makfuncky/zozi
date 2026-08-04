@@ -1,6 +1,6 @@
 """WebSocket endpoints for real-time chat, user notifications, and presence."""
-
 from __future__ import annotations
+
 
 import json
 import logging
@@ -48,8 +48,7 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket, room_id: str, user_id: int, user_name: str = ""):
         await websocket.accept()
         (
-            self._rooms.setdefault(room_id, {}).setdefault(user_id, set())
-            |= {websocket}
+            self._rooms.setdefault(room_id, {}).setdefault(user_id, set()).add(websocket)
         )
         self._user_info[user_id] = {
             "user_id": user_id,
@@ -58,7 +57,7 @@ class ConnectionManager:
             "last_seen": datetime.now(timezone.utc).isoformat(),
             "rooms": set(),
         }
-        self._user_info[user_id]["rooms"] |= {room_id}
+        self._user_info[user_id]["rooms"].add(room_id)
 
     def disconnect(self, websocket: WebSocket, room_id: str, user_id: int):
         user_conns = self._rooms.get(room_id, {}).get(user_id, set())
@@ -82,14 +81,14 @@ class ConnectionManager:
                 try:
                     await ws.send_json(message)
                 except Exception:
-                    dead |= {ws}
+                    dead.add(ws)
         for ws in dead:
             for uid, conns in self._rooms.get(room_id, {}).items():
                 conns.discard(ws)
 
     def set_typing(self, room_id: str, user_id: int, is_typing: bool):
         if is_typing:
-            self._typing.setdefault(room_id, set()) |= {user_id}
+            self._typing.setdefault(room_id, set()).add(user_id)
         else:
             self._typing.get(room_id, set()).discard(user_id)
             if not self._typing.get(room_id):

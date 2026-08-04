@@ -2,7 +2,6 @@
 
 Provides real-time location tracking, GPS updates, and tracking visualization.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime

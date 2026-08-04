@@ -1,5 +1,5 @@
 """
-Products Controller â€�? all product CRUD and supplier upload business logic.
+Products Controller â€�? all product CRUD and supplier upload business logic.
 """
 import html
 import hashlib

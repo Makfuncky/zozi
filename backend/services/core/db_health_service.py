@@ -1,5 +1,4 @@
 """Database health monitoring service."""
-from __future__ import annotations
 
 from typing import Any, cast
 from sqlalchemy import text, func, select, Table, MetaData

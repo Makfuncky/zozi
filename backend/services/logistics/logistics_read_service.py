@@ -1,7 +1,6 @@
 """
 Automatic service for logistics_read_service - DB read operations delegated from controllers.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 from sqlalchemy.orm import Session
@@ -466,23 +465,23 @@ def _db_logisticspartnerservicearea_query_24(db: Session) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_25(db: Session) -> Optional[Any]:
-    return return db.query(Shipment), None
+    return db.query(Shipment), None
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_26(db: Session, assigned_partner_id: Any, id: Any, partner: Any) -> Optional[Any]:
-    return return db.query(Shipment).filter(Shipment.assigned_partner_id == partner.id), partner
+    return db.query(Shipment).filter(Shipment.assigned_partner_id == partner.id), partner
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_27(db: Session) -> Optional[Any]:
-    return return db.query(Shipment), None
+    return db.query(Shipment), None
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_28(db: Session, id: Any) -> Optional[Any]:
-    return return db.query(Shipment).filter(Shipment.id == -1), partner
+    return db.query(Shipment).filter(Shipment.id == -1), partner
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_29(db: Session, assigned_clause: Any, pickup_ready_clause: Any) -> Optional[Any]:
-    return return db.query(Shipment).filter(pickup_ready_clause | assigned_clause), partner
+    return db.query(Shipment).filter(pickup_ready_clause | assigned_clause), partner
     """Read-only query delegated from controller."""
 
 def _db_shipmentconfirmation_query_30(db: Session) -> Optional[Any]:
@@ -490,11 +489,11 @@ def _db_shipmentconfirmation_query_30(db: Session) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_31(db: Session) -> Optional[Any]:
-    return return db.query(Shipment), None
+    return db.query(Shipment), None
     """Read-only query delegated from controller."""
 
 def _db_shipment_query_32(db: Session, assigned_partner_id: Any, id: Any, in_: Any, partner: Any, status: Any) -> Optional[Any]:
-    return db.query(Shipment).filter( Shipment.assigned_partner_id == partner.id, Shipment.status.in_((PARTNER_PICKUP_READY_STATUS, *PARTNER_VISIBLE_ASSIGNED_STATUSES)), ), partner, )
+    return db.query(Shipment).filter( Shipment.assigned_partner_id == partner.id, Shipment.status.in_((PARTNER_PICKUP_READY_STATUS, *PARTNER_VISIBLE_ASSIGNED_STATUSES)) ), partner
     """Read-only query delegated from controller."""
 
 def _db_logisticspartnerpayout_query_33(db: Session) -> Optional[Any]:
@@ -582,7 +581,8 @@ def _db_supplierprofile_query_51(db: Session) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_logisticssettlement_all_52(db: Session, cast: Any, id: Any, int: Any, partner_id: Any, partner_obj: Any, visible_order_ids: Any) -> list[Any]:
-    return for ls in db.query(LogisticsSettlement).filter( LogisticsSettlement.partner_id == cast(int, partner_obj.id), LogisticsSettlement.order_id.in_(visible_order_ids), ).all()
+    result = db.query(LogisticsSettlement).filter( LogisticsSettlement.partner_id == cast(int, partner_obj.id), LogisticsSettlement.order_id.in_(visible_order_ids), ).all().all()
+    return result
     """Read-only query delegated from controller."""
 
 def _db_order_first_53(db: Session, id: Any, order_id: Any, shipment: Any) -> Optional[Any]:
@@ -599,8 +599,8 @@ def _db_orderlogisticsallocation_query_55(db: Session, partner_id: Any, resolved
     return result
     """Read-only query delegated from controller."""
 
-def _db_logisticspartnerservicearea_query_56(db: Session, True: Any, approval_status: Any, approved: Any, is_active: Any, noqa: Any, partner_id: Any, resolved_partner_id: Any) -> Optional[Any]:
-    result = db.query(LogisticsPartnerServiceArea).options(selectinload(LogisticsPartnerServiceArea.partner)).filter( LogisticsPartnerServiceArea.partner_id == resolved_partner_id, LogisticsPartnerServiceArea.approval_status == "approved", LogisticsPartnerServiceArea.is_active == True,  # noqa: E712 )
+def _db_logisticspartnerservicearea_query_56(db: Session, true_val: Any, approval_status: Any, approved: Any, is_active: Any, noqa: Any, partner_id: Any, resolved_partner_id: Any) -> Optional[Any]:
+    result = db.query(LogisticsPartnerServiceArea).options(selectinload(LogisticsPartnerServiceArea.partner)).filter( LogisticsPartnerServiceArea.partner_id == resolved_partner_id, LogisticsPartnerServiceArea.approval_status == "approved", LogisticsPartnerServiceArea.is_active == True, )
     return result
     """Read-only query delegated from controller."""
 

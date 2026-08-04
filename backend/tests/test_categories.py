@@ -1,5 +1,4 @@
 """Tests for category management."""
-from __future__ import annotations
 
 import pytest
 import uuid

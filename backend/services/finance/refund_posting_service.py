@@ -11,7 +11,6 @@ Refund Journal Entries:
   - VAT reversal: Dr 2040 VAT Payable / Cr 2030 Customer Refund Reserve
   - Supplier deduction: Dr 2010 Supplier Payable / Cr 2030 Customer Refund Reserve
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime

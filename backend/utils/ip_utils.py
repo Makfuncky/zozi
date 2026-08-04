@@ -2,7 +2,6 @@
 Centralized IP address extraction and validation utilities.
 Handles proxy headers, private IPs, and trusted proxy detection.
 """
-from __future__ import annotations
 
 import ipaddress
 import logging

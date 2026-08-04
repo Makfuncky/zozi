@@ -1,5 +1,5 @@
 """
-Auth Controller — all authentication and account business logic.
+Auth Controller â€” all authentication and account business logic.
 
 The `get_current_user` dependency lives here and is re-exported by
 `routers/auth.py` so that all existing `from routers.auth import get_current_user`
@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     User,
     UserDevice,
     UserBrowsingHistory,
@@ -33,7 +33,7 @@ from data.models import (
     LogisticsPartner,
     ReferralPointEvent,
 )
-from data.schemas import (
+from db.schemas import (
     UserCreate,
     User as UserSchema,
     ChangePasswordRequest,
@@ -42,7 +42,7 @@ from data.schemas import (
     ReferralPointEventSchema,
     ReferralShareRequest,
 )
-from data.services_database import get_db
+from db.database import get_db
 from utils.cache import cache_get_json, cache_set_json, cache_delete
 from utils.auth import (
     verify_password,
@@ -80,8 +80,7 @@ from utils.email_service import (
 from utils.staff_permissions import default_permissions_for_role, sanitize_staff_permissions
 from utils.audit_log import audit_log, AuditAction
 
-from data.services_write_helpers import add_and_flush, commit_and_refresh, commit_only, flush_only, rollback_only
-from services.security.permissions_read_service import get_user_by_id
+from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, flush_only, rollback_only
 logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -110,13 +109,13 @@ def _next_logistics_partner_code(db: Session, user_id: int) -> str:
     base_code = f"LPAUTO{user_id}"
     candidate = base_code
     suffix = 1
-    _db_logisticspartner_first_0(db, candidate, code)
-
+    while db.query(LogisticsPartner).filter(LogisticsPartner.code == candidate).first():
+        suffix += 1
         candidate = f"{base_code}_{suffix}"
     return candidate
 
 
-# ── Pydantic models ───────────────────────────────────────────────────────────
+# â”€â”€ Pydantic models â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class ForgotPasswordRequest(BaseModel):
     email: str
@@ -188,9 +187,9 @@ def _normalize_customer_verification_when_gate_disabled(user: User, db: Session)
 
 def _resolve_user_from_subject(subject: str, db: Session) -> User | None:
     try:
-        _db_user_first_1(db, id, int, subject)
+        return db.query(User).filter(User.id == int(subject)).first()
     except (TypeError, ValueError):
-        _db_user_first_2(db, str, subject, username)
+        return db.query(User).filter(User.username == str(subject)).first()
 
 
 def _user_id(user: User | UserSchema) -> int:
@@ -221,6 +220,7 @@ def _user_profile_image(user: User | UserSchema) -> str | None:
     return cast(str | None, getattr(user, "profile_image"))
 
 
+
 def _user_effective_permissions(user: User) -> list[str]:
     role = _user_role(user)
     if role not in STAFF_ROLES:
@@ -228,7 +228,7 @@ def _user_effective_permissions(user: User) -> list[str]:
     assigned_permissions = sanitize_staff_permissions(getattr(user, "staff_permissions", None))
     if assigned_permissions:
         return assigned_permissions
-    from data.controllers_admin_controller import ROLE_PERMISSION_MAP
+    from controllers.admin_controller import ROLE_PERMISSION_MAP
 
     return sorted(ROLE_PERMISSION_MAP.get(role, set()))
 
@@ -292,7 +292,7 @@ def _generate_unique_referral_code(db: Session) -> str:
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     for _ in range(30):
         candidate = "".join(secrets.choice(alphabet) for _ in range(REFERRAL_CODE_LENGTH))
-        exists = _db_user_first_3(db, lower, referral_code)
+        exists = db.query(User).filter(func.lower(User.referral_code) == candidate.lower()).first()
         if not exists:
             return candidate
     raise HTTPException(status_code=500, detail="Unable to generate referral code")
@@ -352,13 +352,13 @@ def _user_public_payload(user: User | UserSchema) -> dict[str, Any]:
     return payload
 
 
-# ── Dependency ────────────────────────────────────────────────────────────────
+# â”€â”€ Dependency â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
-    """FastAPI dependency — resolves the current authenticated user from the JWT."""
+    """FastAPI dependency â€” resolves the current authenticated user from the JWT."""
     subject = verify_token(token)
     cache_key = f"auth:user:{subject}"
     cached = cache_get_json(cache_key)
@@ -399,7 +399,7 @@ def get_optional_user(
     token: str | None = Depends(oauth2_scheme_optional),
     db: Session = Depends(get_db),
 ):
-    """FastAPI dependency — resolves the current user from JWT, or returns None if unauthenticated."""
+    """FastAPI dependency â€” resolves the current user from JWT, or returns None if unauthenticated."""
     if not token:
         return None
     try:
@@ -445,7 +445,7 @@ def _find_user_for_login(identifier: str, db: Session) -> User | None:
         return None
 
     return (
-        _db_user_query_4(db)
+        db.query(User)
         .filter(
             (func.lower(User.email) == normalized.lower())
             | (func.lower(User.username) == normalized.lower())
@@ -464,7 +464,7 @@ def _record_device_fingerprint(request: Request | None, user_id: int, db: Sessio
     ip = get_request_ip(request)
     ua = (request.headers.get("user-agent") or "")[:200]
     existing = (
-        _db_userdevice_query_5(db)
+        db.query(UserDevice)
         .filter(
             UserDevice.user_id == user_id,
             UserDevice.fingerprint_hash == fp,
@@ -486,9 +486,10 @@ def _record_device_fingerprint(request: Request | None, user_id: int, db: Sessio
             is_current=True,
         ))
     # Mark other devices as not current
-    _db_userdevice_query_6(db, fingerprint_hash, fp, user_id)
-
-
+    db.query(UserDevice).filter(
+        UserDevice.user_id == user_id,
+        UserDevice.fingerprint_hash != fp,
+    ).update({"is_current": False})
     try:
         commit_only(db)
     except Exception:
@@ -619,14 +620,14 @@ def _slugify_username(value: str) -> str:
 
 def _unique_username(base: str, db: Session) -> str:
     candidate = _slugify_username(base)
-    _db_user_first_7(db, lower, username)
-
+    if not db.query(User).filter(func.lower(User.username) == candidate.lower()).first():
+        return candidate
 
     suffix = 1
     while True:
         next_candidate = f"{candidate[:34]}_{suffix}"
-        _db_user_first_8(db, lower, username)
-
+        if not db.query(User).filter(func.lower(User.username) == next_candidate.lower()).first():
+            return next_candidate
         suffix += 1
 
 
@@ -675,7 +676,7 @@ def _create_social_user(email: str, name: str | None, db: Session, profile: dict
 
 def _resolve_or_create_social_user(email: str, name: str | None, db: Session, profile: dict[str, Any] | None = None) -> User:
     profile = profile or {}
-    existing = _db_user_first_9(db, email, lower)
+    existing = db.query(User).filter(func.lower(User.email) == email.lower()).first()
     if existing:
         changed = False
         if not existing.email_verified:
@@ -923,13 +924,13 @@ def handle_facebook_oauth_callback(code: str, state: str | None, request: Reques
         return _frontend_social_callback(error="facebook_login_failed")
 
 
-# ── Register ──────────────────────────────────────────────────────────────────
+# â”€â”€ Register â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def register_user(user: UserCreate, db: Session) -> UserSchema:
-    _db_user_first_10(db, email, user)
-
-    _db_user_first_11(db, user, username)
-
+    if db.query(User).filter(User.email == user.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    if db.query(User).filter(User.username == user.username).first():
+        raise HTTPException(status_code=400, detail="Username already taken")
 
     # Supplier-specific validation
     if user.role == "supplier":
@@ -960,7 +961,7 @@ def register_user(user: UserCreate, db: Session) -> UserSchema:
     referrer: User | None = None
     if user.role == "customer" and incoming_referral_code:
         referrer = (
-            _db_user_query_12(db)
+            db.query(User)
             .filter(func.lower(User.referral_code) == incoming_referral_code.lower())
             .first()
         )
@@ -1077,18 +1078,18 @@ def register_user(user: UserCreate, db: Session) -> UserSchema:
                 created_user_id,
             )
 
-    persisted_user = get_user_by_id(db, created_user_id)
+    persisted_user = db.query(User).filter(User.id == created_user_id).first()
     if persisted_user is None:
         raise HTTPException(status_code=500, detail="Registration succeeded but the user could not be reloaded")
 
     return UserSchema.model_validate(persisted_user)
 
 
-# ── Email verification ────────────────────────────────────────────────────────
+# â”€â”€ Email verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def verify_email_token(token: str, db: Session) -> dict:
     ev = (
-        _db_emailverificationtoken_query_13(db)
+        db.query(EmailVerificationToken)
         .filter(
             EmailVerificationToken.token == token,
             EmailVerificationToken.used.is_(False),
@@ -1102,7 +1103,7 @@ def verify_email_token(token: str, db: Session) -> dict:
         commit_only(db)
         raise HTTPException(status_code=400, detail="Verification token has expired.")
 
-    user = _db_user_first_14(db, ev, id, user_id)
+    user = db.query(User).filter(User.id == ev.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
@@ -1118,8 +1119,10 @@ def resend_verification(current_user: dict, db: Session) -> dict:
     if current_user["email_verified"]:
         return {"detail": "Email is already verified."}
 
-    _db_emailverificationtoken_query_15(db, current_user, id, is_, used, user_id)
-
+    db.query(EmailVerificationToken).filter(
+        EmailVerificationToken.user_id == current_user["id"],
+        EmailVerificationToken.used.is_(False),
+    ).update({"used": True})
 
     raw_token = secrets.token_urlsafe(32)
     ev_token = EmailVerificationToken(
@@ -1162,8 +1165,10 @@ def resend_verification_public(payload: PublicResendVerificationRequest, db: Ses
     if not user or _user_role(user) != "customer" or user.email_verified:
         return generic_response
 
-    _db_emailverificationtoken_query_16(db, _user_id, user, user_id)
-
+    db.query(EmailVerificationToken).filter(
+        EmailVerificationToken.user_id == _user_id(user),
+        EmailVerificationToken.used.is_(False),
+    ).update({"used": True})
 
     raw_token = secrets.token_urlsafe(32)
     ev_token = EmailVerificationToken(
@@ -1192,7 +1197,7 @@ def resend_verification_public(payload: PublicResendVerificationRequest, db: Ses
     return generic_response
 
 
-# ── Login ─────────────────────────────────────────────────────────────────────
+# â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def login_user(
     response: Response,
@@ -1334,7 +1339,7 @@ def json_login_user(
     }
 
 
-# ── Refresh ───────────────────────────────────────────────────────────────────
+# â”€â”€ Refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def refresh_access_token(request: Request, response: Response, db: Session, body_refresh_token: str | None = None) -> dict:
     refresh_token = request.cookies.get(settings.refresh_token_cookie_name) or body_refresh_token
@@ -1401,10 +1406,10 @@ def refresh_access_token(request: Request, response: Response, db: Session, body
     }
 
 
-# ── Register (JSON / mobile-friendly) ─────────────────────────────────────────
+# â”€â”€ Register (JSON / mobile-friendly) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def json_register_user(response: Response, user_data: UserCreate, db: Session, request: Request | None = None) -> dict:
-    """Register a new user and immediately issue tokens — used by mobile clients."""
+    """Register a new user and immediately issue tokens â€” used by mobile clients."""
     db_user = register_user(user_data, db)
 
     access_token = create_access_token(data={"sub": str(_user_id(db_user))})
@@ -1440,7 +1445,7 @@ def _ensure_referral_code(user: User, db: Session) -> str:
 
 
 def get_referral_dashboard(current_user: dict, db: Session) -> ReferralDashboardSchema:
-    user = _db_user_first_17(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -1452,7 +1457,7 @@ def get_referral_dashboard(current_user: dict, db: Session) -> ReferralDashboard
         or 0
     )
     recent_events = (
-        _db_referralpointevent_query_18(db)
+        db.query(ReferralPointEvent)
         .filter(ReferralPointEvent.user_id == _user_id(user))
         .order_by(ReferralPointEvent.created_at.desc())
         .limit(20)
@@ -1470,13 +1475,13 @@ def get_referral_dashboard(current_user: dict, db: Session) -> ReferralDashboard
 
 
 def get_referral_history(current_user: dict, db: Session, limit: int = 50, offset: int = 0) -> dict[str, Any]:
-    user = _db_user_first_19(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     safe_limit = min(max(limit, 1), 100)
     safe_offset = max(offset, 0)
-    query = _db_referralpointevent_query_20(db, _user_id, user, user_id)
+    query = db.query(ReferralPointEvent).filter(ReferralPointEvent.user_id == _user_id(user))
     total = query.count()
     items = (
         query.order_by(ReferralPointEvent.created_at.desc())
@@ -1493,7 +1498,7 @@ def get_referral_history(current_user: dict, db: Session, limit: int = 50, offse
 
 
 def claim_share_points(body: ReferralShareRequest, current_user: dict, db: Session) -> dict[str, Any]:
-    user = _db_user_first_21(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -1502,7 +1507,7 @@ def claim_share_points(body: ReferralShareRequest, current_user: dict, db: Sessi
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     already_claimed_today = (
-        _db_referralpointevent_query_22(db)
+        db.query(ReferralPointEvent)
         .filter(
             ReferralPointEvent.user_id == _user_id(user),
             ReferralPointEvent.event_type == "share_bonus",
@@ -1547,7 +1552,7 @@ def claim_share_points(body: ReferralShareRequest, current_user: dict, db: Sessi
     }
 
 
-# ── Logout ────────────────────────────────────────────────────────────────────
+# â”€â”€ Logout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def logout_user(request: Request, response: Response, body_refresh_token: str | None = None) -> dict:
     from jose import jwt as _jwt  # local import to avoid top-level circular deps
@@ -1571,7 +1576,7 @@ def logout_user(request: Request, response: Response, body_refresh_token: str | 
     except Exception:
         pass  # best-effort blacklist
 
-    # Blacklist the refresh token (from cookie or body — covers both web and mobile)
+    # Blacklist the refresh token (from cookie or body â€” covers both web and mobile)
     refresh_token = request.cookies.get(settings.refresh_token_cookie_name) or body_refresh_token
     if refresh_token:
         try:
@@ -1593,10 +1598,10 @@ def logout_user(request: Request, response: Response, body_refresh_token: str | 
     return {"detail": "Logged out successfully."}
 
 
-# ── Profile ───────────────────────────────────────────────────────────────────
+# â”€â”€ Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User:
-    user = _db_user_first_23(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -1604,14 +1609,14 @@ def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User
 
     username = getattr(body, "username", None)
     if username and username != _user_username(user):
-        _db_user_first_24(db, username)
-
+        if db.query(User).filter(User.username == username).first():
+            raise HTTPException(status_code=409, detail="Username already taken")
         setattr(user, "username", username)
 
     email = getattr(body, "email", None)
     if email and email != _user_email(user):
-        _db_user_first_25(db, email)
-
+        if db.query(User).filter(User.email == email).first():
+            raise HTTPException(status_code=409, detail="Email already in use")
         setattr(user, "email", email)
         setattr(user, "email_verified", False)
 
@@ -1658,7 +1663,7 @@ async def upload_avatar(file: UploadFile, current_user: dict, db: Session) -> di
     mime_type = file.content_type or "image/jpeg"
     url = _storage.save(key, contents, content_type=mime_type)
 
-    user = _db_user_first_26(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     setattr(user, "profile_image", url)
@@ -1666,10 +1671,10 @@ async def upload_avatar(file: UploadFile, current_user: dict, db: Session) -> di
     return {"profile_image": _user_profile_image(user)}
 
 
-# ── Password management ───────────────────────────────────────────────────────
+# â”€â”€ Password management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def change_password(body: ChangePasswordRequest, current_user: dict, db: Session) -> dict:
-    user = _db_user_first_27(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not verify_password(body.get_current_password(), cast(str, getattr(user, "hashed_password"))):
@@ -1685,12 +1690,14 @@ def change_password(body: ChangePasswordRequest, current_user: dict, db: Session
 
 def forgot_password(body: ForgotPasswordRequest, db: Session) -> dict:
     generic = {"detail": "If that email exists, a reset link has been sent."}
-    user = _db_user_first_28(db, body, email)
+    user = db.query(User).filter(User.email == body.email).first()
     if not user:
         return generic
 
-    _db_passwordresettoken_query_29(db, id, is_, used, user, user_id)
-
+    db.query(PasswordResetToken).filter(
+        PasswordResetToken.user_id == user.id,
+        PasswordResetToken.used.is_(False),
+    ).update({"used": True})
 
     raw_token = secrets.token_urlsafe(32)
     db_token = PasswordResetToken(
@@ -1711,7 +1718,7 @@ def forgot_password(body: ForgotPasswordRequest, db: Session) -> dict:
 
 def reset_password(body: ResetPasswordRequest, db: Session) -> dict:
     db_token = (
-        _db_passwordresettoken_query_30(db)
+        db.query(PasswordResetToken)
         .filter(
             PasswordResetToken.token == body.token,
             PasswordResetToken.used.is_(False),
@@ -1725,7 +1732,7 @@ def reset_password(body: ResetPasswordRequest, db: Session) -> dict:
         commit_only(db)
         raise HTTPException(status_code=400, detail="Reset token has expired.")
 
-    user = _db_user_first_31(db, db_token, id, user_id)
+    user = db.query(User).filter(User.id == db_token.user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
@@ -1738,7 +1745,7 @@ def reset_password(body: ResetPasswordRequest, db: Session) -> dict:
     return {"detail": "Password updated successfully."}
 
 
-# ── Customer Preferences ──────────────────────────────────────────────────────
+# â”€â”€ Customer Preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class PreferencesUpdate(BaseModel):
     preferred_language: Optional[str] = None
@@ -1749,13 +1756,13 @@ class PreferencesUpdate(BaseModel):
 def get_user_preferences(current_user: dict, db: Session) -> dict:
     """Return user locale preferences and browsing history product IDs."""
     import json as _json
-    user = _db_user_first_32(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     history = []
-    browsing_history = _db_userbrowsinghistory_all_33(db, id, user, user_id)
-
-
+    browsing_history = db.query(UserBrowsingHistory).filter(
+        UserBrowsingHistory.user_id == user.id
+    ).order_by(UserBrowsingHistory.viewed_at.desc()).limit(20).all()
     history = [bh.product_id for bh in browsing_history]
     return {
         "preferred_language": cast(str | None, getattr(user, "preferred_language")) or DEFAULT_LANGUAGE,
@@ -1769,7 +1776,7 @@ def update_user_preferences(body: PreferencesUpdate, current_user: dict, db: Ses
     """Persist user locale preferences."""
     _VALID_CURRENCIES = set(KNOWN_CURRENCY_META.keys())
     _VALID_LANGUAGES = {"en", "ar", "fr", "de", "es", "hi", "ur", "tr", "fa"}
-    user = _db_user_first_34(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if body.preferred_language is not None:
@@ -1786,12 +1793,12 @@ def update_user_preferences(body: PreferencesUpdate, current_user: dict, db: Ses
     return get_user_preferences(current_user, db)
 
 
-# ── TOTP 2FA ──────────────────────────────────────────────────────────────────
+# â”€â”€ TOTP 2FA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 def get_totp_status(current_user: dict, db: Session) -> dict:
     """Return whether TOTP 2FA is enabled for the current user."""
-    user = _db_user_first_35(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"totp_enabled": bool(getattr(user, "totp_enabled", False))}
@@ -1818,7 +1825,7 @@ def _validate_totp_code(secret: str, code: str) -> bool:
 
 def setup_totp(current_user: dict, db: Session) -> dict:
     """Generate a TOTP secret and return provisioning information."""
-    user = _db_user_first_36(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if getattr(user, "totp_enabled", False):
@@ -1836,7 +1843,7 @@ def setup_totp(current_user: dict, db: Session) -> dict:
 
 def enable_totp(current_user: dict, db: Session, code: str) -> dict:
     """Verify a TOTP code and enable 2FA with recovery codes."""
-    user = _db_user_first_37(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     secret = cast(str | None, getattr(user, "totp_secret", None))
@@ -1864,7 +1871,7 @@ def enable_totp(current_user: dict, db: Session, code: str) -> dict:
 
 def disable_totp(current_user: dict, db: Session, password: str) -> dict:
     """Disable TOTP 2FA after verifying the current password."""
-    user = _db_user_first_38(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not getattr(user, "totp_enabled", False):
@@ -1915,7 +1922,7 @@ def complete_totp_login(
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid temp token")
 
-    user = get_user_by_id(db, user_id)
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -1940,7 +1947,7 @@ def admin_verify_totp(
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    user = _db_user_first_39(db, current_user, id)
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not getattr(user, "totp_enabled", False):
@@ -1965,5 +1972,6 @@ def admin_verify_totp(
         "expires_in": verify_ttl,
         "detail": "2FA verified for this session",
     }
+
 
 

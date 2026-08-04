@@ -35,7 +35,6 @@ def list_all_orders(
     try:
         return list_orders_by_country(db, country_code, cursor=cursor, limit=limit, status=status, include_deleted=include_deleted)
     finally:
-        from utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 

@@ -12,7 +12,6 @@ Because foreign-key targets in the model layer are often written as bare
 on SQLite. This module centralises that patch so both the test conftest and
 ``alembic/env.py`` share one implementation.
 """
-from __future__ import annotations
 
 from sqlalchemy import MetaData
 from sqlalchemy.orm import configure_mappers

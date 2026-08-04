@@ -4,7 +4,6 @@ Also exposes `broadcast_activity_event`, a sync → async bridge so that
 sync code (e.g. `log_activity`) can fire-and-forget WebSocket broadcasts
 without depending on the router layer.
 """
-from __future__ import annotations
 
 import asyncio
 import json

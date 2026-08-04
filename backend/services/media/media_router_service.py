@@ -1,5 +1,4 @@
 """Media router service module — orchestrates DB operations for upload routers."""
-from __future__ import annotations
 
 import json
 import logging

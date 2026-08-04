@@ -1,7 +1,6 @@
 """
 Automatic service for admin_dashboard_service - DB read operations delegated from controllers.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 from sqlalchemy.orm import Session

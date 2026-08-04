@@ -6,7 +6,6 @@ Generates country-specific legal documents:
 - Return/Refund Policy
 - Supplier Agreement
 """
-from __future__ import annotations
 
 import json
 import logging

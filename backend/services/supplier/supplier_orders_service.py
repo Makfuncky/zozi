@@ -10,7 +10,6 @@ Covers:
   - Ownership checks used by the parcel-proof endpoints
   - Order status transition after a parcel proof upload
 """
-from __future__ import annotations
 
 import logging
 from typing import Any

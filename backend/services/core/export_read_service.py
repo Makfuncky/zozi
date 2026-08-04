@@ -1,7 +1,6 @@
 """
 Automatic service for export_read_service - DB read operations delegated from controllers.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 from sqlalchemy.orm import Session
@@ -82,27 +81,27 @@ def get_coupon_first(db: Session, **filters) -> Optional[Coupon]:
     return query.limit(1).first()
 
 def count_user(db: Session) -> int:
-    """Count total users — delegated from controller."""
+    """Count total users â€” delegated from controller."""
     return db.query(func.count(User.id)).scalar() or 0
 
 
 def count_order(db: Session) -> int:
-    """Count total orders — delegated from controller."""
+    """Count total orders â€” delegated from controller."""
     return db.query(func.count(Order.id)).scalar() or 0
 
 
 def count_product(db: Session) -> int:
-    """Count total products — delegated from controller."""
+    """Count total products â€” delegated from controller."""
     return db.query(func.count(Product.id)).scalar() or 0
 
 
 def count_coupon(db: Session) -> int:
-    """Count total coupons — delegated from controller."""
+    """Count total coupons â€” delegated from controller."""
     return db.query(func.count(Coupon.id)).scalar() or 0
 
 
 def count_auditlog_since(db: Session, since: Any) -> int:
-    """Count audit logs since a given timestamp — delegated from controller."""
+    """Count audit logs since a given timestamp â€” delegated from controller."""
     return db.query(func.count(AuditLog.id)).filter(AuditLog.occurred_at >= since).scalar() or 0
 
 

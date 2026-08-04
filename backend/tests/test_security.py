@@ -1,5 +1,4 @@
 """Tests for security utilities and RBAC."""
-from __future__ import annotations
 
 import os
 import time

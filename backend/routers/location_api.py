@@ -7,8 +7,8 @@ standalone ``location_service`` remains available for direct IP geolocation.
 No coordinates are ever fabricated: a failed lookup returns 502 with a clear
 message so the UI can fall back to the browser Geolocation API.
 """
-
 from __future__ import annotations
+
 
 from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse

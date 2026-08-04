@@ -1,7 +1,6 @@
 """
 Identity & Access Management service with QR login, geo-fencing, and device fingerprinting.
 """
-from __future__ import annotations
 
 import hashlib
 import secrets

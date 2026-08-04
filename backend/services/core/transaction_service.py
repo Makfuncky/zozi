@@ -20,7 +20,6 @@ Usage:
         db.add(entity)
     # auto-commits on success, rolls back on exception
 """
-from __future__ import annotations
 
 import functools
 import logging

@@ -10,7 +10,6 @@ Implements the ERP-level automation requested for the admin Finance module:
 All GL writes go through `general_ledger_service.create_journal_entry` so the
 immutable, double-entry ledger and audit trail remain the single source of truth.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, date, timedelta

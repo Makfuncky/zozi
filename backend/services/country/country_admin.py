@@ -5,7 +5,6 @@ Canonical home for country-specific admin helpers that were previously in
 controllers/country_controller.py. Routers now import from here instead of
 crossing the controller→controller boundary.
 """
-from __future__ import annotations
 
 import json
 from decimal import Decimal

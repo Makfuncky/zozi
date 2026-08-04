@@ -9,7 +9,6 @@ Optimised for low-RAM / low-CPU VPS environments:
   - Every model failure degrades gracefully; never crashes.
 """
 
-from __future__ import annotations
 
 import gc
 import io

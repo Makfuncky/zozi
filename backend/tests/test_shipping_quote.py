@@ -21,7 +21,6 @@ Test scenario:
      ``pricing_breakdown``.
 """
 
-from __future__ import annotations
 
 import uuid
 

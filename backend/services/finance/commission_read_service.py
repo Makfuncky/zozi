@@ -1,5 +1,5 @@
 """Service methods for commission read operations."""
-from __future__ import annotations
+from typing import Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 from data.models import CommissionRecord
@@ -141,7 +141,7 @@ def _db_productcommissionoverride_query_7(db: Session) -> Optional[Any]:
     return db.query(ProductCommissionOverride)
     """Read-only query delegated from controller."""
 
-def _db_user_query_8(db: Session, True: Any, is_active: Any, role: Any, supplier: Any) -> Optional[Any]:
+def _db_user_query_8(db: Session, true_val: Any, is_active: Any, role: Any, supplier: Any) -> Optional[Any]:
     result = db.query(User).filter(User.role == "supplier", User.is_active == True)  # noqa: E712
     return result
     """Read-only query delegated from controller."""

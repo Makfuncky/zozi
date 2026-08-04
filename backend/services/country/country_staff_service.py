@@ -3,7 +3,7 @@
 Each top-level function owns its database session via ``get_db_context`` so the
 router layer never injects or touches a SQLAlchemy session directly.
 """
-from __future__ import annotations
+from typing import List
 from typing import Any, Optional
 from sqlalchemy.orm import Session
 from data.models import CountryStaffAssignment

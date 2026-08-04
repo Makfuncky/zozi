@@ -3,7 +3,6 @@ Leverages existing models (direct_chat_rooms, direct_chat_messages, internal_cha
 employee_communication_threads) and gap-table additions (chat_attachments,
 chat_read_receipts, internal_emails, email_folders).
 """
-from __future__ import annotations
 
 __all__ = [
     "send_chat_message",

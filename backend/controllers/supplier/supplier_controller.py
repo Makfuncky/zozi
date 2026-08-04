@@ -222,8 +222,8 @@ def _persist_supplier_product(
     slug_base = re.sub(r"[^a-z0-9]+", "-", (name or "product").strip().lower()).strip("-") or "product"
     product_slug = slug_base
     attempt = 0
-    _db_product_first_2(db, product_slug, slug)
-
+    while db.query(Product).filter(Product.slug == product_slug).first():
+        attempt += 1
         product_slug = f"{slug_base}-{attempt}"
 
     new_product = Product(
@@ -955,11 +955,9 @@ def get_supplier_orders(
     all_order_ids = [cast(int, order.id) for order in supplier_orders]
     settlements_by_order: dict[int, SupplierSettlement] = {}
     if all_order_ids:
+        rows = _db_suppliersettlement_all_6(db, all_order_ids, in_, order_id, supplier_id)
         settlements_by_order = {
-            cast(int, s.order_id): s
-            _db_suppliersettlement_all_6(db, all_order_ids, in_, order_id, supplier_id)
-
-
+            cast(int, s.order_id): s for s in rows
         }
 
     result = []
@@ -2034,19 +2032,18 @@ def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict
     ).limit(10).all()
 
     product_performance = []
-    _db_product_first_27(db, id, product, product_id, sid, supplier_id)
+    product = _db_product_first_27(db, id, product, product_id, sid, supplier_id)
 
-
-        views = (sales_data[0] or 0) * 10 + 50
-        purchases = sales_data[0] or 0
-        conversion = (purchases / views * 100) if views > 0 else 0
-        product_performance.append({
-            "id": product.id,
-            "name": product.name,
-            "views": views,
-            "purchases": purchases,
-            "conversion": conversion,
-        })
+    views = (sales_data[0] or 0) * 10 + 50
+    purchases = sales_data[0] or 0
+    conversion = (purchases / views * 100) if views > 0 else 0
+    product_performance.append({
+        "id": product.id,
+        "name": product.name,
+        "views": views,
+        "purchases": purchases,
+        "conversion": conversion,
+    })
 
     total_views = sum(p["views"] for p in product_performance)
     conversion_rate = (total_orders / total_views * 100) if total_views > 0 else 0
@@ -2489,7 +2486,7 @@ def bulk_inventory_adjust(adjustments: list, current_user: dict, db: Session) ->
 
     products_map: dict[int, Product] = {
         cast(int, p.id): p
-        _db_product_all_42(db, False, current_user, id, in_, product_ids)
+        for p in _db_product_all_42(db, False, current_user, id, in_, product_ids)
 
 
     }
@@ -2616,9 +2613,9 @@ async def import_products_csv(file: UploadFile, current_user: dict, db: Session)
             slug_base = re.sub(r"[^a-z0-9]+", "-", raw_name.lower()).strip("-") or "product"
             product_slug = slug_base
             attempt = 0
-            _db_product_first_44(db, product_slug, slug)
-
-                product_slug = f"{slug_base}-{attempt}"
+            while _db_product_first_44(db, product_slug, slug):
+                attempt += 1
+            product_slug = f"{slug_base}-{attempt}"
             new_product = Product(
                 name=html.escape(raw_name),
                 slug=product_slug,

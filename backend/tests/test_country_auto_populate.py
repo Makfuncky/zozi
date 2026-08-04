@@ -5,7 +5,6 @@ Tests cover: helper functions (heuristic engine, normalization, confidence scori
 data fetching fallbacks, and the main auto_populate_country orchestration.
 """
 
-from __future__ import annotations
 
 import json
 import os

@@ -1,3 +1,4 @@
+from typing import Set
 """
 File content validation using magic bytes.
 

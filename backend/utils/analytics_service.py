@@ -4,7 +4,6 @@ Provides country-scoped dashboard statistics used by the admin UI
 to render the top-row stat cards (users, suppliers, products, orders, revenue).
 """
 
-from __future__ import annotations
 
 import logging
 from typing import Any

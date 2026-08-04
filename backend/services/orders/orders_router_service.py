@@ -5,7 +5,6 @@ All SQLAlchemy DB access is centralized here for the routers:
 - returns
 - logistics_orders_v2
 """
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, Optional
@@ -181,7 +180,7 @@ def _user_context(user: User) -> dict:
     }
 
 
-# ── Cart Router Service Functions ───────────────────────────────────────────────
+# â”€â”€ Cart Router Service Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_cart_items(
     db: Session,
@@ -306,7 +305,7 @@ def clear_cart(db: Session, user_id: int) -> dict:
     return {"message": "Cart cleared"}
 
 
-# ── Returns Router Service Functions ──────────────────────────────────────────
+# â”€â”€ Returns Router Service Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def serialize_return_request(req: ReturnRequest) -> dict:
     return {
@@ -347,7 +346,7 @@ def update_return_status(db: Session, return_id: int, status: str, notes: Option
     return {"message": "Updated"}
 
 
-# ── Logistics Orders Router Service Functions ──────────────────────────────────
+# â”€â”€ Logistics Orders Router Service Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_logistics_partner_by_user(db: Session, user_id: int) -> Optional[LogisticsPartner]:
     return db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
@@ -401,11 +400,6 @@ def get_order_first(db: Session, **filters) -> Optional[Order]:
     return query.limit(1).first()
 
 
-def list_unknown(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Unknown]:
-    query = db.query(Unknown)
-    for key, value in filters.items():
-        query = query.filter(getattr(Unknown, key) == value)
-    return query.offset(skip).limit(limit).all()
 
 
 def get_shipment_first(db: Session, **filters) -> Optional[Shipment]:
@@ -588,12 +582,12 @@ def _db_user_first_2(db: Session, current_user: Any, id: Any) -> Optional[Any]:
     return result
     """Read-only query delegated from controller."""
 
-def _db_product_all_3(db: Session, False: Any, id: Any, in_: Any, keys: Any, requested_quantities: Any) -> list[Any]:
-    return for product in db.query(Product).options(selectinload(Product.variants)).filter( Product.id.in_(requested_quantities.keys()), Product.is_deleted == False,  # noqa: E712 ).with_for_update().all()
+def _db_product_all_3(db: Session, false_val: Any, id: Any, in_: Any, keys: Any, requested_quantities: Any) -> list[Any]:
+    result = db.query(Product).options(selectinload(Product.variants)).filter(Product.id.in_(requested_quantities.keys()), Product.is_deleted == False).with_for_update().all()
     """Read-only query delegated from controller."""
 
 def _db_supplierprofile_all_4(db: Session, in_: Any, keys: Any, supplier_totals: Any, user_id: Any) -> list[Any]:
-    return for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_totals.keys())).all()
+    return db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_totals.keys())).all()
     """Read-only query delegated from controller."""
 
 def _db_shippingzone_query_5(db: Session) -> Optional[Any]:
@@ -687,7 +681,7 @@ def _db_order_first_24(db: Session, current_user: Any, id: Any, order_id: Any, u
     """Read-only query delegated from controller."""
 
 def _db_orderitem_all_0(db: Session, id: Any, order: Any, order_id: Any) -> list[Any]:
-    return return db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+    return db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
     """Read-only query delegated from controller."""
 
 def _db_product_all_1(db: Session, id: Any, in_: Any, product_ids: Any) -> list[Any]:
@@ -750,6 +744,6 @@ def _db_product_first_13(db: Session, id: Any, item: Any, product_id: Any, suppl
 
 
 def count_username_map(db: Session, user_ids: list[int]) -> dict[int, str]:
-    """Look up usernames for a list of user IDs � delegated from controller."""
+    """Look up usernames for a list of user IDs — delegated from controller."""
     user_rows = db.query(User.id, User.username).filter(User.id.in_(user_ids)).all()
     return {r.id: r.username for r in user_rows}

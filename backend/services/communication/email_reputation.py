@@ -4,7 +4,6 @@ Checks email addresses against known disposable/temporary domains,
 role-based aliases (catch-all), and suspicious TLDs.
 """
 
-from __future__ import annotations
 
 import logging
 import re

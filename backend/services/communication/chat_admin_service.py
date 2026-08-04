@@ -1,5 +1,4 @@
 """Service methods for chat admin read operations."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models_core import (
     ChatRoom,

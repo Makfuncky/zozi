@@ -1,4 +1,4 @@
-"""Flash Sale controller — CRUD for time-limited discount campaigns."""
+"""Flash Sale controller â€” CRUD for time-limited discount campaigns."""
 import json
 from datetime import datetime, timezone
 from typing import Any, List, Optional, cast
@@ -9,12 +9,11 @@ from sqlalchemy.orm import Session
 
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from data.catalog_product_utils import _bump_product_cache_version
+from services.catalog.product_utils import _bump_product_cache_version
 from models import FlashSale
-from data.schemas import FlashSaleCreate, FlashSaleOut
+from db.schemas import FlashSaleCreate, FlashSaleOut
 from utils.datetime_utils import utcnow as _utcnow
-from data.services_write_helpers import (
-from services.commerce.promotion_engine_service import get_flash_sale_by_id
+from services.write_helpers import (
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -46,7 +45,7 @@ def get_active_flash_sales(db: Session) -> List[FlashSaleOut]:
 
     now = _utcnow()
     sales = (
-        _db_flashsale_query_0(db)
+        db.query(FlashSale)
         .filter(
             FlashSale.is_active.is_(True),
             FlashSale.starts_at <= now,
@@ -67,7 +66,7 @@ def get_all_flash_sales(
     search: Optional[str] = None,
 ) -> dict[str, Any]:
     """Return all flash sales (admin only)."""
-    query = _db_flashsale_query_1(db)
+    query = db.query(FlashSale)
     if search and search.strip():
         query = query.filter(FlashSale.title.ilike(f"%{search.strip()}%"))
     total = query.count()
@@ -115,7 +114,7 @@ def create_flash_sale(body: FlashSaleCreate, current_admin: dict, db: Session) -
 
 def update_flash_sale(sale_id: int, body: FlashSaleCreate, current_admin: dict, db: Session) -> FlashSaleOut:
     """Update an existing flash sale (admin only)."""
-    sale = get_flash_sale_by_id(db, sale_id)
+    sale = db.query(FlashSale).filter(FlashSale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Flash sale not found")
 
@@ -148,7 +147,7 @@ def update_flash_sale(sale_id: int, body: FlashSaleCreate, current_admin: dict, 
 
 def delete_flash_sale(sale_id: int, current_admin: dict, db: Session) -> dict:
     """Delete a flash sale (admin only)."""
-    sale = get_flash_sale_by_id(db, sale_id)
+    sale = db.query(FlashSale).filter(FlashSale.id == sale_id).first()
     if not sale:
         raise HTTPException(status_code=404, detail="Flash sale not found")
     sale_title = sale.title

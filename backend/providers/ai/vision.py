@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 """
 Vision Provider
 ===============
 AI-powered vision analysis for product images with Ollama integration.
 Test file: backend/tests/_test_provider/test_vision.py
 """
+from __future__ import annotations
 import json
 import logging
 import os

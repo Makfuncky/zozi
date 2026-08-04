@@ -13,8 +13,8 @@ Routes (mounted at /admin/treasury):
   POST /batches/{batch_id}/reject     → reject a batch
   POST /batches/{batch_id}/dispatch   → mark batch + its payouts as paid
 """
-
 from __future__ import annotations
+
 
 from typing import Any
 

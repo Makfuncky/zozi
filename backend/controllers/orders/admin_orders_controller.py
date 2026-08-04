@@ -139,7 +139,7 @@ def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Sessio
     }
 
 
-# â�?€â�?€ Bulk Product Operations â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€
+# Ã¢—â‚¬Ã¢—â‚¬ Bulk Product Operations Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬Ã¢—â‚¬
 
 def delete_order_admin(order_id: int, acting_user: dict, db: Session) -> dict:
     if acting_user.get("role") != "admin":
@@ -409,7 +409,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
     order_status = cast(str, getattr(order, "status"))
     order_paid_at = cast(datetime | None, getattr(order, "paid_at"))
     if not payment_intent_id:
-        raise HTTPException(status_code=422, detail="Order has no associated payment â€�? cannot refund")
+        raise HTTPException(status_code=422, detail="Order has no associated payment Ã¢â‚¬— cannot refund")
 
     allowed_statuses = {"confirmed", "processing", "prepared", "picking_up", "delivered", "shipped", "cancelled"}
     if order_status == "failed" and order_paid_at is not None:

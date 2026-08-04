@@ -3,7 +3,7 @@
 This module contains all SQLAlchemy DB write/read operations moved from
 the country-related router files to comply with the service layer architecture.
 """
-from __future__ import annotations
+from typing import List
 
 import json
 

@@ -15,7 +15,7 @@ Tier benefits (applied elsewhere, documented here for reference):
   - Silver: 10% bonus points + free shipping on orders > 50 OMR
   - Gold: 15% bonus points + priority support
 """
-from __future__ import annotations
+from typing import Set
 
 import logging
 from datetime import datetime, timezone, timedelta

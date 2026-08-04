@@ -25,7 +25,6 @@ VPS-safety layer (safe for 100s of concurrent suppliers):
 Everything is designed to degrade gracefully instead of crashing.
 """
 
-from __future__ import annotations
 
 import gc
 import io

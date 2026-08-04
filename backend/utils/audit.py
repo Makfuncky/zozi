@@ -2,7 +2,6 @@
 Audit logging utility
 Persists audit events to the audit_logs table.
 """
-from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional

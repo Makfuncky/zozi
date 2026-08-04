@@ -13,7 +13,7 @@ Topics covered:
 Every test receives a ``db_session`` wrapped in a transaction rolled back at
 the end (see ``conftest.py`` for the isolation fixture).
 """
-from __future__ import annotations
+from typing import Set
 
 import uuid
 

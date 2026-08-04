@@ -1,5 +1,5 @@
 """Service methods for finance automation rules read operations."""
-from __future__ import annotations
+from typing import List
 from typing import Optional
 
 from sqlalchemy.orm import Session

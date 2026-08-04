@@ -6,7 +6,6 @@ Supports:
 - Hijri calendar conversion
 - Deep localization for Middle East markets
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime

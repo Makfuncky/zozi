@@ -13,8 +13,9 @@ Routes (mounted at /admin/payout-approval):
   POST /batches/{batch_id}/reject     → reject a batch
   POST /batches/{batch_id}/dispatch   → mark batch + its payouts as paid
 """
-
 from __future__ import annotations
+
+from typing import Optional
 
 from typing import Any
 

@@ -3,7 +3,6 @@ OpenTelemetry distributed tracing setup for Zozi API.
 Instruments FastAPI, SQLAlchemy, and outgoing HTTP requests.
 Trace context is propagated via W3C traceparent headers.
 """
-from __future__ import annotations
 
 import logging
 import os

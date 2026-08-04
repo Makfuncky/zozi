@@ -1,5 +1,5 @@
 """
-Cash Management Controller — backward-compatibility re-export shim.
+Cash Management Controller â€” backward-compatibility re-export shim.
 
 The actual implementation now lives in services/cash_management_service.py
 (correct layer: services). This file re-exports for legacy importers.

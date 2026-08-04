@@ -1,5 +1,4 @@
 """Tests for logistics and shipping."""
-from __future__ import annotations
 
 import pytest
 import uuid

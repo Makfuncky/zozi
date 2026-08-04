@@ -3,7 +3,6 @@
 Includes cache stampede protection via probabilistic early expiry and
 a compute-if-missing helper for search result caching.
 """
-from __future__ import annotations
 
 import hashlib
 import json

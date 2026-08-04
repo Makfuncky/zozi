@@ -3,7 +3,6 @@
 Allows reversing a journal entry by creating a mirror entry with opposite
 sides, referencing the original via `reversal_of_id`.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime

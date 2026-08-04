@@ -3,7 +3,6 @@
 
 This script should be run to regenerate rls_interceptor.py when models change.
 """
-from __future__ import annotations
 import os
 import sys
 from pathlib import Path

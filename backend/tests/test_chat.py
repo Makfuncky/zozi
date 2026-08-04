@@ -1,5 +1,4 @@
 """Tests for chat system."""
-from __future__ import annotations
 
 import uuid
 

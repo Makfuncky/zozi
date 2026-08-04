@@ -1,5 +1,4 @@
 """Service methods for WebSocket chat data access."""
-from __future__ import annotations
 from sqlalchemy.orm import Session
 from data.models import User
 from data.models_core import DirectChatRoom, GroupChatRoom, EntityChatThread, EntityChatMessage, DirectChatMessage, GroupChatMessage

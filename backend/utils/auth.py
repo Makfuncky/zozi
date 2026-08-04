@@ -1,5 +1,5 @@
+
 """Authentication helpers with Redis-backed and in-memory fallbacks."""
-from __future__ import annotations
 
 import logging
 import os

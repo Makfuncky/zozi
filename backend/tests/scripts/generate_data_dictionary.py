@@ -3,7 +3,6 @@
 DB24 requirement: Machine-generated data dictionary for database documentation.
 Outputs schema.json with table/column metadata for all ORM models.
 """
-from __future__ import annotations
 
 import argparse
 import json

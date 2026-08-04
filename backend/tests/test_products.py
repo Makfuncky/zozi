@@ -1,5 +1,4 @@
 """Tests for product listing, search, and admin CRUD."""
-from __future__ import annotations
 
 import pytest
 import uuid

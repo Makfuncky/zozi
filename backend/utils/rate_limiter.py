@@ -15,7 +15,6 @@ to the limiter *instance* it is called on, and enforcement is gated by that
 instance's `enabled` flag. Using one shared instance therefore guarantees that
 a limit applied via `@limiter.limit(...)` is honoured when the request runs.
 """
-from __future__ import annotations
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address

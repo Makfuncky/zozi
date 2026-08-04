@@ -1,5 +1,5 @@
+
 """Flexible application settings used across mixed recovery-era modules."""
-from __future__ import annotations
 
 import json
 import logging

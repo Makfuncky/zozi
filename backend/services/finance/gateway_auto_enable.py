@@ -3,7 +3,6 @@
 Automatically enables payment gateways based on country configuration
 from the auto-populate service.
 """
-from __future__ import annotations
 
 import logging
 from decimal import Decimal

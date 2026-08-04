@@ -1,3 +1,4 @@
+from typing import List
 """Admin email campaign router."""
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query

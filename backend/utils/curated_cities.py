@@ -6,7 +6,6 @@ optionally, *latitude*, *longitude*, *population*, and *is_capital*.
 
 Add cities here as the platform expands into new countries.
 """
-from __future__ import annotations
 
 from typing import Any
 

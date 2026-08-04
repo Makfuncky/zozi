@@ -1,3 +1,4 @@
+from typing import List
 """
 Comprehensive tests for search/autocomplete/visual endpoints.
 Verifies the search/filter/sort integration with the database.

@@ -16,7 +16,6 @@ This file consolidates and enhances testing for:
 - Finance and accounts
 - Communication tests
 """
-from __future__ import annotations
 
 import pytest
 import uuid

@@ -8,7 +8,6 @@ Usage:
     html = generate_invoice_html(inv_data)
     email_invoice(inv_data, to="customer@example.com")
 """
-from __future__ import annotations
 import html as _html
 import io
 import logging

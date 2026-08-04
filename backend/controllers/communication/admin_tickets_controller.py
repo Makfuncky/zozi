@@ -28,6 +28,7 @@ def _build_list_page_payload(items: list, total: int, offset: int, page_size: in
         "pageSize": page_size,
     }
 
+from services.write_helpers import add_and_flush, commit_and_refresh
 
 def _serialize_ticket_attachment(attachment: TicketAttachment) -> dict[str, Any]:
     return {

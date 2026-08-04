@@ -8,7 +8,6 @@ Transport precedence:
 4. Disabled in other environments
 """
 
-from __future__ import annotations
 
 import json
 import logging

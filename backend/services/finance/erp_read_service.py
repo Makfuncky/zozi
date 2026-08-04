@@ -3,7 +3,7 @@
 Covers ERP transactions plus the GL/AR/AP/reconciliation/budget/audit
 read queries used by the finance_erp router (LC1: routers stay thin).
 """
-from __future__ import annotations
+from typing import List
 from datetime import date, datetime
 from typing import Optional
 

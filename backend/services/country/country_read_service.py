@@ -1,7 +1,6 @@
 """
 Automatic service for country_read_service - DB read operations delegated from controllers.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 from sqlalchemy.orm import Session
@@ -110,7 +109,7 @@ def _db_countryconfigversion_query_1(db: Session) -> Optional[Any]:
     return db.query(CountryConfigVersion)
     """Read-only query delegated from controller."""
 
-def _db_countrycity_count_2(db: Session, True: Any, code: Any, country: Any, country_code: Any, is_active: Any) -> Optional[Any]:
+def _db_countrycity_count_2(db: Session, true_val: Any, code: Any, country: Any, country_code: Any, is_active: Any) -> Optional[Any]:
     result = db.query(CountryCity).filter( CountryCity.country_code == country.code, CountryCity.is_active == True, ).count()
     return result
     """Read-only query delegated from controller."""
@@ -119,8 +118,8 @@ def _db_countryconfig_query_3(db: Session) -> Optional[Any]:
     return db.query(CountryConfig)
     """Read-only query delegated from controller."""
 
-def _db_countryconfig_first_4(db: Session, True: Any, cc: Any, code: Any, is_active: Any, noqa: Any) -> Optional[Any]:
-    result = db.query(CountryConfig).filter( CountryConfig.code == cc, CountryConfig.is_active == True,  # noqa: E712 ).first()
+def _db_countryconfig_first_4(db: Session, true_val: Any, cc: Any, code: Any, is_active: Any, noqa: Any) -> Optional[Any]:
+    result = db.query(CountryConfig).filter(CountryConfig.code == cc, CountryConfig.is_active == True).first()  # noqa: E712
     return result
     """Read-only query delegated from controller."""
 
@@ -153,11 +152,13 @@ def _db_omandeliveryzone_all_10(db: Session) -> Optional[Any]:
     """Read-only query delegated from controller."""
 
 def _db_suppliercountrycommission_query_11(db: Session) -> Optional[Any]:
-    return for entry in db.query(SupplierCountryCommission)
+    result = db.query(SupplierCountryCommission).all()
+    return result
     """Read-only query delegated from controller."""
 
 def _db_countryfeatureflag_query_12(db: Session) -> Optional[Any]:
-    return for flag in db.query(CountryFeatureFlag)
+    result = db.query(CountryFeatureFlag).all()
+    return result
     """Read-only query delegated from controller."""
 
 def _db_countryconfigversion_query_13(db: Session) -> Optional[Any]:
@@ -191,7 +192,7 @@ def _db_countrystaffassignment_first_19(db: Session, country_code: Any, upper: A
     return result
     """Read-only query delegated from controller."""
 
-def _db_countrystaffassignment_all_20(db: Session, True: Any, country_code: Any, upper: Any) -> Optional[Any]:
+def _db_countrystaffassignment_all_20(db: Session, true_val: Any, country_code: Any, upper: Any) -> Optional[Any]:
     result = db.query(CountryStaffAssignment).filter( CountryStaffAssignment.country_code == country_code.upper(), CountryStaffAssignment.is_active == True, ).order_by(CountryStaffAssignment.created_at.desc()).all()
     return result
     """Read-only query delegated from controller."""
@@ -221,7 +222,7 @@ def _db_crosscountrycustomersession_all_25(db: Session, country_code: Any, targe
     return result
     """Read-only query delegated from controller."""
 
-def _db_countryconfig_first_26(db: Session, True: Any, code: Any, is_active: Any) -> Optional[Any]:
+def _db_countryconfig_first_26(db: Session, true_val: Any, code: Any, is_active: Any) -> Optional[Any]:
     result = db.query(CountryConfig).filter( CountryConfig.code == code, CountryConfig.is_active == True, ).first()
     return result
     """Read-only query delegated from controller."""

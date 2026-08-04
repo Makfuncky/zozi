@@ -55,7 +55,7 @@ If something goes wrong:
    .gitignore.bak.<timestamp>
 """
 
-from __future__ import annotations
+from typing import Optional
 
 import argparse
 import datetime

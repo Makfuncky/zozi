@@ -18,7 +18,6 @@ environment variable / secret-store entry so that the running singleton
 ``field_encryptor`` in utils/encryption.py is also refreshed (typically
 requires an app restart or a hot-reload of the config).
 """
-from __future__ import annotations
 
 import logging
 from typing import Any

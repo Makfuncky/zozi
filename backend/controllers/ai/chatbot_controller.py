@@ -21,10 +21,10 @@ from sqlalchemy.orm import Session
 import controllers.search_controller as search_ctrl
 from data.models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
 from data.services_write_helpers import (
-from services.ai.ai_service import get_user_by_id
     add_and_flush,
     commit_only,
 )
+from services.ai.ai_service import get_user_by_id
 
 logger = logging.getLogger(__name__)
 

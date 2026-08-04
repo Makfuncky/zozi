@@ -13,7 +13,6 @@ Usage::
     )
     # result = {"status": "clear", ...}  or  {"status": "flagged", ...}
 """
-from __future__ import annotations
 
 __all__ = [
     "run_background_check",
