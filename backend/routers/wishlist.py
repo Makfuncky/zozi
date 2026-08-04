@@ -2,19 +2,26 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from controllers.products_controller import get_products as get_products_controller
 from data.db import get_db
-from data.models import WishlistItem, Product, User
+from data.models import User
 from utils.dependencies import get_current_user
 from utils.pagination import cursor_paginate_desc, build_cursor_pagination_payload
 
-from services.write_helpers import add_and_flush, commit_only, delete_only
+from services.catalog.products_write_service import (
+    get_product_by_id,
+    get_wishlist_item,
+    list_wishlist_items,
+    add_wishlist_item,
+    remove_wishlist_item,
+)
+
 router = APIRouter()
 
 
 def _product_exists_for_wishlist(product_id: int, db: Session) -> bool:
-    if db.query(Product).filter(Product.id == product_id).first() is not None:
+    if get_product_by_id(db, product_id) is not None:
         return True
 
     # Keep wishlist compatibility with IDs coming from the public /products feed,
@@ -37,23 +44,21 @@ def _product_exists_for_wishlist(product_id: int, db: Session) -> bool:
 
 @router.get("")
 def get_wishlist(limit: int = 200, offset: int = 0, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(WishlistItem).options(selectinload(WishlistItem.product)).filter(WishlistItem.user_id == current_user.get("id")).offset(max(0, offset)).limit(min(max(1, limit), 200)).all()
+    return list_wishlist_items(db, int(current_user.get("id")), offset, limit)
 
 @router.post("/{product_id}")
 def add_to_wishlist(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     if not _product_exists_for_wishlist(product_id, db):
         raise HTTPException(status_code=404, detail="Product not found")
-    if db.query(WishlistItem).filter(WishlistItem.user_id == current_user.get("id"), WishlistItem.product_id == product_id).first():
+    if get_wishlist_item(db, int(current_user.get("id")), product_id):
         return {"product_id": product_id, "detail": "Already in wishlist"}
-    add_and_flush(db, WishlistItem(user_id=current_user.get("id"), product_id=product_id))
-    commit_only(db)
+    add_wishlist_item(db, int(current_user.get("id")), product_id)
     return {"product_id": product_id, "detail": "Added to wishlist"}
 
 @router.delete("/{product_id}")
 def remove_from_wishlist(product_id: int, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    item = db.query(WishlistItem).filter(WishlistItem.user_id == current_user.get("id"), WishlistItem.product_id == product_id).first()
+    item = get_wishlist_item(db, int(current_user.get("id")), product_id)
     if not item:
         raise HTTPException(status_code=404, detail="Wishlist item not found")
-    delete_only(db, item); commit_only(db)
+    remove_wishlist_item(db, item)
     return {"product_id": product_id, "detail": "Removed from wishlist"}
-

@@ -103,6 +103,7 @@ class Referral(Base, TenantMixin):
     id = Column(Integer, primary_key=True, index=True)
     referrer_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
     referred_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, unique=True, index=True)
+    referral_code = Column(String(40), nullable=True, index=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

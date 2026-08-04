@@ -20,7 +20,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from data.models import (
-    Account, ScannedExpense, BankMappingRule,
+    Account, AccountBalance, ScannedExpense, BankMappingRule,
     BankStatementImport, BankStatementLine, FixedAsset, Accrual,
     FinanceAutomationLog, JournalEntry,
 )
@@ -547,4 +547,80 @@ def trigger_recurring(
             tpl.next_run_date = nd + timedelta(days=30)
     db.commit()
     return {"template_id": tpl.id, "journal_entry_id": entry.id if not isinstance(entry, dict) else entry.get("id")}
+
+
+# ── Account Management ────────────────────────────────────────────────────────
+
+
+def create_account(
+    db: Session,
+    code: str,
+    name: str,
+    group_id: int,
+    normal_side: str,
+    currency: str = "OMR",
+    country_code: Optional[str] = None,
+) -> Account:
+    """Create a new GL account with initial balance."""
+    acct = Account(
+        code=code,
+        name=name,
+        group_id=group_id,
+        normal_side=normal_side,
+        currency=currency,
+        country_code=country_code,
+    )
+    db.add(acct)
+    db.flush()
+    db.add(AccountBalance(account_id=acct.id, currency=currency, balance=Decimal("0.00")))
+    db.commit()
+    db.refresh(acct)
+    return acct
+
+
+def deactivate_account(db: Session, code: str) -> Account | None:
+    """Deactivate a GL account."""
+    acct = db.query(Account).filter(Account.code == code).first()
+    if not acct:
+        return None
+    acct.is_active = False
+    db.commit()
+    return acct
+
+
+def create_fixed_asset(
+    db: Session,
+    name: str,
+    category: Optional[str] = None,
+    purchase_date: Optional[datetime] = None,
+    purchase_cost: Optional[float] = None,
+    salvage_value: float = 0,
+    useful_life_months: int = 0,
+    asset_code: Optional[str] = None,
+    asset_account_code: str = "1100",
+    depreciation_account_code: str = "5070",
+    accumulated_depr_account_code: str = "1190",
+    country_code: Optional[str] = None,
+    created_by: Optional[int] = None,
+) -> FixedAsset:
+    """Create a fixed asset record."""
+    asset = FixedAsset(
+        name=name,
+        category=category,
+        purchase_date=purchase_date,
+        purchase_cost=purchase_cost,
+        salvage_value=salvage_value,
+        useful_life_months=useful_life_months,
+        asset_code=asset_code,
+        asset_account_code=asset_account_code,
+        depreciation_account_code=depreciation_account_code,
+        accumulated_depr_account_code=accumulated_depr_account_code,
+        country_code=country_code,
+        created_by=created_by,
+        status="pending_depreciation" if purchase_cost else "draft",
+    )
+    db.add(asset)
+    db.commit()
+    db.refresh(asset)
+    return asset
 

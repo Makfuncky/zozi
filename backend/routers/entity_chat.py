@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from data.dependencies_auth import get_current_user
+from services.communication.entity_chat_service import get_entity_threads, get_entity_thread_by_id, get_entity_thread_messages, get_entity_participants
 from data.services_communication_entity_chat_service import (
     get_chat_service,
 )
@@ -35,10 +36,10 @@ async def send_message(
     current_user: dict = Depends(get_current_user),
 ):
     from data.db import get_db_context
-    from data.models import User
+    from services.core.users_write_service import get_user_by_id
 
     with get_db_context() as db:
-        user = db.query(User).filter(User.id == int(current_user["sub"])).first()
+        user = get_user_by_id(db, int(current_user["sub"]))
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 

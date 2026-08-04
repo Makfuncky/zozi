@@ -302,3 +302,23 @@ def list_wishlist_items(db: Session, user_id: int, offset: int = 0, limit: int =
         .limit(min(max(1, limit), 200))
         .all()
     )
+
+
+def add_wishlist_item(db: Session, user_id: int, product_id: int) -> WishlistItem:
+    item = WishlistItem(user_id=user_id, product_id=product_id)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+def remove_wishlist_item(db: Session, item: WishlistItem) -> None:
+    db.delete(item)
+    db.commit()
+
+
+def deactivate_product(db: Session, product: Product) -> None:
+    product.is_active = False
+    product.is_deleted = True
+    db.commit()
+    db.refresh(product)

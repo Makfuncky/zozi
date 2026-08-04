@@ -5,12 +5,13 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from data.db import get_db
 from data.controllers_admin_controller import require_admin
 from services import import_service as svc
+from services.logistics.logistics_router_service import get_import_shipment
 
 router = APIRouter()
 
@@ -128,12 +129,7 @@ def list_shipments(status: str = None, po_id: int = None,
 @router.get("/shipments/{shipment_id}", summary="Get an import shipment")
 def get_shipment(shipment_id: int, db: Session = Depends(get_db),
                  _admin: dict = Depends(require_admin)):
-    s = db.query(svc.ImportShipment).filter(
-        svc.ImportShipment.id == shipment_id
-    ).first()
-    if not s:
-        raise HTTPException(404, "Shipment not found")
-    return s
+    return get_import_shipment(db, shipment_id)
 
 
 @router.post("/shipments/{shipment_id}/confirm", summary="Confirm & post goods in transit")

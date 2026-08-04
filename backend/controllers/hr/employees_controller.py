@@ -17,10 +17,11 @@ from data.models_employee_models import (
 from data.models import User
 from utils.datetime_utils import utcnow as _utcnow
 import services.employee_write_service as ew
+from services.hr.employee_read_service import get_employee_by_id
 
 
 def list_offices(code: str, db: Session) -> list[dict]:
-    offices = db.query(Office).filter(Office.country_code == code).all()
+    offices = _db_office_all_0(db, code, country_code)
     return [{"id": o.id, "name": o.name, "address": o.address, "city": o.city,
              "latitude": o.latitude,
              "longitude": o.longitude, "is_active": o.is_active} for o in offices]
@@ -32,7 +33,7 @@ def create_office(code: str, data: dict, db: Session) -> dict:
 
 
 def update_office(office_id: int, data: dict, db: Session) -> dict:
-    office = db.query(Office).filter(Office.id == office_id).first()
+    office = _db_office_first_1(db, id, office_id)
     if not office:
         raise HTTPException(status_code=404, detail="Office not found")
     office = ew.update_office(db, office, data)
@@ -40,7 +41,7 @@ def update_office(office_id: int, data: dict, db: Session) -> dict:
 
 
 def delete_office(office_id: int, db: Session):
-    office = db.query(Office).filter(Office.id == office_id).first()
+    office = _db_office_first_2(db, id, office_id)
     if not office:
         raise HTTPException(status_code=404, detail="Office not found")
     ew.delete_office(db, office)
@@ -63,7 +64,7 @@ def employee_payload(emp: Employee) -> dict:
 
 def list_employees(code: str, db: Session, department: Optional[str] = None,
                    status: Optional[str] = None, query: Optional[str] = None, limit: int = 100) -> list[dict]:
-    q = db.query(Employee).filter(Employee.country_code == code)
+    q = _db_employee_query_3(db, code, country_code)
     if department and department != "all":
         q = q.filter(Employee.department == department)
     if status and status != "all":
@@ -90,14 +91,14 @@ def create_employee(code: str, data: dict, current_user: dict, db: Session) -> d
 
 
 def get_employee(employee_id: int, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     return employee_payload(emp)
 
 
 def update_employee(employee_id: int, data: dict, current_user: dict, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     updates = {}
@@ -111,14 +112,14 @@ def update_employee(employee_id: int, data: dict, current_user: dict, db: Sessio
 
 
 def delete_employee(employee_id: int, current_user: dict, db: Session):
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     ew.delete_employee(db, emp)
 
 
 def list_employee_documents(employee_id: int, db: Session) -> list[dict]:
-    docs = db.query(EmployeeDocument).filter(EmployeeDocument.employee_id == employee_id).all()
+    docs = _db_employeedocument_all_4(db, employee_id)
     return [{"id": d.id, "doc_type": d.doc_type, "file_url": d.file_url, "expiry_date": d.expiry_date} for d in docs]
 
 
@@ -128,7 +129,7 @@ def create_employee_document(employee_id: int, data: dict, db: Session) -> dict:
 
 
 def update_employee_document_status(doc_id: int, data: dict, db: Session) -> dict:
-    doc = db.query(EmployeeDocument).filter(EmployeeDocument.id == doc_id).first()
+    doc = _db_employeedocument_first_5(db, doc_id, id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     doc = ew.update_employee_document(db, doc, data)
@@ -137,7 +138,7 @@ def update_employee_document_status(doc_id: int, data: dict, db: Session) -> dic
 
 def list_attendance(employee_id: int, db: Session, from_date: Optional[str] = None,
                     to_date: Optional[str] = None, limit: int = 50) -> list[dict]:
-    q = db.query(EmployeeAttendance).filter(EmployeeAttendance.employee_id == employee_id)
+    q = _db_employeeattendance_query_6(db, employee_id)
     if from_date:
         q = q.filter(EmployeeAttendance.date >= datetime.fromisoformat(from_date))
     if to_date:
@@ -150,7 +151,7 @@ def list_attendance(employee_id: int, db: Session, from_date: Optional[str] = No
 
 
 def check_in_employee(employee_id: int, data: dict, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     attendance = ew.create_employee_attendance(db, employee_id, **data)
@@ -159,10 +160,9 @@ def check_in_employee(employee_id: int, data: dict, db: Session) -> dict:
 
 def check_out_employee(employee_id: int, data: dict, db: Session) -> dict:
     today = datetime.now(timezone.utc).date()
-    record = db.query(EmployeeAttendance).filter(
-        EmployeeAttendance.employee_id == employee_id,
-        EmployeeAttendance.date == today
-    ).first()
+    record = _db_employeeattendance_first_7(db, date, employee_id, today)
+
+
     if not record:
         raise HTTPException(status_code=404, detail="No check-in record found for today")
     record = ew.update_employee_attendance(db, record, data)
@@ -170,7 +170,7 @@ def check_out_employee(employee_id: int, data: dict, db: Session) -> dict:
 
 
 def check_in_with_geo(employee_id: int, data: dict, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     data.pop("employee_id", None)
@@ -179,7 +179,7 @@ def check_in_with_geo(employee_id: int, data: dict, db: Session) -> dict:
 
 
 def validate_geo_location(latitude: float, longitude: float, office_id: int, db: Session) -> dict:
-    office = db.query(Office).filter(Office.id == office_id).first()
+    office = _db_office_first_8(db, id, office_id)
     if not office:
         raise HTTPException(status_code=404, detail="Office not found")
     if office.latitude and office.longitude:
@@ -196,7 +196,7 @@ def validate_geo_location(latitude: float, longitude: float, office_id: int, db:
 
 
 def list_employee_relations(employee_id: int, db: Session) -> list[dict]:
-    relations = db.query(EmployeeRelation).filter(EmployeeRelation.employee_id == employee_id).all()
+    relations = _db_employeerelation_all_9(db, employee_id)
     return [{"id": r.id, "related_person_name": r.related_person_name,
              "relation_type": r.relation_type, "is_internal": r.is_internal_employee,
              "internal_employee_id": r.internal_employee_id, "notes": None} for r in relations]
@@ -208,7 +208,7 @@ def create_employee_relation(employee_id: int, data: dict, db: Session) -> dict:
 
 
 def remove_employee_relation(relation_id: int, db: Session):
-    relation = db.query(EmployeeRelation).filter(EmployeeRelation.id == relation_id).first()
+    relation = _db_employeerelation_first_10(db, id, relation_id)
     if not relation:
         raise HTTPException(status_code=404, detail="Relation not found")
     ew.delete_employee_relation(db, relation)
@@ -216,7 +216,7 @@ def remove_employee_relation(relation_id: int, db: Session):
 
 def list_work_logs(employee_id: int, db: Session, from_date: Optional[str] = None,
                    to_date: Optional[str] = None, status: Optional[str] = None, limit: int = 50) -> list[dict]:
-    q = db.query(EmployeeWorkLog).filter(EmployeeWorkLog.employee_id == employee_id)
+    q = _db_employeeworklog_query_11(db, employee_id)
     if from_date:
         q = q.filter(EmployeeWorkLog.date >= datetime.fromisoformat(from_date))
     if to_date:
@@ -234,7 +234,7 @@ def create_work_log(employee_id: int, data: dict, db: Session) -> dict:
 
 
 def approve_work_log(log_id: int, data: dict, current_user: dict, db: Session) -> dict:
-    log = db.query(EmployeeWorkLog).filter(EmployeeWorkLog.id == log_id).first()
+    log = _db_employeeworklog_first_12(db, id, log_id)
     if not log:
         raise HTTPException(status_code=404, detail="Work log not found")
     log = ew.approve_work_log(db, log, status=data.get("status", "approved"))
@@ -242,7 +242,7 @@ def approve_work_log(log_id: int, data: dict, current_user: dict, db: Session) -
 
 
 def generate_qr_login_token(employee_id: int, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     token = str(uuid4())
@@ -254,7 +254,7 @@ def generate_qr_login_token(employee_id: int, db: Session) -> dict:
 
 
 def validate_qr_login(token: str, db: Session) -> dict:
-    session = db.query(DynamicQRSession).filter(DynamicQRSession.qr_token == token).first()
+    session = _db_dynamicqrsession_first_13(db, qr_token, token)
     if not session or session.expires_at <= datetime.now(timezone.utc).replace(tzinfo=None):
         raise HTTPException(status_code=401, detail="Invalid or expired QR token")
     session = ew.update_dynamic_qr_session(
@@ -266,7 +266,7 @@ def validate_qr_login(token: str, db: Session) -> dict:
 
 def list_employee_roles(code: str, db: Session) -> list[dict]:
     from data.models_employee_models import EmployeeRole
-    roles = db.query(EmployeeRole).all()
+    roles = _db_employeerole_all_14(db)
     return [{"id": r.id, "name": r.role_name, "permissions": r.permissions} for r in roles]
 
 
@@ -289,14 +289,14 @@ def create_shift_roster(employee_id: int, data: dict, current_user: dict, db: Se
 
 
 def kill_switch(employee_id: int, current_user: dict, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     user = emp.user
     expires_at = datetime.now(timezone.utc).replace(tzinfo=None)
     if user:
         token = str(uuid4())
-        qr_sessions = db.query(DynamicQRSession).filter(DynamicQRSession.employee_id == employee_id)
+        qr_sessions = _db_dynamicqrsession_query_15(db, employee_id)
         ew.apply_kill_switch(
             db,
             jti=token,
@@ -305,13 +305,13 @@ def kill_switch(employee_id: int, current_user: dict, db: Session) -> dict:
             qr_sessions=qr_sessions,
         )
     else:
-        qr_sessions = db.query(DynamicQRSession).filter(DynamicQRSession.employee_id == employee_id)
+        qr_sessions = _db_dynamicqrsession_query_16(db, employee_id)
         ew.update_qr_sessions_expiry(db, qr_sessions, expires_at)
     return {"message": "Kill switch activated", "employee_id": employee_id}
 
 
 def generate_meeting_token(employee_id: int, db: Session, room_id: Optional[str] = None) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     if emp.user and not emp.user.is_clocked_in:
@@ -366,7 +366,7 @@ def close_communication_channel(db: Session, channel_id: str, reason: str = "com
 
 
 def generate_email_alias(employee_id: int, country_code: str, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     alias = f"{emp.department.lower()}.{country_code.lower()}@zozi.com"

@@ -1,0 +1,84 @@
+# ============================================================================
+# ZOZI FEATURE DEFINITIONS v2 — AUTO-DISCOVERY EDITION
+# ----------------------------------------------------------------------------
+# You NO LONGER list expected files. The tracker discovers them from:
+#   • keywords            (strong seeds)
+#   • description         (backticks, PascalCase, snake_case, bullets auto-parsed)
+#   • must_have (optional) hard expectations that cap the score if absent
+# Paste full specs (like Confluence) into `description` — the extractor reads them.
+# ============================================================================
+
+meta:
+  project: ZOZI E-Commerce Platform
+  version: 2
+  generated_by: scripts/feature_tracker.py
+
+features:
+
+  - id: SYS_001
+    name: "Unified Communication Workspace (Confluence: Chat · Email · Video · Contacts · Files)"
+    todo_ref: "#3 #12 #20"
+    scope: "Admin · Employee"
+    matrix_section: "§I §V"
+    weight: 10
+    keywords: [chat, email, video, channel, conversation, message, composer,
+               inspector, presence, voice, waveform, dlp, ediscovery, proxy,
+               masked, thread, room, meeting, transcript, attachment, mention,
+               inbox, contact, call, recording]
+    must_have:
+      - backend/routers/admin_chat.py
+      - backend/routers/admin_email.py
+      - backend/routers/admin_video.py
+    description: >
+      One surface for every conversation: unified inbox, modality as filter.
+      Merges `EntityChatThread`, `DirectChatRoom`, `InternalChannel`, email and
+      `VideoRoom` into `conversations` + `conversation_messages` +
+      `conversation_participants` with `channel_type` enum (direct, group,
+      internal, entity, country, email, video_event); `proxy_*` masked B2B layer
+      with `is_masked`; replaces siloed `AdminCommunicationPage` tabs.
+      Zone A command bar with ⌘K palette; Zone B modality rail (Inbox, Direct,
+      Groups, Channels, Email, Meet, Contacts, Files, @Mentions, Security/DLP,
+      eDiscovery); Zone C ranked list (you → mentions → DMs → groups → email →
+      channels); Zone D unified message block + morphing composer (voice-note
+      waveform chip, attachment chips, optimistic send ✓→✓✓, typing dots);
+      Zone E inspector (Details, Shared files hub, Members, Pinned,
+      Chain/Labels, Actions: schedule meeting, escalate, legal-hold, flag DLP).
+      Video escalation from any thread: lobby, record, captions, transcript +
+      shared files land back in same thread. Contact relationship timeline
+      aggregates every chat/email/call. DLP scan before external SMTP relay.
+      All events → `communication_audit_trails`. WebSocket presence/typing.
+      Replaces current admin/communication page.tsx tab silos.
+
+  - id: SYS_002
+    name: "Product & Catalog System"
+    todo_ref: "#1"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§II §III §V"
+    weight: 9
+    keywords: [product, category, catalog, badge, flash_sale, browse, search,
+               archive, soft_delete]
+    description: >
+      Browse, full-text search (`fts_products`), category tree, badge filters
+      (is_hot/is_featured/is_new), product detail, NULL-safe backend filters,
+      soft-delete archive with admin restore. `Product`, `Category`,
+      `FlashSale`, `FlashSaleProduct` models; `products_controller.py`,
+      `routers/products.py`, `routers/categories.py`; web `products/page.tsx`,
+      mobile `(tabs)/products`; tests `test_products.py`, `test_categories.py`.
+
+  - id: SYS_031
+    name: "Cash Management / Finance / Treasury System"
+    todo_ref: "—"
+    scope: "Admin · Supplier · Logistor"
+    matrix_section: "§V §III §IV"
+    weight: 9
+    keywords: [finance, treasury, settlement, payout, ledger, bank, vat,
+               refund, cod, remittance, reconciliation, journal]
+    description: >
+      Admin ledger, bank transaction import/reconcile/flag/resolve, supplier &
+      logistics settlements, VAT remittances, refund ledger, COD remittance,
+      payout batch processing + dispatch providers, `JournalEntry` double-entry
+      with period-close lock, Maker-Checker `PayoutBatch`, `finance_automation`
+      exception queue, scheduler @02:00/@03:00. Models `TransactionLedger`,
+      `SupplierSettlement`, `BankTransaction`, `VATRemittance`.
+
+  # ... add every feature the same way: description is the single source of truth

@@ -15,11 +15,12 @@ from data.models import (
 from utils.audit import audit_log
 from utils.constants import DEFAULT_COUNTRY
 
-from services.write_helpers import add_and_flush, delete_only
+from data.services_write_helpers import add_and_flush, delete_only
+from services.core.admin_operations_service import _db_model_first_0, _db_model_first_1, _db_model_first_2, _db_model_first_3, _db_auditlog_query_4
 
 def soft_delete(db: Session, model: type, record_id: int, acting_user: dict, reason: Optional[str] = None) -> None:
     """Soft delete a record."""
-    record = db.query(model).filter(model.id == record_id).first()
+    record = _db_model_first_0(db, id, record_id)
     if record:
         if hasattr(record, "is_deleted"):
             setattr(record, "is_deleted", True)
@@ -32,7 +33,7 @@ def soft_delete(db: Session, model: type, record_id: int, acting_user: dict, rea
 
 def restore(db: Session, model: type, record_id: int, acting_user: dict) -> None:
     """Restore a soft-deleted record."""
-    record = db.query(model).filter(model.id == record_id).first()
+    record = _db_model_first_1(db, id, record_id)
     if record:
         if hasattr(record, "is_deleted"):
             setattr(record, "is_deleted", False)
@@ -45,7 +46,7 @@ def restore(db: Session, model: type, record_id: int, acting_user: dict) -> None
 
 def hard_delete(db: Session, model: type, record_id: int, acting_user: dict, reason: Optional[str] = None) -> None:
     """Hard delete a record permanently."""
-    record = db.query(model).filter(model.id == record_id).first()
+    record = _db_model_first_2(db, id, record_id)
     if record:
         delete_only(db, record)
 
@@ -72,7 +73,7 @@ def archive_entity(
         raise HTTPException(status_code=400, detail=f"Unknown entity type: {model_name}")
 
     if check_relations:
-        record = db.query(model).filter(model.id == record_id).first()
+        record = _db_model_first_3(db, id, record_id)
         if record:
             for rel_name in check_relations:
                 rel = getattr(record, rel_name, None)
@@ -149,7 +150,7 @@ def get_audit_log_page(
     """Get paginated audit log entries."""
     from sqlalchemy import or_
     
-    query = db.query(AuditLog)
+    query = _db_auditlog_query_4(db)
     
     if action_filter:
         query = query.filter(AuditLog.action == action_filter)
@@ -190,10 +191,9 @@ def get_audit_log_page(
 
 def get_available_audit_actions(db: Session) -> list:
     """Get list of unique audit actions."""
-    from sqlalchemy import func
-    result = db.query(AuditLog.action).distinct().all()
-    return [row[0] for row in result]
+    from services.audit.audit_service import get_distinct_audit_actions
+    return get_distinct_audit_actions(db)
 
 
-# â”€â”€ Supplier Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â�?€â�?€ Supplier Verification â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€
 

@@ -9,17 +9,17 @@ from sqlalchemy.orm import Session
 
 from data.models_employee_models import Employee, EmployeeRelation, EmployeeAddress, EmployeeDependent, COIReport
 from data.models import User
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.hr.employee_read_service import get_employee_by_id
     add_and_flush,
     commit_and_refresh,
 )
 
 
-
 def register_address(employee_id: int, address_data: dict, db: Session) -> dict:
     """Register a multi-dimensional address for an employee."""
     from data.models_employee_models import EmployeeAddress
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
@@ -32,7 +32,7 @@ def register_address(employee_id: int, address_data: dict, db: Session) -> dict:
 def register_dependent(employee_id: int, dependent_data: dict, db: Session) -> dict:
     """Register a dependent for an employee."""
     from data.models_employee_models import EmployeeDependent
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
@@ -45,17 +45,17 @@ def register_dependent(employee_id: int, dependent_data: dict, db: Session) -> d
 def check_coi_conflict(employee_id: int, db: Session) -> list[dict]:
     """Check for conflicts of interest in the employee's relationship graph."""
     conflicts = []
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         return conflicts
     
-    relations = db.query(EmployeeRelation).filter(
-        ((EmployeeRelation.employee_id == employee_id) | (EmployeeRelation.internal_employee_id == employee_id))
-    ).all()
+    relations = _db_employeerelation_all_0(db, employee_id)
+
+
     
     for rel in relations:
         other_id = rel.internal_employee_id if rel.employee_id == employee_id else rel.employee_id
-        other = db.query(Employee).filter(Employee.id == other_id).first()
+        other = get_employee_by_id(db, other_id)
         if other:
             if rel.is_internal_employee and other.employment_status == "active":
                 conflicts.append({
@@ -68,7 +68,7 @@ def check_coi_conflict(employee_id: int, db: Session) -> list[dict]:
 
 def create_coi_report(employee_id: int, report_data: dict, db: Session) -> dict:
     """Create a COI report for an employee."""
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
@@ -87,7 +87,7 @@ def create_coi_report(employee_id: int, report_data: dict, db: Session) -> dict:
 
 def validate_gcc_compliance(employee_id: int, db: Session) -> dict:
     """Validate GCC compliance for an employee."""
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
@@ -102,16 +102,16 @@ def validate_gcc_compliance(employee_id: int, db: Session) -> dict:
 
 def get_employee_graph(employee_id: int, db: Session) -> dict:
     """Get the full relationship graph for an employee."""
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
     nodes = [{"id": emp.id, "name": emp.employee_code, "type": "employee"}]
     edges = []
     
-    relations = db.query(EmployeeRelation).filter(
-        (EmployeeRelation.employee_id == employee_id) | (EmployeeRelation.internal_employee_id == employee_id)
-    ).all()
+    relations = _db_employeerelation_all_1(db, employee_id)
+
+
     
     for rel in relations:
         other_id = rel.internal_employee_id if rel.employee_id == employee_id else rel.employee_id
@@ -123,7 +123,7 @@ def get_employee_graph(employee_id: int, db: Session) -> dict:
 def create_disciplinary_case(employee_id: int, case_data: dict, db: Session) -> dict:
     """Create a disciplinary case for an employee."""
     from data.models_employee_models import DisciplinaryCase, Employee
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
@@ -141,14 +141,14 @@ def create_disciplinary_case(employee_id: int, case_data: dict, db: Session) -> 
 def get_disciplinary_cases(db: Session) -> list[dict]:
     """Get all disciplinary cases."""
     from data.models_employee_models import DisciplinaryCase
-    cases = db.query(DisciplinaryCase).all()
+    cases = _db_disciplinarycase_all_2(db)
     return [{"id": c.id, "employee_id": c.employee_id, "employee_name": c.employee_name, "stage": c.stage, "description": c.description, "issued_at": str(c.issued_at), "status": c.status} for c in cases]
 
 
 def create_offboarding_case(employee_id: int, case_data: dict, db: Session) -> dict:
     """Initiate offboarding for an employee."""
     from data.models_employee_models import OffboardingCase, Employee
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     
@@ -166,6 +166,6 @@ def create_offboarding_case(employee_id: int, case_data: dict, db: Session) -> d
 def get_offboarding_cases(db: Session) -> list[dict]:
     """Get all offboarding cases."""
     from data.models_employee_models import OffboardingCase
-    cases = db.query(OffboardingCase).all()
+    cases = _db_offboardingcase_all_3(db)
     return [{"id": c.id, "employee_id": c.employee_id, "employee_name": c.employee_name, "reason": c.reason, "status": c.status, "initiated_at": str(c.initiated_at), "completed_at": str(c.completed_at) if c.completed_at else None} for c in cases]
 

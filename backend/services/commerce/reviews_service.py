@@ -81,3 +81,13 @@ def delete_review(db: Session, review_id: int) -> Review:
     review.is_deleted = True
     db.commit()
     return review
+
+
+
+def list_review_ratings(db: Session, product_id: int) -> list:
+    """Return all rating values for a product — delegated from controller."""
+    return (
+        db.query(Review.rating)
+        .filter(Review.product_id == product_id, Review.is_deleted == False)  # noqa: E712
+        .all()
+    )

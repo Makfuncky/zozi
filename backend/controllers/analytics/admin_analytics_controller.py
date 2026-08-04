@@ -17,13 +17,14 @@ from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
 from utils.cache import cache_get_json, cache_set_json, build_versioned_cache_key
 
 from services.core.write_helpers import add_and_flush, flush_only
+from services.analytics.admin_dashboard_service import count_users
 _ANALYTICS_SNAPSHOT_TTL = 3600
 _ANALYTICS_CACHE_TTL_SECONDS = 300
 _PERIOD_DAYS = {"7d": 7, "30d": 30, "90d": 90}
 
 
 def _load_admin_analytics_snapshot(snapshot_key: str, db: Session) -> dict[str, Any] | None:
-    snapshot = db.query(AdminAnalyticsSnapshot).filter(AdminAnalyticsSnapshot.snapshot_key == snapshot_key).first()
+    snapshot = _db_adminanalyticssnapshot_first_0(db, snapshot_key)
     if snapshot is None:
         return None
     expires_at = cast(datetime | None, getattr(snapshot, "expires_at", None))
@@ -46,7 +47,7 @@ def _store_admin_analytics_snapshot(
 ) -> dict[str, Any]:
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     expires_at = now + _ANALYTICS_SNAPSHOT_TTL
-    snapshot = db.query(AdminAnalyticsSnapshot).filter(AdminAnalyticsSnapshot.snapshot_key == snapshot_key).first()
+    snapshot = _db_adminanalyticssnapshot_first_1(db, snapshot_key)
     serialized_payload = json.dumps(payload, default=str)
     if snapshot is None:
         snapshot = AdminAnalyticsSnapshot(
@@ -177,15 +178,8 @@ def get_customer_insights(db: Session) -> dict:
     this_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     last_month_start = (this_month_start - timedelta(days=1)).replace(day=1)
 
-    new_this_month = db.query(User).filter(
-        User.role == "customer",
-        User.created_at >= this_month_start,
-    ).count()
-    new_last_month = db.query(User).filter(
-        User.role == "customer",
-        User.created_at >= last_month_start,
-        User.created_at < this_month_start,
-    ).count()
+    new_this_month = count_users(db)
+    new_last_month = count_users(db)
 
     return {
         "top_customers": top_customers,
@@ -234,7 +228,7 @@ def get_chatbot_analytics(period: str, db: Session) -> dict:
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
     events = (
-        db.query(ChatbotQueryEvent)
+        _db_chatbotqueryevent_query_2(db)
         .filter(ChatbotQueryEvent.created_at >= since)
         .order_by(ChatbotQueryEvent.created_at.asc())
         .all()

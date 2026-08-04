@@ -10,15 +10,17 @@ from sqlalchemy import or_, func, String, cast as sql_cast
 from sqlalchemy.orm import Session, selectinload
 
 from data.models import (
-    Product, Order, OrderItem, CartItem, Wishlist, Review,
+    Product, Order, OrderItem,
     Notification, User, AuditLog
 )
-from services.catalog.product_utils import _bump_product_cache_version
+from data.catalog_product_utils import _bump_product_cache_version
 from utils.auth import require_permission
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 
-from services.write_helpers import add_and_flush, commit_only
+from data.services_write_helpers import add_and_flush, commit_only
+from services.catalog.products_write_service import clear_product_carts, clear_product_wishlists, archive_product_reviews
+from services.catalog.products_read_service import get_product_by_id
 # Module-level helper functions
 
 
@@ -48,7 +50,7 @@ def bulk_delete_products_admin(product_ids: List[int], acting_user: dict, db: Se
     if len(product_ids) > 200:
         raise HTTPException(status_code=400, detail="Cannot delete more than 200 products at once")
 
-    products = db.query(Product).options(selectinload(Product.variants), selectinload(Product.reviews)).filter(Product.id.in_(product_ids)).all()
+    products = _db_product_all_0(db, id, in_, product_ids)
     found_ids = {cast(int, p.id) for p in products}
     deleted: List[dict] = []
     skipped: List[dict] = []
@@ -97,10 +99,9 @@ def bulk_product_moderation(
     if len(product_ids) > 200:
         raise HTTPException(status_code=400, detail="Cannot moderate more than 200 products at once")
 
-    products = db.query(Product).filter(
-        Product.id.in_(product_ids),
-        Product.is_deleted.is_(False),
-    ).all()
+    products = _db_product_all_1(db, id, in_, product_ids)
+
+
     found_ids = {cast(int, p.id) for p in products}
     processed: List[dict] = []
     skipped: List[dict] = []
@@ -193,7 +194,7 @@ def get_all_products(
     filter_value: Optional[str] = None,
 ) -> dict[str, Any]:
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    query = db.query(Product).options(selectinload(Product.variants))
+    query = _db_product_query_2(db)
     if search and search.strip():
         term = f"%{search.strip()}%"
         query = query.filter(
@@ -226,27 +227,24 @@ def get_all_products(
 
 
 def delete_product_admin(product_id: int, acting_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = get_product_by_id(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
     product_name = str(product.name)
 
     # --- Cascade 1: Remove from all carts ---
-    db.query(CartItem).filter(CartItem.product_id == product_id).delete(synchronize_session=False)
+    clear_product_carts(db, product_id)
 
     # --- Cascade 2: Remove from all wishlists ---
-    db.query(Wishlist).filter(Wishlist.product_id == product_id).delete(synchronize_session=False)
+    clear_product_wishlists(db, product_id)
 
     # --- Cascade 3: Soft-delete reviews (preserve data history) ---
-    db.query(Review).filter(
-        Review.product_id == product_id,
-        Review.is_deleted == False,  # noqa: E712
-    ).update({"is_deleted": True}, synchronize_session=False)
+    archive_product_reviews(db, product_id)
 
     # --- Cascade 4: Notify users with pending/processing orders that include this product ---
     affected_orders = (
-        db.query(Order)
+        _db_order_query_3(db)
         .join(OrderItem, OrderItem.order_id == Order.id)
         .filter(
             OrderItem.product_id == product_id,
@@ -293,7 +291,7 @@ def delete_product_admin(product_id: int, acting_user: dict, db: Session) -> dic
 
 def restore_product_admin(product_id: int, acting_user: dict, db: Session) -> dict:
     """Restore a soft-deleted product (admin only)."""
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = get_product_by_id(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     if not bool(cast(Any, getattr(product, "is_deleted"))):
@@ -320,7 +318,7 @@ def restore_product_admin(product_id: int, acting_user: dict, db: Session) -> di
 def get_pending_products(db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     """Return products pending admin approval."""
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    product_query = db.query(Product).filter(Product.is_approved.is_(False), Product.is_deleted.is_(False))
+    product_query = _db_product_query_4(db, is_, is_approved)
     total = product_query.count()
     products = (
         product_query
@@ -354,7 +352,7 @@ def toggle_product_badge(
     allowed = {"is_hot", "is_featured", "is_new"}
     if field not in allowed:
         raise HTTPException(status_code=400, detail=f"field must be one of {allowed}")
-    product = db.query(Product).filter(Product.id == product_id, Product.is_deleted.is_(False)).first()
+    product = _db_product_first_5(db, id, is_, is_deleted, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     setattr(product, field, value)
@@ -374,12 +372,12 @@ def toggle_product_badge(
 
 
 def approve_product(product_id: int, acting_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(Product.id == product_id, Product.is_deleted.is_(False)).first()
+    product = _db_product_first_6(db, id, is_, is_deleted, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
     from controllers.country_controller import is_product_restricted_for_country
-    supplier = db.query(User).filter(User.id == product.supplier_id).first()
+    supplier = _db_user_first_7(db, id, product, supplier_id)
     if supplier:
         supplier_country = str(getattr(supplier, "preferred_country", "") or "").strip()
         if supplier_country:
@@ -417,7 +415,7 @@ def approve_product(product_id: int, acting_user: dict, db: Session) -> dict:
 
 
 def reject_product(product_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(Product.id == product_id, Product.is_deleted.is_(False)).first()
+    product = _db_product_first_8(db, id, is_, is_deleted, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     setattr(product, "is_approved", False)

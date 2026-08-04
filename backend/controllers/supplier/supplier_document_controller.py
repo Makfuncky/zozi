@@ -16,7 +16,8 @@ from sqlalchemy import desc
 
 from data.models import SupplierDocument, SupplierProfile, User, Notification
 from utils.audit_log import AuditAction, audit_log
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.supplier.supplier_read_service import get_supplier_document_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -69,15 +70,13 @@ def _serialize_doc(doc: SupplierDocument) -> dict:
 # ── Supplier: submit documents ────────────────────────────────────────────────
 
 def _get_supplier_profile_id(current_user: dict, db: Session) -> int:
-    profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user["id"]).first()
+    profile = _db_supplierprofile_first_0(db, current_user, id, user_id)
     return profile.id if profile else current_user["id"]
 
 
 def _documents_query_for_owner(current_user: dict, db: Session):
     profile_id = _get_supplier_profile_id(current_user, db)
-    return db.query(SupplierDocument).filter(
-        SupplierDocument.supplier_id.in_([profile_id, current_user["id"]])
-    )
+    _db_supplierdocument_query_1(db, current_user, id, in_, profile_id, supplier_id)
 
 
 def list_my_documents(current_user: dict, db: Session, limit: Optional[int] = None, offset: int = 0) -> dict:
@@ -186,7 +185,7 @@ def delete_my_document(doc_id: int, current_user: dict, db: Session) -> dict:
     if current_user.get("role") not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
 
-    doc = db.query(SupplierDocument).filter(SupplierDocument.id == doc_id).first()
+    doc = get_supplier_document_by_id(db, doc_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     if current_user.get("role") == "supplier":
@@ -217,7 +216,7 @@ def admin_list_documents(
     if role not in ("admin", "sub_admin", "moderator"):
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    q = db.query(SupplierDocument)
+    q = _db_supplierdocument_query_2(db)
     if supplier_id:
         q = q.filter(SupplierDocument.supplier_id == supplier_id)
     if status:
@@ -245,7 +244,7 @@ def admin_review_document(
     if role not in ("admin", "sub_admin", "moderator"):
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    doc = db.query(SupplierDocument).filter(SupplierDocument.id == doc_id).first()
+    doc = get_supplier_document_by_id(db, doc_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -261,13 +260,13 @@ def admin_review_document(
 
     # Update supplier profile verified_documents list if approved
     if new_status == "approved":
-        profile = db.query(SupplierProfile).filter(
-            SupplierProfile.id == doc.supplier_id
-        ).first()
+        profile = _db_supplierprofile_first_3(db, doc, id, supplier_id)
+
+
         if not profile:
-            profile = db.query(SupplierProfile).filter(
-                SupplierProfile.user_id == doc.supplier_id
-            ).first()
+            profile = _db_supplierprofile_first_4(db, doc, supplier_id, user_id)
+
+
         if profile:
             verified_documents = cast(Optional[str], getattr(profile, "verified_documents", None))
             try:
@@ -308,7 +307,7 @@ def admin_review_document(
         commit_only(db)
 
     # Email notification to supplier — non-blocking
-    supplier_user = db.query(User).filter(User.id == doc.supplier_id).first()
+    supplier_user = _db_user_first_5(db, doc, id, supplier_id)
     supplier_email = cast(Optional[str], getattr(supplier_user, "email", None)) if supplier_user else None
     if supplier_user and supplier_email and notif_title:
         try:

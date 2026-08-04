@@ -20,7 +20,8 @@ from sqlalchemy.orm import Session
 
 import controllers.search_controller as search_ctrl
 from data.models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.ai.ai_service import get_user_by_id
     add_and_flush,
     commit_only,
 )
@@ -183,12 +184,9 @@ def _serialize_products(products: list[Product]) -> list[dict]:
 
 
 def _catalog_guidance_reply(db: Session, message: str, supplier_id: Optional[int] = None, lang: str = "en") -> str:
-    top_products_query = db.query(Product).filter(
-        Product.is_deleted.is_(False),
-        Product.is_active.is_(True),
-        Product.is_approved.is_(True),
-        Product.stock > 0,
-    )
+    top_products_query = _db_product_query_0(db, is_, is_deleted)
+
+
     categories_query = db.query(Product.category).filter(
         Product.is_deleted.is_(False),
         Product.is_active.is_(True),
@@ -329,7 +327,7 @@ def get_shopper_profile(db: Session, user_id: Optional[int]) -> dict[str, Any]:
         if brand:
             brand_scores[str(brand)] += 2
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     browsing_history = _load_browsing_history(user) if user else []
     if browsing_history:
         viewed_rows = (
@@ -665,7 +663,7 @@ def _build_relaxed_product_recommendations(
         signature = json.dumps(variant, sort_keys=True, default=str)
         if signature in seen_variants:
             continue
-        seen_variants.add(signature)
+        seen_variants |= {signature}
         result = cast(
             dict[str, Any],
             search_ctrl.smart_search_from_parsed(
@@ -680,7 +678,7 @@ def _build_relaxed_product_recommendations(
             product_id = int(product.get("id") or 0)
             if not product_id or product_id in seen_ids:
                 continue
-            seen_ids.add(product_id)
+            seen_ids |= {product_id}
             collected.append(product)
             if len(collected) >= candidate_limit:
                 break
@@ -955,7 +953,7 @@ def record_product_click(
 # ─── Record browsing event ────────────────────────────────────────────────────
 def record_product_view(db: Session, user_id: int, product_id: int) -> None:
     """Append to the user's browsing history (last 50 views, deduped)."""
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if not user:
         return
     history = _load_browsing_history(user)

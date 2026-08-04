@@ -9,7 +9,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from data.models import Notification, SupplierDispute, SupplierNotificationPreference
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.orders.orders_router_service import get_supplier_dispute_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -109,7 +110,7 @@ def _serialize_preferences(row: SupplierNotificationPreference) -> dict[str, Any
 
 def _get_or_create_preferences(supplier_id: int, db: Session) -> SupplierNotificationPreference:
     prefs = (
-        db.query(SupplierNotificationPreference)
+        _db_suppliernotificationpreference_query_0(db)
         .filter(SupplierNotificationPreference.supplier_id == supplier_id)
         .first()
     )
@@ -211,7 +212,7 @@ def list_supplier_disputes(
 ) -> dict[str, Any]:
     supplier_id = _supplier_id_from_user(current_user)
 
-    query = db.query(SupplierDispute).filter(SupplierDispute.supplier_id == supplier_id)
+    query = _db_supplierdispute_query_1(db, supplier_id)
     if status:
         normalized_status = status.strip().lower()
         if normalized_status in _ALLOWED_STATUSES:
@@ -240,7 +241,7 @@ def list_supplier_disputes(
 def get_supplier_dispute(dispute_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     supplier_id = _supplier_id_from_user(current_user)
     dispute = (
-        db.query(SupplierDispute)
+        _db_supplierdispute_query_2(db)
         .filter(SupplierDispute.id == dispute_id, SupplierDispute.supplier_id == supplier_id)
         .first()
     )
@@ -257,7 +258,7 @@ def list_admin_disputes(
     limit: int = 100,
     offset: int = 0,
 ) -> dict[str, Any]:
-    query = db.query(SupplierDispute)
+    query = _db_supplierdispute_query_3(db)
     if supplier_id is not None:
         query = query.filter(SupplierDispute.supplier_id == supplier_id)
     if status:
@@ -286,14 +287,14 @@ def list_admin_disputes(
 
 
 def get_admin_dispute(dispute_id: int, db: Session) -> dict[str, Any]:
-    dispute = db.query(SupplierDispute).filter(SupplierDispute.id == dispute_id).first()
+    dispute = get_supplier_dispute_by_id(db, dispute_id)
     if dispute is None:
         raise HTTPException(status_code=404, detail="Dispute not found")
     return _serialize_dispute(dispute)
 
 
 def update_admin_dispute(dispute_id: int, payload: dict[str, Any], current_admin: dict, db: Session) -> dict[str, Any]:
-    dispute = db.query(SupplierDispute).filter(SupplierDispute.id == dispute_id).first()
+    dispute = get_supplier_dispute_by_id(db, dispute_id)
     if dispute is None:
         raise HTTPException(status_code=404, detail="Dispute not found")
 
@@ -351,7 +352,7 @@ def bulk_update_admin_disputes(
     if not ids:
         raise HTTPException(status_code=422, detail="dispute_ids must contain at least one id")
 
-    rows = db.query(SupplierDispute).filter(SupplierDispute.id.in_(ids)).all()
+    rows = _db_supplierdispute_all_4(db, id, ids, in_)
     if not rows:
         return {"updated": 0, "total_requested": len(ids), "missing_ids": ids}
 

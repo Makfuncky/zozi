@@ -14,8 +14,12 @@ from utils.staff_permissions import (
     default_permissions_for_role,
 )
 from .analytics import ROLE_PERMISSION_MAP
+from services.security.permissions_write_service import (
+    get_all_role_permission_settings,
+    get_role_permission_setting,
+)
 
-from services.write_helpers import add_and_flush, commit_only
+from data.services_write_helpers import add_and_flush, commit_only
 
 STAFF_PERMISSION_GROUPS = [
     {"key": "orders", "label": "Order Management", "permissions": ("orders.manage", "orders.view", "orders.cancel")},
@@ -46,7 +50,7 @@ def load_role_permission_settings(db: Session) -> dict[str, set[str]]:
         role: set(permissions)
         for role, permissions in DEFAULT_ROLE_PERMISSION_MAP.items()
     }
-    rows = db.query(RolePermissionSetting).all()
+    rows = get_all_role_permission_settings(db)
     for row in rows:
         role = cast(str | None, getattr(row, "role", None))
         if role not in next_map:
@@ -107,7 +111,7 @@ def update_role_permissions(role: str, new_permissions: list[str], db: Session, 
         )
 
     # Upsert the DB row
-    row = db.query(RolePermissionSetting).filter(RolePermissionSetting.role == role).first()
+    row = get_role_permission_setting(db, role)
     if row is None:
         row = RolePermissionSetting(
             role=role,

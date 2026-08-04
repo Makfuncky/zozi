@@ -1,7 +1,6 @@
 """
 Email Router — send, manage templates, and handle delivery webhooks.
 """
-
 from __future__ import annotations
 
 import logging
@@ -11,28 +10,22 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
 
 from data.controllers_admin_controller import require_roles
 from data.db import get_db
 from routers.auth import get_current_user
-from services.email_gateway import EmailGateway
-from services.transactional_email_service import (
+from services.communication.email_gateway import EmailGateway
+from services.communication.transactional_email_service import (
     enqueue_order_created_email,
     enqueue_invoice_email,
     enqueue_low_stock_alert_email,
     enqueue_order_confirmation_email,
 )
-from models.marketing import (
-    EmailCampaign,
-    EmailTemplate,
-    EmailSuppression,
-    EmailRuntimeConfig,
+from services.communication.email_management_service import (
+    EmailManagementService,
+    get_email_management_service,
 )
-from utils.config import settings
-from utils.datetime_utils import utcnow as _utcnow
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -62,8 +55,12 @@ class SendTransactionalPayload(BaseModel):
     variables: Dict[str, Any] = {}
 
 
+def _get_svc(db: Session = Depends(get_db)) -> EmailManagementService:
+    return EmailManagementService(db)
+
+
 @public_router.post("/webhooks/resend")
-async def resend_webhook(request: Request, db: Session = Depends(get_db)):
+async def resend_webhook(request: Request):
     """Receive delivery event webhooks from Resend."""
     try:
         payload = await request.json()
@@ -79,7 +76,6 @@ async def resend_webhook(request: Request, db: Session = Depends(get_db)):
 def send_email(
     current_user: AdminUser,
     payload: SendEmailPayload,
-    db: Session = Depends(get_db),
 ):
     """Send an email via the configured email provider."""
     gateway = EmailGateway()
@@ -149,10 +145,9 @@ def list_templates(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    templates = db.query(EmailTemplate).order_by(desc(EmailTemplate.created_at)).offset(skip).limit(limit).all()
-    return [_serialize_template(t) for t in templates]
+    return svc.list_templates(skip=skip, limit=limit)
 
 
 @router.get("/campaigns")
@@ -160,21 +155,9 @@ def list_campaigns(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    from models.marketing import EmailCampaign
-    campaigns = db.query(EmailCampaign).order_by(desc(EmailCampaign.created_at)).offset(skip).limit(limit).all()
-    return [
-        {
-            "id": c.id,
-            "name": c.name,
-            "subject": c.subject,
-            "status": c.status,
-            "sent_count": c.sent_count,
-            "created_at": c.created_at.isoformat() if c.created_at else None,
-        }
-        for c in campaigns
-    ]
+    return svc.list_campaigns(skip=skip, limit=limit)
 
 
 @router.get("/suppressions")
@@ -183,27 +166,9 @@ def list_suppressions(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     current_user: AdminOrSuperAdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    q = db.query(EmailSuppression)
-    if status:
-        q = q.filter(EmailSuppression.status == status)
-    suppressions = q.offset(skip).limit(limit).all()
-    return [
-        {
-            "id": s.id,
-            "email": s.email,
-            "reason": s.reason,
-            "source": s.source,
-            "provider": s.provider,
-            "status": s.status,
-            "notes": s.notes,
-            "suppressed_at": s.suppressed_at.isoformat() if s.suppressed_at else None,
-            "last_event_at": s.last_event_at.isoformat() if s.last_event_at else None,
-            "created_at": s.created_at.isoformat() if s.created_at else None,
-        }
-        for s in suppressions
-    ]
+    return svc.list_suppressions(status=status, skip=skip, limit=limit)
 
 
 @router.patch("/suppressions/{suppression_id}")
@@ -211,75 +176,32 @@ def update_suppression(
     suppression_id: int,
     body: Dict[str, Any] = Body(default={}),
     current_user: AdminOrSuperAdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    s = db.query(EmailSuppression).filter(EmailSuppression.id == suppression_id).first()
-    if not s:
+    try:
+        return svc.update_suppression(suppression_id, body)
+    except ValueError:
         raise HTTPException(status_code=404, detail="Suppression not found")
-    if "status" in body:
-        s.status = body["status"]
-        if body["status"] == "active" and not s.suppressed_at:
-            s.suppressed_at = _utcnow()
-        s.last_event_at = _utcnow()
-    if "reason" in body:
-        s.reason = body["reason"]
-    if "notes" in body:
-        s.notes = body["notes"]
-    commit_and_refresh(db, s)
-    return {
-        "id": s.id,
-        "email": s.email,
-        "reason": s.reason,
-        "source": s.source,
-        "provider": s.provider,
-        "status": s.status,
-        "notes": s.notes,
-        "suppressed_at": s.suppressed_at.isoformat() if s.suppressed_at else None,
-        "last_event_at": s.last_event_at.isoformat() if s.last_event_at else None,
-    }
 
 
 @router.post("/campaigns")
 def create_campaign(
     payload: Dict[str, Any] = Body(default={}),
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    campaign = EmailCampaign(
-        name=payload.get("name", "Untitled Campaign"),
-        subject=payload.get("subject", ""),
-        status=payload.get("status", "draft"),
-        target_audience=payload.get("target_audience"),
-        country_code=payload.get("country_code"),
-        created_by=current_user.get("id") if isinstance(current_user, dict) else None,
-    )
-    add_and_flush(db, campaign)
-    commit_and_refresh(db, campaign)
-    return {
-        "id": campaign.id,
-        "name": campaign.name,
-        "subject": campaign.subject,
-        "status": campaign.status,
-        "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
-    }
+    user_id = current_user.get("id") if isinstance(current_user, dict) else None
+    return svc.create_campaign(payload, user_id=user_id)
 
 
 @router.post("/templates")
 def create_template(
     payload: Dict[str, Any] = Body(default={}),
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    template = EmailTemplate(
-        name=payload.get("name", ""),
-        subject=payload.get("subject", ""),
-        content=payload.get("content"),
-        template_type=payload.get("template_type", "marketing"),
-        created_by=current_user.get("id") if isinstance(current_user, dict) else None,
-    )
-    add_and_flush(db, template)
-    commit_and_refresh(db, template)
-    return _serialize_template(template)
+    user_id = current_user.get("id") if isinstance(current_user, dict) else None
+    return svc.create_template(payload, user_id=user_id)
 
 
 @router.put("/templates/{template_id}")
@@ -287,120 +209,41 @@ def update_template(
     template_id: int,
     payload: Dict[str, Any] = Body(default={}),
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-    if not template:
+    try:
+        return svc.update_template(template_id, payload)
+    except ValueError:
         raise HTTPException(status_code=404, detail="Template not found")
-    if "name" in payload:
-        template.name = payload["name"]
-    if "subject" in payload:
-        template.subject = payload["subject"]
-    if "content" in payload:
-        template.content = payload["content"]
-    if "template_type" in payload:
-        template.template_type = payload["template_type"]
-    commit_and_refresh(db, template)
-    return _serialize_template(template)
 
 
 @router.delete("/templates/{template_id}")
 def delete_template(
     template_id: int,
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    template = db.query(EmailTemplate).filter(EmailTemplate.id == template_id).first()
-    if not template:
+    try:
+        return svc.delete_template(template_id)
+    except ValueError:
         raise HTTPException(status_code=404, detail="Template not found")
-    delete_only(db, template)
-    commit_only(db)
-    return {"message": "Template deleted", "id": template_id}
-
-
-def _serialize_template(t: EmailTemplate) -> dict:
-    return {
-        "id": t.id,
-        "name": t.name,
-        "subject": t.subject,
-        "content": t.content,
-        "template_type": t.template_type,
-        "created_at": t.created_at.isoformat() if t.created_at else None,
-        "updated_at": t.updated_at.isoformat() if t.updated_at else None,
-    }
-
-
-def _email_runtime_to_dict(cfg: EmailRuntimeConfig) -> dict:
-    resend_key = bool(cfg.resend_api_key)
-    resend_secret = bool(cfg.resend_webhook_secret)
-    return {
-        "id": cfg.id,
-        "provider": cfg.provider,
-        "active_provider": cfg.provider,
-        "source": "db",
-        "available": True,
-        "live": cfg.provider not in ("disabled", None),
-        "preview_only": cfg.provider == "environment",
-        "supports_webhooks": True,
-        "smtp_host": cfg.smtp_host,
-        "smtp_port": cfg.smtp_port or 587,
-        "smtp_username": cfg.smtp_username,
-        "smtp_use_tls": cfg.smtp_use_tls,
-        "smtp_use_ssl": cfg.smtp_use_ssl,
-        "smtp_timeout_seconds": cfg.smtp_timeout_seconds or 15,
-        "email_from_default": cfg.email_from_default,
-        "email_from_promotional": cfg.email_from_promotional,
-        "email_from_transactional": cfg.email_from_transactional,
-        "email_from_notification": cfg.email_from_notification,
-        "email_from_alert": cfg.email_from_alert,
-        "email_from_verification": cfg.email_from_verification,
-        "email_from_login_verification": cfg.email_from_login_verification,
-        "email_from_password_reset": cfg.email_from_password_reset,
-        "resend_api_key_configured": resend_key,
-        "resend_webhook_secret_configured": resend_secret,
-        "smtp_password_configured": bool(cfg.smtp_password),
-    }
 
 
 @router.get("/config/runtime")
-def get_email_runtime_config(current_user: AdminUser = None, db: Session = Depends(get_db)):
-    cfg = db.query(EmailRuntimeConfig).order_by(EmailRuntimeConfig.id.asc()).first()
-    if not cfg:
-        cfg = EmailRuntimeConfig(provider="environment", smtp_port=587)
-        add_and_flush(db, cfg)
-        commit_and_refresh(db, cfg)
-    return _email_runtime_to_dict(cfg)
+def get_email_runtime_config(
+    current_user: AdminUser = None,
+    svc: EmailManagementService = Depends(_get_svc),
+):
+    return svc.get_email_runtime_config()
 
 
 @router.put("/config/runtime")
 def update_email_runtime_config(
     payload: Dict[str, Any] = Body(default={}),
     current_user: AdminUser = None,
-    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_svc),
 ):
-    cfg = db.query(EmailRuntimeConfig).order_by(EmailRuntimeConfig.id.asc()).first()
-    if not cfg:
-        cfg = EmailRuntimeConfig()
-        add_and_flush(db, cfg)
-    simple_fields = [
-        "provider", "smtp_host", "smtp_port", "smtp_username",
-        "smtp_use_tls", "smtp_use_ssl", "smtp_timeout_seconds",
-        "email_from_default", "email_from_promotional", "email_from_transactional",
-        "email_from_notification", "email_from_alert", "email_from_verification",
-        "email_from_login_verification", "email_from_password_reset",
-    ]
-    for field in simple_fields:
-        if field in payload:
-            setattr(cfg, field, payload[field])
-    # Only overwrite secrets when a non-empty value is supplied.
-    if payload.get("resend_api_key"):
-        cfg.resend_api_key = payload["resend_api_key"]
-    if payload.get("resend_webhook_secret"):
-        cfg.resend_webhook_secret = payload["resend_webhook_secret"]
-    if payload.get("smtp_password"):
-        cfg.smtp_password = payload["smtp_password"]
-    commit_and_refresh(db, cfg)
-    return _email_runtime_to_dict(cfg)
+    return svc.update_email_runtime_config(payload)
 
 
 @router.post("/config/test-send")
@@ -485,4 +328,3 @@ def get_my_inbox(
     from services.employee_communication_service import get_inbox
     employee_id = current_user.get("id") if isinstance(current_user, dict) else 0
     return get_inbox(db, employee_id=employee_id, folder=folder, limit=limit, offset=offset)
-

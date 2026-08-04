@@ -4,13 +4,11 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Path, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import func as sqlfunc
 
 from data.db import get_db
 from data.models import User
-from data.models_core import EntityChatThread, EntityChatMessage
 from services.chat_system import ChatSystem, get_chat_system
-from services.entity_chat_service import EntityChatService, get_chat_service
+from services.communication.entity_chat_service import EntityChatService, get_chat_service
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
@@ -103,12 +101,8 @@ def admin_chat_metrics(
     db: Session = Depends(get_db),
 ):
     """Chat metrics across all countries."""
-    total_threads = db.query(sqlfunc.count(EntityChatThread.id)).scalar() or 0
-    total_messages = db.query(sqlfunc.count(EntityChatMessage.id)).scalar() or 0
-    return {
-        "total_threads": total_threads,
-        "total_messages": total_messages,
-    }
+    chat = get_chat_system(db)
+    return chat.get_chat_metrics()
 
 
 @router.get("/chat/threads/{country_code}")

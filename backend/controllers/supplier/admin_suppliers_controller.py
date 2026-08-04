@@ -11,7 +11,8 @@ from data.models import User, SupplierProfile as SP, Notification
 from utils.auth import require_permission
 from utils.audit import audit_log, AuditAction
 
-from services.write_helpers import add_and_flush, commit_only, flush_only
+from data.services_write_helpers import add_and_flush, commit_only, flush_only
+from services.supplier.supplier_read_service import _db_user_first_0, _db_sp_first_1, _db_user_first_2, _db_supplierprofile_first_3, _db_user_query_4, _db_user_query_5, _db_user_first_6, _db_supplierprofile_first_7, _db_countryconfig_first_8, _db_supplierdocument_all_9, _db_user_first_10, _db_supplierprofile_first_11, _db_user_query_12, _db_supplierprofile_all_13
 
 def bulk_supplier_verification(
     supplier_ids: List[int], action: str, note: Optional[str], acting_user: dict, db: Session
@@ -31,12 +32,12 @@ def bulk_supplier_verification(
     skipped: List[dict] = []
 
     for sid in supplier_ids:
-        user = db.query(User).filter(User.id == sid, User.role == "supplier").first()
+        user = _db_user_first_0(db, id, role, sid, supplier)
         if not user:
             skipped.append({"id": sid, "reason": "Supplier not found"})
             continue
 
-        profile = db.query(SP).filter(SP.user_id == sid).first()
+        profile = _db_sp_first_1(db, sid, user_id)
         if profile is None:
             profile = SP(user_id=sid)
             add_and_flush(db, profile)
@@ -126,12 +127,12 @@ def bulk_manage_suppliers(
     note_text = note.strip() if isinstance(note, str) and note.strip() else None
 
     for supplier_id in list(dict.fromkeys(supplier_ids)):
-        user = db.query(User).filter(User.id == supplier_id, User.role == "supplier").first()
+        user = _db_user_first_2(db, id, role, supplier, supplier_id)
         if not user:
             skipped.append({"id": supplier_id, "reason": "Supplier not found"})
             continue
 
-        profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+        profile = _db_supplierprofile_first_3(db, supplier_id, user_id)
         if profile is None:
             profile = SupplierProfile(user_id=supplier_id)
             add_and_flush(db, profile)
@@ -218,7 +219,7 @@ def bulk_manage_suppliers(
 
 def get_supplier_comparison(db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    supplier_query = db.query(User).filter(User.role == "supplier")
+    supplier_query = _db_user_query_4(db, role, supplier)
     total = supplier_query.count()
     suppliers = (
         supplier_query
@@ -344,7 +345,7 @@ def get_supplier_comparison(db: Session, limit: Optional[int] = None, offset: in
 def get_pending_suppliers(db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     """Return suppliers who have not yet been verified."""
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    supplier_query = db.query(User).filter(User.role == "supplier", User.is_verified.is_(False))
+    supplier_query = _db_user_query_5(db, is_, is_verified, role, supplier)
     total = supplier_query.count()
     suppliers = (
         supplier_query
@@ -370,11 +371,11 @@ def get_pending_suppliers(db: Session, limit: Optional[int] = None, offset: int 
 def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile, CountryConfig
 
-    user = db.query(User).filter(User.id == user_id, User.role == "supplier").first()
+    user = _db_user_first_6(db, id, role, supplier, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
+    profile = _db_supplierprofile_first_7(db, user_id)
     if profile is None:
         profile = SupplierProfile(user_id=user_id)
         add_and_flush(db, profile)
@@ -386,10 +387,9 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
     # ── Country-specific KYC enforcement ───────────────────────────────────
     supplier_country = str(getattr(user, "preferred_country", "") or "").strip()
     if supplier_country:
-        country_config = db.query(CountryConfig).filter(
-            CountryConfig.code == supplier_country.upper(),
-            CountryConfig.is_active == True,
-        ).first()
+        country_config = _db_countryconfig_first_8(db, True, code, supplier_country, upper)
+
+
         if country_config:
             req_raw = country_config.supplier_requirements_json
             if req_raw:
@@ -403,11 +403,8 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
                     if required_docs and isinstance(required_docs, list):
                         from data.models import SupplierDocument
                         approved_types = set()
-                        for doc in db.query(SupplierDocument).filter(
-                            SupplierDocument.supplier_id == user_id,
-                            SupplierDocument.status == "approved",
-                        ).all():
-                            approved_types.add(str(getattr(doc, "document_type", "")).strip().lower())
+                        _db_supplierdocument_all_9(db, approved, status, supplier_id, user_id)
+
 
                         missing = [
                             d for d in required_docs
@@ -450,11 +447,11 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
 def reject_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile
 
-    user = db.query(User).filter(User.id == user_id, User.role == "supplier").first()
+    user = _db_user_first_10(db, id, role, supplier, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
+    profile = _db_supplierprofile_first_11(db, user_id)
     if profile is None:
         profile = SupplierProfile(user_id=user_id)
         add_and_flush(db, profile)
@@ -503,7 +500,7 @@ def get_all_suppliers(
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
 
     query = (
-        db.query(User)
+        _db_user_query_12(db)
         .outerjoin(SupplierProfile, SupplierProfile.user_id == User.id)
         .filter(User.role == "supplier")
     )
@@ -558,7 +555,7 @@ def get_all_suppliers(
     supplier_ids = [cast(int, supplier.id) for supplier in suppliers]
     profiles = {
         cast(int, profile.user_id): profile
-        for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_ids)).all()
+        _db_supplierprofile_all_13(db, in_, supplier_ids, user_id)
     } if supplier_ids else {}
 
     product_metric_rows = (

@@ -6,7 +6,7 @@ from . import Base
 from utils.datetime_utils import utcnow as _utcnow
 from ..mixins import TenantMixin
 
-__all__ = ["Payment", "Coupon", "Banner", "PaymentGatewayConnection", "Payout", "LogisticsPartnerPayout", "PaymentReconciliationRun"]
+__all__ = ["Payment", "Coupon", "Banner", "PaymentGatewayConnection", "Payout", "LogisticsPartnerPayout", "PaymentReconciliationRun", "ErpTransaction", "PayrollRecord"]
 
 def _get_table_args():
     import os
@@ -205,3 +205,34 @@ class LogisticsPartnerPayout(Base, TenantMixin):
     notes = Column(Text, nullable=True)
     partner = relationship("LogisticsPartner", back_populates="payouts")
     country = relationship("CountryConfig", foreign_keys="LogisticsPartnerPayout.country_code")
+
+
+class ErpTransaction(Base, TenantMixin):
+    """ERP transaction ledger row (AR/AP, journals, reconciliation)."""
+    __tablename__ = "erp_transactions"
+    __table_args__ = ({"schema": "finance"},)
+    id = Column(Integer, primary_key=True, index=True)
+    type = Column(String(40), nullable=False, default="journal")
+    reference = Column(String(120), nullable=True, index=True)
+    amount = Column(Numeric(18, 2), nullable=True)
+    status = Column(String(20), default="pending", index=True)
+    date = Column(DateTime, nullable=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class PayrollRecord(Base, TenantMixin):
+    """Payroll run record per employee / country."""
+    __tablename__ = "payroll_records"
+    __table_args__ = ({"schema": "finance"},)
+    id = Column(Integer, primary_key=True, index=True)
+    country_code = Column(String(10), nullable=False, index=True)
+    employee_id = Column(Integer, nullable=True, index=True)
+    period = Column(String(20), nullable=True, index=True)
+    net_pay = Column(Numeric(18, 2), nullable=True)
+    gross_pay = Column(Numeric(18, 2), nullable=True)
+    status = Column(String(20), default="pending", index=True)
+    processed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

@@ -11,9 +11,9 @@ from data.models import (
     SupplierProfile, LogisticsPartner, CountryConfig, Payout, Shipment,
     Invoice, SupportTicket, ReturnRequest, SupplierDocument, Review
 )
-from services.core.admin_operations_service import archive_entity
+from services.core.admin_operations_service import archive_entity, get_category_by_id, get_product_by_id
 
-from services.write_helpers import commit_only
+from data.services_write_helpers import commit_only
 
 def bulk_archive_entities(
     model_name: str,
@@ -68,12 +68,12 @@ def bulk_category_change(
     reason: Optional[str] = None,
 ) -> dict:
     """Change category for multiple products at once."""
-    category = db.query(Category).filter(Category.id == category_id).first()
+    category = get_category_by_id(db, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     updated = 0
     for pid in product_ids:
-        product = db.query(Product).filter(Product.id == pid).first()
+        product = get_product_by_id(db, pid)
         if product and not product.is_deleted:
             product.category_id = category_id
             product.category = category.name

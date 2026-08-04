@@ -27,7 +27,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from data.models import Base
+from models import Base
 from migration_helpers import safe_add_column, safe_create_index, safe_drop_column, safe_drop_index
 from utils.schema_compat import SCHEMA_TRANSLATE_MAP
 

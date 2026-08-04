@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from data.models import ProductVerification, Product, Order, Shipment
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.catalog.products_read_service import get_product_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -67,7 +68,7 @@ def list_verifications(
     if role not in ("admin", "sub_admin", "moderator", "supplier", "logistics_partner"):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    q = db.query(ProductVerification)
+    q = _db_productverification_query_0(db)
 
     if role == "supplier":
         # Only their product verifications
@@ -109,7 +110,7 @@ def create_verification(data: dict, current_user: dict, db: Session) -> dict:
     if not product_id:
         raise HTTPException(status_code=422, detail="product_id is required")
 
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = get_product_by_id(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -146,7 +147,7 @@ def update_verification(v_id: int, data: dict, current_user: dict, db: Session) 
     if role not in ("admin", "sub_admin", "moderator"):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    verification = db.query(ProductVerification).filter(ProductVerification.id == v_id).first()
+    verification = _db_productverification_first_1(db, id, v_id)
     if not verification:
         raise HTTPException(status_code=404, detail="Verification not found")
 
@@ -180,7 +181,7 @@ def bulk_update_verifications(data: dict, current_user: dict, db: Session) -> di
     processed: list[dict] = []
     skipped: list[dict] = []
     for verification_id in list(dict.fromkeys(verification_ids)):
-        verification = db.query(ProductVerification).filter(ProductVerification.id == verification_id).first()
+        verification = _db_productverification_first_2(db, id, verification_id)
         if not verification:
             skipped.append({"id": verification_id, "reason": "Verification not found"})
             continue
@@ -204,12 +205,12 @@ def get_verification(v_id: int, current_user: dict, db: Session) -> dict:
     if role not in ("admin", "sub_admin", "moderator", "supplier", "logistics_partner", "support"):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    v = db.query(ProductVerification).filter(ProductVerification.id == v_id).first()
+    v = _db_productverification_first_3(db, id, v_id)
     if not v:
         raise HTTPException(status_code=404, detail="Verification not found")
 
     if role == "supplier":
-        product = db.query(Product).filter(Product.id == v.product_id).first()
+        product = _db_product_first_4(db, id, product_id, v)
         if not product or product.supplier_id != current_user["id"]:
             raise HTTPException(status_code=403, detail="Access denied")
 

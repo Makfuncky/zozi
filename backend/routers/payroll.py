@@ -10,9 +10,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from data.dependencies_auth import get_current_user
+from services.finance.payroll_read_service import get_payroll_records, get_payroll_record_by_id, get_payroll_summary
 from data.db import get_db
 from data.models import Employee, EmployeeDocument
 from services.payroll_engine import PayrollEngine
+from services.hr.employee_write_service import list_employee_documents
 from services.effective_permissions import check_permission
 from utils.country_rls import enforce_country_access
 
@@ -125,17 +127,7 @@ def get_employee_payslips(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    docs = (
-        db.query(EmployeeDocument)
-        .filter(
-            EmployeeDocument.employee_id == employee_id,
-            EmployeeDocument.doc_type == "payslip",
-        )
-        .order_by(EmployeeDocument.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    docs = list_employee_documents(db, employee_id, skip, limit)
     return {
         "payslips": [
             {

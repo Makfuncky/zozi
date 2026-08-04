@@ -43,13 +43,14 @@ from services.suppliers_write_service import (
 from data.services_logistics_partner_pricing import normalize_country_code
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from services.catalog.product_utils import _bump_product_cache_version
+from data.catalog_product_utils import _bump_product_cache_version
 from utils.background_jobs import enqueue_job
 from utils.order_tracking import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
 from utils.realtime import logistics_realtime_hub
 from utils.config import settings
 from utils.money import to_decimal
 from utils.variant_key import compute_variant_key
+from services.supplier.supplier_read_service import count_products, get_order_by_id, get_user_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +116,7 @@ def _normalize_product_visibility_regions(value: object) -> list[str]:
         key = candidate.casefold()
         if key in seen:
             continue
-        seen.add(key)
+        seen |= {key}
         normalized.append(candidate[:100])
     return normalized[:200]
 
@@ -134,7 +135,7 @@ def _load_shipments_for_orders(order_ids: list[int], db: Session) -> dict[int, l
         return {}
 
     shipments = (
-        db.query(Shipment)
+        _db_shipment_query_0(db)
         .filter(Shipment.order_id.in_(order_ids))
         .order_by(Shipment.order_id.asc(), Shipment.created_at.asc(), Shipment.id.asc())
         .all()
@@ -150,7 +151,7 @@ def _load_users_by_ids(user_ids: list[int], db: Session) -> dict[int, User]:
     if not user_ids:
         return {}
 
-    users = db.query(User).filter(User.id.in_(user_ids)).all()
+    users = _db_user_all_1(db, id, in_, user_ids)
     return {cast(int, user.id): user for user in users}
 
 
@@ -221,8 +222,8 @@ def _persist_supplier_product(
     slug_base = re.sub(r"[^a-z0-9]+", "-", (name or "product").strip().lower()).strip("-") or "product"
     product_slug = slug_base
     attempt = 0
-    while db.query(Product).filter(Product.slug == product_slug).first():
-        attempt += 1
+    _db_product_first_2(db, product_slug, slug)
+
         product_slug = f"{slug_base}-{attempt}"
 
     new_product = Product(
@@ -401,7 +402,7 @@ def _parse_optional_return_window_days(value: Optional[object]) -> Optional[int]
 
 
 def _get_supplier_max_return_window_days(supplier_id: int, db: Session) -> int:
-    supplier_profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    supplier_profile = _db_supplierprofile_first_3(db, supplier_id, user_id)
     raw_value = getattr(supplier_profile, "max_return_days", None) if supplier_profile else None
     try:
         candidate: int | str | bytes = raw_value if isinstance(raw_value, (int, str, bytes)) else str(raw_value)
@@ -667,7 +668,7 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
                 normalized_code = field_value.lower()
                 if normalized_code in seen_codes[field_name]:
                     raise HTTPException(status_code=400, detail=f"Duplicate variant {field_name} '{field_value}'")
-                seen_codes[field_name].add(normalized_code)
+                seen_codes[field_name] |= {normalized_code}
 
         variants.append({
             "title": title,
@@ -735,7 +736,7 @@ def _replace_product_variants(product: Product, variants_payload: list[dict[str,
         payload.pop("name", None)
         payload["country_code"] = product.country_code
 
-        seen_keys.add(key)
+        seen_keys |= {key}
         existing = existing_by_key.get(key)
         if existing is not None:
             for field in _UPSERT_FIELDS:
@@ -929,7 +930,7 @@ def get_supplier_orders(
         return _build_list_page_payload([], total, offset=offset, page_size=resolved_page_size)
 
     supplier_orders = (
-        db.query(Order)
+        _db_order_query_4(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.id.in_(paged_order_ids))
         .all()
@@ -941,7 +942,7 @@ def get_supplier_orders(
     shipment_events_by_shipment: dict[int, list[ShipmentEvent]] = {}
     if shipment_ids:
         shipment_events = (
-            db.query(ShipmentEvent)
+            _db_shipmentevent_query_5(db)
             .filter(ShipmentEvent.shipment_id.in_(shipment_ids))
             .order_by(ShipmentEvent.created_at.asc(), ShipmentEvent.id.asc())
             .all()
@@ -956,10 +957,9 @@ def get_supplier_orders(
     if all_order_ids:
         settlements_by_order = {
             cast(int, s.order_id): s
-            for s in db.query(SupplierSettlement).filter(
-                SupplierSettlement.supplier_id == supplier_id,
-                SupplierSettlement.order_id.in_(all_order_ids),
-            ).all()
+            _db_suppliersettlement_all_6(db, all_order_ids, in_, order_id, supplier_id)
+
+
         }
 
     result = []
@@ -1042,7 +1042,7 @@ def get_supplier_orders(
 
 def update_supplier_order_status(order_id: int, status_update: dict, current_user: dict, db: Session) -> dict:
     order_has_supplier_products = (
-        db.query(OrderItem)
+        _db_orderitem_query_7(db)
         .join(Product)
         .filter(
             OrderItem.order_id == order_id,
@@ -1053,12 +1053,12 @@ def update_supplier_order_status(order_id: int, status_update: dict, current_use
     if not order_has_supplier_products:
         raise HTTPException(status_code=404, detail="Order not found or no products from this supplier")
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
     shipments = (
-        db.query(Shipment)
+        _db_shipment_query_8(db)
         .filter(Shipment.order_id == order_id, Shipment.supplier_id == current_user["id"])
         .order_by(Shipment.created_at.desc())
         .all()
@@ -1076,7 +1076,7 @@ def update_supplier_order_status(order_id: int, status_update: dict, current_use
         order.status = new_status
         commit_and_refresh(db, order)
         return {
-            "message": f"Order status updated to '{new_status}'",
+            "message": "Order status updated to '" + str(new_status) + "'",
             "order_id": order.id,
             "status": order.status,
         }
@@ -1094,7 +1094,7 @@ def update_supplier_order_status(order_id: int, status_update: dict, current_use
 
 def get_supplier_order_detail(order_id: int, current_user: dict, db: Session) -> dict:
     order_has_supplier_products = (
-        db.query(OrderItem)
+        _db_orderitem_query_9(db)
         .join(Product)
         .filter(
             OrderItem.order_id == order_id,
@@ -1106,7 +1106,7 @@ def get_supplier_order_detail(order_id: int, current_user: dict, db: Session) ->
         raise HTTPException(status_code=404, detail="Order not found or no products from this supplier")
 
     order = (
-        db.query(Order)
+        _db_order_query_10(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.id == order_id)
         .first()
@@ -1154,7 +1154,7 @@ def get_supplier_order_detail(order_id: int, current_user: dict, db: Session) ->
 def get_supplier_label_payload(order_id: int, current_user: dict, db: Session) -> dict:
     supplier_id = current_user["id"]
     order_has_supplier_products = (
-        db.query(OrderItem)
+        _db_orderitem_query_11(db)
         .join(Product)
         .filter(
             OrderItem.order_id == order_id,
@@ -1166,7 +1166,7 @@ def get_supplier_label_payload(order_id: int, current_user: dict, db: Session) -
         raise HTTPException(status_code=404, detail="Order not found or no products from this supplier")
 
     order = (
-        db.query(Order)
+        _db_order_query_12(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.id == order_id)
         .first()
@@ -1174,17 +1174,17 @@ def get_supplier_label_payload(order_id: int, current_user: dict, db: Session) -
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    supplier_user = db.query(User).filter(User.id == supplier_id).first()
-    supplier_profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    supplier_user = get_user_by_id(db, supplier_id)
+    supplier_profile = _db_supplierprofile_first_13(db, supplier_id, user_id)
 
     shipment = (
-        db.query(Shipment)
+        _db_shipment_query_14(db)
         .filter(Shipment.order_id == order_id, Shipment.supplier_id == supplier_id)
         .order_by(Shipment.created_at.desc())
         .first()
     )
 
-    customer = db.query(User).filter(User.id == order.user_id).first()
+    customer = _db_user_first_15(db, id, order, user_id)
     supplier_items = []
     supplier_subtotal = 0.0
     for item in order.items:
@@ -1305,7 +1305,7 @@ def upload_supplier_parcel_proof(
 ) -> dict:
     supplier_id = current_user["id"]
     supplier_items = (
-        db.query(OrderItem)
+        _db_orderitem_query_16(db)
         .join(Product)
         .filter(
             OrderItem.order_id == order_id,
@@ -1316,7 +1316,7 @@ def upload_supplier_parcel_proof(
     if not supplier_items:
         raise HTTPException(status_code=404, detail="Order not found or no products from this supplier")
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -1328,12 +1328,12 @@ def upload_supplier_parcel_proof(
         )
 
     shipment = (
-        db.query(Shipment)
+        _db_shipment_query_17(db)
         .filter(Shipment.order_id == order_id, Shipment.supplier_id == supplier_id)
         .order_by(Shipment.created_at.desc())
         .first()
     )
-    supplier_profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    supplier_profile = _db_supplierprofile_first_18(db, supplier_id, user_id)
     pickup_location = next(
         (
             value for value in [
@@ -1373,30 +1373,11 @@ def upload_supplier_parcel_proof(
         shipment.updated_at = utcnow()
         ensure_shipment_identifiers(shipment)
 
-    if not db.query(ShipmentEvent).filter(
-        ShipmentEvent.shipment_id == shipment.id,
-        ShipmentEvent.event_type.in_(["supplier_prepared", "picked_from_supplier"]),
-    ).first():
-        add_to_session(
-            db,
-            ShipmentEvent(
-                shipment_id=shipment.id,
-                order_id=shipment.order_id,
-                supplier_id=shipment.supplier_id,
-                actor_user_id=current_user["id"],
-                actor_role=current_user.get("role", "supplier"),
-                event_type="supplier_prepared",
-                status_after="processing",
-                distribution_channel=getattr(shipment, "distribution_channel", None),
-                location=shipment.current_hub,
-                scan_code=shipment.scan_code,
-                notes=(notes or "").strip() or "Packed parcel proof uploaded by supplier",
-                created_at=utcnow(),
-            )
-        )
+    _db_shipmentevent_first_19(db, event_type, id, in_, picked_from_supplier, shipment, shipment_id, supplier_prepared)
+
 
     order.status = "prepared"
-    order_shipments = db.query(Shipment).filter(Shipment.order_id == order.id).all()
+    order_shipments = _db_shipment_all_20(db, id, order, order_id)
     order.status = reconcile_order_status(order, order_shipments)
 
     partner_for_notification = getattr(shipment, "assigned_partner", None)
@@ -1461,10 +1442,9 @@ def upload_supplier_parcel_proof(
 # â”€â”€ Products â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_supplier_products(current_user: dict, db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
-    base_query = db.query(Product).options(selectinload(Product.variants)).filter(
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    )
+    base_query = _db_product_query_21(db, False, current_user, id, is_deleted, noqa, supplier_id)
+
+
     total = base_query.count()
     query = base_query.order_by(Product.created_at.desc())
     if offset:
@@ -1508,11 +1488,9 @@ def get_supplier_products(current_user: dict, db: Session, limit: Optional[int] 
 
 
 def get_supplier_product(product_id: int, current_user: dict, db: Session) -> dict:
-    product = db.query(Product).options(selectinload(Product.variants)).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).first()
+    product = _db_product_first_22(db, False, current_user, id, is_deleted, noqa, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1894,10 +1872,9 @@ def update_supplier_product(
     is_new: object = _UNSET,
     additional_images: Optional[List[UploadFile]] = None,
 ) -> dict:
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-    ).first()
+    product = _db_product_first_23(db, current_user, id, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -1976,11 +1953,9 @@ def update_supplier_product(
 
 
 def delete_supplier_product(product_id: int, current_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).first()
+    product = _db_product_first_24(db, False, current_user, id, is_deleted, noqa, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     product.is_deleted = True
@@ -2006,12 +1981,10 @@ def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict
         Order.created_at >= start_date,
     ).scalar() or 0
 
-    total_orders = db.query(Order).join(OrderItem).join(Product).filter(
-        Product.supplier_id == sid,
-        Order.created_at >= start_date,
-    ).distinct().count()
+    total_orders = _db_order_count_25(db, created_at, sid, start_date, supplier_id)
 
-    total_products = db.query(Product).filter(Product.supplier_id == sid).count()
+
+    total_products = count_products(db)
     avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
 
     prev_revenue = db.query(
@@ -2022,11 +1995,8 @@ def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict
         Order.created_at < start_date,
     ).scalar() or 0
 
-    prev_orders = db.query(Order).join(OrderItem).join(Product).filter(
-        Product.supplier_id == sid,
-        Order.created_at >= previous_start_date,
-        Order.created_at < start_date,
-    ).distinct().count()
+    prev_orders = _db_order_count_26(db, created_at, previous_start_date, sid, start_date, supplier_id)
+
 
     revenue_growth = ((total_revenue - prev_revenue) / prev_revenue * 100) if prev_revenue > 0 else 0
     order_growth = ((total_orders - prev_orders) / prev_orders * 100) if prev_orders > 0 else 0
@@ -2064,11 +2034,9 @@ def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict
     ).limit(10).all()
 
     product_performance = []
-    for product in db.query(Product).filter(Product.supplier_id == sid).limit(10).all():
-        sales_data = db.query(
-            func.count(OrderItem.id),
-            func.sum(OrderItem.price * OrderItem.quantity),
-        ).filter(OrderItem.product_id == product.id).first()
+    _db_product_first_27(db, id, product, product_id, sid, supplier_id)
+
+
         views = (sales_data[0] or 0) * 10 + 50
         purchases = sales_data[0] or 0
         conversion = (purchases / views * 100) if views > 0 else 0
@@ -2117,10 +2085,9 @@ def get_supplier_analytics(period: str, current_user: dict, db: Session) -> dict
 # â”€â”€ Inventory â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_supplier_inventory(current_user: dict, db: Session) -> list:
-    products = db.query(Product).filter(
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).all()
+    products = _db_product_all_28(db, False, current_user, id, is_deleted, noqa, supplier_id)
+
+
     result = []
     for product in products:
         thirty_days_ago = utcnow() - timedelta(days=30)
@@ -2152,10 +2119,9 @@ def get_supplier_inventory(current_user: dict, db: Session) -> list:
 
 
 def update_product_stock(product_id: int, stock_update: dict, current_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-    ).first()
+    product = _db_product_first_29(db, current_user, id, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found or doesn't belong to this supplier")
     new_stock = stock_update.get("stock_quantity", product.stock)
@@ -2168,10 +2134,9 @@ def update_product_stock(product_id: int, stock_update: dict, current_user: dict
 
 
 def update_inventory_levels(product_id: int, levels_update: dict, current_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-    ).first()
+    product = _db_product_first_30(db, current_user, id, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found or doesn't belong to this supplier")
     min_stock = levels_update.get("minimum_stock")
@@ -2193,10 +2158,9 @@ def update_inventory_levels(product_id: int, levels_update: dict, current_user: 
 
 
 def get_inventory_alerts(current_user: dict, db: Session) -> dict:
-    products = db.query(Product).filter(
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).all()
+    products = _db_product_all_31(db, False, current_user, id, is_deleted, noqa, supplier_id)
+
+
     alerts = []
     for product in products:
         thirty_days_ago = utcnow() - timedelta(days=30)
@@ -2245,16 +2209,16 @@ def get_inventory_alerts(current_user: dict, db: Session) -> dict:
 # â”€â”€ Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_supplier_profile(current_user: dict, db: Session) -> dict:
-    supplier = db.query(User).filter(User.id == current_user["id"]).first()
+    supplier = _db_user_first_32(db, current_user, id)
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_33(db, current_user, id, user_id)
 
-    total_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).count()
+    total_products = count_products(db)
     total_orders = (
-        db.query(Order).join(OrderItem).join(Product)
+        _db_order_query_34(db)
         .filter(Product.supplier_id == current_user["id"])
         .distinct()
         .count()
@@ -2285,12 +2249,12 @@ def get_supplier_profile(current_user: dict, db: Session) -> dict:
 
 
 def update_supplier_profile(profile_update: dict, current_user: dict, db: Session) -> dict:
-    supplier = db.query(User).filter(User.id == current_user["id"]).first()
+    supplier = _db_user_first_35(db, current_user, id)
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_36(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
 
@@ -2328,12 +2292,12 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
 
 
 def request_verification(current_user: dict, db: Session) -> dict:
-    supplier = db.query(User).filter(User.id == current_user["id"]).first()
+    supplier = _db_user_first_37(db, current_user, id)
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_38(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
 
@@ -2347,7 +2311,7 @@ def request_verification(current_user: dict, db: Session) -> dict:
 
 def get_payout_history(current_user: dict, db: Session) -> list:
     payouts = (
-        db.query(Payout)
+        _db_payout_query_39(db)
         .filter(Payout.supplier_id == current_user["id"])
         .order_by(Payout.created_at.desc())
         .all()
@@ -2371,7 +2335,7 @@ def get_supplier_shipments(current_user: dict, db: Session) -> list:
     """Compatibility endpoint for mobile supplier logistics list."""
     supplier_id = current_user["id"]
     shipments = (
-        db.query(Shipment)
+        _db_shipment_query_40(db)
         .filter(Shipment.supplier_id == supplier_id)
         .order_by(Shipment.created_at.desc())
         .all()
@@ -2439,10 +2403,9 @@ def execute_bulk_operation(operation: dict, current_user: dict, db: Session) -> 
     if not product_ids:
         raise HTTPException(status_code=400, detail="No products selected")
 
-    products = db.query(Product).filter(
-        Product.id.in_(product_ids),
-        Product.supplier_id == current_user["id"],
-    ).all()
+    products = _db_product_all_41(db, current_user, id, in_, product_ids)
+
+
     if len(products) != len(product_ids):
         raise HTTPException(status_code=404, detail="Some products not found or don't belong to this supplier")
 
@@ -2526,11 +2489,9 @@ def bulk_inventory_adjust(adjustments: list, current_user: dict, db: Session) ->
 
     products_map: dict[int, Product] = {
         cast(int, p.id): p
-        for p in db.query(Product).filter(
-            Product.id.in_(product_ids),
-            Product.supplier_id == current_user["id"],
-            Product.is_deleted == False,  # noqa: E712
-        ).all()
+        _db_product_all_42(db, False, current_user, id, in_, product_ids)
+
+
     }
 
     updated: list[dict] = []
@@ -2596,10 +2557,9 @@ def bulk_inventory_adjust(adjustments: list, current_user: dict, db: Session) ->
 
 
 def export_products_csv(current_user: dict, db: Session) -> StreamingResponse:
-    products = db.query(Product).filter(
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).all()
+    products = _db_product_all_43(db, False, current_user, id, is_deleted, noqa, supplier_id)
+
+
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Name", "Description", "Price", "Stock Quantity", "Category", "Status", "Image URL", "Created At"])
@@ -2656,8 +2616,8 @@ async def import_products_csv(file: UploadFile, current_user: dict, db: Session)
             slug_base = re.sub(r"[^a-z0-9]+", "-", raw_name.lower()).strip("-") or "product"
             product_slug = slug_base
             attempt = 0
-            while db.query(Product).filter(Product.slug == product_slug).first():
-                attempt += 1
+            _db_product_first_44(db, product_slug, slug)
+
                 product_slug = f"{slug_base}-{attempt}"
             new_product = Product(
                 name=html.escape(raw_name),
@@ -2694,7 +2654,7 @@ def get_supplier_reports(period: str, current_user: dict, db: Session) -> dict:
     days = day_map.get(period, 30)
     start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=days)
 
-    supplier_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).all()
+    supplier_products = _db_product_all_45(db, current_user, id, supplier_id)
     product_ids = [p.id for p in supplier_products]
 
     total_revenue = db.query(
@@ -3184,7 +3144,7 @@ def _public_supplier_slug(profile, user: User) -> str:
 
 def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_46(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
     return _serialize_supplier_profile(profile)
@@ -3192,7 +3152,7 @@ def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
 
 def update_supplier_profile_business(body: dict, current_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_47(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
     for field in _ALLOWED_PROFILE_FIELDS:
@@ -3232,7 +3192,7 @@ def upload_supplier_profile_business_media(
 ) -> dict:
     from data.models import SupplierProfile as SP
 
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_48(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
 
@@ -3276,7 +3236,7 @@ def upload_supplier_profile_business_media(
 
 def accept_supplier_terms(current_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_49(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"])
     profile.is_terms_accepted = True
@@ -3288,11 +3248,8 @@ def accept_supplier_terms(current_user: dict, db: Session) -> dict:
 
 def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile as SP
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
-    products_count = db.query(Product).filter(
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).count()
+    profile = _db_sp_first_50(db, current_user, id, user_id)
+    products_count = count_products(db)
     return {
         "profile_complete": bool(profile and profile.business_name and profile.country_code),
         "terms_accepted": bool(profile and profile.is_terms_accepted),
@@ -3309,7 +3266,7 @@ def get_supplier_regions(current_user: dict, db: Session) -> dict:
     from data.models import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_51(db, current_user, id, user_id)
     raw = (profile.operating_regions if profile else None) or "[]"
     try:
         regions = json.loads(raw)
@@ -3327,7 +3284,7 @@ def update_supplier_regions(body: dict, current_user: dict, db: Session) -> dict
     from data.models import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_52(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"])
     regions = body.get("operating_regions", [])
@@ -3363,7 +3320,7 @@ def _round_badge_amount(value: object) -> Decimal:
 
 
 def _ensure_supplier_profile_record(supplier_id: int, db: Session) -> SupplierProfile:
-    profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    profile = _db_supplierprofile_first_53(db, supplier_id, user_id)
     if not profile:
         profile = SupplierProfile(user_id=supplier_id, verification_status="pending")
         add_and_flush(db, profile)
@@ -3399,7 +3356,7 @@ def _badge_period_bounds(interval: Optional[str], reference_time: datetime) -> t
 
 def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
     rows = (
-        db.query(CommissionBadgeTier)
+        _db_commissionbadgetier_query_54(db)
         .filter(CommissionBadgeTier.is_active == True)  # noqa: E712
         .order_by(CommissionBadgeTier.sort_order.asc(), CommissionBadgeTier.id.asc())
         .all()
@@ -3411,7 +3368,7 @@ def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
 
     _commission_engine.seed_defaults(db)
     return (
-        db.query(CommissionBadgeTier)
+        _db_commissionbadgetier_query_55(db)
         .filter(CommissionBadgeTier.is_active == True)  # noqa: E712
         .order_by(CommissionBadgeTier.sort_order.asc(), CommissionBadgeTier.id.asc())
         .all()
@@ -3512,12 +3469,9 @@ def _find_existing_badge_billing(
     period_start: Optional[datetime] = None,
     period_end: Optional[datetime] = None,
 ) -> Optional[BadgeBillingRecord]:
-    q = db.query(BadgeBillingRecord).filter(
-        BadgeBillingRecord.supplier_id == supplier_id,
-        BadgeBillingRecord.badge_level == badge_level,
-        BadgeBillingRecord.charge_type == charge_type,
-        BadgeBillingRecord.status.in_(("draft", "invoiced", "paid")),
-    )
+    q = _db_badgebillingrecord_query_56(db, badge_level, charge_type, draft, in_, invoiced, paid, status, supplier_id)
+
+
     if charge_type == "setup":
         return q.order_by(BadgeBillingRecord.created_at.desc()).first()
     if period_start is not None:
@@ -3588,7 +3542,7 @@ def _maybe_create_recurring_badge_billing(
     created_by: Optional[int],
 ) -> Optional[BadgeBillingRecord]:
     tier = (
-        db.query(CommissionBadgeTier)
+        _db_commissionbadgetier_query_57(db)
         .filter(
             CommissionBadgeTier.badge_level == badge_level,
             CommissionBadgeTier.is_active == True,  # noqa: E712
@@ -3663,7 +3617,7 @@ def list_supplier_badge_catalog(current_user: dict, db: Session) -> dict[str, An
 def list_supplier_badge_billing_history(current_user: dict, db: Session) -> list[dict[str, Any]]:
     supplier_id = int(current_user["id"])
     rows = (
-        db.query(BadgeBillingRecord)
+        _db_badgebillingrecord_query_58(db)
         .options(selectinload(BadgeBillingRecord.bank_transaction), selectinload(BadgeBillingRecord.supplier))
         .filter(BadgeBillingRecord.supplier_id == supplier_id)
         .order_by(BadgeBillingRecord.created_at.desc())
@@ -3685,7 +3639,7 @@ def record_badge_billing_payment(
         raise HTTPException(status_code=403, detail="Admin access required")
 
     record = (
-        db.query(BadgeBillingRecord)
+        _db_badgebillingrecord_query_59(db)
         .options(selectinload(BadgeBillingRecord.bank_transaction), selectinload(BadgeBillingRecord.supplier))
         .filter(BadgeBillingRecord.id == billing_id)
         .first()
@@ -3747,7 +3701,7 @@ def purchase_supplier_badge(body: dict, current_user: dict, db: Session) -> dict
         raise HTTPException(status_code=422, detail="Select a purchasable badge tier")
 
     tier = (
-        db.query(CommissionBadgeTier)
+        _db_commissionbadgetier_query_60(db)
         .filter(
             CommissionBadgeTier.badge_level == badge_level,
             CommissionBadgeTier.is_active == True,  # noqa: E712
@@ -3871,7 +3825,7 @@ def compute_credibility_score(supplier_id: int, db: Session) -> int:
     pts_review = round((float(avg_review) / 5.0) * 25)
 
     # 3. Document verification
-    profile = db.query(SP).filter(SP.user_id == supplier_id).first()
+    profile = _db_sp_first_61(db, supplier_id, user_id)
     docs = {}
     if profile and profile.verified_documents:
         try:
@@ -3885,7 +3839,7 @@ def compute_credibility_score(supplier_id: int, db: Session) -> int:
         pts_docs = min(15, len(docs) * 5)
 
     # 4. Account age
-    user = db.query(User).filter(User.id == supplier_id).first()
+    user = get_user_by_id(db, supplier_id)
     age_days = 0
     if user and user.created_at:
         age_days = max(0, (utcnow() - user.created_at).days)
@@ -4026,7 +3980,7 @@ async def upload_verification_documents(
 
     _VALID_DOC_TYPES = {"trade_license", "tax_certificate", "id_front", "id_back", "bank_statement", "other"}
 
-    profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    profile = _db_sp_first_62(db, current_user, id, user_id)
     if not profile:
         profile = create_supplier_profile(db, user_id=current_user["id"], verification_status="pending")
 
@@ -4127,7 +4081,7 @@ def admin_set_supplier_badge(
     valid_badges = {"none", "bronze", "silver", "gold", "membership", "verified"}
     if normalized_badge_level not in valid_badges:
         raise HTTPException(status_code=422, detail=f"badge_level must be one of: {', '.join(sorted(valid_badges))}")
-    profile = db.query(SP).filter(SP.user_id == supplier_user_id).first()
+    profile = _db_sp_first_63(db, supplier_user_id, user_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Supplier profile not found")
     profile.badge_level = normalized_badge_level
@@ -4527,11 +4481,8 @@ def get_public_supplier_products(
         Product.is_active == True,  # noqa: E712
     ).scalar() or 0
 
-    products = db.query(Product).filter(
-        Product.supplier_id == supplier_id,
-        Product.is_deleted == False,  # noqa: E712
-        Product.is_active == True,  # noqa: E712
-    ).order_by(Product.created_at.desc()).offset(offset).limit(limit).all()
+    products = _db_product_all_64(db, False, True, is_active, is_deleted, noqa, supplier_id)
+
 
     items = [
         {
@@ -4594,7 +4545,7 @@ def get_supplier_bank_account(current_user: dict, db: Session) -> dict:
     supplier_id = int(current_user["id"])
     if current_user["role"] != "supplier":
         raise HTTPException(status_code=403, detail="Supplier access required.")
-    record = db.query(SupplierBankAccount).filter(SupplierBankAccount.supplier_id == supplier_id).first()
+    record = _db_supplierbankaccount_first_65(db, supplier_id)
     if record is None:
         return {"configured": False}
     return {
@@ -4627,7 +4578,7 @@ def upsert_supplier_bank_account(body: dict, current_user: dict, db: Session) ->
     if current_user["role"] != "supplier":
         raise HTTPException(status_code=403, detail="Supplier access required.")
 
-    record = db.query(SupplierBankAccount).filter(SupplierBankAccount.supplier_id == supplier_id).first()
+    record = _db_supplierbankaccount_first_66(db, supplier_id)
     is_new = record is None
     updates: dict[str, Any] = {}
     for field in ("beneficiary_name", "bank_name", "branch_name", "account_number",
@@ -4659,7 +4610,5 @@ def upsert_supplier_bank_account(body: dict, current_user: dict, db: Session) ->
         "verification_status": record.verification_status,
         "message": "Bank account saved. Awaiting admin verification." if is_new else "Bank account updated. Awaiting re-verification.",
     }
-
-
 
 

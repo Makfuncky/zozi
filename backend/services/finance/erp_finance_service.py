@@ -17,7 +17,7 @@ from sqlalchemy import func, and_
 from data.models import (
     Customer, Vendor, APBill, ARInvoice, BankStatementLine, BankReconciliation,
     JournalEntry, JournalEntryLine, Account, AccountBalance, FiscalPeriod,
-    Budget, FinanceAuditLog, BankMappingRule,
+    Budget, FinanceAuditLog, BankMappingRule, RecurringTemplate,
 )
 from data.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl
@@ -337,4 +337,63 @@ def budget_variance(db: Session, fiscal_period_id: int, country_code: Optional[s
         "total_budget": float(total_budget), "total_actual": float(total_actual),
         "total_variance": float(total_budget - total_actual), "rows": rows,
     }
+
+
+# ── Account Management ────────────────────────────────────────────────────────
+
+
+def update_account(
+    db: Session,
+    code: str,
+    name: Optional[str] = None,
+    normal_side: Optional[str] = None,
+    currency: Optional[str] = None,
+    group_id: Optional[int] = None,
+) -> Account:
+    """Update account fields and commit."""
+    acct = db.query(Account).filter(Account.code == code).first()
+    if not acct:
+        raise ValueError(f"Account '{code}' not found")
+    if name is not None:
+        acct.name = name
+    if normal_side is not None:
+        acct.normal_side = normal_side
+    if currency is not None:
+        acct.currency = currency
+    if group_id is not None:
+        acct.group_id = group_id
+    db.commit()
+    db.refresh(acct)
+    return acct
+
+
+# ── Recurring Templates ───────────────────────────────────────────────────────
+
+
+def create_recurring_template(
+    db: Session,
+    name: str,
+    frequency: str = "monthly",
+    next_run_date: Optional[datetime] = None,
+    description: str = "",
+    lines: list[dict] = None,
+    currency: str = "OMR",
+    country_code: Optional[str] = None,
+    created_by: Optional[int] = None,
+) -> RecurringTemplate:
+    """Create a recurring journal entry template."""
+    tpl = RecurringTemplate(
+        name=name,
+        frequency=frequency,
+        next_run_date=next_run_date,
+        description=description,
+        lines=lines or [],
+        currency=currency,
+        country_code=country_code,
+        created_by=created_by,
+    )
+    db.add(tpl)
+    db.commit()
+    db.refresh(tpl)
+    return tpl
 

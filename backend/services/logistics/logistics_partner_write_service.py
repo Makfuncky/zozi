@@ -1,4 +1,4 @@
-"""Logistics partner write service — DB write operations for logistics partner entities."""
+"""Logistics partner service — DB read and write operations for logistics partner entities."""
 import logging
 from datetime import datetime, timezone
 from typing import Any, Optional, cast
@@ -602,3 +602,38 @@ def create_sla_breach_notifications(
     if created:
         db.commit()
     return created
+
+
+# ── Read helpers ─────────────────────────────────────────────────────────────
+
+def build_partners_query(db: Session, country_code: str, include_deleted: bool = False):
+    """Build a query for logistics partners in a country (for cursor pagination)."""
+    q = db.query(LogisticsPartner).filter(LogisticsPartner.country_code == country_code)
+    if not include_deleted:
+        q = q.filter(LogisticsPartner.is_deleted == False)
+    return q.order_by(LogisticsPartner.id.desc())
+
+
+def get_partner_by_id(db: Session, partner_id: int, country_code: str) -> Optional[LogisticsPartner]:
+    """Fetch a single partner by ID within a country."""
+    return db.query(LogisticsPartner).filter(
+        LogisticsPartner.id == partner_id,
+        LogisticsPartner.country_code == country_code,
+    ).first()
+
+
+def get_partner_by_user(db: Session, user_id: int) -> Optional[LogisticsPartner]:
+    """Fetch the logistics partner row owned by a given user."""
+    return db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+
+
+def list_shipments_for_partner(db: Session, partner_id: int, skip: int = 0, limit: int = 20) -> list[Shipment]:
+    """List shipments assigned to a logistics partner."""
+    return (
+        db.query(Shipment)
+        .filter(Shipment.assigned_partner_id == partner_id)
+        .order_by(Shipment.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )

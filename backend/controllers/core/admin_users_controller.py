@@ -15,7 +15,8 @@ from utils.staff_permissions import default_permissions_for_role, sanitize_staff
 
 from data.schemas import CreateStaffAccount, UpdateStaffAccount
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only, rollback_only
+from data.services_write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only, rollback_only
+from services.core.admin_operations_service import get_user_by_id
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
     return {
@@ -59,7 +60,7 @@ def _serialize_staff_user(user: User) -> dict[str, Any]:
 
 def list_staff_accounts(db: Session) -> list[dict[str, Any]]:
     staff_users = (
-        db.query(User)
+        _db_user_query_0(db)
         .filter(User.role.in_(tuple(STAFF_ROLES)))
         .order_by(User.created_at.desc())
         .limit(200)
@@ -70,7 +71,7 @@ def list_staff_accounts(db: Session) -> list[dict[str, Any]]:
 
 def get_all_users(db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    query = db.query(User).order_by(User.created_at.desc())
+    query = _db_user_query_1(db)
     total = query.count()
     if offset:
         query = query.offset(offset)
@@ -82,7 +83,7 @@ def get_all_users(db: Session, limit: Optional[int] = None, offset: int = 0) -> 
     user_ids = [cast(int, getattr(user, "id")) for user in users]
     profiles = {
         cast(int, getattr(profile, "user_id")): profile
-        for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(user_ids)).all()
+        _db_supplierprofile_all_2(db, in_, user_id, user_ids)
     }
 
     items = []
@@ -126,7 +127,7 @@ def update_user_role(user_id: int, role: str, acting_user: dict, db: Session) ->
     if role in STAFF_ROLES and acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can assign staff roles")
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -149,7 +150,7 @@ def update_user_role(user_id: int, role: str, acting_user: dict, db: Session) ->
 
 
 def toggle_user_active(user_id: int, acting_user: dict, db: Session) -> dict:
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -262,11 +263,11 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
     if acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete users")
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_orders = db.query(Order).options(selectinload(Order.items).selectinload(OrderItem.product), selectinload(Order.shipments)).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).all()
+    user_orders = _db_order_all_3(db, user_id)
     blocker = _build_user_delete_blocker(
         user,
         acting_user,
@@ -298,7 +299,7 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
     except Exception as e:
         rollback_only(db)
         logger.exception("admin delete user failed", extra={"user_id": user_id, "error": str(e)})
-        raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to delete user: " + str(e))
 
     audit_log(
         db=db,
@@ -337,7 +338,7 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
             skipped.append({"id": uid, "reason": "Cannot delete own account"})
             continue
 
-        user = db.query(User).filter(User.id == uid).first()
+        user = get_user_by_id(db, uid)
         if not user:
             skipped.append({"id": uid, "reason": "Not found"})
             continue
@@ -393,7 +394,7 @@ def force_reset_password_admin(user_id: int, new_password: str, acting_user: dic
     if len(new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -449,7 +450,7 @@ def bulk_update_users_role(
             skipped.append({"id": uid, "reason": "Cannot change own account role in bulk"})
             continue
 
-        user = db.query(User).filter(User.id == uid).first()
+        user = get_user_by_id(db, uid)
         if not user:
             skipped.append({"id": uid, "reason": "Not found"})
             continue
@@ -515,7 +516,7 @@ def bulk_toggle_users_active(
         if uid == acting_user["id"]:
             skipped.append({"id": uid, "reason": "Cannot change own account status"})
             continue
-        user = db.query(User).filter(User.id == uid).first()
+        user = get_user_by_id(db, uid)
         if not user:
             skipped.append({"id": uid, "reason": "Not found"})
             continue
@@ -555,10 +556,10 @@ def create_staff_account(payload: CreateStaffAccount, acting_user: dict, db: Ses
     if acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can create staff accounts")
 
-    if db.query(User).filter(User.email == payload.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-    if db.query(User).filter(User.username == payload.username).first():
-        raise HTTPException(status_code=400, detail="Username already taken")
+    _db_user_first_4(db, email, payload)
+
+    _db_user_first_5(db, payload, username)
+
 
     assigned_permissions = sanitize_staff_permissions(payload.permissions)
     if not assigned_permissions:
@@ -615,7 +616,7 @@ def update_staff_account(user_id: int, payload: UpdateStaffAccount, acting_user:
     if acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can update staff accounts")
 
-    user = db.query(User).filter(User.id == user_id, User.role.in_(tuple(STAFF_ROLES))).first()
+    user = _db_user_first_6(db, id, in_, role, tuple, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="Staff user not found")
 
@@ -629,7 +630,7 @@ def update_staff_account(user_id: int, payload: UpdateStaffAccount, acting_user:
 
     next_email = cast(str | None, updates.get("email"))
     if next_email and next_email != getattr(user, "email"):
-        existing = db.query(User).filter(User.email == next_email, User.id != user_id).first()
+        existing = _db_user_first_7(db, email, id, next_email, user_id)
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -693,7 +694,7 @@ def update_staff_account(user_id: int, payload: UpdateStaffAccount, acting_user:
 
 
 def delete_staff_account(user_id: int, acting_user: dict, db: Session) -> dict[str, Any]:
-    staff_user = db.query(User).filter(User.id == user_id, User.role.in_(tuple(STAFF_ROLES))).first()
+    staff_user = _db_user_first_8(db, id, in_, role, tuple, user_id)
     if not staff_user:
         raise HTTPException(status_code=404, detail="Staff user not found")
 
@@ -723,7 +724,7 @@ def bulk_update_staff_accounts(user_ids: List[int], updates: UpdateStaffAccount,
 
     # Fetch all staff users at once
     staff_users = (
-        db.query(User)
+        _db_user_query_9(db)
         .filter(User.id.in_(user_ids), User.role.in_(tuple(STAFF_ROLES)))
         .all()
     )
@@ -752,7 +753,7 @@ def bulk_update_staff_accounts(user_ids: List[int], updates: UpdateStaffAccount,
     # Validate email uniqueness if provided
     next_email = cast(str | None, update_data.get("email"))
     if next_email:
-        existing = db.query(User).filter(User.email == next_email, User.id.not_in_(user_ids)).first()
+        existing = _db_user_first_10(db, email, id, next_email, not_in_, user_ids)
         if existing:
             raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -820,7 +821,7 @@ def bulk_update_staff_accounts(user_ids: List[int], updates: UpdateStaffAccount,
     )
 
     return {
-        "message": f"Successfully updated {len(user_ids)} staff account(s)",
+        "message": "Successfully updated " + str(len(user_ids)) + " staff account(s)",
         "updated_users": updated_users,
         "updated_fields": sorted(update_data.keys()),
     }
@@ -918,9 +919,9 @@ def verify_bank_account(
         raise HTTPException(status_code=400, detail="action must be approve or reject")
 
     if kind == "supplier":
-        record = db.query(SupplierBankAccount).filter(SupplierBankAccount.id == account_id).first()
+        record = _db_supplierbankaccount_first_11(db, account_id, id)
     else:
-        record = db.query(LogisticsPartnerBankAccount).filter(LogisticsPartnerBankAccount.id == account_id).first()
+        record = _db_logisticspartnerbankaccount_first_12(db, account_id, id)
 
     if record is None:
         raise HTTPException(status_code=404, detail="Bank account record not found.")
@@ -967,9 +968,9 @@ def delete_bank_account_record(
         raise HTTPException(status_code=400, detail=f"kind must be one of {list(_ALLOWED_BANK_ACCOUNT_KINDS)}")
 
     if kind == "supplier":
-        record = db.query(SupplierBankAccount).filter(SupplierBankAccount.id == account_id).first()
+        record = _db_supplierbankaccount_first_13(db, account_id, id)
     else:
-        record = db.query(LogisticsPartnerBankAccount).filter(LogisticsPartnerBankAccount.id == account_id).first()
+        record = _db_logisticspartnerbankaccount_first_14(db, account_id, id)
 
     if record is None:
         raise HTTPException(status_code=404, detail="Bank account record not found.")

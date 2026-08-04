@@ -38,7 +38,7 @@ def _collect_upload_sources(
             upload_key = f"{upload.filename}:{id(upload)}"
             if upload_key in seen_uploads:
                 continue
-            seen_uploads.add(upload_key)
+            seen_uploads |= {upload_key}
             image_bytes = upload.file.read()
             if image_bytes and len(image_bytes) <= MAX_IMAGE_SIZE:
                 image_bytes_list.append(image_bytes)
@@ -73,7 +73,7 @@ def _collect_upload_sources(
             continue
         if not image_bytes or len(image_bytes) > MAX_IMAGE_SIZE:
             continue
-        seen_local_paths.add(local_key)
+        seen_local_paths |= {local_key}
         upload_filenames.append(resolved_path.name)
         image_bytes_list.append(image_bytes)
 

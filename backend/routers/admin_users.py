@@ -6,7 +6,6 @@ from data.models import User
 from data.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
-from data.services_write_helpers import commit_only
 from services.core.admin_operations_service import (
     archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities,
     hard_delete_entity, update_user_role, toggle_user_active, force_reset_password_admin, delete_user_admin

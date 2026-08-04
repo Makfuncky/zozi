@@ -187,3 +187,40 @@ Logistic Partner can send request to customer for delivery and Customer will get
     - `Shipment Returned` when Customer reject the order and want to return the order to supplier and then cancel the order that is also a process which should to show in the Supplier-Order page, Customer-My Orders page, Admin-Order Page and when the status of Order become `Shipment Returned` then it should to show in the Supplier-Order page, Customer-My Orders page, Admin-Order Page.
 
 ---
+
+
+# ========================================================================
+
+
+	### Order System in detail. 
+		1. read the @codebase_v1.md and @documents/ORDER_MANAGEMENT.md and extract the code and functions for order system and compare with the system what we have right now and apply remaining to complete order system and delivery system properly.
+		2. current location is also not working while order system and customer is placing the order. make a python servier to track the IP and current location for easy for user coordinates.
+		3. do the complete test starting from placing the order by the customer, then supplier will complete the parcel and then logistic will take parcel from supplier and deliver to customer.
+		4. check complete workflow in detail. 
+		5. check complete database sytem regarding this in detail to keep better database.
+		6. admin panel needs all the update in detail also.
+
+
+		2. Supplier
+		do one thing read the @codebase_v1.md which was before code and find out all the code related to the Logistic Panel where we had almost complete frontend and backend structure of code and it was before country, employee hierarchy adding.
+
+		check what have to add into our current code system and start to add. you have to do this step by step audit and comparison and list down all the changes that need to be made in our current code system according to previous codebase_v1 for betterment.
+
+		start to make plan.
+		---
+		Read the complete backend, models, routers, services, controller in detail regarding the admin and also frontend of admin panel and check what is not properly wired and broken and start to wire and fix that. 
+		read complete admin panel to make it better and functional properly and ensure the admin panel is fully functional and optimized for performance.
+		there are big changes also needed. 
+			1. Staffs & Employees pages must merge because both are things same and permission page is also part of management of staff & employees. so all three pages need be smartly merge and check also backend code to be merge and make a complete hierarchy system.
+			1a. Video, Chat, Emil all internal and external communication system must be in one tab.
+			2. Moderator & Ticket & Dispute, all there are same problem and solving of the supplier and customer. so all needs to be merge to be unified.
+			3. Command Center & Analytic also sort of same, you should add the Analytics Page in to Command center  Page to give unified understanding of the application and operations.
+			4. Payment, Payout are not configured and wired with the backend.
+			5. Finance [chart of account] is also not configured and wired with the backend and also Treasury Page is the part of Finance & reflection of Payments.
+			6. Before we have complete reconciliation system of [ Order ➡️ COD ➡️ Logistic Partner ➡️ ZOZI Treasury ➡️ Supplier ] system but now it is gone because we integrate country management system and employees system. so now again you have to incorporate this engine of reconciliation again. 
+				[ Order Dispatched ➡️ COD ➡️ Logistic Partner ➡️ ZOZI Treasury ➡️ Supplier ] 
+				[ Order Dispatched ➡️ Card payment/ payment gateway ➡️ ZOZI Treasury ➡️ Logistic Partner  ] 
+				[  Order Dispatched ➡️ Card payment/ payment gateway ➡️ ZOZI Treasury ➡️ Supplier ] 
+			7. Admin have complete CRUD system.
+			8. we had complete system of commission system which is ruined now due country integration so you have to incorporate properly.
+		read again in detail and check what we can do better for admin pages for best control ever.

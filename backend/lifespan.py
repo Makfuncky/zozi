@@ -41,12 +41,12 @@ def _ensure_tables_exist() -> bool:
     try:
         from sqlalchemy import inspect
 
-        from data.db import engine
+        from db.database import engine
         existing = set(inspect(engine).get_table_names()) - {"alembic_version"}
         if existing:
             logger.info("DB tables already exist (%d found), skipping schema creation", len(existing))
             return False
-        from data.db import create_tables
+        from db.database import create_tables
         create_tables()
         logger.info("DB tables freshly created")
         return True
@@ -85,7 +85,7 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 def _startup_load_role_permissions() -> None:
     try:
         from data.controllers_admin_controller import load_role_permission_settings
-        from data.db import SessionLocal
+        from db.database import SessionLocal
 
         db = SessionLocal()
         try:
@@ -98,12 +98,11 @@ def _startup_load_role_permissions() -> None:
 
 def _startup_register_event_listeners() -> None:
     try:
-        from data.services_orders import _event_publisher
-        from data.events import PaymentConfirmedEvent
-        from data.services_fulfillment_service import FulfillmentService
+        from data.services_orders import _event_publisher, FulfillmentService
+        from data.services_payments import PaymentConfirmedEvent
 
         fulfillment = FulfillmentService()
-        from data.db import SessionLocal
+        from db.database import SessionLocal
 
         def _handle_fulfillment(event: PaymentConfirmedEvent) -> None:
             db = SessionLocal()
@@ -122,8 +121,8 @@ def _startup_register_event_listeners() -> None:
 
 def _startup_seed_treasury() -> None:
     try:
-        from data.db import SessionLocal
-        from db.treasury_seeder import seed_treasury_system
+        from db.database import SessionLocal
+        from data.seed_treasury import seed_treasury_system
 
         db = SessionLocal()
         try:
@@ -145,7 +144,7 @@ def _seed_demo_data() -> None:
         logger.debug("Skipping demo data seed — SEED_DATA_ON_STARTUP is disabled")
         return
     try:
-        from data.db import SessionLocal
+        from db.database import SessionLocal
         from db.seed import seed_data
 
         seed_data(SessionLocal)
@@ -168,7 +167,7 @@ def _ensure_default_accounts() -> None:
         return
 
     try:
-        from data.db import SessionLocal
+        from db.database import SessionLocal
         from db.seed import _ensure_demo_user
 
         db = SessionLocal()

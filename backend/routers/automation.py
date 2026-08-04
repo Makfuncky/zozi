@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from data.db import get_db
+from data.models import User
 from utils.dependencies import require_admin
 from services import automation_scheduler as scheduler
 from services.gateway_reconciliation_service import (
@@ -27,7 +28,10 @@ from services.payout_batch_service import (
     generate_supplier_payout_batches,
     generate_logistics_payout_batches,
     get_pending_batches_for_supplier,
-    supplier_approve_batch,
+)
+from services.treasury.treasury_router_service import (
+    approve_batch as approve_batch_svc,
+    reject_batch as reject_batch_svc,
 )
 from services.refund_posting_service import post_refund_automatically
 from services.credit_control_service import (
@@ -141,11 +145,11 @@ def pending_supplier_batches(supplier_id: int, db: Session = Depends(get_db)):
     return get_pending_batches_for_supplier(db, supplier_id)
 
 
-@router.post("/payout-batches/{batch_id}/approve", summary="Supplier approves payout batch")
-def accept_payout_batch(batch_id: int, supplier_id: int, approved: bool = True,
-                   notes: str = None, db: Session = Depends(get_db)):
-    """Supplier self-approval for payout batch."""
-    return supplier_approve_batch(db, batch_id, supplier_id, approved, notes)
+@router.post("/payout-batches/{batch_id}/approve", summary="Admin approves payout batch")
+def accept_payout_batch(batch_id: int, notes: str = None,
+                   db: Session = Depends(get_db), current_admin: User = Depends(require_admin)):
+    """Admin approval for payout batch — CA3 fix: suppliers cannot self-approve."""
+    return approve_batch_svc(db, batch_id=batch_id, notes=notes, current_admin=current_admin)
 
 
 # ── Refund Posting (#26) ──────────────────────────────────────────────────

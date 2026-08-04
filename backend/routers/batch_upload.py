@@ -1,6 +1,6 @@
 """
 Batch Upload Router — process 10+ products in parallel using async workers
-==========================================================================
+===========================================================================
 Accepts up to 20 images + a JSON manifest, processes them concurrently
 through the A/B test → BG removal → AI analysis pipeline, and returns
 results in under 2 minutes.
@@ -32,8 +32,9 @@ from data.providers_bg_remover import (
 )
 from data.providers_vision import suggest_price
 from services.storage import storage as _storage
-
-from services.write_helpers import commit_only, flush_only, rollback_only
+from services.media.media_router_service import (
+    batch_publish_products as batch_publish_products_service,
+)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -53,7 +54,30 @@ async def _save_batch_image(
     if not image_b64:
         return None
     try:
-        # Handle data URI prefix
+        if "," in image_b64:
+            image_b64 = image_b64.split(",", 1)[1]
+
+        raw = base64.b64decode(image_b64)
+
+        safe_name = re.sub(r"[^a-z0-9]+", "_", product_name.lower().strip())[:40] or "product"
+        filename = f"{supplier_id}_{safe_name}_{uuid.uuid4().hex[:8]}.png"
+        key = f"supplier_uploads/{filename}"
+
+        return _storage.save(key, raw, content_type="image/png")
+    except Exception as exc:
+        logger.error("Failed to save batch image for %s: %s", product_name, exc)
+        return None
+
+
+def _save_batch_image_sync(
+    image_b64: str,
+    supplier_id: int,
+    product_name: str,
+) -> Optional[str]:
+    """Synchronous wrapper for saving batch images (for service use)."""
+    if not image_b64:
+        return None
+    try:
         if "," in image_b64:
             image_b64 = image_b64.split(",", 1)[1]
 
@@ -78,229 +102,32 @@ async def batch_publish_products(
     ),
     db: Session = Depends(get_db),
 ):
-    """Publish products from batch-analyze results.
-
-    Takes the JSON response from ``POST /supplier/products/batch-analyze`` and
-    creates real Product records in the database with:
-      - AI-detected name, category, description, tags
-      - AI-suggested price + stock
-      - AI-detected variants (colors, sizes) with per-variant stock
-      - Saved BG-removed images
-      - Auto-generated SEO slugs and product codes
-
-    Batch-completes all products in parallel for maximum throughput.
-    Returns the created product IDs and any errors per item.
-
-    Args:
-        batch_results_json: The full response from batch-analyze.
-
-    Returns:
-        {
-            "total": int,
-            "published": int,
-            "failed": int,
-            "products": [{ "id": int, "name": str, "slug": str,
-                           "image_url": str, "error": str | None }],
-        }
-    """
-    try:
-        batch_data = json.loads(batch_results_json)
-    except (json.JSONDecodeError, TypeError) as exc:
-        raise HTTPException(400, f"Invalid JSON: {exc}")
-
-    results = batch_data.get("results", [])
-    if not results:
-        raise HTTPException(400, "No results in batch data")
-
-    if len(results) > MAX_BATCH_SIZE:
-        raise HTTPException(400, f"Maximum {MAX_BATCH_SIZE} products per batch")
-
-    # Import the product creation logic
+    """Publish products from batch-analyze results."""
     from controllers.supplier_controller import _persist_supplier_product
 
-    # Process each product sequentially (DB writes must be serialized)
-    published: List[Dict[str, Any]] = []
-    errors: List[Dict[str, Any]] = []
+    def _save_image(bg_b64: str, supplier_id: int, name: str) -> Optional[str]:
+        loop = asyncio.get_running_loop()
+        try:
+            return loop.run_until_complete(_save_batch_image(bg_b64, supplier_id, name))
+        except RuntimeError:
+            return _save_batch_image_sync(bg_b64, supplier_id, name)
+
+    def _persist_product(**kwargs):
+        return _persist_supplier_product(**kwargs)
 
     try:
-        for idx, item in enumerate(results):
-            if item.get("status") != "completed":
-                errors.append({
-                    "index": idx,
-                    "name": item.get("name_hint", f"Item {idx}"),
-                    "error": item.get("error", "Analysis incomplete"),
-                })
-                continue
-
-            try:
-                analysis = item.get("analysis", {}) or {}
-                price_data = item.get("price_suggestion", {}) or {}
-                bg_b64 = item.get("bg_removed_b64", "")
-                name_hint = item.get("name_hint", "")
-                winner = item.get("winner_strategy", "general")
-
-                # Extract fields from AI analysis
-                product_name = (
-                    analysis.get("product_name_hint")
-                    or analysis.get("english_title")
-                    or analysis.get("name")
-                    or name_hint
-                    or f"Product {idx + 1}"
-                )
-                product_name = str(product_name)[:200]
-
-                category = analysis.get("suggested_category") or "General"
-                subcategory = analysis.get("suggested_subcategory") or None
-                description = (
-                    analysis.get("english_description")
-                    or analysis.get("product_description")
-                    or f"{product_name} — Quality product from our catalog."
-                )
-
-                # Price
-                suggested_price = price_data.get("suggested_price") or analysis.get("ai_suggested_price") or 0
-                try:
-                    price = float(suggested_price) if suggested_price else 10.0
-                except (TypeError, ValueError):
-                    price = 10.0
-                if price <= 0:
-                    price = 10.0
-
-                # Stock
-                stock = 100
-                stock_hints = analysis.get("stock_hints", {}) or {}
-                if stock_hints:
-                    total_stock = 0
-                    for color_hints in stock_hints.values():
-                        if isinstance(color_hints, dict):
-                            total_stock += sum(
-                                int(v) for v in color_hints.values() if isinstance(v, (int, float))
-                            )
-                    if total_stock > 0:
-                        stock = total_stock
-
-                # Tags
-                tags_list = analysis.get("suggested_tags", []) or []
-                tags = ", ".join(str(t) for t in tags_list if t)[:500] if tags_list else None
-
-                # Colors
-                attrs = analysis.get("detected_attributes", {}) or {}
-                colors_list = attrs.get("color", []) or []
-                color = ", ".join(str(c) for c in colors_list if c)[:200] if colors_list else None
-
-                # Brand
-                brand = analysis.get("suggested_brand") or attrs.get("brand") or None
-
-                # Build variants from AI analysis
-                variants_payload = []
-                variant_options = analysis.get("variant_options", {}) or {}
-
-                if "color" in variant_options or "size" in variant_options:
-                    colors = variant_options.get("color", ["Default"])
-                    sizes = variant_options.get("size", ["One Size"])
-
-                    for color_val in colors:
-                        for size_val in sizes:
-                            hints = stock_hints or {}
-                            color_key = str(color_val) if color_val else "Default"
-                            size_key = str(size_val) if size_val else "One Size"
-                            item_stock = 0
-                            if isinstance(hints, dict):
-                                color_stock = hints.get(color_key, {}) or {}
-                                if isinstance(color_stock, dict):
-                                    item_stock = int(color_stock.get(size_key, 0) or 0)
-                            if item_stock <= 0:
-                                item_stock = 50
-
-                            variants_payload.append({
-                                "color": color_val,
-                                "size": size_val,
-                                "stock": item_stock,
-                                "price": price,
-                                "is_active": True,
-                            })
-
-                # Save the BG-removed image
-                image_url = await _save_batch_image(bg_b64, current_user["id"], product_name)
-
-                # Create the product in DB (_persist_supplier_product handles slug generation internally)
-                new_product = _persist_supplier_product(
-                    name=product_name,
-                    description=description,
-                    price=price,
-                    stock_quantity=stock,
-                    category=category,
-                    subcategory=subcategory,
-                    color=color,
-                    brand=brand,
-                    tags=tags,
-                    sizes=None,
-                    materials=None,
-                    visibility_regions=[],
-                    weight=None,
-                    dimensions=None,
-                    compare_price=None,
-                    discount_starts_at=None,
-                    discount_ends_at=None,
-                    return_window_days=None,
-                    is_active=True,
-                    image_url=image_url,
-                    video_url=None,
-                    additional_media=[image_url] if image_url else None,
-                    ai_description=description,
-                    variants_payload=json.dumps(variants_payload) if variants_payload else None,
-                    current_user=current_user,
-                    db=db,
-                    bg_preset=winner,
-                    extra_attributes={
-                        "batch_upload": True,
-                        "batch_index": idx,
-                        "winner_strategy": winner,
-                        "ai_source": analysis.get("source", "batch"),
-                    },
-                )
-
-                flush_only(db)
-
-                published.append({
-                    "id": new_product.id,
-                    "name": product_name,
-                    "slug": new_product.slug or "",
-                    "image_url": image_url,
-                    "category": category,
-                    "price": price,
-                    "stock": stock,
-                    "variants_count": len(variants_payload),
-                })
-
-            except Exception as exc:
-                logger.exception("Failed to publish batch item %s: %s", idx, exc)
-                errors.append({
-                    "index": idx,
-                    "name": item.get("name_hint", f"Item {idx}"),
-                    "error": str(exc),
-                })
-
-        commit_only(db)
-    except Exception as outer_exc:
-        rollback_only(db)
-        logger.exception("Batch publish outer error: %s", outer_exc)
-        return {
-            "total": len(results),
-            "published": len(published),
-            "failed": len(results) - len(published),
-            "products": published,
-            "errors": errors + [{"index": -1, "error": f"Batch aborted: {outer_exc}"}],
-            "partial": True,
-        }
-
-    return {
-        "total": len(results),
-        "published": len(published),
-        "failed": len(errors),
-        "products": published,
-        "errors": errors,
-    }
+        return batch_publish_products_service(
+            db=db,
+            batch_results_json=batch_results_json,
+            current_user=current_user,
+            save_image_fn=_save_image,
+            persist_product_fn=_persist_product,
+            max_batch_size=MAX_BATCH_SIZE,
+        )
+    except Exception as e:
+        if "Invalid JSON" in str(e) or "No results" in str(e) or "Maximum" in str(e):
+            raise HTTPException(400, str(e))
+        raise HTTPException(500, f"Batch publish failed: {e}")
 
 
 @router.post("/products/batch-analyze")
@@ -330,14 +157,12 @@ async def batch_analyze_products(
     if len(images) > MAX_BATCH_SIZE:
         raise HTTPException(400, f"Maximum {MAX_BATCH_SIZE} images per batch")
 
-    # Parse optional name hints
     try:
         name_hints: List[str] = json.loads(names_json) if names_json else []
     except (json.JSONDecodeError, TypeError):
         name_hints = []
     name_hints = (name_hints + [""] * MAX_BATCH_SIZE)[:MAX_BATCH_SIZE]
 
-    # Read all images in parallel
     async def read_one(file: UploadFile, idx: int) -> tuple[bytes, str]:
         raw = await file.read()
         if not raw:
@@ -346,8 +171,7 @@ async def batch_analyze_products(
 
     image_data = await asyncio.gather(*[read_one(f, i) for i, f in enumerate(images)])
 
-    # Process each image in parallel with concurrency limits
-    sem = asyncio.Semaphore(min(8, len(images)))  # Max 8 concurrent
+    sem = asyncio.Semaphore(min(8, len(images)))
 
     async def process_one(args: tuple[bytes, str]) -> Dict[str, Any]:
         raw, hint = args
@@ -357,11 +181,9 @@ async def batch_analyze_products(
                 "status": "processing",
             }
             try:
-                # Step 1: A/B test BG strategies
                 best_strategy = "production_birefnet"
                 best_score = -1.0
 
-                # Test first 3 strategies for speed
                 test_strategies = ["clean_commercial", "production_birefnet", "variant_testing"]
                 scored: List[tuple[float, str]] = []
 
@@ -371,7 +193,6 @@ async def batch_analyze_products(
                         processed = await remove_background_async(raw, strategy=strategy)
                         elapsed_ms = (asyncio.get_running_loop().time() - t0) * 1000
 
-                        # Quick quality check
                         img = _bytes_to_image(processed)
                         alpha = img.split()[-1] if img.mode == "RGBA" else None
                         if alpha:
@@ -388,15 +209,12 @@ async def batch_analyze_products(
                     scored.sort(key=lambda x: x[0], reverse=True)
                     best_score, best_strategy = scored[0]
 
-                # Step 2: Apply winning strategy
                 bg_result = await remove_background_async(raw, strategy=best_strategy)
 
-                # Step 3: AI analysis
                 ai_result = await analyze_product_image_async(
                     raw, filename=hint or "", generate_copy=False, use_vision=True
                 )
 
-                # Step 4: Generate price suggestion
                 loop = asyncio.get_running_loop()
                 price_result = await loop.run_in_executor(
                     None, suggest_price, raw,
@@ -423,7 +241,6 @@ async def batch_analyze_products(
 
     results = await asyncio.gather(*[process_one(args) for args in image_data])
 
-    # Summary
     completed = sum(1 for r in results if r.get("status") == "completed")
     failed = sum(1 for r in results if r.get("status") == "failed")
     strategy_wins: Dict[str, int] = {}

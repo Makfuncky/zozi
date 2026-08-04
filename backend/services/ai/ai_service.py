@@ -3,6 +3,7 @@ AI Service — HuggingFace Inference API integration.
 
 Provides:
     * generate_product_description(name, category, image_bytes=None) -> str
+from sqlalchemy.orm import Session
     * suggest_category(name, description="") -> str
     * suggest_tags(name, category, description="") -> list[str]
     * infer_product_name(name, description="", image_bytes=None) -> str
@@ -1207,3 +1208,25 @@ def _get_shooting_tip(angle_name: str) -> str:
     }
     return tips.get(angle_name, "Use consistent lighting and a clean background.")
 
+
+def get_product_first(db: Session, **filters) -> Optional[Product]:
+    query = db.query(Product)
+    for key, value in filters.items():
+        query = query.filter(getattr(Product, key) == value)
+    return query.limit(1).first()
+
+
+def get_unknown_first(db: Session, **filters) -> Optional[Unknown]:
+    query = db.query(Unknown)
+    for key, value in filters.items():
+        query = query.filter(getattr(Unknown, key) == value)
+    return query.limit(1).first()
+
+
+def get_user_by_id(db: Session, record_id: int) -> Optional[User]:
+    return db.query(User).filter(User.id == record_id).first()
+
+def _db_product_query_0(db: Session, is_: Any, is_deleted: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.is_deleted.is_(False), Product.is_active.is_(True), Product.is_approved.is_(True), Product.stock > 0, )
+    return result
+    """Read-only query delegated from controller."""

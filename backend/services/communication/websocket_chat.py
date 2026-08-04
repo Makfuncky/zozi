@@ -5,16 +5,80 @@ Features: Entity-scoped rooms, live messaging, typing indicators, read receipts
 import logging
 import json
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from data.models_core import EntityChatThread, EntityChatMessage
-from data.models_employee_models import Employee
+from data.models_core import (
+    EntityChatThread, EntityChatMessage, DirectChatRoom, DirectChatMessage,
+    GroupChatRoom, GroupChatMember,
+)
 from data.db import get_service_session
+from data.services_write_helpers import add_and_flush, commit_and_refresh, commit_only
 
 logger = logging.getLogger("zozi.websocket_chat")
+
+
+def create_direct_message(
+    db: Session,
+    room_id: str,
+    sender_id: int,
+    content: str,
+    msg_type: str = "text"
+) -> Tuple[Optional[int], Optional[str]]:
+    """Create a direct message and return (id, created_at_iso) or (None, None)."""
+    room = db.query(DirectChatRoom).filter(DirectChatRoom.chat_id == room_id).first()
+    if not room:
+        return None, None
+    msg = DirectChatMessage(room_id=room.id, sender_id=sender_id, message=content, message_type=msg_type)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg.id, msg.created_at.isoformat()
+
+
+def create_group_message(
+    db: Session,
+    room_id: str,
+    sender_id: int,
+    content: str,
+    msg_type: str = "text"
+) -> Tuple[Optional[int], Optional[str]]:
+    """Create a group message and return (id, created_at_iso) or (None, None)."""
+    room = db.query(GroupChatRoom).filter(GroupChatRoom.chat_id == room_id).first()
+    if not room:
+        return None, None
+    msg = GroupChatMessage(room_id=room.id, sender_id=sender_id, message=content, message_type=msg_type)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg.id, msg.created_at.isoformat()
+
+
+def create_entity_message(
+    db: Session,
+    thread_id: int,
+    sender_id: int,
+    content: str,
+    msg_type: str = "text"
+) -> Tuple[Optional[int], Optional[str]]:
+    """Create an entity message and return (id, created_at_iso) or (None, None)."""
+    thread = db.query(EntityChatThread).filter(EntityChatThread.id == thread_id).first()
+    if not thread:
+        return None, None
+    msg = EntityChatMessage(thread_id=thread.id, sender_id=sender_id, message=content, message_type=msg_type)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg.id, msg.created_at.isoformat()
+
+
+def commit_read_receipts(db: Session, messages: list) -> int:
+    """Commit read_at timestamps on messages."""
+    if messages:
+        db.commit()
+    return len(messages)
 
 
 class WebSocketChatService:
@@ -129,6 +193,50 @@ class WebSocketChatService:
             }
             for m in reversed(messages)
         ]
+
+
+def persist_direct_message(db: Session, room_id: str, sender_id: int, content: str, msg_type: str = "text") -> tuple[Optional[int], Optional[str]]:
+    """Store a direct message in the database."""
+    room = db.query(DirectChatRoom).filter(DirectChatRoom.chat_id == room_id).first()
+    if not room:
+        return None, None
+    msg = DirectChatMessage(room_id=room.id, sender_id=sender_id, message=content, message_type=msg_type)
+    add_and_flush(db, msg)
+    commit_and_refresh(db, msg)
+    return msg.id, msg.created_at.isoformat()
+
+
+def persist_group_message(db: Session, room_id: str, sender_id: int, content: str, msg_type: str = "text") -> tuple[Optional[int], Optional[str]]:
+    """Store a group message in the database."""
+    room = db.query(GroupChatRoom).filter(GroupChatRoom.chat_id == room_id).first()
+    if not room:
+        return None, None
+    msg = GroupChatMessage(room_id=room.id, sender_id=sender_id, message=content, message_type=msg_type)
+    add_and_flush(db, msg)
+    commit_and_refresh(db, msg)
+    return msg.id, msg.created_at.isoformat()
+
+
+def persist_entity_message(db: Session, thread_id: int, sender_id: int, content: str, msg_type: str = "text") -> tuple[Optional[int], Optional[str]]:
+    """Store an entity chat message in the database."""
+    thread = db.query(EntityChatThread).filter(EntityChatThread.id == thread_id).first()
+    if not thread:
+        return None, None
+    msg = EntityChatMessage(thread_id=thread.id, sender_id=sender_id, message=content, message_type=msg_type)
+    add_and_flush(db, msg)
+    commit_and_refresh(db, msg)
+    return msg.id, msg.created_at.isoformat()
+
+
+def commit_read_receipts_messages(db: Session, messages: list) -> int:
+    """Commit read_at timestamps on messages."""
+    count = 0
+    now = datetime.now(timezone.utc)
+    for m in messages:
+        m.read_at = now
+        count += 1
+    commit_only(db)
+    return count
 
 
 def get_websocket_chat_service(db: Session = None) -> WebSocketChatService:

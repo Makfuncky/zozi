@@ -9,7 +9,7 @@ from alembic import context
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from data.models import Base as ModelsBase
+from models import Base as ModelsBase
 from utils.schema_compat import SCHEMA_TRANSLATE_MAP, patch_fk_schemas
 
 config = context.config

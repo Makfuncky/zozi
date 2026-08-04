@@ -359,7 +359,7 @@ def update_product_inventory(db: Session, order_id: int, decrement: bool = True)
     """
     order = db.query(Order).filter_by(id=order_id).first()
     if not order:
-        logger.error(f"Order not found for inventory update: {order_id}")
+        logger.error("Order not found for inventory update: " + str(order_id))
         return
     
     for order_item in order.items:

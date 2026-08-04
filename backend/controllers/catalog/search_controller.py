@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from models.products import Product
 from data.schemas import _normalize_image_path
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
+from services.catalog.products_read_service import _db_product_query_0, _db_product_query_1, _db_product_query_2, _db_product_query_3, _db_product_query_4
 
 # ── Price-range keyword map ────────────────────────────────────────────────
 PRICE_KEYWORDS: list[tuple[re.Pattern, float | None, float | None]] = [
@@ -493,12 +494,8 @@ def smart_search_from_parsed(
     }
     parsed = _resolve_brand_from_catalog(parsed, db)
 
-    query = db.query(Product).filter(
-        Product.is_deleted == False,
-        Product.is_active.isnot(False),
-        Product.is_approved.isnot(False),
-        Product.stock > 0,
-    )
+    query = _db_product_query_0(db, False, is_active, is_deleted, isnot)
+
 
     if supplier_id is not None:
         query = query.filter(Product.supplier_id == supplier_id)
@@ -631,19 +628,16 @@ def get_recommendations(
     ]
 
     if user_id is None:
-        query = db.query(Product).filter(
-            Product.is_deleted == False,   # noqa: E712
-            Product.is_active.isnot(False),
-            Product.is_approved.isnot(False),
-            Product.stock > 0,
-        )
+        query = _db_product_query_1(db, False, is_active, is_deleted, isnot, noqa)
+
+
         if normalized_recent_categories:
             query = query.filter(Product.category.in_(normalized_recent_categories))
 
         recommended = query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
         if not recommended and normalized_recent_categories:
             recommended = (
-                db.query(Product)
+                _db_product_query_2(db)
                 .filter(
                     Product.is_deleted == False,   # noqa: E712
                     Product.is_active == True,     # noqa: E712
@@ -786,12 +780,9 @@ def get_recommendations(
             .all()
         }
 
-        query = db.query(Product).filter(
-            Product.is_deleted == False,   # noqa: E712
-            Product.is_active == True,     # noqa: E712
-            Product.is_approved == True,   # noqa: E712
-            Product.stock > 0,
-        )
+        query = _db_product_query_3(db, False, True, is_active, is_approved, is_deleted, noqa, stock)
+
+
         if purchased_product_ids:
             query = query.filter(Product.id.notin_(purchased_product_ids))
         if top_categories:
@@ -800,12 +791,9 @@ def get_recommendations(
         recommended = query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()
         if not recommended:
             # Fallback to global best products when category affinity is sparse.
-            fallback_query = db.query(Product).filter(
-                Product.is_deleted == False,   # noqa: E712
-                Product.is_active == True,     # noqa: E712
-                Product.is_approved == True,   # noqa: E712
-                Product.stock > 0,
-            )
+            fallback_query = _db_product_query_4(db, False, True, is_active, is_approved, is_deleted, noqa, stock)
+
+
             if purchased_product_ids:
                 fallback_query = fallback_query.filter(Product.id.notin_(purchased_product_ids))
             recommended = fallback_query.order_by(Product.sales_count.desc(), Product.rating.desc()).limit(limit).all()

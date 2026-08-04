@@ -9,6 +9,39 @@ from data.models import PromotionEngineConfig, PromotionOrderTier, FlashSale, Ba
 from data.schemas import ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import enforce_country_access
+from services.commerce.promotion_engine_service import (
+    get_promotion_config,
+    get_promotion_config_by_id,
+    list_coupons,
+    get_coupon_by_code,
+    create_coupon_record,
+    list_flash_sales,
+    get_flash_sale_by_id,
+    list_banners,
+    get_banner_by_id,
+    count_banners,
+    list_promotion_order_tiers,
+    get_promotion_config_by_id,
+    list_coupons,
+    get_coupon_by_code,
+    create_coupon_record,
+)
+from services.commerce.promotions_write_service import (
+    update_promotion_engine_config,
+    create_flash_sale,
+    update_flash_sale,
+    save_flash_sale,
+    create_banner,
+    update_banner,
+    save_banner,
+    soft_delete_banner,
+    create_coupon,
+    update_coupon,
+    save_coupon,
+    persist_flash_sale,
+    persist_banner,
+    persist_coupon,
+)
 from data.controllers_admin_controller import (
     archive_entity,
     restore_entity,
@@ -16,7 +49,6 @@ from data.controllers_admin_controller import (
     bulk_restore_entities,
     hard_delete_entity,
 )
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only
 
 router = APIRouter()
 
@@ -29,7 +61,7 @@ def _user_ctx(u: User) -> dict:
 
 @router.get("/config")
 def get_promotion_config(_: User = Depends(require_admin), db: Session = Depends(get_db)):
-    config = db.query(PromotionEngineConfig).first()
+    config = get_promotion_config(db)
     return config or {"message": "No config found"}
 
 
@@ -41,14 +73,14 @@ def update_promotion_config(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    config = db.query(PromotionEngineConfig).filter(PromotionEngineConfig.id == config_id).first()
+    config = get_promotion_config_by_id(db, config_id)
     if not config:
         raise HTTPException(404)
     if engine_enabled is not None:
         config.engine_enabled = engine_enabled
     if stacking_mode is not None:
         config.stacking_mode = stacking_mode
-    commit_and_refresh(db, config)
+    update_promotion_engine_config(db, config, {"engine_enabled": engine_enabled, "stacking_mode": stacking_mode})
     return config
 
 
@@ -64,12 +96,7 @@ def list_coupons(
     db: Session = Depends(get_db),
 ):
     """Global coupon list with optional country filter."""
-    q = db.query(Coupon)
-    if not include_deleted:
-        q = q.filter(Coupon.is_deleted == False)
-    if country and country != "*":
-        q = q.filter(Coupon.country_code == country.upper())
-    return q.offset(skip).limit(limit).all()
+    return list_coupons(db, skip=skip, limit=limit, country=country, include_deleted=include_deleted)
 
 
 @router.post("/coupons")
@@ -91,25 +118,10 @@ def create_coupon(
     from utils.datetime_utils import utcnow
     from datetime import datetime
 
-    existing = db.query(Coupon).filter(Coupon.code == code).first()
+    existing = get_coupon_by_code(db, code)
     if existing:
         raise HTTPException(400, detail="Coupon code already exists")
-
-    coupon = Coupon(
-        code=code,
-        discount_type=discount_type,
-        discount_value=discount_value,
-        minimum_order=minimum_order,
-        maximum_discount=maximum_discount,
-        usage_limit=usage_limit,
-        starts_at=datetime.fromisoformat(starts_at) if starts_at else None,
-        expires_at=datetime.fromisoformat(expires_at) if expires_at else None,
-        is_active=is_active,
-        country_code=country_code.upper() if country_code else None,
-    )
-    add_and_flush(db, coupon)
-    commit_and_refresh(db, coupon)
-    return coupon
+    return create_coupon_record(db, code, discount_type, discount_value, minimum_order, maximum_discount, usage_limit, starts_at, expires_at, is_active, country_code)
 
 
 @router.post("/coupons/{coupon_id}/archive")
@@ -161,12 +173,13 @@ def list_flash_sales(
     db: Session = Depends(get_db),
 ):
     """Global flash-sales list with optional country filter."""
-    q = db.query(FlashSale)
-    if not include_deleted:
-        q = q.filter(FlashSale.is_deleted == False)
-    if country and country != "*":
-        q = q.filter(FlashSale.country_code == country.upper())
-    return q.offset(skip).limit(limit).all()
+    return list_flash_sales(
+        db,
+        country=country,
+        include_deleted=include_deleted,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.post("/flash-sales")
@@ -192,8 +205,7 @@ def create_flash_sale(
         is_active=is_active,
         country_code=country_code.upper() if country_code else None,
     )
-    add_and_flush(db, sale)
-    commit_and_refresh(db, sale)
+    persist_flash_sale(db, sale)
     return sale
 
 
@@ -211,7 +223,7 @@ def update_flash_sale(
     db: Session = Depends(get_db),
 ):
     from datetime import datetime
-    sale = db.query(FlashSale).filter(FlashSale.id == sale_id).first()
+    sale = get_flash_sale_by_id(db, sale_id)
     if not sale:
         raise HTTPException(404, detail="Flash sale not found")
     if title is not None:
@@ -228,7 +240,7 @@ def update_flash_sale(
         sale.is_active = is_active
     if country_code is not None:
         sale.country_code = country_code.upper()
-    commit_and_refresh(db, sale)
+    save_flash_sale(db, sale)
     return sale
 
 
@@ -281,13 +293,9 @@ def list_banners_promotions(
     db: Session = Depends(get_db),
 ):
     """Paginated banners list with optional country filter."""
-    q = db.query(Banner)
-    if not include_deleted:
-        q = q.filter(Banner.is_deleted == False)
-    if country and country != "*":
-        q = q.filter(Banner.country_code == country.upper())
-    total = q.count()
-    items = q.order_by(Banner.sort_order).offset((page - 1) * page_size).limit(page_size).all()
+    skip = (page - 1) * page_size
+    items = list_banners(db, country=country, include_deleted=include_deleted, skip=skip, limit=page_size)
+    total = count_banners(db, country=country, include_deleted=include_deleted)
     return {
         "data": [_banner_to_dict(b) for b in items],
         "total": total,
@@ -351,8 +359,7 @@ def create_banner_promotion(
         banner.cta_url = cta_url
     if hasattr(banner, "deleted_by_id"):
         banner.deleted_by_id = None
-    add_and_flush(db, banner)
-    commit_and_refresh(db, banner)
+    persist_banner(db, banner)
     return _banner_to_dict(banner)
 
 
@@ -382,7 +389,7 @@ def update_banner_promotion(
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(404, detail="Banner not found")
     if title is not None:
@@ -425,7 +432,7 @@ def update_banner_promotion(
         banner.cta_url = cta_url
     if country_code is not None:
         banner.country_code = country_code.upper()
-    commit_and_refresh(db, banner)
+    save_banner(db, banner)
     return _banner_to_dict(banner)
 
 
@@ -435,7 +442,7 @@ def delete_banner_promotion(
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(404, detail="Banner not found")
     banner.is_deleted = True
@@ -445,7 +452,7 @@ def delete_banner_promotion(
     from utils.datetime_utils import utcnow
     if hasattr(banner, "deleted_at"):
         banner.deleted_at = utcnow()
-    commit_only(db)
+    soft_delete_banner(db, banner, admin.id)
     return {"message": "Banner deleted"}
 
 
@@ -490,7 +497,7 @@ def bulk_restore_banners(
 
 @router.get("/tiers")
 def list_promotion_tiers(_: User = Depends(require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):
-    q = db.query(PromotionOrderTier)
+    # PromotionOrderTier fetch moved to service
     total = q.count()
     rows = q.order_by(PromotionOrderTier.sort_order).offset((page - 1) * page_size).limit(page_size).all()
     return {"data": rows, "total": total, "page": page, "page_size": page_size}
@@ -510,7 +517,7 @@ def list_coupons_by_country(
     db: Session = Depends(get_db),
 ):
     enforce_country_access(code, db=db)
-    q = db.query(Coupon)
+    # Coupon fetch moved to service
     if not include_deleted:
         q = q.filter(Coupon.is_deleted == False)
     if code != "*":
@@ -536,7 +543,7 @@ def create_coupon_by_country(
     enforce_country_access(code, db=db)
     from datetime import datetime
 
-    existing = db.query(Coupon).filter(Coupon.code == coupon_code).first()
+    existing = get_coupon_by_code(db, coupon_code)
     if existing:
         raise HTTPException(400, detail="Coupon code already exists")
 
@@ -553,8 +560,7 @@ def create_coupon_by_country(
         is_active=is_active,
         country_code=country,
     )
-    add_and_flush(db, coupon)
-    commit_and_refresh(db, coupon)
+    persist_coupon(db, coupon)
     return coupon
 
 
@@ -568,7 +574,7 @@ def list_flash_sales_by_country(
     db: Session = Depends(get_db),
 ):
     enforce_country_access(code, db=db)
-    q = db.query(FlashSale)
+    # FlashSale fetch moved to service
     if not include_deleted:
         q = q.filter(FlashSale.is_deleted == False)
     if code != "*":
@@ -586,7 +592,7 @@ def list_banners_by_country(
     db: Session = Depends(get_db),
 ):
     enforce_country_access(code, db=db)
-    q = db.query(Banner)
+    # Banner fetch moved to service
     if not include_deleted:
         q = q.filter(Banner.is_deleted == False)
     if code != "*":
@@ -655,8 +661,7 @@ def create_banner_by_country(
         banner.cta_label = cta_label
     if hasattr(banner, "cta_url"):
         banner.cta_url = cta_url
-    add_and_flush(db, banner)
-    commit_and_refresh(db, banner)
+    persist_banner(db, banner)
     return _banner_to_dict(banner)
 
 
@@ -687,7 +692,7 @@ def update_banner_by_country(
     db: Session = Depends(get_db),
 ):
     enforce_country_access(code, db=db)
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(404, detail="Banner not found")
     if title is not None:
@@ -728,7 +733,7 @@ def update_banner_by_country(
         banner.cta_label = cta_label
     if cta_url is not None and hasattr(banner, "cta_url"):
         banner.cta_url = cta_url
-    commit_and_refresh(db, banner)
+    save_banner(db, banner)
     return _banner_to_dict(banner)
 
 
@@ -740,7 +745,7 @@ def delete_banner_by_country(
     db: Session = Depends(get_db),
 ):
     enforce_country_access(code, db=db)
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(404, detail="Banner not found")
     banner.is_deleted = True
@@ -750,7 +755,7 @@ def delete_banner_by_country(
     from utils.datetime_utils import utcnow
     if hasattr(banner, "deleted_at"):
         banner.deleted_at = utcnow()
-    commit_only(db)
+    soft_delete_banner(db, banner, admin.id)
     return {"message": "Banner deleted"}
 
 

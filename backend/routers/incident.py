@@ -2,13 +2,13 @@
 Incident War Room API
 """
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import IncidentWarRoom, User
-from services.incident_service import get_incident_service, IncidentService
 from data.db import get_db
 from data.dependencies_auth import get_current_user
+from services.security.security_router_service import get_war_room_db
+from services.incident_service import get_incident_service
 
 router = APIRouter()
 
@@ -65,16 +65,4 @@ async def get_war_room(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    war_room = db.query(IncidentWarRoom).filter_by(id=war_room_id).first()
-    if not war_room:
-        return {"exists": False}
-    
-    return {
-        "id": war_room.id,
-        "incident_id": war_room.incident_id,
-        "title": war_room.title,
-        "severity": war_room.severity,
-        "status": war_room.status,
-        "started_at": war_room.started_at.isoformat(),
-        "action_items": [{"id": a.id, "title": a.title, "status": a.status} for a in war_room.action_items]
-    }
+    return get_war_room_db(db, war_room_id=war_room_id)

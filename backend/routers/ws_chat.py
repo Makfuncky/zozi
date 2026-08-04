@@ -15,12 +15,14 @@ from data.db import get_db, get_db_session
 from data.models_core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
 from data.models import User, Notification, SupportTicket, TicketReply
 from utils.config import settings
+from services.core.users_write_service import get_user_by_id
+from services.communication.chat_read_service import get_direct_chat_room_by_id, get_group_chat_room_by_id, get_entity_thread_by_id, get_room_messages, get_unread_direct_messages, get_unread_group_messages, get_unread_entity_messages
+from services.communication.websocket_chat import persist_direct_message, persist_group_message, persist_entity_message, commit_read_receipts_messages
 
 # Canonical user connection manager lives in services (single source of truth)
 # â€” re-exported here for backward compatibility.
 from services.websocket_manager import UserConnectionManager, user_manager
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["websocket"])
@@ -45,7 +47,10 @@ class ConnectionManager:
 
     async def connect(self, websocket: WebSocket, room_id: str, user_id: int, user_name: str = ""):
         await websocket.accept()
-        self._rooms.setdefault(room_id, {}).setdefault(user_id, set()).add(websocket)
+        (
+            self._rooms.setdefault(room_id, {}).setdefault(user_id, set())
+            |= {websocket}
+        )
         self._user_info[user_id] = {
             "user_id": user_id,
             "name": user_name,
@@ -53,7 +58,7 @@ class ConnectionManager:
             "last_seen": datetime.now(timezone.utc).isoformat(),
             "rooms": set(),
         }
-        self._user_info[user_id]["rooms"].add(room_id)
+        self._user_info[user_id]["rooms"] |= {room_id}
 
     def disconnect(self, websocket: WebSocket, room_id: str, user_id: int):
         user_conns = self._rooms.get(room_id, {}).get(user_id, set())
@@ -77,14 +82,14 @@ class ConnectionManager:
                 try:
                     await ws.send_json(message)
                 except Exception:
-                    dead.add(ws)
+                    dead |= {ws}
         for ws in dead:
             for uid, conns in self._rooms.get(room_id, {}).items():
                 conns.discard(ws)
 
     def set_typing(self, room_id: str, user_id: int, is_typing: bool):
         if is_typing:
-            self._typing.setdefault(room_id, set()).add(user_id)
+            self._typing.setdefault(room_id, set()) |= {user_id}
         else:
             self._typing.get(room_id, set()).discard(user_id)
             if not self._typing.get(room_id):
@@ -119,7 +124,7 @@ manager = ConnectionManager()
 
 
 def _get_user_name(db: Session, user_id: int) -> str:
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if user:
         return user.full_name or user.name or user.email or f"User {user_id}"
     return f"User {user_id}"
@@ -128,21 +133,21 @@ def _get_user_name(db: Session, user_id: int) -> str:
 def _persist_message(db: Session, room_id: str, sender_id: int, content: str, msg_type: str = "text"):
     """Store message in the database."""
     if room_id.startswith("dm_"):
-        room = db.query(DirectChatRoom).filter(DirectChatRoom.chat_id == room_id).first()
+        room = get_direct_chat_room_by_id(db, room_id)
         if room:
             msg = DirectChatMessage(room_id=room.id, sender_id=sender_id, message=content, message_type=msg_type)
             add_and_flush(db, msg)
             commit_and_refresh(db, msg)
             return msg.id, msg.created_at.isoformat()
     elif room_id.startswith("group_"):
-        room = db.query(GroupChatRoom).filter(GroupChatRoom.chat_id == room_id).first()
+        room = get_group_chat_room_by_id(db, room_id)
         if room:
             msg = GroupChatMessage(room_id=room.id, sender_id=sender_id, message=content, message_type=msg_type)
             add_and_flush(db, msg)
             commit_and_refresh(db, msg)
             return msg.id, msg.created_at.isoformat()
     else:
-        thread = db.query(EntityChatThread).filter(EntityChatThread.id == int(room_id)).first()
+        thread = get_entity_thread_by_id(db, int(room_id))
         if thread:
             msg = EntityChatMessage(thread_id=thread.id, sender_id=sender_id, message=content)
             add_and_flush(db, msg)
@@ -156,33 +161,21 @@ def _mark_messages_read(db: Session, room_id: str, user_id: int):
     now = datetime.now(timezone.utc)
     count = 0
     if room_id.startswith("dm_"):
-        room = db.query(DirectChatRoom).filter(DirectChatRoom.chat_id == room_id).first()
+        room = get_direct_chat_room_by_id(db, room_id)
         if room:
-            msgs = db.query(DirectChatMessage).filter(
-                DirectChatMessage.room_id == room.id,
-                DirectChatMessage.sender_id != user_id,
-                DirectChatMessage.read_at.is_(None),
-            ).all()
+            msgs = get_unread_direct_messages(db, room.id, user_id)
             for m in msgs:
                 m.read_at = now
                 count += 1
     elif room_id.startswith("group_"):
-        room = db.query(GroupChatRoom).filter(GroupChatRoom.chat_id == room_id).first()
+        room = get_group_chat_room_by_id(db, room_id)
         if room:
-            msgs = db.query(GroupChatMessage).filter(
-                GroupChatMessage.room_id == room.id,
-                GroupChatMessage.sender_id != user_id,
-                GroupChatMessage.read_at.is_(None),
-            ).all()
+            msgs = get_unread_group_messages(db, room.id, user_id)
             for m in msgs:
                 m.read_at = now
                 count += 1
     else:
-        msgs = db.query(EntityChatMessage).filter(
-            EntityChatMessage.thread_id == int(room_id),
-            EntityChatMessage.sender_id != user_id,
-            EntityChatMessage.read_at.is_(None),
-        ).all()
+        msgs = get_unread_entity_messages(db, int(room_id), user_id)
         for m in msgs:
             m.read_at = now
             count += 1
@@ -385,7 +378,7 @@ async def websocket_user(
 
     db = next(get_db())
     try:
-        user = db.query(User).filter(User.id == user_id).first()
+        user = get_user_by_id(db, user_id)
         role = user.role if user else ""
     finally:
         db.close()

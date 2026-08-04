@@ -17,6 +17,9 @@ from data.models import (
     ExecutiveNews
 )
 from data.models_employee_models import Employee
+from data.services_write_helpers import (
+    add_and_flush, commit_and_refresh, delete_only, commit_only,
+)
 from utils.config import settings
 from utils.redis_client import redis_client
 
@@ -65,6 +68,130 @@ class WebSocketManager:
 
 
 websocket_manager = WebSocketManager()
+
+
+def get_safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
+    """Execute a safe scalar SQL query."""
+    try:
+        return db.execute(text(sql), params or {}).scalar() or 0
+    except Exception:
+        return 0
+
+
+def get_safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool = False) -> Any:
+    """Execute a safe fetch SQL query."""
+    try:
+        result = db.execute(text(sql), params or {})
+        return result.scalar() if scalar else result.fetchall()
+    except Exception:
+        return 0 if scalar else []
+
+
+def get_safe_count(db: Session, table: str, where: str, params: dict | None = None) -> Any:
+    """Execute a safe count SQL query."""
+    query = text("SELECT COUNT(*) FROM " + table + " WHERE " + where)
+    if params:
+        query = query.bindparams(**params)
+    try:
+        return db.execute(query).scalar() or 0
+    except Exception:
+        return 0
+
+
+def _safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
+    """Execute a safe scalar SQL query, returning 0 on any error."""
+    try:
+        return db.execute(text(sql), params or {}).scalar() or 0
+    except Exception:
+        return 0
+
+
+def count_unresolved_fraud_alerts(db: Session) -> int:
+    """Count fraud alerts that are not yet resolved (delegated read for router)."""
+    return db.query(FraudAlert).filter(FraudAlert.is_resolved == False).count()
+
+
+def get_command_center_heartbeat_metrics(
+    db: Session, now: datetime
+) -> dict:
+    """Compute the real-time command-center heartbeat metrics (delegated reads).
+
+    All queries are wrapped so a failure of any single metric degrades gracefully
+    to 0 instead of breaking the websocket stream.
+    """
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    one_hour_ago = now - timedelta(hours=1)
+    active_threshold = now - timedelta(minutes=10)
+    active_order = "('cancelled', 'returned')"
+    return {
+        "today_orders": _safe_scalar(
+            db, "SELECT COUNT(*) FROM orders WHERE created_at >= :today", {"today": today_start}
+        ),
+        "today_revenue": float(
+            _safe_scalar(
+                db,
+                "SELECT COALESCE(SUM(total_amount), 0) FROM orders "
+                "WHERE created_at >= :today AND status NOT IN " + active_order,
+                {"today": today_start},
+            )
+        ),
+        "today_gmv": float(
+            _safe_scalar(
+                db,
+                "SELECT COALESCE(SUM(total_amount), 0) FROM orders "
+                "WHERE created_at >= :today AND status NOT IN " + active_order,
+                {"today": today_start},
+            )
+        ),
+        "delayed_orders": int(
+            _safe_scalar(
+                db,
+                "SELECT COUNT(*) FROM shipments WHERE status = 'delayed' AND estimated_delivery < :now",
+                {"now": now},
+            )
+        ),
+        "failed_deliveries": int(
+            _safe_scalar(
+                db,
+                "SELECT COUNT(*) FROM orders WHERE status = 'failed' AND created_at >= :today",
+                {"today": today_start},
+            )
+        ),
+        "active_customers_buying": int(
+            _safe_scalar(
+                db,
+                "SELECT COUNT(DISTINCT customer_id) FROM orders "
+                "WHERE created_at >= :today AND status NOT IN " + active_order,
+                {"today": today_start},
+            )
+        ),
+        "active_customers_window_shopping": int(
+            _safe_scalar(
+                db,
+                "SELECT COUNT(*) FROM user_sessions WHERE last_activity >= :active AND is_active = true",
+                {"active": active_threshold},
+            )
+        ),
+        "employees_working": int(
+            _safe_scalar(db, "SELECT COUNT(*) FROM employees WHERE employment_status = 'active'")
+        ),
+        "system_issues": int(
+            _safe_scalar(
+                db,
+                "SELECT COUNT(*) FROM system_health_events WHERE severity IN ('error', 'critical') AND created_at >= :since",
+                {"since": one_hour_ago},
+            )
+        ),
+        "active_logistics_partners": int(
+            _safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active'")
+        ),
+        "logistics_issues": int(
+            _safe_scalar(
+                db,
+                "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active' AND verification_status = 'rejected'",
+            )
+        ),
+    }
 
 
 class NewsAggregatorService:
@@ -376,12 +503,95 @@ class CommandCenterService:
             SystemHealthEvent.created_at.desc()
         ).limit(limit).all()
     
-    def get_fraud_alerts(self, limit: int = 20) -> List[FraudAlert]:
-        return self.db.query(FraudAlert).filter(
-            FraudAlert.status != "resolved"
-        ).order_by(
-            FraudAlert.created_at.desc()
-        ).limit(limit).all()
+    def get_fraud_alerts(self, limit: int = 20, unresolved_only: bool = False) -> List[FraudAlert]:
+        q = self.db.query(FraudAlert)
+        if unresolved_only:
+            q = q.filter(FraudAlert.is_resolved == False)
+        else:
+            q = q.filter(FraudAlert.status != "resolved")
+        return q.order_by(FraudAlert.created_at.desc()).limit(limit).all()
+
+    def get_system_health_events(self, skip: int = 0, limit: int = 50) -> List[SystemHealthEvent]:
+        """Get system health events with pagination."""
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        return (
+            self.db.query(SystemHealthEvent)
+            .filter(SystemHealthEvent.created_at >= today_start)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def get_unacknowledged_alerts(self, limit: int = 10) -> list:
+        """Get unacknowledged system alerts."""
+        from data.models import SystemAlert
+        return (
+            self.db.query(SystemAlert)
+            .filter(SystemAlert.is_acknowledged == False)
+            .order_by(SystemAlert.severity.desc(), SystemAlert.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    def get_executive_news_by_id(self, news_id: int) -> ExecutiveNews | None:
+        """Get an executive news article by ID."""
+        return self.db.query(ExecutiveNews).filter(ExecutiveNews.id == news_id).first()
+
+    def get_alerts(self, severity: str | None = None, acknowledged: bool | None = None, limit: int = 20) -> list:
+        """Get system alerts with filters."""
+        from data.models import SystemAlert
+        q = self.db.query(SystemAlert).filter(SystemAlert.is_acknowledged == False)
+        if severity:
+            q = q.filter(SystemAlert.severity == severity)
+        return q.order_by(SystemAlert.created_at.desc()).limit(limit).all()
+
+    def get_alert_by_id(self, alert_id: int):
+        """Get a system alert by ID."""
+        from data.models import SystemAlert
+        return self.db.query(SystemAlert).filter(SystemAlert.id == alert_id).first()
+
+    def create_executive_news(self, payload: dict) -> ExecutiveNews:
+        """Create and persist an executive news article."""
+        article = ExecutiveNews(
+            title=payload.get("title"),
+            summary=payload.get("summary"),
+            content=payload.get("content"),
+            url=payload.get("url"),
+            category=payload.get("category", "general"),
+            priority=payload.get("priority", "normal"),
+            country_code=payload.get("country_code"),
+            is_published=bool(payload.get("is_published", True)),
+            ai_sentiment=payload.get("ai_sentiment", "neutral"),
+            published_at=datetime.now(timezone.utc),
+        )
+        add_and_flush(self.db, article)
+        commit_and_refresh(self.db, article)
+        return article
+
+    def delete_executive_news(self, article: ExecutiveNews) -> None:
+        """Delete a persisted executive news article."""
+        delete_only(self.db, article)
+        commit_only(self.db)
+
+    def resolve_alert(self, alert: object) -> None:
+        """Mark a system alert as acknowledged."""
+        alert.is_acknowledged = True
+        commit_only(self.db)
+
+    def get_dashboard_stats(self, today_start: datetime) -> dict:
+        """Get dashboard statistics."""
+        from data.models import UserSession
+        return {
+            "customers": self.db.query(User).filter(User.role == "customer").count(),
+            "suppliers": self.db.query(User).filter(User.role == "supplier").count(),
+            "logistics_companies": self.db.query(LogisticsPartner).count(),
+            "active": self.db.query(LogisticsPartner).filter(LogisticsPartner.status == "active").count(),
+            "failed": self.db.query(Order).filter(Order.status == "failed").count(),
+            "alerts_pending": self.db.query(FraudAlert).filter(FraudAlert.is_resolved == False).count(),
+            "active_sessions": self.db.query(UserSession).filter(
+                UserSession.last_activity >= datetime.now(timezone.utc).replace(hour=0)
+            ).count(),
+        }
     
     def get_cash_position(self) -> dict:
         result = self.db.execute(text("""

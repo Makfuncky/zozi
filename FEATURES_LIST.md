@@ -2,142 +2,184 @@ ZOZI Platform Features (Investor Version)
 
 # _____________________________________________________________________________________________ Database Work.
 
-### 1. SYSTEM CONSTITUTION (BULLET POINTS)
+## ZOZI ENTERPRISE DATABASE CONSTITUTION & BUILD MASTER PLAN
 
-**Core Philosophy & Governance**
-*   **Single Source of Truth:** Treat DB as an Enterprise Data Platform. Never duplicate transactional data; reference it.
-*   **No Table Drops/Merges:** Optimize for domain clarity, not table count. Hundreds of tables are correct.
-*   **Alembic ONLY:** `Base.metadata.create_all()` is strictly forbidden in Production. All changes require reviewed migrations with downgrades and contract tests.
-*   **Machine-Documented:** Data dictionary and ERDs are generated via CI scripts, never hand-maintained.
-*   **Versioning & Ownership:** Every schema has a designated team owner. Every release maps to a specific DB schema version.
-
-**16 Bounded Contexts (PostgreSQL Schemas)**
-*   `core` (Identity), `commerce` (Catalog/Orders), `supplier` (Ops/KYC), `customer` (Profiles/Points), `logistics` (Fleet/POD), `finance` (Ledger/AR/AP), `treasury` (Cash/Payouts), `hr` (Employees), `country` (Configs/Rules), `media` (Metadata), `ai` (Staging/Embeddings), `communication` (Chat/Notify), `audit` (WORM logs), `security` (Risk/MFA), `analytics` (Snapshots), `configuration` (Toggles).
-*   *Future Reserved:* Ads, Affiliate, B2B, POS, ERP, CRM, BI.
-
-**Canonical Data Patterns**
-*   **Categories:** Materialized paths (`/1/15/42/`) + `lft/rgt`, no recursive CTEs.
-*   **Variants:** JSONB `attributes` + GIN index + `variant_key` hash.
-*   **Finance:** Immutable double-entry ledger chain. No direct `UPDATE` on posted entries.
-*   **AI/ML:** Writes to `ai_staging_*` tables first; explicit commit to business tables; audit in `ai_upload_jobs`.
-*   **Search:** `tsvector` + GIN + `pgvector` (HNSW). No `LIKE '%...%'`.
-*   **Analytics:** Materialized views and daily/monthly snapshots. No live heavy aggregates.
-*   **Files:** Metadata in PostgreSQL; Bytes in S3/CDN (Cloudflare R2).
-
-**Security, Multi-Tenancy & Lifecycle**
-*   **Country Isolation:** 100% of country-scoped tables carry `country_code` and enforce Row-Level Security (RLS).
-*   **Soft Deletes:** Business tables use `is_deleted`, `deleted_at`, `deleted_by`. No hard deletes.
-*   **Data Lifecycle:** Created → Active → Archived (Partition Detach) → Cold Storage → Destroyed (Crypto-shred for GDPR).
-*   **DB Limits:** Enforce strict limits (e.g., Max 20 product images, 200MB video, 50MB chat attachments, 5000 char notes).
-
-**Performance & Infrastructure Targets**
-*   **Targets:** Hot-list p95 < 300ms, Search < 300ms, Checkout < 500ms.
-*   **Query Rules:** Cursor pagination only (no `OFFSET`), max 3 JOINs, mandatory `selectinload` to prevent N+1.
-*   **Cross-Ecosystem:** Strictly via Transactional Outbox (Events/Services). **Zero cross-ecosystem Foreign Keys.**
-*   **Scaling:** PgBouncer (Transaction mode), Redis (Cache/Queue), Read Replicas for Analytics, Partitioning (Monthly Range for logs/orders, Hash for variants >10M).
+This document is the **Single Source of Truth** and **Binding Contract** for the ZOZI Platform Data Layer. Any AI agent or engineer MUST read this in full before generating, altering, or querying any database artifact.
 
 ---
 
-### 2. ARCHITECTURE DIAGRAMS
+## 1. ARCHITECTURE & FLOW DIAGRAMS
 
-**Diagram A: Layered Request & Data Flow**
-```text
-[Client / UI]
-      │
-      ▼
-[API / Routers] ──► (Validation, Rate-Limit, RLS Context Injection)
-      │
-      ▼
-[Controllers] ────► (Orchestration)
-      │
-      ▼
-[Services] ───────► (Business Logic, THE ONLY WRITERS)
-      │
-      ├────────────────────────────────────────┐
-      ▼                                        ▼
-[Providers (AI/Ext)]                   [Models (SQLAlchemy)]
-                                               │
-      ┌────────────────────────────────────────┴──────────────────────────────┐
-      ▼                                                                       ▼
-[Transactional Outbox] ◄────────────── [PostgreSQL 15 Primary] ──────► [Redis Cache/Queue]
-(Events/DLQ)                           (16 Schemas, RLS, Triggers)
-                                               │
-                                               ▼
-                                     [Read Replicas] ──► [Analytics / Dashboards]
+### A. Layered System & Data Flow Architecture
+```mermaid
+graph TD
+    Client[Web / Mobile / API] -->|HTTPS/WSS| WAF[WAF / Nginx / CDN]
+    WAF --> API[FastAPI Routers]
+    API --> Ctrl[Controllers]
+    Ctrl --> Svc[Services - ONLY WRITERS]
+    
+    Svc -->|Sync/ACID| DB[(PostgreSQL 15)]
+    Svc -->|Async/Events| Outbox[Transactional Outbox]
+    Svc -->|Cache/Queue| Redis[(Redis Cluster)]
+    Svc -->|Bytes/Media| S3[Cloudflare R2 / S3]
+    
+    Outbox -->|Relay| Broker[Message Broker]
+    Broker --> Workers[Task Workers: AI, Email, Analytics]
+    
+    DB -->|Read Replicas| Analytics[Analytics & Snapshots]
+    DB -->|RLS / Partitions| Tenants[Country / Tenant Isolation]
 ```
 
-**Diagram B: Storage Tiers & Media Architecture**
+### B. Media, Storage & AI Lifecycle
 ```text
-[HOT TIER: PostgreSQL Primary]
-  └─ Active Transactions, Master Data, Config, Media Metadata, AI Staging
-       │
-[WARM TIER: Redis & Read Replicas]
-  └─ Session Cache, Facet Counts, Materialized Views, Dashboards
-       │
-[COLD TIER: Object Storage (S3 / Cloudflare R2)]
-  └─ Media Bytes (Images/Video), Document Attachments, DB Backups
-       │
-[ARCHIVE TIER: Detached Partitions / Glacier]
-  └─ Aged Audit Logs, Old Chats, Historical Orders (> Retention Period)
-```
-
-**Diagram C: Cross-Ecosystem Event Flow (Order to Finance)**
-```text
-[Commerce: Order Created] 
-       │ (Publishes to Outbox)
-       ▼
-[Inventory Reserved] ──► [Payment Success] ──► [Supplier Notified]
-                                                 │
-[Analytics Snapshot] ◄── [Ledger Updated] ◄──────┴── [Delivery Assigned]
+[Upload] -> API Validation -> S3/R2 (Original Bytes) -> DB (`media_assets` Metadata)
+                 |
+                 v
+         [Async Workers] -> Optimize/Thumbnail/WebP -> CDN Edge
+                 |
+                 v
+         [AI Pipeline] -> CLIP/Whisper/OCR -> `ai_embeddings` (pgvector) -> `ai_staging`
+                 |
+                 v
+         [Explicit Commit] -> Business Tables (e.g., `products`) -> Audit Log
 ```
 
 ---
 
-### 3. STEP-BY-STEP CONSTRUCTION PLAN
+## 2. MASTER BULLET POINTS (The "What" & "Rules")
 
-*AI Builder Directive: Execute these phases sequentially. Do not proceed to the next phase until the "Done When" condition is met.*
+### 🏛️ Golden Rules & Governance
+*   **Single Source of Truth:** Never duplicate transactional data; reference it. No cross-ecosystem Foreign Keys (use Events/Services).
+*   **No Silent Fallbacks:** If a pipeline fails, report it explicitly. Never mask errors.
+*   **Schema Changes:** **Alembic ONLY**. `Base.metadata.create_all()` is strictly forbidden in Production. Every migration requires a downgrade and contract test.
+*   **Country Isolation:** 100% of country-scoped tables MUST have `country_code` and PostgreSQL Row-Level Security (RLS).
+*   **Immutability:** Financial ledgers and audit logs are append-only/WORM. Never `UPDATE` posted journal entries.
+*   **Config as Data:** No hardcoded business constants (commissions, fees). Use config tables.
 
-#### **Phase 0: Freeze, Inventory & Governance Setup**
-1.  **Generate Inventory:** Run `generate_data_dictionary.py` to map all ~310 ORM models to the 16 bounded contexts.
-2.  **Define Ownership & Limits:** Assign team owners to all 16 schemas. Document hard limits (e.g., max file sizes, max array lengths) in the configuration schema.
-3.  **Done When:** A unified, machine-generated inventory exists with zero orphan tables and mapped ownership.
+### 🗄️ Bounded Contexts (PostgreSQL Schemas)
+*   `core`: Users, roles, sessions, devices, auth.
+*   `commerce`: Products, variants, categories, carts, orders.
+*   `supplier`: Profiles, KYC, documents, wallets.
+*   `customer`: Profiles, addresses, wishlists, points.
+*   `logistics`: Partners, fleet, shipments, routes, POD.
+*   `finance`: Chart of Accounts, double-entry journal, AR/AP, invoices.
+*   `treasury`: Cash positions, bank reconciliation, payouts.
+*   `hr`: Employees, attendance, shifts, payroll.
+*   `country`: Configs, cities, tax rules, legal rules.
+*   `media`: `media_assets` metadata (bytes in object storage).
+*   `ai`: Embeddings, requests, results, staging tables, jobs.
+*   `communication`: Chat, email, SMS, push, tickets, video rooms.
+*   `audit`: WORM logs, permission audits, security logs.
+*   `security`: API keys, fraud, risk, MFA, OTP.
+*   `analytics`: Daily/monthly snapshots, KPIs, materialized views.
+*   `configuration`: System toggles, business rules.
 
-#### **Phase 1: Migration Pipeline Hardening**
-1.  **Block `create_all`:** Enforce environment guard raising an exception if `Base.metadata.create_all()` is called outside `APP_ENV=development`.
-2.  **Fix Alembic Chain:** Repair the broken `Union` import head. Generate missing migrations for `points_transactions`, `upload_jobs`, `user_points`.
-3.  **CI Gates:** Implement `alembic check` for schema drift and require contract tests for every new migration.
-4.  **Done When:** Production schema can *only* be altered via Alembic; CI fails on un-migrated model changes.
+### 🔍 Domain-Specific "Small Details" & Data Patterns
 
-#### **Phase 2: Bounded-Context Schemas**
-1.  **Create Schemas:** Execute `CREATE SCHEMA` for all 16 contexts.
-2.  **Move Tables:** Run `ALTER TABLE ... SET SCHEMA ...` for all existing tables.
-3.  **Update ORM:** Add `__table_args__ = {"schema": "<context>"}` to all SQLAlchemy models and update `search_path`.
-4.  **Done When:** All models resolve under their specific namespace; application tests pass.
+#### 🛒 Commerce & Catalog
+*   **Categories:** Materialized path (`/1/15/42/`) + `lft/rgt` for instant subtree queries.
+*   **Variants:** JSONB `attributes` + GIN index + `variant_key` hash. No flat columns for color/size.
+*   **Limits:** Max 20 images per product. Max 50 variants per product.
 
-#### **Phase 3: Security & Multi-Tenancy (RLS)**
-1.  **Standardize Country Code:** Resolve `VARCHAR(3)` vs `VARCHAR(10)` mismatches. Ensure every tenant table has `country_code`.
-2.  **Apply RLS:** Execute `data/pg_rls_policies.sql`. Inject `SET app.current_country_code` via middleware.
-3.  **Partitioning:** Apply Monthly Range partitioning to `journal_entries`, `audit_logs`, `chat_messages`, `shipment_events`.
-4.  **Done When:** Cross-country read attempts return 0 rows; security tests pass.
+#### 💰 Finance & Treasury
+*   **Ledger Chain:** CoA → Journal → Ledger → Balance → Trial Balance → P&L.
+*   **Rules:** Strict double-entry. `Σdebit == Σcredit`. Period-close locking.
+*   **Payouts:** Batches → Treasury Payout → Journal → Bank.
 
-#### **Phase 4: Canonical Pattern Enforcement**
-1.  **Catalog:** Migrate categories to materialized paths; convert variant attributes to JSONB + GIN.
-2.  **Finance:** Route all financial writes through the Ledger Service. Add immutability triggers to posted journal entries.
-3.  **AI & Events:** Implement `ai_staging` commit flows. Build Transactional Outbox (`outbox_events`, `inbox_events`, `event_retry_queue`, `event_dead_letter`).
-4.  **Done When:** Anti-patterns (e.g., cross-FK chains, live aggregates, direct AI writes) are eradicated and blocked by tests.
+#### 💬 Communication (Chat, Email, Video Calls)
+*   **Chat Tables:** `chat_threads`, `chat_messages` (Partitioned monthly by `created_at`).
+*   **Chat Features:** Read receipts, typing indicators (Redis), last seen, voice notes (Max 5MB, S3 stored).
+*   **Video Calls:** `video_rooms` table tracks `session_id`, `participants`, `started_at`, `ended_at`. WebRTC signaling via WebSockets; DB only stores metadata/billing.
+*   **Email/SMS:** `notification_queue`, `email_messages`. Provider-agnostic. Track opens/clicks via webhooks → `email_events`. Retry logic + Dead Letter Queue (DLQ).
 
-#### **Phase 5: Normalization, Storage & Indexing**
-1.  **Split Wide Tables:** Break the 85-column `country_configs` into `basics`, `economics`, `tax`, `legal`.
-2.  **Media Offload:** Ensure 100% of file bytes are routed to S3/R2; DB holds only metadata.
-3.  **Index & FK Backlog:** Add the 62 missing composite indexes and 44 missing FK constraints (PostgreSQL only).
-4.  **Done When:** No table exceeds ~40 columns without ADR justification; `EXPLAIN ANALYZE` shows no sequential scans on hot paths.
+#### 🖼️ Media & Storage (Images, Videos, Voice, Docs)
+*   **Rule:** **Metadata in DB, Bytes in Object Storage (Cloudflare R2/S3).**
+*   **Images:** Original → Optimized → Thumbnail → WebP → CDN. DB stores `url`, `mime`, `hash`, `w/h`, `ai_status`.
+*   **Videos:** Max 200MB. Streamed via CDN.
+*   **Documents:** Supplier KYC, PDFs. Encrypted at rest in S3.
+*   **Lifecycle:** Hot (CDN) → Warm (S3 Standard) → Cold (S3 Glacier/Archive) → Destroyed (after legal retention).
 
-#### **Phase 6: Analytics, Monitoring & Automation**
-1.  **Snapshots:** Create materialized views (`mv_daily_sales`, `kpi_supplier`, etc.) with cron-based refresh.
-2.  **Monitoring:** Deploy Prometheus/Grafana. Alert on slow queries, replication lag, autovacuum failures, and outbox DLQ size.
-3.  **Auto-Docs:** Hook `generate_data_dictionary.py` and ERD generator into the CI/CD pipeline to run on every merged migration.
-4.  **Done When:** Dashboards read exclusively from replicas/snapshots; documentation auto-updates on merge; monitoring alerts are active.
+#### 🤖 AI, Search & Vectorization
+*   **Vectorization:** `pgvector` extension. `embedding vector(1536)` on products/AI assets. HNSW indexing.
+*   **Search Strategy:** Hybrid Search = Full-Text Search (`tsvector` + GIN) + Semantic (`pgvector`) + CLIP (Vision).
+*   **AI Staging:** AI NEVER writes directly to business tables. Flow: `ai_upload_jobs` → `ai_staging_*` → Explicit Human/Auto Commit → `products`.
+*   **Models:** Local Ollama (`phi3:mini`, `qwen2.5`, `moondream`). Vision OFF by default on VPS to save costs.
 
+#### 📊 Analytics, Events & Audit
+*   **Events (Transactional Outbox):** `outbox_events` (written in same TX as business data) → Relay → Broker → `inbox_events` (idempotency dedupe) → `event_dead_letter`.
+*   **Analytics:** NEVER run live aggregates on transactional tables. Use Materialized Views (`mv_daily_sales`, `kpi_revenue`) refreshed by cron.
+*   **Audit:** ONE append-only `audit_logs` table, range-partitioned monthly. `log_type` enum (activity, security, finance, api).
+
+### ⚙️ Infrastructure, Scaling & Security
+*   **Performance Targets:** Search <300ms, Product Page <200ms, Checkout <500ms, Hot-list p95 <300ms.
+*   **Pooling:** PgBouncer (Transaction mode) in Prod. App pool `size=5`, `max_overflow=10`.
+*   **Pagination:** Cursor-based EVERYWHERE. No `OFFSET` on large tables.
+*   **Security:** TLS in transit, Encryption at rest. PII masking at app layer. WORM for financial/legal.
+*   **Growth Planning:** MVP (10K products) → Scale (1M products, JSONB GIN, pgvector) → Massive (100M products, shard by country).
+
+---
+
+## 3. STEP-BY-STEP CONSTRUCTION GUIDE (For AI & Engineers)
+
+*Execute these steps sequentially. Do not skip phases. Validate against the "AI Binding Contract" at every step.*
+
+### Step 1: Foundation & Governance Setup
+1.  **Initialize Alembic:** Set up `alembic/` directory. Configure `env.py` to read from `APP_ENV`.
+2.  **Enforce Env Gate:** Write a startup guard in `db/database.py` that raises a fatal error if `Base.metadata.create_all()` is called when `APP_ENV != development`.
+3.  **Create Schemas:** Execute `CREATE SCHEMA` for all 16 bounded contexts (`core`, `commerce`, `finance`, etc.).
+4.  **Implement Mixins:** Create `db/mixins.py` with `AuditMixin` (created_at, updated_at, created_by, version), `SoftDeleteMixin` (is_deleted, deleted_at, delete_reason), and `TenantMixin` (country_code).
+
+### Step 2: Core, Identity & Country Isolation
+1.  **Build Core Tables:** `users`, `roles`, `sessions`, `devices` in the `core` schema.
+2.  **Implement RLS:** Write `data/pg_rls_policies.sql`. Create the `rls_interceptor.py` middleware to `SET app.current_country_code` on every request.
+3.  **Apply RLS:** Apply policies to all `TenantMixin` inherited tables. Ensure cross-country reads return 0 rows (fail-closed).
+4.  **Security Tables:** Build `security` schema (api_keys, mfa, otp, blacklist).
+
+### Step 3: Catalog, Media & Object Storage
+1.  **Object Storage Setup:** Configure `boto3` with Cloudflare R2 endpoint.
+2.  **Build Media Tables:** Create `media.media_assets` (metadata only: url, mime, hash, w/h, ai_status).
+3.  **Build Catalog:** Create `commerce.categories` (materialized path), `commerce.products`, `commerce.product_variants` (JSONB attributes + GIN).
+4.  **Implement Upload Flow:** API receives file -> uploads bytes to R2 -> saves metadata to `media_assets` -> links to product.
+
+### Step 4: Commerce, Logistics & Event Outbox
+1.  **Build Order Flow:** `commerce.orders`, `order_items`, `carts`.
+2.  **Implement Transactional Outbox:** Create `outbox_events`, `inbox_events`, `event_retry_queue`, `event_dead_letter`.
+3.  **Wire Services:** Ensure `OrderService` writes to `orders` AND `outbox_events` in the **exact same database transaction**.
+4.  **Logistics:** Build `logistics.shipments`, `routes`, `pod` (Proof of Delivery). Link via events, not FKs.
+
+### Step 5: Strict Finance & Ledger Implementation
+1.  **Build Ledger:** Create `finance.accounts` (CoA), `finance.journal_entries`, `finance.journal_entry_lines`.
+2.  **Enforce Immutability:** Write a PostgreSQL Trigger that raises an exception on `UPDATE` or `DELETE` to `journal_entry_lines`.
+3.  **Build Ledger Service:** Create `finance_ledger_service.py`. This is the **ONLY** service allowed to insert into journal tables. Ensure `Σdebit == Σcredit` before commit.
+4.  **Treasury:** Build `treasury.payout_batches`, `cash_positions`.
+
+### Step 6: Communication (Chat, Video, Notifications)
+1.  **Build Chat:** Create `communication.chat_threads`, `chat_messages`. Apply **Monthly Range Partitioning** on `chat_messages.created_at`.
+2.  **Video Calls:** Create `communication.video_rooms` for session metadata. Integrate WebSocket router for WebRTC signaling.
+3.  **Notifications:** Build `communication.notification_queue`, `email_messages`, `push_logs`. Implement retry logic and DLQ routing.
+4.  **Presence:** Configure Redis to handle ephemeral "typing" and "online" states (do not store in Postgres).
+
+### Step 7: AI, Vectorization & Search
+1.  **Enable Extensions:** Run `CREATE EXTENSION vector; CREATE EXTENSION pg_trgm; CREATE EXTENSION btree_gin;`
+2.  **Build AI Tables:** Create `ai.ai_requests`, `ai.ai_embeddings` (using `vector(1536)`), `ai.ai_staging_products`.
+3.  **Implement Hybrid Search:** Create generated `tsvector` columns for text search. Build search service combining `tsvector` (BM25) + `pgvector` (Cosine similarity).
+4.  **AI Commit Flow:** Build the explicit commit pipeline from `ai_staging` to `commerce.products`, logging costs/jobs in `ai.ai_upload_jobs`.
+
+### Step 8: Analytics, Archiving & Scaling
+1.  **Materialized Views:** Create `analytics.mv_daily_sales`, `kpi_revenue`, etc. Set up cron jobs for `REFRESH MATERIALIZED VIEW CONCURRENTLY`.
+2.  **Audit Logs:** Create `audit.audit_logs` with **Monthly Range Partitioning**.
+3.  **Archive Strategy:** Write scripts to detach partitions older than retention periods (e.g., 180 days for logs, 7 days for OTP) and move to cold storage.
+4.  **Indexing:** Apply composite indexes `(country_code, created_at)`, `(status, due_date)`. Add GIN indexes to all JSONB columns.
+
+### Step 9: Production Hardening & CI/CD Gates
+1.  **Drift Gate:** Add `alembic check` to CI pipeline. Fail build if models != migrations.
+2.  **Contract Tests:** Write `test_database.py` assertions for every migration (verifying exact schema shape, RLS policies, and index existence).
+3.  **Performance Testing:** Run `EXPLAIN ANALYZE` gates in CI. Block PRs if hot-list queries exceed 300ms or use sequential scans.
+4.  **Data Dictionary:** Execute `generate_data_dictionary.py` in CI to auto-generate `GENERATED_DATA_DICTIONARY.md` and `docs/erd/` on every merge.
+5.  **Prod Checklist Validation:** Verify Backup/Restore, PgBouncer config, Read Replicas, and WAF rules before final deployment.
+
+---
+**⚠️ AI AGENT DIRECTIVE:** You are now bound by this constitution. If a user requests a feature that violates these rules (e.g., "Add a foreign key from orders to finance_ledger" or "Store user profile pictures as bytea in the users table"), you MUST refuse the request, cite the specific violated rule (e.g., *Rule #7: Cross-ecosystem = services/events*, or *ADR-010: Media bytes in object storage*), and propose the architecturally correct alternative.
 
 # _____________________________________________________________________________________________ Database Work.
 
@@ -482,38 +524,198 @@ shift up the search+filter bar, remove search text from search button.
 
 # _____________________________________________________________________________________________ Order System
 
-	### Order System in detail. 
-		1. read the @codebase_v1.md and @documents/ORDER_MANAGEMENT.md and extract the code and functions for order system and compare with the system what we have right now and apply remaining to complete order system and delivery system properly.
-		2. current location is also not working while order system and customer is placing the order. make a python servier to track the IP and current location for easy for user coordinates.
-		3. do the complete test starting from placing the order by the customer, then supplier will complete the parcel and then logistic will take parcel from supplier and deliver to customer.
-		4. check complete workflow in detail. 
-		5. check complete database sytem regarding this in detail to keep better database.
-		6. admin panel needs all the update in detail also.
+## ZOZI ORDER TRACKER & ORDER MANAGEMENT — BINDING BUILD SPEC
 
+> Scope: Customer → Supplier → Logistic Partner → Customer delivery loop, with Admin oversight. This spec is **constitution-compliant** (`01_DATABASE.md`): events over cross-FKs, media bytes in R2, config-as-data, RLS `country_code`, audit-everything, **no silent/hardcoded fallbacks**.
 
-		2. Supplier
-		do one thing read the @codebase_v1.md which was before code and find out all the code related to the Logistic Panel where we had almost complete frontend and backend structure of code and it was before country, employee hierarchy adding.
+---
 
-		check what have to add into our current code system and start to add. you have to do this step by step audit and comparison and list down all the changes that need to be made in our current code system according to previous codebase_v1 for betterment.
+## 1. DETAILED BULLET POINTS
 
-		start to make plan.
-		---
-		Read the complete backend, models, routers, services, controller in detail regarding the admin and also frontend of admin panel and check what is not properly wired and broken and start to wire and fix that. 
-		read complete admin panel to make it better and functional properly and ensure the admin panel is fully functional and optimized for performance.
-		there are big changes also needed. 
-			1. Staffs & Employees pages must merge because both are things same and permission page is also part of management of staff & employees. so all three pages need be smartly merge and check also backend code to be merge and make a complete hierarchy system.
-			1a. Video, Chat, Emil all internal and external communication system must be in one tab.
-			2. Moderator & Ticket & Dispute, all there are same problem and solving of the supplier and customer. so all needs to be merge to be unified.
-			3. Command Center & Analytic also sort of same, you should add the Analytics Page in to Command center  Page to give unified understanding of the application and operations.
-			4. Payment, Payout are not configured and wired with the backend.
-			5. Finance [chart of account] is also not configured and wired with the backend and also Treasury Page is the part of Finance & reflection of Payments.
-			6. Before we have complete reconciliation system of [ Order ➡️ COD ➡️ Logistic Partner ➡️ ZOZI Treasury ➡️ Supplier ] system but now it is gone because we integrate country management system and employees system. so now again you have to incorporate this engine of reconciliation again. 
-				[ Order Dispatched ➡️ COD ➡️ Logistic Partner ➡️ ZOZI Treasury ➡️ Supplier ] 
-				[ Order Dispatched ➡️ Card payment/ payment gateway ➡️ ZOZI Treasury ➡️ Logistic Partner  ] 
-				[  Order Dispatched ➡️ Card payment/ payment gateway ➡️ ZOZI Treasury ➡️ Supplier ] 
-			7. Admin have complete CRUD system.
-			8. we had complete system of commission system which is ruined now due country integration so you have to incorporate properly.
-		read again in detail and check what we can do better for admin pages for best control ever.
+### 1.1 Non-negotiables
+- **One order, one identity:** every order gets a unique Order ID + signed QR token at placement; the QR is the physical "passport" of the parcel across all hands.
+- **Single source of truth for status:** status lives only in DB; every change is a server-side validated transition (config-driven state machine, **not** UI logic) written to `shipment_events` + published as an outbox event.
+- **No hardcoded fallbacks:** if QR service / location service / signature capture is unavailable, the system reports an explicit error mode and offers the *audited alternate path* (request→confirm). Never auto-succeed, never fake a scan.
+- **Universal visibility:** the same order + same timeline is visible to **Customer, Supplier, Logistic Partner, Admin** — each with role-scoped actions.
+- **Proof at every handover:** pickup = QR scan *or* supplier-confirmed request; delivery = e-signature *or* customer-confirmed request; packaging = packed-parcel photo. All proofs are media files (bytes in R2, metadata in DB).
+- **Admin is the referee:** Admin can correct any wrongly-set status and cancel any wrong order — always with mandatory reason + audit log + notification to all parties.
+
+### 1.2 Canonical lifecycle — EXACTLY as defined (order → delivery)
+1. **`PENDING`** — Customer places order (payment/COD). Location captured (GPS + IP-geo service). Order appears on Supplier page (new-order alert), Customer "My Orders", Admin. Not shown to logistics yet.
+2. **`PROCESSING`** — Supplier sees and accepts the order; starts processing. Visible on Supplier / Customer / Admin pages.
+3. **`PREPARED`** — Supplier finishes packing: prints the parcel sheet, applies tamper seal + QR label, logs weight/dimensions, **uploads photo of the packed parcel**. Status flips to `PREPARED` and the order **flashes on ALL logistic partner pages** as available for pick-up.
+4. **`PICKING UP`** — One logistic partner confirms pick-up. From this moment the order is **removed from every other logistic partner's page** and visible only to the claiming partner (plus Supplier/Customer/Admin).
+   - Logistic partner **may cancel the pick-up** at this stage (any reason, **before** picked/shipped) → order returns to `PREPARED` and re-flashes to all partners.
+5. **`PICKED FROM SUPPLIER`** — physical handover, verified by **either** path:
+   - **Path A:** logistic partner **scans the parcel QR** in-app at handover; **or**
+   - **Path B:** logistic sends a pick-up request → supplier gets notified → supplier confirms the handover.
+6. **Transit (logistic-only sub-statuses, allowed only between `PICKED` and `DELIVERED`):**
+   - `LOGISTIC RECEIVED` (hub receives from rider) → `DISTRIBUTION CHECKPOINT` (reaches distribution center) → `OUT FOR DELIVERY` / *In Transit / Delivering to Customer* (rider out, live GPS on).
+   - Exceptions: `SHIPMENT DELAYED` (problem, resumes later), `SHIPMENT RESCHEDULED` (new slot), `SHIPMENT FAILED` (unresolvable → must **return parcel to supplier** → `SHIPMENT CANCELLED`), `SHIPMENT RETURNED` (customer rejects at door → return to supplier → cancel/refund).
+7. **`DELIVERED`** — final handover, verified by **either** path:
+   - **Path A:** logistic takes the customer's **e-signature** on the app; **or**
+   - **Path B:** logistic sends a delivery request → customer gets notified → customer confirms receipt.
+8. **`CANCELLED`** — customer cancels mid-process (before pick-up completes), or Admin cancels a wrong order. Visible everywhere.
+9. **Post-delivery:** Returns / Replacement window opens (see §1.5).
+
+### 1.3 Status & transition rules (who may do what)
+- **Supplier:** `PENDING→PROCESSING→PREPARED`; confirm pick-up request (Path B); confirm return receipt.
+- **Logistic partner:** claim `PREPARED→PICKING UP`; cancel own claim; scan QR / request pick-up; all transit sub-statuses; request delivery confirmation.
+- **Customer:** cancel (early stages); confirm delivery (Path B); reject at door (`SHIPMENT RETURNED`); request return/replacement.
+- **Admin:** **override/correct any status** (mandatory reason), **cancel any order**, resolve disputes, view everything.
+- Transition matrix stored in **`configuration.order_status_rules`** (config-as-data) — server enforces it; illegal transitions rejected with explicit error.
+
+### 1.4 Packaging & printing material
+- **Supplier packages by default** (fastest); standardized: tamper-proof seal + QR label + optional weight/dimensions. Optional future **Packaging Manager** role (central hub) — reserved, config-switchable, no schema redesign later.
+- **"Print Parcel Sheet" button on the Supplier order page** generates a one-page sheet containing:
+  - Customer Name · Contact Number · Full Location **+ Latitude/Longitude** · Landmark
+  - Order Items List (qty, variant attributes) · Invoice · Order Number · **QR code**
+  - Payment method + **COD amount to collect** (if COD) · Supplier return address · Tamper-seal ID · Print timestamp
+- Label payload served by a **first-class endpoint** (`/orders/{id}/label`) returning structured JSON + printable PDF/HTML; QR encodes a signed token URL resolved server-side (role + status checked on every scan).
+
+### 1.5 Returns & replacements (part of tracking, not an afterthought)
+- Customer requests **Return** or **Replacement** from My Orders within a configurable window (`order_status_rules`/config), with reason + optional photos.
+- Admin (or auto-policy) approves → **reverse shipment** created and tracked with the same engine: `RETURN_REQUESTED → RETURN_APPROVED → RETURN_IN_TRANSIT (reverse pick-up) → RETURNED_TO_SUPPLIER (inspection)`.
+- Outcome: **Refund** posted only through the finance **ledger service** (never ad-hoc), or **Replacement** = new order linked via `original_order_uuid`, dispatched through the identical tracking flow.
+
+### 1.6 Panel visibility matrix
+| Status | Customer | Supplier | Claiming Logistic | Other Logistics | Admin |
+|---|---|---|---|---|---|
+| PENDING / PROCESSING | ✅ timeline | ✅ queue | — | — | ✅ |
+| PREPARED | ✅ | ✅ | ✅ **flashing pick-up board** | ✅ flashing | ✅ |
+| PICKING UP → OUT FOR DELIVERY | ✅ live + GPS | ✅ | ✅ own order only | ❌ **hidden** | ✅ |
+| DELIVERED / CANCELLED / SHIPMENT CANCELLED / RETURNED | ✅ | ✅ | ✅ history | ❌ | ✅ |
+
+### 1.7 Database additions (constitution-compliant)
+- `commerce.packages`: 1:1 to order · `qr_token_hash` · weight/dimensions · `tamper_seal_id` · `packed_photo_media_id` · `packaged_by/at`.
+- `logistics.shipments`: claiming partner, claim/cancel timestamps, current sub-status.
+- `logistics.shipment_events`: **monthly range-partitioned** · `order_uuid`, `actor_role`, `status`, lat/lng, notes, `media_ref` (photo/signature), idempotency key.
+- `logistics.proof_of_delivery`: method (`qr_scan | supplier_confirm | e_signature | customer_confirm`), `signature_media_id`, confirmer.
+- `commerce.return_requests` (+ replacement link) · `configuration.order_status_rules`.
+- All tables: `country_code` + RLS, audit mixins, soft-delete; **media bytes in R2**, metadata in `media_assets`.
+
+### 1.8 Events, notifications & reconciliation
+- Every status change → same-transaction `outbox_events` write → WS push + push notification + email (key transitions) to the 4 panels; UI shows explicit error state if feed unavailable (no silent zeros).
+- **Reconciliation engine (restored, country-aware):**
+  - `COD:` Delivered → rider collects cash → **Logistic remits → ZOZI Treasury → Supplier payout (− commission)**
+  - `Card:` Gateway → **Treasury → Supplier payout (− commission)** and **Treasury → Logistic delivery fee**
+  - Nightly reconciliation cron with variance alerting; order referenced by `order_uuid` data column + events (no cross-ecosystem FK).
+- **Location service:** small Python sidecar resolving IP→geo (GeoIP DB) merged with device GPS; stored on order with accuracy; failure → explicit "pin manually" mode, never silent.
+- **Admin ecosystem wiring:** staff/employees+permissions merged hierarchy; unified Communication tab (video/chat/email); unified Moderator/Tickets/Disputes; Command Center + Analytics merged; Payments/Payouts, Finance CoA + Treasury wired; commission engine restored; full Admin CRUD.
+
+### 1.9 Surfaces & sign-off
+- Implement identically in **web_app** (Customer/Admin/Supplier/Logistic panels) and **mobile_app** (scan, signature, GPS, claim board).
+- **E2E test matrix:** golden path (place→process→pack+photo+print→claim→QR scan→transit sub-statuses→e-sign→delivered); pick-up cancel; delayed/rescheduled; failed→return→cancelled; door-reject→returned; customer cancel; admin override/cancel; return & replacement; visibility assertions (flash at PREPARED, hide at PICKING UP); no-fallback assertions; COD reconciliation run.
+- After all green → update `documents/CODEBASE_STATUS_MATRIX_DETAILED.md` section-by-section.
+
+---
+
+## 2. DIAGRAMS
+
+### 2.1 End-to-end flow (swim-lane, handovers & proofs)
+```mermaid
+flowchart TB
+subgraph CUST["👤 CUSTOMER"]
+  C1["Places order (COD/Card)<br/>GPS + IP-geo captured"]
+  C2["My Orders: live timeline"]
+  C3["e-Signature on app (A)<br/>OR confirms delivery request (B)"]
+  C4["Rejects at door / requests return"]
+end
+subgraph SUP["🏪 SUPPLIER"]
+  S1["New order → PROCESSING"]
+  S2["Packs · PRINTS PARCEL SHEET<br/>tamper seal + QR + weight/dims"]
+  S3["Uploads packed-parcel PHOTO → PREPARED"]
+  S4["Confirms pick-up request (B)"]
+end
+subgraph LOG["🚚 LOGISTIC PARTNER"]
+  L1["Pick-up board: PREPARED orders FLASH<br/>(all partners)"]
+  L2["Claims pick-up → PICKING UP<br/>hidden from other partners"]
+  L3["Scans parcel QR (A)"]
+  L4["LOGISTIC RECEIVED → DISTRIBUTION CHECKPOINT<br/>→ OUT FOR DELIVERY (+live GPS)"]
+  L5["Exceptions: DELAYED · RESCHEDULED ·<br/>FAILED→return to supplier→CANCELLED"]
+end
+subgraph SYS["🧠 SYSTEM / ️ ADMIN"]
+  Q["Order ID + signed QR generated<br/>label payload endpoint"]
+  E["Each change → shipment_events + outbox event<br/>→ WS/push to all 4 panels"]
+  AD["ADMIN: full visibility · correct wrong status ·<br/>cancel wrong order · disputes · reconciliation"]
+end
+
+C1 --> Q --> S1 --> S2 --> S3 --> L1 --> L2
+L2 --> L3 --> L4
+L2 --> S4 --> L4
+S4 -.notify.-> SUP
+L4 --> L5
+L4 --> C3 -->|DELIVERED| C2
+L4 --> C4 -->|SHIPMENT RETURNED → supplier| C2
+C1 -.customer/admin cancel.-> CX["CANCELLED"]
+E -.fan-out.-> CUST & SUP & LOG & AD
+```
+
+### 2.2 Status state-machine (guards = roles; proofs required)
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING : Customer places order
+    PENDING --> PROCESSING : Supplier accepts
+    PROCESSING --> PREPARED : Supplier packs + photo + printed QR label
+    PREPARED --> PICKING_UP : ONE logistic claims (others hidden)
+    PICKING_UP --> PREPARED : Logistic cancels claim (before picked)
+    PREPARED --> PICKED_FROM_SUPPLIER : QR scan (A) / supplier confirms (B)
+    PICKING_UP --> PICKED_FROM_SUPPLIER : QR scan (A) / supplier confirms (B)
+    PICKED_FROM_SUPPLIER --> LOGISTIC_RECEIVED : hub intake
+    LOGISTIC_RECEIVED --> DISTRIBUTION_CHECKPOINT : dist. center
+    DISTRIBUTION_CHECKPOINT --> OUT_FOR_DELIVERY : rider dispatched
+    PICKED_FROM_SUPPLIER --> SHIPMENT_DELAYED : issue → resume
+    SHIPMENT_DELAYED --> OUT_FOR_DELIVERY
+    PICKED_FROM_SUPPLIER --> SHIPMENT_RESCHEDULED : new slot
+    SHIPMENT_RESCHEDULED --> OUT_FOR_DELIVERY
+    PICKED_FROM_SUPPLIER --> SHIPMENT_FAILED : unresolvable
+    SHIPMENT_FAILED --> SHIPMENT_CANCELLED : return to supplier, then cancel
+    OUT_FOR_DELIVERY --> DELIVERED : e-signature (A) / customer confirms (B)
+    OUT_FOR_DELIVERY --> SHIPMENT_RETURNED : reject at door → return to supplier
+    PENDING --> CANCELLED : customer / admin
+    PROCESSING --> CANCELLED : customer / admin
+    PREPARED --> CANCELLED : customer / admin
+    DELIVERED --> RETURN_REQUESTED : return/replacement window
+    RETURN_REQUESTED --> RETURN_APPROVED : admin/policy
+    RETURN_APPROVED --> RETURN_IN_TRANSIT : reverse pick-up
+    RETURN_IN_TRANSIT --> RETURNED_TO_SUPPLIER : inspection
+    RETURNED_TO_SUPPLIER --> REFUNDED : ledger refund
+    RETURNED_TO_SUPPLIER --> REPLACEMENT_DISPATCHED : linked new order
+    DELIVERED --> [*]
+    CANCELLED --> [*]
+    SHIPMENT_CANCELLED --> [*]
+    SHIPMENT_RETURNED --> [*]
+```
+
+### 2.3 Money flow (reconciliation)
+```
+COD :  DELIVERED → rider collects cash → LOGISTIC remits → ZOZI TREASURY → SUPPLIER payout (− commission)
+CARD:  Gateway → ZOZI TREASURY → ├─ SUPPLIER payout (− commission)   └─ LOGISTIC delivery fee
+```
+
+---
+
+## 3. STEP-BY-STEP CONSTRUCTION POINTS
+
+**Step 1 — Schema & state machine.** Alembic migration (with downgrade + contract test) creating `packages`, `shipments`, `shipment_events` (monthly-partitioned), `proof_of_delivery`, `return_requests`, `order_status_rules`; add `country_code`+RLS + audit mixins; seed the transition matrix as config data. *Done when:* illegal transition rejected in test; drift gate green.
+
+**Step 2 — Placement, location & QR.** Order creation writes `delivery_lat/lng` (GPS + IP-geo sidecar; explicit manual-pin mode on failure); generate signed QR token + `/orders/{id}/label` payload endpoint (all print fields). *Done when:* label renders with QR + COD amount; scan token resolves server-side with role/status checks.
+
+**Step 3 — Supplier workflow.** Order queue → accept (`PROCESSING`) → pack → **Print Parcel Sheet** button → upload packed photo (bytes→R2) → `PREPARED` + outbox event. *Done when:* photo missing blocks `PREPARED` with explicit error.
+
+**Step 4 — Logistic claim & handover.** Flashing pick-up board for all partners at `PREPARED`; claim → `PICKING UP` (row-level visibility filter hides from others); claim-cancel returns to `PREPARED`; Path A QR scan + Path B request/confirm → `PICKED FROM SUPPLIER` (idempotent, double-scan rejected). *Done when:* visibility assertions pass.
+
+**Step 5 — Transit & exceptions.** Transit sub-statuses with GPS trail; DELAYED/RESCHEDULED/FAILED; FAILED enforces return-to-supplier before `SHIPMENT CANCELLED`; door-reject → `SHIPMENT RETURNED`. *Done when:* each exception path leaves a full audited trail.
+
+**Step 6 — Delivery proof.** In-app e-signature capture (PNG→R2) or customer confirm request → `DELIVERED` + `proof_of_delivery` row + COD flag for reconciliation. *Done when:* both paths produce POD record.
+
+**Step 7 — Returns/replacements & money.** RMA flow → reverse shipment → inspection → ledger-only refund or linked replacement order; wire reconciliation entries (COD & Card paths) + nightly variance cron. *Done when:* COD run reconciles Order→Logistic→Treasury→Supplier with zero variance.
+
+**Step 8 — Admin controls & panels.** Status-override + cancel-with-reason (audit + notify); disputes/communication/command-center merges; finance/treasury/commission wiring; build timeline/boards/scan/signature/print UIs in **web_app and mobile_app** with loading + empty + explicit-error states. *Done when:* parity check web vs mobile passes.
+
+**Step 9 — E2E test & close-out.** Run the full §1.9 matrix (golden + all exception paths + no-fallback checks) on clean Postgres via Alembic; load-test hot lists (p95 < 300ms); then update `CODEBASE_STATUS_MATRIX_DETAILED.md` section-by-section. *Done when:* every row green and matrix committed.
+
+> **AI Directive:** build strictly in this order; any request that bypasses the state machine, skips proof artifacts, stores media bytes in the DB, or adds a silent fallback MUST be refused and corrected per this spec and Appendix A of `01_DATABASE.md`.
 
 # _____________________________________________________________________________________________ Order System
 
@@ -730,6 +932,785 @@ For **ZoZI**, I would avoid building a full ERP like SAP or Oracle at the beginn
 
 
 # _____________________________________________________________________________________________ Admin Finance ERP System
+
+# _____________________________________________________________________________________________ [ADMIN FINANCE & TEASURY SYSTEM ERP]
+
+## ZOZI FINANCE · TREASURY · AUTOMATION — MASTER BUILD SPEC
+
+> Binding addendum to `01_DATABASE.md` (finance domain → future `03_FINANCE.md`). All rules below inherit the constitution: **Alembic-only schema changes, event-driven writes, AI outputs staged → explicit commit (ADR-007), config-as-data, RLS `country_code`, media bytes in R2, immutable ledger, no silent fallbacks.**
+
+---
+
+## 1. BULLET POINTS — EXTRACTED + ENHANCED
+
+### 1.1 Non-negotiable mandates
+- **Event-based double-entry truth:** never `UPDATE` a balance column; balances = sums of immutable `journal_entry_lines`; `SUM(Dr) == SUM(Cr)` enforced at DB level (trigger + service check); posted entries immutable; reversals only via counter-entries.
+- **Money math:** Python `Decimal` + Postgres `NUMERIC(16,4)` everywhere; **no floats** (Penny-Rounding law).
+- **Event-driven ledger:** Orders/Logistics/Payments publish outbox events (`OrderDelivered`, `RefundApproved`…); only `TreasuryService`/`GeneralLedgerService` write to the GL (ADR-006/014).
+- **75% zero-touch automation:** routines auto-run; humans work only the **Exception Queue**.
+- **Triple-Verification for every auto-post:** ① rule/logic match ② AI confidence ≥ 95% (threshold config-driven) ③ GL/sub-ledger cross-reference; any fail → Exception Queue, never a guess.
+- **Maker-Checker:** manual journals & payout batches live in `pending_journal_entries`/`payout_batches(draft)` until a *second, distinct* user with approve rights posts; checker ≠ maker enforced.
+- **Period-close locking:** `fiscal_periods.is_closed` rejects back-dated postings at DB level.
+- **Shadow-mode cutover:** new ledger runs parallel to legacy `wallet_balance`; nightly drift cron; cutover only at 0 variance; legacy killed after.
+- **Orphan Detector cron (03:00):** any `delivered/paid` order or payout without a journal entry → Critical alert to Finance Command Center.
+- **(ADDED) Automation staging law:** every AI/OCR/parsed result lands in a staging table first and is committed explicitly — auto-post *is* the commit step, logged as `actor=system:<automation>` in `finance_audit_logs`.
+- **(ADDED) Idempotency law:** every automation run/line carries an idempotency key (`inbox_events`), e.g. `bankrec:{import_id}:{line_id}` — retries can never double-post.
+- **(ADDED) Kill-switch law:** each automation has an independent pause toggle; paused/failed states show explicit badges — never silent stoppage (Rule #16).
+
+### 1.2 Four-tier data architecture (schema)
+- **Tier 1 CoA:** `account_groups` (1000–6000 hierarchy) · `accounts` (code, `normal_side`, currency) · `account_balances` (locked materialized cache).
+- **Tier 2 Immutable Ledger:** `journal_entries` (header: date, `reference_type/id`, currency, fx_rate, status draft/posted/reversed) · `journal_entry_lines` (account, side, amount>0, cost-center, entity) · `pending_journal_entries` · `fiscal_periods`.
+- **Tier 3 Treasury:** `treasury_accounts` (buckets: `cash_operating`, `cash_gateway_settlement`, `reserve_supplier_payable`, `reserve_logistics_payable`, `reserve_refund`, `reserve_vat`, `reserve_commission`, `receivable_customer`) · `treasury_transactions` · `cash_position_snapshots` · `gateway_settlement_schedules` (T+2/T+7) · `cash_flow_forecasts` · `exchange_rates`.
+- **Tier 4 Sub-ledgers & Automation:** `ar_invoices`/`ar_ledger_entries` · `ap_bills`/`ap_ledger_entries` · `commission_ledger_entries` · `payout_rules/batches/batch_items/payouts` · `bank_statement_imports/lines` · `bank_mapping_rules` · `scanned_expenses` · `accruals` · `vat_remittances` · `fixed_assets` · `finance_audit_logs` · **(ADDED)** `automation_runs`, `exception_queue`, `report_definitions`, `purchase_orders/grn/landed_costs`, `loans/investments/schedules`.
+- GCC CoA seeded idempotently (1010 Cash Op · 1020 Gateway Clearing · 1030 COD Receivable · 2010 Supplier Payables · 2020 Logistics Payables · 2040 VAT Payable · 2060 Deferred Revenue · 4010 Commission Revenue · 6010 Gateway Fees …); **GMV ≠ revenue** — only commission/markups/SaaS are revenue.
+
+### 1.3 Double-entry matrix (auto-posted per event)
+| Event | Debit | Credit |
+|---|---|---|
+| Card payment | 1020 Gateway Clearing | 2060 Deferred Revenue |
+| Gateway settles | 1010 Cash Op + 6010 Gateway Fee | 1020 Clearing |
+| Delivered (card) | 2060 Deferred Rev | 2010 Supplier Pay + 2020 Logistics Pay + 4010 Commission Rev + 2040 VAT |
+| Delivered (COD) | 1030 COD Receivable | same 4-way split |
+| Logistics remits COD | 1010 Cash Op | 1030 COD Receivable |
+| Supplier payout | 2010 Supplier Pay | 1010 Cash Op |
+| Refund | Rev/Deferred + payables reversed | 1010/1020 cash out |
+| Month-end FX reval | 6060 FX Loss (or reverse) | FX asset/AR/AP accounts |
+
+### 1.4 Treasury engine
+- Real-time cash position (event-refreshed `account_balances` + snapshots EOD/hourly); **Free Cash = cash − reserves** (VAT/supplier/refund reserves can never be spent accidentally).
+- Gateway settlement tracking (webhook + CSV auto-match vs `1020`), COD remittance engine vs `1030`, reserve transfers (Maker-Checker), 30/60/90 cash-flow forecast (ML over open AR/AP + payout schedules + historical refund rate), month-end FX revaluation auto-posts.
+
+### 1.5 🤖 THE AUTOMATION SYSTEM (detail — the core ask)
+| # | Automation | Trigger | Staging target | Auto-post condition | Exception path |
+|---|---|---|---|---|---|
+| 1 | **OCR expense & asset capture** (auto-expense) | camera/upload/`finance@` email; bytes→R2 | `scanned_expenses` (vendor, date, amount, VAT, per-field confidence) + pgvector embed | conf ≥95% **+ duplicate check (hash+vendor+amount+date)** + ≤ auto-limit → drafts AP bill *or* `fixed_assets` card | split-screen review (original vs fields) |
+| 2 | **Email-to-Ledger inbox** | IMAP watcher on `finance@zozi.com` | `scanned_expenses` / `gateway_settlement_schedules` | template/vendor match ≥95% | queue; original email kept as immutable artifact |
+| 3 | **Auto bank reconciliation** | statement CSV/API upload (daily) | `bank_statement_lines` | amount exact + ref match + date ±3d (configurable) + conf ≥95% → `is_reconciled` | split-screen match UI, bulk resolve |
+| 4 | **Auto supplier payouts (scheduler)** | nightly cron 02:00 | `payout_batches(draft)` from `commission_ledger_entries` + `payout_rules` | generation is auto; **dispatch always Maker-Checker**; supplier gets secure SMS/email pre-review link | payout exception list (mismatched balances, KYC holds) |
+| 5 | **Auto-accrual & reversal** | month-end 23:59 / day-1 cron | `accruals` | rule-based (no AI gate) | review list |
+| 6 | **Depreciation run** | monthly cron | draft JEs from `fixed_assets` (straight-line/declining; disposal gain/loss) | schedule config valid | asset exception list |
+| 7 | **FX revaluation** | month-end cron | draft JEs | rate source present (timestamped `exchange_rates`) | manual rate entry screen |
+| 8 | **VAT remittance** | continuous aggregation + month-end | `vat_remittances` (output−input) | arithmetic exact | ZATCA/FTA CSV export wizard + review |
+| 9 | **Orphan detector** | daily 03:00 | alerts only | n/a | Critical alert, Command Center |
+| 10 | **Voice-to-text finance ops** | mic (admin web/mobile) → Whisper STT (EN `phi3`/AR `qwen2.5`) | intent draft card | **never auto-posts** — confirm card → maker-checker if posting | explicit "STT unavailable" mode, manual entry |
+| 11 | **Finance chatbot (vectorized)** | NL query; RAG over CoA+ledger+docs via `ai_embeddings` (pgvector) | `ai_staging_journals` | user taps **Confirm** (+checker above threshold) | explicit "cannot verify" answer, cites sources |
+| 12 | **Import & Purchase automation** | PO/GRN/vendor-invoice events | `ap_bills(draft)` | **3-way match** PO↔GRN↔Invoice within tolerance + **landed-cost auto-allocation** (customs/freight/insurance → asset/COGS value) | match-exception queue |
+| 13 | **Loans & Investments** | wizard field-selection (principal, rate, term, method) | `schedules` (effective-interest amortization / valuation) | schedule cron posts interest/valuation JEs | manual review list |
+| 14 | **Wholesale / B2B revenue** | bulk-order dispatch on terms | `ar_invoices` + `ar_ledger_entries` (net-30, credit limits, IFRS-15 deferred amortization) | credit check passes | credit-hold queue + **auto dunning cadence** (emails day 3/7/14, late-fee per config) |
+
+**Automation governance (ADDED hardening):** `configuration.automation_rules` holds every threshold (confidence %, auto-post caps, date variance, 3-way-match tolerance, dunning cadence) — editable in UI, versioned, audited; `automation_runs` logs each run (job, started, status, posted/exception counts, error) powering the Control Tower; DLQ via `event_dead_letter`; local Ollama `moondream` for vision when available, explicit degraded-queue mode when not (ADR-015, Rule #16).
+
+### 1.6 Security · RBAC · Performance · Testing
+- Granular perms (`finance.ap.post`, `finance.ledger.approve`, `finance.reconciliation`…) via `require_finance_permission`; delegated roles (AP Clerk / Treasury Analyst); append-only `finance_audit_logs` (actor incl. `system:*`, old/new JSON, IP).
+- N+1 eradication (`selectinload/joinedload`); composite indexes `(country_code, created_at)`, `(status, due_date)`, `(entity_type, entity_id)`; dashboards/reports served from **materialized views + read replicas**; cursor pagination; Decimal-only.
+- Tests: **Chaos Monkey** (1000 checkouts + 500 payouts, zero deadlocks, Dr==Cr), **Penny Rounding**, **Time-Travel Audit** (replay journals to reconstruct any past date), **malformed-automation tests** (bad CSV/OCR → Exception Queue, never crash), E2E Playwright (CSV→AI map→draft→approve→trial balance), k6 load.
+
+---
+
+## 2. DIAGRAMS
+
+### 2.1 Master automation & ledger pipeline
+```mermaid
+flowchart TB
+subgraph SRC["📥 SOURCES"]
+  O["Order/Logistics/Refund<br/>outbox events"]
+  BK["Bank statements CSV/API"]
+  EM["finance@ inbox PDFs/CSVs"]
+  OC["OCR scans: receipts·bills·asset invoices"]
+  VC["Voice commands"]
+  CH["Chatbot NL requests"]
+  PU["Purchase/Import: PO·GRN·customs"]
+end
+subgraph AI["🤖 INGEST + AI STAGING (ADR-007)"]
+  P["Parsers: OCR·Whisper·NLP·fuzzy·pgvector embed"]
+  S["Staging: scanned_expenses·bank_statement_lines·<br/>ai_staging_journals·ap drafts·schedules"]
+  TV["TRIPLE-VERIFY: ① rules ② conf≥95% ③ GL cross-ref<br/>+ duplicate & idempotency checks"]
+end
+SRC --> P --> S --> TV
+TV -->|PASS| POST["TreasuryService AUTO-POST<br/>(immutable, Dr==Cr, NUMERIC)"]
+TV -->|FAIL/LOW-CONF| EQ["EXCEPTION QUEUE<br/>split-screen human review"]
+EQ -->|approve/edit| POST
+POST --> GL[("journal_entries/lines<br/>+ account_balances(locked)")]
+GL --> TR["Treasury buckets·snapshots·forecasts"]
+GL --> SUB["AR·AP·Commission·VAT sub-ledgers"]
+TR --> SCH["SCHEDULERS: payouts·accruals·depreciation·<br/>FX·VAT·dunning·orphan-detector"]
+SCH --> PAY["Maker-Checker → Supplier/Logistics payouts"]
+GL --> REP["Report builder·mat-views·dashboards"]
+SCH & EQ --> TWR["AUTOMATION CONTROL TOWER<br/>toggles·thresholds·runs·DLQ"]
+```
+
+### 2.2 Money circuit (order → treasury → payout; same circuit as Order Tracker)
+```mermaid
+flowchart LR
+  ORD["Order placed"] -->|Card| GW["Dr 1020 / Cr 2060"]
+  GW -->|T+2/T+7 auto-match| CASH["Dr 1010 + 6010 fee / Cr 1020"]
+  ORD -->|COD| DEL
+  GW --> DEL
+  DEL["DELIVERED (QR/e-sig proof)"] --> SPLIT["Dr 2060 → Cr 2010 Supplier<br/>Cr 2020 Logistics · Cr 4010 Commission · Cr 2040 VAT"]
+  ORD2["Rider collects COD → Dr 1030"] -->|reittance auto-rec| CASH
+  SPLIT --> BAT["Nightly auto payout_batches"]
+  BAT --> MC["Maker-Checker + supplier pre-review"]
+  MC --> OUT["Dr 2010 / Cr 1010 → Supplier paid"]
+  SPLIT --> VATR["VAT reserve → monthly ZATCA/FTA export"]
+```
+
+### 2.3 Automation item lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> INGESTED : doc/statement/voice/email/PO received (bytes→R2)
+    INGESTED --> PARSED : OCR/NLP/fuzzy + pgvector embed
+    PARSED --> VERIFIED : triple-verification + dup/idempotency
+    VERIFIED --> AUTO_POSTED : conf≥95% & within config limits
+    VERIFIED --> EXCEPTION : low conf / dup / mismatch
+    EXCEPTION --> POSTED : human approve/edit (audited)
+    EXCEPTION --> REJECTED : human reject (reason logged)
+    AUTO_POSTED --> [*]
+    POSTED --> [*]
+    REJECTED --> [*]
+```
+
+---
+
+## 3. STEP-BY-STEP CONSTRUCTION
+
+**Phase 0 — Governance.** Freeze mandates §1.1; define RBAC matrix; create `configuration.automation_rules` + `automation_runs` + `exception_queue` designs. *Done when:* thresholds & roles signed off (ADR log updated).
+
+**Phase 1 — Schema & seeds.** One Alembic migration set (downgrade + contract tests) for the 4 tiers + automation tables; immutable-ledger DB trigger; seed GCC CoA, treasury buckets, fiscal periods. *Done when:* drift gate green; trial-balance endpoint returns seeded zeros balanced.
+
+**Phase 2 — Core engines.** `GeneralLedgerService.post_journal_entry()` (Dr==Cr abort, `SELECT … FOR UPDATE` on `account_balances`) + `TreasuryService` (position, snapshots, forecasts, settlements). *Done when:* Penny-Rounding + Time-Travel unit tests pass.
+
+**Phase 3 — Shadow mode & cutover.** Inject GL into payments/orders/payouts controllers in shadow; nightly drift cron legacy-vs-ledger; at 0 variance kill legacy wallet writes; wire gateway webhook auto-match + COD remittance engine. *Done when:* 7 clean drift-free nights.
+
+**Phase 4 — Automation Wave 1 (documents & money-in).** OCR auto-expense/asset pipeline; Email-to-Ledger; auto bank rec; orphan detector. *Done when:* malformed-file tests land 100% in Exception Queue; ≥95%-conf fixtures auto-post.
+
+**Phase 5 — Automation Wave 2 (schedulers).** Nightly payout batch generator + supplier pre-review links + Maker-Checker dispatch; accrual/reversal; depreciation; FX reval; VAT aggregation/export; dunning cadence. *Done when:* one full simulated month closes with zero manual routine posts.
+
+**Phase 6 — Voice & chatbot.** Whisper STT service + intent parser (confirm-gated); RAG chatbot over CoA/ledger/docs with draft-journal cards. *Done when:* voice→draft→approve E2E passes; degraded-mode test shows explicit errors only.
+
+**Phase 7 — Advanced ERP modules.** AR/AP aging + approvals; Import & Purchase 3-way match + landed cost; Loans & Investments wizards + schedule crons; Wholesale/B2B credit, AR invoicing, IFRS-15 recognition. *Done when:* 3-way-match tolerance tests + amortization math tests pass.
+
+**Phase 8 — Report builder & analytics.** `report_definitions` (JSONB fields/filters/group-by) + preview + save + scheduled email/CSV/PDF; heavy reports on materialized views/read replicas. *Done when:* admin builds, saves, schedules a custom P&L-by-cost-center with no code.
+
+**Phase 9 — Command Center UI (web + mobile parity).** Build per §4; lazy-loaded routes; skeletons; WS live ticks. *Done when:* Playwright E2E full lifecycle green on both apps.
+
+**Phase 10 — Hardening & close-out.** Chaos Monkey, load (k6), security (RLS fail-closed per country), restore drills; update `CODEBASE_STATUS_MATRIX_DETAILED.md` section-by-section. *Done when:* all gates green + sign-off.
+
+---
+
+## 4. UI/UX LAYOUT — FINANCE COMMAND CENTER
+
+### 4.1 Route-driven sidebar (`/admin/finance?section=…`, lazy-loaded)
+```
+📊 Command Center (dashboard+analytics merged)   🏦 Treasury (cash·banks·reconciliation·gateway)
+📒 Ledger (CoA tree·journals·trial balance·pending)  🤝 Settlements (commissions·payouts·COD·refunds)
+💰 Receivables (invoices·receipts·aging·dunning)     🏗 Purchasing (PO·GRN·imports·landed cost)
+🏢 Payables (bills·payments·aging·OCR dropzone)      🏛 Assets & Capital (fixed assets·loans·investments)
+🧾 Tax & Compliance (VAT·WHT·period close)           📑 Reports (builder·saved·scheduled)
+🤖 Automation Tower (controls·exception queue·audit)
+```
+**Topbar:** global hybrid search (FTS+vector) · 🎙 voice · 🤖 chatbot drawer · country switcher (RLS) · 🔔 exception-count bell.
+
+### 4.2 Key screens
+- **Dashboard:** KPI card row (Free Cash, Locked Reserves, MTD Net Revenue, Pending Payouts, VAT Due, Exceptions) with skeleton loaders + sparklines; 30/60/90 cash-flow chart; AP/AR aging bars; live GMV tick (WS).
+- **Exception Queue (the human inbox):** left = prioritized list (source icon, confidence chip, amount); right = **split-screen**: original PDF/image (R2 viewer) | extracted fields (per-field confidence) | suggested GL lines; actions Approve / Edit / Reject (reason) with keyboard shortcuts; bulk-resolve.
+- **OCR Dropzone (Payables + mobile camera):** drag-drop → side-by-side original vs extracted → "Post to AP" / "Register Asset"; duplicate-invoice warning banner.
+- **Reconciliation (Treasury):** bank line left ↔ suggested GL matches right with confidence chips; auto-match toggle + threshold slider; one-click & bulk reconcile; exception filter.
+- **Payout Control Room (Settlements):** batch pipeline chips `draft→pending→approved→dispatched→settled`; maker notes; **Approve disabled for the maker**; dispatch → bank API/CSV; supplier pre-review status column.
+- **Report Builder:** drag fields (CoA ranges, dimensions: country/supplier/cost-center/period) + filter builder + group-by → live preview grid → Save / Schedule (daily/weekly/monthly email) / Export CSV·PDF.
+- **Automation Control Tower:** card per automation (OCR, bank-rec, payouts, accruals, depreciation, FX, VAT, dunning, orphan, voice, chatbot) with ON/OFF toggle, cron, last-run, posted/exception counters, threshold sliders, "View DLQ"; paused = explicit badge.
+- **Chatbot drawer & Voice chip:** suggested prompts ("Why did VAT jump?", "Draft rent accrual"); every actionable answer is a **confirm card** (→ maker-checker above limits); transcript chip editable before intent parse.
+- **UX principles:** sub-200ms first paint via materialized views + server components; tabular numerals; sticky headers; ARIA + keyboard nav; empty/loading/error states never silent zeros; mobile app = supplier invoice submit, logistics remittance upload, approver push-approvals, camera OCR.
+
+> **AI Directive:** implement in Phase order; any automation that posts without staging+triple-verify, any balance `UPDATE`, any float math, or any silent fallback violates this spec and Appendix A — STOP and ask.
+
+# _____________________________________________________________________________________________ [ADMIN FINANCE & TEASURY SYSTEM ERP]
+
+# _____________________________________________________________________________________________ [EMPLOYEES & Hr SYSTEM]
+
+## ZOZI EMPLOYEE MANAGEMENT SYSTEM (EMS) + COMMUNICATION SUITE — MASTER BUILD SPEC
+
+> Binding addendum to `01_DATABASE.md` (hr + comms schemas → future `05_HR.md` / `06_COMMUNICATION.md`). Inherits the constitution: **RLS `country_code` on every hr/comms row, Alembic-only migrations, event-driven cross-domain writes (outbox), media bytes in R2, append-only audit, Maker-Checker on money & permissions, config-as-data, AI staged→committed, no silent fallbacks.** Strategy: **complete + wire + govern the ~70% existing skeleton; do not rebuild.**
+
+---
+
+## 1. BULLET POINTS — EXTRACTED + ENHANCED
+
+### 1.1 Core mandates
+- **One Identity, Many Doors:** single `users`+`employees` identity across password/TOTP, phone-OTP, biometric, QR-kiosk, SSO — same permissions everywhere.
+- **Hierarchy = Authority = Permission:** org chart *drives* approvals (leave, expense, payroll, handover) via `reporting_manager_id` + `authority_level`; not cosmetic.
+- **Country isolation by default:** RLS context set at login; Oman manager never sees KSA staff; only `global/admin` see consolidated.
+- **Internal-first communication:** resolve recipients in-org first (in-DB delivery); only explicit external addresses hit SMTP.
+- **Performance feeds payroll:** KPI/OKR → bonus multiplier in auto-disbursement; zero spreadsheet math.
+- **(ADDED) Escalation SLA law:** any approval (leave/expense/access/payroll) unactioned > config hours auto-escalates to next `authority_level` — no silent stalls.
+- **(ADDED) Automation governance:** every auto-action logged as `actor=system:<job>` in `employee_activity_logs`/audit; thresholds in `configuration` tables; runs in `automation_runs`; failures → explicit Exception Queue (Rule #16).
+
+### 1.2 Unified login & session security (5 doors)
+- **D1** Email/password + TOTP (`users.totp_secret`); **D2** SMS/WhatsApp OTP short-lived token; **D3** biometric (`employee_biometrics.fingerprint_hash/face_encoding`) only on `user_devices.is_trusted=True`, enrollment bootstrapped by password+OTP; **D4** QR kiosk: `dynamic_qr_sessions.qr_token` + expiry + `geo_fence_logs.is_within_fence` + optional liveness biometric vs buddy-punching → writes attendance *and* kiosk-scoped session (8h); **D5** SSO (Google/Apple/MS) mapping `sub`→email, auto-provision pre-registered employees.
+- Every login writes `user_devices` (fingerprint, IP, OS); unknown device → force MFA/block; concurrent-session policy per role; refresh-token rotation (mobile 30d).
+- On login: `SET app.current_country_code`; **risk score** (geo anomaly + new device + odd hour) > threshold → step-up MFA or lock + manager notify.
+- **(ADDED)** device-fingerprint + face-liveness combo for buddy-punch detection; **(ADDED)** quarterly access-recertification campaign auto-revokes unconfirmed grants.
+
+### 1.3 Hierarchy & RBAC
+- `org_units` **materialized path** `/1/12/45/` + `parent_id`; solid line = `reporting_manager_id`; dotted line = `employee_relations(relation_type='matrix_manager')`; DB triggers block circular reporting & reporting to lower authority (unless matrix-flagged).
+- Authority thresholds config-driven (e.g., expense > 500 OMR needs `authority_level ≥ 3`); services `get_org_chart / get_user_chain / get_all_subordinates / can_manage / reassign_manager / backfill_authority_levels` recomputed in one transaction on drag-reassign.
+- **3-layer RBAC:** Global role JSON → Country role (`country_staff_assignments.role_in_country`) → Hierarchy-derived; resolver precedence **Country > Hierarchy > Global**, Redis-cached, invalidated on change; `require_permission("hr.payroll.release")` on every protected endpoint; Permission-Matrix UI with Maker-Checker for sensitive grants (`finance.*`, `users.delete`); sub-admins **cannot grant what they don't hold**; self-service access requests route up `can_manage()` chain.
+
+### 1.4 Country-wise management & localization
+- Country Staff Assignment console (multi-country regional roles + country switcher re-sets RLS); per-country: salary currency, leave allocations (`employee_leave_ledgers`), `country_holiday_calendars`, labor-law rules (notice, EOSB) from `country_configs`.
+
+### 1.5 Lifecycle (onboarding ↔ offboarding)
+- Onboarding pipeline with SLA per step: create user+employee → org/manager/role/country → documents → biometric enrollment → `employee_assets` → `physical_id_cards` → welcome email; probation auto-alerts 30/60/90; conversion requires check-in.
+- Offboarding auto-run: revoke sessions + disable devices + reclaim assets + exit survey + transfer `shift_handover_tasks` + archive chat/email per retention (legal-hold override) + `employment_status='terminated'`; **(ADDED)** final EOSB settlement published as event → Treasury posts journal (no manual hand-off).
+
+### 1.6 Time, attendance, leave, shifts
+- Attendance via QR-kiosk/biometric/geo-fence; `is_anomaly` when Haversine > 50m or untrusted device → manager anomaly dashboard; shifts auto-rostered by rules; **handover gate:** outgoing staff must acknowledge `shift_handover_tasks` before clock-out; leave routed to manager, balances enforced vs ledger, country-specific types; `employee_work_logs` (hours+geo+approval) → utilization analytics.
+
+### 1.7 Communication suite (chat · video · email) — complete the gaps
+- **Chat:** 1:1 `direct_chat_rooms`, groups (roles, @mentions), Slack-style `internal_channels` (dept/country/project, public/private, pinned); **gap-fill:** `chat_attachments`→`media_assets` for image/video/document + **voice notes** (compressed .ogg/.m4a + duration + waveform JSON); realtime via `WebSocketManager` (typing, `chat_read_receipts`, presence); threading, edit/delete (audited), reactions, FTS search, forward, per-channel retention + legal-hold; every write → `communication_audit_trails`.
+- **Video:** rooms + participants + recordings + watermark + boardroom mode + tokens; **gap-fill:** real-time Whisper transcription + AR/EN translation + `extract_action_items()` → **auto-create assigned tasks** (staged→confirm); recordings to **WORM/retention-locked object storage**.
+- **Email:** `internal_emails` + `email_folders`; **smart router** (directory-first, in-DB instant delivery; external only via relay); threading, labels/rules, FTS; attachments with size limits + virus-scan hook; external controls: domain allow-lists, **DLP PII scan**, mandatory compliance BCC per role; **gap-fill missing endpoints** `POST /email/bulk`, `POST /email/from-alias`.
+- **(ADDED)** auto-translate chat/channel messages AR↔EN; **(ADDED)** announcements with mandatory read-confirmation tracking; **(ADDED)** meeting-cost indicator (participants × duration × rate) to curb meeting bloat.
+
+### 1.8 Activity ledger, compliance, analytics
+- Append-only `employee_activity_logs` (actor, target, action, entity, country, metadata, ip, device) — logins, scans, handovers, mentions, shares, approvals, hierarchy moves, reviews; visibility: self / manager-subtree / HR-legal (gated + access-logged); eDiscovery export.
+- COI engine auto-detects relative reporting lines / shared interests → review flags; document/certification expiry alerts + action blocks; disciplinary workflow with evidence; PDPL/GDPR: PII encrypted at rest, right-to-access/export packages, retention purge jobs with hold override.
+- HR dashboards from **materialized views**: headcount by country/dept, attrition-risk model, DEI pay-equity, hiring velocity, leave burn rate, overtime cost; composite indexes `(country_code, employment_status)`, `(reporting_manager_id)`, `(org_unit_id)`.
+
+### 1.9 Payroll & auto-disbursement (wired to Treasury)
+- Auto-aggregate: base + attendance deductions + OT (work_logs) + approved expenses + per-diem + leave encashment + **KPI bonus multiplier** + statutory (tax/social/EOSB) with country rules from `country_configs`.
+- Pipeline: draft `payout_batch` (line per employee → `employee_bank_accounts` IBAN/SWIFT) → **Maker (payroll mgr) ≠ Checker (finance controller)** → Treasury posts journal (Dr Salary Expense / Cr Bank + Payables + Tax Payable) → bank API/file → auto bank-recon + retry failed → payslip PDF → `employee_documents(type=payslip)` (owner + payroll admin only) → notify in-app/email/SMS; post-close immutability; corrections via next-period adjustments.
+
+### 1.10 🤖 THE AUTOMATION SYSTEM (detail — the core ask)
+| # | Automation | Trigger | Staging/Inputs | Auto action | Exception path |
+|---|---|---|---|---|---|
+| 1 | **Auto-onboarding** | offer accepted | pipeline steps w/ SLA | user+employee, org, role, country, docs request, biometric invite, assets, ID card, welcome mail, default channels | SLA breach → escalate to HR head |
+| 2 | **Auto-attendance & anomaly** | kiosk/biometric/geo scan | haversine, device trust, scan pattern | check-in/out, late/OT compute | anomaly queue (buddy-punch, >50m, untrusted) → manager |
+| 3 | **Auto-rostering & handover** | weekly cron + leave/skills | shift rules, certifications | publish rosters; block clock-out till handover acknowledged | coverage conflicts → scheduler UI |
+| 4 | **Auto-leave processing** | request | ledger balance + country calendar + conflicts | auto-approve if ≤ threshold & no conflict; else route up; year-end carry-forward | abuse-pattern alerts → manager |
+| 5 | **Auto-payroll & disbursement** | monthly cron | attendance/OT/expenses/KPI/deductions | draft batch → Maker-Checker → journal → bank → recon → payslips | salary-Δ > threshold / missing IBAN → hold queue |
+| 6 | **Auto-performance signals** | nightly + cycle crons | operational KPIs (sales, tickets, on-time) via read-only | health score R/A/G; open 360 cycles; PIP trigger; bonus multiplier → payroll | calibration session UI |
+| 7 | **Auto document/cert expiry** | daily scan | expiry_date | notify 30/14/7d; block dependent actions (e.g., shift w/o cert) | renewal escalation |
+| 8 | **Auto-COI detection** | hierarchy/relations change | dependents + relations + interests graph | flag conflicting lines for review | compliance case |
+| 9 | **Auto comms compliance** | message/email write | DLP rules, allow-lists, virus-scan | internal-first routing; block/quarantine external violations; auto legal-hold on case open; retention purge | DLP quarantine review |
+| 10 | **Auto meeting intelligence** | recording end | Whisper transcript + translation | action items → staged tasks → confirm → assigned with due dates; RAG-index transcript | low-confidence items → review list |
+| 11 | **HR chatbot + voice assistant** | NL/voice (Whisper) | handbook/policy RAG (pgvector) | answers + draft requests (leave, expense, 1:1) via confirm cards | explicit "cannot verify" mode |
+| 12 | **Auto-offboarding & settlement** | termination event | asset/task/comms inventories | revoke all, transfer tasks, archive per policy, EOSB event → Treasury | unrecovered assets → case |
+| 13 | **Auto access governance** | request + quarterly cron | permission catalog | route requests up chain; recertification campaign auto-revokes | manager review queue |
+| 14 | **Auto HR analytics & attrition risk** | nightly | mat-views | R/A/G dashboards; attrition-risk alerts to managers | — |
+
+### 1.15 Security · Performance · Testing
+- MFA for privileged roles; device binding; immutable audit; PII encryption; WORM recordings; **(ADDED)** bank-detail change = verification freeze + penny-test before next payroll.
+- `selectinload/joinedload`; mat-views for dashboards; heavy work (payslip PDF, bank files, transcoding, analytics) on Celery/Redis — never in request path.
+- Acceptance = source "Definition of Done": biometric + kiosk login same identity/country scope; manager subtree approvals + health board; 1:1 chat with voice note + image realtime + channel broadcast; internal email never touches SMTP, external passes DLP; month-end payroll auto-aggregate → Maker-Checker → balanced journal → disbursed + reconciled; everything in activity ledger, RLS-isolated.
+
+---
+
+## 2. DIAGRAMS
+
+### 2.1 Master EMS architecture
+```mermaid
+flowchart TB
+subgraph ID["🔐 UNIFIED IDENTITY — 5 DOORS"]
+  D1["Password+TOTP"] & D2["Phone OTP"] & D3["Biometric<br/>(trusted device)"] & D4["QR Kiosk<br/>+geo-fence"] & D5["SSO"]
+end
+ID --> SES["Session Engine: user_devices · risk-score → step-up MFA<br/>SET app.current_country_code (RLS)"]
+SES --> RBAC["Permission Resolver: Country > Hierarchy > Global<br/>(Redis-cached · require_permission guards)"]
+RBAC --> ORG
+subgraph HR["🧩 HR MODULES (hr schema)"]
+  ORG["Org Chart: path · solid/dotted · authority_level"]
+  ATT["Attendance · Shifts · Handover · Leave"]
+  LIFE["Onboarding ↔ Offboarding (SLA)"]
+  PERF["OKR/KPI · 360° · Health Score · PIP"]
+  PAY["Payroll auto-aggregate"]
+end
+ORG --> ATT
+ORG --> PERF
+PERF -->|bonus multiplier| PAY
+subgraph COM["💬 COMMUNICATION SUITE (comms schema)"]
+  CH["1:1·Groups·Channels + attachments/voice (R2)<br/>WS realtime · receipts · presence"]
+  EM["Internal Email: internal-first router · DLP · allow-list"]
+  VD["Video: tokens · watermark · WORM recording ·<br/>Whisper transcript → action-item tasks"]
+end
+HR --> EV[("outbox_events")]
+COM --> EV
+EV --> FIN["finance/treasury: payout_batch →<br/>double-entry journal → bank → auto-recon"]
+EV --> AN["analytics mat-views: headcount · attrition ·<br/>OT cost · DEI · leave burn"]
+HR & COM --> AL[("employee_activity_logs · append-only")]
+```
+
+### 2.2 Payroll auto-disbursement circuit
+```mermaid
+flowchart LR
+  A["Nightly inputs: attendance · OT · expenses ·<br/>per-diem · KPI multiplier · statutory"] --> B["Draft payroll batch"]
+  B --> C{"Anomaly gate:<br/>salary Δ > thr? IBAN missing?<br/>cert expired?"}
+  C -->|clean| D["MAKER generates"]
+  C -->|flag| E["Exception queue"] --> D
+  D --> F["CHECKER approves (≠maker)"]
+  F --> G["Treasury journal:<br/>Dr Salary Exp · Cr Bank/Payables/Tax"]
+  G --> H["Bank dispatch · retry failed"]
+  H --> I["Auto bank-recon"]
+  G --> J["Payslip PDF → docs + notify"]
+  I --> K["Period close → immutable"]
+```
+
+### 2.3 Employee lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> ONBOARDING : offer accepted (auto pipeline)
+    ONBOARDING --> PROBATION : steps complete, SLA met
+    PROBATION --> ACTIVE : 90-day conversion + check-in
+    PROBATION --> OFFBOARDING : failed conversion
+    ACTIVE --> PIP : health score red (auto)
+    PIP --> ACTIVE : improvement confirmed
+    PIP --> OFFBOARDING : unresolved → disciplinary tie-in
+    ACTIVE --> OFFBOARDING : resignation/termination
+    OFFBOARDING --> ALUMNI : auto revoke + EOSB event → Treasury
+    ALUMNI --> ACTIVE : boomerang re-hire (ADDED)
+```
+
+---
+
+## 3. STEP-BY-STEP CONSTRUCTION
+
+**Phase 0 — Schema alignment & gaps.** Alembic migration (downgrade + contract tests) for gap tables: `employee_bank_accounts`, `okr_objectives`, `kpi_metrics`, `performance_reviews`, `internal_emails`, `email_folders`, `chat_attachments`, `chat_read_receipts`, `employee_activity_logs`; move `employee_*`/`org_units`/`offices`→`hr`, channels/chats→`comms`; freeze `HR_PERMISSION_MAP`; verify RLS registry. *Done when:* drift gate green + orphan-table warning zero.
+
+**Phase 1 — Identity.** `auth_service.py` 5 doors + device trust + risk scoring + RLS-on-login + kiosk attendance session. *Done when:* same person logs in via biometric (mobile) and QR-kiosk with correct country scope; unknown-device MFA test passes.
+
+**Phase 2 — Org engine.** Materialized path + matrix relations + anti-cycle triggers + authority backfill; draggable Org Chart UI (single-transaction reassign). *Done when:* drag-reassign recomputes path/authority and approvals follow new chain.
+
+**Phase 3 — RBAC.** Resolver + Redis cache + `require_permission` everywhere + Matrix UI + Maker-Checker sensitive grants + self-service requests + **(ADDED)** recertification campaign. *Done when:* sub-admin cannot grant beyond own set (test).
+
+**Phase 4 — Country console.** Assignments, multi-country switcher, localization (currency/leave/holidays/EOSB from `country_configs`). *Done when:* cross-country read returns nothing without global role.
+
+**Phase 5 — Lifecycle.** Onboarding SLA pipeline, probation alerts, offboarding auto-revoke + task transfer + EOSB event. *Done when:* offboarding completes with zero live sessions/devices.
+
+**Phase 6 — Time & shifts.** Anomaly detection, auto-rostering, handover gate, leave auto-approve/route + escalation SLA. *Done when:* unactioned leave auto-escalates per config.
+
+**Phase 7 — Communication completion.** Attachments + voice waveform, receipts/presence/typing WS, threading/reactions/FTS, retention + legal-hold; WORM recordings + realtime transcript + action-item tasks; internal email client + smart router + DLP + allow-list + BCC; add `POST /email/bulk`, `/email/from-alias`. *Done when:* 1:1 voice-note + image chat realtime E2E passes; external DLP block test passes.
+
+**Phase 8 — Activity ledger & eDiscovery.** Append-only writer hooks across all modules; privacy-gated viewers; export. *Done when:* every Phase-1..7 action appears in ledger.
+
+**Phase 9 — Performance.** OKR cascade, auto KPI pulls (read-only from commerce/logistics/support), 360 cycles, health score, calibration, PIP, bonus multiplier feed. *Done when:* health board matches computed signals in test fixtures.
+
+**Phase 10 — Payroll.** Auto-aggregate → Maker-Checker → Treasury journal → bank → recon → payslips → notify; penny-test bank-change freeze. *Done when:* simulated month disburses with balanced journal + 0 recon variance.
+
+**Phase 11 — ESS portal + mobile parity.** Self-service profile/docs/leave/expense/payslip/shift-swap/goals/LMS; kiosk mode; biometric login. *Done when:* web/mobile feature parity checklist green.
+
+**Phase 12 — Automation Tower + assistants.** `automation_runs` + toggles + thresholds UI; HR chatbot + voice (confirm-gated); analytics mat-views + attrition alerts. *Done when:* each automation shows run health; paused = explicit badge.
+
+**Phase 13 — Compliance & close-out.** COI flags, expiry blocks, GDPR/PDPL export, retention purges with holds; E2E Playwright full acceptance; k6 load; update `CODEBASE_STATUS_MATRIX_DETAILED.md`. *Done when:* all acceptance criteria (§1.15) green.
+
+---
+
+## 4. UI/UX LAYOUT
+
+### 4.1 Employee Workspace (default landing)
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ TOPBAR: [🔍 people/search] [🎙 voice] [🤖 HR bot] [country: OM ▼] [🔔2] │
+├──────────────┬──────────────────────────────────────────────────────────┤
+│ SIDEBAR      │ MY DAY: shift card · handover tasks (ack gate) ·         │
+│ My Workspace │ approvals due · announcements (read-confirm)             │
+│ Org Chart    │ KPI STRIP: attendance · health R/A/G · leave balance ·   │
+│ Directory    │ pending expenses                                         │
+│ Attendance   │ ──────────────────────────────────────────────────────── │
+│ Shifts/Leave │ QUICK ACTIONS: leave · expense · book room · start 1:1 · │
+│ Payroll      │ payslip · shift-swap                                     │
+│ Performance  │ ──────────────────────────────────────────────────────── │
+│ Comms Hub    │ TEAM PULSE: calendar · birthdays · recognition badges    │
+│ Compliance   │ CHAT DRAWER (right): DMs · channels · voice waveforms ·  │
+│ Analytics    │ presence dots                                            │
+│ Automation   │                                                          │
+└──────────────┴──────────────────────────────────────────────────────────┘
+```
+
+### 4.2 Admin HR Command Center (route-driven tabs, lazy-loaded)
+`directory · org-chart (draggable canvas, solid/dotted lines, authority badges) · attendance (anomaly queue split-screen: scan map+device vs policy) · shifts-handover · leave (auto-approve log + escalations) · payroll control room (batch pipeline chips, maker≠checker locks, exception holds) · performance (health board, calibration, PIP) · onboarding/offboarding pipelines (SLA timers) · documents-compliance (expiry radar 30/14/7) · coi-disciplinary · comms-hub (channels admin, eDiscovery portal, audit viewer, legal-hold controls) · analytics-DEI · permission-matrix (role×group grid, sensitive = Maker-Checker draft) · country-assignments · automation-tower (per-job toggle/cron/last-run/exception counters/DLQ)`.
+
+### 4.3 Key screens
+- **Chat:** 3-pane (rooms/channels | thread | details/members); voice-note inline waveform player; attachment lightbox; pinned + search; retention badge per channel.
+- **Email client:** folders left, list, reading pane; compose with **directory-first autocomplete** + internal/external chip; DLP warning banner before external send; labels/rules builder.
+- **Video:** calendar scheduler; join via token; live transcript panel (AR/EN toggle); action-items side panel with "assign" confirm; watermark/boardroom toggles; recording → WORM badge.
+- **Org Chart:** drag-to-reassign with impact preview (subtree count, authority recompute) + single-transaction commit; matrix lines dashed.
+- **Payroll Control Room:** batch list `draft→approved→dispatched→settled`; per-employee drilldown (inputs provenance: attendance/OT/KPI); approve disabled for maker.
+- **UX principles:** skeleton loaders; explicit empty/error states; tabular numerals; ARIA + keyboard; density toggle; country switcher re-sets RLS; mobile = biometric login, kiosk, scan payslip, approvals push, camera expense/voice notes.
+
+> **AI Directive:** build in Phase order on the existing skeleton; any cross-domain write bypassing outbox, any balance-style mutable HR money field, any attachment byte in DB, or any silent fallback violates this spec and Appendix A — STOP and ask.
+
+
+# _____________________________________________________________________________________________ [EMPLOYEES & Hr SYSTEM]
+
+# _____________________________________________________________________________________________ [ADVANCED FILTERS · AI SEARCH · VIDEO COMMERCE — MASTER BUILD SPEC]
+
+## ZOZI DISCOVERY LAYER — ADVANCED FILTERS · AI SEARCH · VIDEO COMMERCE — MASTER BUILD SPEC
+
+> Binding addendum to `01_DATABASE.md` (commerce/media/ai/analytics schemas → future `02_SEARCH.md`). Inherits the constitution: **hybrid search = FTS + pgvector + CLIP (ADR-013), JSONB variants + GIN (ADR-004), materialized-path categories (ADR-005), media bytes in R2 + CDN (ADR-010), snapshots/mat-views never live aggregates (ADR-008), AI staged→commit (ADR-007), RLS `country_code`, config-as-data, cursor pagination, p95 < 300ms, no silent fallbacks (`mode:"lexical"`).**
+
+### 0. Corrections to the supplied draft (constitution alignment)
+- **Elasticsearch ≠ source of truth:** Postgres-native hybrid (tsvector+GIN / pgvector HNSW / CLIP) is the engine; a dedicated OpenSearch cluster appears **only at the Massive scale stage** as an event-synced read-model (never a second truth).
+- `OFFSET` pagination → **cursor pagination**; `float` prices → **NUMERIC/Decimal**; sync `views_count` UPDATE → **async batched counters** (Redis INCR → flush); live facet aggregates → **`mv_facet_counts` + Redis**; add `country_code`+RLS to every new table; processing on **Celery/ARQ**, never in request path.
+
+---
+
+## 1. BULLET POINTS — EXTRACTED + ENHANCED
+
+### 1.1 Feature 1 — Advanced Faceted Filters (Amazon-style)
+- **Config-driven facets:** `product_filter_metadata` (category_id, filter_name, type `range|multi_select|single_select|boolean`, display_order, is_active) + `product_filter_options` (value, display, count, sort) — per-category dynamic rails; editable in admin, versioned, audited.
+- **Data columns:** `products.filter_attributes` **JSONB + GIN**; variant attrs JSONB + `variant_key`; generated `search_vector tsvector` + GIN; partial index `WHERE is_deleted=false AND is_active=true`; composite `(country_code, created_at)`, `(supplier_id, is_active)`.
+- **Facet set:** price (min/max/avg + **histogram buckets (ADDED)**), brands w/ counts, rating distribution, dynamic attributes, availability, shipping options, country-aware promotions.
+- **Disjunctive faceting (ADDED):** each facet's counts ignore its own selection so options never self-hide; zero-count options auto-hidden, trending options auto-promoted.
+- **API:** `GET /search/filters?category_id&search_query` (counts respect active query) · `POST /search/advanced` (sorts: relevance/price↑↓/rating/newest) · **filter state URL-synced** for shareability + SEO (ADDED).
+- **Frontend:** desktop left rail / mobile bottom-sheet; active-filter **chips + clear-all**; dual price slider over histogram; star "≥N & up"; skeleton loaders; result-count tick per toggle.
+
+### 1.2 Feature 2 — Google-style AI Search
+- **Query parser:** intent classification (`product | compare | recommendation | reviews`) + entity extraction ("under 100 OMR" → max_price, "4+ stars" → min_rating, brand dictionary, attribute:value pairs); parsed filters surface as **removable understanding chips** (ADDED).
+- **Retrieval:** hybrid RRF fusion — lexical `tsvector` (boosts `name^3 brand^2 description^2 tags`, fuzziness AUTO) + semantic `pgvector` HNSW + CLIP image match; synonym expansion with decaying boost; **did-you-mean via `pg_trgm` (AR+EN) (ADDED)**.
+- **Autocomplete & trending:** completion suggest + Redis sorted-set of popular queries + trigram fallback; trending from `search_events` with recency decay, **per country (RLS)**; voice input (Whisper) (ADDED).
+- **AI NER:** local models (`qwen2.5` AR/EN, `phi3`) for brand/category/attribute; spaCy-style rules as fast path; **(ADDED) LLM fallback only with explicit confidence, else `mode:"lexical"` — never silent.**
+- **Analytics loop:** every query/click/zero-result/abandon → outbox events → `search_analytics` snapshots; powers auto-tuning (§1.5).
+
+### 1.3 Feature 3 — Video Commerce (row-first, hybrid desktop)
+- **Schema:** `product_videos` (product_id, urls, thumbnail, duration, type `demo|unboxing|review|lifestyle`, title, views, is_featured, `upload_status pending|processing|ready|failed`) + batched `video_events` (view/complete/pause/skip, watch_duration, device) — **monthly partitioned (ADDED)**; `products.video_count`.
+- **Processing (queue, never request path):** validate ≤100MB + mime; transcode H.264/AAC ≤720p crf23 faststart, trim ≤30s; **(ADDED) HLS adaptive renditions**; thumbs @10/50/90% + WebP poster; **Whisper captions AR/EN (accessibility condition)**; watermark; CDN publish; explicit `failed` + reason + retry/DLQ.
+- **Placement verdict (adopted):** **mobile-first horizontal snap-row** after banner/search (GCC 85%+ mobile; native scroll; above fold; lazy-independent) + **desktop hybrid**: optional right rail (related videos · recently viewed · cross-sell) ≥1024px only.
+- **Playback rules:** lazy via IntersectionObserver (`preload=none` + poster); auto-play **muted**, one-at-a-time; show 1.5 cards (scroll affordance); snap points; duration badge; tap→sound; **user disable toggle persisted**; **Save-Data/slow-conn → poster image fallback**; captions toggle; RTL-safe.
+- **Recommendation strategy:** same product → same category/brand/tag-overlap → **(ADDED) pgvector video-embedding similarity + co-view graph + trending decay**, country-scoped; featured flag curated by merchandising automation.
+- **Pros honored / cons mitigated:** engagement & conversion ↑ vs bandwidth/storage/load → CDN + lazy + short clips + HLS + disable + fallback (all conditions from analysis enforced as code rules).
+
+### 1.4 🤖 AUTOMATION SYSTEM (detail — the core ask)
+| # | Automation | Trigger | Staging/Inputs | Auto action | Exception path |
+|---|---|---|---|---|---|
+| 1 | **Auto catalog enrichment** | supplier upload | CLIP/moondream tags, alt-text, category suggest, attribute extraction, text+image embeddings | `ai_staging_products` → commit to `products/filter_attributes/embedding` | low-conf → merchandiser queue |
+| 2 | **Auto facet/count refresh** | write events + cron 15min | product/stock/price events | invalidate Redis + refresh `mv_facet_counts`; hide zeros; promote trending options | variance alert |
+| 3 | **Auto synonym & redirect mining** | nightly | zero-result + reformulated queries + search_events | draft synonyms/redirects; auto-apply ≥ conf threshold | review list |
+| 4 | **Auto search-rank tuning** | nightly + A/B harness | CTR/abandon/conversion per query class | adjust boost weights **inside guarded bands**; flag regressions | rollback + alert |
+| 5 | **Auto video pipeline** | upload | R2 original | transcode/thumbs/captions/watermark/CDN; status transitions; retry+DLQ | explicit `failed` + reason UI |
+| 6 | **Auto video recs & trending** | events + cron | embeddings + co-view + watch-time | recency-decayed trending per country; personalized rail | cold-start → curated featured |
+| 7 | **Auto merchandising** | schedules + CTR | banner calendar, row CTR | banner on/off; row re-rank; recently-viewed; cross-sell/upsell slots | manual override pin |
+| 8 | **Auto accessibility & localization** | media commit | Whisper/CLIP outputs | captions, alt-text, AR translation (qwen2.5), RTL checks, did-you-mean AR | editor queue |
+| 9 | **Auto integrity/spam guard** | event stream | view/review patterns | bot-view filtering, review spam, fake-engagement scrub, price/stock anomaly | exception queue |
+| 10 | **Auto SEO** | product change | metadata | meta titles/descriptions, JSON-LD, sitemap + canonical filtered URLs | — |
+| 11 | **Auto cache invalidation** | price/stock writes | events | Redis purge + stampede guards; warm top-N facet pages | explicit stale-badge if lag |
+| 12 | **Auto KPI watchdog** | hourly | metrics snapshots | compare vs targets (filter use >40%, search success >85%, video engage >60%, load <3s, 3G <5s) → report/alert | regression ticket auto-created |
+
+### 1.5 Scale ladder & testing
+- MVP: FTS + GIN + Redis → Growth: mat-views + replica + PgBouncer → Scale: JSONB GIN + pgvector + partition `video_events` → Massive: country shard + dedicated search read-model.
+- Tests: contract per migration; `EXPLAIN ANALYZE` CI gate on products/search queries; k6 hot-list p95 <300ms; A/B filter & video placements; Lighthouse + 3G throttle; accessibility audit (captions/ARIA/RTL); spam-fixture tests; update `CODEBASE_STATUS_MATRIX_DETAILED.md`.
+
+---
+
+## 2. DIAGRAMS
+
+### 2.1 Discovery architecture (search + filters + learning loop)
+```mermaid
+flowchart TB
+subgraph FE["🛍️ STOREFRONT web+mobile"]
+  SB["Search bar: autocomplete · voice · trending"]
+  FR["Filter rail/bottom-sheet · chips · URL-sync"]
+  VR["Video snap-row · PDP rail"]
+end
+SB --> QP["Query Parser: intent · price/rating/brand ·<br/>synonyms · did-you-mean · understanding chips"]
+QP --> HYB["HYBRID RETRIEVAL + RRF (boosts=config)"]
+subgraph PG["PostgreSQL = SOURCE OF TRUTH (RLS per country)"]
+  FTS["tsvector + GIN"]
+  VEC["pgvector HNSW"]
+  CLP["CLIP image embed"]
+  JB["filter_attributes JSONB + GIN"]
+  MV["mv_facet_counts · snapshots"]
+end
+HYB --> FTS
+HYB --> VEC
+HYB --> CLP
+FR --> JB
+FTS & VEC & CLP --> RRF["Fusion + intent-aware re-rank"]
+RRF --> RES["Results + disjunctive facets (MV+Redis)"]
+JB --> RES
+MV --> RES
+RES --> FE
+FE --> EV[("search/video events → outbox (async)")]
+EV --> AN["analytics: CTR · zero-results · watch-time"]
+AN --> TUNE["AUTO-LOOP: synonyms · boosts ·<br/>trending · recs · merchandising"]
+TUNE --> HYB
+TUNE --> VR
+```
+
+### 2.2 Video pipeline & recommendation circuit
+```mermaid
+flowchart LR
+  UP["Supplier upload ≤100MB"] --> VAL["Validate · status=processing"]
+  VAL --> R2[("R2 original (bytes)")]
+  R2 --> WK["Celery workers"]
+  WK --> TR["Transcode H.264 ≤720p ≤30s + HLS"]
+  WK --> TH["Thumbs 10/50/90% + WebP poster"]
+  WK --> CP["Whisper captions AR/EN"]
+  WK --> WM["Watermark"]
+  TR & TH & CP & WM --> RDY["CDN publish · status=ready<br/>metadata → product_videos (DB)"]
+  RDY --> REC["Recs: cat/brand/tags · pgvector sim ·<br/>co-view · trending decay (per country)"]
+  REC --> ROW["Mobile snap-row · desktop rail"]
+  ROW --> EVT["video_events batched<br/>(Redis → flush → partitioned table)"]
+  EVT --> REC
+  VAL -->|failure| DLQ["Explicit failed + reason · retry/DLQ"]
+```
+
+### 2.3 Video status lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING : upload accepted (metadata row)
+    PENDING --> PROCESSING : worker claimed
+    PROCESSING --> READY : transcode+thumbs+captions+CDN ok
+    PROCESSING --> FAILED : explicit reason (retry/DLQ)
+    FAILED --> PROCESSING : retry
+    READY --> FEATURED : merchandising auto/curated
+    READY --> ARCHIVED : retention/product inactive
+```
+
+---
+
+## 3. STEP-BY-STEP CONSTRUCTION
+
+**Phase 0 — Schema & config.** Alembic (downgrade + contract tests): `product_filter_metadata/options`, `products.filter_attributes`+GIN, generated `search_vector`, `products.embedding vector`, `product_videos`, `video_events`+`search_events` (monthly partitions), config tables (synonyms, boosts, thresholds, facet defs); RLS on all; Redis keyspace plan. *Done when:* drift gate green; EXPLAIN shows index-only scans on hot facets.
+
+**Phase 1 — Facet foundation.** Backfill `filter_attributes` from variants; build `mv_facet_counts` + cron + event invalidation; stampede-guarded cache. *Done when:* facet API < 50ms warm on 1M-product fixture.
+
+**Phase 2 — Filter engine.** Service (disjunctive counts, JSONB apply, sorts) + endpoints + cursor pagination; URL-state sync. *Done when:* p95 < 300ms; multi-facet combo test green.
+
+**Phase 3 — Hybrid search.** RRF fusion + parser + autocomplete + trending + did-you-mean + voice; explicit `mode:"lexical"` degradation; search events → outbox. *Done when:* zero-result rate baseline captured; fallback test shows explicit mode only.
+
+**Phase 4 — AI enrichment & tuning loop.** Staging→commit enrichment; synonym mining; guarded boost tuner + A/B harness; audit every auto-change. *Done when:* nightly loop runs 7 clean nights with audit trail.
+
+**Phase 5 — Video pipeline.** Upload validation → R2 → workers (transcode/HLS/thumbs/captions/watermark) → CDN → status; batched analytics; recommendation engine. *Done when:* upload→READY < 5 min; captions present on 100% of ready videos.
+
+**Phase 6 — Storefront UI.** Filter rail/bottom-sheet + chips; search dropdown w/ understanding chips; video snap-row (mobile) + desktop rail; lazy-load, disable toggle, save-data fallback; RTL/AR; skeletons. *Done when:* Lighthouse ≥ target + 3G < 5s test passes on web + mobile apps.
+
+**Phase 7 — Merchandising & SEO automation.** Banner scheduler, row re-rank, recently-viewed, cross-sell, JSON-LD/sitemaps. *Done when:* KPI watchdog dashboard live with all 12 automations reporting health.
+
+**Phase 8 — Validate & close-out.** A/B (row vs sidebar vs hybrid), k6 load, accessibility + spam fixtures, E2E Playwright (search→filter→video→PDP→cart); update `CODEBASE_STATUS_MATRIX_DETAILED.md`. *Done when:* all success metrics (§1.5) instrumented and green.
+
+---
+
+## 4. UI/UX LAYOUT
+
+### 4.1 PLP / Home (mobile-first hybrid)
+```
+MOBILE (<768px)                          DESKTOP (>1024px)
+┌──────────────────────────┐   ┌───────────────┬──────────────────────────┬──────────────┐
+│ Banner (auto-scheduled)  │   │ FILTER RAIL   │ Banner + Search + voice  │ RIGHT RAIL   │
+│ Search + voice + chips   │   │ price hist    ├──────────────────────────┤ related vids │
+│ [▶▶ VIDEO SNAP-ROW 1.5]  │   │ brands(counts)│ [▶▶ HORIZONTAL VIDEO ROW]│ recently seen│
+│ Chips: under-100 × 4★ ×  │   │ attrs groups  ├──────────────────────────┤ cross-sell   │
+│ 2-col grid · infinite    │   │ ≥4★ · in-stock│ PRODUCT GRID (cursor)    │              │
+│ [Filters] bottom-sheet   │   │ clear-all     │                          │              │
+└──────────────────────────┘   └───────────────┴──────────────────────────┴──────────────┘
+```
+
+### 4.2 Key screens
+- **Search dropdown:** suggestions w/ thumbnails + trending tag; understanding chips ("under 100 OMR ×", "brand: Samsung ×"); did-you-mean banner; empty state = remove-filter suggestions + synonyms (never silent zero).
+- **PDP:** gallery with video tab + captions; desktop right rail "You may also like (video)"; mobile row below fold; add-to-cart sticky; save-data → posters.
+- **Supplier Video Studio:** upload w/ live validation; processing timeline (transcode→thumbs→captions→CDN); caption editor; thumbnail picker; analytics (views, watch-time, completion, attributed conversions); explicit failure cards w/ retry.
+- **Admin Merchandising Console:** facet metadata manager (per-category rails, order, types); synonym/redirect manager w/ confidence slider; boost tuner + A/B dashboard; featured-video approval queue; trending controls; **KPI watchdog** vs targets (filter use >40% · search success >85% · video engage >60% · load <3s · 3G <5s) with auto-tickets on regression.
+- **UX principles:** one muted autoplay; disable toggle persisted per user; captions default-on when sound off; skeletons + explicit stale badges; ARIA/keyboard; RTL-first Arabic; tabular price numerals; density toggle.
+
+> **AI Directive:** build in Phase order; any live aggregate in a request path, any media byte in DB, any OFFSET on large tables, any sync counter UPDATE, or any silent search fallback violates this spec and Appendix A — STOP and ask.
+
+# _____________________________________________________________________________________________ [ADVANCED FILTERS · AI SEARCH · VIDEO COMMERCE — MASTER BUILD SPEC]
+
+# _____________________________________________________________________________________________ [ADMIN COMMAND CENTER]
+
+## ZOZI UNIFIED OPERATIONS COMMAND CENTER — MASTER BUILD SPEC
+
+> Binding addendum to `01_DATABASE.md` (analytics/audit/comms/country schemas → future `10_ANALYTICS.md` + `08_COUNTRY.md`). Inherits the constitution: **analytics never live-aggregate on request path (ADR-008 → 4-tier strategy), financial truth only from the double-entry ledger (ADR-006), RLS `country_code` everywhere, events via outbox (ADR-014), config-as-data, AI staged→commit, append-only audit, no silent fallbacks (explicit `degraded` flags), p95 < 300ms, cursor pagination, Alembic-only.**
+
+### 0. Prime directives (from founder notes)
+- **Merge Command Center + Analytics into ONE "Single Window"** — they currently replicate/complement each other; **read all existing dashboard/analytics code in detail before merging**; delete the duplicate page after cutover.
+- **Dashboard ≠ Command Center:** *every employee* gets a **limited personal dashboard**; *Admin* gets the **full Command Center**; Admin may **grant Command Center access to others with limited, zone-scoped, country-scoped rights** (Maker-Checker for sensitive zones like Treasury/Fraud).
+- Dynamic, modern, glanceable UI: one-glance organizational health; widgets over tables; traffic-light semantics; deep-link every number to its filtered workspace.
+
+---
+
+## 1. BULLET POINTS — EXTRACTED + ENHANCED
+
+### 1.1 Access & visibility model
+- Same URL for all; UI + data auto-shaped by **role layer (Global > Country > Hierarchy)** + RLS: CEO/Global Admin = aggregated global; Country Head = identical UI filtered to assigned countries (metrics, chats, escalations, roster); Employee = personal KPIs only.
+- **Zone-level permission strings** (`cc.treasury.view`, `cc.fraud.view`, `cc.workforce.view`…) in the frozen permission catalog; assignment audited in `admin_change_audit_logs`; sensitive grants = Maker-Checker.
+- **(ADDED) Data-freshness badge per widget** (tier + last-updated + `degraded` flag) — transparency, never fake-live.
+- **(ADDED) Alert-fatigue control:** dedupe/aggregate repeats; quiet-hours per tier (Tier-3 always breaks through).
+
+### 1.2 Metric inventory → 4-Tier data strategy
+| Zone / Metrics | Tier |
+|---|---|
+| **Z1 Heartbeat:** today's orders/GMV/revenue, active users (buying vs window-shopping: session + >3 views + no cart 10min), live fleet (companies vs individuals, active shipments, delayed, failed), employees working, system issues | **T1** WS/Redis PubSub 2–5s (`/ws/admin/telemetry`) |
+| **Z2 Treasury:** available/locked/operating cash, supplier & logistics payables, refund reserve, VAT liability (+remittance countdown), commission reserve, pending payouts, refunds, disputes | **T3** instant SQL on `account_balances` (1010/2010/2020/2040…) — *never order sums* |
+| **Z3 Growth:** revenue trend 30d, country-wise sales map, category/product trends, top searches + zero-results, gender split, signups, CLV **(ADDED)**, cash-runway forecast **(ADDED)** | **T2** Redis 5-min cron + **T4** nightly MVs (`daily_trend_aggregates`) |
+| **Z4 Workforce/Ops:** on-duty roster (QR/geo), performance tickers (tickets/hr, moderation approve-rate, payouts processed), bottlenecks (KYC pending, moderation queue, stuck orders, returns), shift handovers, grievances | **T1+T2** |
+| **Z5 External Intel:** Market Radar news ticker, regulatory shield (ZATCA/PDPL/VAT countdowns), FX ticker + margin alerts, supply-chain alerts, competitor price index, sentiment/NPS pulse, PR crisis radar | **T2** + news pipeline |
+| **Z6 Engine Room & Fraud:** API p95/p99, error rate, CPU/mem, DB conns/replication lag/disk, Redis hit/eviction, gateway success heatmap (auto-reroute <85%), CDN health by region, live attack map, chargeback velocity (>1% critical), ATO radar (reset spikes, supplier bank-change) | **T1** Prometheus/Grafana/Loki embed + fraud engine |
+- Partner health MVs: `supplier_health_scores` (cancellation/return/KYC-expiry), `logistics_sla_alerts`. New tracking tables: `search_logs`, `user_sessions`, `system_health_events`.
+
+### 1.3 Human Operations layer (the "active cockpit")
+- **Broadcasts:** Global (Admin) vs Local (Country Head) color-coded dismissible banners; read-confirmation tracking **(ADDED)**.
+- **Shift handover logs:** mandatory end-of-shift digital sign-off (unresolved criticals, pending approvals, glitches); incoming shift must acknowledge; **(ADDED) block clock-out until filed** (ties to EMS handover gate).
+- **Escalation Siren:** Tier-1 Country Manager (2h ack timer) → Tier-2 Country Head/Finance (in-alert Approve/Block) → Tier-3 Admin/CTO (SMS/email fallback + red flash); every ack/action → append-only audit ("alert 14:00, acked 14:05, no action").
+- **War-Room chat:** entity-attached threads (click "Failed Deliveries" → the exact chat about that batch); @mentions deep-link to the exact screen with action button ready; auto-translate AR↔EN.
+- **Safe Box:** supplier grievances vs staff + anonymous whistleblower channel → visible **only** Global Admin/Compliance (bypasses local heads); SLA-penalty tracker requiring Admin sign-off.
+- **(ADDED) Follow-the-sun handoff view:** auto-highlights which country shift is handing over now.
+
+### 1.4 News & Market Intelligence pipeline
+- `news_sources` (name, url, type `rss|api|scrape`, category `market|logistics|regulatory|ecommerce|internal`, `target_audience admin_only|supplier|public`, fetch_interval, is_active, api_key_required) + `news_articles` (external_id, **SHA256 content_hash dedupe**, title/summary/content, url, image_url, published/fetched_at, country_code nullable, `ai_sentiment`, `ai_tags` JSONB, `is_published`).
+- Async fetchers (feedparser/httpx/newspaper3k) on 15-min cron with per-source `last_fetched` in Redis; sanitize (strip HTML/trackers, UTC normalize); **AI enrichment staged**: entity→country/module map, sentiment, relevance score **<40 discarded**; PubSub → WS ticker; audience routing: Admin Market Radar / Supplier Insights / Public SEO blog; moderation queue + `flush-now` + publish toggle; auto-publish only ≥ confidence threshold **(ADDED, ADR-007)**.
+- **Regulatory Shield:** ZATCA Phase-2 e-invoicing success ticker, PDPL/GDPR audit countdown + encryption %, VAT filing countdowns **linked to ledger `2040`**; T-7/T-3/T-1 alerts **(ADDED)**.
+- **What-If Simulation Engine:** commission/SLA/promo-ROI simulators read **snapshots only**, outputs labeled "projection — not truth", never write to ledger **(ADDED guardrail)**; launched via Ctrl+K.
+
+### 1.5 Decision Engine & monitoring
+- Anomaly rules (config-driven): delayed >5% active → red; zero-search spike → "Alert Procurement" + stock check; VAT > threshold + due ≤4d → "Generate Tax Report"; gateway <85% → auto-reroute + badge; every alert carries a **deep-link action button** into the pre-filtered workspace.
+- Monitoring embed (Zone 6): app p95/p99, error rate, CPU/mem; DB conns/slow-query/replication-lag/disk; Redis mem/hit/eviction; business (orders/hr, conversion, signups); alerts: error >1%, resp >3s, CPU >80%, disk >85%, gateway fail >5%.
+
+### 1.6 Country Control Plane (integrated, not siloed)
+- Normalized schema: split `country_configs` → basics/economics/tax/legal + `country_cities`, `country_category_tax_rates`, `country_config_versions` (draft→approve→publish→rollback), `country_feature_flags`, `country_staff_assignments`.
+- **Heuristic Orchestrator:** RestCountries/WorldBank/GeoDB/Nager.Date fetchers, 48h Redis cache, **explicit `degraded` flags** (Rule #16); gateway ranking 0–100; commission-tier generator; KYC-tier auto-assign; logistics model recommender; restricted-category auto-tag; **source-transparency badges** in UI.
+- **Ghost-Row Ledger UI** (no modals): inline expandable create row, 600ms debounced auto-map search, 17-tab workspace, inline editors within algorithmic bounds, masked keys + "Test Connection".
+- **Downstream auto-wiring:** checkout gateways, supplier KYC fields, moderation blocks, payout holds/minimums, ETA holiday-skip — all read country config live (no deploys).
+- Cross-border detection (`cross_country_customer_records`), dynamic currency/tax swap, deep localization (Eastern Arabic numerals, Hijri, RTL logical CSS, dynamic address builder); draft-to-publish safety net; localized legal PDF generation; immutable financial edit audit with mandatory reason; data-residency KMS + export redaction; geospatial maps (cities, shops/warehouses, partner GPS, parcel tracking).
+
+### 1.7 🤖 AUTOMATION SYSTEM (detail — the core ask)
+| # | Automation | Trigger | Auto action | Exception path |
+|---|---|---|---|---|
+| 1 | **Metric aggregation** | crons 5min + nightly | T2 Redis JSON + T4 MV refresh; drift vs T3 ledger checked | variance alert |
+| 2 | **Live telemetry push** | outbox events | PubSub → WS heartbeat increments | explicit stale badge on lag |
+| 3 | **Escalation engine** | alert raise | tier timers → auto-escalate → SMS/email T3; ack audit | missed-SLA → performance flag |
+| 4 | **News flush & enrich** | 15-min cron | fetch→dedupe→sanitize→AI tag/sentiment→route by audience | moderation queue; `degraded` source badge |
+| 5 | **Gateway health & reroute** | webhook stream | per-country success heatmap; <85% auto-reroute + banner | manual freeze button |
+| 6 | **Fraud watch** | event stream | attack map, chargeback >1% critical, ATO radar (bank-change) | Tier-2/3 queue |
+| 7 | **Decision-engine anomalies** | rules cron | deep-link action cards (procurement, tax report, SLA breach) | dismiss-with-reason logged |
+| 8 | **Handover enforcement** | shift end | block clock-out till log filed; incoming ack required | manager override logged |
+| 9 | **Broadcast targeting** | publish | global/local routing + read-confirm tracking | non-readers → reminder ping |
+| 10 | **Regulatory countdowns** | daily | VAT from ledger; ZATCA/PDPL timers T-7/3/1 | compliance queue |
+| 11 | **Sentiment & PR radar** | scrape cron | sentiment score, NPS pulse, viral-traction alert | PR queue |
+| 12 | **What-If sims** | Ctrl+K request | snapshot-only projection models | labeled "not truth" |
+| 13 | **Auto digests** | daily 07:00 **(ADDED)** | CEO briefing assembled from zones → email/chat; country digests | — |
+| 14 | **Dashboard personalization** | role login **(ADDED)** | zone/widget layout per role; saved layouts; compare-mode (today vs yesterday) | admin-published defaults |
+| 15 | **Country orchestrator** | new-country search | auto-map heuristics → **draft** → publish approval | degraded flags per source |
+| 16 | **KPI watchdog** | hourly | targets vs actuals (load <500ms, alert MTTA, ack SLA) → auto-tickets | regression alerts |
+
+---
+
+## 2. DIAGRAMS
+
+### 2.1 Single-Window data architecture (4 tiers → zones → actions)
+```mermaid
+flowchart TB
+subgraph SRC["EVENT SOURCES (outbox · webhooks · scrapers)"]
+  O["orders/shipments/payments"] & A["auth/sessions/attendance"] & S["search/video events"] & H["prometheus · gateways · system_health"] & N["RSS/API news"]
+end
+O --> T1 & T2 & T4
+A --> T1 & T2
+S --> T2
+H --> T1
+N --> NP["NEWS PIPELINE: dedupe SHA256 → sanitize →<br/>AI enrich (sentiment/tags/relevance≥40) → audience route"]
+NP --> T2
+subgraph TIERS["4-TIER STRATEGY"]
+  T1["T1 REAL-TIME 2-5s<br/>Redis PubSub → /ws/admin/telemetry"]
+  T2["T2 CACHE 5-min TTL<br/>cron → Redis JSON"]
+  T3["T3 LEDGER instant SQL<br/>account_balances (cash/VAT/payables)"]
+  T4["T4 NIGHTLY MV/OLAP<br/>trends · health scores · CLV"]
+end
+T1 & T2 & T3 & T4 --> CC["COMMAND CENTER — SINGLE WINDOW (6 Zones)<br/>RLS + role-shaped · freshness badges"]
+CC --> DR["ACTION DRAWER: Alerts · Comms · Roster"]
+CC --> CP["Ctrl+K PALETTE: jump · broadcast · simulate"]
+CC --> DE["DECISION ENGINE cards w/ deep-link buttons"]
+DE --> ESC["ESCALATION TIERS 1→2→3 (timers · SMS/email)"]
+ESC --> AUD[("admin_change_audit_logs · append-only")]
+DE --> OPS["pre-filtered workspaces: refund approve ·<br/>gateway reroute · tax report · fraud queue"]
+```
+
+### 2.2 Escalation lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> RAISED : anomaly/monitor/fraud/ledger-imbalance
+    RAISED --> TIER1 : Country Manager (2h timer)
+    TIER1 --> ACKED : ack + action (deep-link)
+    TIER1 --> TIER2 : timer expiry
+    TIER2 --> ACKED : in-alert Approve/Block
+    TIER2 --> TIER3 : expiry / financial risk
+    TIER3 --> ACKED : SMS+email fallback + red flash
+    ACKED --> AUDITED : who/when/action logged
+    AUDITED --> [*]
+```
+
+### 2.3 News → surfaces routing
+```mermaid
+flowchart LR
+  F["Fetchers (rss/api/scrape)"] --> D["Dedupe + Sanitize"]
+  D --> E["AI: entities→country/module · sentiment · relevance"]
+  E -->|<40| X["Discard (logged)"]
+  E -->|≥40| R["Route by audience"]
+  R -->|admin_only| MR["Market Radar ticker + Regulatory Shield"]
+  R -->|supplier| SI["Supplier Industry Insights"]
+  R -->|public| BL["Storefront Blog (SEO)"]
+  MR --> B["1-click: Draft Internal Broadcast"]
+```
+
+---
+
+## 3. STEP-BY-STEP CONSTRUCTION
+
+**Phase 0 — Audit & freeze.** Read *all* existing Command Center/Dashboard/Analytics code; map duplicates; define unified zone taxonomy + widget catalog; freeze permission strings (`cc.*`) + alert thresholds in config tables. *Done when:* duplicate-feature map signed off; old routes listed for deletion.
+
+**Phase 1 — Schema & MVs.** Alembic (downgrade + contract tests): `search_logs`, `user_sessions`, `system_health_events`, `news_sources/articles`, `escalations`, `broadcasts(+read_confirms)`, `shift_handover_logs`, `grievances`; MVs `supplier_health_scores`, `logistics_sla_alerts`, `daily_trend_aggregates`; RLS + indexes on all. *Done when:* drift gate green.
+
+**Phase 2 — Tier services.** Cron cache jobs (T2) + WS telemetry channel (T1) hooked to order/shipment/auth events; T3 ledger reader; gateway-health monitor + reroute hook; freshness/degraded metadata on every payload. *Done when:* dashboard API < 500ms with 50+ metrics; zero raw-table aggregates in request path.
+
+**Phase 3 — Unified frontend.** Build 6-zone Single Window + Action Drawer + Ctrl+K; role variants (employee-limited / country-filtered / global); **delete old Analytics page**; skeletons, traffic-lights, sparklines, compare-mode, annotations **(ADDED)**, RTL/AR. *Done when:* Playwright E2E on all three role views; Lighthouse green.
+
+**Phase 4 — Human Ops.** Broadcasts + read-confirm; handover enforcement; escalation matrix with timers + audit; entity-attached war-room chat + translate; Safe Box; penalty tracker. *Done when:* unacked Tier-1 auto-escalates in test; every ack audited.
+
+**Phase 5 — News & Shield.** Ingestion workers + dedupe + AI enrichment + routing; Market Radar ticker; Regulatory countdowns wired to ledger VAT; moderation queue + flush-now. *Done when:* 7 clean cron nights; duplicate wire stories deduped 100%.
+
+**Phase 6 — Engine Room & Fraud.** Prometheus/Grafana/Loki embeds; attack map; chargeback/ATO alerts; CDN-by-region health. *Done when:* all 5 infra alert rules fire correctly in chaos test.
+
+**Phase 7 — Decision & Simulation.** Anomaly rule engine + deep-link action cards; What-If simulators (snapshot-only, labeled projections). *Done when:* each card lands on the pre-filtered workspace with action ready.
+
+**Phase 8 — Country Plane wiring.** Ghost-row + 17-tab workspace; orchestrator with degraded flags; downstream syncs (checkout/KYC/moderation/payouts/ETA); localization + residency + legal PDFs; geospatial maps. *Done when:* adding a country changes checkout/KYC/payout behavior with zero deploys.
+
+**Phase 9 — Watchdog, digests & hardening.** KPI watchdog + auto-tickets; daily auto-digests; alert-fatigue controls; load test (k6) on dashboard; security (RLS fail-closed per zone). *Done when:* MTTA/ack-SLA baselines met.
+
+**Phase 10 — Close-out.** Full E2E (CEO/CountryHead/Employee views), heuristics Pytest, schema-drift gate, update `CODEBASE_STATUS_MATRIX_DETAILED.md`. *Done when:* old duplicate pages removed and matrix green.
+
+---
+
+## 4. UI/UX LAYOUT — THE SINGLE WINDOW
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ TOPBAR: [Ctrl+K palette] [country ctx ▼] [ tier-badged] [broadcast ▾]      │
+│ [BANNER: global/local notices — color-coded, dismissible, read-tracked]      │
+├───────────────────────────────────────────────────────────────┬──────────────┤
+│ Z1 HEARTBEAT (live): Orders·GMV·Rev·Buying-vs-Window·Fleet map │ ACTION       │
+│ Z2 TREASURY: cash waterfall·liability dials·VAT countdown·     │ DRAWER       │
+│    gateway heatmap            │ Z3 GROWTH: country map·trends· │ [Alerts▸timers]│
+│                                │  intent radar·gender·CLV       │ [Comms▸war-room]│
+│ Z4 WORKFORCE: roster·tickers·bottlenecks·handover·safe-box     │ [Roster▸perf]│
+│ Z5 INTEL: Market Radar ticker·Regulatory Shield·FX·sentiment   │              │
+│ Z6 ENGINE ROOM: traffic-lights·infra·attack map·chargeback     │              │
+└───────────────────────────────────────────────────────────────┴──────────────┘
+```
+- **Role variants:** Employee = personal KPIs + team roster + announcements only; Country Head = full zones, country-filtered, no global Treasury/Fraud unless granted; Admin/CEO = global + grant management.
+- **Widget grammar:** every card = value + spark/dial + traffic-light + freshness badge + click→filtered workspace; skeletons on load; explicit stale/degraded badges; compare toggle; admin-pinnable annotations ("Ramadan sale start").
+- **Palette examples:** "Show Gateway Health KSA", "Simulate 2% commission drop", "Broadcast maintenance OM", "Pending KYC Saudi".
+- **Mobile:** condensed heartbeat + tier-3 alerts + drawer; push digests; tap→deep-link.
+- **Principles:** glance-first (no 30-query page loads), action-over-observation (every alert has a button), audit-everything, RTL-first Arabic, ARIA/keyboard, density toggle.
+
+> **AI Directive:** implement in Phase order; any dashboard query that live-aggregates transactional tables, any financial widget not sourced from the ledger, any cross-country leak, any un-audited alert/ack, or any silent degraded path violates this spec and Appendix A — STOP and ask.
+
+# _____________________________________________________________________________________________ [ADMIN COMMAND CENTER]
+
+# _____________________________________________________________________________________________ [COUNTRY PAGE SYSTEM & COUNTRY ADDING SYSTEM]
+
+
+
+# _____________________________________________________________________________________________ [COUNTRY PAGE SYSTEM & COUNTRY ADDING SYSTEM]
+
+
+
 
 # _____________________________________________________________________________________________ AI Provider System
 
@@ -2838,110 +3819,6 @@ Response:
 
 
 # _____________________________________________________________________________________________ List of Problem to be fix.
-## Goal
-- Resolve all 82 issues from the ZOZI Platform Full Structural Audit (3 Critical, 24 High, 37 Medium, 18 Low) with detailed fixes.
-
-## Constraints & Preferences
-- No interactive back-and-forth; deliver a consolidated report with file paths, line references, severity, and fixes.
-- Cover project-level, backend, frontend/web_app, frontend/mobile_app, database, Docker/CI, and testing concerns.
-
-## Progress
-### Done
-- **C1**: Verified `alembic/env.py` already imports `models` (line 11) — no fix needed
-- **C2**: Verified root `auth.py` does not exist; only `utils/auth.py` is present — no fix needed
-- **C3**: Consolidated 6 files importing `Base` from `db.database` → `db.base`: `controllers/admin_controller.py`, `db/employee_models.py`, `db/init_db.py`, `db/media_models.py`, `controllers/promotion_controller.py`, `utils/migrations.py`
-- **H3**: Verified `utils/redis_client.py` already uses `settings.redis_url` and caches connections — audit was inaccurate
-- **H4**: Removed duplicate `Product.variants` module-level assignment in `models/products.py`
-- **H5**: Verified `_get_table_args()` does not exist in `models/payments.py` — audit was inaccurate
-- **H6**: Verified `hf_api_token` is NOT in `_BOOL_KEYS` and `presigned_uploads_enabled` has no duplicate keys — audit was inaccurate
-- **H7**: Verified `db/models.py` shim does not exist — no fix needed
-- **H8**: Verified `get_current_user` returns typed `User` (not `dict`) in `utils/dependencies.py` line 35
-- **H9**: Verified `cache_delete` called on profile update at `controllers/auth_controller.py` line 1619
-- **H10**: Verified root `auth.py` does not exist — no fix needed
-- **H11**: Verified `db/migrations/new_tables.py` already deprecated with reference to Alembic migration `20260728_0000`
-- **H13**: Added server-side auth middleware to `frontend/web_app/src/middleware.ts` gating admin/supplier/logistics routes
-- **H14**: Added auth guards to supplier and logistics layouts
-- **H16**: Split `globals.css` — extracted CSS custom properties to `tokens.css`
-- **H17**: Deduplicated country alias maps across 3 files: removed local `countryAliases`/`normalizeCountryCode` from `web_app/src/lib/api/country.ts`, `web_app/src/lib/currencyStore.ts`, and `mobile_app/lib/countrySelection.ts`; all now import from `@shared/localization`
-- **H19**: Replaced 7 client-side direct `fetch()` calls with `apiFetch` for CSRF protection
-- **H21**: Fixed `paymentService.ts` `queryParam()` to use passed URL parameter instead of `window.location`
-- **H22**: Updated `@types/react-native` from `~0.73.0` to `~0.83.0`
-- **H23**: Fixed `LogBox.ignoreAllLogs` to only silence in production
-- **H24**: Changed Jest `testEnvironment` from `'node'` to `'jsdom'`
-- **M10**: Fixed `csrf_middleware.py` and `security_headers.py` to use `settings.app_env` instead of `os.environ["APP_ENV"]`
-- **M39**: Removed hardcoded seed credentials from `db/seed.py` — replaced `admin123`, `supplier123`, `customer123`, `password123` fallbacks with required env vars (`SEED_ADMIN_PASSWORD`, `SEED_SUPPLIER_PASSWORD`, `SEED_CUSTOMER_PASSWORD`, `SEED_LOGISTICS_PASSWORD`, `SEED_EMPLOYEE_PASSWORD`)
-- **L5**: Added `UploadJob` to `models/__init__.py` `__all__` exports
-- **L11**: Removed orphan backup file `package.json.wyJ3QXz5UTYVCJ5vF4RXrbU7AaAMy7-F5hmL-pJuRaM`
-- **L12**: Removed `check.js` throwaway debug script from mobile app root
-- **L13**: Removed `polyfills/react.js` dead code
-- **L17**: Removed duplicate `ProductCard.tsx` from `components/ui/` and its export from `components/ui/index.ts`
-- **L18**: Removed conflicting `web.output` from `app.json` (now authoritative in `app.config.js`)
-
-### In Progress
-- **H1**: Refactor `backend/dependencies.py` (718-line god file) — split router, dependency injector, and re-export facade into separate modules
-- **H2**: Extract service layers from 4 mega-controllers (payments_controller.py 4483 lines, admin_controller.py 4340 lines, logistics_partner_controller.py 3424 lines, auth_controller.py 1958 lines)
-- **H12**: Adopt React Server Components — convert data-heavy pages to server components for SSR/SEO
-- **H15**: Split 8 files exceeding 1,000 lines (countries/page.tsx 3355, variantConfig.ts 2992, treasury-content.tsx 2167, logistics-partner/profile/page.tsx 2141, etc.)
-- **H18**: Add code-splitting — dynamic imports for admin bundle
-- **H20**: Split `mobile_app/lib/api.ts` (2333 lines) into focused modules (token management, API client, endpoints, types, cache)
-- **M1-M14**: Backend medium issues (router dedup, sys.path, session factories, etc.)
-- **M15-M27**: Frontend Web medium issues (layouts, error boundaries, any types, etc.)
-- **M28-M37**: Mobile medium issues (.gitignore, polyfills, EAS config, etc.)
-- **M38-M41**: Database medium issues (migrations, N+1 queries, etc.)
-- **L1-L18**: Low issues (lazy imports, duplicate engine, bcrypt truncation, etc.) — partially addressed
-
-### Blocked
-- (none)
-
-## Key Decisions
-- C1, C2, C3, H4, H6, H10 were already fixed or incorrect in the audit — verified and confirmed
-- H3, H5, H7, H8, H9, H11 were already resolved in prior work — audit was inaccurate on these
-- H17 (country alias dedup) required removing local copies in 3 files and importing from `@shared/localization`
-- M39 (hardcoded seed credentials) replaced fallbacks with required env vars that raise `ValueError` if unset
-- L17 (duplicate ProductCard) removed `components/ui/ProductCard.tsx` and its export; `components/ProductCard.tsx` is the canonical version
-- L18 (conflicting app.json/app.config.js) removed `web.output` from `app.json` since `app.config.js` is authoritative
-
-## Next Steps
-1. Continue with H1: Refactor `backend/dependencies.py` (718-line god file) — split into router, injector, and facade modules
-2. Continue with H2: Extract service layers from 4 mega-controllers
-3. Continue with H12: Adopt React Server Components for data-heavy pages
-4. Continue with H15: Split 8 files exceeding 1,000 lines
-5. Continue with H18: Add code-splitting with dynamic imports
-6. Continue with H20: Split `mobile_app/lib/api.ts` into focused modules
-7. Work through M1-M41 medium issues
-8. Work through remaining L1-L18 low issues
-9. Verify all changes compile and no regressions
-
-## Critical Context
-- Backend uses FastAPI with ~120 auto-discovered routers via `importlib`, causing duplicate prefix collisions
-- `lifespan.py` runs `Base.metadata.create_all` and Alembic auto-migration on startup, plus unconditional seed data
-- `backend/utils/config.py` is a 509-line hand-rolled `Settings` class (not Pydantic `BaseSettings`) with silent fallback defaults
-- `backend/db/database.py` has 5 session factories with inconsistent commit/rollback behavior
-- `backend/auth.py` uses an in-memory dict token blacklist (not shared across workers) and creates a new Redis connection per call
-- `frontend/web_app` and `frontend/mobile_app` both depend on `@shared` monorepo package linked to `../shared/dist` with no build-step enforcement
-- Root `.env` contains plaintext secrets (`SECRET_KEY`, `POSTGRES_PASSWORD`, `STRIPE_SECRET_KEY`) and is referenced by Docker Compose
-
-## Relevant Files
-- `backend/alembic/env.py` — Already imports models (C1 resolved)
-- `backend/auth.py` — Root auth.py does not exist (C2 resolved)
-- `backend/utils/auth.py` — Canonical auth module with Redis-backed token blacklist
-- `backend/utils/redis_client.py` — Centralized Redis client using `settings.redis_url` (H3 resolved)
-- `backend/dependencies.py` — 718-line god file (router + injector + re-export facade) — H1 in progress
-- `backend/utils/dependencies.py` — Separate dependencies file
-- `backend/models/products.py` — Had duplicate Product.variants relationship (H4 fixed)
-- `backend/models/payments.py` — No `_get_table_args()` exists (H5 audit inaccurate)
-- `backend/utils/config.py` — 509-line hand-rolled Settings class (H6 audit inaccurate)
-- `backend/db/base.py` — Declarative Base (single import source for all models)
-- `backend/db/database.py` — Engine/session creation with 5 session helper functions
-- `backend/db/migrations/new_tables.py` — Deprecated raw SQL migration (H11 resolved)
-- `backend/db/seed.py` — Had hardcoded seed passwords (M39 fixed)
-- `backend/models/__init__.py` — Added UploadJob export (L5 fixed)
-- `backend/main.py` — FastAPI entry point with dynamic router loading
-- `backend/lifespan.py` — Startup/shutdown hooks with auto-migration and auto-seed
-- `frontend/web_app/` — Next.js app with 100% client components, no SSR, no auth middleware
-- `frontend/mobile_app/` — React Native app with God file api.ts, broken paymentService.ts
-- `docker-compose.yml` — Docker Compose with bind-mount of source code, no backend healthcheck
-- Root `.env` — Contains plaintext secrets referenced by Docker Compose
 
 # _________________________________________________ 
 

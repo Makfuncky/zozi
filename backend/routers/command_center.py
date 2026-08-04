@@ -13,16 +13,22 @@ from sqlalchemy import func, text
 from data.db import get_db, SessionLocal
 from data.dependencies_auth import get_current_user
 from data.models import (
-    FraudAlert, SystemAlert, ExecutiveNews, CommandCenterView,
+    FraudAlert, SystemAlert, CommandCenterView,
     User, Order, OrderItem, Product, Shipment, LogisticsPartner,
     CountryConfig, SystemHealthEvent, UserSession, ReturnRequest,
     SupportTicket,
 )
 from data.services_database import get_db_sync
-from services.command_center_service import CommandCenterService
+from services.command_center_service import (
+    CommandCenterService,
+    get_safe_scalar,
+    get_safe_fetch,
+    get_safe_count,
+    get_command_center_heartbeat_metrics,
+    count_unresolved_fraud_alerts,
+)
 from utils.dependencies import require_admin
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
 _ALLOWED_TABLES = {
     "orders", "order_items", "shipments", "users", "user_sessions",
     "employees", "system_health_events", "logistics_partners", "accounts",
@@ -40,18 +46,11 @@ def _validate_table_name(table_name: str) -> str:
 
 
 def safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
-    try:
-        return db.execute(text(sql), params or {}).scalar() or 0
-    except Exception:
-        return 0
+    return get_safe_scalar(db, sql, params)
 
 
 def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool = False) -> Any:
-    try:
-        result = db.execute(text(sql), params or {})
-        return result.scalar() if scalar else result.fetchall()
-    except Exception:
-        return 0 if scalar else []
+    return get_safe_fetch(db, sql, params, scalar)
 
 
 def _validate_where_clause(where: str) -> str:
@@ -64,13 +63,7 @@ def _validate_where_clause(where: str) -> str:
 def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
     validated_table = _validate_table_name(table)
     validated_where = _validate_where_clause(where)
-    query = text(f"SELECT COUNT(*) FROM {validated_table} WHERE {validated_where}")
-    if params:
-        query = query.bindparams(**params)
-    try:
-        return db.execute(query).scalar() or 0
-    except Exception:
-        return 0
+    return get_safe_count(db, validated_table, validated_where, params)
 
 
 router = APIRouter()
@@ -151,12 +144,7 @@ def get_system_metrics(
     db: Session = Depends(get_db),
 ) -> SystemMetricsResponse:
     try:
-        health_events = (
-            db.query(SystemHealthEvent)
-            .filter(SystemHealthEvent.created_at >= datetime.now(timezone.utc).replace(hour=0))
-            .offset(skip).limit(limit)
-            .all()
-        )
+        health_events = CommandCenterService(db).get_system_health_events(skip=skip, limit=limit)
         latencies = [float(e.metric_value) for e in health_events if e.metric_name == "api_latency"]
         errors = [float(e.metric_value) for e in health_events if e.metric_name == "error_rate"]
         return SystemMetricsResponse(
@@ -200,13 +188,7 @@ def get_dashboard(
     system_metrics = get_system_metrics(db)
     treasury_metrics = get_treasury_metrics(db)
     
-    alerts = (
-        db.query(SystemAlert)
-        .filter(SystemAlert.is_acknowledged == False)
-        .order_by(SystemAlert.severity.desc(), SystemAlert.created_at.desc())
-        .limit(10)
-        .all()
-    )
+    alerts = CommandCenterService(db).get_unacknowledged_alerts(limit=10)
     
     active_alerts = [
         {
@@ -225,9 +207,7 @@ def get_dashboard(
     user_country = user_country[0] if user_country else "OM"
     headlines = []
     try:
-        articles = db.query(ExecutiveNews).filter(
-            ExecutiveNews.is_published == True
-        ).order_by(ExecutiveNews.published_at.desc()).limit(5).all()
+        articles = CommandCenterService(db).get_executive_news(limit=5)
         
         for article in articles:
             headlines.append({
@@ -255,13 +235,7 @@ def get_fraud_alerts(
     limit: int = Query(10, le=50),
     db: Session = Depends(get_db)
 ) -> List[FraudAlertResponse]:
-    alerts = (
-        db.query(FraudAlert)
-        .filter(FraudAlert.is_resolved == False)
-        .order_by(FraudAlert.created_at.desc())
-        .limit(limit)
-        .all()
-    )
+    alerts = CommandCenterService(db).get_fraud_alerts(limit=limit, unresolved_only=True)
     
     return [
         FraudAlertResponse(
@@ -282,11 +256,7 @@ def get_executive_news(
     category: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ) -> List[NewsArticleResponse]:
-    query = db.query(ExecutiveNews).filter(ExecutiveNews.is_published == True)
-    if category:
-        query = query.filter(ExecutiveNews.category == category)
-    
-    articles = query.order_by(ExecutiveNews.published_at.desc()).limit(limit).all()
+    articles = CommandCenterService(db).get_executive_news(category=category, limit=limit)
     
     return [
         NewsArticleResponse(
@@ -309,11 +279,7 @@ def get_command_center_headlines(
     category: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ) -> List[NewsArticleResponse]:
-    query = db.query(ExecutiveNews).filter(ExecutiveNews.is_published == True)
-    if category:
-        query = query.filter(ExecutiveNews.category == category)
-    
-    articles = query.order_by(ExecutiveNews.published_at.desc()).limit(limit).all()
+    articles = CommandCenterService(db).get_executive_news(category=category, limit=limit)
     
     return [
         NewsArticleResponse(
@@ -339,20 +305,8 @@ def create_executive_news(
     title = payload.get("title")
     if not title:
         raise HTTPException(status_code=400, detail="title is required")
-    article = ExecutiveNews(
-        title=title,
-        summary=payload.get("summary"),
-        content=payload.get("content"),
-        url=payload.get("url"),
-        category=payload.get("category", "general"),
-        priority=payload.get("priority", "normal"),
-        country_code=payload.get("country_code"),
-        is_published=bool(payload.get("is_published", True)),
-        ai_sentiment=payload.get("ai_sentiment", "neutral"),
-        published_at=datetime.now(timezone.utc),
-    )
-    add_and_flush(db, article)
-    commit_and_refresh(db, article)
+    service = CommandCenterService(db)
+    article = service.create_executive_news(payload)
     return NewsArticleResponse(
         id=article.id,
         title=article.title,
@@ -371,11 +325,11 @@ def delete_executive_news(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    article = db.query(ExecutiveNews).filter(ExecutiveNews.id == news_id).first()
+    service = CommandCenterService(db)
+    article = service.get_executive_news_by_id(news_id)
     if not article:
         raise HTTPException(status_code=404, detail="News article not found")
-    delete_only(db, article)
-    commit_only(db)
+    service.delete_executive_news(article)
     return {"message": "Deleted", "id": news_id}
 
 
@@ -384,11 +338,7 @@ def get_alerts(
     severity: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ) -> List[AlertResponse]:
-    query = db.query(SystemAlert).filter(SystemAlert.is_acknowledged == False)
-    if severity:
-        query = query.filter(SystemAlert.severity == severity)
-    
-    alerts = query.order_by(SystemAlert.created_at.desc()).limit(20).all()
+    alerts = CommandCenterService(db).get_alerts(severity=severity, acknowledged=False, limit=20)
     
     return [
         AlertResponse(
@@ -410,11 +360,11 @@ def resolve_alert(
     _: dict = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    alert = db.query(SystemAlert).filter(SystemAlert.id == alert_id).first()
+    service = CommandCenterService(db)
+    alert = service.get_alert_by_id(alert_id)
     if not alert:
         raise HTTPException(status_code=404, detail="Alert not found")
-    alert.is_acknowledged = True
-    commit_only(db)
+    service.resolve_alert(alert)
     return {"message": "Alert resolved", "id": alert_id}
 
 
@@ -426,31 +376,25 @@ def get_dashboard_stats(
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     
-    users_count = db.query(User).count()
-    orders_today = db.query(Order).filter(Order.created_at >= today_start).count()
-    orders_pending = db.query(Order).filter(Order.status == "pending").count()
-    shipments = db.query(Shipment).filter(Shipment.status == "delayed").count()
-    fraud_events = db.query(FraudAlert).filter(
-        FraudAlert.created_at >= datetime.now(timezone.utc).replace(hour=0)
-    ).count()
+    stats = CommandCenterService(db).get_dashboard_stats(today_start)
     
     return {
         "users": {
-            "customers": db.query(User).filter(User.role == "customer").count(),
-            "suppliers": db.query(User).filter(User.role == "supplier").count(),
+            "customers": stats["customers"],
+            "suppliers": stats["suppliers"],
             "employees": 12,
-            "logistics_companies": db.query(LogisticsPartner).count(),
+            "logistics_companies": stats["logistics_companies"],
             "logistics_individuals": 0,
         },
         "logistics": {
-            "active": db.query(LogisticsPartner).filter(LogisticsPartner.status == "active").count(),
+            "active": stats["active"],
             "issues": shipments,
         },
         "orders": {
             "today": orders_today,
             "pending": orders_pending,
             "delayed": shipments,
-            "failed": db.query(Order).filter(Order.status == "failed").count(),
+            "failed": stats["failed"],
         },
         "finance": {
             "pending_payouts": 85000.00,
@@ -458,7 +402,7 @@ def get_dashboard_stats(
         },
         "fraud": {
             "events_24h": fraud_events,
-            "alerts_pending": db.query(FraudAlert).filter(FraudAlert.is_resolved == False).count(),
+            "alerts_pending": count_unresolved_fraud_alerts(db),
             "suspicious_ips": 0,
         },
         "revenue": {
@@ -467,9 +411,7 @@ def get_dashboard_stats(
             "gmv": 300000.00,
         },
         "system": {
-            "active_sessions": db.query(UserSession).filter(
-                UserSession.last_activity >= datetime.now(timezone.utc).replace(hour=0)
-            ).count(),
+            "active_sessions": stats["active_sessions"],
             "window_shoppers": 45,
         },
         "trends": {"top_categories": []},
@@ -512,25 +454,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
                     one_hour_ago = now - timedelta(hours=1)
 
-                    def safe_scalar(sql: str, params: dict | None = None):
-                        try:
-                            return db.execute(text(sql), params or {}).scalar() or 0
-                        except Exception:
-                            return 0
-
-                    heartbeat = {
-                        "today_orders": safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE created_at >= :today", {"today": today_start}),
-                        "today_revenue": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "today_gmv": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "delayed_orders": int(safe_scalar(db, "SELECT COUNT(*) FROM shipments WHERE status = 'delayed' AND estimated_delivery < :now", {"now": now})),
-                        "failed_deliveries": int(safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE status = 'failed' AND created_at >= :today", {"today": today_start})),
-                        "active_customers_buying": int(safe_scalar(db, "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "active_customers_window_shopping": int(safe_scalar(db, "SELECT COUNT(*) FROM user_sessions WHERE last_activity >= :active AND is_active = true", {"active": now - timedelta(minutes=10)})),
-                        "employees_working": int(safe_scalar(db, "SELECT COUNT(*) FROM employees WHERE employment_status = 'active'")),
-                        "system_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM system_health_events WHERE severity IN ('error', 'critical') AND created_at >= :since", {"since": one_hour_ago})),
-                        "active_logistics_partners": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active'")),
-                        "logistics_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active' AND verification_status = 'rejected'")),
-                    }
+                    heartbeat = get_command_center_heartbeat_metrics(db, now)
 
                     await websocket.send_json({"type": "heartbeat", "data": heartbeat, "timestamp": now.isoformat()})
             except Exception:

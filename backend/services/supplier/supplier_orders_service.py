@@ -20,8 +20,20 @@ from sqlalchemy.orm import Session
 
 from data.models import Order, OrderItem, SupplierProfile, User
 from data.services_write_helpers import commit_only
+from services.storage import storage as _storage
 
 logger = logging.getLogger(__name__)
+
+
+def delete_parcel_proof_files(db: Session, order_id: int) -> None:
+    """Remove all existing reference_* files from parcel-proof storage for the given order."""
+    prefix = f"parcel_proofs/{order_id}/"
+    for old_ref in _storage.list(prefix):
+        if old_ref.split("/")[-1].startswith("reference_"):
+            try:
+                _storage.delete(old_ref)
+            except Exception:
+                pass
 
 
 # ── Helper: extract user ID from either a dict or a User ORM model ─────

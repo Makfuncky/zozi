@@ -81,6 +81,7 @@ class LogisticsPartnerServiceArea(Base, TenantMixin):
 
     origin_city = Column(String, nullable=False)
     city_name = Column(String, nullable=False)
+    country_name = Column(String, nullable=True)
     zone_label = Column(String, nullable=True)
     charge_amount = Column(Numeric(10, 2), nullable=True)
     minimum_charge = Column(Numeric(10, 2), nullable=True)

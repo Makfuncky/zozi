@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from controllers.commerce.coupons_controller import build_coupon_quote
 from controllers.commerce.promotion_controller import calculate_order_tier_discount, record_order_tier_ledger
-from services.catalog.product_utils import resolve_product_variant
+from data.catalog_product_utils import resolve_product_variant
 from data.services_orders import (
     apply_order_status_change,
     build_order_payment_snapshot,
@@ -62,6 +62,7 @@ from services.orders_write_service import (
 from utils.order_tracking import build_order_tracking_payload, derive_order_financials, normalize_shipment_event_type, order_status_label, reconcile_order_status, shipment_scan_codes
 from utils.redis_client import get_redis
 from utils.ip_utils import get_request_ip
+from services.orders.orders_router_service import get_order_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ def _load_shipments_for_orders(order_ids: list[int], db: Session) -> dict[int, l
         return {}
 
     shipments = (
-        db.query(Shipment)
+        _db_shipment_query_0(db)
         .filter(Shipment.order_id.in_(order_ids))
         .order_by(Shipment.order_id.asc(), Shipment.created_at.asc(), Shipment.id.asc())
         .all()
@@ -92,7 +93,7 @@ def _load_events_for_shipments(shipment_ids: list[int], db: Session) -> dict[int
         return {}
 
     events = (
-        db.query(ShipmentEvent)
+        _db_shipmentevent_query_1(db)
         .filter(ShipmentEvent.shipment_id.in_(shipment_ids))
         .order_by(ShipmentEvent.created_at.asc(), ShipmentEvent.id.asc())
         .all()
@@ -126,7 +127,7 @@ def _build_shipping_address(order: OrderCreate) -> str | None:
 def _save_customer_delivery_profile(current_user: dict, order: OrderCreate, db: Session) -> None:
     if not order.save_to_profile:
         return
-    user = db.query(User).filter(User.id == current_user["id"]).first()
+    user = _db_user_first_2(db, current_user, id)
     if not user:
         return
 
@@ -170,10 +171,9 @@ def _load_products_for_order(order: OrderCreate, db: Session) -> Tuple[Dict[int,
     # Use SELECT FOR UPDATE to lock the rows and prevent overselling under concurrency
     products = {
         cast(int, cast(Any, product).id): product
-        for product in db.query(Product).options(selectinload(Product.variants)).filter(
-            Product.id.in_(requested_quantities.keys()),
-            Product.is_deleted == False,  # noqa: E712
-        ).with_for_update().all()
+        _db_product_all_3(db, False, id, in_, keys, requested_quantities)
+
+
     }
 
     for item in order.items:
@@ -183,7 +183,7 @@ def _load_products_for_order(order: OrderCreate, db: Session) -> Tuple[Dict[int,
         variant = resolve_product_variant(product, item.selected_size, item.selected_color)
         has_variants = bool(getattr(product, "variants", []) or [])
         if has_variants and ((item.selected_size or "").strip() or (item.selected_color or "").strip()) and variant is None:
-            raise HTTPException(status_code=422, detail=f"Selected variant is not available for '{product.name}'")
+            raise HTTPException(status_code=422, detail="Selected variant is not available for '" + str(product.name) + "'")
 
     for product_id, requested_quantity in requested_quantities.items():
         product = products.get(product_id)
@@ -302,7 +302,7 @@ def _group_supplier_totals(
     if supplier_totals:
         supplier_profiles = {
             cast(int, profile.user_id): profile
-            for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_totals.keys())).all()
+            _db_supplierprofile_all_4(db, in_, keys, supplier_totals, user_id)
         }
         for supplier_id, metrics in supplier_totals.items():
             profile = supplier_profiles.get(supplier_id)
@@ -345,7 +345,7 @@ def _quote_supplier_groups(
 
     supplier_ids = list(supplier_totals.keys())
     zones = (
-        db.query(ShippingZone)
+        _db_shippingzone_query_5(db)
         .filter(
             ShippingZone.supplier_id.in_(supplier_ids),
             ShippingZone.is_active == True,  # noqa: E712
@@ -931,7 +931,7 @@ def preview_order(order: OrderCreate, current_user: dict, db: Session) -> dict[s
 
 def get_orders(current_user: dict, db: Session, *, skip: int = 0, limit: int = 50) -> List[Order]:
     orders = (
-        db.query(Order)
+        _db_order_query_6(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.user_id == current_user["id"])
         .order_by(Order.created_at.desc())
@@ -959,7 +959,7 @@ def get_orders(current_user: dict, db: Session, *, skip: int = 0, limit: int = 5
 
 def get_order(order_id: int, current_user: dict, db: Session) -> Order:
     order = (
-        db.query(Order)
+        _db_order_query_7(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(
             Order.id == order_id,
@@ -990,7 +990,7 @@ def _supplier_can_access_order(order: Order, supplier_id: int) -> bool:
 
 
 def _get_logistics_partner_for_user(user_id: int | None, db: Session) -> LogisticsPartner:
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+    partner = _db_logisticspartner_first_8(db, user_id)
     if not partner:
         raise HTTPException(status_code=403, detail="No logistics partner profile found")
     return partner
@@ -1090,7 +1090,7 @@ def _build_supply_chain_timeline(shipments: list[Shipment], events: list[Shipmen
 
 def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
     order = (
-        db.query(Order)
+        _db_order_query_9(db)
         .options(
             selectinload(Order.items).selectinload(OrderItem.product),
             selectinload(Order.shipments).selectinload(Shipment.carrier),
@@ -1111,10 +1111,10 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
     elif order.user_id != user_id:
         raise HTTPException(status_code=403, detail="You do not have access to this order invoice")
 
-    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).order_by(Shipment.created_at.asc()).all()
+    shipments = _db_shipment_all_10(db, order_id)
     shipment_ids = [shipment.id for shipment in shipments]
     events = (
-        db.query(ShipmentEvent)
+        _db_shipmentevent_query_11(db)
         .filter(ShipmentEvent.shipment_id.in_(shipment_ids))
         .order_by(ShipmentEvent.created_at.asc())
         .all()
@@ -1124,7 +1124,7 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
 
     supplier_ids = sorted({item.product.supplier_id for item in order.items if item.product and item.product.supplier_id})
     suppliers = (
-        db.query(User).filter(User.id.in_(supplier_ids)).all()
+        _db_user_all_12(db, id, in_, supplier_ids)
         if supplier_ids
         else []
     )
@@ -1203,7 +1203,7 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
 
 
 def confirm_order_scan_receipt(order_id: int, data: dict, current_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -1217,7 +1217,7 @@ def confirm_order_scan_receipt(order_id: int, data: dict, current_user: dict, db
         raise HTTPException(status_code=422, detail="scan_code is required")
 
     shipments = (
-        db.query(Shipment)
+        _db_shipment_query_13(db)
         .filter(Shipment.order_id == order_id)
         .order_by(Shipment.created_at.asc(), Shipment.id.asc())
         .all()
@@ -1270,7 +1270,7 @@ def confirm_order_scan_receipt(order_id: int, data: dict, current_user: dict, db
 
 
 def get_order_tracking(order_id: int, current_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -1287,7 +1287,7 @@ def get_order_tracking(order_id: int, current_user: dict, db: Session) -> dict:
     elif order.user_id != user_id:
         raise HTTPException(status_code=403, detail="You do not have access to this order tracking")
 
-    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).order_by(Shipment.created_at.asc()).all()
+    shipments = _db_shipment_all_14(db, order_id)
     if partner is not None:
         shipments = [shipment for shipment in shipments if shipment.assigned_partner_id == partner.id]
         if not shipments:
@@ -1295,7 +1295,7 @@ def get_order_tracking(order_id: int, current_user: dict, db: Session) -> dict:
 
     shipment_ids = [shipment.id for shipment in shipments]
     events = (
-        db.query(ShipmentEvent)
+        _db_shipmentevent_query_15(db)
         .filter(ShipmentEvent.shipment_id.in_(shipment_ids))
         .order_by(ShipmentEvent.created_at.asc())
         .all()
@@ -1303,7 +1303,7 @@ def get_order_tracking(order_id: int, current_user: dict, db: Session) -> dict:
         else []
     )
     confirmations = (
-        db.query(ShipmentConfirmation)
+        _db_shipmentconfirmation_query_16(db)
         .filter(ShipmentConfirmation.shipment_id.in_(shipment_ids))
         .order_by(ShipmentConfirmation.created_at.desc(), ShipmentConfirmation.id.desc())
         .all()
@@ -1311,7 +1311,7 @@ def get_order_tracking(order_id: int, current_user: dict, db: Session) -> dict:
         else []
     )
     return_request = (
-        db.query(ReturnRequest)
+        _db_returnrequest_query_17(db)
         .filter(ReturnRequest.order_id == order_id)
         .order_by(ReturnRequest.created_at.desc())
         .first()
@@ -1342,10 +1342,9 @@ def respond_to_shipment_confirmation(
     current_user: dict,
     db: Session,
 ) -> dict:
-    confirmation = db.query(ShipmentConfirmation).filter(
-        ShipmentConfirmation.id == confirmation_id,
-        ShipmentConfirmation.order_id == order_id,
-    ).first()
+    confirmation = _db_shipmentconfirmation_first_18(db, confirmation_id, id, order_id)
+
+
     if not confirmation:
         raise HTTPException(status_code=404, detail="Confirmation request not found")
 
@@ -1362,7 +1361,7 @@ def respond_to_shipment_confirmation(
         raise HTTPException(status_code=422, detail="decision must be one of: accepted, rejected")
 
     response_notes = str(data.get("response_notes") or data.get("notes") or "").strip() or None
-    shipment = db.query(Shipment).filter(Shipment.id == confirmation.shipment_id).first()
+    shipment = _db_shipment_first_19(db, confirmation, id, shipment_id)
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
@@ -1413,9 +1412,9 @@ def respond_to_shipment_confirmation(
             )
         )
 
-        order = db.query(Order).filter(Order.id == shipment.order_id).first()
+        order = _db_order_first_20(db, id, order_id, shipment)
         if order is not None:
-            order_shipments = db.query(Shipment).filter(Shipment.order_id == order.id).all()
+            order_shipments = _db_shipment_all_21(db, id, order, order_id)
             new_order_status = reconcile_order_status(order, order_shipments)
             order.status = new_order_status
 
@@ -1473,7 +1472,7 @@ def respond_to_shipment_confirmation(
 
 
 def confirm_order_receipt_scan(order_id: int, data: dict, current_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -1485,7 +1484,7 @@ def confirm_order_receipt_scan(order_id: int, data: dict, current_user: dict, db
     if not scan_code:
         raise HTTPException(status_code=422, detail="scan_code is required")
 
-    shipments = db.query(Shipment).filter(Shipment.order_id == order_id).all()
+    shipments = _db_shipment_all_22(db, order_id)
     if not shipments:
         raise HTTPException(status_code=404, detail="No shipments found for this order")
 
@@ -1500,7 +1499,7 @@ def confirm_order_receipt_scan(order_id: int, data: dict, current_user: dict, db
     matched.status = "delivered"
     matched.actual_delivery = matched.actual_delivery or _utcnow()
     matched.updated_at = matched.actual_delivery
-    order_shipments = db.query(Shipment).filter(Shipment.order_id == order_id).all()
+    order_shipments = _db_shipment_all_23(db, order_id)
     order.status = reconcile_order_status(order, order_shipments)
 
     add_and_flush(db, 
@@ -1538,10 +1537,9 @@ def confirm_order_receipt_scan(order_id: int, data: dict, current_user: dict, db
 
 
 def cancel_order(order_id: int, current_user: dict, db: Session) -> Order:
-    order = db.query(Order).filter(
-        Order.id == order_id,
-        Order.user_id == current_user["id"],
-    ).first()
+    order = _db_order_first_24(db, current_user, id, order_id, user_id)
+
+
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status not in ("pending", "confirmed"):

@@ -941,7 +941,7 @@ class ThreatFeedUpdater:
             self.db.commit()
             return count
         except Exception as e:
-            logger.error(f"Failed to update Tor list: {e}")
+            logger.error("Failed to update Tor list: " + str(e))
             return 0
     
     def _update_proxy_list(self) -> int:
@@ -959,7 +959,7 @@ class ThreatFeedUpdater:
                 except redis.exceptions.ResponseError:
                     pass
         except Exception as e:
-            logger.error(f"Failed to update proxy list: {e}")
+            logger.error("Failed to update proxy list: " + str(e))
         return count
     
     def _update_hosting_asns(self) -> int:
@@ -975,7 +975,7 @@ class ThreatFeedUpdater:
                 except redis.exceptions.ResponseError:
                     pass
         except Exception as e:
-            logger.error(f"Failed to update hosting ASNs: {e}")
+            logger.error("Failed to update hosting ASNs: " + str(e))
         return count
 
 

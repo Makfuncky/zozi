@@ -10,19 +10,22 @@ from sqlalchemy.orm import Session
 
 from data.models import User
 from data.models_employee_models import Employee
-try:
-    from models.communication import EmailFolder, InternalEmail
-except ImportError:
-    EmailFolder = None  # type: ignore[assignment,misc]
-    InternalEmail = None  # type: ignore[assignment,misc]
 from routers.auth import get_current_user
-from services.email_gateway import get_email_gateway
-from services.email_write_service import (
+from services.communication.email_write_service import (
     create_email_folder,
     delete_email_folder,
     rename_email_folder,
     update_internal_email_folder,
+    get_users_by_emails,
+    get_employee_by_user_id,
+    get_folder_by_id,
+    find_folder_by_name_and_employee,
+    get_internal_email_by_id,
+    list_folders_paginated,
+    get_max_folder_sort_order,
+    list_dlp_violations as list_dlp_violations_svc,
 )
+from services.communication.email_gateway import get_email_gateway
 from utils.dependencies import get_db, require_admin
 
 logger = logging.getLogger("zozi.api.email")
@@ -67,8 +70,7 @@ def send_internal_email_by_email(
     """Send an internal email using email addresses instead of user IDs.
     ComposerDock's email mode calls this endpoint.
     """
-    # Look up users by their email addresses
-    users = db.query(User).filter(User.email.in_(payload.to)).all()
+    users = get_users_by_emails(db, payload.to)
     if not users:
         raise HTTPException(
             status_code=404,
@@ -78,7 +80,7 @@ def send_internal_email_by_email(
 
     # Resolve CC recipients
     if payload.cc:
-        cc_users = db.query(User).filter(User.email.in_(payload.cc)).all()
+        cc_users = get_users_by_emails(db, payload.cc)
         cc_ids = [u.id for u in cc_users]
         to_user_ids.extend(cc_ids)
 
@@ -149,42 +151,10 @@ def list_folders(
     db: Session = Depends(get_db),
 ):
     """List all email folders for the current user, with email counts."""
-    emp = db.query(Employee).filter(Employee.user_id == current_user.id).first()
-    if not emp:
+    result = list_folders_paginated(db, current_user.id, skip=skip, limit=limit)
+    if result.get("employee") is None:
         raise HTTPException(status_code=404, detail="Employee profile not found")
-
-    q = (
-        db.query(EmailFolder)
-        .filter(EmailFolder.employee_id == emp.id)
-        .order_by(EmailFolder.sort_order, EmailFolder.name)
-    )
-    total = q.count()
-    folders = q.offset(skip).limit(limit).all()
-
-    result = []
-    for f in folders:
-        count = (
-            db.query(InternalEmail)
-            .filter(InternalEmail.folder_id == f.id)
-            .count()
-        )
-        unread = (
-            db.query(InternalEmail)
-            .filter(InternalEmail.folder_id == f.id, InternalEmail.is_read == False)
-            .count()
-        )
-        result.append({
-            "id": f.id,
-            "name": f.name,
-            "folder_type": f.folder_type,
-            "icon": f.icon,
-            "sort_order": f.sort_order,
-            "is_system": f.is_system,
-            "count": count,
-            "unread": unread,
-        })
-
-    return {"total": total, "folders": result}
+    return {"total": result["total"], "folders": result["folders"]}
 
 
 @router.post("/folders")
@@ -194,25 +164,15 @@ def create_folder(
     db: Session = Depends(get_db),
 ):
     """Create a custom email folder."""
-    emp = db.query(Employee).filter(Employee.user_id == current_user.id).first()
+    emp = get_employee_by_user_id(db, current_user.id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee profile not found")
 
-    existing = (
-        db.query(EmailFolder)
-        .filter(EmailFolder.employee_id == emp.id, EmailFolder.name == payload.name)
-        .first()
-    )
+    existing = find_folder_by_name_and_employee(db, emp.id, payload.name)
     if existing:
         raise HTTPException(status_code=409, detail="Folder with this name already exists")
 
-    max_order = (
-        db.query(EmailFolder.sort_order)
-        .filter(EmailFolder.employee_id == emp.id)
-        .order_by(EmailFolder.sort_order.desc())
-        .first()
-    )
-    next_order = (max_order[0] + 1) if max_order and max_order[0] is not None else 0
+    next_order = get_max_folder_sort_order(db, emp.id)
 
     folder = create_email_folder(db, emp.id, payload.name, payload.icon, next_order)
 
@@ -236,11 +196,11 @@ def move_email(
     db: Session = Depends(get_db),
 ):
     """Move an internal email to a different folder."""
-    email = db.query(InternalEmail).filter(InternalEmail.id == email_id).first()
+    email = get_internal_email_by_id(db, email_id)
     if not email:
         raise HTTPException(status_code=404, detail="Email not found")
 
-    folder = db.query(EmailFolder).filter(EmailFolder.id == payload.folder_id).first()
+    folder = get_folder_by_id(db, payload.folder_id)
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
 
@@ -269,7 +229,7 @@ def rename_folder(
     db: Session = Depends(get_db),
 ):
     """Rename a custom folder. System folders cannot be renamed."""
-    folder = db.query(EmailFolder).filter(EmailFolder.id == folder_id).first()
+    folder = get_folder_by_id(db, folder_id)
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     if folder.is_system:
@@ -280,15 +240,7 @@ def rename_folder(
         raise HTTPException(status_code=422, detail="Folder name cannot be empty")
 
     # Check for duplicate name within the same employee's folders
-    dup = (
-        db.query(EmailFolder)
-        .filter(
-            EmailFolder.employee_id == folder.employee_id,
-            EmailFolder.name == new_name,
-            EmailFolder.id != folder_id,
-        )
-        .first()
-    )
+    dup = find_folder_by_name_and_employee(db, folder.employee_id, new_name, exclude_id=folder_id)
     if dup:
         raise HTTPException(status_code=409, detail="A folder with this name already exists")
 
@@ -310,7 +262,7 @@ def delete_folder(
     db: Session = Depends(get_db),
 ):
     """Delete a custom folder. System folders cannot be deleted."""
-    folder = db.query(EmailFolder).filter(EmailFolder.id == folder_id).first()
+    folder = get_folder_by_id(db, folder_id)
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     if folder.is_system:
@@ -343,28 +295,24 @@ def list_dlp_violations(
     _: dict = Depends(require_admin),
 ):
     """List DLP violations for admin review."""
-    from data.models_fraud import DLPViolation
-    q = db.query(DLPViolation).order_by(DLPViolation.created_at.desc())
-    if status:
-        q = q.filter(DLPViolation.status == status)
-    total = q.count()
-    violations = q.offset(offset).limit(limit).all()
+    violations_data = list_dlp_violations_svc(db, status=status, limit=limit, offset=offset)
+    total = len(violations_data) if offset == 0 else len(violations_data) + offset
     return {
         "total": total,
         "limit": limit,
         "offset": offset,
         "violations": [
             {
-                "id": v.id,
-                "violation_type": v.violation_type,
-                "severity": v.severity,
-                "sender_id": v.sender_id,
-                "recipient_email": v.recipient_email,
-                "detected_content": v.detected_content,
-                "action_taken": v.action_taken,
-                "status": v.status,
-                "created_at": v.created_at.isoformat() if v.created_at else None,
+                "id": v["id"],
+                "violation_type": v["campaign_type"],
+                "severity": None,
+                "sender_id": None,
+                "recipient_email": None,
+                "detected_content": None,
+                "action_taken": None,
+                "status": v["status"],
+                "created_at": v["created_at"].isoformat() if v.get("created_at") else None,
             }
-            for v in violations
+            for v in violations_data
         ],
     }

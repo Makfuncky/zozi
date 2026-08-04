@@ -3,7 +3,7 @@ from typing import Any, List, cast
 
 from fastapi import HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session
 
 from services.orders.cart_shipping_service import (
     _load_products_for_order,
@@ -16,10 +16,14 @@ from services.commerce.cart_write_service import (
     delete_cart_item_by_variant,
     upsert_cart_item,
     sync_cart_items,
+    load_cart_items,
+    get_products_by_ids,
+    get_active_product_by_id,
+    get_cart_item_by_variant,
 )
 from data.models import CartItem, Product
 from data.schemas import OrderCreate
-from services.catalog.product_utils import resolve_product_variant
+from data.catalog_product_utils import resolve_product_variant
 from data.services_logistics_partner_pricing import quote_shipping_for_destination
 from utils.config import settings
 
@@ -88,19 +92,14 @@ def _cart_row(item: CartItem) -> dict[str, Any]:
 
 
 def _load_cart_items(user_id: int, db: Session) -> list[CartItem]:
-    return (
-        db.query(CartItem)
-        .options(joinedload(CartItem.product).selectinload(Product.variants))
-        .filter(CartItem.user_id == user_id)
-        .all()
-    )
+    return load_cart_items(db, user_id)
 
 
 def _resolve_variant_or_raise(product: Product, selected_size: str | None, selected_color: str | None):
     variant = resolve_product_variant(product, selected_size, selected_color)
     has_variants = bool(getattr(product, "variants", []) or [])
     if has_variants and (_normalize_variant(selected_size) or _normalize_variant(selected_color)) and variant is None:
-        raise HTTPException(status_code=422, detail=f"Selected variant is not available for '{product.name}'")
+        raise HTTPException(status_code=422, detail="Selected variant is not available for '" + str(product.name) + "'")
     return variant
 
 
@@ -129,13 +128,7 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> List[dict]:
     product_ids = sorted({item.product_id for item in body.items})
     products = {
         p.id: p
-        for p in db.query(Product)
-        .options(selectinload(Product.variants))
-        .filter(
-            Product.id.in_(product_ids),
-            Product.is_deleted.is_(False),
-        )
-        .all()
+        for p in get_products_by_ids(db, product_ids)
     }
 
     normalized_items: dict[tuple[int, str, str], CartItemIn] = {}
@@ -187,10 +180,7 @@ def upsert_cart_item(user_id: int, product_id: int, quantity: int, selected_size
     if quantity <= 0:
         return remove_cart_item(user_id, product_id, selected_size, selected_color, db)
 
-    product = db.query(Product).options(selectinload(Product.variants)).filter(
-        Product.id == product_id,
-        Product.is_deleted.is_(False),
-    ).first()
+    product = get_active_product_by_id(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
@@ -202,15 +192,8 @@ def upsert_cart_item(user_id: int, product_id: int, quantity: int, selected_size
     if available_stock < qty:
         raise HTTPException(status_code=409, detail=f"Insufficient stock for '{product.name}'")
 
-    existing = (
-        db.query(CartItem)
-        .filter(
-            CartItem.user_id == user_id,
-            CartItem.product_id == product_id,
-            CartItem.selected_size == normalized_size,
-            CartItem.selected_color == normalized_color,
-        )
-        .first()
+    existing = get_cart_item_by_variant(
+        db, user_id, product_id, normalized_size, normalized_color
     )
     upsert_cart_item(db, user_id, product_id, qty, normalized_size, normalized_color, existing)
     return get_cart(user_id, db)

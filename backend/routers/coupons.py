@@ -6,13 +6,17 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, sta
 from sqlalchemy.orm import Session
 
 from data.dependencies_auth import get_current_user
+from services.commerce.coupons_read_service import get_available_coupons, get_coupon_by_code, apply_coupon_to_order, get_user_coupon_usage
+from services.commerce.coupons_write_service import create_coupon as svc_create_coupon, delete_coupon as svc_delete_coupon, get_coupon_by_code_or_id, coupon_has_usage
+from services.catalog.products_write_service import (
+    get_active_coupon_by_code, get_coupon_by_code, build_coupon_query,
+)
 from data.db import get_db
 from data.schemas import CursorPage
-from data.models import Coupon, CouponUsage
 from utils.datetime_utils import utcnow
 from utils.pagination import cursor_paginate_desc
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
+
 router = APIRouter()
 
 
@@ -94,7 +98,7 @@ def validate_coupon(
     if not code or order_amount is None:
         return {"valid": False, "error": "code and order_amount are required"}
 
-    coupon = db.query(Coupon).filter(Coupon.code == code, Coupon.is_active == True).first()
+    coupon = get_active_coupon_by_code(db, code)
     if coupon is None:
         return {"valid": False, "error": "Coupon not found"}
 
@@ -142,7 +146,7 @@ def validate_coupon(
 
 @router.get("", response_model=CursorPage)
 def list_coupons(_: dict = Depends(_require_admin), db: Session = Depends(get_db), cursor: str | None = Query(None, description="Cursor for next page"), limit: int = Query(20, ge=1, le=100)):
-    q = db.query(Coupon).order_by(Coupon.id.desc())
+    q = build_coupon_query(db)
     return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
 
 
@@ -157,7 +161,7 @@ def create_coupon(
     code = str(payload.get("code") or "").strip().upper()
     if not code:
         raise HTTPException(status_code=422, detail="Coupon code is required")
-    if db.query(Coupon).filter(Coupon.code == code).first() is not None:
+    if get_coupon_by_code(db, code) is not None:
         raise HTTPException(status_code=409, detail="Coupon already exists")
 
     discount_type = _normalize_discount_type(payload.get("discount_type") or "percent")
@@ -175,7 +179,8 @@ def create_coupon(
     if usage_limit_raw not in (None, "", "none", "null", "nan"):
         usage_limit = _to_int(usage_limit_raw)
 
-    coupon = Coupon(
+    return svc_create_coupon(
+        db,
         code=code,
         title=payload.get("title"),
         description=payload.get("description"),
@@ -189,19 +194,15 @@ def create_coupon(
         starts_at=starts_at,
         expires_at=expires_at,
     )
-    add_and_flush(db, coupon)
-    commit_and_refresh(db, coupon)
-    return coupon
 
 
 @router.delete("/{coupon_id}")
 def delete_coupon(coupon_id: str, _: dict = Depends(_require_admin), db: Session = Depends(get_db)):
-    coupon = db.query(Coupon).filter((Coupon.code == coupon_id) | (Coupon.id == int(coupon_id) if coupon_id.isdigit() else False)).first()
+    coupon = get_coupon_by_code_or_id(db, coupon_id)
     if coupon is None:
         raise HTTPException(status_code=404, detail="Coupon not found")
-    if db.query(CouponUsage).filter(CouponUsage.coupon_id == coupon.id).first() is not None:
+    if coupon_has_usage(db, coupon.id):
         raise HTTPException(status_code=409, detail="Archive or disable it instead of deleting a coupon with usage history")
-    delete_only(db, coupon)
-    commit_only(db)
+    svc_delete_coupon(db, coupon)
     return {"message": "Deleted"}
 

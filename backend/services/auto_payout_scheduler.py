@@ -108,7 +108,7 @@ def run_auto_payout_sweep(
             .filter(
                 SupplierSettlement.status == "pending",
                 SupplierSettlement.payout_id.is_(None),
-                SupplierSettlement.is_deleted == False,  # noqa: E712
+                SupplierSettlement.deleted_at.is_(None),  # soft-delete filter
                 # eligible_at is NULL → use the created_at + default holding period
                 (
                     SupplierSettlement.eligible_at.is_(None)

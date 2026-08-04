@@ -16,7 +16,8 @@ from data.models import Coupon, CouponUsage, Product
 from data.schemas import CouponValidate, OrderItemBase
 from utils.datetime_utils import utcnow
 from utils.money import round_money, to_decimal
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.commerce.promotion_engine_service import count_coupon_usages, get_coupon_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -25,16 +26,14 @@ from services.write_helpers import (
 )
 
 
-
 def _normalize_coupon_code(code: str) -> str:
     return code.strip().upper()
 
 
 def _get_coupon_by_code(code: str, db: Session) -> Coupon:
-    coupon = db.query(Coupon).filter(
-        Coupon.code == _normalize_coupon_code(code),
-        Coupon.is_active.is_(True),
-    ).first()
+    coupon = _db_coupon_first_0(db, _normalize_coupon_code, code)
+
+
     if not coupon:
         logger.info("Coupon code %s not found or inactive", code)
         raise HTTPException(status_code=404, detail="Invalid coupon code")
@@ -66,10 +65,9 @@ def _calculate_total_from_items(items: List[OrderItemBase], db: Session) -> Deci
     product_ids = {item.product_id for item in items}
     products = {
         product.id: product
-        for product in db.query(Product).filter(
-            Product.id.in_(product_ids),
-            Product.is_deleted.is_(False),
-        ).all()
+        _db_product_all_1(db, id, in_, product_ids)
+
+
     }
 
     subtotal = Decimal("0.00")
@@ -110,7 +108,7 @@ def validate_coupon(body: CouponValidate, current_user: dict, db: Session) -> di
 def list_coupons(current_user: dict, db: Session) -> List[Coupon]:
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
-    return db.query(Coupon).order_by(Coupon.created_at.desc()).all()
+    _db_coupon_all_2(db)
 
 
 def create_coupon(
@@ -126,8 +124,8 @@ def create_coupon(
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     code = code.strip().upper()
-    if db.query(Coupon).filter(Coupon.code == code).first():
-        raise HTTPException(status_code=409, detail="Coupon code already exists")
+    _db_coupon_first_3(db, code)
+
     if discount_type not in ("percent", "fixed"):
         raise HTTPException(status_code=422, detail="discount_type must be 'percent' or 'fixed'")
     coupon = Coupon(
@@ -154,7 +152,7 @@ def create_coupon(
 
 
 def _delete_coupon_record(coupon: Coupon, current_user: dict, db: Session) -> dict:
-    usage_count = db.query(CouponUsage).filter(CouponUsage.coupon_id == coupon.id).count()
+    usage_count = count_coupon_usages(db)
     if usage_count:
         raise HTTPException(
             status_code=409,
@@ -189,7 +187,7 @@ def _delete_coupon_record(coupon: Coupon, current_user: dict, db: Session) -> di
 def delete_coupon(coupon_id: int, current_user: dict, db: Session) -> dict:
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
-    coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+    coupon = get_coupon_by_id(db, coupon_id)
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
     return _delete_coupon_record(coupon, current_user, db)
@@ -198,10 +196,9 @@ def delete_coupon(coupon_id: int, current_user: dict, db: Session) -> dict:
 def delete_coupon_by_code(code: str, current_user: dict, db: Session) -> dict:
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
-    coupon = db.query(Coupon).filter(Coupon.code == code.upper()).first()
+    coupon = _db_coupon_first_4(db, code, upper)
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
     return _delete_coupon_record(coupon, current_user, db)
-
 
 

@@ -5,13 +5,29 @@ from datetime import datetime
 from typing import Any, Optional, cast
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from data.models import SupportTicket, TicketMessage, TicketAttachment, Notification
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_MAX_PAGE_SIZE
+from services.communication.tickets_write_service import (
+    list_tickets as _fetch_tickets,
+    count_tickets,
+    get_ticket_with_details,
+    get_ticket_by_id,
+)
 
-from services.write_helpers import add_and_flush, commit_and_refresh
+from data.services_write_helpers import add_and_flush, commit_and_refresh
+
+
+def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
+    return {
+        "data": items,
+        "total": total,
+        "page": (offset // page_size) + 1 if page_size > 0 else 1,
+        "pageSize": page_size,
+    }
+
 
 def _serialize_ticket_attachment(attachment: TicketAttachment) -> dict[str, Any]:
     return {
@@ -64,43 +80,21 @@ def _serialize_support_ticket(ticket: SupportTicket, *, include_message: bool = 
 
 def list_tickets(db: Session, status: Optional[str] = None, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     resolved_limit = 200 if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    q = db.query(SupportTicket)
-    if status:
-        q = q.filter(SupportTicket.status == status)
-    total = q.count()
-    tickets = (
-        q.options(
-            selectinload(SupportTicket.user),
-            selectinload(SupportTicket.attachments),
-            selectinload(SupportTicket.messages),
-        )
-        .order_by(SupportTicket.created_at.desc(), SupportTicket.id.desc())
-        .offset(max(0, offset))
-        .limit(resolved_limit)
-        .all()
-    )
+    tickets = _fetch_tickets(db, status=status, limit=resolved_limit, offset=offset)
+    total = count_tickets(db, status=status)
     serialized = [_serialize_support_ticket(ticket) for ticket in tickets]
     return _build_list_page_payload(serialized, total, offset=offset, page_size=resolved_limit)
 
 
 def get_ticket_detail(ticket_id: int, db: Session) -> dict:
-    ticket = (
-        db.query(SupportTicket)
-        .options(
-            selectinload(SupportTicket.user),
-            selectinload(SupportTicket.messages).selectinload(TicketMessage.sender),
-            selectinload(SupportTicket.attachments),
-        )
-        .filter(SupportTicket.id == ticket_id)
-        .first()
-    )
+    ticket = get_ticket_with_details(db, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     return _serialize_support_ticket(ticket, include_message=True, include_replies=True)
 
 
 def reply_to_ticket(ticket_id: int, message: str, acting_user: dict, db: Session) -> dict:
-    ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
+    ticket = get_ticket_by_id(db, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     if not message or not message.strip():
@@ -131,7 +125,7 @@ def update_ticket_status(ticket_id: int, status: str, acting_user: dict, db: Ses
     allowed = {"open", "pending", "in_progress", "resolved", "closed"}
     if status not in allowed:
         raise HTTPException(status_code=400, detail=f"Status must be one of: {', '.join(allowed)}")
-    ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
+    ticket = get_ticket_by_id(db, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     setattr(ticket, "status", status)

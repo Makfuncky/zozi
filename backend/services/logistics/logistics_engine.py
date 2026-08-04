@@ -157,7 +157,7 @@ class LogisticsEngine:
         self.db.refresh(country)
 
         return {
-            "message": f"Provider '{provider_id}' {'updated' if existing else 'created'} for {country_code}",
+            "message": "Provider '" + str(provider_id) + "' " + ("updated" if existing else "created") + " for " + str(country_code),
             "provider": normalized,
         }
 

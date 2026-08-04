@@ -7,22 +7,24 @@ from data.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse, 
 from utils.dependencies import get_current_user, require_admin
 from utils.pagination import cursor_paginate_desc
 
-from services.write_helpers import commit_only, refresh_only
+from services.core.users_write_service import get_user_by_id, build_user_query, save_user
+from services.security.auth_write_service import update_user_profile
 router = APIRouter()
 
 @router.get("/me", response_model=UserOut)
 def get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(User).filter(User.id == current_user.get("id")).first()
+    return get_user_by_id(db, current_user.get("id"))
 
 
 @router.put("/me", response_model=UserOut)
 def update_profile(payload: UserUpdate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == current_user.get("id")).first()
+    user = get_user_by_id(db, current_user.get("id"))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    for k, v in payload.model_dump(exclude_unset=True).items():
+    updates = payload.model_dump(exclude_unset=True)
+    for k, v in updates.items():
         setattr(user, k, v)
-    commit_only(db); refresh_only(db, user)
+    update_user_profile(db, user, updates)
     return user
 
 @router.get("", response_model=CursorPage)
@@ -38,7 +40,7 @@ def list_users(
     Pass nextCursor as cursor parameter to fetch the next page.
     """
     result = cursor_paginate_desc(
-        query=db.query(User),
+        query=build_user_query(db),
         cursor=cursor,
         page_size=limit,
     )
@@ -46,16 +48,15 @@ def list_users(
 
 @router.get("/{user_id}", response_model=UserOut)
 def get_user(user_id: int, _: User = Depends(require_admin), db: Session = Depends(get_db)):
-    u = db.query(User).filter(User.id == user_id).first()
+    u = get_user_by_id(db, user_id)
     if not u: raise HTTPException(404, "User not found")
     return u
 
 @router.put("/{user_id}", response_model=UserOut)
 def admin_update_user(user_id: int, payload: UserAdminUpdate, _: User = Depends(require_admin), db: Session = Depends(get_db)):
-    u = db.query(User).filter(User.id == user_id).first()
+    u = get_user_by_id(db, user_id)
     if not u: raise HTTPException(404, "User not found")
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(u, k, v)
-    commit_only(db); refresh_only(db, u)
-    return u
+    return save_user(db, u)
 

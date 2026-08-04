@@ -30,14 +30,14 @@ from data.models import (
 )
 from utils.audit_log import AuditAction, audit_log
 from services import commission_engine
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.finance.commission_read_service import get_product_by_id, get_user_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
     delete_only,
     flush_only,
 )
-
 
 
 def _build_list_page_payload(items: list[Any], total: int, *, offset: int = 0, page_size: Optional[int] = None) -> dict[str, Any]:
@@ -84,7 +84,7 @@ def get_effective_rate(
     """Return the effective commission rate for a supplier/product combo."""
     category_slug: Optional[str] = None
     if product_id:
-        product = db.query(Product).filter(Product.id == product_id).first()
+        product = get_product_by_id(db, product_id)
         category_slug = _category_to_slug(getattr(product, "category", None) if product else None)
 
     return commission_engine.get_effective_rate(
@@ -99,12 +99,12 @@ def get_effective_rate(
 
 def get_supplier_commission(supplier_id: int, db: Session) -> dict:
     """Return active commission agreement and full history for a supplier."""
-    supplier = db.query(User).filter(User.id == supplier_id).first()
+    supplier = get_user_by_id(db, supplier_id)
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
     active = (
-        db.query(CommissionAgreement)
+        _db_commissionagreement_query_0(db)
         .filter(
             CommissionAgreement.supplier_id == supplier_id,
             CommissionAgreement.is_active == True,  # noqa: E712
@@ -113,7 +113,7 @@ def get_supplier_commission(supplier_id: int, db: Session) -> dict:
     )
 
     history = (
-        db.query(CommissionAgreement)
+        _db_commissionagreement_query_1(db)
         .filter(CommissionAgreement.supplier_id == supplier_id)
         .order_by(CommissionAgreement.effective_from.desc())
         .all()
@@ -152,7 +152,7 @@ def set_supplier_commission(
     if not (0.0 <= rate <= 1.0):
         raise HTTPException(status_code=422, detail="Rate must be between 0.0 and 1.0")
 
-    supplier = db.query(User).filter(User.id == supplier_id, User.role == "supplier").first()
+    supplier = _db_user_first_2(db, id, role, supplier, supplier_id)
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
@@ -160,7 +160,7 @@ def set_supplier_commission(
 
     # Deactivate previous active agreement
     prev = (
-        db.query(CommissionAgreement)
+        _db_commissionagreement_query_3(db)
         .filter(
             CommissionAgreement.supplier_id == supplier_id,
             CommissionAgreement.is_active == True,  # noqa: E712
@@ -207,7 +207,7 @@ def delete_supplier_commission_override(
     _require_admin(acting_user)
 
     active_agreements = (
-        db.query(CommissionAgreement)
+        _db_commissionagreement_query_4(db)
         .filter(
             CommissionAgreement.supplier_id == supplier_id,
             CommissionAgreement.is_active == True,  # noqa: E712
@@ -243,7 +243,7 @@ def delete_supplier_commission_override(
 def get_product_commission_override(product_id: int, db: Session) -> Optional[dict]:
     """Return the active commission override for a product, or None."""
     override = (
-        db.query(ProductCommissionOverride)
+        _db_productcommissionoverride_query_5(db)
         .filter(ProductCommissionOverride.product_id == product_id)
         .first()
     )
@@ -265,12 +265,12 @@ def set_product_commission_override(
     if not (0.0 <= rate <= 1.0):
         raise HTTPException(status_code=422, detail="Rate must be between 0.0 and 1.0")
 
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = get_product_by_id(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
     existing = (
-        db.query(ProductCommissionOverride)
+        _db_productcommissionoverride_query_6(db)
         .filter(ProductCommissionOverride.product_id == product_id)
         .first()
     )
@@ -321,7 +321,7 @@ def delete_product_commission_override(
     _require_admin(acting_user)
 
     override = (
-        db.query(ProductCommissionOverride)
+        _db_productcommissionoverride_query_7(db)
         .filter(ProductCommissionOverride.product_id == product_id)
         .first()
     )
@@ -393,7 +393,7 @@ def list_all_supplier_commissions(
 ) -> dict:
     """Return current commission rate for every active supplier."""
     resolved_limit = 100 if limit is None else max(1, min(limit, 500))
-    query = db.query(User).filter(User.role == "supplier", User.is_active == True)  # noqa: E712
+    query = _db_user_query_8(db, True, is_active, role, supplier)
     if search and search.strip():
         term = f"%{search.strip()}%"
         query = query.filter(or_(User.username.ilike(term), User.full_name.ilike(term), User.email.ilike(term)))
@@ -408,7 +408,7 @@ def list_all_supplier_commissions(
     agreements: dict[int, CommissionAgreement] = {}
     if supplier_ids:
         for agreement in (
-            db.query(CommissionAgreement)
+            _db_commissionagreement_query_9(db)
             .filter(
                 CommissionAgreement.supplier_id.in_(supplier_ids),
                 CommissionAgreement.is_active == True,  # noqa: E712
@@ -632,7 +632,7 @@ def list_category_rates(
     search: Optional[str] = None,
 ) -> dict:
     """Return all category rates, seeding defaults on first call."""
-    query = db.query(CommissionCategoryRate)
+    query = _db_commissioncategoryrate_query_10(db)
     if search and search.strip():
         term = f"%{search.strip()}%"
         query = query.filter(
@@ -644,7 +644,7 @@ def list_category_rates(
     rows = query.order_by(CommissionCategoryRate.category_display_name, CommissionCategoryRate.id).all()
     if not rows:
         commission_engine.seed_defaults(db)
-        query = db.query(CommissionCategoryRate)
+        query = _db_commissioncategoryrate_query_11(db)
         if search and search.strip():
             term = f"%{search.strip()}%"
             query = query.filter(
@@ -664,9 +664,9 @@ def update_category_rate(
     category_slug: str, payload: dict, acting_user: dict, db: Session
 ) -> dict:
     _require_admin(acting_user)
-    row = db.query(CommissionCategoryRate).filter(
-        CommissionCategoryRate.category_slug == category_slug
-    ).first()
+    row = _db_commissioncategoryrate_first_12(db, category_slug)
+
+
     if not row:
         raise HTTPException(status_code=404, detail=f"Category rate not found: {category_slug}")
 
@@ -721,13 +721,13 @@ def list_badge_tiers(
     offset: int = 0,
     search: Optional[str] = None,
 ) -> dict:
-    query = db.query(CommissionBadgeTier)
+    query = _db_commissionbadgetier_query_13(db)
     if search and search.strip():
         query = query.filter(CommissionBadgeTier.badge_level.ilike(f"%{search.strip()}%"))
     rows = query.order_by(CommissionBadgeTier.sort_order, CommissionBadgeTier.id).all()
     if not rows:
         commission_engine.seed_defaults(db)
-        query = db.query(CommissionBadgeTier)
+        query = _db_commissionbadgetier_query_14(db)
         if search and search.strip():
             query = query.filter(CommissionBadgeTier.badge_level.ilike(f"%{search.strip()}%"))
         rows = query.order_by(CommissionBadgeTier.sort_order, CommissionBadgeTier.id).all()
@@ -741,9 +741,9 @@ def update_badge_tier(
     badge_level: str, payload: dict, acting_user: dict, db: Session
 ) -> dict:
     _require_admin(acting_user)
-    row = db.query(CommissionBadgeTier).filter(
-        CommissionBadgeTier.badge_level == badge_level
-    ).first()
+    row = _db_commissionbadgetier_first_15(db, badge_level)
+
+
     if not row:
         raise HTTPException(status_code=404, detail=f"Badge tier not found: {badge_level}")
 
@@ -819,7 +819,7 @@ def list_ledger_entries(
     skip: int = 0,
     limit: int = 50,
 ) -> dict:
-    q = db.query(CommissionLedgerEntry)
+    q = _db_commissionledgerentry_query_16(db)
     if supplier_id:
         q = q.filter(CommissionLedgerEntry.supplier_id == supplier_id)
     if order_id:
@@ -834,7 +834,7 @@ def create_ledger_adjustment(
 ) -> dict:
     """Create an adjustment entry when a dispute is resolved."""
     _require_admin(acting_user)
-    original = db.query(CommissionLedgerEntry).filter(CommissionLedgerEntry.id == ledger_id).first()
+    original = _db_commissionledgerentry_first_17(db, id, ledger_id)
     if not original:
         raise HTTPException(status_code=404, detail="Ledger entry not found")
     if bool(getattr(original, "is_adjusted")):

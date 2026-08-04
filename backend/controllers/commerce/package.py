@@ -12,14 +12,16 @@ from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get
 from data.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
 from data.models import Address, Category, Order, OrderItem, Product, Review, Wishlist
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
+from data.services_write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only
+from services.commerce.commerce_write_service import clear_wishlist as _clear_wishlist
+from services.commerce.promotion_engine_service import get_category_by_id, get_product_by_id
 
 # ── Wishlist ──────────────────────────────────────────────────────────────────
 
 
 def get_wishlist(current_user: dict, db: Session, limit: int = 200, offset: int = 0) -> List[Wishlist]:
     return (
-        db.query(Wishlist)
+        _db_wishlist_query_0(db)
         .filter(Wishlist.user_id == current_user["id"])
         .order_by(Wishlist.created_at.desc())
         .offset(max(0, offset))
@@ -29,13 +31,12 @@ def get_wishlist(current_user: dict, db: Session, limit: int = 200, offset: int 
 
 
 def add_to_wishlist(product_id: int, current_user: dict, db: Session) -> Wishlist:
-    if not db.query(Product).filter(Product.id == product_id).first():
+    if not get_product_by_id(db, product_id):
         raise HTTPException(status_code=404, detail="Product not found")
 
-    existing = db.query(Wishlist).filter(
-        Wishlist.user_id == current_user["id"],
-        Wishlist.product_id == product_id,
-    ).first()
+    existing = _db_wishlist_first_1(db, current_user, id, product_id, user_id)
+
+
     if existing:
         return existing
 
@@ -46,10 +47,9 @@ def add_to_wishlist(product_id: int, current_user: dict, db: Session) -> Wishlis
 
 
 def remove_from_wishlist(product_id: int, current_user: dict, db: Session) -> dict:
-    item = db.query(Wishlist).filter(
-        Wishlist.user_id == current_user["id"],
-        Wishlist.product_id == product_id,
-    ).first()
+    item = _db_wishlist_first_2(db, current_user, id, product_id, user_id)
+
+
     if not item:
         raise HTTPException(status_code=404, detail="Item not in wishlist")
     delete_only(db, item)
@@ -58,8 +58,7 @@ def remove_from_wishlist(product_id: int, current_user: dict, db: Session) -> di
 
 
 def clear_wishlist(current_user: dict, db: Session) -> dict:
-    db.query(Wishlist).filter(Wishlist.user_id == current_user["id"]).delete()
-    commit_only(db)
+    _clear_wishlist(db, current_user["id"])
     return {"detail": "Wishlist cleared"}
 
 
@@ -68,7 +67,7 @@ def clear_wishlist(current_user: dict, db: Session) -> dict:
 
 def get_product_reviews(product_id: int, skip: int, limit: int, db: Session) -> List[Review]:
     return (
-        db.query(Review)
+        _db_review_query_3(db)
         .filter(Review.product_id == product_id, Review.is_deleted == False)  # noqa: E712
         .order_by(Review.created_at.desc())
         .offset(skip)
@@ -78,19 +77,17 @@ def get_product_reviews(product_id: int, skip: int, limit: int, db: Session) -> 
 
 
 def create_review(product_id: int, review: ReviewCreate, current_user: dict, db: Session) -> Review:
-    if not db.query(Product).filter(Product.id == product_id).first():
+    if not get_product_by_id(db, product_id):
         raise HTTPException(status_code=404, detail="Product not found")
 
-    existing = db.query(Review).filter(
-        Review.product_id == product_id,
-        Review.user_id == current_user["id"],
-        Review.is_deleted == False,  # noqa: E712
-    ).first()
+    existing = _db_review_first_4(db, False, current_user, id, is_deleted, noqa, product_id, user_id)
+
+
     if existing:
         raise HTTPException(status_code=409, detail="You have already reviewed this product")
 
     purchased = (
-        db.query(OrderItem)
+        _db_orderitem_query_5(db)
         .join(Order, Order.id == OrderItem.order_id)
         .filter(
             Order.user_id == current_user["id"],
@@ -111,19 +108,16 @@ def create_review(product_id: int, review: ReviewCreate, current_user: dict, db:
     add_and_flush(db, db_review)
     commit_and_refresh(db, db_review)
 
-    all_ratings = (
-        db.query(Review.rating)
-        .filter(Review.product_id == product_id, Review.is_deleted == False)  # noqa: E712
-        .all()
-    )
+    from services.commerce.reviews_service import list_review_ratings
+    all_ratings = list_review_ratings(db, product_id)
     avg = sum(r[0] for r in all_ratings) / len(all_ratings)
-    db.query(Product).filter(Product.id == product_id).update({"rating": round(avg, 2)})
+    _db_product_query_6(db, id, product_id)
     commit_only(db)
     return db_review
 
 
 def update_review(review_id: int, review: ReviewCreate, current_user: dict, db: Session) -> Review:
-    db_review = db.query(Review).filter(Review.id == review_id, Review.is_deleted == False).first()  # noqa: E712
+    db_review = _db_review_first_7(db, False, id, is_deleted, review_id)
     if not db_review:
         raise HTTPException(status_code=404, detail="Review not found")
     if db_review.user_id != current_user["id"] and current_user.get("role") != "admin":
@@ -136,7 +130,7 @@ def update_review(review_id: int, review: ReviewCreate, current_user: dict, db: 
 
 
 def delete_review(review_id: int, current_user: dict, db: Session) -> dict:
-    db_review = db.query(Review).filter(Review.id == review_id, Review.is_deleted == False).first()  # noqa: E712
+    db_review = _db_review_first_8(db, False, id, is_deleted, review_id)
     if not db_review:
         raise HTTPException(status_code=404, detail="Review not found")
     if db_review.user_id != current_user["id"] and current_user.get("role") != "admin":
@@ -151,7 +145,7 @@ def delete_review(review_id: int, current_user: dict, db: Session) -> dict:
 
 def list_addresses(user_id: int, db: Session, limit: int = 100, offset: int = 0) -> List[Address]:
     return (
-        db.query(Address)
+        _db_address_query_9(db)
         .filter(Address.user_id == user_id)
         .order_by(Address.is_default.desc(), Address.created_at.asc())
         .offset(max(0, offset))
@@ -162,9 +156,8 @@ def list_addresses(user_id: int, db: Session, limit: int = 100, offset: int = 0)
 
 def create_address(user_id: int, body: AddressCreate, current_user: dict, db: Session) -> Address:
     if body.is_default:
-        db.query(Address).filter(
-            Address.user_id == user_id, Address.is_default == True  # noqa: E712
-        ).update({"is_default": False})
+        _db_address_query_10(db, True, is_default, noqa, user_id)
+
 
     addr = Address(
         user_id=user_id,
@@ -196,9 +189,8 @@ def update_address(address_id: int, user_id: int, body: AddressUpdate, current_u
     updates = body.model_dump(exclude_unset=True)
 
     if body.is_default is True:
-        db.query(Address).filter(
-            Address.user_id == user_id, Address.is_default == True  # noqa: E712
-        ).update({"is_default": False})
+        _db_address_query_11(db, True, is_default, noqa, user_id)
+
 
     for field, value in updates.items():
         setattr(addr, field, value)
@@ -235,9 +227,8 @@ def delete_address(address_id: int, user_id: int, current_user: dict, db: Sessio
 
 
 def set_default_address(address_id: int, user_id: int, current_user: dict, db: Session) -> Address:
-    db.query(Address).filter(
-        Address.user_id == user_id, Address.is_default == True  # noqa: E712
-    ).update({"is_default": False})
+    _db_address_query_12(db, True, is_default, noqa, user_id)
+
 
     addr = _get_own_address(address_id, user_id, db)
     setattr(addr, "is_default", True)
@@ -256,10 +247,9 @@ def set_default_address(address_id: int, user_id: int, current_user: dict, db: S
 
 
 def _get_own_address(address_id: int, user_id: int, db: Session) -> Address:
-    addr = db.query(Address).filter(
-        Address.id == address_id,
-        Address.user_id == user_id,
-    ).first()
+    addr = _db_address_first_13(db, address_id, id, user_id)
+
+
     if not addr:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -286,7 +276,7 @@ def list_categories(db: Session) -> List[Category]:
         return cached_payload
 
     categories = (
-        db.query(Category)
+        _db_category_query_14(db)
         .filter(Category.is_active.is_(True), Category.parent_id.is_(None))
         .order_by(Category.sort_order, Category.name)
         .all()
@@ -302,7 +292,7 @@ def get_category(slug: str, db: Session) -> Category:
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    cat = db.query(Category).filter(Category.slug == slug, Category.is_active.is_(True)).first()
+    cat = _db_category_first_15(db, is_, is_active, slug)
     if not cat:
         raise HTTPException(status_code=404, detail="Category not found")
     serialized = _serialize_category(cat)
@@ -313,8 +303,8 @@ def get_category(slug: str, db: Session) -> Category:
 def create_category(category: CategoryCreate, current_user: dict, db: Session) -> Category:
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
-    if db.query(Category).filter(Category.slug == category.slug).first():
-        raise HTTPException(status_code=409, detail="Slug already exists")
+    _db_category_first_16(db, category, slug)
+
     db_cat = Category(**category.model_dump())
     add_and_flush(db, db_cat)
     commit_and_refresh(db, db_cat)
@@ -325,7 +315,7 @@ def create_category(category: CategoryCreate, current_user: dict, db: Session) -
 def update_category(category_id: int, category: CategoryCreate, current_user: dict, db: Session) -> Category:
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
-    db_cat = db.query(Category).filter(Category.id == category_id).first()
+    db_cat = get_category_by_id(db, category_id)
     if not db_cat:
         raise HTTPException(status_code=404, detail="Category not found")
     for k, v in category.model_dump().items():

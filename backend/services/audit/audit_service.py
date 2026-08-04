@@ -106,3 +106,10 @@ class AuditService:
 def create_audit_service(db: Session) -> AuditService:
     return AuditService(db)
 
+
+
+
+def get_distinct_audit_actions(db: Session) -> list[str]:
+    """Return list of unique audit actions — delegated from controller."""
+    result = db.query(AuditLog.action).distinct().all()
+    return [row[0] for row in result]

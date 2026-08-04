@@ -1,8 +1,66 @@
 """Cart write service — DB write operations for cart items."""
 
-from sqlalchemy.orm import Session
+from typing import Optional
 
-from data.models import CartItem
+from sqlalchemy.orm import Session, joinedload, selectinload
+
+from data.models import CartItem, Product
+
+
+def load_cart_items(db: Session, user_id: int) -> list[CartItem]:
+    """Return all cart items for *user_id* with product + variants preloaded."""
+    return (
+        db.query(CartItem)
+        .options(joinedload(CartItem.product).selectinload(Product.variants))
+        .filter(CartItem.user_id == user_id)
+        .all()
+    )
+
+
+def get_products_by_ids(db: Session, product_ids: list[int]) -> list[Product]:
+    """Return non-deleted products with variants preloaded for the given IDs."""
+    return (
+        db.query(Product)
+        .options(selectinload(Product.variants))
+        .filter(
+            Product.id.in_(product_ids),
+            Product.is_deleted.is_(False),
+        )
+        .all()
+    )
+
+
+def get_active_product_by_id(db: Session, product_id: int) -> Optional[Product]:
+    """Return a non-deleted product with variants preloaded, or None."""
+    return (
+        db.query(Product)
+        .options(selectinload(Product.variants))
+        .filter(
+            Product.id == product_id,
+            Product.is_deleted.is_(False),
+        )
+        .first()
+    )
+
+
+def get_cart_item_by_variant(
+    db: Session,
+    user_id: int,
+    product_id: int,
+    selected_size: str,
+    selected_color: str,
+) -> Optional[CartItem]:
+    """Return a single cart item matching the given variant, or None."""
+    return (
+        db.query(CartItem)
+        .filter(
+            CartItem.user_id == user_id,
+            CartItem.product_id == product_id,
+            CartItem.selected_size == selected_size,
+            CartItem.selected_color == selected_color,
+        )
+        .first()
+    )
 
 
 def create_cart_item(db: Session, **item_data) -> CartItem:

@@ -10,11 +10,12 @@ from sqlalchemy.orm import Session, joinedload
 from data.models import Payout, TransactionLedger, SupplierSettlement, LogisticsSettlement, Notification
 from utils.audit import audit_log, AuditAction
 
-from services.write_helpers import add_and_flush, commit_only
+from data.services_write_helpers import add_and_flush, commit_only
+from services.treasury.payout_batch_service import get_payout_by_id
 
 def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list:
     payouts = (
-        db.query(Payout)
+        _db_payout_query_0(db)
         .options(joinedload(Payout.supplier))
         .filter(Payout.status.in_(["pending", "processing"]))
         .order_by(Payout.created_at.asc())
@@ -40,7 +41,7 @@ def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list
 
 
 def _refresh_order_finance_settlement_status(order_id: int, db: Session) -> None:
-    entries = db.query(TransactionLedger).filter(TransactionLedger.order_id == order_id).limit(1000).all()
+    entries = _db_transactionledger_all_1(db, order_id)
     if not entries:
         return
 
@@ -53,7 +54,7 @@ def _refresh_order_finance_settlement_status(order_id: int, db: Session) -> None
 
     supplier_settlements = {
         (row.supplier_id, row.order_id): row
-        for row in db.query(SupplierSettlement)
+        _db_suppliersettlement_query_2(db)
         .filter(
             SupplierSettlement.order_id == order_id,
             SupplierSettlement.supplier_id.in_([p[0] for p in supplier_pairs]),
@@ -63,7 +64,7 @@ def _refresh_order_finance_settlement_status(order_id: int, db: Session) -> None
 
     logistics_settlements = {
         (row.partner_id, row.order_id): row
-        for row in db.query(LogisticsSettlement)
+        _db_logisticssettlement_query_3(db)
         .filter(
             LogisticsSettlement.order_id == order_id,
             LogisticsSettlement.partner_id.in_([p[0] for p in logistics_pairs]),
@@ -99,7 +100,7 @@ def _sync_supplier_settlements_for_payout(
     processed_at: datetime | None,
     db: Session,
 ) -> None:
-    settlements = db.query(SupplierSettlement).filter(SupplierSettlement.payout_id == payout_id).all()
+    settlements = _db_suppliersettlement_all_4(db, payout_id)
     if not settlements:
         return
 
@@ -107,7 +108,7 @@ def _sync_supplier_settlements_for_payout(
     now = processed_at or datetime.now(timezone.utc).replace(tzinfo=None)
 
     for settlement in settlements:
-        touched_order_ids.add(cast(int, settlement.order_id))
+        touched_order_ids |= {cast(int, settlement.order_id)}
 
         if new_status == "completed":
             settlement.status = "settled"
@@ -131,7 +132,7 @@ def verify_payout(
     acting_user: dict,
     db: Session,
 ) -> dict:
-    payout = db.query(Payout).filter(Payout.id == payout_id).first()
+    payout = get_payout_by_id(db, payout_id)
     if not payout:
         raise HTTPException(status_code=404, detail="Payout not found")
 

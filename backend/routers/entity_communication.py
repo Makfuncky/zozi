@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from data.models import EntityChatThread, EntityChatMessage, User
-from services.entity_chat_service import get_chat_service, EntityChatService
+from services.communication.entity_chat_service import get_chat_service, EntityChatService
 from services.email_gateway import EmailGateway, get_email_gateway
 from data.db import get_db
 from data.dependencies_auth import get_current_user

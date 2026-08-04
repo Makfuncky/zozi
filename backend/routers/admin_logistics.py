@@ -3,25 +3,41 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from data.db import get_db
 from data.schemas import CursorPage
-from data.models import LogisticsPartner, User
+from data.models import User
 from data.schemas import ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin, require_super_admin
 from utils.pagination import cursor_paginate_desc
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
-from services.core.admin_operations_service import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
-from services.logistics_partner_write_service import update_logistics_partner
+from services.core.admin_operations_service import (
+    archive_entity,
+    restore_entity,
+    bulk_archive_entities,
+    bulk_restore_entities,
+    hard_delete_entity,
+)
+from services.logistics.logistics_partner_write_service import (
+    update_logistics_partner,
+    get_partner_by_id,
+    build_partners_query,
+)
 
 router = APIRouter()
 
 
 @router.get("/{country_code}/partners", response_model=CursorPage)
-def list_partners(country_code: str = Path(..., description="ISO country code"), include_deleted: bool = False, cursor: str | None = Query(None, description="Cursor for next page"), limit: int = Query(20, ge=1, le=100), _: User = Depends(require_admin), db: Session = Depends(get_db)):
+def list_partners_route(
+    country_code: str = Path(..., description="ISO country code"),
+    include_deleted: bool = False,
+    cursor: str | None = Query(None, description="Cursor for next page"),
+    limit: int = Query(20, ge=1, le=100),
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(LogisticsPartner).filter(LogisticsPartner.country_code == country_code.upper())
-        if not include_deleted: q = q.filter(LogisticsPartner.is_deleted == False)
+        q = build_partners_query(db, country_code.upper(), include_deleted)
         return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
     finally:
         clear_rls_context()
@@ -32,8 +48,9 @@ def approve_partner(country_code: str = Path(..., description="ISO country code"
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        p = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id, LogisticsPartner.country_code == country_code.upper()).first()
-        if not p: raise HTTPException(404)
+        p = get_partner_by_id(db, partner_id, country_code.upper())
+        if not p:
+            raise HTTPException(404)
         update_logistics_partner(db, p, {"verification_status": "approved"})
         return {"message": "Partner approved"}
     finally:
@@ -45,8 +62,9 @@ def reject_partner(country_code: str = Path(..., description="ISO country code")
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        p = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id, LogisticsPartner.country_code == country_code.upper()).first()
-        if not p: raise HTTPException(404)
+        p = get_partner_by_id(db, partner_id, country_code.upper())
+        if not p:
+            raise HTTPException(404)
         update_logistics_partner(db, p, {"verification_status": "rejected"})
         return {"message": "Partner rejected"}
     finally:
@@ -58,11 +76,12 @@ def toggle_partner_active(country_code: str = Path(..., description="ISO country
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        p = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id, LogisticsPartner.country_code == country_code.upper()).first()
-        if not p: raise HTTPException(404)
+        p = get_partner_by_id(db, partner_id, country_code.upper())
+        if not p:
+            raise HTTPException(404)
         new_status = "suspended" if p.status == "active" else "active"
         update_logistics_partner(db, p, {"status": new_status})
-        return {"message": f"Partner {new_status}"}
+        return {"message": "Partner " + str(new_status)}
     finally:
         clear_rls_context()
 

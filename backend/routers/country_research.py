@@ -6,10 +6,8 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 
-from data.db import get_db
-from routers.auth import get_current_user
+from data.dependencies_auth import get_current_user
 from services.country_auto_populate import auto_populate_country
 from services.country_research import build_country_research
 
@@ -21,7 +19,6 @@ router = APIRouter(tags=["country-research"])
 @router.get("/{code}/research")
 async def get_country_research(
     code: str,
-    db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
     """Return the full 20-module e-commerce research report for a country.

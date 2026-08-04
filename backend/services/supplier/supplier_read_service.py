@@ -200,3 +200,626 @@ def soft_delete_product(db: Session, product_id: int, user_id: int) -> dict:
     product.is_deleted = True
     commit_only(db)
     return {"status": "success", "message": "Product deleted"}
+
+
+def list_supplier_profiles(db: Session) -> list[SupplierProfile]:
+    """List all supplier profiles (delegated read for routers)."""
+    return db.query(SupplierProfile).all()
+
+
+def get_supplier_profile_by_id(db: Session, profile_id: int) -> SupplierProfile | None:
+    """Get a supplier profile by ID (delegated read for routers)."""
+    return db.query(SupplierProfile).filter(SupplierProfile.id == profile_id).first()
+
+
+def count_supplier_profiles(
+    db: Session,
+    country_code: str | None = None,
+    verification_status: str | None = None,
+    is_active: bool | None = None,
+) -> int:
+    """Count supplier profiles with optional country/status/active filters (LC1 delegated read)."""
+    query = db.query(SupplierProfile)
+    if country_code and country_code != "*":
+        query = query.filter(SupplierProfile.country_code == country_code.upper())
+    if verification_status is not None:
+        query = query.filter(SupplierProfile.verification_status == verification_status)
+    if is_active is not None:
+        query = query.filter(SupplierProfile.is_active == is_active)
+    return query.count()
+
+
+def list_comparison_supplier_profiles(db: Session, limit: int = 200) -> list[SupplierProfile]:
+    """List non-deleted supplier profiles for the comparison view (LC1 delegated read)."""
+    return (
+        db.query(SupplierProfile)
+        .filter(SupplierProfile.is_deleted == False)
+        .order_by(SupplierProfile.id.asc())
+        .limit(limit)
+        .all()
+    )
+
+def get_user_by_id(db: Session, record_id: int) -> Optional[User]:
+    return db.query(User).filter(User.id == record_id).first()
+
+
+def get_sp_by_id(db: Session, record_id: int) -> Optional[SP]:
+    return db.query(SP).filter(SP.id == record_id).first()
+
+
+def get_supplierprofile_by_id(db: Session, record_id: int) -> Optional[SupplierProfile]:
+    return db.query(SupplierProfile).filter(SupplierProfile.id == record_id).first()
+
+
+def count_user(db: Session, **filters) -> int:
+    query = db.query(User)
+    for key, value in filters.items():
+        query = query.filter(getattr(User, key) == value)
+    return query.count()
+
+
+def get_unknown_first(db: Session, **filters) -> Optional[Unknown]:
+    query = db.query(Unknown)
+    for key, value in filters.items():
+        query = query.filter(getattr(Unknown, key) == value)
+    return query.limit(1).first()
+
+
+def get_countryconfig_first(db: Session, **filters) -> Optional[CountryConfig]:
+    query = db.query(CountryConfig)
+    for key, value in filters.items():
+        query = query.filter(getattr(CountryConfig, key) == value)
+    return query.limit(1).first()
+
+
+def get_supplierdocument_first(db: Session, **filters) -> Optional[SupplierDocument]:
+    query = db.query(SupplierDocument)
+    for key, value in filters.items():
+        query = query.filter(getattr(SupplierDocument, key) == value)
+    return query.limit(1).first()
+
+
+def get_user_first(db: Session, **filters) -> Optional[User]:
+    query = db.query(User)
+    for key, value in filters.items():
+        query = query.filter(getattr(User, key) == value)
+    return query.limit(1).first()
+
+
+def list_supplierprofile(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[SupplierProfile]:
+    query = db.query(SupplierProfile)
+    for key, value in filters.items():
+        query = query.filter(getattr(SupplierProfile, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_unknown_scalar(db: Session, column: str, **filters) -> Any:
+    query = db.query(getattr(Unknown, column))
+    for key, value in filters.items():
+        query = query.filter(getattr(Unknown, key) == value)
+    return query.scalar()
+
+
+def get_shipment_first(db: Session, **filters) -> Optional[Shipment]:
+    query = db.query(Shipment)
+    for key, value in filters.items():
+        query = query.filter(getattr(Shipment, key) == value)
+    return query.limit(1).first()
+
+
+def list_user(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[User]:
+    query = db.query(User)
+    for key, value in filters.items():
+        query = query.filter(getattr(User, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_product_by_condition(db: Session, **filters) -> Optional[Product]:
+    query = db.query(Product)
+    for key, value in filters.items():
+        query = query.filter(getattr(Product, key) == value)
+    return query.first()
+
+
+def get_unknown_by_condition(db: Session, **filters) -> Optional[Unknown]:
+    query = db.query(Unknown)
+    for key, value in filters.items():
+        query = query.filter(getattr(Unknown, key) == value)
+    return query.first()
+
+
+def get_order_first(db: Session, **filters) -> Optional[Order]:
+    query = db.query(Order)
+    for key, value in filters.items():
+        query = query.filter(getattr(Order, key) == value)
+    return query.limit(1).first()
+
+
+def get_shipmentevent_first(db: Session, **filters) -> Optional[ShipmentEvent]:
+    query = db.query(ShipmentEvent)
+    for key, value in filters.items():
+        query = query.filter(getattr(ShipmentEvent, key) == value)
+    return query.limit(1).first()
+
+
+def get_suppliersettlement_first(db: Session, **filters) -> Optional[SupplierSettlement]:
+    query = db.query(SupplierSettlement)
+    for key, value in filters.items():
+        query = query.filter(getattr(SupplierSettlement, key) == value)
+    return query.limit(1).first()
+
+
+def get_orderitem_first(db: Session, **filters) -> Optional[OrderItem]:
+    query = db.query(OrderItem)
+    for key, value in filters.items():
+        query = query.filter(getattr(OrderItem, key) == value)
+    return query.limit(1).first()
+
+
+def get_order_by_id(db: Session, record_id: int) -> Optional[Order]:
+    return db.query(Order).filter(Order.id == record_id).first()
+
+
+def list_shipment(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Shipment]:
+    query = db.query(Shipment)
+    for key, value in filters.items():
+        query = query.filter(getattr(Shipment, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_product_first(db: Session, **filters) -> Optional[Product]:
+    query = db.query(Product)
+    for key, value in filters.items():
+        query = query.filter(getattr(Product, key) == value)
+    return query.limit(1).first()
+
+
+def count_product(db: Session, **filters) -> int:
+    query = db.query(Product)
+    for key, value in filters.items():
+        query = query.filter(getattr(Product, key) == value)
+    return query.count()
+
+
+def list_product(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Product]:
+    query = db.query(Product)
+    for key, value in filters.items():
+        query = query.filter(getattr(Product, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_payout_first(db: Session, **filters) -> Optional[Payout]:
+    query = db.query(Payout)
+    for key, value in filters.items():
+        query = query.filter(getattr(Payout, key) == value)
+    return query.limit(1).first()
+
+
+def get_commissionbadgetier_first(db: Session, **filters) -> Optional[CommissionBadgeTier]:
+    query = db.query(CommissionBadgeTier)
+    for key, value in filters.items():
+        query = query.filter(getattr(CommissionBadgeTier, key) == value)
+    return query.limit(1).first()
+
+
+def get_badgebillingrecord_first(db: Session, **filters) -> Optional[BadgeBillingRecord]:
+    query = db.query(BadgeBillingRecord)
+    for key, value in filters.items():
+        query = query.filter(getattr(BadgeBillingRecord, key) == value)
+    return query.limit(1).first()
+
+
+def list_unknown(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[Unknown]:
+    query = db.query(Unknown)
+    for key, value in filters.items():
+        query = query.filter(getattr(Unknown, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_supplierbankaccount_by_id(db: Session, record_id: int) -> Optional[SupplierBankAccount]:
+    return db.query(SupplierBankAccount).filter(SupplierBankAccount.id == record_id).first()
+
+
+def get_supplierdocument_by_id(db: Session, record_id: int) -> Optional[SupplierDocument]:
+    return db.query(SupplierDocument).filter(SupplierDocument.id == record_id).first()
+
+
+def get_supplierprofile_first(db: Session, **filters) -> Optional[SupplierProfile]:
+    query = db.query(SupplierProfile)
+    for key, value in filters.items():
+        query = query.filter(getattr(SupplierProfile, key) == value)
+    return query.limit(1).first()
+
+def _db_user_first_0(db: Session, id: Any, role: Any, sid: Any, supplier: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == sid, User.role == "supplier").first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_1(db: Session, sid: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == sid).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_first_2(db: Session, id: Any, role: Any, supplier: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == supplier_id, User.role == "supplier").first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_3(db: Session, supplier_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_query_4(db: Session, role: Any, supplier: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.role == "supplier")
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_query_5(db: Session, is_: Any, is_verified: Any, role: Any, supplier: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.role == "supplier", User.is_verified.is_(False))
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_first_6(db: Session, id: Any, role: Any, supplier: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == user_id, User.role == "supplier").first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_7(db: Session, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_countryconfig_first_8(db: Session, True: Any, code: Any, supplier_country: Any, upper: Any) -> Optional[Any]:
+    result = db.query(CountryConfig).filter( CountryConfig.code == supplier_country.upper(), CountryConfig.is_active == True, ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierdocument_all_9(db: Session, approved: Any, status: Any, supplier_id: Any, user_id: Any) -> list[Any]:
+    return for doc in db.query(SupplierDocument).filter( SupplierDocument.supplier_id == user_id, SupplierDocument.status == "approved", ).all(): approved_types |= {str(getattr(doc, "document_type", "")).strip().lower()}
+    """Read-only query delegated from controller."""
+
+def _db_user_first_10(db: Session, id: Any, role: Any, supplier: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == user_id, User.role == "supplier").first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_11(db: Session, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_query_12(db: Session) -> Optional[Any]:
+    return db.query(User)
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_all_13(db: Session, in_: Any, supplier_ids: Any, user_id: Any) -> list[Any]:
+    return for profile in db.query(SupplierProfile).filter(SupplierProfile.user_id.in_(supplier_ids)).all()
+    """Read-only query delegated from controller."""
+
+def _db_shipment_query_0(db: Session) -> Optional[Any]:
+    return db.query(Shipment)
+    """Read-only query delegated from controller."""
+
+def _db_user_all_1(db: Session, id: Any, in_: Any, user_ids: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id.in_(user_ids)).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_2(db: Session, product_slug: Any, slug: Any) -> Optional[Any]:
+    return while db.query(Product).filter(Product.slug == product_slug).first(): attempt += 1
+    """Read-only query delegated from controller."""
+
+def _db_order_query_4(db: Session) -> Optional[Any]:
+    return db.query(Order)
+    """Read-only query delegated from controller."""
+
+def _db_shipmentevent_query_5(db: Session) -> Optional[Any]:
+    return db.query(ShipmentEvent)
+    """Read-only query delegated from controller."""
+
+def _db_suppliersettlement_all_6(db: Session, all_order_ids: Any, in_: Any, order_id: Any, supplier_id: Any) -> list[Any]:
+    return for s in db.query(SupplierSettlement).filter( SupplierSettlement.supplier_id == supplier_id, SupplierSettlement.order_id.in_(all_order_ids), ).all()
+    """Read-only query delegated from controller."""
+
+def _db_orderitem_query_7(db: Session) -> Optional[Any]:
+    return db.query(OrderItem)
+    """Read-only query delegated from controller."""
+
+def _db_shipment_query_8(db: Session) -> Optional[Any]:
+    return db.query(Shipment)
+    """Read-only query delegated from controller."""
+
+def _db_orderitem_query_9(db: Session) -> Optional[Any]:
+    return db.query(OrderItem)
+    """Read-only query delegated from controller."""
+
+def _db_order_query_10(db: Session) -> Optional[Any]:
+    return db.query(Order)
+    """Read-only query delegated from controller."""
+
+def _db_orderitem_query_11(db: Session) -> Optional[Any]:
+    return db.query(OrderItem)
+    """Read-only query delegated from controller."""
+
+def _db_order_query_12(db: Session) -> Optional[Any]:
+    return db.query(Order)
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_13(db: Session, supplier_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_shipment_query_14(db: Session) -> Optional[Any]:
+    return db.query(Shipment)
+    """Read-only query delegated from controller."""
+
+def _db_user_first_15(db: Session, id: Any, order: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == order.user_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_orderitem_query_16(db: Session) -> Optional[Any]:
+    return db.query(OrderItem)
+    """Read-only query delegated from controller."""
+
+def _db_shipment_query_17(db: Session) -> Optional[Any]:
+    return db.query(Shipment)
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_18(db: Session, supplier_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_shipmentevent_first_19(db: Session, event_type: Any, id: Any, in_: Any, picked_from_supplier: Any, shipment: Any, shipment_id: Any, supplier_prepared: Any) -> Optional[Any]:
+    return if not db.query(ShipmentEvent).filter( ShipmentEvent.shipment_id == shipment.id, ShipmentEvent.event_type.in_(["supplier_prepared", "picked_from_supplier"]), ).first(): add_to_session( db, ShipmentEvent( shipment_id=shipment.id, order_id=shipment.order_id, supplier_id=shipment.supplier_id, actor_user_id=current_user["id"], actor_role=current_user.get("role", "supplier"), event_type="supplier_prepared", status_after="processing", distribution_channel=getattr(shipment, "distribution_channel", None), location=shipment.current_hub, scan_code=shipment.scan_code, notes=(notes or "").strip() or "Packed parcel proof uploaded by supplier", created_at=utcnow(), ) )
+    """Read-only query delegated from controller."""
+
+def _db_shipment_all_20(db: Session, id: Any, order: Any, order_id: Any) -> Optional[Any]:
+    result = db.query(Shipment).filter(Shipment.order_id == order.id).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_query_21(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).options(selectinload(Product.variants)).filter( Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 )
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_22(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).options(selectinload(Product.variants)).filter( Product.id == product_id, Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_23(db: Session, current_user: Any, id: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_24(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_order_count_25(db: Session, created_at: Any, sid: Any, start_date: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Order).join(OrderItem).join(Product).filter( Product.supplier_id == sid, Order.created_at >= start_date, ).distinct().count()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_order_count_26(db: Session, created_at: Any, previous_start_date: Any, sid: Any, start_date: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Order).join(OrderItem).join(Product).filter( Product.supplier_id == sid, Order.created_at >= previous_start_date, Order.created_at < start_date, ).distinct().count()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_27(db: Session, id: Any, product: Any, product_id: Any, sid: Any, supplier_id: Any) -> Optional[Any]:
+    return for product in db.query(Product).filter(Product.supplier_id == sid).limit(10).all(): sales_data = db.query( func.count(OrderItem.id), func.sum(OrderItem.price * OrderItem.quantity), ).filter(OrderItem.product_id == product.id).first()
+    """Read-only query delegated from controller."""
+
+def _db_product_all_28(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_29(db: Session, current_user: Any, id: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_30(db: Session, current_user: Any, id: Any, product_id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id == product_id, Product.supplier_id == current_user["id"], ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_all_31(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_first_32(db: Session, current_user: Any, id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_33(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_order_query_34(db: Session) -> Optional[Any]:
+    return db.query(Order).join(OrderItem).join(Product)
+    """Read-only query delegated from controller."""
+
+def _db_user_first_35(db: Session, current_user: Any, id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_36(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_first_37(db: Session, current_user: Any, id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_38(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_payout_query_39(db: Session) -> Optional[Any]:
+    return db.query(Payout)
+    """Read-only query delegated from controller."""
+
+def _db_shipment_query_40(db: Session) -> Optional[Any]:
+    return db.query(Shipment)
+    """Read-only query delegated from controller."""
+
+def _db_product_all_41(db: Session, current_user: Any, id: Any, in_: Any, product_ids: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.id.in_(product_ids), Product.supplier_id == current_user["id"], ).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_all_42(db: Session, False: Any, current_user: Any, id: Any, in_: Any, product_ids: Any) -> list[Any]:
+    return for p in db.query(Product).filter( Product.id.in_(product_ids), Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).all()
+    """Read-only query delegated from controller."""
+
+def _db_product_all_43(db: Session, False: Any, current_user: Any, id: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.supplier_id == current_user["id"], Product.is_deleted == False,  # noqa: E712 ).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_first_44(db: Session, product_slug: Any, slug: Any) -> Optional[Any]:
+    return while db.query(Product).filter(Product.slug == product_slug).first(): attempt += 1
+    """Read-only query delegated from controller."""
+
+def _db_product_all_45(db: Session, current_user: Any, id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter(Product.supplier_id == current_user["id"]).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_46(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_47(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_48(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_49(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_50(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_51(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_52(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_53(db: Session, supplier_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_commissionbadgetier_query_54(db: Session) -> Optional[Any]:
+    return db.query(CommissionBadgeTier)
+    """Read-only query delegated from controller."""
+
+def _db_commissionbadgetier_query_55(db: Session) -> Optional[Any]:
+    return db.query(CommissionBadgeTier)
+    """Read-only query delegated from controller."""
+
+def _db_badgebillingrecord_query_56(db: Session, badge_level: Any, charge_type: Any, draft: Any, in_: Any, invoiced: Any, paid: Any, status: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(BadgeBillingRecord).filter( BadgeBillingRecord.supplier_id == supplier_id, BadgeBillingRecord.badge_level == badge_level, BadgeBillingRecord.charge_type == charge_type, BadgeBillingRecord.status.in_(("draft", "invoiced", "paid")), )
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_commissionbadgetier_query_57(db: Session) -> Optional[Any]:
+    return db.query(CommissionBadgeTier)
+    """Read-only query delegated from controller."""
+
+def _db_badgebillingrecord_query_58(db: Session) -> Optional[Any]:
+    return db.query(BadgeBillingRecord)
+    """Read-only query delegated from controller."""
+
+def _db_badgebillingrecord_query_59(db: Session) -> Optional[Any]:
+    return db.query(BadgeBillingRecord)
+    """Read-only query delegated from controller."""
+
+def _db_commissionbadgetier_query_60(db: Session) -> Optional[Any]:
+    return db.query(CommissionBadgeTier)
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_61(db: Session, supplier_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_62(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_sp_first_63(db: Session, supplier_user_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SP).filter(SP.user_id == supplier_user_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_product_all_64(db: Session, False: Any, True: Any, is_active: Any, is_deleted: Any, noqa: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(Product).filter( Product.supplier_id == supplier_id, Product.is_deleted == False,  # noqa: E712 Product.is_active == True,  # noqa: E712 ).order_by(Product.created_at.desc()).offset(offset).limit(limit).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierbankaccount_first_65(db: Session, supplier_id: Any) -> Optional[Any]:
+    result = db.query(SupplierBankAccount).filter(SupplierBankAccount.supplier_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierbankaccount_first_66(db: Session, supplier_id: Any) -> Optional[Any]:
+    result = db.query(SupplierBankAccount).filter(SupplierBankAccount.supplier_id == supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_0(db: Session, current_user: Any, id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user["id"]).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierdocument_query_1(db: Session, current_user: Any, id: Any, in_: Any, profile_id: Any, supplier_id: Any) -> Optional[Any]:
+    return return db.query(SupplierDocument).filter( SupplierDocument.supplier_id.in_([profile_id, current_user["id"]]) )
+    """Read-only query delegated from controller."""
+
+def _db_supplierdocument_query_2(db: Session) -> Optional[Any]:
+    result = db.query(SupplierDocument)
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_supplierprofile_first_4(db: Session, doc: Any, supplier_id: Any, user_id: Any) -> Optional[Any]:
+    result = db.query(SupplierProfile).filter( SupplierProfile.user_id == doc.supplier_id ).first()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_user_first_5(db: Session, doc: Any, id: Any, supplier_id: Any) -> Optional[Any]:
+    result = db.query(User).filter(User.id == doc.supplier_id).first()
+    return result
+    """Read-only query delegated from controller."""

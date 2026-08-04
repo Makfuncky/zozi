@@ -143,7 +143,7 @@ def _send_return_email(return_id: int, *, event_kind: str) -> dict[str, Any]:
             detail = f"We received your {getattr(req, 'intent', 'return')} request and the team will review it shortly."
         else:
             status = str(getattr(req, "status", "pending") or "pending").replace("_", " ").title()
-            subject = f"Return request update for order #{order.id}"
+            subject = "Return request update for order #" + str(order.id)
             detail = f"Your return request is now <strong>{status}</strong>."
 
         html = (
@@ -171,12 +171,12 @@ def _send_shipment_status_email(shipment_id: int, *, event_type: str | None = No
             detail = f"Shipment event: <strong>{event_type.replace('_', ' ').title()}</strong>.<br>{detail}"
 
         html = (
-            f"<h2>Shipment update for order #{order.id}</h2>"
+            "<h2>Shipment update for order #" + str(order.id) + "</h2>"
             f"<p>Hi {_first_name(user)},</p>"
             f"<p>{detail}</p>"
             f"<p><a href=\"{_tracking_link(cast(int, order.id))}\">Track your shipment</a></p>"
         )
-        send_email(str(user.email), f"Shipment update for order #{order.id}", html, purpose="notification")
+        send_email(str(user.email), "Shipment update for order #" + str(order.id), html, purpose="notification")
         return {"shipment_id": shipment_id, "sent": True, "status": status}
 
 
@@ -248,7 +248,7 @@ def _send_doc_status_email(supplier_id: int, doc_type: str, status: str, review_
         )
         send_email(
             str(supplier.email),
-            f"Document Update: {label} — {status_label}",
+            "Document Update: " + str(label) + " \u2014 " + str(status_label),
             html,
             purpose="notification",
         )

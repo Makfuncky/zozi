@@ -317,3 +317,63 @@ def _log_automation(db: Session, kind: str, processed: int, changed: int,
     except Exception as e:
         logger.warning("Automation log failed: %s", e)
         db.rollback()
+
+def get_payout_first(db: Session, **filters) -> Optional[Payout]:
+    query = db.query(Payout)
+    for key, value in filters.items():
+        query = query.filter(getattr(Payout, key) == value)
+    return query.limit(1).first()
+
+
+def list_transactionledger(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[TransactionLedger]:
+    query = db.query(TransactionLedger)
+    for key, value in filters.items():
+        query = query.filter(getattr(TransactionLedger, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_suppliersettlement_first(db: Session, **filters) -> Optional[SupplierSettlement]:
+    query = db.query(SupplierSettlement)
+    for key, value in filters.items():
+        query = query.filter(getattr(SupplierSettlement, key) == value)
+    return query.limit(1).first()
+
+
+def get_logisticssettlement_first(db: Session, **filters) -> Optional[LogisticsSettlement]:
+    query = db.query(LogisticsSettlement)
+    for key, value in filters.items():
+        query = query.filter(getattr(LogisticsSettlement, key) == value)
+    return query.limit(1).first()
+
+
+def list_suppliersettlement(db: Session, skip: int = 0, limit: int = 100, **filters) -> list[SupplierSettlement]:
+    query = db.query(SupplierSettlement)
+    for key, value in filters.items():
+        query = query.filter(getattr(SupplierSettlement, key) == value)
+    return query.offset(skip).limit(limit).all()
+
+
+def get_payout_by_id(db: Session, record_id: int) -> Optional[Payout]:
+    return db.query(Payout).filter(Payout.id == record_id).first()
+
+def _db_payout_query_0(db: Session) -> Optional[Any]:
+    return db.query(Payout)
+    """Read-only query delegated from controller."""
+
+def _db_transactionledger_all_1(db: Session, order_id: Any) -> Optional[Any]:
+    result = db.query(TransactionLedger).filter(TransactionLedger.order_id == order_id).limit(1000).all()
+    return result
+    """Read-only query delegated from controller."""
+
+def _db_suppliersettlement_query_2(db: Session) -> Optional[Any]:
+    return for row in db.query(SupplierSettlement)
+    """Read-only query delegated from controller."""
+
+def _db_logisticssettlement_query_3(db: Session) -> Optional[Any]:
+    return for row in db.query(LogisticsSettlement)
+    """Read-only query delegated from controller."""
+
+def _db_suppliersettlement_all_4(db: Session, payout_id: Any) -> Optional[Any]:
+    result = db.query(SupplierSettlement).filter(SupplierSettlement.payout_id == payout_id).all()
+    return result
+    """Read-only query delegated from controller."""

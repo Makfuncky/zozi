@@ -198,7 +198,7 @@ def notify_suppliers_of_payout(
         One entry per notification sent (or attempted), each with keys:
         ``supplier_id``, ``email``, ``status``, and optionally ``error``.
     """
-    from email_service import send_email
+    from utils.email_service import send_email
 
     notifications: list[dict[str, Any]] = []
     payout_ids = sweep_result.get("payout_ids", [])
@@ -289,7 +289,7 @@ def notify_logistics_partners_of_payout(
     list[dict]
         One entry per notification sent (or attempted).
     """
-    from email_service import send_email
+    from utils.email_service import send_email
 
     notifications: list[dict[str, Any]] = []
     payout_ids = sweep_result.get("payout_ids", [])

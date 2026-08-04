@@ -71,7 +71,7 @@ def reset_demo_data(db: Session) -> dict[str, int]:
         if table not in _ALLOWED_TABLES:
             continue
         try:
-            delete_stmt = text(f"DELETE FROM {table}")
+            delete_stmt = text("DELETE FROM " + table)
             result = db.execute(delete_stmt)
             deleted_counts[table] = result.rowcount or 0
         except Exception:

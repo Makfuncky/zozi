@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from data.db import get_db
 from data.models import User
 from utils.dependencies import require_supplier
-from services.storage import storage as _storage
 
 # AI analysis for parcel-photo matching (uses the vision provider)
 ai_logger = logging.getLogger(__name__)
@@ -30,6 +29,7 @@ from services.supplier.supplier_orders_service import (
     list_orders_for_supplier,
     list_supplier_order_ids,
     mark_order_prepared_if_processing,
+    delete_parcel_proof_files,
 )
 
 logger = logging.getLogger(__name__)
@@ -299,13 +299,7 @@ async def replace_reference_image(
         raise HTTPException(status_code=400, detail="Only JPEG, PNG, and WebP images are accepted")
 
     # Remove all existing reference_* files
-    prefix = f"parcel_proofs/{order_id}/"
-    for old_ref in _storage.list(prefix):
-        if os.path.basename(old_ref).startswith("reference_"):
-            try:
-                _storage.delete(old_ref)
-            except Exception:
-                pass
+    delete_parcel_proof_files(db=db, order_id=order_id)
 
     # Read and save the new reference
     content = await file.read()

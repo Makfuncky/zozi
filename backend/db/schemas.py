@@ -553,6 +553,44 @@ class PaginatedProducts(BaseModel):
     pages: int = Field(description="Total pages")
 
 
+class ProductSearchRequest(BaseModel):
+    """Search request body for POST /api/v1/products/search.
+
+    Mirrors the query-parameter interface of GET /api/v1/products so clients
+    that prefer a POST body (e.g. for complex / faceted queries) can use the
+    same filtering, sorting, and pagination capabilities.
+    """
+
+    q: Optional[str] = Field(default=None, description="Full-text search query across name, description, category, subcategory")
+    category: Optional[str] = Field(default=None, description="Filter by top-level category slug or name")
+    subcategory: Optional[str] = Field(default=None, description="Filter by subcategory")
+    brand: Optional[str] = Field(default=None, description="Filter by brand (single)")
+    brands: Optional[str] = Field(default=None, description="Filter by comma-separated list of brands")
+    color: Optional[str] = Field(default=None, description="Filter by color")
+    region: Optional[str] = Field(default=None, description="Filter by visibility region")
+    supplier: Optional[str] = Field(default=None, description="Filter by supplier name or business name")
+    min_price: Optional[float] = Field(default=None, ge=0, description="Minimum price (inclusive)")
+    max_price: Optional[float] = Field(default=None, ge=0, description="Maximum price (inclusive)")
+    min_rating: Optional[float] = Field(default=None, ge=0, le=5, description="Minimum product rating (inclusive)")
+    max_rating: Optional[float] = Field(default=None, ge=0, le=5, description="Maximum product rating (inclusive)")
+    new_arrivals: bool = Field(default=False, description="Limit to recently added products")
+    best_sellers: bool = Field(default=False, description="Limit to best-selling products")
+    trending: bool = Field(default=False, description="Sort by trending (sales count)")
+    in_stock: bool = Field(default=False, description="Only include products with stock > 0")
+    min_discount: Optional[int] = Field(default=None, ge=0, description="Minimum discount percentage")
+    deals: bool = Field(default=False, description="Include deal / flash-sale pricing metadata")
+    sort: Optional[str] = Field(
+        default=None,
+        description="Sort order: price_asc, price_desc, name_asc, newest, rating, bestseller, discount",
+    )
+    sale_id: Optional[int] = Field(default=None, description="Filter by flash-sale ID")
+    has_video: bool = Field(default=False, description="Only include products with video")
+    attributes: Optional[str] = Field(default=None, description="JSON string of attribute filter values")
+
+    limit: int = Field(default=24, ge=1, le=100, description="Results per page")
+    offset: int = Field(default=0, ge=0, description="Pagination offset")
+
+
 # ── Cart ──────────────────────────────────────────────────────────────────────
 
 class CartItemCreate(BaseModel):

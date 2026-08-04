@@ -5,13 +5,13 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from data.db import get_db
 from data.models import User
 from utils.dependencies import get_current_user, require_admin
 from utils.audit_log import AuditAction, audit_log
 from utils.ip_utils import get_ip_for_logging
+from services.communication.communication_read_service import execute_unified_inbox_query
 
 logger = logging.getLogger("zozi.api.comms")
 
@@ -215,7 +215,7 @@ def unified_inbox(
     user_id = int(current_user.id)
     params["user_id"] = user_id
 
-    rows = db.execute(text(sql), params).mappings().all()
+    rows = execute_unified_inbox_query(db, sql, params)
 
     has_more = len(rows) > limit
     if has_more:

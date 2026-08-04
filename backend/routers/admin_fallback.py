@@ -6,14 +6,13 @@ parameter (e.g. GET /{code}/suppliers).  The admin frontend often hits
 the SAME endpoints WITHOUT a country code (GET /admin/suppliers).
 
 This router provides shallow proxy routes that delegate to the same
-underlying controllers, so the frontend works whether or not a country
-code is supplied.
+underlying controllers / service layer, so the frontend works whether or
+not a country code is supplied.  All data access goes through
+services/core/admin_dashboard_service.py (LC1: routers stay thin).
 """
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from data.db import get_db
@@ -22,17 +21,21 @@ from utils.pagination import cursor_paginate_desc
 from data.controllers_admin_controller import (
     get_current_admin,
     get_all_suppliers,
-    list_pending_payouts,
 )
-from data.models import (
-    Category as CategoryModel,
-    CommissionGlobalConfig,
-    Employee,
-    Payment,
-    Payout as PayoutModel,
-    ShippingCarrier,
-    Shipment,
-    ShippingZone,
+from services.core.admin_dashboard_service import (
+    get_fallback_admin_dashboard_stats,
+    get_fallback_admin_stats,
+    list_payouts_query,
+    list_categories_query,
+    list_payments_query,
+    list_accounts_fallback,
+    list_employees_query,
+    get_commission_config,
+    list_shipping_carriers_fallback,
+    get_shipping_zone_count,
+    get_shipment_count,
+    get_accounting_summary,
+    get_treasury_cash_total,
 )
 
 router = APIRouter()
@@ -46,27 +49,7 @@ def admin_dashboard_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Simple admin dashboard stats — works without country_code."""
-    from sqlalchemy import func as sqlfunc
-    from data.models import User as UserModel, Order as OrderModel, Product as ProductModel
-
-    total_revenue = (
-        db.query(sqlfunc.sum(Payment.amount))
-        .filter(Payment.status == "completed")
-        .scalar()
-        or 0
-    )
-    total_users = db.query(sqlfunc.count(UserModel.id)).scalar() or 0
-    total_orders = db.query(sqlfunc.count(OrderModel.id)).scalar() or 0
-
-    return {
-        "total_revenue": float(total_revenue),
-        "total_users": total_users,
-        "total_orders": total_orders,
-        "active_sessions": 0,
-        "pending_payouts": db.query(PayoutModel).filter(
-            PayoutModel.status == "pending"
-        ).count(),
-    }
+    return get_fallback_admin_dashboard_stats(db)
 
 
 # ── Stats (simple aggregate) ──────────────────────────────────────────────
@@ -77,25 +60,7 @@ def admin_stats_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Simple aggregate stats — works without country_code."""
-    from sqlalchemy import func as sqlfunc
-    from data.models import User as UserModel, Order as OrderModel, Product as ProductModel
-
-    return {
-        "total_users": db.query(sqlfunc.count(UserModel.id)).scalar() or 0,
-        "total_customers": db.query(sqlfunc.count(UserModel.id)).filter(
-            UserModel.role == "customer"
-        ).scalar() or 0,
-        "total_suppliers": db.query(sqlfunc.count(UserModel.id)).filter(
-            UserModel.role == "supplier"
-        ).scalar() or 0,
-        "total_orders": db.query(sqlfunc.count(OrderModel.id)).scalar() or 0,
-        "total_products": db.query(sqlfunc.count(ProductModel.id)).filter(
-            ProductModel.is_deleted == False
-        ).scalar() or 0,
-        "pending_payouts": db.query(PayoutModel).filter(
-            PayoutModel.status == "pending"
-        ).count(),
-    }
+    return get_fallback_admin_stats(db)
 
 
 # ── Suppliers (fallback — delegates to get_all_suppliers) ─────────────────
@@ -131,8 +96,9 @@ def admin_payouts_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all payouts (no country code required)."""
-    q = db.query(PayoutModel).order_by(PayoutModel.id.desc())
-    return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
+    return cursor_paginate_desc(
+        list_payouts_query(db), cursor=cursor, page_size=limit
+    )
 
 
 # ── Categories (fallback) ──────────────────────────────────────────────────
@@ -145,8 +111,9 @@ def admin_categories_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all categories (no country code required)."""
-    q = db.query(CategoryModel).order_by(CategoryModel.id.desc())
-    return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
+    return cursor_paginate_desc(
+        list_categories_query(db), cursor=cursor, page_size=limit
+    )
 
 
 # ── Commission (fallback) ──────────────────────────────────────────────────
@@ -157,7 +124,7 @@ def admin_commission_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Get commission global config (no country code required)."""
-    config = db.query(CommissionGlobalConfig).first()
+    config = get_commission_config(db)
     return config or {}
 
 
@@ -171,13 +138,9 @@ def admin_employees_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all employees (no country code required)."""
-    from data.models import User as UserModel
-    q = (
-        db.query(Employee)
-        .join(UserModel, Employee.user_id == UserModel.id)
-        .order_by(UserModel.full_name.asc().nullslast(), Employee.id)
+    return cursor_paginate_desc(
+        list_employees_query(db), cursor=cursor, page_size=limit
     )
-    return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
 
 
 # ── Payments (fallback) ────────────────────────────────────────────────────
@@ -190,8 +153,9 @@ def admin_payments_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all payments (no country code required)."""
-    q = db.query(Payment).order_by(Payment.id.desc())
-    return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
+    return cursor_paginate_desc(
+        list_payments_query(db), cursor=cursor, page_size=limit
+    )
 
 
 # ── Logistics (fallback — list shipping carriers) ──────────────────────────
@@ -204,24 +168,17 @@ def admin_logistics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List logistics carriers and partners (no country code required)."""
-    from data.models import Shipment, ShippingZone
-
-    carriers = db.query(ShippingCarrier).filter(
-        ShippingCarrier.is_active == True
-    ).offset(skip).limit(limit).all()
-    zone_count = db.query(ShippingZone).filter(
-        ShippingZone.is_active == True
-    ).count()
-    shipment_count = db.query(Shipment).count()
-
+    carriers = list_shipping_carriers_fallback(db, active_only=True)
     return {
         "active_carriers": [
             {"id": c.id, "name": c.name, "code": c.code}
-            for c in carriers
+            for c in carriers[skip : skip + limit]
         ],
-        "active_zones": zone_count,
-        "total_shipments": shipment_count,
+        "active_zones": get_shipping_zone_count(db),
+        "total_shipments": get_shipment_count(db),
     }
+
+
 # ── Logistics Partners (fallback) ──────────────────────────────────────────────
 
 @router.get("/logistics-partners")
@@ -232,13 +189,11 @@ def admin_logistics_partners_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List logistics partners (no country code required)."""
-    carriers = db.query(ShippingCarrier).filter(
-        ShippingCarrier.is_active == True
-    ).offset(skip).limit(limit).all()
+    carriers = list_shipping_carriers_fallback(db, active_only=True)
     return {
         "partners": [
             {"id": c.id, "name": c.name, "code": c.code, "is_active": c.is_active}
-            for c in carriers
+            for c in carriers[skip : skip + limit]
         ],
         "total": len(carriers),
     }
@@ -252,19 +207,9 @@ def admin_treasury_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury summary — redirect to /admin/treasury/metrics if you need full metrics."""
-    from data.models import Account as AccountModel, AccountBalance as AccountBalanceModel
-
-    total_cash = (
-        db.query(func.sum(AccountBalanceModel.balance))
-        .select_from(AccountBalanceModel)
-        .scalar()
-        or 0
-    )
-    account_count = db.query(AccountModel).count()
-
     return {
-        "total_cash": float(total_cash),
-        "total_accounts": account_count,
+        "total_cash": get_treasury_cash_total(db),
+        "total_accounts": get_accounting_summary(db)["total_accounts"],
         "metrics_available_at": "/admin/treasury/metrics",
     }
 
@@ -279,19 +224,10 @@ def admin_treasury_metrics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury metrics summary (no country code required)."""
-    from data.models import Account as AccountModel, AccountBalance as AccountBalanceModel
-
-    accounts = db.query(AccountModel).offset(skip).limit(limit).all()
-    total_cash = (
-        db.query(func.sum(AccountBalanceModel.balance))
-        .select_from(AccountBalanceModel)
-        .scalar()
-        or 0
-    )
-
+    accounts = list_accounts_fallback(db, skip=skip, limit=limit)
     return {
         "total_accounts": len(accounts),
-        "total_cash": float(total_cash),
+        "total_cash": get_treasury_cash_total(db),
         "accounts": [
             {
                 "id": a.id,

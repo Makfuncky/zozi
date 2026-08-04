@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 from data.models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, ProcessedWebhookEvent, TransactionLedger, CountryConfig
 from services.payments import PaymentConfirmedEvent
 from utils.config import settings
-from services.catalog.product_utils import _bump_product_cache_version
+from data.catalog_product_utils import _bump_product_cache_version
 from services.payments_write_service import (
     add_processed_webhook_event,
     add_to_session,

@@ -16,7 +16,8 @@ from utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZ
 from utils.order_tracking import reconcile_order_status, order_status_label
 from data.services_orders import apply_order_status_change
 
-from services.write_helpers import add_and_flush, commit_only, rollback_only
+from data.services_write_helpers import add_and_flush, commit_only, rollback_only
+from services.orders.orders_router_service import get_order_by_id, count_username_map
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
     return {
@@ -50,7 +51,7 @@ def bulk_update_order_status_admin(
     skipped: List[dict] = []
 
     for oid in order_ids:
-        order = db.query(Order).filter(Order.id == oid).first()
+        order = get_order_by_id(db, oid)
         if not order:
             skipped.append({"id": oid, "reason": "Not found"})
             continue
@@ -98,7 +99,7 @@ def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Sessio
     skipped: List[dict] = []
 
     for oid in order_ids:
-        order = db.query(Order).filter(Order.id == oid).first()
+        order = get_order_by_id(db, oid)
         if not order:
             skipped.append({"id": oid, "reason": "Not found"})
             continue
@@ -138,13 +139,13 @@ def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Sessio
     }
 
 
-# â”€â”€ Bulk Product Operations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â�?€â�?€ Bulk Product Operations â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€
 
 def delete_order_admin(order_id: int, acting_user: dict, db: Session) -> dict:
     if acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete orders")
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -185,7 +186,7 @@ def get_all_orders(
     missing_tracking_only: bool = False,
 ) -> dict[str, Any]:
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    query = db.query(Order).options(selectinload(Order.items).selectinload(OrderItem.product))
+    query = _db_order_query_0(db)
     if status and status != "all":
         query = query.filter(Order.status == status)
     if min_amount is not None:
@@ -231,12 +232,11 @@ def get_all_orders(
     user_ids = list({cast(int, o.user_id) for o in orders if o.user_id is not None})
     username_map: dict[int, str] = {}
     if user_ids:
-        user_rows = db.query(User.id, User.username).filter(User.id.in_(user_ids)).all()
-        username_map = {r.id: r.username for r in user_rows}
+        username_map = count_username_map(db, user_ids)
 
     # Batch-load shipments for all orders at once (avoid N+1)
     all_shipments = (
-        db.query(Shipment)
+        _db_shipment_query_1(db)
         .filter(Shipment.order_id.in_(order_ids))
         .order_by(Shipment.order_id.asc(), Shipment.created_at.asc(), Shipment.id.asc())
         .all()
@@ -250,7 +250,7 @@ def get_all_orders(
     events_by_shipment: dict[int, list] = {}
     if all_shipment_ids:
         all_events = (
-            db.query(ShipmentEvent)
+            _db_shipmentevent_query_2(db)
             .filter(ShipmentEvent.shipment_id.in_(all_shipment_ids))
             .order_by(ShipmentEvent.created_at.asc())
             .all()
@@ -321,7 +321,7 @@ def _can_staff_override_order_status(current_status: str, target_status: str) ->
 
 
 def update_order_status(order_id: int, status: str, acting_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     valid_statuses = (
@@ -355,7 +355,7 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
     order_status = cast(str, getattr(order, "status"))
     order_paid_at = cast(datetime | None, getattr(order, "paid_at"))
     if order_status == "confirmed" and order_paid_at is None:
-        allowed_transitions["confirmed"].add("failed")
+        allowed_transitions["confirmed"] |= {"failed"}
 
     is_admin_override = False
     if status not in allowed_transitions.get(order_status, set()):
@@ -402,18 +402,18 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
 
 
 def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     payment_intent_id = cast(str | None, getattr(order, "payment_intent_id"))
     order_status = cast(str, getattr(order, "status"))
     order_paid_at = cast(datetime | None, getattr(order, "paid_at"))
     if not payment_intent_id:
-        raise HTTPException(status_code=422, detail="Order has no associated payment â€” cannot refund")
+        raise HTTPException(status_code=422, detail="Order has no associated payment â€�? cannot refund")
 
     allowed_statuses = {"confirmed", "processing", "prepared", "picking_up", "delivered", "shipped", "cancelled"}
     if order_status == "failed" and order_paid_at is not None:
-        allowed_statuses.add("failed")
+        allowed_statuses |= {"failed"}
     if order_status not in allowed_statuses:
         raise HTTPException(status_code=409, detail=f"Cannot refund order in '{order_status}' status")
 
@@ -476,7 +476,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
 
 
 def update_order_tracking(order_id: int, tracking_number: str, acting_user: dict, db: Session) -> dict:
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 

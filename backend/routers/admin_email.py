@@ -2,79 +2,88 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func as sqlfunc, case as sql_case
 from data.db import get_db
+from data.models import User
 from data.schemas import CursorPage
-from data.models import EmailCampaign, NewsletterSubscriber, CampaignRecipient, User
 from data.schemas import EmailCampaignCreate, EmailCampaignOut
 from utils.dependencies import require_admin
-from utils.pagination import cursor_paginate_desc
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
-from services.email_write_service import (
-    create_email_campaign as create_email_campaign_db,
-    delete_email_campaign as delete_email_campaign_db,
+from utils.pagination import cursor_paginate_desc
+from services.communication.email_management_service import (
+    EmailManagementService,
 )
+
 
 router = APIRouter()
 
 
+def _get_email_svc(db: Session = Depends(get_db)) -> EmailManagementService:
+    return EmailManagementService(db)
+
+
 @router.get("/campaigns", response_model=list[EmailCampaignOut])
-def list_all_campaigns(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+def list_all_campaigns(_: User = Depends(require_admin), svc: EmailManagementService = Depends(_get_email_svc)):
     """List all email campaigns across all countries (consolidated view)."""
-    return db.query(EmailCampaign).order_by(EmailCampaign.created_at.desc()).limit(200).all()
+    return svc.list_all_campaigns(limit=200)
 
 
 @router.get("/metrics")
-def admin_email_metrics(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+def admin_email_metrics(_: User = Depends(require_admin), svc: EmailManagementService = Depends(_get_email_svc)):
     """Consolidated email metrics across all countries."""
-    total_subscribers = db.query(sqlfunc.count(NewsletterSubscriber.id)).filter(NewsletterSubscriber.is_active == True).scalar() or 0
-    campaign_stats = db.query(
-        sqlfunc.count(EmailCampaign.id).label("total"),
-        sqlfunc.sum(sql_case((EmailCampaign.status == "sending", 1), else_=0)).label("active"),
-        sqlfunc.count(CampaignRecipient.id).label("total_sent"),
-    ).first()
-    total_sent = int(campaign_stats.total_sent or 0)
-    return {
-        "total_subscribers": total_subscribers,
-        "active_campaigns": int(campaign_stats.active or 0),
-        "total_campaigns": int(campaign_stats.total or 0),
-        "total_sent": total_sent,
-    }
+    return svc.get_email_metrics()
 
 
 @router.get("/campaigns/{country_code}", response_model=CursorPage)
-def list_campaigns(country_code: str = Path(..., description="ISO country code"), _: User = Depends(require_admin), db: Session = Depends(get_db), cursor: str | None = Query(None, description="Cursor for next page"), limit: int = Query(20, ge=1, le=100)):
+def list_campaigns(
+    country_code: str = Path(..., description="ISO country code"),
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_email_svc),
+    cursor: str | None = Query(None, description="Cursor for next page"),
+    limit: int = Query(20, ge=1, le=100),
+):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(EmailCampaign).filter(EmailCampaign.country_code == country_code.upper())
+        q = svc.get_campaigns_by_country_query(country_code)
         return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
     finally:
         clear_rls_context()
 
 
 @router.post("/campaigns/{country_code}", response_model=EmailCampaignOut, status_code=201)
-def create_campaign(country_code: str = Path(..., description="ISO country code"), payload: EmailCampaignCreate = None, _: User = Depends(require_admin), db: Session = Depends(get_db)):
+def create_campaign(
+    country_code: str = Path(..., description="ISO country code"),
+    payload: EmailCampaignCreate = None,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+    svc: EmailManagementService = Depends(_get_email_svc),
+):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        allowed = {"name", "subject", "status", "send_at", "created_by", "country_code"}
-        data = {k: v for k, v in payload.model_dump().items() if k in allowed and v is not None}
-        data["country_code"] = country_code.upper()
-        return create_email_campaign_db(db, **data)
+        return svc.create_campaign(payload.model_dump(), country_code.upper())
     finally:
         clear_rls_context()
 
 
 @router.delete("/campaigns/{country_code}/{campaign_id}")
-def delete_campaign(country_code: str = Path(..., description="ISO country code"), campaign_id: int = Path(...), _: User = Depends(require_admin), db: Session = Depends(get_db)):
+def delete_campaign(
+    country_code: str = Path(..., description="ISO country code"),
+    campaign_id: int = Path(...),
+    _: User = Depends(require_admin),
+    svc: EmailManagementService = Depends(_get_email_svc),
+    db: Session = Depends(get_db),
+):
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        c = db.query(EmailCampaign).filter(EmailCampaign.id == campaign_id, EmailCampaign.country_code == country_code.upper()).first()
-        if not c: raise HTTPException(404)
-        delete_email_campaign_db(db, c)
+        try:
+            campaign = svc.find_campaign_for_deletion(campaign_id, country_code)
+        except ValueError:
+            raise HTTPException(404)
+        svc.delete_campaign(campaign)
         return {"message": "Deleted"}
     finally:
         clear_rls_context()

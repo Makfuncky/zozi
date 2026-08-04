@@ -3,6 +3,7 @@
 Exposes AR/AP, payments register, journal browser, bank reconciliation matching,
 budgets/variance, finance audit log, COA edit, and automation triggers. All
 endpoints enforce finance permission delegation via `require_finance_permission`.
+All data access is delegated to the service layer (LC1: routers stay thin).
 """
 from __future__ import annotations
 
@@ -12,23 +13,34 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from data.db import get_db
 from data.dependencies_auth import get_current_user
-from data.controllers_admin_controller import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from data.models import (
-    Account, JournalEntry, JournalEntryLine, ARInvoice, APBill, Customer, Vendor,
-    BankStatementLine, BankReconciliation, Budget, FiscalPeriod, FinanceAuditLog,
-    RecurringTemplate, AccountGroup,
+from services.finance.erp_read_service import (
+    get_account_by_code,
+    get_account_group_by_code,
+    list_accounts_paged as list_accounts_paged_svc,
+    list_ar_invoices,
+    list_ap_bills,
+    list_payments_register,
+    browse_journal_entries,
+    get_journal_line_rows,
+    list_statement_lines,
+    list_statement_imports,
+    get_lines_for_import,
+    list_budgets as list_budgets_svc,
+    list_finance_audit_log,
 )
-from services import erp_finance_service as erp, finance_automation as fa, general_ledger_service as gl
+from data.models import (
+    RecurringTemplate,
+)
+from services import erp_finance_service as erp, finance_automation as fa
+from services.finance.erp_finance_service import update_account as svc_update_account
+from services.finance.erp_finance_service import create_recurring_template as svc_create_recurring_template
 from services.ocr_parser import parse_bill_text
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -46,17 +58,6 @@ def require_finance_permission(slug: str):
     return _dep
 
 
-def _with_rls(country_code: Optional[str], db: Session):
-    if country_code:
-        get_country_or_404(country_code.upper(), db)
-        set_rls_context({country_code.upper()}, is_restricted=True)
-
-    def cleanup():
-        if country_code:
-            clear_rls_context()
-    return cleanup
-
-
 # ── Chart of Accounts (edit) ───────────────────────────────────────────────────
 
 
@@ -70,21 +71,18 @@ class AccountUpdate(BaseModel):
 @router.put("/accounts/{code}", summary="Edit a GL account")
 def update_account(code: str, body: AccountUpdate, db: Session = Depends(get_db),
                    _admin=Depends(require_finance_permission("finance.coa"))):
-    acct = db.query(Account).filter(Account.code == code).first()
-    if not acct:
-        raise HTTPException(404, f"Account '{code}' not found")
-    if body.name is not None:
-        acct.name = body.name
-    if body.normal_side is not None:
-        acct.normal_side = body.normal_side
-    if body.currency is not None:
-        acct.currency = body.currency
     if body.group_code is not None:
-        grp = db.query(AccountGroup).filter(AccountGroup.code == body.group_code).first()
+        grp = get_account_group_by_code(db, body.group_code)
         if not grp:
             raise HTTPException(404, f"Group '{body.group_code}' not found")
-        acct.group_id = grp.id
-    commit_only(db)
+    svc_update_account(
+        db,
+        code=code,
+        name=body.name,
+        normal_side=body.normal_side,
+        currency=body.currency,
+        group_id=grp.id if body.group_code is not None else None,
+    )
     return {"status": "updated", "code": code}
 
 
@@ -97,16 +95,10 @@ def list_accounts_paged(
     limit: int = Query(100, le=500), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.coa")),
 ):
-    q = db.query(Account)
-    if group_code:
-        from data.models import AccountGroup
-        q = q.join(AccountGroup, Account.group_id == AccountGroup.id).filter(AccountGroup.code == group_code)
-    if search:
-        q = q.filter(Account.name.ilike(f"%{search}%") | Account.code.ilike(f"%{search}%"))
-    if active_only:
-        q = q.filter(Account.is_active == True)  # noqa: E712
-    total = q.count()
-    rows = q.order_by(Account.code).offset(offset).limit(limit).all()
+    total, rows = list_accounts_paged_svc(
+        db, group_code=group_code, search=search, active_only=active_only,
+        limit=limit, offset=offset,
+    )
     return {"total": total, "items": [
         {"id": a.id, "code": a.code, "name": a.name, "normal_side": a.normal_side,
          "currency": a.currency, "is_active": a.is_active, "country_code": a.country_code}
@@ -147,11 +139,7 @@ def ar_aging(as_of: date = Query(date.today()), country_code: Optional[str] = Qu
 def list_ar(db: Session = Depends(get_db), country_code: Optional[str] = Query(None, max_length=3),
             limit: int = Query(200, le=500), offset: int = Query(0, ge=0),
             _admin=Depends(require_finance_permission("finance.ar"))):
-    q = db.query(ARInvoice)
-    if country_code:
-        q = q.filter((ARInvoice.country_code == country_code) | (ARInvoice.country_code.is_(None)))
-    total = q.count()
-    rows = q.order_by(ARInvoice.id.desc()).offset(offset).limit(limit).all()
+    total, rows = list_ar_invoices(db, country_code=country_code, limit=limit, offset=offset)
     return {"total": total, "items": [
         {"id": r.id, "customer_id": r.customer_id, "invoice_number": r.invoice_number,
          "amount": float(r.amount), "due_date": r.due_date.isoformat() if r.due_date else None,
@@ -210,11 +198,7 @@ def ap_aging(as_of: date = Query(date.today()), country_code: Optional[str] = Qu
 def list_ap(db: Session = Depends(get_db), country_code: Optional[str] = Query(None, max_length=3),
             limit: int = Query(200, le=500), offset: int = Query(0, ge=0),
             _admin=Depends(require_finance_permission("finance.ap"))):
-    q = db.query(APBill)
-    if country_code:
-        q = q.filter((APBill.country_code == country_code) | (APBill.country_code.is_(None)))
-    total = q.count()
-    rows = q.order_by(APBill.id.desc()).offset(offset).limit(limit).all()
+    total, rows = list_ap_bills(db, country_code=country_code, limit=limit, offset=offset)
     return {"total": total, "items": [
         {"id": r.id, "vendor_id": r.vendor_id, "bill_number": r.bill_number,
          "amount": float(r.amount), "due_date": r.due_date.isoformat() if r.due_date else None,
@@ -253,19 +237,10 @@ def payments_register(
     limit: int = Query(100, le=500), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.payments")),
 ):
-    q = db.query(JournalEntryLine, JournalEntry, Account.code, Account.name).join(
-        JournalEntry, JournalEntryLine.entry_id == JournalEntry.id).join(
-        Account, JournalEntryLine.account_id == Account.id)
-    if account_code:
-        q = q.filter(Account.code == account_code)
-    if country_code:
-        q = q.filter(JournalEntryLine.country_code == country_code)
-    if start_date:
-        q = q.filter(JournalEntry.entry_date >= datetime(start_date.year, start_date.month, start_date.day))
-    if end_date:
-        q = q.filter(JournalEntry.entry_date <= datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59))
-    total = q.count()
-    rows = q.order_by(JournalEntry.entry_date.desc()).offset(offset).limit(limit).all()
+    total, rows = list_payments_register(
+        db, start_date=start_date, end_date=end_date, account_code=account_code,
+        country_code=country_code, limit=limit, offset=offset,
+    )
     return {"total": total, "items": [
         {"entry_id": je.id, "reference_number": je.reference_number, "entry_date": je.entry_date.isoformat(),
          "account_code": code, "account_name": name, "side": jl.side, "amount": float(jl.amount),
@@ -286,22 +261,13 @@ def browse_journal(
     limit: int = Query(100, le=500), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.journals")),
 ):
-    q = db.query(JournalEntry)
-    if reference_type:
-        q = q.filter(JournalEntry.reference_type == reference_type)
-    if country_code:
-        q = q.filter(JournalEntry.country_code == country_code)
-    if start_date:
-        q = q.filter(JournalEntry.entry_date >= datetime(start_date.year, start_date.month, start_date.day))
-    if end_date:
-        q = q.filter(JournalEntry.entry_date <= datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59))
-    total = q.count()
-    entries = q.order_by(JournalEntry.entry_date.desc()).offset(offset).limit(limit).all()
+    total, entries = browse_journal_entries(
+        db, reference_type=reference_type, country_code=country_code,
+        start_date=start_date, end_date=end_date, limit=limit, offset=offset,
+    )
     # Bulk-load lines for the page (avoids N+1).
     ids = [e.id for e in entries]
-    line_rows = (db.query(JournalEntryLine, Account.code, Account.name).join(
-        Account, JournalEntryLine.account_id == Account.id).filter(
-        JournalEntryLine.entry_id.in_(ids)).all()) if ids else []
+    line_rows = get_journal_line_rows(db, ids)
     by_entry = {}
     for jl, code, name in line_rows:
         by_entry.setdefault(jl.entry_id, []).append(
@@ -321,7 +287,7 @@ def browse_journal(
 def reconciliation_view(import_id: int, skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100),
                         db: Session = Depends(get_db),
                         _admin=Depends(require_finance_permission("finance.reconciliation"))):
-    lines = db.query(BankStatementLine).filter(BankStatementLine.import_id == import_id).offset(skip).limit(limit).all()
+    lines = list_statement_lines(db, import_id, skip=skip, limit=limit)
     out = []
     for ln in lines:
         sugg = erp.suggest_matches(db, ln)
@@ -350,13 +316,10 @@ def auto_match(import_id: int, db: Session = Depends(get_db),
 def reconciliation_status(country_code: Optional[str] = Query(None, max_length=3),
                           db: Session = Depends(get_db),
                           _admin=Depends(require_finance_permission("finance.reconciliation"))):
-    from data.models import BankStatementImport
-    imports = db.query(BankStatementImport)
-    if country_code:
-        imports = imports.filter(BankStatementImport.country_code == country_code)
+    imports = list_statement_imports(db, country_code=country_code, limit=50)
     out = []
-    for imp in imports.order_by(BankStatementImport.id.desc()).limit(50).all():
-        lines = db.query(BankStatementLine).filter(BankStatementLine.import_id == imp.id).all()
+    for imp in imports:
+        lines = get_lines_for_import(db, imp.id)
         matched = sum(1 for l in lines if l.status == "reconciled")
         out.append({"import_id": imp.id, "bank_name": imp.bank_name, "total": len(lines),
                     "matched": matched, "status": imp.status})
@@ -379,13 +342,9 @@ class BudgetSet(BaseModel):
 def list_budgets(fiscal_period_id: Optional[int] = Query(None), country_code: Optional[str] = Query(None, max_length=3),
                  skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100),
                  db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.budgets"))):
-    q = db.query(Budget)
-    if fiscal_period_id:
-        q = q.filter(Budget.fiscal_period_id == fiscal_period_id)
-    if country_code:
-        q = q.filter((Budget.country_code == country_code) | (Budget.country_code.is_(None)))
-    total = q.count()
-    rows = q.offset(skip).limit(limit).all()
+    total, rows = list_budgets_svc(
+        db, fiscal_period_id=fiscal_period_id, country_code=country_code, skip=skip, limit=limit,
+    )
     return {"total": total, "items": [
         {"id": b.id, "account_code": b.account_code, "fiscal_period_id": b.fiscal_period_id,
          "amount": float(b.amount), "currency": b.currency, "country_code": b.country_code}
@@ -419,19 +378,10 @@ def finance_audit(
     limit: int = Query(100, le=500), offset: int = Query(0, ge=0),
     db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.audit")),
 ):
-    q = db.query(FinanceAuditLog)
-    if action:
-        q = q.filter(FinanceAuditLog.action == action)
-    if actor_id:
-        q = q.filter(FinanceAuditLog.actor_id == actor_id)
-    if country_code:
-        q = q.filter((FinanceAuditLog.country_code == country_code) | (FinanceAuditLog.country_code.is_(None)))
-    if start:
-        q = q.filter(FinanceAuditLog.created_at >= datetime(start.year, start.month, start.day))
-    if end:
-        q = q.filter(FinanceAuditLog.created_at <= datetime(end.year, end.month, end.day, 23, 59, 59))
-    total = q.count()
-    rows = q.order_by(FinanceAuditLog.created_at.desc()).offset(offset).limit(limit).all()
+    total, rows = list_finance_audit_log(
+        db, start=start, end=end, action=action, actor_id=actor_id,
+        country_code=country_code, limit=limit, offset=offset,
+    )
     return {"total": total, "items": [
         {"id": a.id, "action": a.action, "actor_id": a.actor_id, "entity_type": a.entity_type,
          "entity_id": a.entity_id, "country_code": a.country_code,
@@ -502,11 +452,17 @@ class RecurringCreate(BaseModel):
 @router.post("/recurring", summary="Create recurring entry template")
 def create_recurring(body: RecurringCreate, db: Session = Depends(get_db),
                      _admin=Depends(require_finance_permission("finance.coa"))):
-    tpl = RecurringTemplate(name=body.name, frequency=body.frequency, next_run_date=body.next_run_date,
-                            description=body.description, lines=body.lines, currency=body.currency,
-                            country_code=body.country_code, created_by=_admin.get("id"))
-    add_and_flush(db, tpl)
-    commit_and_refresh(db, tpl)
+    tpl = svc_create_recurring_template(
+        db,
+        name=body.name,
+        frequency=body.frequency,
+        next_run_date=body.next_run_date,
+        description=body.description,
+        lines=body.lines,
+        currency=body.currency,
+        country_code=body.country_code,
+        created_by=_admin.get("id"),
+    )
     return {"id": tpl.id}
 
 
@@ -514,4 +470,3 @@ def create_recurring(body: RecurringCreate, db: Session = Depends(get_db),
 def trigger_recurring(template_id: int, db: Session = Depends(get_db),
                       _admin=Depends(require_finance_permission("finance.coa"))):
     return fa.trigger_recurring(db, template_id=template_id, run_by=_admin.get("id"))
-

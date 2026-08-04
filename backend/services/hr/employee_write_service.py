@@ -1,10 +1,12 @@
 """Employee write service — DB write operations for HR and employee entities."""
 from datetime import datetime
 
+from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from data.models import (
+    AlumniNetwork,
     DynamicQRSession,
     Employee,
     EmployeeAttendance,
@@ -59,7 +61,59 @@ def list_employees_public(db: Session) -> list[dict]:
     return employees
 
 
+def _validate_employee_data(
+    db: Session, data: dict, is_update: bool = False
+) -> None:
+    required = ["employee_code"] if not is_update else []
+    for field in required:
+        if field not in data or not data[field]:
+            raise HTTPException(
+                status_code=422, detail=f"Missing required field: {field}"
+            )
+
+    if "employment_status" in data and data["employment_status"]:
+        allowed_statuses = {"active", "inactive", "terminated", "on_leave"}
+        if data["employment_status"] not in allowed_statuses:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid employment_status. Must be one of: {', '.join(sorted(allowed_statuses))}",
+            )
+
+    if "employment_type" in data and data["employment_type"]:
+        allowed_types = {"full_time", "part_time", "contract", "temporary"}
+        if data["employment_type"] not in allowed_types:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid employment_type. Must be one of: {', '.join(sorted(allowed_types))}",
+            )
+
+    if "employee_code" in data and data["employee_code"]:
+        existing = (
+            db.query(Employee)
+            .filter(Employee.employee_code == data["employee_code"])
+            .first()
+        )
+        if existing and (is_update is False or (is_update and "id" in data and existing.id != data.get("id"))):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Employee code '{data['employee_code']}' already exists",
+            )
+
+    if "user_id" in data and data["user_id"]:
+        existing = (
+            db.query(Employee)
+            .filter(Employee.user_id == data["user_id"])
+            .first()
+        )
+        if existing and (is_update is False or (is_update and "id" in data and existing.id != data.get("id"))):
+            raise HTTPException(
+                status_code=409,
+                detail=f"Employee with user_id {data['user_id']} already exists",
+            )
+
+
 def create_employee(db: Session, **employee_data) -> Employee:
+    _validate_employee_data(db, employee_data, is_update=False)
     emp = Employee(**employee_data)
     db.add(emp)
     db.commit()
@@ -68,6 +122,7 @@ def create_employee(db: Session, **employee_data) -> Employee:
 
 
 def update_employee(db: Session, emp: Employee, updates: dict) -> Employee:
+    _validate_employee_data(db, {**updates, "id": emp.id}, is_update=True)
     for key, value in updates.items():
         setattr(emp, key, value)
     db.commit()
@@ -234,3 +289,143 @@ def apply_kill_switch(
     for session in qr_sessions:
         session.expires_at = expires_at
     db.commit()
+
+
+def get_employee_by_user_id(db: Session, user_id: int) -> Employee | None:
+    return db.query(Employee).filter(Employee.user_id == user_id).first()
+
+
+def list_employee_documents(
+    db: Session, employee_id: int, skip: int = 0, limit: int = 20
+) -> list[EmployeeDocument]:
+    return (
+        db.query(EmployeeDocument)
+        .filter(EmployeeDocument.employee_id == employee_id, EmployeeDocument.doc_type == "payslip")
+        .order_by(EmployeeDocument.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def list_alumni_network(db: Session, skip: int = 0, limit: int = 20):
+    return (
+        db.query(AlumniNetwork, Employee)
+        .join(Employee, Employee.id == AlumniNetwork.employee_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def list_hse_incidents(db: Session):
+    return (
+        db.execute(
+            text(
+                "SELECT i.id, i.employee_id, e.employee_code, i.incident_type, "
+                "i.description, i.date_occurred, i.severity, i.status "
+                "FROM hse_incidents i "
+                "LEFT JOIN employees e ON e.id = i.employee_id "
+                "ORDER BY i.created_at DESC"
+            )
+        )
+        .fetchall()
+    )
+
+
+def create_hse_incident(db: Session, incident: dict, employee_id: int) -> None:
+    from datetime import datetime, timezone
+
+    db.execute(
+        text(
+            "INSERT INTO hse_incidents "
+            "(employee_id, incident_type, description, date_occurred, severity, status, created_at) "
+            "VALUES (:eid, :itype, :desc, :docc, :sev, :status, :created)"
+        ),
+        {
+            "eid": employee_id,
+            "itype": incident.get("incident_type", "near_miss"),
+            "desc": incident.get("description", ""),
+            "docc": incident.get("date_occurred"),
+            "sev": incident.get("severity", "low"),
+            "status": incident.get("status", "open"),
+            "created": datetime.now(timezone.utc).replace(tzinfo=None),
+        },
+    )
+    db.commit()
+
+
+def get_employee_by_id(db: Session, employee_id: int) -> Employee | None:
+    return db.query(Employee).filter(Employee.id == employee_id).first()
+
+
+def check_employee_conflicts(db: Session, employee_id: int, skip: int = 0, limit: int = 20) -> dict:
+    from sqlalchemy import or_
+
+    employee = get_employee_by_id(db, employee_id)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    conflicts = []
+
+    try:
+        relations = (
+            db.query(EmployeeRelation)
+            .filter(
+                or_(
+                    EmployeeRelation.employee_id == employee_id,
+                    EmployeeRelation.internal_employee_id == employee_id,
+                )
+            )
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("EmployeeRelation query failed: %s", exc)
+        return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}
+
+    for rel in relations:
+        other_id = (
+            rel.internal_employee_id
+            if rel.employee_id == employee_id
+            else rel.employee_id
+        )
+        other = get_employee_by_id(db, other_id) if other_id else None
+        if other and other.department and employee.department:
+            if other.department == employee.department:
+                conflicts.append({
+                    "type": "same_department",
+                    "employee_id": other.id,
+                    "employee_code": other.employee_code,
+                    "relation_type": rel.relation_type,
+                    "description": f"{employee.employee_code} and {other.employee_code} are in the same department ({employee.department}) with a {rel.relation_type} relation",
+                    "severity": "medium",
+                })
+
+    if employee.reporting_manager_id:
+        manager = get_employee_by_id(db, employee.reporting_manager_id)
+        if manager:
+            for rel in relations:
+                other_id = (
+                    rel.internal_employee_id
+                    if rel.employee_id == employee_id
+                    else rel.employee_id
+                )
+                if other_id == manager.id:
+                    conflicts.append({
+                        "type": "manager_relation",
+                        "employee_id": manager.id,
+                        "employee_code": manager.employee_code,
+                        "relation_type": rel.relation_type,
+                        "description": f"{employee.employee_code}'s {rel.relation_type} ({manager.employee_code}) is their direct manager",
+                        "severity": "high",
+                    })
+
+    return {
+        "employee_id": employee_id,
+        "employee_code": employee.employee_code,
+        "has_conflicts": len(conflicts) > 0,
+        "conflicts": conflicts,
+    }

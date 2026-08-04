@@ -14,6 +14,7 @@ __all__ = ["FiscalPeriod", "TransactionLedger", "SupplierSettlement", "JournalEn
            "PendingJournalEntry", "PayoutBatch", "PayoutBatchItem",
            "ARLedgerEntry", "APLedger", "BankStatementImport", "BankStatementLine",
     "BankMappingRule", "FixedAsset", "Accrual", "ScannedExpense", "FinanceAutomationLog",
+           "AutomationRule", "AutomationLog",
            "Vendor", "Customer", "CostCenter", "APBill", "ARInvoice", "BankAccount",
            "Budget", "BankReconciliation", "RecurringTemplate", "FinanceAuditLog"]
 
@@ -499,6 +500,7 @@ class PayoutBatch(Base, TenantMixin):
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), unique=True, nullable=False)
 
+    total_amount = Column(Numeric(16, 4), nullable=True)
     item_count = Column(Integer, default=0)
     status = Column(String(20), default="draft")
     created_by = Column(Integer, ForeignKey("core.users.id"), nullable=False)
@@ -831,4 +833,29 @@ class FinanceAutomationLog(Base, TenantMixin):
     records_changed = Column(Integer, default=0)
     detail = Column(JSON, nullable=True)
     run_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+
+
+class AutomationRule(Base, TenantMixin):
+    """Finance automation rule (OCR, reconciliation, depreciation, mapping)."""
+    __tablename__ = "automation_rules"
+    __table_args__ = (Index("ix_automation_rule_country", "country_code"), {"schema": "finance"})
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(120), nullable=False)
+    trigger_type = Column(String(40), nullable=True)  # on_receipt, daily, monthly, manual
+    config = Column(JSON, nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
+class AutomationLog(Base, TenantMixin):
+    """Execution log for a finance automation rule."""
+    __tablename__ = "automation_logs"
+    __table_args__ = (Index("ix_automation_log_rule", "rule_id"), {"schema": "finance"})
+    id = Column(Integer, primary_key=True, index=True)
+    rule_id = Column(Integer, ForeignKey("finance.automation_rules.id"), nullable=False, index=True)
+    status = Column(String(20), default="success")  # success, failed, partial
+    detail = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
 

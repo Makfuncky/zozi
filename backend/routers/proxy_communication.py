@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from data.models import ProxyChannel, ProxySession, ProxyMessage, User
-from services.proxy_communication import get_proxy_service, ProxyCommunicationService
+from services.communication.proxy_communication import get_proxy_service, ProxyCommunicationService
 from data.db import get_db
 from data.dependencies_auth import get_current_user
 from data.controllers_admin_controller import require_admin
@@ -42,10 +42,10 @@ async def get_proxy_channel(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    channel = db.query(ProxyChannel).filter_by(id=channel_id).first()
+    proxy_service = get_proxy_service(db)
+    channel = proxy_service.get_channel(channel_id)
     if not channel:
         raise HTTPException(status_code=404, detail="Proxy channel not found")
-    proxy_service = get_proxy_service(db)
     return {
         "id": channel.id,
         "entity_type": channel.entity_type,
@@ -153,10 +153,8 @@ async def get_user_channels(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    channels = db.query(ProxyChannel).filter(
-        ProxyChannel.participants.contains({"user_ids": [user_id]})
-    ).offset(skip).limit(limit).all()
     proxy_service = get_proxy_service(db)
+    channels = proxy_service.list_user_channels(user_id, skip, limit)
     return [
         {
             "id": c.id,
@@ -175,8 +173,8 @@ async def admin_list_channels(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
-    channels = db.query(ProxyChannel).offset(skip).limit(limit).all()
     proxy_service = get_proxy_service(db)
+    channels = proxy_service.list_channels(skip, limit)
     return [
         {
             "id": c.id,

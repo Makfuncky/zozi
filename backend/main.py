@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 
 from middleware.orchestrator import setup_middleware
 from utils.ip_utils import set_request_ip
-from data.db import engine
-from data.base import Base
+from db.database import engine
+from db.base import Base
 # RLS is auto-registered via @event.listens_for(Engine, ...) in rls_interceptor.py
 from utils.config import settings
 from utils.logging_config import setup_structlog, get_request_id
@@ -71,7 +71,7 @@ setup_prometheus(app)
 # Initialize OpenTelemetry tracing (requires OTEL_EXPORTER_OTLP_ENDPOINT env var)
 try:
     from utils.tracing import setup_tracing
-    from data.db import engine
+    from db.database import engine
     setup_tracing(app, db_engine=engine)
 except Exception:
     logger.info("OpenTelemetry tracing skipped (packages not installed or no endpoint configured)")
@@ -91,7 +91,7 @@ async def health_check():
 async def health_deps():
     from utils.config import settings
     from utils.auth import _get_redis
-    from data.db import check_connection_health
+    from db.database import check_connection_health
     
     redis_status = "ok" if _get_redis() else "unavailable"
     email_status = get_email_delivery_status()
@@ -113,8 +113,8 @@ async def health_deps():
 async def health_ready():
     from utils.config import settings
     from utils.auth import _get_redis
-    from data.db import check_connection_health
-    from data.controllers_finance import payments_controller
+    from db.database import check_connection_health
+    from data.services_finance import _payment_provider_runtime_status
     from types import SimpleNamespace
     
     db_ok = check_connection_health()
@@ -136,7 +136,7 @@ async def health_ready():
     
     if settings.readiness_require_payments:
         try:
-            payments = payments_controller._payment_provider_runtime_status(db)
+            payments = _payment_provider_runtime_status(db)
             if not payments.get("online_provider"):
                 deps["payments"] = "unavailable"
                 blocking.append("payments")
@@ -166,7 +166,7 @@ def get_email_delivery_status():
 # Backwards-compatible alias for the user realtime socket. The ws_chat router is
 # mounted under the "/ws-chat" prefix (=> /ws-chat/ws/user), but mobile/web
 # clients connect to the bare "/ws/user" path. Keep both working.
-from routers.communication.ws_chat import websocket_user  # noqa: E402
+from routers.ws_chat import websocket_user  # noqa: E402
 
 app.add_api_websocket_route("/ws/user", websocket_user)
 
@@ -214,6 +214,7 @@ def _load_routers():
         ("treasury", "/api/v1/treasury"),
         ("admin_treasury", "/api/v1/admin/treasury"),
         ("admin", "/api/v1/admin"),
+        ("admin_fallback", "/api/v1/admin"),
         ("notifications", "/api/v1/notifications"),
         ("search", "/api/v1/search"),
         ("reviews", "/api/v1/reviews"),
@@ -294,7 +295,6 @@ def _load_routers():
         ("admin_analytics", "/api/v1/admin"),
         ("admin_chat", "/api/v1/admin"),
         ("admin_video", "/api/v1/admin"),
-        ("admin_fallback", "/api/v1/admin"),
         ("accounting", "/api/v1/accounting"),
         ("finance_automation", "/api/v1/accounting"),
         ("finance_erp", "/api/v1/accounting"),

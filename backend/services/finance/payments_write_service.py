@@ -39,6 +39,14 @@ def delete_payment(db: Session, payment: Payment) -> None:
     db.commit()
 
 
+def build_payment_query(db: Session, status: str | None = None):
+    from sqlalchemy import desc
+    q = db.query(Payment).order_by(desc(Payment.created_at))
+    if status:
+        q = q.filter(Payment.status == status)
+    return q
+
+
 def create_payment_provider_config(db: Session, **config_data) -> PaymentProviderConfig:
     config = PaymentProviderConfig(**config_data)
     db.add(config)

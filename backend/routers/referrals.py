@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from data.db import get_db
-from data.models import Referral, User
+from data.models import User
+from services.core.users_write_service import get_referral_by_referrer_id, get_or_create_referral
 from utils.dependencies import get_current_user
 from controllers.promotion_controller import get_promotion_config
 
-from services.write_helpers import add_and_flush, commit_only, refresh_only
 router = APIRouter()
 
 
@@ -27,10 +27,8 @@ def referral_config(db: Session = Depends(get_db)):
 
 @router.get("/my-code")
 def get_referral_code(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    referral = db.query(Referral).filter(Referral.referrer_id == current_user.id).first()
+    referral = get_referral_by_referrer_id(db, current_user.id)
     if not referral:
         code = secrets.token_urlsafe(8).upper()
-        referral = Referral(referrer_id=current_user.id, referral_code=code)
-        add_and_flush(db, referral); commit_only(db); refresh_only(db, referral)
+        referral = get_or_create_referral(db, current_user.id, code)
     return {"referral_code": referral.referral_code, "status": referral.status, "referral_url": f"/signup?ref={referral.referral_code}"}
-

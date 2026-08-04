@@ -21,7 +21,7 @@ from data.models import (
     SupplierProfile,
 )
 from utils.audit_log import AuditAction, audit_log
-from services.write_helpers import commit_and_refresh
+from data.services_write_helpers import commit_and_refresh
 
 logger = logging.getLogger(__name__)
 

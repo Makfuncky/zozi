@@ -19,7 +19,8 @@ __all__ = [
     "EmployeeAddress", "EmployeeDependent", "EmployeeAsset",
     "EmployeeCertification", "EmployeeDocument", "EmployeeRelation",
     "COIReport", "TravelRequest", "AlumniNetwork", "DisciplinaryCase", "OffboardingCase",
-    "OrgUnit"
+    "OrgUnit", "TrainingModule", "EmployeeTraining",
+    "ActivityLog", "ApprovalRequest",
 ]
 
 class Office(Base, TenantMixin):
@@ -39,7 +40,7 @@ class PhysicalIDCard(Base, TenantMixin):
     __tablename__ = "physical_id_cards"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), unique=True, nullable=False)
     card_number = Column(String(50), unique=True, nullable=False, index=True)
     issued_at = Column(DateTime, default=_utcnow)
     expires_at = Column(DateTime, nullable=True)
@@ -68,7 +69,7 @@ class EmployeeBiometric(Base, TenantMixin):
     __tablename__ = "employee_biometrics"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), unique=True, nullable=False)
     fingerprint_hash = Column(String(255), nullable=True)
     face_encoding = Column(Text, nullable=True)
     biometric_type = Column(String(20), default="fingerprint")
@@ -154,6 +155,7 @@ class Employee(Base, TenantMixin):
     documents = relationship("EmployeeDocument", back_populates="employee", cascade="all, delete-orphan")
     relations = relationship("EmployeeRelation", back_populates="employee", cascade="all, delete-orphan", foreign_keys="EmployeeRelation.employee_id")
     work_logs = relationship("EmployeeWorkLog", back_populates="employee", cascade="all, delete-orphan")
+    trainings = relationship("EmployeeTraining", back_populates="employee", cascade="all, delete-orphan")
     attendance = relationship("EmployeeAttendance", back_populates="employee", cascade="all, delete-orphan")
     leave_requests = relationship("EmployeeLeaveRequest", back_populates="employee", cascade="all, delete-orphan")
     leave_ledgers = relationship("EmployeeLeaveLedger", back_populates="employee", cascade="all, delete-orphan")
@@ -321,7 +323,7 @@ class EmployeeRelation(Base, TenantMixin):
     related_person_name = Column(String(160), nullable=False)
     relation_type = Column(String(30), nullable=False)
     is_internal_employee = Column(Boolean, default=False)
-    internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    internal_employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -350,11 +352,11 @@ class COIReport(Base, TenantMixin):
     __tablename__ = "coi_reports"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=False)
     related_person_name = Column(String(160), nullable=False)
     relation_type = Column(String(30), nullable=False)
     is_internal = Column(Boolean, default=False)
-    internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    internal_employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=True)
     risk_level = Column(String(20), default="low")
     is_approved = Column(Boolean, default=False)
     approved_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -368,7 +370,7 @@ class TravelRequest(Base, TenantMixin):
     __tablename__ = "employee_travel_requests"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=False)
     destination_country = Column(String(10), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
@@ -387,7 +389,7 @@ class AlumniNetwork(Base, TenantMixin):
     __tablename__ = "alumni_network"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), unique=True, nullable=False)
     status = Column(String(20), default="active")
     granted_at = Column(DateTime, default=_utcnow)
     eligibility_expires_at = Column(DateTime, nullable=True)
@@ -400,7 +402,7 @@ class DisciplinaryCase(Base, TenantMixin):
     __tablename__ = "disciplinary_cases"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=False, index=True)
     employee_name = Column(String(200), nullable=True)
     stage = Column(String(30), nullable=False, default="verbal_warning")
     description = Column(Text, nullable=False)
@@ -414,7 +416,7 @@ class OffboardingCase(Base, TenantMixin):
     __tablename__ = "offboarding_cases"
     __table_args__ = ({"schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id"), nullable=False, index=True)
     employee_name = Column(String(200), nullable=True)
     reason = Column(String(50), nullable=False, default="resignation")
     status = Column(String(20), default="pending")
@@ -424,3 +426,61 @@ class OffboardingCase(Base, TenantMixin):
     created_at = Column(DateTime, default=_utcnow)
 
     employee = relationship("Employee", foreign_keys=[employee_id])
+
+
+class TrainingModule(Base):
+    __tablename__ = "training_modules"
+    module_id = Column(String(100), primary_key=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    required_for_role = Column(String(100), nullable=True)
+    duration_minutes = Column(Integer, default=30)
+    is_active = Column(Boolean, default=True)
+    permission_key = Column(String(100), nullable=True)
+    permission_description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+    trainings = relationship("EmployeeTraining", back_populates="module", cascade="all, delete-orphan")
+
+
+class EmployeeTraining(Base, TenantMixin):
+    __tablename__ = "employee_trainings"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id = Column(String(100), ForeignKey("training_modules.module_id"), nullable=False)
+    assigned_at = Column(DateTime, nullable=True, server_default="CURRENT_TIMESTAMP")
+    completed_at = Column(DateTime, nullable=True)
+    score = Column(Numeric(5, 2), nullable=True)
+    status = Column(String(20), default="assigned")
+
+    employee = relationship("Employee", back_populates="trainings")
+    module = relationship("TrainingModule", back_populates="trainings")
+
+
+class ActivityLog(Base, TenantMixin):
+    """User activity log entry (ESS dashboard feed)."""
+    __tablename__ = "activity_logs"
+    __table_args__ = ({"schema": "hr"},)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
+    action = Column(String(120), nullable=True)
+    entity_type = Column(String(60), nullable=True)
+    entity_id = Column(Integer, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+
+class ApprovalRequest(Base, TenantMixin):
+    """Approval request assigned to a user (ESS pending approvals)."""
+    __tablename__ = "approval_requests"
+    __table_args__ = ({"schema": "hr"},)
+    id = Column(Integer, primary_key=True, index=True)
+    assignee_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
+    requester_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    approval_type = Column(String(60), nullable=True)
+    status = Column(String(20), default="pending", index=True)
+    reason = Column(Text, nullable=True)
+    decision_note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)

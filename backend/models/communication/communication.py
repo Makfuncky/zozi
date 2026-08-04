@@ -10,7 +10,7 @@ __all__ = ["Notification", "Announcement", "FAQ", "HelpCategory", "TicketMessage
            "ProxyChannel", "ProxySession", "ProxyMessage", "ProxyCallLog",
            "EmployeeCommunicationThread", "ExternalContactMasking", "CommunicationAuditTrail",
            "InternalChannel", "InternalChannelMember", "InternalMessage",
-           "ChatAttachment", "InternalEmail", "EmailFolder"]
+           "ChatAttachment", "InternalEmail", "EmailFolder", "MaskedMessage"]
 
 class Notification(Base, TenantMixin):
     __tablename__ = "notifications"
@@ -317,4 +317,21 @@ class EmailFolder(Base):
     sort_order = Column(Integer, default=0)
     is_system = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
+
+class MaskedMessage(Base, TenantMixin):
+    __tablename__ = "masked_messages"
+    __table_args__ = (
+        Index("ix_masked_messages_sender", "sender_id"),
+        Index("ix_masked_messages_recipient", "recipient_ref"),
+        Index("ix_masked_messages_hash", "message_hash"),
+        {"schema": "communication"})
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    recipient_ref = Column(String(200), nullable=False)
+    message_hash = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=_utcnow)
+
+    sender = relationship("User")
 

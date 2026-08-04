@@ -15,7 +15,8 @@ from utils.audit_log import audit_log
 from data.models import PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier
 from utils.money import to_decimal
 from services.promotion_engine_service import ensure_promotion_tables
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.commerce.promotion_engine_service import _db_promotionengineconfig_first_0, _db_promotionordertier_count_1, _db_promotionordertier_query_2, _db_promotionordertier_first_3, _db_promotionordertier_first_4, _db_promotionordertier_query_5
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -75,7 +76,7 @@ def _serialize_tier(row: PromotionOrderTier) -> dict[str, Any]:
 
 def _get_or_create_config(db: Session) -> PromotionEngineConfig:
     ensure_promotion_tables(db)
-    row = db.query(PromotionEngineConfig).order_by(PromotionEngineConfig.id.asc()).first()
+    row = _db_promotionengineconfig_first_0(db)
     if row:
         return row
 
@@ -110,8 +111,8 @@ def _get_or_create_config(db: Session) -> PromotionEngineConfig:
 
 
 def _seed_default_tiers(db: Session, updated_by: Optional[int]) -> None:
-    if db.query(PromotionOrderTier).count() > 0:
-        return
+    _db_promotionordertier_count_1(db)
+
 
     defaults = [
         {
@@ -257,7 +258,7 @@ def update_promotion_config(payload: dict[str, Any], acting_user: dict[str, Any]
 def list_promotion_tiers(db: Session) -> list[dict[str, Any]]:
     _get_or_create_config(db)
     rows = (
-        db.query(PromotionOrderTier)
+        _db_promotionordertier_query_2(db)
         .order_by(PromotionOrderTier.sort_order.asc(), PromotionOrderTier.min_order_amount.asc())
         .all()
     )
@@ -326,7 +327,7 @@ def create_promotion_tier(payload: dict[str, Any], acting_user: dict[str, Any], 
 
 def update_promotion_tier(tier_id: int, payload: dict[str, Any], acting_user: dict[str, Any], db: Session) -> dict[str, Any]:
     _get_or_create_config(db)
-    row = db.query(PromotionOrderTier).filter(PromotionOrderTier.id == tier_id).first()
+    row = _db_promotionordertier_first_3(db, id, tier_id)
     if not row:
         raise HTTPException(status_code=404, detail="Tier not found")
 
@@ -372,7 +373,7 @@ def update_promotion_tier(tier_id: int, payload: dict[str, Any], acting_user: di
 
 def delete_promotion_tier(tier_id: int, acting_user: dict[str, Any], db: Session) -> dict[str, Any]:
     _get_or_create_config(db)
-    row = db.query(PromotionOrderTier).filter(PromotionOrderTier.id == tier_id).first()
+    row = _db_promotionordertier_first_4(db, id, tier_id)
     if not row:
         raise HTTPException(status_code=404, detail="Tier not found")
 
@@ -410,7 +411,7 @@ def delete_promotion_tier(tier_id: int, acting_user: dict[str, Any], db: Session
 
 def _find_matching_tier(order_value: Decimal, db: Session) -> Optional[PromotionOrderTier]:
     rows = (
-        db.query(PromotionOrderTier)
+        _db_promotionordertier_query_5(db)
         .filter(PromotionOrderTier.is_active.is_(True))
         .order_by(PromotionOrderTier.sort_order.asc(), PromotionOrderTier.min_order_amount.asc())
         .all()

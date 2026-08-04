@@ -25,6 +25,7 @@ from services.finance_transfer_service import build_transfer_export_payload
 from utils.background_jobs import enqueue_job, get_job
 from utils.constants import MAX_EXPORT_ROWS
 from data.services_database import get_standalone_session
+from services.core.admin_operations_service import _db_user_all_0, _db_order_all_1, _db_product_all_2, _db_coupon_all_3, _db_auditlog_query_4, _db_user_query_5, _db_order_query_6, _db_product_query_7, _db_coupon_query_8, _db_auditlog_query_9
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +175,7 @@ def _map_audit_log(lg: AuditLog) -> dict:
 
 
 def _build_users_export(db: Session) -> tuple[list[dict], list[str], str, dict[str, Any]]:
-    users = db.query(User).order_by(User.id).limit(MAX_EXPORT_ROWS).all()
+    users = _db_user_all_0(db)
     rows = [
         {
             "id": u.id,
@@ -199,7 +200,7 @@ def _build_users_export(db: Session) -> tuple[list[dict], list[str], str, dict[s
 
 
 def _build_orders_export(db: Session) -> tuple[list[dict], list[str], str, dict[str, Any]]:
-    orders = db.query(Order).order_by(Order.id).limit(MAX_EXPORT_ROWS).all()
+    orders = _db_order_all_1(db)
     rows = [
         {
             "id": o.id,
@@ -228,7 +229,7 @@ def _build_orders_export(db: Session) -> tuple[list[dict], list[str], str, dict[
 
 
 def _build_products_export(db: Session) -> tuple[list[dict], list[str], str, dict[str, Any]]:
-    products = db.query(Product).order_by(Product.id).limit(MAX_EXPORT_ROWS).all()
+    products = _db_product_all_2(db)
     rows = [
         {
             "id": p.id,
@@ -258,7 +259,7 @@ def _build_products_export(db: Session) -> tuple[list[dict], list[str], str, dic
 
 
 def _build_coupons_export(db: Session) -> tuple[list[dict], list[str], str, dict[str, Any]]:
-    coupons = db.query(Coupon).order_by(Coupon.id).limit(MAX_EXPORT_ROWS).all()
+    coupons = _db_coupon_all_3(db)
     rows = [
         {
             "id": c.id,
@@ -290,7 +291,7 @@ def _build_audit_logs_export(db: Session, days: int) -> tuple[list[dict], list[s
 
     since = utcnow() - timedelta(days=days)
     logs = (
-        db.query(AuditLog)
+        _db_auditlog_query_4(db)
         .filter(AuditLog.occurred_at >= since)
         .order_by(AuditLog.id)
         .all()
@@ -345,7 +346,7 @@ def _build_export_payload(
 
 def export_users_csv(current_user: dict, db: Session) -> StreamingResponse:
     _require_admin(current_user)
-    count = db.query(func.count(User.id)).scalar()
+    count = count_user(db)
     audit_log(
         db=db,
         action=AuditAction.DATA_EXPORTED,
@@ -355,7 +356,7 @@ def export_users_csv(current_user: dict, db: Session) -> StreamingResponse:
         resource_type="users",
         details={"count": count},
     )
-    query = db.query(User).order_by(User.id)
+    query = _db_user_query_5(db)
     return _csv_streaming_response(
         _csv_stream(_iter_rows(db, query, _map_user), _USER_FIELDS),
         "users_export.csv",
@@ -364,7 +365,7 @@ def export_users_csv(current_user: dict, db: Session) -> StreamingResponse:
 
 def export_orders_csv(current_user: dict, db: Session) -> StreamingResponse:
     _require_admin(current_user)
-    count = db.query(func.count(Order.id)).scalar()
+    count = count_order(db)
     audit_log(
         db=db,
         action=AuditAction.DATA_EXPORTED,
@@ -374,7 +375,7 @@ def export_orders_csv(current_user: dict, db: Session) -> StreamingResponse:
         resource_type="orders",
         details={"count": count},
     )
-    query = db.query(Order).order_by(Order.id)
+    query = _db_order_query_6(db)
     return _csv_streaming_response(
         _csv_stream(_iter_rows(db, query, _map_order), _ORDER_FIELDS),
         "orders_export.csv",
@@ -383,7 +384,7 @@ def export_orders_csv(current_user: dict, db: Session) -> StreamingResponse:
 
 def export_products_csv(current_user: dict, db: Session) -> StreamingResponse:
     _require_admin(current_user)
-    count = db.query(func.count(Product.id)).scalar()
+    count = count_product(db)
     audit_log(
         db=db,
         action=AuditAction.DATA_EXPORTED,
@@ -393,7 +394,7 @@ def export_products_csv(current_user: dict, db: Session) -> StreamingResponse:
         resource_type="products",
         details={"count": count},
     )
-    query = db.query(Product).order_by(Product.id)
+    query = _db_product_query_7(db)
     return _csv_streaming_response(
         _csv_stream(_iter_rows(db, query, _map_product), _PRODUCT_FIELDS),
         "products_export.csv",
@@ -402,7 +403,7 @@ def export_products_csv(current_user: dict, db: Session) -> StreamingResponse:
 
 def export_coupons_csv(current_user: dict, db: Session) -> StreamingResponse:
     _require_admin(current_user)
-    count = db.query(func.count(Coupon.id)).scalar()
+    count = count_coupon(db)
     audit_log(
         db=db,
         action=AuditAction.DATA_EXPORTED,
@@ -412,7 +413,7 @@ def export_coupons_csv(current_user: dict, db: Session) -> StreamingResponse:
         resource_type="coupons",
         details={"count": count},
     )
-    query = db.query(Coupon).order_by(Coupon.id)
+    query = _db_coupon_query_8(db)
     return _csv_streaming_response(
         _csv_stream(_iter_rows(db, query, _map_coupon), _COUPON_FIELDS),
         "coupons_export.csv",
@@ -426,7 +427,7 @@ def export_audit_logs_csv(current_user: dict, db: Session, days: int = 30) -> St
     from utils.datetime_utils import utcnow
     from datetime import timedelta
     since = utcnow() - timedelta(days=days)
-    count = db.query(func.count(AuditLog.id)).filter(AuditLog.occurred_at >= since).scalar()
+    count = count_auditlog_since(db, since)
     audit_log(
         db=db,
         action=AuditAction.DATA_EXPORTED,
@@ -436,7 +437,7 @@ def export_audit_logs_csv(current_user: dict, db: Session, days: int = 30) -> St
         resource_type="audit_logs",
         details={"count": count, "days": days},
     )
-    query = db.query(AuditLog).filter(AuditLog.occurred_at >= since).order_by(AuditLog.id)
+    query = _db_auditlog_query_9(db, since=since)
     return _csv_streaming_response(
         _csv_stream(_iter_rows(db, query, _map_audit_log), _AUDIT_FIELDS),
         f"audit_logs_{days}d_export.csv",

@@ -554,6 +554,17 @@ class ChatSystem:
             for t in threads
         ]
 
+    def get_chat_metrics(self) -> dict:
+        from data.models_core import EntityChatThread, EntityChatMessage
+        from sqlalchemy import func as sqlfunc
+
+        total_threads = self.db.query(sqlfunc.count(EntityChatThread.id)).scalar() or 0
+        total_messages = self.db.query(sqlfunc.count(EntityChatMessage.id)).scalar() or 0
+        return {
+            "total_threads": total_threads,
+            "total_messages": total_messages,
+        }
+
 
 def get_chat_system(db: Session) -> ChatSystem:
     return ChatSystem(db)

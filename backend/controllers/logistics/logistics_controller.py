@@ -27,7 +27,8 @@ from utils.order_tracking import canonical_scan_code, ensure_shipment_identifier
 from utils.order_tracking import shipment_event_label, shipment_status_label
 from utils.datetime_utils import utcnow as _utcnow
 from utils.realtime import logistics_realtime_hub
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.logistics.logistics_read_service import count_shipments, count_shipping_zones, get_logistics_partner_by_id, get_order_by_id, get_shipment_event_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -272,7 +273,7 @@ async def update_event_gps(
     role = current_user.get("role", "")
     if role not in ("supplier", "admin", "superadmin", "logistics_partner"):
         raise HTTPException(status_code=403, detail="Forbidden")
-    event = db.query(ShipmentEvent).filter(ShipmentEvent.id == event_id).first()
+    event = get_shipment_event_by_id(db, event_id)
     if event is None:
         raise HTTPException(status_code=404, detail="Shipment event not found")
     # Suppliers may only update events on their own shipments
@@ -281,7 +282,7 @@ async def update_event_gps(
         if event.supplier_id != supplier_id:
             raise HTTPException(status_code=403, detail="Forbidden")
     if role == "logistics_partner":
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user.get("id")).first()
+        partner = _db_logisticspartner_first_0(db, current_user, get, id, user_id)
         if not partner or not event.shipment or event.shipment.assigned_partner_id != partner.id:
             raise HTTPException(status_code=403, detail="Forbidden")
     if not (-90 <= latitude <= 90):
@@ -343,7 +344,7 @@ def _resolve_assigned_partner(data: dict[str, Any], db: Session) -> LogisticsPar
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=422, detail="assigned_partner_id must be an integer") from exc
 
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id).first()
+    partner = get_logistics_partner_by_id(db, partner_id)
     if not partner:
         raise HTTPException(status_code=404, detail="Assigned logistics partner not found")
     if cast(str, getattr(partner, "status", "")) != "active":
@@ -356,10 +357,9 @@ def _resolve_assigned_partner(data: dict[str, Any], db: Session) -> LogisticsPar
 async def get_carriers(current_user: dict, db: Session) -> list[dict]:
     """Return global platform carriers + this supplier's custom carriers."""
     supplier_id = _require_supplier(current_user)
-    carriers = db.query(ShippingCarrier).filter(
-        (ShippingCarrier.supplier_id.is_(None)) | (ShippingCarrier.supplier_id == supplier_id),
-        ShippingCarrier.is_active.is_(True),
-    ).order_by(ShippingCarrier.supplier_id.nullsfirst(), ShippingCarrier.name).limit(100).all()
+    carriers = _db_shippingcarrier_all_1(db, is_, supplier_id)
+
+
     return [_serialize_carrier(c) for c in carriers]
 
 
@@ -391,10 +391,9 @@ async def create_carrier(data: dict, current_user: dict, db: Session) -> dict:
 async def delete_carrier(carrier_id: int, current_user: dict, db: Session) -> dict:
     """Soft-delete (deactivate) a supplier's custom carrier."""
     supplier_id = _require_supplier(current_user)
-    carrier = db.query(ShippingCarrier).filter(
-        ShippingCarrier.id == carrier_id,
-        ShippingCarrier.supplier_id == supplier_id,
-    ).first()
+    carrier = _db_shippingcarrier_first_2(db, carrier_id, id, supplier_id)
+
+
     if not carrier:
         raise HTTPException(status_code=404, detail="Carrier not found")
     setattr(carrier, "is_active", False)
@@ -406,9 +405,9 @@ async def delete_carrier(carrier_id: int, current_user: dict, db: Session) -> di
 
 async def get_shipping_zones(current_user: dict, db: Session) -> list[dict]:
     supplier_id = _require_supplier(current_user)
-    zones = db.query(ShippingZone).filter(
-        ShippingZone.supplier_id == supplier_id,
-    ).order_by(ShippingZone.name).limit(100).all()
+    zones = _db_shippingzone_all_3(db, supplier_id)
+
+
     return [_serialize_zone(z) for z in zones]
 
 
@@ -439,10 +438,9 @@ async def upsert_shipping_zone(data: dict, current_user: dict, db: Session) -> d
 
     zone_id = data.get("id")
     if zone_id:
-        zone = db.query(ShippingZone).filter(
-            ShippingZone.id == zone_id,
-            ShippingZone.supplier_id == supplier_id,
-        ).first()
+        zone = _db_shippingzone_first_4(db, id, supplier_id, zone_id)
+
+
         if not zone:
             raise HTTPException(status_code=404, detail="Zone not found")
         setattr(zone, "name", name)
@@ -480,10 +478,9 @@ async def upsert_shipping_zone(data: dict, current_user: dict, db: Session) -> d
 
 async def delete_shipping_zone(zone_id: int, current_user: dict, db: Session) -> dict:
     supplier_id = _require_supplier(current_user)
-    zone = db.query(ShippingZone).filter(
-        ShippingZone.id == zone_id,
-        ShippingZone.supplier_id == supplier_id,
-    ).first()
+    zone = _db_shippingzone_first_5(db, id, supplier_id, zone_id)
+
+
     if not zone:
         raise HTTPException(status_code=404, detail="Zone not found")
     delete_only(db, zone)
@@ -522,7 +519,7 @@ async def get_orders_to_fulfil(current_user: dict, db: Session, limit: int = 200
     ]
 
     orders = (
-        db.query(Order)
+        _db_order_query_6(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(
             Order.id.in_(order_ids_with_supplier_items),
@@ -574,7 +571,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
     if not order_id:
         raise HTTPException(status_code=422, detail="order_id is required")
 
-    order = db.query(Order).filter(Order.id == order_id).first()
+    order = get_order_by_id(db, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
@@ -589,11 +586,9 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
         raise HTTPException(status_code=403, detail="This order does not contain your products")
 
     # Prevent duplicate shipments
-    existing = db.query(Shipment).filter(
-        Shipment.order_id == order_id,
-        Shipment.supplier_id == supplier_id,
-        Shipment.status.notin_(["failed", "returned"]),
-    ).first()
+    existing = _db_shipment_first_7(db, failed, notin_, order_id, returned, status, supplier_id)
+
+
     if existing:
         raise HTTPException(
             status_code=409,
@@ -602,7 +597,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
     current_hub = str(data.get("current_hub", "")).strip() or None
     if not current_hub:
-        supplier_profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == supplier_id).first()
+        supplier_profile = _db_supplierprofile_first_8(db, supplier_id, user_id)
         current_hub = next(
             (
                 value for value in [
@@ -690,11 +685,9 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
     try:
         from data.models import Invoice
         from controllers.invoice_controller import create_invoice_from_order
-        has_invoice = db.query(Invoice).filter(
-            Invoice.order_id == order_id,
-            Invoice.supplier_id == supplier_id,
-            Invoice.invoice_type == "sale",
-        ).first()
+        has_invoice = _db_invoice_first_9(db, invoice_type, order_id, sale, supplier_id)
+
+
         if not has_invoice:
             create_invoice_from_order(
                 data={"order_id": order_id, "shipment_id": shipment.id},
@@ -712,7 +705,7 @@ async def get_active_shipments(current_user: dict, db: Session) -> list[dict]:
     """Return all non-delivered active shipments for this supplier."""
     supplier_id = _require_supplier(current_user)
     shipments = (
-        db.query(Shipment)
+        _db_shipment_query_10(db)
         .options(
             selectinload(Shipment.order),
             selectinload(Shipment.carrier),
@@ -733,7 +726,7 @@ async def get_shipment_history(current_user: dict, db: Session, page: int = 1, p
     """Return paginated fulfilment history for this supplier."""
     supplier_id = _require_supplier(current_user)
     q = (
-        db.query(Shipment)
+        _db_shipment_query_11(db)
         .options(
             selectinload(Shipment.order),
             selectinload(Shipment.carrier),
@@ -755,7 +748,7 @@ async def get_shipment_history(current_user: dict, db: Session, page: int = 1, p
 async def get_shipment_events(shipment_id: int, current_user: dict, db: Session) -> list[dict]:
     supplier_id = _require_supplier(current_user)
     shipment = (
-        db.query(Shipment)
+        _db_shipment_query_12(db)
         .options(
             selectinload(Shipment.order),
             selectinload(Shipment.carrier),
@@ -770,16 +763,16 @@ async def get_shipment_events(shipment_id: int, current_user: dict, db: Session)
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
-    events = db.query(ShipmentEvent).filter(
-        ShipmentEvent.shipment_id == shipment_id
-    ).order_by(ShipmentEvent.created_at.asc()).all()
+    events = _db_shipmentevent_all_13(db, shipment_id)
+
+
     return [_serialize_event(event) for event in events]
 
 
 async def scan_shipment_event(shipment_id: int, data: dict, current_user: dict, db: Session) -> dict:
     supplier_id = _require_supplier(current_user)
     shipment = (
-        db.query(Shipment)
+        _db_shipment_query_14(db)
         .options(
             selectinload(Shipment.order),
             selectinload(Shipment.carrier),
@@ -834,7 +827,7 @@ async def scan_shipment_event(shipment_id: int, data: dict, current_user: dict, 
         actual_delivery = cast(Optional[datetime], getattr(shipment, "actual_delivery", None))
         setattr(shipment, "actual_delivery", actual_delivery or _utcnow())
     if shipment.order:
-        order_shipments = db.query(Shipment).filter(Shipment.order_id == shipment.order_id).all()
+        order_shipments = _db_shipment_all_15(db, order_id, shipment)
         setattr(shipment.order, "status", reconcile_order_status(shipment.order, order_shipments))
         if status_after == "delivered":
             title = "Order Delivered" if shipment.order.status == "delivered" else "Shipment Delivered"
@@ -896,7 +889,7 @@ async def update_shipment_status(shipment_id: int, data: dict, current_user: dic
     """Update supplier-controlled shipment packaging metadata."""
     supplier_id = _require_supplier(current_user)
     shipment = (
-        db.query(Shipment)
+        _db_shipment_query_16(db)
         .options(
             selectinload(Shipment.order),
             selectinload(Shipment.carrier),
@@ -946,7 +939,7 @@ async def update_shipment_status(shipment_id: int, data: dict, current_user: dic
         )
 
     if shipment.order:
-        order_shipments = db.query(Shipment).filter(Shipment.order_id == shipment.order_id).all()
+        order_shipments = _db_shipment_all_17(db, order_id, shipment)
         setattr(shipment.order, "status", reconcile_order_status(shipment.order, order_shipments))
 
     commit_and_refresh(db, shipment)
@@ -957,19 +950,12 @@ async def get_logistics_summary(current_user: dict, db: Session) -> dict:
     """Return a quick stats summary for the logistics dashboard."""
     supplier_id = _require_supplier(current_user)
 
-    total_shipments = db.query(Shipment).filter(Shipment.supplier_id == supplier_id).count()
-    pending_shipments = db.query(Shipment).filter(
-        Shipment.supplier_id == supplier_id,
-        Shipment.status == "pending",
-    ).count()
-    in_transit = db.query(Shipment).filter(
-        Shipment.supplier_id == supplier_id,
-        Shipment.status.in_(["shipped", "in_transit"]),
-    ).count()
-    delivered = db.query(Shipment).filter(
-        Shipment.supplier_id == supplier_id,
-        Shipment.status == "delivered",
-    ).count()
+    total_shipments = count_shipments(db)
+    pending_shipments = count_shipments(db)
+    in_transit = _db_shipment_count_18(db, in_, in_transit, shipped, status, supplier_id)
+
+
+    delivered = count_shipments(db)
 
     # Orders awaiting fulfilment count
     supplier_product_ids = [
@@ -990,16 +976,10 @@ async def get_logistics_summary(current_user: dict, db: Session) -> dict:
         ).distinct().all()
     ] if supplier_product_ids else []
 
-    awaiting_count = db.query(Order).filter(
-        Order.id.in_(order_ids_with_items),
-        Order.id.notin_(shipped_order_ids),
-        Order.status.in_(["confirmed", "paid", "processing"]),
-    ).count()
+    awaiting_count = _db_order_count_19(db, id, in_, order_ids_with_items)
 
-    zones_count = db.query(ShippingZone).filter(
-        ShippingZone.supplier_id == supplier_id,
-        ShippingZone.is_active == True,  # noqa: E712
-    ).count()
+
+    zones_count = count_shipping_zones(db)
 
     channels_raw = db.query(
         Shipment.distribution_channel,

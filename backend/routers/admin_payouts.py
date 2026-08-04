@@ -4,12 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from data.db import get_db
 from data.schemas import CursorPage, PayoutCreate, PayoutOut
-from data.models import FinanceAutomationLog, Payout, User
+from data.models import User
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.datetime_utils import utcnow
-from utils.audit_log import audit_log, AuditAction
+from utils.pagination import cursor_paginate_desc
+
 from services.auto_payout_scheduler import (
     get_background_job_status as _get_bg_status,
     start_auto_payout_background_job as _start_bg_job,
@@ -17,8 +18,16 @@ from services.auto_payout_scheduler import (
     run_auto_payout_sweep as _run_supplier_sweep,
     run_auto_logistics_payout_sweep as _run_logistics_sweep,
 )
-from services.write_helpers import add_and_flush, commit_only, refresh_only
-from utils.pagination import cursor_paginate_desc
+from services.treasury.payout_admin_service import (
+    query_payouts_by_country,
+    query_pending_payouts,
+    query_pending_payouts_by_country,
+    get_payout,
+    create_payout_record,
+    verify_payout_record,
+    process_payout_record,
+    query_recent_automation_logs,
+)
 
 router = APIRouter()
 
@@ -35,7 +44,7 @@ def list_payouts(country_code: str = Path(..., description="ISO country code"), 
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(Payout).filter(Payout.country_code == country_code.upper())
+        q = query_payouts_by_country(db, country_code.upper())
         return cursor_paginate_desc(q.order_by(Payout.id.desc()), cursor=cursor, page_size=limit)
     finally:
         clear_rls_context()
@@ -51,18 +60,7 @@ def create_payout(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        model_cols = {c.name for c in Payout.__table__.columns}
-        data = {k: v for k, v in payload.model_dump().items() if k in model_cols}
-        p = Payout(**data, country_code=country_code.upper())
-        add_and_flush(db, p); commit_only(db); refresh_only(db, p)
-        audit_log(
-            db=db, action=AuditAction.PAYOUT_PROCESSED,
-            user_id=current_admin.id, username=current_admin.username,
-            user_role="admin", resource_type="payout",
-            resource_id=p.id,
-            details={"amount": str(p.amount) if p.amount else None, "method": p.method},
-        )
-        return p
+        return create_payout_record(db, payload, country_code.upper(), current_admin)
     finally:
         clear_rls_context()
 
@@ -75,7 +73,7 @@ def list_pending_payouts(
     limit: int = Query(20, ge=1, le=100),
 ):
     """List all pending payouts (RLS-scoped if context is set)."""
-    q = db.query(Payout).filter(Payout.status == "pending")
+    q = query_pending_payouts(db)
     return cursor_paginate_desc(q.order_by(Payout.id.desc()), cursor=cursor, page_size=limit)
 
 
@@ -91,7 +89,7 @@ def list_pending_payouts_by_country(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(Payout).filter(Payout.status == "pending", Payout.country_code == country_code.upper())
+        q = query_pending_payouts_by_country(db, country_code.upper())
         return cursor_paginate_desc(q.order_by(Payout.id.desc()), cursor=cursor, page_size=limit)
     finally:
         clear_rls_context()
@@ -109,23 +107,16 @@ def verify_payout(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        p = db.query(Payout).filter(Payout.id == payout_id, Payout.country_code == country_code.upper()).first()
+        p = get_payout(db, payout_id, country_code.upper())
         if not p:
             raise HTTPException(404, "Payout not found")
-        p.status = payload.status if payload and payload.status else "verified"
-        p.processed_at = utcnow()
-        if payload:
-            if payload.note:
-                p.notes = payload.note
-            if payload.bank_reference:
-                p.reference = payload.bank_reference
-        commit_only(db)
-        audit_log(
-            db=db, action=AuditAction.PAYOUT_PROCESSED,
-            user_id=current_admin.id, username=current_admin.username,
-            user_role="admin", resource_type="payout",
-            resource_id=payout_id,
-            details={"status": p.status, "reference": p.reference, "notes": p.notes},
+        status = payload.status if payload and payload.status else "verified"
+        verify_payout_record(
+            db, p,
+            status=status,
+            note=payload.note if payload else None,
+            bank_reference=payload.bank_reference if payload else None,
+            current_admin=current_admin,
         )
         return {"verified": True, "payout_id": payout_id}
     finally:
@@ -175,17 +166,10 @@ def process_payout(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        p = db.query(Payout).filter(Payout.id == payout_id, Payout.country_code == country_code.upper()).first()
-        if not p: raise HTTPException(404)
-        p.status = "paid"; p.processed_at = utcnow()
-        commit_only(db)
-        audit_log(
-            db=db, action=AuditAction.PAYOUT_PROCESSED,
-            user_id=current_admin.id, username=current_admin.username,
-            user_role="admin", resource_type="payout",
-            resource_id=payout_id,
-            details={"status": "paid"},
-        )
+        p = get_payout(db, payout_id, country_code.upper())
+        if not p:
+            raise HTTPException(404)
+        process_payout_record(db, p, current_admin)
         return {"message": "Payout processed"}
     finally:
         clear_rls_context()
@@ -205,15 +189,8 @@ def get_background_job_status_endpoint(
     """
     status = _get_bg_status()
 
-    # Enrich with recent history from FinanceAutomationLog
-    history = (
-        db.query(FinanceAutomationLog)
-        .filter(
-            FinanceAutomationLog.kind.in_(["auto_payout", "auto_logistics_payout"]),
-        )
-        .order_by(FinanceAutomationLog.created_at.desc())
-        .limit(20)
-        .all()
+    history = query_recent_automation_logs(
+        db, ["auto_payout", "auto_logistics_payout"], limit=20
     )
 
     return {

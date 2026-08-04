@@ -146,3 +146,29 @@ def update_commission_ledger_entry(
     db.commit()
     db.refresh(entry)
     return entry
+
+
+def list_commission_rates(db: Session, country_code: str):
+    return db.query(CommissionCategoryRate).filter(
+        CommissionCategoryRate.country_code == country_code.upper()
+    )
+
+
+def get_commission_rate_by_id(db: Session, rate_id: int, country_code: str):
+    return db.query(CommissionCategoryRate).filter(
+        CommissionCategoryRate.id == rate_id,
+        CommissionCategoryRate.country_code == country_code.upper(),
+    ).first()
+
+
+def list_commission_tiers(db: Session, country_code: str):
+    return db.query(CommissionBadgeTier).filter(
+        CommissionBadgeTier.country_code == country_code.upper()
+    )
+
+
+def get_commission_tier_by_id(db: Session, tier_id: int, country_code: str):
+    return db.query(CommissionBadgeTier).filter(
+        CommissionBadgeTier.id == tier_id,
+        CommissionBadgeTier.country_code == country_code.upper(),
+    ).first()

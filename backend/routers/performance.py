@@ -250,82 +250,9 @@ def coi_check_endpoint(
 ):
     """Run a simple conflict-of-interest check by examining employee relations
     and shared departments. Returns any detected conflicts."""
-    try:
-        from data.models_employee_models import Employee, EmployeeRelation
-    except Exception as exc:
-        logger.warning("EmployeeRelation model not available: %s", exc)
-        return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}
+    from services.hr.employee_write_service import check_employee_conflicts
 
-    from sqlalchemy import or_
-
-    employee = db.query(Employee).filter(Employee.id == employee_id).first()
-    if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
-
-    conflicts = []
-
-    # Check employee relations for potential conflicts
-    try:
-        relations = (
-            db.query(EmployeeRelation)
-            .filter(
-                or_(
-                    EmployeeRelation.employee_id == employee_id,
-                    EmployeeRelation.internal_employee_id == employee_id,
-                )
-            )
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-    except Exception as exc:
-        logger.warning("EmployeeRelation query failed (table may not exist): %s", exc)
-        return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}
-
-    for rel in relations:
-        other_id = (
-            rel.internal_employee_id
-            if rel.employee_id == employee_id
-            else rel.employee_id
-        )
-        other = db.query(Employee).filter(Employee.id == other_id).first()
-        if other and other.department and employee.department:
-            if other.department == employee.department:
-                conflicts.append({
-                    "type": "same_department",
-                    "employee_id": other.id,
-                    "employee_code": other.employee_code,
-                    "relation_type": rel.relation_type,
-                    "description": f"{employee.employee_code} and {other.employee_code} are in the same department ({employee.department}) with a {rel.relation_type} relation",
-                    "severity": "medium",
-                })
-
-    # Check if employee's manager is a relative
-    if employee.reporting_manager_id:
-        manager = db.query(Employee).filter(Employee.id == employee.reporting_manager_id).first()
-        if manager:
-            for rel in relations:
-                other_id = (
-                    rel.internal_employee_id
-                    if rel.employee_id == employee_id
-                    else rel.employee_id
-                )
-                if other_id == manager.id:
-                    conflicts.append({
-                        "type": "manager_relation",
-                        "employee_id": manager.id,
-                        "employee_code": manager.employee_code,
-                        "relation_type": rel.relation_type,
-                        "description": f"{employee.employee_code}'s {rel.relation_type} ({manager.employee_code}) is their direct manager",
-                        "severity": "high",
-                    })
-
-    return {
-        "employee_id": employee_id,
-        "employee_code": employee.employee_code,
-        "has_conflicts": len(conflicts) > 0,
-        "conflicts": conflicts,
-    }
+    return check_employee_conflicts(db, employee_id, skip=skip, limit=limit)
 
 
 @router.get("/hr/health-board", summary="Get performance health board for a manager's team")

@@ -4,17 +4,15 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import func as sqlfunc
 
 from data.db import get_db
 from data.models import User
 from data.models_core import VideoRoom
-from services.video_conferencing import get_video_conference
+from services.video_conferencing import get_video_conference, list_all_video_rooms, list_video_rooms_by_country, get_video_room_by_room_id, get_video_room_metrics, update_video_room_country
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 
-from services.write_helpers import commit_and_refresh, commit_only
 logger = logging.getLogger("zozi.api.admin_video")
 router = APIRouter()
 
@@ -44,7 +42,7 @@ def admin_list_all_rooms(
     db: Session = Depends(get_db),
 ):
     """List all video rooms across all countries (consolidated view)."""
-    rooms = db.query(VideoRoom).order_by(VideoRoom.created_at.desc()).limit(200).all()
+    rooms = list_all_video_rooms(db, limit=200)
     return [_serialize_room(r) for r in rooms]
 
 
@@ -56,10 +54,7 @@ def admin_list_video_rooms(
 ):
     """List video rooms, filtered by the X-Country-Code header when present."""
     country = _resolve_country(request, "")
-    q = db.query(VideoRoom)
-    if country:
-        q = q.filter(VideoRoom.country_code == country)
-    rooms = q.order_by(VideoRoom.created_at.desc()).limit(200).all()
+    rooms = list_video_rooms_by_country(db, country_code=country, limit=200)
     return [_serialize_room(r) for r in rooms]
 
 
@@ -82,10 +77,9 @@ def admin_create_video_room(
     part_list = participants or ([creator] if creator is not None else [])
     vc = get_video_conference(db)
     result = vc.create_room(name, part_list, boardroom, country_code=country, employee_id=creator)
-    db_room = db.query(VideoRoom).filter(VideoRoom.room_id == result["room_id"]).first()
+    db_room = get_video_room_by_room_id(db, result["room_id"])
     if db_room and not db_room.country_code:
-        db_room.country_code = country
-        commit_only(db)
+        update_video_room_country(db, db_room, country)
     return {
         "id": db_room.id if db_room else None,
         "room_uuid": result.get("room_uuid"),
@@ -105,9 +99,10 @@ def admin_video_metrics(
     db: Session = Depends(get_db),
 ):
     """Video room metrics across all countries."""
-    total_rooms = db.query(sqlfunc.count(VideoRoom.id)).scalar() or 0
-    active_rooms = db.query(sqlfunc.count(VideoRoom.id)).filter(VideoRoom.status == "active").scalar() or 0
-    max_part_sum = db.query(sqlfunc.coalesce(sqlfunc.sum(VideoRoom.max_participants), 0)).scalar() or 0
+    metrics = get_video_room_metrics(db)
+    total_rooms = metrics["total_rooms"]
+    active_rooms = metrics["active_rooms"]
+    max_part_sum = metrics["max_participants_sum"]
     return {
         "total_rooms": total_rooms,
         "active_rooms": active_rooms,
@@ -124,7 +119,7 @@ def admin_list_rooms(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        rooms = db.query(VideoRoom).filter(VideoRoom.country_code == country_code.upper()).order_by(VideoRoom.created_at.desc()).limit(100).all()
+        rooms = list_video_rooms_by_country(db, country_code=country_code.upper(), limit=100)
         return [
             {
                 "id": r.id,
@@ -160,10 +155,9 @@ def admin_create_room(
         is_boardroom = purpose == "boardroom"
         result = vc.create_room(name, participants, is_boardroom, employee_id=created_by)
 
-        db_room = db.query(VideoRoom).filter(VideoRoom.room_id == result["room_id"]).first()
+        db_room = get_video_room_by_room_id(db, result["room_id"])
         if db_room and not db_room.country_code:
-            db_room.country_code = country_code.upper()
-            commit_and_refresh(db, db_room)
+            update_video_room_country(db, db_room, country_code.upper())
         return {
             "id": db_room.id if db_room else None,
             "room_uuid": result.get("room_uuid"),

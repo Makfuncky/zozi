@@ -15,7 +15,8 @@ from sqlalchemy import desc
 
 from data.models import Invoice, InvoiceItem, Order, OrderItem, Product, Shipment, User
 from utils.audit_log import AuditAction, audit_log
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.communication.tickets_write_service import get_invoice_by_id
     add_and_flush,
     commit_and_refresh,
     flush_only,
@@ -85,7 +86,7 @@ def list_invoices(
     order_id: Optional[int] = None,
 ) -> dict:
     role = current_user.get("role")
-    q = db.query(Invoice)
+    q = _db_invoice_query_0(db)
 
     if role == "supplier":
         q = q.filter(Invoice.supplier_id == current_user["id"])
@@ -112,7 +113,7 @@ def list_invoices(
 
 def get_invoice(invoice_id: int, current_user: dict, db: Session) -> dict:
     inv = (
-        db.query(Invoice)
+        _db_invoice_query_1(db)
         .options(selectinload(Invoice.supplier), selectinload(Invoice.items))
         .filter(Invoice.id == invoice_id)
         .first()
@@ -125,7 +126,7 @@ def get_invoice(invoice_id: int, current_user: dict, db: Session) -> dict:
     if role == "supplier" and inv.supplier_id != uid:
         raise HTTPException(status_code=403, detail="Access denied")
     if role == "customer":
-        order = db.query(Order).filter(Order.id == inv.order_id, Order.user_id == uid).first()
+        order = _db_order_first_2(db, id, inv, order_id, uid, user_id)
         if not order:
             raise HTTPException(status_code=403, detail="Access denied")
 
@@ -145,7 +146,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
         raise HTTPException(status_code=422, detail="order_id is required")
 
     order = (
-        db.query(Order)
+        _db_order_query_3(db)
         .options(selectinload(Order.items).selectinload(OrderItem.product))
         .filter(Order.id == order_id)
         .first()
@@ -156,11 +157,9 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
     supplier_id = current_user["id"] if role == "supplier" else data.get("supplier_id", current_user["id"])
 
     # Check no duplicate invoice for same order+supplier
-    existing = db.query(Invoice).filter(
-        Invoice.order_id == order_id,
-        Invoice.supplier_id == supplier_id,
-        Invoice.invoice_type == "sale",
-    ).first()
+    existing = _db_invoice_first_4(db, invoice_type, order_id, sale, supplier_id)
+
+
     if existing:
         raise HTTPException(status_code=409, detail="Invoice already exists for this order")
 
@@ -237,7 +236,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
 # ── Update status ─────────────────────────────────────────────────────────────
 
 def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: Session) -> dict:
-    inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
+    inv = get_invoice_by_id(db, invoice_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
@@ -292,16 +291,15 @@ def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: S
 
 def get_invoice_overview(db: Session) -> dict:
     from sqlalchemy import func as sqlfunc
-    total = db.query(Invoice).count()
+    total = _db_invoice_count_5(db)
     by_status = db.query(Invoice.status, sqlfunc.count(Invoice.id)).group_by(Invoice.status).all()
     total_value = db.query(sqlfunc.sum(Invoice.total_amount)).scalar() or 0
-    recent = db.query(Invoice).order_by(desc(Invoice.created_at)).limit(10).all()
+    recent = _db_invoice_all_6(db)
     return {
         "total_invoices": total,
         "total_value": float(total_value),
         "by_status": {s: c for s, c in by_status},
         "recent": [_serialize_invoice(i) for i in recent],
     }
-
 
 

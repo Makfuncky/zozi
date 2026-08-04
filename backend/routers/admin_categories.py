@@ -6,12 +6,21 @@ from sqlalchemy.orm import Session
 
 from data.db import get_db
 from data.schemas import CursorPage, CategoryOut, CategoryCreate, CategoryUpdate, MessageResponse
-from data.models import Category, User
+from data.models import User
 from utils.dependencies import require_admin
 from utils.slug import generate_slug
 from utils.pagination import cursor_paginate_desc
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only
+from services.catalog.category_service import (
+    get_category_query,
+    get_category_by_ref,
+    get_category_by_id,
+    category_slug_exists,
+    create_category,
+    update_category,
+    deactivate_category,
+)
+
 router = APIRouter()
 
 
@@ -23,67 +32,53 @@ async def list_categories(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Category)
-    if active_only:
-        query = query.filter(Category.is_active == True)
-    if parent_id is not None:
-        query = query.filter(Category.parent_id == parent_id)
+    query = get_category_query(db, active_only=active_only, parent_id=parent_id)
     return cursor_paginate_desc(query, cursor=cursor, page_size=limit)
 
 
 @router.get("/{category_ref}", response_model=CategoryOut)
 async def get_category(category_ref: str, db: Session = Depends(get_db)):
-    cat = db.query(Category).filter(Category.slug == category_ref).first()
-    if not cat and category_ref.isdigit():
-        cat = db.query(Category).filter(Category.id == int(category_ref)).first()
+    cat = get_category_by_ref(db, category_ref)
     if not cat:
         raise HTTPException(status_code=404, detail="Category not found")
     return cat
 
 
 @router.post("/", response_model=CategoryOut)
-async def create_category(
+async def create_category_endpoint(
     payload: CategoryCreate,
     _admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     slug = generate_slug(payload.slug or payload.name)
-    if db.query(Category).filter(Category.slug == slug).first():
+    if category_slug_exists(db, slug):
         raise HTTPException(status_code=409, detail="Category slug already exists")
 
     payload_data = payload.model_dump(exclude_none=True, exclude={"slug"})
-    cat = Category(name=payload.name, slug=slug)
-    for field_name, value in payload_data.items():
-        if field_name == "name":
-            continue
-        setattr(cat, field_name, value)
-    add_and_flush(db, cat)
-    commit_and_refresh(db, cat)
+    name = payload.name
+    cat = create_category(db, name=name, slug=slug, **payload_data)
     return cat
 
 
 @router.put("/{category_id}", response_model=CategoryOut)
-async def update_category(
+async def update_category_endpoint(
     category_id: int,
     payload: CategoryUpdate,
     _admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    cat = db.query(Category).filter(Category.id == category_id).first()
+    cat = get_category_by_id(db, category_id)
     if not cat:
         raise HTTPException(status_code=404, detail="Category not found")
     updates = payload.model_dump(exclude_none=True)
     requested_slug = updates.pop("slug", None)
     if requested_slug is not None:
         slug = generate_slug(requested_slug)
-        existing = db.query(Category).filter(Category.slug == slug, Category.id != category_id).first()
-        if existing:
+        if category_slug_exists(db, slug, exclude_id=category_id):
             raise HTTPException(status_code=409, detail="Category slug already exists")
         cat.slug = slug
-    for k, v in updates.items():
-        setattr(cat, k, v)
-    commit_and_refresh(db, cat)
-    return cat
+    updated = update_category(db, cat, updates)
+    return updated
 
 
 @router.get("/admin/flat", response_model=CursorPage)
@@ -94,7 +89,7 @@ async def list_categories_flat(
     limit: int = Query(20, ge=1, le=100),
 ):
     """Return all active categories with id, slug, name, parent_id, commission_rate for admin commission config."""
-    query = db.query(Category).filter(Category.is_active == True)
+    query = get_category_query(db, active_only=True)
     result = cursor_paginate_desc(query, cursor=cursor, page_size=limit)
     result.items = [
         {
@@ -116,10 +111,8 @@ async def delete_category(
     _admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    cat = db.query(Category).filter(Category.id == category_id).first()
+    cat = get_category_by_id(db, category_id)
     if not cat:
         raise HTTPException(status_code=404, detail="Category not found")
-    cat.is_active = False
-    commit_only(db)
+    deactivate_category(db, cat)
     return MessageResponse(message="Category deactivated")
-

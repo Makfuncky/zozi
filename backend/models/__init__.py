@@ -119,7 +119,7 @@ __all__ = [
     "PermissionCategory", "Permission", "RolePermissionAssignment", "UserPermissionOverride", "PermissionAuditLog",
     "AIUploadJob", "AIStagingProduct", "AIStagingVariant", "AIGenerationLog", "AIStagingImage", "AIAuditLog", "AIEmbedding", "AIRequest", "AIResult",
     "CountryBasics", "CountryEconomics", "CountryLegal", "CountryTax",
-    "ChatAttachment", "InternalEmail", "EmailFolder",
+     "ChatAttachment", "InternalEmail", "EmailFolder", "MaskedMessage",
     "OutboxEvent", "InboxEvent", "EventRetryQueue", "EventDeadLetter",
     "DailySalesSnapshot", "MonthlySalesSnapshot", "KPICustomer", "KPISupplier", "KPICountry", "KPIRevenue", "KPIOrders", "KPIRetention", "KPIConversion", "CashPositionSnapshotMV", "FacetCountsSnapshot",
     "UploadJob",

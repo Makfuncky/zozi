@@ -1,11 +1,11 @@
 """
-Upload Jobs Router â€” real-time upload tracking with WebSocket push
+Upload Jobs Router — real-time upload tracking with WebSocket push
 ==================================================================
 Provides endpoints for:
-  - GET  /upload-jobs          â€” list jobs for current supplier
-  - GET  /upload-jobs/stats    â€” aggregate stats
-  - GET  /upload-jobs/{id}     â€” single job detail
-  - WS   /ws/upload-jobs       â€” real-time WebSocket stream of job updates
+  - GET  /upload-jobs          — list jobs for current supplier
+  - GET  /upload-jobs/stats    — aggregate stats
+  - GET  /upload-jobs/{id}     — single job detail
+  - WS   /ws/upload-jobs       — real-time WebSocket stream of job updates
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from services.upload_job_service import (
     get_supplier_jobs,
     get_job_stats,
 )
-from models.upload_job import UploadJob
+from services.media.media_router_service import get_upload_job as get_upload_job_service
 
 router = APIRouter()
 
@@ -56,12 +56,17 @@ def get_upload_job(
     current_user: dict = Depends(require_roles("supplier", "admin")),
 ):
     """Get a single upload job with full details."""
-    job = db.query(UploadJob).filter(UploadJob.id == job_id).first()
-    if not job:
-        raise HTTPException(status_code=404, detail="Upload job not found")
-    if job.supplier_id != current_user["id"] and current_user.get("role") != "admin":
+    try:
+        return get_upload_job_service(
+            db=db,
+            job_id=job_id,
+            user_id=current_user["id"],
+            is_admin=current_user.get("role") == "admin",
+        )
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail="Upload job not found")
         raise HTTPException(status_code=403, detail="Not your upload job")
-    return job.to_dict()
 
 
 @router.post("/upload-jobs/start", status_code=201)

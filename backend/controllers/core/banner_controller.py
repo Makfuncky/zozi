@@ -21,7 +21,8 @@ from sqlalchemy.orm import Session
 from utils.audit_log import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from data.models import Banner
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.core.admin_operations_service import get_banner_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
@@ -228,7 +229,7 @@ def _banner_to_dict(banner: Banner) -> dict:
 
 def _seed_defaults(db: Session) -> None:
     """Insert default banners if the table is empty."""
-    count = db.query(Banner).count()
+    count = _db_banner_count_0(db)
     if count == 0:
         for d in _DEFAULT_BANNERS:
             add_and_flush(db, Banner(**d))
@@ -261,7 +262,7 @@ def get_banners(db: Session, banner_type: Optional[str] = None, active_only: boo
             return cached_payload
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    q = db.query(Banner)
+    q = _db_banner_query_1(db)
     if country_code:
         q = q.filter(or_(Banner.country_code == country_code, Banner.country_code == None))
     if banner_type:
@@ -289,7 +290,7 @@ def get_banners_page(
 ) -> dict:
     _seed_defaults(db)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    query = db.query(Banner)
+    query = _db_banner_query_2(db)
     if banner_type:
         query = query.filter(Banner.banner_type == banner_type)
     if active_only:
@@ -311,7 +312,7 @@ def get_banners_page(
 
 
 def get_banner_by_id(banner_id: int, db: Session) -> dict:
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(status_code=404, detail="Banner not found")
     return _banner_to_dict(banner)
@@ -359,7 +360,7 @@ def create_banner(payload: BannerCreate, admin_id: int, current_admin: dict, db:
 
 
 def update_banner(banner_id: int, payload: BannerUpdate, current_admin: dict, db: Session) -> dict:
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(status_code=404, detail="Banner not found")
     updates = payload.model_dump(exclude_none=True)
@@ -382,7 +383,7 @@ def update_banner(banner_id: int, payload: BannerUpdate, current_admin: dict, db
 
 
 def delete_banner(banner_id: int, current_admin: dict, db: Session) -> dict:
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(status_code=404, detail="Banner not found")
     banner_title = banner.title
@@ -412,7 +413,7 @@ async def upload_banner_image(
     from utils.file_validation import validate_upload_image
     from services.storage import storage as _storage
 
-    banner = db.query(Banner).filter(Banner.id == banner_id).first()
+    banner = get_banner_by_id(db, banner_id)
     if not banner:
         raise HTTPException(status_code=404, detail="Banner not found")
 
@@ -443,7 +444,7 @@ async def upload_banner_image(
 def reorder_banners(banner_ids: list[int], current_admin: dict, db: Session) -> list[dict]:
     """Accept an ordered list of banner IDs and reassign sort_order accordingly."""
     for index, bid in enumerate(banner_ids):
-        db.query(Banner).filter(Banner.id == bid).update({"sort_order": index})
+        _db_banner_query_3(db, bid, id)
     commit_only(db)
     audit_log(
         db,

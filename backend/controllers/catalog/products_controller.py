@@ -1,5 +1,5 @@
 """
-Products Controller â€” all product CRUD and supplier upload business logic.
+Products Controller â€�? all product CRUD and supplier upload business logic.
 """
 import html
 import hashlib
@@ -28,7 +28,13 @@ from services.core.write_helpers import (
     commit_only,
     refresh_only,
 )
-from services.catalog.product_utils import resolve_product_variant, _bump_product_cache_version  # noqa: F401
+from services.catalog.products_write_service import (
+    clear_product_carts,
+    clear_product_wishlists,
+    archive_product_reviews,
+)
+from data.catalog_product_utils import resolve_product_variant, _bump_product_cache_version  # noqa: F401
+from services.catalog.products_read_service import get_category_by_id
 
 
 logger = logging.getLogger(__name__)
@@ -74,7 +80,7 @@ def _normalize_product_visibility_regions(value: Any) -> str | None:
         key = candidate.casefold()
         if key in seen:
             continue
-        seen.add(key)
+        seen |= {key}
         normalized.append(candidate)
     return json.dumps(normalized) if normalized else None
 
@@ -115,14 +121,13 @@ def _resolve_product_category_fields(payload: dict[str, Any], db: Session) -> di
 
     matched_category = None
     if category_id is not None:
-        matched_category = db.query(Category).filter(Category.id == category_id).first()
+        matched_category = get_category_by_id(db, category_id)
         if matched_category is None:
             raise HTTPException(status_code=422, detail="Selected category was not found")
     elif category_name:
         lookup_tokens = _category_lookup_tokens(category_name)
-        matched_category = db.query(Category).filter(
-            or_(func.lower(Category.name).in_(lookup_tokens), func.lower(Category.slug).in_(lookup_tokens))
-        ).first()
+        matched_category = _db_category_first_0(db, lookup_tokens, lower, name)
+
 
     if matched_category is not None:
         resolved["category_id"] = cast(int, getattr(matched_category, "id"))
@@ -237,11 +242,9 @@ def _get_active_flash_sales(
     sale_id: Optional[int] = None,
 ) -> list[FlashSale]:
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    query = db.query(FlashSale).filter(
-        FlashSale.is_active == True,  # noqa: E712
-        FlashSale.starts_at <= now,
-        FlashSale.ends_at >= now,
-    )
+    query = _db_flashsale_query_1(db, True, ends_at, is_active, noqa, now, starts_at)
+
+
     if sale_id is not None:
         query = query.filter(FlashSale.id == sale_id)
     return query.order_by(FlashSale.discount_pct.desc(), FlashSale.ends_at.asc()).limit(100).all()
@@ -311,10 +314,9 @@ def _is_product_restricted_for_country(
     code = normalize_country_code(country_code)
     if not code:
         return False
-    country = db.query(CountryConfig).filter(
-        CountryConfig.code == code,
-        CountryConfig.is_active == True,
-    ).first()
+    country = _db_countryconfig_first_2(db, True, code, is_active)
+
+
     if not country:
         return False
     raw = country.product_restrictions_json
@@ -359,13 +361,8 @@ def _list_products_cached(
     has_video: bool = False,
     attributes: Optional[str] = None,
 ) -> tuple[list[dict[str, Any]], int]:
-    query = db.query(Product).options(
-        selectinload(Product.variants),
-    ).filter(
-        Product.is_deleted == False,           # noqa: E712
-        Product.is_active.isnot(False),        # NULL â†’ active
-        Product.is_approved.isnot(False),      # NULL â†’ approved
-    )
+    query = _db_product_query_3(db, False, is_active, is_deleted, isnot, noqa)
+
 
     active_sales = _get_active_flash_sales(db, sale_id=sale_id)
     active_sales_by_product: dict[int, FlashSale] = {}
@@ -377,7 +374,7 @@ def _list_products_cached(
             global_flash_sale = global_flash_sale or sale
             continue
         for product_id in scoped_product_ids:
-            sale_product_ids.add(product_id)
+            sale_product_ids |= {product_id}
             active_sales_by_product.setdefault(product_id, sale)
 
     if sale_id is not None:
@@ -510,10 +507,9 @@ def _list_products_cached(
         restriction_cache: dict[str, bool] = {}
         if code:
             from models.country.countries import CountryConfig
-            country = db.query(CountryConfig).filter(
-                CountryConfig.code == code,
-                CountryConfig.is_active == True,
-            ).first()
+            country = _db_countryconfig_first_4(db, True, code, is_active)
+
+
             if country and country.product_restrictions_json:
                 try:
                     raw = country.product_restrictions_json
@@ -657,10 +653,9 @@ def get_product(product_id: int, db: Session) -> Product:
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    product = db.query(Product).options(selectinload(Product.variants)).filter(
-        Product.id == product_id,
-        Product.is_deleted == False,  # noqa: E712
-    ).first()
+    product = _db_product_first_5(db, False, id, is_deleted, noqa, product_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     active_sales = _get_active_flash_sales(db)
@@ -673,10 +668,9 @@ def get_product(product_id: int, db: Session) -> Product:
 
 
 def update_product(product_id: int, product: ProductCreate, current_user: dict, db: Session) -> Product:
-    db_product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-    ).first()
+    db_product = _db_product_first_6(db, current_user, id, product_id, supplier_id)
+
+
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found or not authorized")
     data = _prepare_product_write_payload(product.model_dump())
@@ -704,29 +698,24 @@ def update_product(product_id: int, product: ProductCreate, current_user: dict, 
 
 
 def delete_product(product_id: int, current_user: dict, db: Session) -> dict:
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).first()
+    product = _db_product_first_7(db, False, current_user, id, is_deleted, noqa, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found or not authorized")
 
     product_name = str(product.name)
 
     # Cascade: remove from carts and wishlists
-    db.query(CartItem).filter(CartItem.product_id == product_id).delete(synchronize_session=False)
-    db.query(Wishlist).filter(Wishlist.product_id == product_id).delete(synchronize_session=False)
+    clear_product_carts(db, product_id)
+    clear_product_wishlists(db, product_id)
 
     # Cascade: soft-delete reviews
-    db.query(Review).filter(
-        Review.product_id == product_id,
-        Review.is_deleted == False,  # noqa: E712
-    ).update({"is_deleted": True}, synchronize_session=False)
+    archive_product_reviews(db, product_id)
 
     # Cascade: notify users with in-flight orders
     affected_orders = (
-        db.query(Order)
+        _db_order_query_8(db)
         .join(OrderItem, OrderItem.order_id == Order.id)
         .filter(
             OrderItem.product_id == product_id,
@@ -778,18 +767,16 @@ def update_product_return_window(
     if days < 10:
         raise HTTPException(status_code=422, detail="Return window must be at least 10 days")
 
-    product = db.query(Product).filter(
-        Product.id == product_id,
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).first()
+    product = _db_product_first_9(db, False, current_user, id, is_deleted, noqa, product_id, supplier_id)
+
+
     if not product:
         raise HTTPException(status_code=404, detail="Product not found or not authorized")
 
     # Check against supplier's configured maximum
-    supplier_profile = db.query(SupplierProfile).filter(
-        SupplierProfile.user_id == current_user["id"]
-    ).first()
+    supplier_profile = _db_supplierprofile_first_10(db, current_user, id, user_id)
+
+
     max_days = int(supplier_profile.max_return_days) if supplier_profile and supplier_profile.max_return_days else 30
     if days > max_days:
         raise HTTPException(
@@ -814,10 +801,9 @@ def patch_product_stock(
     """Adjust product stock by delta (+/-). Suppliers own their products; admins can adjust any."""
     role = current_user.get("role")
 
-    q = db.query(Product).filter(
-        Product.id == product_id,
-        Product.is_deleted == False,  # noqa: E712
-    )
+    q = _db_product_query_11(db, False, id, is_deleted, noqa, product_id)
+
+
     if role not in ("admin", "sub_admin"):
         q = q.filter(Product.supplier_id == current_user["id"])
 
@@ -851,7 +837,7 @@ def patch_product_stock(
         try:
             from data.models import User as UserModel
             from utils.email_service import send_email
-            supplier = db.query(UserModel).filter(UserModel.id == supplier_id).first()
+            supplier = _db_usermodel_first_12(db, id, supplier_id)
             supplier_email = cast(str | None, getattr(supplier, "email")) if supplier else None
             if supplier and supplier_email:
                 html_body = f"""
@@ -875,10 +861,7 @@ def patch_product_stock(
 
 
 def get_supplier_products_simple(current_user: dict, db: Session) -> List[Product]:
-    return db.query(Product).filter(
-        Product.supplier_id == current_user["id"],
-        Product.is_deleted == False,  # noqa: E712
-    ).all()
+    _db_product_all_13(db, False, current_user, id, is_deleted, noqa, supplier_id)
 
 
 def create_supplier_product_with_upload(
@@ -915,9 +898,9 @@ def create_supplier_product_with_upload(
         stock=stock,
         supplier_id=current_user["id"],
     )
-    category_match = db.query(Category).filter(
-        or_(func.lower(Category.name) == category.strip().casefold(), func.lower(Category.slug) == category.strip().casefold())
-    ).first() if category and category.strip() else None
+    category_match = _db_category_first_14(db, lower, name)
+
+
     if category_match is not None:
         product.category_id = cast(int, getattr(category_match, "id"))
         product.category = cast(str, getattr(category_match, "name"))
@@ -930,25 +913,14 @@ def create_supplier_product_with_upload(
 
 def autocomplete_products(q: str, db: Session) -> List[str]:
     term = f"%{q.lower()}%"
-    results = db.query(Product.name).filter(Product.name.ilike(term)).limit(10).all()
-    return [r[0] for r in results]
+    from services.catalog.products_read_service import autocomplete_product_names
+    return autocomplete_product_names(db, term)
 
 
 def get_supplier_names(db: Session) -> List[str]:
     """Return supplier usernames and storefront business names for filtering."""
-    results = (
-        db.query(User.username, SupplierProfile.business_name)
-        .join(Product, Product.supplier_id == User.id)
-        .outerjoin(SupplierProfile, SupplierProfile.user_id == User.id)
-        .filter(
-            User.role == "supplier",
-            Product.is_deleted == False,  # noqa: E712
-            Product.is_active.isnot(False),
-            Product.is_approved.isnot(False),
-        )
-        .order_by(User.username)
-        .all()
-    )
+    from services.catalog.products_read_service import get_supplier_name_choices
+    results = get_supplier_name_choices(db)
     names: list[str] = []
     seen: set[str] = set()
     for username, business_name in results:
@@ -959,7 +931,7 @@ def get_supplier_names(db: Session) -> List[str]:
             key = normalized.lower()
             if not normalized or key in seen:
                 continue
-            seen.add(key)
+            seen |= {key}
             names.append(normalized)
     return names
 
@@ -992,15 +964,12 @@ def get_product_by_barcode(code: str, db: Session) -> Product:
 
     product = None
     if product_id is not None:
-        product = db.query(Product).options(selectinload(Product.variants)).filter(
-            Product.id == product_id,
-            Product.is_deleted == False,   # noqa: E712
-            Product.is_active == True,     # noqa: E712
-            Product.is_approved == True,   # noqa: E712
-        ).first()
+        product = _db_product_first_15(db, False, True, id, is_active, is_approved, is_deleted, noqa, product_id)
+
+
     if not product:
         matched_variant = (
-            db.query(ProductVariant)
+            _db_productvariant_query_16(db)
             .options(selectinload(ProductVariant.product).selectinload(Product.variants))
             .filter(
                 ProductVariant.is_active == True,  # noqa: E712
@@ -1032,7 +1001,7 @@ def get_recommended_products(current_user: Optional[dict], limit: int, db: Sessi
 
     if current_user:
         user = (
-            db.query(User)
+            _db_user_query_17(db)
             .options(selectinload(User.browsing_history_json))
             .filter(User.id == current_user["id"])
             .first()
@@ -1043,7 +1012,7 @@ def get_recommended_products(current_user: Optional[dict], limit: int, db: Sessi
                 history: list[int] = _json.loads(browsing_history_json)[-20:]
                 if history:
                     viewed = (
-                        db.query(Product)
+                        _db_product_query_18(db)
                         .options(selectinload(Product.variants))
                         .filter(Product.id.in_(history))
                         .all()
@@ -1052,11 +1021,8 @@ def get_recommended_products(current_user: Optional[dict], limit: int, db: Sessi
             except Exception:
                 pass
 
-    base_q = db.query(Product).filter(
-        Product.is_deleted == False,   # noqa: E712
-        Product.is_active == True,     # noqa: E712
-        Product.is_approved == True,   # noqa: E712
-    )
+    base_q = _db_product_query_19(db, False, True, is_active, is_approved, is_deleted, noqa)
+
 
     if categories:
         results = (

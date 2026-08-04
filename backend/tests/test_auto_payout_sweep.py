@@ -75,7 +75,7 @@ def test_auto_payout_sweep_creates_payout_and_batch(
 
     # Patch email_service.send_email — the notification service imports it
     # via ``from email_service import send_email`` inside the function body.
-    with patch("email_service.send_email") as mock_send:
+    with patch("utils.email_service.send_email") as mock_send:
         result = run_auto_payout_sweep(db_session)
 
     # ── 4. Assert sweep result ────────────────────────────────────────────
@@ -149,7 +149,7 @@ def test_auto_payout_sweep_no_eligible_settlements(
     ``no_eligible_settlements`` status."""
     from data.services_auto_payout_scheduler import run_auto_payout_sweep
 
-    with patch("email_service.send_email"):
+    with patch("utils.email_service.send_email"):
         result = run_auto_payout_sweep(db_session)
 
     assert result["status"] == "no_eligible_settlements"
@@ -185,7 +185,7 @@ def test_auto_payout_sweep_skips_future_eligible(
 
     from data.services_auto_payout_scheduler import run_auto_payout_sweep
 
-    with patch("email_service.send_email"):
+    with patch("utils.email_service.send_email"):
         result = run_auto_payout_sweep(db_session)
 
     assert result["status"] == "no_eligible_settlements", (
@@ -222,7 +222,7 @@ def test_auto_payout_sweep_dry_run(
 
     from data.services_auto_payout_scheduler import run_auto_payout_sweep
 
-    with patch("email_service.send_email"):
+    with patch("utils.email_service.send_email"):
         result = run_auto_payout_sweep(db_session, dry_run=True)
 
     assert result["status"] == "ok"

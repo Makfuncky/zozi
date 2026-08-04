@@ -70,6 +70,21 @@ class ProxyCommunicationService:
     def __init__(self, db: Session = None):
         self.db = db or get_service_session()
         self.number_manager = ProxyNumberManager(self.db)
+
+    def get_channel(self, channel_id):
+        return self.db.query(ProxyChannel).filter_by(id=channel_id).first()
+
+    def list_user_channels(self, user_id, skip=0, limit=20):
+        return (
+            self.db.query(ProxyChannel)
+            .filter(ProxyChannel.participants.contains({"user_ids": [user_id]}))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def list_channels(self, skip=0, limit=20):
+        return self.db.query(ProxyChannel).offset(skip).limit(limit).all()
     
     def create_proxy_channel(
         self,

@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Optional
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from data.models_employee_models import Employee, AlumniNetwork
@@ -15,8 +13,12 @@ from controllers.hr.hr_controller import (
 )
 from data.db import get_db
 from data.dependencies_auth import get_current_user
+from services.hr.employee_write_service import (
+    list_alumni_network,
+    list_hse_incidents as list_hse_incidents_service,
+    create_hse_incident as create_hse_incident_service,
+)
 
-from services.write_helpers import commit_only
 router = APIRouter()
 
 
@@ -82,13 +84,7 @@ def list_alumni(
     db: Session = Depends(get_db),
 ):
     """Return the alumni network records (employee offboarding rehire pool)."""
-    rows = (
-        db.query(AlumniNetwork, Employee)
-        .join(Employee, Employee.id == AlumniNetwork.employee_id)
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    rows = list_alumni_network(db, skip=skip, limit=limit)
     return [
         {
             "id": a.id,
@@ -107,15 +103,7 @@ def list_alumni(
 
 @router.get("/hse/incidents")
 def list_hse_incidents(db: Session = Depends(get_db)):
-    rows = db.execute(
-        text("""
-            SELECT i.id, i.employee_id, e.employee_code, i.incident_type,
-                   i.description, i.date_occurred, i.severity, i.status
-            FROM hse_incidents i
-            LEFT JOIN employees e ON e.id = i.employee_id
-            ORDER BY i.created_at DESC
-        """)
-    ).fetchall()
+    rows = list_hse_incidents_service(db)
     return [
         {
             "id": r[0],
@@ -136,25 +124,7 @@ def create_hse_incident(incident: dict, db: Session = Depends(get_db)):
     employee_id = incident.get("employee_id")
     if not employee_id:
         raise HTTPException(status_code=400, detail="employee_id required")
-    db.execute(
-        text("""
-            INSERT INTO hse_incidents
-                (employee_id, incident_type, description, date_occurred, severity, status, created_at)
-            VALUES (:eid, :itype, :desc, :docc, :sev, :status, :created)
-        """),
-        {
-            "eid": employee_id,
-            "itype": incident.get("incident_type", "near_miss"),
-            "desc": incident.get("description", ""),
-            "docc": incident.get("date_occurred"),
-            "sev": incident.get("severity", "low"),
-            "status": incident.get("status", "open"),
-            "created": __import__("datetime").datetime.now(
-                __import__("datetime").timezone.utc
-            ).replace(tzinfo=None),
-        },
-    )
-    commit_only(db)
+    create_hse_incident_service(db, incident, employee_id)
     return {"message": "HSE incident recorded", "employee_id": employee_id}
 
 

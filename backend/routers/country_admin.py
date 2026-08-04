@@ -16,8 +16,25 @@ from data.models_country_enhancements import CountryCity, CountryCategoryTaxRate
 from data.dependencies_auth import get_current_user
 from services.legal_contract_service import LegalContractService
 from services.audit_trail_service import AuditTrailService
+from services.country.country_maps_service import (
+    get_country_city_by_id,
+    list_active_staff_assignments,
+    get_active_staff_assignment,
+    get_staff_assignment_by_id,
+)
+from services.country.country_tax_service import (
+    list_active_category_tax_rates,
+    get_category_tax_rate,
+)
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only
+from services.country.country_write_service import (
+    add_country_communication,
+    add_country_city_and_commit,
+    add_country_staff_assignment,
+    deactivate_country_staff_assignment,
+    add_tax_entry,
+    commit_country_changes,
+)
 router = APIRouter(tags=["country-admin"])
 
 
@@ -110,8 +127,7 @@ def send_country_communication(
         related_entity_id=related_entity_id,
         status="sent",
     )
-    add_and_flush(db, comm)
-    commit_and_refresh(db, comm)
+    add_country_communication(db, comm)
     return {
         "id": comm.id,
         "subject": comm.subject,
@@ -131,10 +147,7 @@ def list_communications(
 ):
     """Inbox: list communications for the current user, filtered by role+country."""
     user_id = current_user.get("id")
-    query = db.query(CountryCommunication).filter(
-        (CountryCommunication.to_user_id == user_id) |
-        (CountryCommunication.to_user_id.is_(None))
-    )
+    comms = get_country_communications(db, user_id, status=status, priority=priority, limit=limit)
     if status:
         query = query.filter(CountryCommunication.status == status)
     if priority:
@@ -165,12 +178,12 @@ def mark_communication_read(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    comm = db.query(CountryCommunication).filter(CountryCommunication.id == comm_id).first()
+    comm = get_country_communication_by_id(db, comm_id)
     if not comm:
         raise HTTPException(status_code=404, detail="Communication not found")
     comm.status = "read"
     comm.read_at = datetime.now(timezone.utc)
-    commit_only(db)
+    commit_country_changes(db)
     return {"status": "read", "read_at": comm.read_at.isoformat()}
 
 
@@ -202,7 +215,7 @@ def list_cities(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    query = db.query(CountryCity).filter(CountryCity.country_code == country_code.upper())
+    query = list_country_cities_by_country(db, country_code.upper())
     if active:
         query = query.filter(CountryCity.status == "active")
     cities = query.order_by(CountryCity.population.desc()).limit(limit).all()
@@ -244,8 +257,7 @@ def add_city(
         longitude=longitude,
         status="active",
     )
-    add_and_flush(db, city)
-    commit_and_refresh(db, city)
+    add_country_city_and_commit(db, city)
     return {"id": city.id, "name": city.name, "status": "created"}
 
 
@@ -263,7 +275,7 @@ def update_city(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == country_code.upper()).first()
+    city = get_country_city_by_id(db, city_id)
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
     if name is not None:
@@ -280,7 +292,7 @@ def update_city(
         city.longitude = longitude
     if status is not None:
         city.status = status
-    commit_only(db)
+    commit_country_changes(db)
     return {"id": city.id, "name": city.name, "status": "updated"}
 
 
@@ -291,11 +303,11 @@ def delete_city(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == country_code.upper()).first()
+    city = get_country_city_by_id(db, city_id)
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
     city.status = "inactive"
-    commit_only(db)
+    commit_country_changes(db)
     return {"status": "deleted"}
 
 
@@ -310,12 +322,7 @@ def list_staff(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    assignments = (
-        db.query(CountryStaffAssignment)
-        .filter(CountryStaffAssignment.country_code == country_code.upper(), CountryStaffAssignment.is_active == True)
-        .offset(skip).limit(limit)
-        .all()
-    )
+    assignments = list_active_staff_assignments(db, country_code, skip=skip, limit=limit)
     return [
         {
             "id": a.id,
@@ -338,16 +345,7 @@ def assign_staff(
 ):
     if role_in_country not in ("country_head", "country_manager", "country_moderator", "country_finance"):
         raise HTTPException(status_code=400, detail="Invalid role")
-    existing = (
-        db.query(CountryStaffAssignment)
-        .filter(
-            CountryStaffAssignment.country_code == country_code.upper(),
-            CountryStaffAssignment.user_id == user_id,
-            CountryStaffAssignment.role_in_country == role_in_country,
-            CountryStaffAssignment.is_active == True,
-        )
-        .first()
-    )
+    existing = get_active_staff_assignment(db, country_code, user_id, role_in_country)
     if existing:
         raise HTTPException(status_code=409, detail="Staff already assigned with this role")
     assignment = CountryStaffAssignment(
@@ -357,8 +355,7 @@ def assign_staff(
         assigned_by=current_user.get("id"),
         is_active=True,
     )
-    add_and_flush(db, assignment)
-    commit_only(db)
+    add_country_staff_assignment(db, assignment)
     return {"id": assignment.id, "status": "assigned"}
 
 
@@ -369,15 +366,10 @@ def remove_staff(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    assignment = (
-        db.query(CountryStaffAssignment)
-        .filter(CountryStaffAssignment.id == staff_id, CountryStaffAssignment.country_code == country_code.upper())
-        .first()
-    )
+    assignment = get_staff_assignment_by_id(db, staff_id, country_code)
     if not assignment:
         raise HTTPException(status_code=404, detail="Staff assignment not found")
-    assignment.is_active = False
-    commit_only(db)
+    deactivate_country_staff_assignment(db, assignment)
     return {"status": "removed"}
 
 
@@ -392,12 +384,7 @@ def list_tax_rates(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    rates = (
-        db.query(CountryCategoryTaxRate)
-        .filter(CountryCategoryTaxRate.country_code == country_code.upper(), CountryCategoryTaxRate.is_active == True)
-        .offset(skip).limit(limit)
-        .all()
-    )
+    rates = list_active_category_tax_rates(db, country_code, skip=skip, limit=limit)
     return [
         {
             "id": r.id,
@@ -418,14 +405,7 @@ def set_tax_rate(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    existing = (
-        db.query(CountryCategoryTaxRate)
-        .filter(
-            CountryCategoryTaxRate.country_code == country_code.upper(),
-            CountryCategoryTaxRate.category_id == category_id,
-        )
-        .first()
-    )
+    existing = get_category_tax_rate(db, country_code, category_id)
     if existing:
         existing.tax_rate = tax_rate
         existing.tax_name = tax_name
@@ -438,6 +418,6 @@ def set_tax_rate(
             tax_name=tax_name,
             is_active=True,
         )
-        add_and_flush(db, rate)
-    commit_only(db)
+        add_tax_entry(db, rate)
+    commit_country_changes(db)
     return {"status": "saved", "category_id": category_id, "tax_rate": tax_rate}

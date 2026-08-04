@@ -12,7 +12,7 @@ from controllers.catalog.products_controller import (
 )  # noqa: F401
 
 # Imported from product_utils for convenience
-from services.catalog.product_utils import _bump_product_cache_version  # noqa: F401
+from data.catalog_product_utils import _bump_product_cache_version  # noqa: F401
 
 __all__ = [
     "get_products",

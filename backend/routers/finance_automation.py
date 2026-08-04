@@ -1,4 +1,7 @@
-"""Finance Automation Router — OCR bills, bank mapping, depreciation, accruals, COA CRUD."""
+"""Finance Automation Router — OCR bills, bank mapping, depreciation, accruals, COA CRUD.
+
+All data access is delegated to the service layer (LC1: routers stay thin).
+"""
 from __future__ import annotations
 
 import logging
@@ -6,27 +9,38 @@ from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, Body, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from data.db import get_db
-from data.controllers_admin_controller import require_admin
 from data.dependencies_auth import get_current_user
+from services.finance.automation_read_service import (
+    list_accruals as list_accruals_svc,
+    list_bank_mapping_rules,
+    list_fixed_assets,
+    list_scanned_expenses,
+)
+from services.finance.erp_read_service import (
+    get_account_by_code,
+    get_account_group_by_code,
+    list_statement_lines,
+)
 from services import finance_automation as fa
 from services import general_ledger_service as gl
+from services.finance.finance_automation import create_account as svc_create_account
+from services.finance.finance_automation import deactivate_account as svc_deactivate_account
+from services.finance.finance_automation import create_fixed_asset as svc_create_fixed_asset
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
-from data.models import Account, AccountGroup, AccountBalance, BankMappingRule, BankStatementLine
+from data.models import AccountGroup
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, flush_only
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
 def require_finance_permission(slug: str):
     """Allow full admins OR users granted a specific finance permission (delegation)."""
-    from data.controllers_admin_controller import require_admin
     from services import permission_service as permsvc
 
     def _dep(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -36,10 +50,6 @@ def require_finance_permission(slug: str):
             return current_user
         raise HTTPException(status_code=403, detail=f"Requires permission: {slug}")
     return _dep
-
-
-class _AdminResp(BaseModel):
-    pass
 
 
 def _with_rls(country_code: Optional[str], db: Session):
@@ -69,18 +79,20 @@ class AccountCreate(BaseModel):
 def create_account(body: AccountCreate, db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.coa"))):
     cleanup = _with_rls(body.country_code, db)
     try:
-        if db.query(Account).filter(Account.code == body.code).first():
+        if get_account_by_code(db, body.code):
             raise HTTPException(409, f"Account '{body.code}' already exists")
-        grp = db.query(AccountGroup).filter(AccountGroup.code == body.group_code).first()
+        grp = get_account_group_by_code(db, body.group_code)
         if not grp:
             raise HTTPException(404, f"Account group '{body.group_code}' not found")
-        acct = Account(code=body.code, name=body.name, group_id=grp.id,
-                       normal_side=body.normal_side, currency=body.currency,
-                       country_code=body.country_code)
-        add_and_flush(db, acct)
-        flush_only(db)
-        add_and_flush(db, AccountBalance(account_id=acct.id, currency=body.currency, balance=Decimal("0.00")))
-        commit_and_refresh(db, acct)
+        acct = svc_create_account(
+            db,
+            code=body.code,
+            name=body.name,
+            group_id=grp.id,
+            normal_side=body.normal_side,
+            currency=body.currency,
+            country_code=body.country_code,
+        )
         return gl.list_accounts(db)
     finally:
         cleanup()
@@ -88,11 +100,9 @@ def create_account(body: AccountCreate, db: Session = Depends(get_db), _admin=De
 
 @router.post("/accounts/{code}/deactivate", summary="Deactivate a GL account")
 def deactivate_account(code: str, db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.coa"))):
-    acct = db.query(Account).filter(Account.code == code).first()
+    acct = svc_deactivate_account(db, code)
     if not acct:
         raise HTTPException(404, f"Account '{code}' not found")
-    acct.is_active = False
-    commit_only(db)
     return {"status": "deactivated", "code": code}
 
 
@@ -123,14 +133,12 @@ def create_rule(body: MappingRuleCreate, db: Session = Depends(get_db), _admin=D
 
 @router.get("/mapping-rules", summary="List mapping rules")
 def list_rules(country_code: Optional[str] = Query(None, max_length=3), skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.bank.mapping"))):
-    q = db.query(BankMappingRule)
-    if country_code:
-        q = q.filter((BankMappingRule.country_code == country_code) | (BankMappingRule.country_code.is_(None)))
+    rules = list_bank_mapping_rules(db, country_code=country_code, skip=skip, limit=limit)
     return [
         {"id": r.id, "name": r.name, "match_pattern": r.match_pattern,
          "account_code": r.account_code, "normal_side": r.normal_side, "category": r.category,
          "priority": r.priority, "is_active": r.is_active}
-        for r in q.order_by(BankMappingRule.priority.asc()).offset(skip).limit(limit).all()
+        for r in rules
     ]
 
 
@@ -162,11 +170,12 @@ def import_statement(body: StatementImportBody, db: Session = Depends(get_db), _
 
 @router.get("/statements/{import_id}/lines", summary="List statement lines for an import")
 def statement_lines(import_id: int, skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.bank.mapping"))):
+    lines = list_statement_lines(db, import_id, skip=skip, limit=limit)
     return [
         {"id": l.id, "description": l.description, "amount": float(l.amount),
          "mapped_account_code": l.mapped_account_code, "mapped_side": l.mapped_side,
          "status": l.status}
-        for l in db.query(BankStatementLine).filter(BankStatementLine.import_id == import_id).offset(skip).limit(limit).all()
+        for l in lines
     ]
 
 
@@ -211,15 +220,12 @@ def scan_expense(body: ScannedExpenseBody, db: Session = Depends(get_db), _admin
 
 @router.get("/expenses/scanned", summary="List scanned expenses")
 def list_scanned(country_code: Optional[str] = Query(None, max_length=3), db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.expenses.scan"))):
-    from data.models import ScannedExpense
-    q = db.query(ScannedExpense)
-    if country_code:
-        q = q.filter(ScannedExpense.country_code == country_code)
+    rows = list_scanned_expenses(db, country_code=country_code, limit=200)
     return [
         {"id": e.id, "vendor_name": e.vendor_name, "amount": float(e.amount),
          "status": e.status, "account_code": e.expense_account_code,
          "created_at": e.created_at.isoformat() if e.created_at else None}
-        for e in q.order_by(ScannedExpense.id.desc()).limit(200).all()
+        for e in rows
     ]
 
 
@@ -242,25 +248,33 @@ class FixedAssetCreate(BaseModel):
 
 @router.post("/fixed-assets", summary="Register a fixed asset")
 def create_asset(body: FixedAssetCreate, db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.assets"))):
-    from data.models import FixedAsset
-    asset = FixedAsset(**body.model_dump(exclude_none=True), created_by=_admin.get("id"))
-    add_and_flush(db, asset)
-    commit_and_refresh(db, asset)
+    asset = svc_create_fixed_asset(
+        db,
+        name=body.name,
+        category=body.category,
+        purchase_date=body.purchase_date,
+        purchase_cost=body.purchase_cost,
+        salvage_value=body.salvage_value,
+        useful_life_months=body.useful_life_months,
+        asset_code=body.asset_code,
+        asset_account_code=body.asset_account_code,
+        depreciation_account_code=body.depreciation_account_code,
+        accumulated_depr_account_code=body.accumulated_depr_account_code,
+        country_code=body.country_code,
+        created_by=_admin.get("id"),
+    )
     return {"id": asset.id, "name": asset.name, "status": asset.status}
 
 
 @router.get("/fixed-assets", summary="List fixed assets")
 def list_assets(country_code: Optional[str] = Query(None, max_length=3), skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.assets"))):
-    from data.models import FixedAsset
-    q = db.query(FixedAsset)
-    if country_code:
-        q = q.filter((FixedAsset.country_code == country_code) | (FixedAsset.country_code.is_(None)))
+    rows = list_fixed_assets(db, country_code=country_code, skip=skip, limit=limit)
     return [
         {"id": a.id, "name": a.name, "category": a.category, "purchase_cost": float(a.purchase_cost),
          "salvage_value": float(a.salvage_value), "useful_life_months": a.useful_life_months,
          "accumulated_depreciation": float(a.accumulated_depreciation or 0),
          "status": a.status, "country_code": a.country_code}
-        for a in q.order_by(FixedAsset.id.desc()).offset(skip).limit(limit).all()
+        for a in rows
     ]
 
 
@@ -297,14 +311,11 @@ def create_accrual(body: AccrualCreate, db: Session = Depends(get_db), _admin=De
 
 @router.get("/accruals", summary="List accruals")
 def list_accruals(country_code: Optional[str] = Query(None, max_length=3), skip: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_db), _admin=Depends(require_finance_permission("finance.accruals"))):
-    from data.models import Accrual
-    q = db.query(Accrual)
-    if country_code:
-        q = q.filter((Accrual.country_code == country_code) | (Accrual.country_code.is_(None)))
+    rows = list_accruals_svc(db, country_code=country_code, skip=skip, limit=limit)
     return [
         {"id": a.id, "accrual_type": a.accrual_type, "amount": float(a.amount),
          "description": a.description, "status": a.status, "country_code": a.country_code}
-        for a in q.order_by(Accrual.id.desc()).offset(skip).limit(limit).all()
+        for a in rows
     ]
 
 

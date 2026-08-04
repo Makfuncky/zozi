@@ -16,7 +16,8 @@ from data.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierRetur
 from utils.audit_log import audit_log, AuditAction
 from data.services_orders import _order_holds_inventory, apply_order_status_change
 from utils.config import settings
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.orders.orders_router_service import get_return_request_by_id
     add_and_flush,
     commit_and_refresh,
 )
@@ -60,14 +61,14 @@ def _order_items(order: Order, db: Session) -> list[OrderItem]:
     items = list(order.items or [])
     if items:
         return items
-    return db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+    _db_orderitem_all_0(db, id, order, order_id)
 
 
 def _order_return_window_days(order: Order, db: Session) -> int:
     items = _order_items(order, db)
     product_ids = [item.product_id for item in items if item.product_id]
     products = (
-        {cast(int, p.id): p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()}
+        _db_product_all_1(db, id, in_, product_ids)
         if product_ids
         else {}
     )
@@ -89,7 +90,7 @@ def _order_delivery_reference(order: Order, db: Session) -> datetime | None:
         return None
 
     delivered_shipments = (
-        db.query(Shipment)
+        _db_shipment_query_2(db)
         .filter(Shipment.order_id == order.id, Shipment.actual_delivery.isnot(None))
         .order_by(Shipment.actual_delivery.desc())
         .all()
@@ -104,7 +105,7 @@ def _return_request_item_summaries(req: ReturnRequest, db: Session) -> list[dict
     order = cast(Optional[Order], getattr(req, "order", None))
     if order is None:
         order = (
-            db.query(Order)
+            _db_order_query_3(db)
             .options(selectinload(Order.items).selectinload(OrderItem.product))
             .filter(Order.id == req.order_id)
             .first()
@@ -140,7 +141,7 @@ def _attach_return_request_context(req: ReturnRequest, db: Session) -> ReturnReq
     order = cast(Optional[Order], getattr(req, "order", None))
     if order is None:
         order = (
-            db.query(Order)
+            _db_order_query_4(db)
             .options(selectinload(Order.items).selectinload(OrderItem.product))
             .filter(Order.id == req.order_id)
             .first()
@@ -281,14 +282,14 @@ def _capture_exc(exc: Exception) -> None:
 
 
 def create_return_request(current_user: dict, payload: ReturnRequestCreate, db: Session) -> ReturnRequest:
-    order = db.query(Order).filter(Order.id == payload.order_id, Order.user_id == current_user["id"]).first()
+    order = _db_order_first_5(db, current_user, id, order_id, payload, user_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
     target_order_item: OrderItem | None = None
     if payload.order_item_id is not None:
         target_order_item = (
-            db.query(OrderItem)
+            _db_orderitem_query_6(db)
             .options(selectinload(OrderItem.product))
             .filter(OrderItem.id == payload.order_item_id, OrderItem.order_id == order.id)
             .first()
@@ -300,7 +301,7 @@ def create_return_request(current_user: dict, payload: ReturnRequestCreate, db: 
     if delivery_reference is None:
         raise HTTPException(status_code=422, detail="Returns can only be requested after the order is delivered")
 
-    existing_query = db.query(ReturnRequest).filter(ReturnRequest.order_id == payload.order_id)
+    existing_query = _db_returnrequest_query_7(db, order_id, payload)
     if payload.order_item_id is not None:
         existing_query = existing_query.filter(ReturnRequest.order_item_id == payload.order_item_id)
     else:
@@ -357,9 +358,9 @@ def create_return_request(current_user: dict, payload: ReturnRequestCreate, db: 
 
 
 def list_return_requests(current_user: dict, db: Session, *, limit: int = 50, offset: int = 0) -> List[ReturnRequest]:
-    query = db.query(ReturnRequest).options(
-        selectinload(ReturnRequest.order).selectinload(Order.items).selectinload(OrderItem.product)
-    )
+    query = _db_returnrequest_query_8(db)
+
+
     if current_user.get("role") not in ("admin", "support"):
         query = query.filter(ReturnRequest.customer_id == current_user.get("id"))
     requests = query.order_by(ReturnRequest.created_at.desc()).offset(offset).limit(limit).all()
@@ -368,7 +369,7 @@ def list_return_requests(current_user: dict, db: Session, *, limit: int = 50, of
 
 def get_return_request(return_id: int, current_user: dict, db: Session) -> ReturnRequest:
     req = (
-        db.query(ReturnRequest)
+        _db_returnrequest_query_9(db)
         .options(selectinload(ReturnRequest.order).selectinload(Order.items).selectinload(OrderItem.product))
         .filter(ReturnRequest.id == return_id)
         .first()
@@ -386,7 +387,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
     if current_user.get("role") not in ("admin", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    req = db.query(ReturnRequest).filter(ReturnRequest.id == return_id).first()
+    req = get_return_request_by_id(db, return_id)
     if req is None:
         raise HTTPException(status_code=404, detail="Return request not found")
 
@@ -405,7 +406,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
 
     # Auto-issue refund only for actual returns, not replacement intent.
     if payload.status == "completed" and intent == "return":
-        order = db.query(Order).filter(Order.id == req.order_id).first()
+        order = _db_order_first_10(db, id, order_id, req)
         payment_id = cast(str | None, getattr(order, "payment_intent_id")) if order else None
         if order is not None and payment_id:
 
@@ -499,7 +500,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                         logger.error("Tap auto-refund failed for return %s: %s", return_id, exc)
                         _capture_exc(exc)
     elif payload.status == "completed" and intent == "replacement":
-        order = db.query(Order).filter(Order.id == req.order_id).first()
+        order = _db_order_first_11(db, id, order_id, req)
         if order is not None:
             add_and_flush(db, Notification(
                 user_id=req.user_id,
@@ -571,7 +572,7 @@ def list_supplier_return_requests(
 
     supplier_id = int(cast(Any, current_user.get("id")))
     base_query = (
-        db.query(ReturnRequest)
+        _db_returnrequest_query_12(db)
         .options(
             selectinload(ReturnRequest.order)
             .selectinload(Order.items)
@@ -605,7 +606,7 @@ def update_supplier_return_request(
     if current_user.get("role") != "supplier":
         raise HTTPException(status_code=403, detail="Supplier access required")
 
-    req = db.query(ReturnRequest).filter(ReturnRequest.id == return_id).first()
+    req = get_return_request_by_id(db, return_id)
     if req is None:
         raise HTTPException(status_code=404, detail="Return request not found")
 
@@ -638,10 +639,9 @@ def update_supplier_return_request(
             raise HTTPException(status_code=409, detail="Approve the return before applying restock")
         if not current_state.get("restock_applied"):
             for item in owned_items:
-                product = db.query(Product).filter(
-                    Product.id == item["product_id"],
-                    Product.supplier_id == supplier_id,
-                ).first()
+                product = _db_product_first_13(db, id, item, product_id, supplier_id)
+
+
                 if product is not None:
                     cast(Any, product).stock = int(cast(Any, getattr(product, "stock", 0)) or 0) + int(item["quantity"])
             current_state["restock_applied"] = True

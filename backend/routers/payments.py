@@ -53,6 +53,7 @@ from services.finance.payments_gateway_service import (
 )
 from data.db import get_db
 from models.payments import Payment
+from services.finance.payments_write_service import build_payment_query
 from utils.pagination import cursor_paginate_desc, build_cursor_pagination_payload
 
 router = APIRouter()
@@ -81,7 +82,7 @@ def _require_admin(current_user: dict = Depends(get_current_user)) -> dict:
 
 @router.get("/")
 def list_payments(page: int = Query(1, ge=1), page_size: int = Query(50, ge=1, le=500), status: Optional[str] = Query(None), db: Session = Depends(get_db), _: dict = Depends(_require_admin)):
-    q = db.query(Payment).order_by(Payment.created_at.desc())
+    q = build_payment_query(db, status=status)
     if status:
         q = q.filter(Payment.status == status)
     total = q.count()

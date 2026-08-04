@@ -49,7 +49,7 @@ os.environ.setdefault("CSRF_DISABLED", "true")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
 os.environ.setdefault("SEED_ADMIN_PASSWORD", "admin123")
 
-from data.base import Base  # noqa: E402
+from db.base import Base  # noqa: E402
 
 import data.models  # noqa: E402
 
@@ -323,7 +323,7 @@ _GAP_DDL: dict[str, str] = {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             batch_number VARCHAR(50) NOT NULL,
             country_code VARCHAR(10),
-            total_amount NUMERIC(16,4) NOT NULL,
+            total_amount NUMERIC(16,4),
             item_count INTEGER NOT NULL,
             status VARCHAR(20) DEFAULT 'pending_approval',
             created_by INTEGER REFERENCES users(id),
@@ -332,7 +332,10 @@ _GAP_DDL: dict[str, str] = {
             settled_at TIMESTAMP,
             notes TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            uuid VARCHAR(36) NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            version INTEGER DEFAULT 1
         )
     """,
     "journal_entries": """
@@ -416,25 +419,23 @@ def db_session(engine) -> Iterator[Session]:
 
 
 @pytest.fixture
-def app(engine, _seed_default_accounts):
+def app(engine, _seed_default_accounts, db_session):
     """Build the FastAPI app with the DB dependency overridden to the test engine.
 
     Depends on ``_seed_default_accounts`` so demo users (admin, supplier, etc.)
     exist in the DB before any test that uses the TestClient runs.
+
+    ``db_session`` is injected so the app shares the **same transactional
+    session** as the test — data seeded by ``_seed_test_products(db_session)``
+    is immediately visible to request handlers, and teardown rolls it all back.
     """
-    from data.db import get_db as _real_get_db  # noqa: F401
-    from data.services_database import get_db as _services_get_db  # noqa: F401
+    from db.database import get_db as _real_get_db  # noqa: F401
+    from services.database import get_db as _services_get_db  # noqa: F401
 
     import main as _main  # noqa: E401  (ensures routers are importable)
 
-    Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-
-    async def _override_get_db():
-        db = Session()
-        try:
-            yield db
-        finally:
-            db.close()
+    def _override_get_db():
+        yield db_session
 
     _main.app.dependency_overrides[_real_get_db] = _override_get_db
     _main.app.dependency_overrides[_services_get_db] = _override_get_db
@@ -443,7 +444,7 @@ def app(engine, _seed_default_accounts):
 
 
 def _set_email_verified(email: str) -> None:
-    from data.models import User as _User
+    from models import User as _User
 
     sess = _TestSession()
     try:
@@ -471,71 +472,15 @@ _DEMO_USERS: list[tuple[str, str, str, str, str]] = [
 def _seed_default_accounts(engine):
     """Seed demo users and the countries they reference **once per session**.
 
-    ``_ensure_demo_user`` in ``db/seed.py`` hard-codes ``country_code="AE"``
-    on every user, and the ``users`` table has
-    ``ForeignKey("country_configs.code")``.  We must create the country
-    rows *before* users or the FK constraint will fail.
-
-    ``autouse=True`` was removed — tests that need the demo accounts should
-    declare ``_seed_default_accounts`` as a parameter or depend on ``client``
-    (which transitively seeds).  This saves ~6s per test file by running the
-    seeding only once per pytest session.
+    Delegates to ``services.core.admin_operations_service.seed_demo_data``
+    so that tests never import model or db layers directly (CG2 compliance).
     """
-    from data.db_seed import _ensure_demo_user
-    from data.models import CountryConfig, User as _UserModel
+    from services.core.admin_operations_service import seed_demo_data
 
     TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = TestingSession()
     try:
-        # ── Step 1: ensure the countries that _ensure_demo_user references ──
-        demo_countries = [
-            {"code": "AE", "name": "United Arab Emirates", "currency": "AED",
-             "currency_symbol": "د.إ", "phone_code": "+971"},
-            {"code": "SA", "name": "Saudi Arabia", "currency": "SAR",
-             "currency_symbol": "﷼", "phone_code": "+966"},
-            {"code": "OM", "name": "Oman", "currency": "OMR",
-             "currency_symbol": "﷼", "phone_code": "+968"},
-        ]
-        for c in demo_countries:
-            existing = session.query(CountryConfig).filter(
-                CountryConfig.code == c["code"]
-            ).first()
-            if not existing:
-                session.add(CountryConfig(**c))
-        session.flush()
-
-        # ── Step 2a: seed WELCOME10 coupon for coupon validation tests ──
-        from data.models import Coupon as _Coupon
-        existing_coupon = session.query(_Coupon).filter(_Coupon.code == "WELCOME10").first()
-        if not existing_coupon:
-            session.add(_Coupon(
-                code="WELCOME10",
-                title="Welcome Discount",
-                discount_type="percentage",
-                discount_value=10,
-                minimum_order=10,
-                is_active=True,
-            ))
-        session.flush()
-
-        # ── Step 2: seed demo user accounts ──
-        for email, username, password, role, label in _DEMO_USERS:
-            _ensure_demo_user(
-                session,
-                email=email,
-                username=username,
-                password=password,
-                role=role,
-                log_label=label,
-            )
-            # Ensure customer users are email-verified so tokens work
-            # out of the box for every endpoint.
-            if role == "customer":
-                user_obj = session.query(_UserModel).filter(_UserModel.email == email).first()
-                if user_obj:
-                    user_obj.email_verified = True
-            session.flush()
-        session.commit()
+        seed_demo_data(session)
     finally:
         session.close()
     yield
@@ -572,7 +517,7 @@ def _auth_tokens(engine, _seed_default_accounts) -> dict[str, str]:
         "supplier": "eyJ...", "customer": "eyJ..."}``
     """
     from datetime import timedelta
-    from data.models import User as _User
+    from models import User as _User
     from utils.auth import create_access_token as _create_token
 
     _Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)

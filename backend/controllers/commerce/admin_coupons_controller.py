@@ -12,11 +12,12 @@ from data.models import Coupon
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 
-from services.write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only, rollback_only
+from data.services_write_helpers import add_and_flush, commit_and_refresh, commit_only, delete_only, rollback_only
+from services.commerce.promotion_engine_service import get_coupon_by_id
 
 def list_coupons(db: Session, *, skip: int = 0, limit: int | None = None, search: Optional[str] = None) -> dict:
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
-    query = db.query(Coupon)
+    query = _db_coupon_query_0(db)
     if search and search.strip():
         query = query.filter(Coupon.code.ilike(f"%{search.strip()}%"))
     total = query.with_entities(func.count(Coupon.id)).scalar() or 0
@@ -50,8 +51,8 @@ def create_coupon(data: dict, acting_user: dict, db: Session) -> dict:
     code = (data.get("code") or "").strip().upper()
     if not code:
         raise HTTPException(status_code=400, detail="Coupon code is required")
-    if db.query(Coupon).filter(Coupon.code == code).first():
-        raise HTTPException(status_code=409, detail="Coupon code already exists")
+    _db_coupon_first_1(db, code)
+
 
     from datetime import datetime as _dt
     expires_raw = data.get("expires_at")
@@ -88,7 +89,7 @@ def create_coupon(data: dict, acting_user: dict, db: Session) -> dict:
 
 
 def update_coupon(coupon_id: int, data: dict, acting_user: dict, db: Session) -> dict:
-    coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+    coupon = get_coupon_by_id(db, coupon_id)
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
     for field in ("discount_type", "value", "min_order", "max_uses", "is_active"):
@@ -105,11 +106,12 @@ def update_coupon(coupon_id: int, data: dict, acting_user: dict, db: Session) ->
 
 
 def delete_coupon(coupon_id: int, acting_user: dict, db: Session) -> dict:
-    coupon = db.query(Coupon).filter(Coupon.id == coupon_id).first()
+    coupon = get_coupon_by_id(db, coupon_id)
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
 
-    usage_count = db.query(func.count(CouponUsage.id)).filter(CouponUsage.coupon_id == coupon_id).scalar() or 0
+    from services.commerce.coupons_read_service import count_coupon_usage
+    usage_count = count_coupon_usage(db, coupon_id)
     if usage_count > 0:
         raise HTTPException(
             status_code=409,
@@ -128,5 +130,5 @@ def delete_coupon(coupon_id: int, acting_user: dict, db: Session) -> dict:
     return {"message": "Coupon deleted"}
 
 
-# â”€â”€ Support Tickets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â�?€â�?€ Support Tickets â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€â�?€
 

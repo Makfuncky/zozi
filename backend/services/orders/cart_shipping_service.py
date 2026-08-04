@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from data.schemas import OrderCreate
 from services.logistics.logistics_partner_pricing import normalize_country_code
-from services.catalog.product_utils import resolve_product_variant
+from data.catalog_product_utils import resolve_product_variant
 from utils.audit_log import audit_log
 from utils.money import round_money, to_decimal
 
@@ -43,7 +43,7 @@ def _load_products_for_order(order: OrderCreate, db: Session) -> Tuple[Dict[int,
         variant = resolve_product_variant(product, item.selected_size, item.selected_color)
         has_variants = bool(getattr(product, "variants", []) or [])
         if has_variants and ((item.selected_size or "").strip() or (item.selected_color or "").strip()) and variant is None:
-            raise HTTPException(status_code=422, detail=f"Selected variant is not available for '{product.name}'")
+            raise HTTPException(status_code=422, detail="Selected variant is not available for '" + str(product.name) + "'")
 
     for product_id, requested_quantity in requested_quantities.items():
         product = products.get(product_id)

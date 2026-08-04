@@ -372,7 +372,7 @@ def logistics_update_transit_status(
         return {"success": False, "error": "Order or shipment not found"}
 
     if order.status not in ("shipped", "in_transit"):
-        return {"success": False, "error": f"Cannot update transit in '{order.status}' status"}
+        return {"success": False, "error": "Cannot update transit in '" + str(order.status) + "' status"}
 
     # Map event type to status
     status_map = {
@@ -734,7 +734,7 @@ def get_order_shipment_label(order_id: int, db: Session) -> Optional[dict]:
                 "quantity": item.quantity,
                 "price": float(item.price or 0),
                 "total": float((item.price or 0) * item.quantity),
-                "variant": f"{item.selected_size or ''} {item.selected_color or ''}".strip() or None,
+                "variant": (item.selected_size or "") + " " + (item.selected_color or ""),
             }
             for item in items
         ],

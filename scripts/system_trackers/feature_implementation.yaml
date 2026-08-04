@@ -1,0 +1,715 @@
+# ============================================================================
+# ZOZI FEATURE DEFINITIONS — MASTER TRACKER
+# ============================================================================
+# HOW TO USE:
+#   1. Each feature below describes ONE row in the status matrix
+#   2. Update `description` with small text explaining what "done" means
+#   3. List expected files, patterns, models, routes, tests
+#   4. Run: python scripts/feature_tracker.py
+#   5. Output: updated CODEBASE_STATUS_MATRIX.md with real percentages
+#
+# STATUS KEY:
+#   ✅ Complete · ⚠️ Partial · ❌ Not Yet Built · 🔍 Scanning
+# 
+# HOW TO ADD A NEW FEATURE:
+#   Open scripts/feature_definitions.yaml
+#   Add a new entry under systems_overview
+# 
+#   - id: SYS_028
+#     name: "My New Feature"
+#     todo_ref: "#42"
+#     scope: "Customer · Admin"       # ← auto-routes to Sections II & V
+#     matrix_section: "§II §V"
+#     weight: 7                        # 1-10 importance for weighted %
+#     description: >
+#       Small text describing what "done" looks like.
+#       This is used by Ollama for semantic analysis.
+#     expected:
+#       backend_files:
+#         - backend/controllers/my_feature_controller.py
+#         - backend/routers/my_feature.py
+#       backend_patterns:
+#         - "def my_feature_handler"
+#       frontend_web:
+#         - frontend/web_app/src/app/my-feature/page.tsx
+#       frontend_mobile:
+#         - frontend/mobile_app/app/my-feature.tsx
+#       models: [MyFeatureModel]
+#       api_routes:
+#         - "GET /my-feature"
+#         - "POST /my-feature"
+#       tests:
+#         - backend/tests/test_my_feature.py
+# ============================================================================
+
+meta:
+  project: ZOZI E-Commerce Platform
+  generated_by: feature_tracker.py
+  sections:
+    - systems_overview
+    - section_i_infrastructure
+    - section_ii_customer
+    - section_iii_supplier
+    - section_iv_logistics
+    - section_v_admin
+
+# ============================================================================
+# 🗂️ SYSTEMS OVERVIEW — MASTER QUICK REFERENCE
+# ============================================================================
+systems_overview:
+  - id: SYS_001
+    name: "Auth, Identity & Email Verification"
+    todo_ref: "#1 #11 #20"
+    scope: "All roles"
+    matrix_section: "§I §II §III §IV §V"
+    weight: 10
+    description: >
+      Email/password login, Google OAuth, JWT rotation, CSRF double-submit,
+      account lockout, email verification gate, push token sync, stable demo accounts.
+    expected:
+      backend_files:
+        - backend/controllers/auth_controller.py
+        - backend/routers/auth.py
+        - backend/utils/auth.py
+      backend_patterns:
+        - "def login"
+        - "def register"
+        - "def refresh_token"
+        - "def logout"
+        - "CSRF"
+        - "account_lockout"
+      frontend_web:
+        - frontend/web_app/src/app/login/page.tsx
+        - frontend/web_app/src/app/register/page.tsx
+        - frontend/web_app/src/app/verify-email/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/(auth)/login.tsx
+        - frontend/mobile_app/app/(auth)/register.tsx
+      models: [User, PasswordResetToken, EmailVerificationToken, RevokedToken]
+      api_routes:
+        - "POST /auth/login"
+        - "POST /auth/register"
+        - "POST /auth/refresh"
+        - "POST /auth/logout"
+        - "POST /auth/oauth/google/id-token"
+      tests:
+        - backend/tests/test_auth.py
+        - backend/tests/test_auth_hardening.py
+
+  - id: SYS_002
+    name: "Product & Catalog System"
+    todo_ref: "#1"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§II §III §V"
+    weight: 9
+    description: >
+      Browse, full-text search, category tree, badge filters, product detail,
+      NULL-safe backend filters, soft-delete archive.
+    expected:
+      backend_files:
+        - backend/controllers/products_controller.py
+        - backend/routers/products.py
+        - backend/controllers/categories_controller.py
+        - backend/routers/categories.py
+      backend_patterns:
+        - "def list_products"
+        - "def get_product"
+        - "search"
+        - "category"
+      frontend_web:
+        - frontend/web_app/src/app/products/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/(tabs)/products/index.tsx
+      models: [Product, Category, FlashSale, FlashSaleProduct]
+      api_routes:
+        - "GET /products"
+        - "GET /products/{id}"
+        - "GET /categories"
+      tests:
+        - backend/tests/test_products.py
+        - backend/tests/test_categories.py
+
+  - id: SYS_003
+    name: "Discount & Promotions System"
+    todo_ref: "#1"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§II §III §V"
+    weight: 7
+    description: >
+      Flash Sales, Supplier Discounts (compare_price + time window),
+      Coupons & Codes (expiry/max-uses/min-order), promotional banners.
+    expected:
+      backend_files:
+        - backend/controllers/flash_sale_controller.py
+        - backend/controllers/coupons_controller.py
+        - backend/controllers/banner_controller.py
+      models: [FlashSale, FlashSaleProduct, Coupon, CouponUsage, Banner]
+      api_routes:
+        - "GET /flash-sales"
+        - "POST /coupons/validate"
+        - "GET /banners"
+      tests:
+        - backend/tests/test_flash_sales.py
+        - backend/tests/test_coupons.py
+        - backend/tests/test_banners.py
+
+  - id: SYS_004
+    name: "Cart & Checkout System"
+    todo_ref: "#1"
+    scope: "Customer"
+    matrix_section: "§II"
+    weight: 10
+    description: >
+      Cart CRUD (server-side cross-device), 4-step checkout, COD active,
+      Stripe/Tap capability-gated, coupon apply, inventory reserve on placement.
+    expected:
+      backend_files:
+        - backend/controllers/cart_controller.py
+        - backend/controllers/orders_controller.py
+        - backend/controllers/payments_controller.py
+        - backend/routers/cart.py
+        - backend/routers/orders.py
+        - backend/routers/payments.py
+      frontend_web:
+        - frontend/web_app/src/app/cart/page.tsx
+        - frontend/web_app/src/app/checkout/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/cart.tsx
+        - frontend/mobile_app/app/checkout.tsx
+      models: [Cart, CartItem, Order, OrderItem, Payment]
+      api_routes:
+        - "POST /cart/items"
+        - "POST /orders"
+        - "POST /payments/create-payment-intent"
+      tests:
+        - backend/tests/test_cart.py
+        - backend/tests/test_payments_orders.py
+
+  - id: SYS_005
+    name: "Order & Tracking System"
+    todo_ref: "#1 #7 #18"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§II §III §V"
+    weight: 10
+    description: >
+      Order placement + multi-supplier split, status lifecycle, supplier prepared
+      handoff, supply chain tracking, shipping zones, cancellation, receipt scan guard,
+      real-time order-tracking WebSocket.
+    expected:
+      backend_files:
+        - backend/controllers/orders_controller.py
+        - backend/controllers/logistics_controller.py
+      models: [Order, OrderItem, Shipment, ShipmentEvent, ReturnRequest]
+      api_routes:
+        - "POST /orders"
+        - "GET /orders/{id}/tracking"
+        - "GET /ws/logistics"
+      tests:
+        - backend/tests/test_payments_orders.py
+        - backend/tests/test_supply_chain_flow.py
+
+  - id: SYS_006
+    name: "Payment System"
+    todo_ref: "#1"
+    scope: "Customer · Admin"
+    matrix_section: "§II §V"
+    weight: 9
+    description: >
+      COD production-active, Stripe integration capability-gated,
+      Tap Payments integration capability-gated, webhook HMAC validation,
+      refund routing.
+    expected:
+      backend_files:
+        - backend/controllers/payments_controller.py
+        - backend/routers/payments.py
+      models: [Payment, ProcessedWebhookEvent]
+      api_routes:
+        - "POST /payments/create-payment-intent"
+        - "POST /payments/webhook"
+        - "POST /payments/tap/create"
+      tests:
+        - backend/tests/test_payments_orders.py
+
+  - id: SYS_007
+    name: "Logistics, Shipping & Distribution"
+    todo_ref: "#7 #9"
+    scope: "Logistor · Supplier · Admin"
+    matrix_section: "§III §IV §V"
+    weight: 10
+    description: >
+      Shipments lifecycle, partner assignment, partner dashboard analytics,
+      supplier parcel-proof pickup handoff, delivery e-signature, 9 scan event
+      types, GPS lat/lng, partner GPS map widgets, WebSocket refresh,
+      route planning, SLA breach alerts, logistics partner revenue/payout.
+    expected:
+      backend_files:
+        - backend/controllers/logistics_controller.py
+        - backend/controllers/logistics_partner_controller.py
+        - backend/routers/logistics.py
+        - backend/routers/logistics_partner.py
+      models: [Shipment, ShipmentEvent, LogisticsPartner, LogisticsPartnerPayout]
+      api_routes:
+        - "GET /logistics-partners/dashboard"
+        - "PUT /logistics-partners/shipments/{id}/status"
+        - "POST /logistics/scan-event"
+      tests:
+        - backend/tests/test_logistics.py
+        - backend/tests/test_logistics_partner.py
+        - backend/tests/test_supply_chain_flow.py
+
+  - id: SYS_008
+    name: "Invoice & Supply Chain Tracker"
+    todo_ref: "#8"
+    scope: "All roles"
+    matrix_section: "§II §III §IV §V"
+    weight: 7
+    description: >
+      Auto-invoice on shipment, HTML/PDF rendering (ReportLab), full supply
+      chain milestones, HTML email to customer, 18-test suite.
+    expected:
+      backend_files:
+        - backend/controllers/invoice_controller.py
+        - backend/routers/invoices.py
+        - backend/utils/invoice_html.py
+      models: [Invoice, InvoiceItem]
+      api_routes:
+        - "GET /invoices/{id}/html"
+        - "GET /invoices/{id}/pdf"
+      tests:
+        - backend/tests/test_invoices.py
+
+  - id: SYS_009
+    name: "Barcode & QR Scanning System"
+    todo_ref: "#9"
+    scope: "Logistor · Supplier · Admin"
+    matrix_section: "§III §IV §V"
+    weight: 6
+    description: >
+      Mobile expo-camera lazy-loaded + logistics-partner scan flow,
+      Web BarcodeDetector API + @zxing/library fallback, immutable scan audit,
+      9 event/status types.
+    expected:
+      backend_files:
+        - backend/controllers/logistics_controller.py
+        - backend/controllers/product_verification_controller.py
+      frontend_web:
+        - frontend/web_app/src/app/barcode-scan/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/barcode-scan.tsx
+        - frontend/mobile_app/app/logistics-partner/scan.tsx
+      tests:
+        - backend/tests/test_logistics.py
+        - backend/tests/test_product_verification.py
+
+  - id: SYS_010
+    name: "Product Spec Verification System"
+    todo_ref: "#16"
+    scope: "Supplier · Logistor · Admin"
+    matrix_section: "§III §IV §V"
+    weight: 6
+    description: >
+      3 checkpoints (supplier_dispatch, logistics_receipt, customer_receipt),
+      3 results (passed/failed/partial), discrepancy payloads, evidence URLs,
+      role-based per checkpoint, 20-test suite.
+    expected:
+      backend_files:
+        - backend/controllers/product_verification_controller.py
+        - backend/routers/product_verification.py
+      models: [ProductVerification]
+      api_routes:
+        - "POST /product-verifications"
+      tests:
+        - backend/tests/test_product_verification.py
+
+  - id: SYS_011
+    name: "Customer Account System"
+    todo_ref: "#1 #11 #12"
+    scope: "Customer"
+    matrix_section: "§II"
+    weight: 6
+    description: >
+      Profile edit, field-encrypted phone, address book CRUD + set-default,
+      wishlist (2-col grid), newsletter subscribe/unsubscribe, order history,
+      returns, invoice view, referral dashboard.
+    expected:
+      backend_files:
+        - backend/controllers/auth_controller.py
+        - backend/controllers/address_controller.py
+      frontend_web:
+        - frontend/web_app/src/app/profile/page.tsx
+        - frontend/web_app/src/app/profile/referrals/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/profile.tsx
+        - frontend/mobile_app/app/addresses.tsx
+        - frontend/mobile_app/app/referrals.tsx
+      models: [User, Address, ReferralPointEvent]
+      tests:
+        - backend/tests/test_auth.py
+        - backend/tests/test_addresses.py
+        - backend/tests/test_referrals.py
+
+  - id: SYS_012
+    name: "Returns & Customer Policy System"
+    todo_ref: "#13 #15"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§II §III §V"
+    weight: 7
+    description: >
+      Return/replacement request, refund routing (Stripe/Tap), admin RMA queue,
+      supplier review queue, delivered-only return gating, per-product return
+      window enforcement, payout eligibility linked to return-window expiry.
+    expected:
+      backend_files:
+        - backend/controllers/returns_controller.py
+        - backend/routers/returns.py
+      models: [ReturnRequest]
+      api_routes:
+        - "POST /returns"
+        - "PATCH /returns/{id}/status"
+      tests:
+        - backend/tests/test_returns.py
+
+  - id: SYS_013
+    name: "Supplier Panel System"
+    todo_ref: "#6 #19"
+    scope: "Supplier"
+    matrix_section: "§III"
+    weight: 10
+    description: >
+      Consolidated supplier IA around Product Management, Orders, Reports, Profile
+      hubs. Unified profile action strip. Product CRUD + richer media-backed upload.
+      Single-product media intake. Bulk CSV import/export. Order management.
+      Shipping label + parcel QR. Package metadata. Supplier returns queue.
+      Supplier dispute center.
+    expected:
+      backend_files:
+        - backend/controllers/supplier_controller.py
+        - backend/routers/supplier.py
+      frontend_web:
+        - frontend/web_app/src/app/supplier/products/page.tsx
+        - frontend/web_app/src/app/supplier/orders/page.tsx
+        - frontend/web_app/src/app/supplier/profile/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/supplier/products/index.tsx
+        - frontend/mobile_app/app/supplier/orders.tsx
+        - frontend/mobile_app/app/supplier/profile.tsx
+      models: [SupplierProfile, SupplierDocument]
+      tests:
+        - backend/tests/test_supplier.py
+        - backend/tests/test_supplier_documents.py
+
+  - id: SYS_014
+    name: "Supplier KYC & Document Verification"
+    todo_ref: "#13"
+    scope: "Supplier · Admin"
+    matrix_section: "§III §V"
+    weight: 6
+    description: >
+      Doc upload (type + expiry date), pending→approved→rejected lifecycle,
+      auto-promote on approval → verified status + in-app notification + email,
+      6-test suite.
+    expected:
+      backend_files:
+        - backend/controllers/supplier_document_controller.py
+        - backend/routers/supplier_documents.py
+      models: [SupplierDocument]
+      tests:
+        - backend/tests/test_supplier_documents.py
+
+  - id: SYS_015
+    name: "Supplier Credibility & Assurance Badge"
+    todo_ref: "#17"
+    scope: "Supplier · Customer"
+    matrix_section: "§III"
+    weight: 5
+    description: >
+      Credibility score: orders + reviews + docs + delivery timeliness,
+      badge level (Bronze/Silver/Gold), SupplierBadge on all product cards,
+      7 badge tests, admin badge control.
+    expected:
+      backend_files:
+        - backend/controllers/supplier_controller.py
+      models: [SupplierProfile]
+      tests:
+        - backend/tests/test_supplier.py
+
+  - id: SYS_016
+    name: "Supplier Payout, Terms & Commission"
+    todo_ref: "#14"
+    scope: "Supplier · Admin"
+    matrix_section: "§III §V"
+    weight: 8
+    description: >
+      Payout request (pending→processing→completed), admin approval + audit-log,
+      terms surfaced in supplier profile, commission agreements with supplier-level
+      base rates, product overrides, version history, admin commission management.
+    expected:
+      backend_files:
+        - backend/controllers/supplier_controller.py
+        - backend/controllers/commission_controller.py
+        - backend/routers/commission.py
+      models: [Payout, CommissionAgreement, ProductCommissionOverride]
+      tests:
+        - backend/tests/test_admin_hierarchy_payouts.py
+        - backend/tests/test_commission_engine.py
+
+  - id: SYS_017
+    name: "Supplier Public Storefront & About Page"
+    todo_ref: "#21"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§III"
+    weight: 7
+    description: >
+      Canonical web vanity storefront route /supplier={slug}, richer About Us
+      narrative, expanded supplier trust/contact panel, supplier-context chatbot
+      deep links, supplier storefront discovery in search results, PII-safe.
+    expected:
+      backend_files:
+        - backend/controllers/supplier_controller.py
+        - backend/routers/public_suppliers.py
+      frontend_web:
+        - frontend/web_app/src/app/suppliers/[id]/page.tsx
+        - frontend/web_app/src/app/supplier-storefront/[slug]/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/suppliers/[id].tsx
+      models: [SupplierProfile]
+      tests:
+        - backend/tests/test_public_suppliers.py
+
+  - id: SYS_018
+    name: "Logistor Panel System"
+    todo_ref: "#7"
+    scope: "Logistor"
+    matrix_section: "§IV"
+    weight: 10
+    description: >
+      Dashboard KPIs + operational analytics, shipment list/filter/pagination,
+      prepared pickup queue + explicit pickup claim/cancel lifecycle,
+      dedicated LP scan pages, mobile e-signature capture, GPS ingestion,
+      scan audit trail, barcode scanning, self-registration, partner-scoped
+      WebSocket refresh, route optimization, partner payout/revenue center,
+      SLA breach alerts.
+    expected:
+      backend_files:
+        - backend/controllers/logistics_partner_controller.py
+        - backend/routers/logistics_partner.py
+      frontend_web:
+        - frontend/web_app/src/app/logistics-partner/dashboard/page.tsx
+        - frontend/web_app/src/app/logistics-partner/shipments/page.tsx
+        - frontend/web_app/src/app/logistics-partner/scan/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/logistics-partner/dashboard.tsx
+        - frontend/mobile_app/app/logistics-partner/shipments.tsx
+        - frontend/mobile_app/app/logistics-partner/scan.tsx
+      models: [LogisticsPartner, LogisticsPartnerPayout]
+      tests:
+        - backend/tests/test_logistics_partner.py
+
+  - id: SYS_019
+    name: "AI, Chatbot & Recommendations"
+    todo_ref: "#2 #4 #5 #12"
+    scope: "Customer · Supplier · Admin"
+    matrix_section: "§I §II"
+    weight: 8
+    description: >
+      Chatbot (intent detection, session history, product suggestions,
+      supplier-scoped mode), supplier-context chatbot deep links, privacy-safe
+      supplier assistance, 5-signal recommendation engine, AI product description
+      generation, image AI.
+    expected:
+      backend_files:
+        - backend/controllers/chatbot_controller.py
+        - backend/controllers/ai_controller.py
+        - backend/routers/chatbot.py
+        - backend/routers/ai.py
+      frontend_web:
+        - frontend/web_app/src/app/chatbot/page.tsx
+        - frontend/web_app/src/components/Chatbot.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/chatbot.tsx
+      models: [ChatbotQueryEvent]
+      tests:
+        - backend/tests/test_chatbot.py
+        - backend/tests/test_ai_bulk.py
+        - backend/tests/test_image_ai_service.py
+
+  - id: SYS_020
+    name: "Email, Campaigns & Verification"
+    todo_ref: "#3 #12 #20"
+    scope: "All roles"
+    matrix_section: "§I §II §V"
+    weight: 7
+    description: >
+      Email delivery (3-attempt backoff), A/B subject testing, newsletter,
+      transactional emails, email verification on register, admin-managed runtime
+      provider config, Resend webhook verification.
+    expected:
+      backend_files:
+        - backend/controllers/email_controller.py
+        - backend/routers/email.py
+        - backend/utils/email_service.py
+      models: [EmailCampaign, EmailTemplate, CampaignRecipient, EmailProviderConfig, EmailSuppression, EmailDeliveryEvent]
+      tests:
+        - backend/tests/test_email_campaigns.py
+        - backend/tests/test_email_ab.py
+
+  - id: SYS_021
+    name: "Support, Tickets & Help"
+    todo_ref: "#1"
+    scope: "Customer · Supplier · Logistics Partner · Admin"
+    matrix_section: "§II §V"
+    weight: 6
+    description: >
+      Unified ticket create/reply flows, role-based ticket_category + raised_by_role,
+      attachment uploads, admin queue + dedicated thread page, status lifecycle,
+      help portal, real-time reply/ticket refresh.
+    expected:
+      backend_files:
+        - backend/routers/tickets.py
+      frontend_web:
+        - frontend/web_app/src/app/tickets/page.tsx
+        - frontend/web_app/src/app/help/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/tickets.tsx
+        - frontend/mobile_app/app/ticket-detail.tsx
+      models: [SupportTicket, TicketReply]
+      tests:
+        - backend/tests/test_tickets.py
+
+  - id: SYS_022
+    name: "Notification System"
+    todo_ref: "#1"
+    scope: "Customer · Supplier"
+    matrix_section: "§I §II"
+    weight: 5
+    description: >
+      In-app notification list + read/unread, realtime WebSocket badge/list refresh,
+      push (Expo/FCM/APNs), token lifecycle (PushTokenSync).
+    expected:
+      backend_files:
+        - backend/controllers/notifications_controller.py
+        - backend/routers/notifications.py
+      models: [Notification, PushNotificationToken]
+      tests:
+        - backend/tests/test_notifications.py
+        - backend/tests/test_push_notifications.py
+
+  - id: SYS_023
+    name: "Analytics & Reports System"
+    todo_ref: "#5 #6"
+    scope: "Supplier · Admin · Logistics Partner"
+    matrix_section: "§III §V"
+    weight: 7
+    description: >
+      Supplier revenue time-series, product performance per SKU, admin KPI
+      dashboard, admin analytics time-series, payout hierarchy, logistics partner
+      KPIs/SLA analytics, on-demand CSV/PDF exports.
+    expected:
+      backend_files:
+        - backend/controllers/admin_controller.py
+        - backend/controllers/supplier_controller.py
+        - backend/routers/admin.py
+      frontend_web:
+        - frontend/web_app/src/app/admin/dashboard/page.tsx
+        - frontend/web_app/src/app/admin/analytics/page.tsx
+        - frontend/web_app/src/app/supplier/analytics/page.tsx
+      tests:
+        - backend/tests/test_admin_analytics.py
+        - backend/tests/test_admin_analytics_timeseries.py
+
+  - id: SYS_024
+    name: "Security & Compliance System"
+    todo_ref: "#10 #11"
+    scope: "All roles"
+    matrix_section: "§I §V"
+    weight: 9
+    description: >
+      CSRF, JWT rotation, field-level PII encryption (38 models), key rotation,
+      RBAC 29 boundary tests, audit logging, rate-limiting, account lockout,
+      PII scrub in Sentry, external secret-store resolution.
+    expected:
+      backend_files:
+        - backend/utils/auth.py
+        - backend/utils/encryption.py
+        - backend/utils/key_rotation.py
+        - backend/utils/config.py
+      models: [AuditLog]
+      tests:
+        - backend/tests/test_auth_hardening.py
+        - backend/tests/test_rbac.py
+        - backend/tests/test_key_rotation.py
+        - backend/tests/test_config_secret_store.py
+
+  - id: SYS_025
+    name: "Database, ORM & Infrastructure"
+    todo_ref: "#1"
+    scope: "Internal"
+    matrix_section: "§I"
+    weight: 10
+    description: >
+      25 model files, 6 active Alembic migrations, Redis caching, health checks,
+      Sentry error tracking, file upload validation, DB backup (30-min auto-scheduler),
+      GitHub Actions CI/CD, full-stack validation runner.
+    expected:
+      backend_files:
+        - backend/db/models.py
+        - backend/db/database.py
+        - backend/utils/backup.py
+        - backend/utils/background_jobs.py
+        - .github/workflows/ci-cd.yml
+      tests:
+        - backend/tests/test_database.py
+        - backend/tests/test_startup_schema_bootstrap.py
+        - backend/tests/test_backup.py
+        - backend/tests/test_background_jobs.py
+
+  - id: SYS_026
+    name: "Cash Management / Finance System"
+    todo_ref: "—"
+    scope: "Admin · Supplier · Logistor"
+    matrix_section: "§V §III §IV"
+    weight: 9
+    description: >
+      Finance dashboard: admin ledger, bank transaction import/reconcile/flag/resolve,
+      supplier & logistics settlements, VAT remittances, refund ledger, COD remittance
+      tracking, payout batch processing, bank account management, provider-ready
+      payout dispatch layer, scheduled finance-cycle orchestration.
+    expected:
+      backend_files:
+        - backend/controllers/cash_management_controller.py
+        - backend/services/cash_management_service.py
+        - backend/services/finance_transfer_service.py
+        - backend/routers/cash_management.py
+      models: [BankTransaction, FinanceBankAccount, SupplierBankAccount, LogisticsPartnerBankAccount, TransactionLedger, SupplierSettlement, LogisticsSettlement, RefundLedger, VATRemittance]
+      tests:
+        - backend/tests/test_cash_management.py
+
+  - id: SYS_027
+    name: "Referral & Points System"
+    todo_ref: "—"
+    scope: "Customer"
+    matrix_section: "§II"
+    weight: 5
+    description: >
+      Referral code tracked, GET /referrals/me, GET /referrals/history,
+      POST /referrals/share, ReferralPointEvent model, web profile/referrals/,
+      r/[code]/ redirect, mobile referrals.tsx.
+    expected:
+      backend_files:
+        - backend/routers/auth.py
+      frontend_web:
+        - frontend/web_app/src/app/profile/referrals/page.tsx
+        - frontend/web_app/src/app/r/[code]/page.tsx
+      frontend_mobile:
+        - frontend/mobile_app/app/referrals.tsx
+      models: [ReferralPointEvent]
+      tests:
+        - backend/tests/test_referrals.py
+
+
+
+# ============================================================================
+# NOTE: Sections I-V below are derived from systems_overview by scope tag.
+# The script automatically categorizes features into the right section.
+# You only need to maintain the systems_overview list above.
+# ============================================================================  

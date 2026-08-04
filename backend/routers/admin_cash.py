@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from data.db import get_db
-from data.models import CashAccount, CashTransaction, User
+from data.models import User
 from data.schemas import CashAccountCreate, CashAccountOut, CashTransactionCreate, CashTransactionOut
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
@@ -10,6 +10,8 @@ from utils.rls_interceptor import set_rls_context, clear_rls_context
 from services.cash_management_write_service import (
     create_cash_account as create_cash_account_db,
     create_cash_transaction as create_cash_transaction_db,
+    list_cash_accounts,
+    get_cash_account,
 )
 
 router = APIRouter()
@@ -20,7 +22,7 @@ def list_accounts(country_code: str = Path(..., description="ISO country code"),
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        return db.query(CashAccount).filter(CashAccount.is_active == True, CashAccount.country_code == country_code.upper()).offset(skip).limit(limit).all()
+        return list_cash_accounts(db, country_code.upper(), skip=skip, limit=limit)
     finally:
         clear_rls_context()
 
@@ -40,8 +42,9 @@ def create_transaction(country_code: str = Path(..., description="ISO country co
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        account = db.query(CashAccount).filter(CashAccount.id == payload.account_id, CashAccount.country_code == country_code.upper()).first()
-        if not account: raise HTTPException(404, "Account not found")
+        account = get_cash_account(db, payload.account_id, country_code.upper())
+        if not account:
+            raise HTTPException(404, "Account not found")
         if payload.transaction_type == "debit":
             account.balance -= payload.amount
         else:

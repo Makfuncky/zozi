@@ -1614,3 +1614,296 @@ def test_gateway_connection(code: str, gateway_id: str, environment: str, curren
 
 # For backward compatibility, use PayoutRuleCategory and PayoutRuleProduct
 # as they serve as the commission and product payout rules respectively
+
+# ── Archive / Restore / Toggle functions ─────────────────────────────────────────
+
+def archive_country(db: Session, code: str, current_user: dict) -> dict[str, Any]:
+    country = _get_country_or_404(db, code)
+    if bool(country.is_active):
+        country.is_active = False
+        record_admin_change(
+            db,
+            actor_id=current_user.get("id"),
+            action="archive",
+            entity="country",
+            entity_key=country.code,
+            before={"is_active": True},
+            after={"is_active": False},
+        )
+        db.commit()
+    return {"message": "Country archived", "code": country.code}
+
+
+def restore_country(db: Session, code: str, current_user: dict) -> dict[str, Any]:
+    country = _get_country_or_404(db, code)
+    if not bool(country.is_active):
+        country.is_active = True
+        record_admin_change(
+            db,
+            actor_id=current_user.get("id"),
+            action="restore",
+            entity="country",
+            entity_key=country.code,
+            before={"is_active": False},
+            after={"is_active": True},
+        )
+        db.commit()
+    return {"message": "Country restored", "code": country.code}
+
+
+def toggle_country_active(db: Session, code: str, current_user: dict) -> dict[str, Any]:
+    country = _get_country_or_404(db, code)
+    country.is_active = not bool(country.is_active)
+    record_admin_change(
+        db,
+        actor_id=current_user.get("id"),
+        action="toggle_active",
+        entity="country",
+        entity_key=country.code,
+        before={"is_active": not bool(country.is_active)},
+        after={"is_active": bool(country.is_active)},
+    )
+    db.commit()
+    return {"message": "Country activated" if country.is_active else "Country deactivated", "is_active": bool(country.is_active)}
+
+
+def hard_delete_country(db: Session, code: str) -> None:
+    country = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
+    if country:
+        db.delete(country)
+        db.commit()
+
+
+def bulk_archive_countries(db: Session, ids: list[str], current_user: dict) -> dict[str, Any]:
+    codes = [c.upper() for c in ids if c]
+    countries = db.query(CountryConfig).filter(CountryConfig.code.in_(codes)).all()
+    for c in countries:
+        if bool(c.is_active):
+            c.is_active = False
+    record_admin_change(
+        db,
+        actor_id=current_user.get("id"),
+        action="bulk_archive",
+        entity="countries",
+        entity_key=",".join(codes),
+        before=None,
+        after={"codes": codes, "count": len(countries)},
+    )
+    db.commit()
+    return {"message": f"{len(countries)} countries archived", "codes": codes}
+
+
+def bulk_restore_countries(db: Session, ids: list[str], current_user: dict) -> dict[str, Any]:
+    codes = [c.upper() for c in ids if c]
+    countries = db.query(CountryConfig).filter(CountryConfig.code.in_(codes)).all()
+    for c in countries:
+        if not bool(c.is_active):
+            c.is_active = True
+    record_admin_change(
+        db,
+        actor_id=current_user.get("id"),
+        action="bulk_restore",
+        entity="countries",
+        entity_key=",".join(codes),
+        before=None,
+        after={"codes": codes, "count": len(countries)},
+    )
+    db.commit()
+    return {"message": f"{len(countries)} countries restored", "codes": codes}
+
+
+# ── City management functions ─────────────────────────────────────────────────
+
+def create_city(db: Session, code: str, body: dict[str, Any]) -> dict[str, Any]:
+    country = _get_country_or_404(db, code)
+    city = CountryCity(
+        country_code=code.upper(),
+        name=str(body.get("name", "")).strip(),
+        region=str(body.get("region", "")).strip() or None,
+        latitude=float(body["lat"]) if body.get("lat") is not None else None,
+        longitude=float(body["lng"]) if body.get("lng") is not None else None,
+        population=int(body.get("population")) if body.get("population") is not None else None,
+        source=str(body.get("source", "openmeteo")),
+        is_active=bool(body.get("is_active", True)),
+        sort_order=int(body.get("sort_order", 0) or 0),
+    )
+    db.add(city)
+    db.commit()
+    db.refresh(city)
+    return {"message": "City created", "id": city.id, "name": city.name}
+
+
+def update_city(db: Session, code: str, city_id: int, body: dict[str, Any]) -> dict[str, Any]:
+    city = _get_city_or_404(db, code, city_id)
+    if "name" in body:
+        city.name = str(body["name"]).strip()
+    if "region" in body:
+        city.region = str(body.get("region", "")).strip() or None
+    if "latitude" in body:
+        city.latitude = float(body["latitude"]) if body.get("latitude") is not None else None
+    if "longitude" in body:
+        city.longitude = float(body["longitude"]) if body.get("longitude") is not None else None
+    if "population" in body:
+        city.population = int(body.get("population")) if body.get("population") is not None else None
+    if "is_active" in body:
+        city.is_active = bool(body["is_active"])
+    if "sort_order" in body:
+        city.sort_order = int(body.get("sort_order", 0) or 0)
+    db.commit()
+    db.refresh(city)
+    return {"message": "City updated", "id": city.id}
+
+
+def delete_city(db: Session, code: str, city_id: int) -> None:
+    city = _get_city_or_404(db, code, city_id)
+    db.delete(city)
+    db.commit()
+
+
+# ── Feature flag management functions ───────────────────────────────────────────
+
+def create_feature_flag(db: Session, code: str, body: dict[str, Any], current_user: dict = None) -> dict[str, Any]:
+    normalized_code = normalize_country_code(code)
+    existing_country = db.query(CountryConfig).filter(CountryConfig.code == normalized_code).first()
+    if existing_country:
+        for key, value in body.items():
+            if key == "is_enabled":
+                continue
+            flag = CountryFeatureFlag(
+                country_code=normalized_code,
+                feature_key=str(key).strip(),
+                is_enabled=bool(value.get("is_enabled", False)) if isinstance(value, dict) else bool(value),
+                rollout_audience=str(value.get("rollout_audience", "")).strip() or None if isinstance(value, dict) else None,
+                notes=str(value.get("notes", "")).strip() or None if isinstance(value, dict) else None,
+            )
+            db.add(flag)
+        db.commit()
+        return {"message": "Feature flag created", "country_code": normalized_code}
+    raise HTTPException(status_code=404, detail="Country not found")
+
+
+def update_feature_flag(db: Session, code: str, key: str, body: dict[str, Any], current_user: dict = None) -> dict[str, Any]:
+    flag = _get_feature_flag_or_404(db, code, key)
+    if "is_enabled" in body:
+        flag.is_enabled = bool(body["is_enabled"])
+    if "rollout_audience" in body:
+        flag.rollout_audience = str(body.get("rollout_audience", "")).strip() or None
+    if "notes" in body:
+        flag.notes = str(body.get("notes", "")).strip() or None
+    db.commit()
+    db.refresh(flag)
+    return {"message": "Feature flag updated", "feature_key": flag.feature_key}
+
+
+def delete_feature_flag(db: Session, code: str, key: str) -> None:
+    flag = _get_feature_flag_or_404(db, code, key)
+    db.delete(flag)
+    db.commit()
+
+
+# ── Commission rate management functions ───────────────────────────────────────
+
+def create_commission_rate(db: Session, code: str, payload: dict[str, Any], current_user: dict = None) -> dict[str, Any]:
+    country = _get_country_or_404(db, code)
+    rate = PayoutRuleCategory(
+        country_code=code.upper(),
+        category_slug=str(payload.get("supplier_tier", "standard").strip().lower()),
+        commission_rate=_to_decimal(payload.get("commission_percentage", 0), field="commission_rate"),
+        notes=str(payload.get("notes", "")).strip() or None,
+        is_active=bool(payload.get("is_active", True)),
+        fixed_fee=_to_decimal(payload.get("fixed_fee", 0), field="fixed_fee"),
+    )
+    db.add(rate)
+    db.commit()
+    db.refresh(rate)
+    return {"message": "Commission rate created", "id": rate.id, "category_slug": rate.category_slug}
+
+
+def delete_commission_rate(db: Session, code: str, tier: str, name: str, current_user: dict = None) -> dict[str, Any]:
+    row = (
+        db.query(PayoutRuleCategory)
+        .filter(
+            PayoutRuleCategory.country_code == code.upper(),
+            PayoutRuleCategory.category_slug == tier.lower(),
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Commission rate not found")
+    db.delete(row)
+    db.commit()
+    return {"message": "Commission rate deleted", "tier": tier}
+
+
+def list_commission_rates(db: Session, code: str, skip: int = 0, limit: int = 20) -> list[dict[str, Any]]:
+    rows = (
+        db.query(PayoutRuleCategory)
+        .filter(PayoutRuleCategory.country_code == code.upper())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": row.id,
+            "country_code": row.country_code,
+            "tier": row.category_slug,
+            "name": row.name or row.category_slug,
+            "commission_percentage": float(row.commission_rate),
+            "fixed_fee": float(row.fixed_fee) if row.fixed_fee else 0,
+            "is_active": bool(row.is_active),
+        }
+        for row in rows
+    ]
+
+
+# ── Bulk city update ─────────────────────────────────────────────────────────────
+
+def update_country_cities_bulk(
+    code: str,
+    payload: dict[str, Any],
+    current_user: dict,
+    db: Session,
+) -> dict[str, Any]:
+    country = _get_country_or_404(db, code)
+    cities_data = payload.get("cities", [])
+    if not isinstance(cities_data, list):
+        cities_data = []
+
+    for c in cities_data:
+        if not isinstance(c, dict):
+            continue
+        city_id = c.get("id")
+        if city_id:
+            city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
+            if city:
+                if "name" in c:
+                    city.name = str(c["name"]).strip()
+                if "region" in c:
+                    city.region = str(c.get("region", "")).strip() or None
+                if "latitude" in c:
+                    city.latitude = float(c["latitude"]) if c.get("latitude") is not None else None
+                if "longitude" in c:
+                    city.longitude = float(c["longitude"]) if c.get("longitude") is not None else None
+                if "population" in c:
+                    city.population = int(c.get("population")) if c.get("population") is not None else None
+                if "is_active" in c:
+                    city.is_active = bool(c["is_active"])
+                if "sort_order" in c:
+                    city.sort_order = int(c.get("sort_order", 0) or 0)
+        else:
+            city = CountryCity(
+                country_code=code.upper(),
+                name=str(c.get("name", "")).strip(),
+                region=str(c.get("region", "")).strip() or None,
+                latitude=float(c.get("latitude")) if c.get("latitude") is not None else None,
+                longitude=float(c.get("longitude")) if c.get("longitude") is not None else None,
+                population=int(c.get("population")) if c.get("population") is not None else None,
+                is_active=bool(c.get("is_active", True)),
+                sort_order=int(c.get("sort_order", 0) or 0),
+            )
+            db.add(city)
+
+    db.commit()
+    cities = db.query(CountryCity).filter(CountryCity.country_code == code.upper()).all()
+    return {"message": "Cities updated", "count": len(cities), "country_code": code.upper()}

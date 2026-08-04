@@ -71,7 +71,8 @@ from utils.order_tracking import (
 )
 from utils.auth import get_password_hash
 from utils.realtime import logistics_realtime_hub
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.logistics.logistics_read_service import get_logistics_partner_by_id, get_shipment_by_id, get_user_by_id
     commit_and_refresh,
     rollback_only,
 )
@@ -102,8 +103,8 @@ def _next_partner_code(db: Session, user_id: int) -> str:
     base_code = f"LPAUTO{user_id}"
     candidate = base_code
     suffix = 1
-    while db.query(LogisticsPartner).filter(LogisticsPartner.code == candidate).first():
-        suffix += 1
+    _db_logisticspartner_first_0(db, candidate, code)
+
         candidate = f"{base_code}_{suffix}"
     return candidate
 
@@ -487,7 +488,7 @@ def _validate_partner_service_area(db: Session, *, partner_id: int, service_area
     if service_area_id is None:
         return
     area = (
-        db.query(LogisticsPartnerServiceArea)
+        _db_logisticspartnerservicearea_query_1(db)
         .filter(
             LogisticsPartnerServiceArea.id == service_area_id,
             LogisticsPartnerServiceArea.partner_id == partner_id,
@@ -503,7 +504,7 @@ def _pickup_visible_to_partner(shipment: Shipment, partner: LogisticsPartner, db
         return False
     order = cast(Optional[Order], getattr(shipment, "order", None))
     if order is None:
-        order = db.query(Order).filter(Order.id == shipment.order_id).first()
+        order = _db_order_first_2(db, id, order_id, shipment)
     if order is None:
         return False
     return partner_can_service_order(partner, order, db)
@@ -515,9 +516,9 @@ def _require_admin(current_user: dict) -> None:
 
 
 def _get_partner_for_user(user_id: int, db: Session) -> LogisticsPartner:
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+    partner = _db_logisticspartner_first_3(db, user_id)
     if not partner:
-        user = db.query(User).filter(User.id == user_id).first()
+        user = get_user_by_id(db, user_id)
         if not user or cast(str, getattr(user, "role", "")) != "logistics_partner":
             raise HTTPException(status_code=403, detail="No logistics partner profile found")
 
@@ -567,9 +568,9 @@ def _resolve_partner_user_link(
             user_id = int(raw_user_id)
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=422, detail="user_id must be an integer") from exc
-        user = db.query(User).filter(User.id == user_id).first()
+        user = get_user_by_id(db, user_id)
     elif raw_email:
-        user = db.query(User).filter(func.lower(User.email) == raw_email.lower()).first()
+        user = _db_user_first_4(db, email, lower)
 
     if not user:
         raise HTTPException(status_code=404, detail="Linked logistics partner user not found")
@@ -577,7 +578,7 @@ def _resolve_partner_user_link(
         raise HTTPException(status_code=422, detail="Linked user must have logistics_partner role")
 
     if not allow_existing_link:
-        existing_partner_q = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user.id)
+        existing_partner_q = _db_logisticspartner_query_5(db, id, user, user_id)
         if partner_id is not None:
             existing_partner_q = existing_partner_q.filter(LogisticsPartner.id != partner_id)
         if existing_partner_q.first():
@@ -744,7 +745,7 @@ def list_my_partner_service_areas(
     approval_status: str | None = None,
 ) -> list[dict[str, Any]]:
     role = current_user.get("role")
-    query = db.query(LogisticsPartnerServiceArea)
+    query = _db_logisticspartnerservicearea_query_6(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsPartnerServiceArea.partner_id == partner.id)
@@ -773,7 +774,7 @@ def list_my_partner_pricing_profiles(
     service_area_id: int | None = None,
 ) -> list[dict[str, Any]]:
     role = current_user.get("role")
-    query = db.query(LogisticsPricingProfile)
+    query = _db_logisticspricingprofile_query_7(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsPricingProfile.partner_id == partner.id)
@@ -802,7 +803,7 @@ def list_my_partner_category_rules(
     service_area_id: int | None = None,
 ) -> list[dict[str, Any]]:
     role = current_user.get("role")
-    query = db.query(LogisticsCategoryPricingRule)
+    query = _db_logisticscategorypricingrule_query_8(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsCategoryPricingRule.partner_id == partner.id)
@@ -831,7 +832,7 @@ def list_my_partner_vehicle_rules(
     service_area_id: int | None = None,
 ) -> list[dict[str, Any]]:
     role = current_user.get("role")
-    query = db.query(LogisticsVehicleRule)
+    query = _db_logisticsvehiclerule_query_9(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsVehicleRule.partner_id == partner.id)
@@ -861,7 +862,7 @@ def upsert_my_partner_service_area(area_id: int | None, data: dict, current_user
             target_partner_id = int(partner_id_raw)
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=422, detail="partner_id must be an integer") from exc
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == target_partner_id).first()
+        partner = get_logistics_partner_by_id(db, target_partner_id)
         if not partner:
             raise HTTPException(status_code=404, detail="Logistics partner not found")
     elif role == "logistics_partner":
@@ -874,7 +875,7 @@ def upsert_my_partner_service_area(area_id: int | None, data: dict, current_user
         area = stage_logistics_partner_service_area(db, partner_id=partner.id)
     else:
         area = (
-            db.query(LogisticsPartnerServiceArea)
+            _db_logisticspartnerservicearea_query_10(db)
             .filter(
                 LogisticsPartnerServiceArea.id == area_id,
                 LogisticsPartnerServiceArea.partner_id == partner.id,
@@ -911,7 +912,7 @@ def upsert_my_partner_pricing_profile(profile_id: int | None, data: dict, curren
             target_partner_id = int(partner_id_raw)
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=422, detail="partner_id must be an integer") from exc
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == target_partner_id).first()
+        partner = get_logistics_partner_by_id(db, target_partner_id)
         if not partner:
             raise HTTPException(status_code=404, detail="Logistics partner not found")
     elif role == "logistics_partner":
@@ -932,7 +933,7 @@ def upsert_my_partner_pricing_profile(profile_id: int | None, data: dict, curren
         profile = stage_logistics_partner_pricing_profile(db, partner_id=partner.id)
     else:
         profile = (
-            db.query(LogisticsPricingProfile)
+            _db_logisticspricingprofile_query_11(db)
             .filter(
                 LogisticsPricingProfile.id == profile_id,
                 LogisticsPricingProfile.partner_id == partner.id,
@@ -969,7 +970,7 @@ def upsert_my_partner_category_rule(rule_id: int | None, data: dict, current_use
             target_partner_id = int(partner_id_raw)
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=422, detail="partner_id must be an integer") from exc
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == target_partner_id).first()
+        partner = get_logistics_partner_by_id(db, target_partner_id)
         if not partner:
             raise HTTPException(status_code=404, detail="Logistics partner not found")
     elif role == "logistics_partner":
@@ -990,7 +991,7 @@ def upsert_my_partner_category_rule(rule_id: int | None, data: dict, current_use
         rule = stage_logistics_partner_category_rule(db, partner_id=partner.id)
     else:
         rule = (
-            db.query(LogisticsCategoryPricingRule)
+            _db_logisticscategorypricingrule_query_12(db)
             .filter(
                 LogisticsCategoryPricingRule.id == rule_id,
                 LogisticsCategoryPricingRule.partner_id == partner.id,
@@ -1027,7 +1028,7 @@ def upsert_my_partner_vehicle_rule(rule_id: int | None, data: dict, current_user
             target_partner_id = int(partner_id_raw)
         except (TypeError, ValueError) as exc:
             raise HTTPException(status_code=422, detail="partner_id must be an integer") from exc
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == target_partner_id).first()
+        partner = get_logistics_partner_by_id(db, target_partner_id)
         if not partner:
             raise HTTPException(status_code=404, detail="Logistics partner not found")
     elif role == "logistics_partner":
@@ -1048,7 +1049,7 @@ def upsert_my_partner_vehicle_rule(rule_id: int | None, data: dict, current_user
         rule = stage_logistics_partner_vehicle_rule(db, partner_id=partner.id)
     else:
         rule = (
-            db.query(LogisticsVehicleRule)
+            _db_logisticsvehiclerule_query_13(db)
             .filter(
                 LogisticsVehicleRule.id == rule_id,
                 LogisticsVehicleRule.partner_id == partner.id,
@@ -1077,7 +1078,7 @@ def upsert_my_partner_vehicle_rule(rule_id: int | None, data: dict, current_user
 
 def delete_my_partner_pricing_profile(profile_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     role = current_user.get("role")
-    query = db.query(LogisticsPricingProfile).filter(LogisticsPricingProfile.id == profile_id)
+    query = _db_logisticspricingprofile_query_14(db, id, profile_id)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsPricingProfile.partner_id == partner.id)
@@ -1092,7 +1093,7 @@ def delete_my_partner_pricing_profile(profile_id: int, current_user: dict, db: S
 
 def delete_my_partner_category_rule(rule_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     role = current_user.get("role")
-    query = db.query(LogisticsCategoryPricingRule).filter(LogisticsCategoryPricingRule.id == rule_id)
+    query = _db_logisticscategorypricingrule_query_15(db, id, rule_id)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsCategoryPricingRule.partner_id == partner.id)
@@ -1107,7 +1108,7 @@ def delete_my_partner_category_rule(rule_id: int, current_user: dict, db: Sessio
 
 def delete_my_partner_vehicle_rule(rule_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     role = current_user.get("role")
-    query = db.query(LogisticsVehicleRule).filter(LogisticsVehicleRule.id == rule_id)
+    query = _db_logisticsvehiclerule_query_16(db, id, rule_id)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsVehicleRule.partner_id == partner.id)
@@ -1122,7 +1123,7 @@ def delete_my_partner_vehicle_rule(rule_id: int, current_user: dict, db: Session
 
 def delete_my_partner_service_area(area_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     role = current_user.get("role")
-    query = db.query(LogisticsPartnerServiceArea).filter(LogisticsPartnerServiceArea.id == area_id)
+    query = _db_logisticspartnerservicearea_query_17(db, area_id, id)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         query = query.filter(LogisticsPartnerServiceArea.partner_id == partner.id)
@@ -1137,7 +1138,7 @@ def delete_my_partner_service_area(area_id: int, current_user: dict, db: Session
 
 def review_partner_profile(partner_id: int, data: dict, current_user: dict, db: Session) -> dict:
     _require_admin(current_user)
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id).first()
+    partner = get_logistics_partner_by_id(db, partner_id)
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
     decision = str(data.get("status", "")).strip().lower()
@@ -1158,7 +1159,7 @@ def review_partner_profile(partner_id: int, data: dict, current_user: dict, db: 
 
 def review_partner_service_area(area_id: int, data: dict, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
-    area = db.query(LogisticsPartnerServiceArea).filter(LogisticsPartnerServiceArea.id == area_id).first()
+    area = _db_logisticspartnerservicearea_first_18(db, area_id, id)
     if not area:
         raise HTTPException(status_code=404, detail="Service area not found")
     decision = str(data.get("status", "")).strip().lower()
@@ -1181,7 +1182,7 @@ def review_partner_service_area(area_id: int, data: dict, current_user: dict, db
 
 def review_partner_pricing_profile(profile_id: int, data: dict, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
-    profile = db.query(LogisticsPricingProfile).filter(LogisticsPricingProfile.id == profile_id).first()
+    profile = _db_logisticspricingprofile_first_19(db, id, profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Pricing profile not found")
     decision = str(data.get("status", "")).strip().lower()
@@ -1204,7 +1205,7 @@ def review_partner_pricing_profile(profile_id: int, data: dict, current_user: di
 
 def review_partner_category_rule(rule_id: int, data: dict, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
-    rule = db.query(LogisticsCategoryPricingRule).filter(LogisticsCategoryPricingRule.id == rule_id).first()
+    rule = _db_logisticscategorypricingrule_first_20(db, id, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Category pricing rule not found")
     decision = str(data.get("status", "")).strip().lower()
@@ -1227,7 +1228,7 @@ def review_partner_category_rule(rule_id: int, data: dict, current_user: dict, d
 
 def review_partner_vehicle_rule(rule_id: int, data: dict, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
-    rule = db.query(LogisticsVehicleRule).filter(LogisticsVehicleRule.id == rule_id).first()
+    rule = _db_logisticsvehiclerule_first_21(db, id, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Vehicle rule not found")
     decision = str(data.get("status", "")).strip().lower()
@@ -1303,10 +1304,9 @@ def list_public_partners(
     limit: int = 12,
 ) -> dict[str, Any]:
     region_code = normalize_country_code(country)
-    query = db.query(LogisticsPartner).filter(
-        LogisticsPartner.status == "active",
-        LogisticsPartner.verification_status == "approved",
-    )
+    query = _db_logisticspartner_query_22(db, active, approved, status, verification_status)
+
+
     search = (q or "").strip()
     if search:
         pattern = f"%{search}%"
@@ -1350,15 +1350,13 @@ def list_public_partners(
 
 
 def get_public_partner(partner_id: int, db: Session) -> dict[str, Any]:
-    partner = db.query(LogisticsPartner).filter(
-        LogisticsPartner.id == partner_id,
-        LogisticsPartner.status == "active",
-        LogisticsPartner.verification_status == "approved",
-    ).first()
+    partner = _db_logisticspartner_first_23(db, active, approved, id, partner_id, status, verification_status)
+
+
     if not partner:
         raise HTTPException(status_code=404, detail="Logistics partner not found")
     approved_areas = (
-        db.query(LogisticsPartnerServiceArea)
+        _db_logisticspartnerservicearea_query_24(db)
         .filter(
             LogisticsPartnerServiceArea.partner_id == partner.id,
             LogisticsPartnerServiceArea.is_active == True,  # noqa: E712
@@ -1375,21 +1373,21 @@ def get_public_partner(partner_id: int, db: Session) -> dict[str, Any]:
 def _scoped_shipments_query(current_user: dict, db: Session) -> tuple:
     role = current_user.get("role")
     if role in ("admin", "sub_admin", "moderator"):
-        return db.query(Shipment), None
+        _db_shipment_query_25(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
-        return db.query(Shipment).filter(Shipment.assigned_partner_id == partner.id), partner
+        _db_shipment_query_26(db, assigned_partner_id, id, partner)
     raise HTTPException(status_code=403, detail="Logistics partner access required")
 
 
 def _partner_visible_shipments_query(current_user: dict, db: Session) -> tuple:
     role = current_user.get("role")
     if role in ("admin", "sub_admin", "moderator"):
-        return db.query(Shipment), None
+        _db_shipment_query_27(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         if not _partner_is_active(partner):
-            return db.query(Shipment).filter(Shipment.id == -1), partner
+            _db_shipment_query_28(db, id)
         pickup_ready_event_exists = db.query(ShipmentEvent.id).filter(
             ShipmentEvent.shipment_id == Shipment.id,
             ShipmentEvent.event_type.in_(["supplier_prepared", "pickup_cancelled", "picked_from_supplier"]),
@@ -1402,7 +1400,7 @@ def _partner_visible_shipments_query(current_user: dict, db: Session) -> tuple:
             (Shipment.assigned_partner_id == partner.id)
             & (Shipment.status.in_(PARTNER_VISIBLE_ASSIGNED_STATUSES))
         )
-        return db.query(Shipment).filter(pickup_ready_clause | assigned_clause), partner
+        _db_shipment_query_29(db, assigned_clause, pickup_ready_clause)
     raise HTTPException(status_code=403, detail="Logistics partner access required")
 
 
@@ -1459,7 +1457,7 @@ def _active_confirmation_map(shipment_ids: list[int], db: Session) -> dict[int, 
     if not shipment_ids:
         return {}
     confirmations = (
-        db.query(ShipmentConfirmation)
+        _db_shipmentconfirmation_query_30(db)
         .filter(
             ShipmentConfirmation.shipment_id.in_(shipment_ids),
             ShipmentConfirmation.status == "pending",
@@ -1539,16 +1537,13 @@ def _calculate_partner_analytics(shipments_q, db: Session) -> dict:
 def _partner_dashboard_shipments_query(current_user: dict, db: Session) -> tuple:
     role = current_user.get("role")
     if role in ("admin", "sub_admin", "moderator"):
-        return db.query(Shipment), None
+        _db_shipment_query_31(db)
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         return (
-            db.query(Shipment).filter(
-                Shipment.assigned_partner_id == partner.id,
-                Shipment.status.in_((PARTNER_PICKUP_READY_STATUS, *PARTNER_VISIBLE_ASSIGNED_STATUSES)),
-            ),
-            partner,
-        )
+            _db_shipment_query_32(db, assigned_partner_id, id, in_, partner, status)
+
+
     raise HTTPException(status_code=403, detail="Logistics partner access required")
 
 
@@ -1731,7 +1726,7 @@ def _calculate_partner_payout_summary(shipments_q, partner: LogisticsPartner | N
         })
 
     payouts = (
-        db.query(LogisticsPartnerPayout)
+        _db_logisticspartnerpayout_query_33(db)
         .filter(LogisticsPartnerPayout.partner_id == partner.id)
         .order_by(desc(LogisticsPartnerPayout.created_at))
         .all()
@@ -1769,7 +1764,7 @@ def _latest_geo_events_for_shipments(shipments: list[Shipment], db: Session) -> 
     if not shipment_ids:
         return {}
     events = (
-        db.query(ShipmentEvent)
+        _db_shipmentevent_query_34(db)
         .filter(
             ShipmentEvent.shipment_id.in_(shipment_ids),
             ShipmentEvent.latitude.isnot(None),
@@ -1960,11 +1955,11 @@ def _publish_shipment_update(shipment: Shipment, event: ShipmentEvent | None, ki
 def list_partners(current_user: dict, db: Session) -> list:
     role = current_user.get("role")
     if role in ("admin", "sub_admin"):
-        partners = db.query(LogisticsPartner).order_by(desc(LogisticsPartner.created_at)).limit(200).all()
+        partners = _db_logisticspartner_all_35(db)
         return [_serialize_partner(p) for p in partners]
     elif role == "supplier":
         partners = (
-            db.query(LogisticsPartner)
+            _db_logisticspartner_query_36(db)
             .filter(LogisticsPartner.status == "active", LogisticsPartner.verification_status == "approved")
             .order_by(LogisticsPartner.name.asc())
             .limit(200)
@@ -1992,12 +1987,11 @@ def create_partner(data: dict, current_user: dict, db: Session) -> dict:
     linked_user_id = _resolve_partner_user_link(data, db, allow_existing_link=True)
 
     if linked_user_id is not None:
-        existing_placeholder = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == linked_user_id).first()
+        existing_placeholder = _db_logisticspartner_first_37(db, linked_user_id, user_id)
         if existing_placeholder:
-            code_conflict = db.query(LogisticsPartner).filter(
-                LogisticsPartner.code == code,
-                LogisticsPartner.id != existing_placeholder.id,
-            ).first()
+            code_conflict = _db_logisticspartner_first_38(db, code, existing_placeholder, id)
+
+
             if code_conflict:
                 raise HTTPException(status_code=409, detail="Partner code already exists")
             setattr(existing_placeholder, "name", data["name"])
@@ -2023,7 +2017,7 @@ def create_partner(data: dict, current_user: dict, db: Session) -> dict:
             commit_and_refresh(db, existing_placeholder)
             return _serialize_partner(existing_placeholder)
 
-    existing = db.query(LogisticsPartner).filter(LogisticsPartner.code == code).first()
+    existing = _db_logisticspartner_first_39(db, code)
     if existing:
         raise HTTPException(status_code=409, detail="Partner code already exists")
 
@@ -2057,7 +2051,7 @@ def create_partner(data: dict, current_user: dict, db: Session) -> dict:
 
 def update_partner(partner_id: int, data: dict, current_user: dict, db: Session) -> dict:
     _require_admin(current_user)
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id).first()
+    partner = get_logistics_partner_by_id(db, partner_id)
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
 
@@ -2065,10 +2059,9 @@ def update_partner(partner_id: int, data: dict, current_user: dict, db: Session)
         code = str(data.get("code", "")).strip().upper()
         if not code:
             raise HTTPException(status_code=422, detail="code cannot be empty")
-        code_conflict = db.query(LogisticsPartner).filter(
-            LogisticsPartner.code == code,
-            LogisticsPartner.id != partner_id,
-        ).first()
+        code_conflict = _db_logisticspartner_first_40(db, code, id, partner_id)
+
+
         if code_conflict:
             raise HTTPException(status_code=409, detail="Partner code already exists")
         setattr(partner, "code", code)
@@ -2108,7 +2101,7 @@ def update_partner(partner_id: int, data: dict, current_user: dict, db: Session)
 def delete_partner(partner_id: int, current_user: dict, db: Session) -> dict:
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin-only")
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id).first()
+    partner = get_logistics_partner_by_id(db, partner_id)
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
     blocker = _build_partner_delete_blocker(partner_id, db)
@@ -2148,7 +2141,7 @@ def bulk_manage_partners(
     normalized_note = _sanitize_optional_string(note, max_length=2000)
     ordered_ids = list(dict.fromkeys(partner_ids))
     partners = (
-        db.query(LogisticsPartner)
+        _db_logisticspartner_query_41(db)
         .filter(LogisticsPartner.id.in_(ordered_ids))
         .all()
     )
@@ -2305,14 +2298,14 @@ def get_partner_payouts(current_user: dict, db: Session) -> list:
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         payouts = (
-            db.query(LogisticsPartnerPayout)
+            _db_logisticspartnerpayout_query_42(db)
             .filter(LogisticsPartnerPayout.partner_id == partner.id)
             .order_by(desc(LogisticsPartnerPayout.created_at))
             .all()
         )
         return [_serialize_partner_payout(payout) for payout in payouts]
     if role in ("admin", "sub_admin"):
-        payouts = db.query(LogisticsPartnerPayout).order_by(desc(LogisticsPartnerPayout.created_at)).all()
+        payouts = _db_logisticspartnerpayout_all_43(db)
         return [_serialize_partner_payout(payout) for payout in payouts]
     raise HTTPException(status_code=403, detail="Access denied")
 
@@ -2358,7 +2351,7 @@ def request_partner_payout(data: dict, current_user: dict, db: Session) -> dict:
 def list_pending_partner_payouts(current_user: dict, db: Session) -> list:
     _require_admin(current_user)
     payouts = (
-        db.query(LogisticsPartnerPayout)
+        _db_logisticspartnerpayout_query_44(db)
         .filter(LogisticsPartnerPayout.status.in_(["pending", "processing"]))
         .order_by(LogisticsPartnerPayout.created_at.desc(), LogisticsPartnerPayout.id.desc())
         .all()
@@ -2368,7 +2361,7 @@ def list_pending_partner_payouts(current_user: dict, db: Session) -> list:
 
 def verify_partner_payout(payout_id: int, data: dict, current_user: dict, db: Session) -> dict:
     _require_admin(current_user)
-    payout = db.query(LogisticsPartnerPayout).filter(LogisticsPartnerPayout.id == payout_id).first()
+    payout = _db_logisticspartnerpayout_first_45(db, id, payout_id)
     if payout is None:
         raise HTTPException(status_code=404, detail="Logistics payout not found")
 
@@ -2445,7 +2438,7 @@ def scan_lookup_shipment_partner(code: str, current_user: dict, db: Session) -> 
     partner_has_approved_service_areas = False
     if partner is not None:
         partner_has_approved_service_areas = (
-            db.query(LogisticsPartnerServiceArea)
+            _db_logisticspartnerservicearea_query_46(db)
             .filter(
                 LogisticsPartnerServiceArea.partner_id == cast(int, getattr(partner, "id")),
                 LogisticsPartnerServiceArea.is_active == True,  # noqa: E712
@@ -2465,7 +2458,7 @@ def scan_lookup_shipment_partner(code: str, current_user: dict, db: Session) -> 
         return visible_pickup or assigned_to_partner
 
     shipment = (
-        db.query(Shipment)
+        _db_shipment_query_47(db)
         .filter(
             (Shipment.scan_code == trimmed) | (Shipment.tracking_number == trimmed)
         )
@@ -2491,14 +2484,14 @@ def scan_lookup_shipment_partner(code: str, current_user: dict, db: Session) -> 
         if upper_trimmed.startswith("SHIP-"):
             shipment_id_text = trimmed.split("-", 1)[1]
             if shipment_id_text.isdigit():
-                candidate = db.query(Shipment).filter(Shipment.id == int(shipment_id_text)).first()
+                candidate = _db_shipment_first_48(db, id, int, shipment_id_text)
                 if candidate is not None:
                     fallback_candidates = [candidate]
         elif upper_trimmed.startswith("ORDER-"):
             order_id_text = trimmed.split("-", 1)[1]
             if order_id_text.isdigit():
                 fallback_candidates = (
-                    db.query(Shipment)
+                    _db_shipment_query_49(db)
                     .filter(Shipment.order_id == int(order_id_text))
                     .order_by(desc(Shipment.created_at))
                     .all()
@@ -2532,7 +2525,7 @@ def scan_lookup_shipment_partner(code: str, current_user: dict, db: Session) -> 
     customer = cast(Optional[User], getattr(order, "user", None)) if order else None
     supplier = cast(Optional[User], getattr(shipment, "supplier", None))
     supplier_profile = (
-        db.query(SupplierProfile)
+        _db_supplierprofile_query_50(db)
         .filter(SupplierProfile.user_id == cast(int, getattr(shipment, "supplier_id")))
         .first()
     )
@@ -2621,7 +2614,7 @@ def get_partner_shipments(
     supplier_profiles = {
         cast(int, getattr(profile, "user_id")): profile
         for profile in (
-            db.query(SupplierProfile)
+            _db_supplierprofile_query_51(db)
             .filter(SupplierProfile.user_id.in_(supplier_ids))
             .all()
             if supplier_ids
@@ -2635,10 +2628,9 @@ def get_partner_shipments(
     if partner_obj is not None and visible_order_ids:
         _lp_settlements: dict[int, LogisticsSettlement] = {
             cast(int, ls.order_id): ls
-            for ls in db.query(LogisticsSettlement).filter(
-                LogisticsSettlement.partner_id == cast(int, partner_obj.id),
-                LogisticsSettlement.order_id.in_(visible_order_ids),
-            ).all()
+            _db_logisticssettlement_all_52(db, cast, id, int, partner_id, partner_obj, visible_order_ids)
+
+
         }
     else:
         _lp_settlements = {}
@@ -2730,7 +2722,7 @@ def create_shipment_confirmation_request_partner(
     if role not in ("admin", "sub_admin", "logistics_partner"):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    shipment = get_shipment_by_id(db, shipment_id)
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
@@ -2757,7 +2749,7 @@ def create_shipment_confirmation_request_partner(
     target_role: str
     order = cast(Optional[Order], getattr(shipment, "order", None))
     if order is None:
-        order = db.query(Order).filter(Order.id == shipment.order_id).first()
+        order = _db_order_first_53(db, id, order_id, shipment)
 
     signature_name: str | None = None
     signature_data_url: str | None = None
@@ -2779,7 +2771,7 @@ def create_shipment_confirmation_request_partner(
         raise HTTPException(status_code=409, detail="No target user found for this confirmation request")
 
     existing_pending = (
-        db.query(ShipmentConfirmation)
+        _db_shipmentconfirmation_query_54(db)
         .filter(
             ShipmentConfirmation.shipment_id == shipment.id,
             ShipmentConfirmation.confirmation_type == confirmation_type,
@@ -2867,7 +2859,7 @@ def get_partner_pricing_insights(
     if resolved_partner_id is None:
         raise HTTPException(status_code=422, detail="partner_id is required")
 
-    allocations_q = db.query(OrderLogisticsAllocation).filter(OrderLogisticsAllocation.partner_id == resolved_partner_id)
+    allocations_q = _db_orderlogisticsallocation_query_55(db, partner_id, resolved_partner_id)
     if service_area_id is not None:
         allocations_q = allocations_q.filter(OrderLogisticsAllocation.service_area_id == service_area_id)
     allocations = allocations_q.order_by(desc(OrderLogisticsAllocation.updated_at), desc(OrderLogisticsAllocation.id)).all()
@@ -2939,11 +2931,9 @@ def get_partner_pricing_insights(
         )
 
     route_presets: list[dict[str, Any]] = []
-    areas_q = db.query(LogisticsPartnerServiceArea).options(selectinload(LogisticsPartnerServiceArea.partner)).filter(
-        LogisticsPartnerServiceArea.partner_id == resolved_partner_id,
-        LogisticsPartnerServiceArea.approval_status == "approved",
-        LogisticsPartnerServiceArea.is_active == True,  # noqa: E712
-    )
+    areas_q = _db_logisticspartnerservicearea_query_56(db, True, approval_status, approved, is_active, noqa, partner_id, resolved_partner_id)
+
+
     if service_area_id is not None:
         areas_q = areas_q.filter(LogisticsPartnerServiceArea.id == service_area_id)
     for area in areas_q.order_by(desc(LogisticsPartnerServiceArea.updated_at), desc(LogisticsPartnerServiceArea.id)).all():
@@ -3025,7 +3015,7 @@ def update_shipment_status_partner(
     if role not in ("admin", "sub_admin", "logistics_partner"):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    shipment = get_shipment_by_id(db, shipment_id)
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")
 
@@ -3034,7 +3024,7 @@ def update_shipment_status_partner(
     if role == "logistics_partner":
         partner = _get_partner_for_user(current_user["id"], db)
         partner_has_approved_service_areas = (
-            db.query(LogisticsPartnerServiceArea)
+            _db_logisticspartnerservicearea_query_57(db)
             .filter(
                 LogisticsPartnerServiceArea.partner_id == cast(int, getattr(partner, "id")),
                 LogisticsPartnerServiceArea.is_active == True,  # noqa: E712
@@ -3144,7 +3134,7 @@ def update_shipment_status_partner(
             ("in_transit", "failed"): "shipment_failed",
             ("shipped", "returned"): "shipment_returned",
             ("in_transit", "returned"): "shipment_returned",
-        }.get((old_status, new_status), f"status_updated_to_{new_status}")
+        }.get((old_status, new_status), "status_updated_to_" + str(new_status))
 
     event_notes = " · ".join(
         part for part in [str(data.get("notes", "")).strip() or None, vehicle_selection_note] if part
@@ -3222,7 +3212,7 @@ def bulk_update_shipment_status_partner(
     if status not in allowed_statuses:
         raise HTTPException(
             status_code=422,
-            detail=f"Invalid status. Allowed for bulk update: {allowed_statuses}",
+            detail="Invalid status. Allowed for bulk update: " + str(allowed_statuses),
         )
 
     # partner-role transition map (same table as single update)
@@ -3237,7 +3227,7 @@ def bulk_update_shipment_status_partner(
     skipped: list[dict] = []
 
     for sid in shipment_ids:
-        shipment = db.query(Shipment).filter(Shipment.id == sid).first()
+        shipment = get_shipment_by_id(db, sid)
         if not shipment:
             skipped.append({"id": sid, "reason": "Not found"})
             continue
@@ -3287,7 +3277,7 @@ def bulk_update_shipment_status_partner(
             "in_transit": "distribution_checkpoint",
             "failed": "shipment_failed",
             "returned": "shipment_returned",
-        }.get(status, f"status_updated_to_{status}")
+        }.get(status, "status_updated_to_" + str(status))
 
         distribution_channel = cast(Optional[str], getattr(shipment, "distribution_channel", None))
         stage_shipment_event(
@@ -3304,9 +3294,9 @@ def bulk_update_shipment_status_partner(
         )
 
         # Reconcile parent order status
-        order = db.query(Order).filter(Order.id == shipment.order_id).first()
+        order = _db_order_first_58(db, id, order_id, shipment)
         if order is not None:
-            order_shipments = db.query(Shipment).filter(Shipment.order_id == order.id).all()
+            order_shipments = _db_shipment_all_59(db, id, order, order_id)
             setattr(order, "status", reconcile_order_status(order, order_shipments))
 
         updated.append({"id": sid, "new_status": status, "old_status": external_old_status})
@@ -3343,9 +3333,9 @@ def bulk_update_shipment_status_partner(
 
 def _get_partner_for_user(current_user: dict | int, db: Session) -> LogisticsPartner:
     user_id = int(current_user["id"]) if isinstance(current_user, dict) else int(current_user)
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+    partner = _db_logisticspartner_first_60(db, user_id)
     if partner is None:
-        user = db.query(User).filter(User.id == user_id).first()
+        user = get_user_by_id(db, user_id)
         if not user or cast(str, getattr(user, "role", "")) != "logistics_partner":
             raise HTTPException(status_code=403, detail="No logistics partner profile found")
 
@@ -3368,9 +3358,9 @@ def get_partner_bank_account(current_user: dict, db: Session) -> dict:
         raise HTTPException(status_code=403, detail="Logistics partner access required.")
     partner = _get_partner_for_user(current_user, db)
     partner_id = int(cast(int, partner.id))
-    record = db.query(LogisticsPartnerBankAccount).filter(
-        LogisticsPartnerBankAccount.partner_id == partner_id
-    ).first()
+    record = _db_logisticspartnerbankaccount_first_61(db, partner_id)
+
+
     if record is None:
         return {"configured": False}
     return {
@@ -3404,9 +3394,9 @@ def upsert_partner_bank_account(body: dict, current_user: dict, db: Session) -> 
     partner = _get_partner_for_user(current_user, db)
     partner_id = int(cast(int, partner.id))
 
-    record = db.query(LogisticsPartnerBankAccount).filter(
-        LogisticsPartnerBankAccount.partner_id == partner_id
-    ).first()
+    record = _db_logisticspartnerbankaccount_first_62(db, partner_id)
+
+
     is_new = record is None
     updates: dict[str, Any] = {}
     for field in ("beneficiary_name", "bank_name", "branch_name", "account_number",
@@ -3474,7 +3464,7 @@ def list_partner_documents(current_user: dict, db: Session) -> list:
         raise HTTPException(status_code=403, detail="Logistics partner access required")
     partner = _get_partner_for_user(current_user, db)
     docs = (
-        db.query(LogisticsPartnerDocument)
+        _db_logisticspartnerdocument_query_63(db)
         .filter(LogisticsPartnerDocument.partner_id == cast(int, partner.id))
         .order_by(LogisticsPartnerDocument.created_at.desc())
         .all()
@@ -3607,10 +3597,9 @@ def delete_partner_document(doc_id: int, current_user: dict, db: Session) -> dic
     if current_user.get("role") != "logistics_partner":
         raise HTTPException(status_code=403, detail="Logistics partner access required")
     partner = _get_partner_for_user(current_user, db)
-    doc = db.query(LogisticsPartnerDocument).filter(
-        LogisticsPartnerDocument.id == doc_id,
-        LogisticsPartnerDocument.partner_id == cast(int, partner.id),
-    ).first()
+    doc = _db_logisticspartnerdocument_first_64(db, cast, doc_id, id, int, partner, partner_id)
+
+
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     if doc.status in ("under_review", "approved"):
@@ -3625,7 +3614,7 @@ def admin_review_lp_document(doc_id: int, data: dict, current_user: dict, db: Se
     if role not in ("admin", "sub_admin", "moderator"):
         raise HTTPException(status_code=403, detail="Admin access required")
 
-    doc = db.query(LogisticsPartnerDocument).filter(LogisticsPartnerDocument.id == doc_id).first()
+    doc = _db_logisticspartnerdocument_first_65(db, doc_id, id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -3679,7 +3668,7 @@ def list_city_distances(
     page_size: int = 50,
 ) -> dict[str, Any]:
     _require_admin(current_user)
-    query = db.query(CityDistanceMatrix)
+    query = _db_citydistancematrix_query_66(db)
     if origin_country_code:
         query = query.filter(CityDistanceMatrix.origin_country_code == origin_country_code.upper())
     if destination_country_code:
@@ -3715,7 +3704,7 @@ def create_city_distance(data: dict[str, Any], current_user: dict, db: Session) 
     if distance_km <= 0:
         raise HTTPException(status_code=422, detail="distance_km must be greater than 0")
     existing = (
-        db.query(CityDistanceMatrix)
+        _db_citydistancematrix_query_67(db)
         .filter(
             CityDistanceMatrix.origin_country_code == origin_cc,
             CityDistanceMatrix.destination_country_code == dest_cc,
@@ -3746,7 +3735,7 @@ def create_city_distance(data: dict[str, Any], current_user: dict, db: Session) 
 
 def update_city_distance(matrix_id: int, data: dict[str, Any], current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
-    entry = db.query(CityDistanceMatrix).filter(CityDistanceMatrix.id == matrix_id).first()
+    entry = _db_citydistancematrix_first_68(db, id, matrix_id)
     if not entry:
         raise HTTPException(status_code=404, detail="City distance entry not found")
     try:
@@ -3766,11 +3755,10 @@ def update_city_distance(matrix_id: int, data: dict[str, Any], current_user: dic
 
 def delete_city_distance(matrix_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
-    entry = db.query(CityDistanceMatrix).filter(CityDistanceMatrix.id == matrix_id).first()
+    entry = _db_citydistancematrix_first_69(db, id, matrix_id)
     if not entry:
         raise HTTPException(status_code=404, detail="City distance entry not found")
     delete_city_distance_matrix(db, entry)
     return {"detail": "City distance entry deleted"}
-
 
 

@@ -4,7 +4,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from data.models_employee_models import Employee, EmployeeTraining, TrainingModule
+from models.hr.employee_models import Employee, EmployeeTraining, TrainingModule
 
 
 def create_training_module(
@@ -76,3 +76,10 @@ def update_training_completion(
 def delete_training_module(db: Session, module: TrainingModule) -> None:
     db.delete(module)
     db.commit()
+
+
+def get_training_by_employee_module(db: Session, employee_id: int, module_id: str) -> EmployeeTraining | None:
+    return db.query(EmployeeTraining).filter(
+        EmployeeTraining.employee_id == employee_id,
+        EmployeeTraining.module_id == module_id
+    ).first()

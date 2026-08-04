@@ -15,19 +15,19 @@ from sqlalchemy.orm import Session
 from data.models_employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
 from data.models import User
 from utils.datetime_utils import utcnow as _utcnow
-from services.write_helpers import (
+from data.services_write_helpers import (
+from services.security.permissions_read_service import get_employee_by_id
     add_and_flush,
     commit_and_refresh,
     commit_only,
 )
 
 
-
 _QR_SECRET_KEY = os.getenv("EMPLOYEE_QR_SECRET_KEY", "")
 
 
 def generate_physical_card(employee_id: int, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     card_number = f"ZOZI-{secrets.token_hex(8).upper()}"
@@ -38,10 +38,10 @@ def generate_physical_card(employee_id: int, db: Session) -> dict:
 
 
 def enroll_biometric(employee_id: int, biometric_type: str, data: str, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
-    existing = db.query(EmployeeBiometric).filter(EmployeeBiometric.employee_id == employee_id).first()
+    existing = _db_employeebiometric_first_0(db, employee_id)
     if existing:
         existing.fingerprint_hash = data if biometric_type == "fingerprint" else existing.fingerprint_hash
         existing.face_encoding = data if biometric_type == "face" else existing.face_encoding
@@ -61,7 +61,7 @@ def enroll_biometric(employee_id: int, biometric_type: str, data: str, db: Sessi
 
 
 def validate_geo_fence(latitude: float, longitude: float, office_id: int, db: Session) -> dict:
-    office = db.query(Office).filter(Office.id == office_id).first()
+    office = _db_office_first_1(db, id, office_id)
     if not office:
         raise HTTPException(status_code=404, detail="Office not found")
     if not office.latitude or not office.longitude:
@@ -84,7 +84,7 @@ def log_geo_fence_event(employee_id: int, latitude: float, longitude: float, is_
 
 
 def generate_qr_token(employee_id: int, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
     if emp.employment_status != "active":
@@ -116,12 +116,12 @@ def validate_qr_token(qr_token: str, db: Session) -> dict:
         exp = token_data.get("exp", 0)
         if datetime.now(timezone.utc).timestamp() > exp:
             raise HTTPException(status_code=400, detail="Token expired")
-        emp = db.query(Employee).filter(Employee.id == token_data["employee_id"]).first()
+        emp = _db_employee_first_2(db, employee_id, id, token_data)
         if not emp:
             raise HTTPException(status_code=404, detail="Employee not found")
         if emp.employment_status != "active":
             raise HTTPException(status_code=403, detail="Employee is not active")
-        user = db.query(User).filter(User.id == emp.user_id).first() if emp.user_id else None
+        user = _db_user_first_3(db, emp, id, user_id)
         return {
             "valid": True,
             "employee": {"id": emp.id, "employee_code": emp.employee_code, "department": emp.department, "position": emp.position, "country_code": emp.country_code},
@@ -132,10 +132,10 @@ def validate_qr_token(qr_token: str, db: Session) -> dict:
 
 
 def revoke_physical_card(employee_id: int, reason: str, db: Session) -> dict:
-    emp = db.query(Employee).filter(Employee.id == employee_id).first()
+    emp = get_employee_by_id(db, employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
-    card = db.query(PhysicalIDCard).filter(PhysicalIDCard.employee_id == employee_id).first()
+    card = _db_physicalidcard_first_4(db, employee_id)
     if card:
         card.is_revoked = True
         card.revoked_at = _utcnow()

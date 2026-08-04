@@ -296,6 +296,7 @@ class PromotionEngineConfig(Base, TenantMixin):
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
 
+    engine_enabled = Column(Boolean, default=False)
     allow_product_coupons = Column(Boolean, default=True)
     allow_category_coupons = Column(Boolean, default=True)
     allow_order_tier_discounts = Column(Boolean, default=True)
@@ -344,6 +345,8 @@ class PromotionOrderTier(Base, TenantMixin):
     discount_amount = Column(Numeric(10, 2), nullable=True)
     discount_value = Column(Numeric(10, 2), nullable=True)
     stacking_allowed = Column(Boolean, default=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    is_active = Column(Boolean, default=True, index=True)
     country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True)
 
     updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)

@@ -802,27 +802,3 @@ This feature list represents the **complete, unbroken chain** from database sche
 4.  **Wiring Fourth:** Connect the downstream systems (Payments, Logistics, Treasury) to read from the new `country_configs` source of truth.
 
 *Would you like to generate the exact **Alembic Migration Scripts** for the new normalized tables, or the **FastAPI Unified Router** skeleton to begin implementation?*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

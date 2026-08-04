@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from data.dependencies_auth import get_current_user
+from services.country.cross_border_service import get_customer_cross_border_stats
 
 
 router = APIRouter()
@@ -81,22 +82,14 @@ def get_cross_border_session(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
 ):
-    from data.models import Order, User
     from data.db import get_db_context
 
     with get_db_context() as db:
-        user = db.query(User).filter(User.id == customer_id).first()
-        if not user:
+        stats = get_customer_cross_border_stats(db, customer_id, skip=skip, limit=limit)
+        if stats["user"] is None:
             raise HTTPException(status_code=404, detail="Customer not found")
-        current_country = user.country_code or "AE"
-        orders = (
-            db.query(Order.currency, Order.shipping_country)
-            .filter(Order.customer_id == customer_id)
-            .filter(Order.shipping_country != None)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        current_country = stats["current_country"]
+        orders = stats["orders"]
         buckets: dict[tuple[str, str], dict] = {}
         for currency, country in orders:
             key = (currency or "USD", country or "US")

@@ -9,8 +9,11 @@ from sqlalchemy.orm import Session
 from data.db import get_db
 from routers.auth import get_current_user
 import controllers.logistics.logistics_controller as ctrl
-
-from services.write_helpers import add_and_flush, commit_and_refresh
+from services.logistics.logistics_router_service import (
+    get_shipment_by_scan_code,
+    serialize_shipment_for_scan,
+    update_shipment_status_direct,
+)
 router = APIRouter()
 
 
@@ -123,24 +126,8 @@ async def scan_lookup_shipment(
     """Look up a shipment by tracking number or scan code. Admin only."""
     if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
-    from data.models import Shipment
-    shipment = db.query(Shipment).filter(
-        (Shipment.tracking_number == code) | (Shipment.id == (int(code) if code.isdigit() else -1))
-    ).first()
-    if not shipment:
-        raise HTTPException(status_code=404, detail="Shipment not found")
-    return {
-        "id": shipment.id,
-        "order_id": shipment.order_id,
-        "status": shipment.status,
-        "carrier_name": shipment.carrier_name,
-        "tracking_number": shipment.tracking_number,
-        "distribution_channel": shipment.distribution_channel,
-        "current_hub": shipment.current_hub,
-        "shipping_address": (shipment.order.shipping_address if shipment.order else None),
-        "created_at": shipment.created_at.isoformat() if shipment.created_at else None,
-        "updated_at": shipment.updated_at.isoformat() if shipment.updated_at else None,
-    }
+    shipment = get_shipment_by_scan_code(db, code)
+    return serialize_shipment_for_scan(shipment)
 
 
 @router.put("/shipments/{shipment_id}/status")
@@ -153,38 +140,10 @@ async def admin_update_shipment_status(
     """Admin endpoint to update a shipment status directly (bypasses supplier check)."""
     if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
-    from data.models import Shipment, ShipmentEvent
-    from datetime import datetime, timezone
-    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
-    if not shipment:
-        raise HTTPException(status_code=404, detail="Shipment not found")
     new_status = data.get("status")
-    if new_status:
-        shipment.status = new_status
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        if new_status == "delivered" and not shipment.actual_delivery:
-            shipment.actual_delivery = now
-        elif new_status == "shipped" and not shipment.shipped_at:
-            shipment.shipped_at = now
-        event = ShipmentEvent(
-            shipment_id=shipment_id,
-            event_type="status_change",
-            status_after=new_status,
-            location=shipment.current_hub,
-            notes=data.get("note", "Admin status update"),
-            created_at=now,
-        )
-        add_and_flush(db, event)
-    commit_and_refresh(db, shipment)
-    return {
-        "id": shipment.id,
-        "order_id": shipment.order_id,
-        "status": shipment.status,
-        "carrier_name": shipment.carrier_name,
-        "tracking_number": shipment.tracking_number,
-        "distribution_channel": shipment.distribution_channel,
-        "current_hub": shipment.current_hub,
-    }
+    if not new_status:
+        raise HTTPException(status_code=422, detail="status is required")
+    return update_shipment_status_direct(db, shipment_id, new_status, note=data.get("note"))
 
 
 @router.get("/shipments/active")

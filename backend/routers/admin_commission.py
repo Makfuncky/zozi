@@ -14,6 +14,10 @@ from services.commission_write_service import (
     create_commission_badge_tier as create_badge_tier_db,
     update_commission_category_rate as update_category_rate_db,
     update_commission_badge_tier as update_badge_tier_db,
+    list_commission_rates as list_rates_db,
+    get_commission_rate_by_id as get_rate_db,
+    list_commission_tiers as list_tiers_db,
+    get_commission_tier_by_id as get_tier_db,
 )
 
 router = APIRouter()
@@ -24,7 +28,7 @@ def list_rates(country_code: str = Path(..., description="ISO country code"), _:
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(CommissionCategoryRate).filter(CommissionCategoryRate.country_code == country_code.upper())
+        q = list_rates_db(db, country_code)
         return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
     finally:
         clear_rls_context()
@@ -52,7 +56,7 @@ def create_rate(country_code: str = Path(..., description="ISO country code"), p
 @router.put("/{country_code}/rates/{rate_id}", response_model=CommissionCategoryRateOut)
 def update_rate(country_code: str = Path(..., description="ISO country code"), rate_id: int = Path(..., description="Rate id"), payload: CommissionCategoryRateCreate = None, _: User = Depends(require_admin), db: Session = Depends(get_db)):
     get_country_or_404(country_code.upper(), db)
-    r = db.query(CommissionCategoryRate).filter(CommissionCategoryRate.id == rate_id, CommissionCategoryRate.country_code == country_code.upper()).first()
+    r = get_rate_db(db, rate_id, country_code)
     if not r:
         raise HTTPException(status_code=404, detail="Category rate not found")
     data = payload.model_dump() if payload else {}
@@ -71,7 +75,7 @@ def list_badge_tiers(country_code: str = Path(..., description="ISO country code
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        q = db.query(CommissionBadgeTier).filter(CommissionBadgeTier.country_code == country_code.upper())
+        q = list_tiers_db(db, country_code)
         return cursor_paginate_desc(q, cursor=cursor, page_size=limit)
     finally:
         clear_rls_context()
@@ -98,7 +102,7 @@ def create_badge_tier(country_code: str = Path(..., description="ISO country cod
 @router.put("/{country_code}/badge-tiers/{tier_id}", response_model=CommissionBadgeTierOut)
 def update_badge_tier(country_code: str = Path(..., description="ISO country code"), tier_id: int = Path(..., description="Badge tier id"), payload: CommissionBadgeTierCreate = None, _: User = Depends(require_admin), db: Session = Depends(get_db)):
     get_country_or_404(country_code.upper(), db)
-    t = db.query(CommissionBadgeTier).filter(CommissionBadgeTier.id == tier_id, CommissionBadgeTier.country_code == country_code.upper()).first()
+    t = get_tier_db(db, tier_id, country_code)
     if not t:
         raise HTTPException(status_code=404, detail="Badge tier not found")
     data = payload.model_dump() if payload else {}

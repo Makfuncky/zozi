@@ -430,3 +430,10 @@ class VideoConferenceRoom:
 
 def get_video_conference(db: Session) -> VideoConferenceRoom:
     return VideoConferenceRoom(db)
+
+
+def list_all_video_rooms(db: Session, limit: int = 200) -> list:
+    from data.models_core import VideoRoom
+    from sqlalchemy import desc
+    q = db.query(VideoRoom).order_by(desc(VideoRoom.created_at))
+    return q.limit(limit).all()

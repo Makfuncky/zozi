@@ -430,3 +430,141 @@ def smart_search_from_parsed(
         "products": normalized_products,
         "results": normalized_products,
     }
+
+def fetch_brands_for_search(db: Session) -> list[str]:
+    """Fetch distinct product brands for search autocomplete — delegated from controller."""
+    brand_rows = (
+        db.query(Product.brand)
+        .filter(
+            Product.is_deleted == False,  # noqa: E712
+            Product.is_active == True,    # noqa: E712
+            Product.is_approved == True,  # noqa: E712
+            Product.stock > 0,
+            Product.brand.isnot(None),
+        )
+        .distinct()
+        .all()
+    )
+    return sorted(
+        [cast(str, row[0]).strip() for row in brand_rows if row and row[0]],
+        key=len,
+        reverse=True,
+    )
+
+
+def compute_category_weights(db: Session, user_id: int, normalized_recent_categories: list[str]) -> tuple[dict, Optional[float], Optional[float], set]:
+    """Compute weighted categories from purchase history — delegated from controller."""
+    from sqlalchemy import func
+    from catalog.models import Order, OrderItem, Wishlist, Product as ProdModel
+    
+    category_rows = (
+        db.query(Product.category, func.sum(OrderItem.quantity).label("units"))
+        .join(OrderItem, OrderItem.product_id == ProdModel.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(
+            Order.user_id == user_id,
+            ProdModel.is_deleted == False,  # noqa: E712
+            ProdModel.is_active == True,    # noqa: E712
+            ProdModel.is_approved == True,  # noqa: E712
+        )
+        .group_by(Product.category)
+        .order_by(desc(func.sum(OrderItem.quantity)))
+        .all()
+    )
+    weighted_categories: dict[str, float] = {
+        (row.category or "Uncategorized"): float(row.units or 0)
+        for row in category_rows
+    }
+
+    wishlist_rows = (
+        db.query(Product.category)
+        .join(Wishlist, Wishlist.product_id == ProdModel.id)
+        .filter(
+            Wishlist.user_id == user_id,
+            ProdModel.is_deleted == False,  # noqa: E712
+            ProdModel.is_active == True,    # noqa: E712
+        )
+        .all()
+    )
+    for row in wishlist_rows:
+        cat = (row.category or "Uncategorized").strip()
+        if cat:
+            weighted_categories[cat] = weighted_categories.get(cat, 0) + 0.3
+
+    for category in normalized_recent_categories:
+        clean = (category or "").strip()
+        if clean:
+            weighted_categories[clean] = weighted_categories.get(clean, 0) + 0.5
+
+    user_product_ids_subq = (
+        db.query(OrderItem.product_id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.user_id == user_id)
+        .distinct()
+        .limit(20)
+        .scalar_subquery()
+    )
+    co_order_ids_subq = (
+        db.query(OrderItem.order_id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(
+            OrderItem.product_id.in_(user_product_ids_subq),
+            Order.user_id != user_id,
+        )
+        .distinct()
+        .limit(100)
+        .scalar_subquery()
+    )
+    also_bought_rows = (
+        db.query(Product.category, func.count(OrderItem.product_id).label("co_count"))
+        .join(OrderItem, OrderItem.product_id == ProdModel.id)
+        .filter(
+            OrderItem.order_id.in_(co_order_ids_subq),
+            ProdModel.id.notin_(user_product_ids_subq),
+            ProdModel.is_deleted == False,  # noqa: E712
+            ProdModel.is_active == True,    # noqa: E712
+            ProdModel.is_approved == True,  # noqa: E712
+        )
+        .group_by(Product.category)
+        .limit(50)
+        .all()
+    )
+    for row in also_bought_rows:
+        cat = (row.category or "Uncategorized").strip()
+        if cat:
+            boost = min(float(row.co_count) * 0.2, 3.0)
+            weighted_categories[cat] = weighted_categories.get(cat, 0) + boost
+
+    price_avg_row = (
+        db.query(func.avg(Product.price).label("avg_price"))
+        .join(OrderItem, OrderItem.product_id == ProdModel.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.user_id == user_id)
+        .first()
+    )
+    price_band_lo: Optional[float] = None
+    price_band_hi: Optional[float] = None
+    if price_avg_row and price_avg_row.avg_price:
+        avg = float(price_avg_row.avg_price)
+        price_band_lo = avg * 0.4
+        price_band_hi = avg * 2.5
+
+    purchased_product_ids = {
+        row.product_id
+        for row in db.query(OrderItem.product_id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.user_id == user_id)
+        .distinct()
+        .all()
+    }
+
+    top_categories = [
+        category
+        for category, _score in sorted(
+            weighted_categories.items(),
+            key=lambda kv: kv[1],
+            reverse=True,
+        )[:4]
+    ]
+
+    return weighted_categories, price_band_lo, price_band_hi, purchased_product_ids

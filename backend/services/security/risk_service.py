@@ -8,7 +8,7 @@ from sqlalchemy import text
 
 from data.models_employee_models import Employee, EmployeeAttendance, GeoFenceLog, EmployeeRelation, COIReport
 from utils.datetime_utils import utcnow as _utcnow
-from services.write_helpers import commit_only
+from data.services_write_helpers import commit_only
 
 
 def get_risk_score(employee_id: int | None, db: Session) -> list[dict]:

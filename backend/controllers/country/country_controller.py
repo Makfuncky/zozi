@@ -24,6 +24,7 @@ from data.services_logistics_partner_pricing import normalize_country_code
 from services.tax_service import calculate_tax
 from utils.datetime_utils import utcnow as _utcnow
 from services.country_write_service import (
+from services.country.country_read_service import get_user_by_id
     add_country_communication,
     add_country_city,
     add_feature_flag,
@@ -140,7 +141,7 @@ def _to_decimal(value: Any, *, field: str) -> Decimal:
 
 def _get_country_or_404(code: str, db: Session) -> CountryConfig:
     normalized = normalize_country_code(code)
-    country = db.query(CountryConfig).filter(CountryConfig.code == normalized).first()
+    country = _db_countryconfig_first_0(db, code, normalized)
     if not country:
         raise HTTPException(status_code=404, detail="Country config not found")
     return country
@@ -171,7 +172,7 @@ def _record_admin_change(
 
 def _next_version(db: Session, country_code: str, config_type: str) -> int:
     latest = (
-        db.query(CountryConfigVersion)
+        _db_countryconfigversion_query_1(db)
         .filter(
             CountryConfigVersion.country_code == country_code,
             CountryConfigVersion.config_type == config_type,
@@ -207,10 +208,9 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
     city_count = 0
     if db is not None:
         try:
-            city_count = db.query(CountryCity).filter(
-                CountryCity.country_code == country.code,
-                CountryCity.is_active == True,
-            ).count()
+            city_count = _db_countrycity_count_2(db, True, code, country, country_code, is_active)
+
+
         except Exception:
             city_count = 0
 
@@ -288,10 +288,9 @@ def _country_public_payload(country: CountryConfig, db: Session | None = None) -
     }
 
 
-
 def list_public_countries(db: Session) -> list[dict[str, Any]]:
     rows = (
-        db.query(CountryConfig)
+        _db_countryconfig_query_3(db)
         .filter(CountryConfig.is_active == True)  # noqa: E712
         .order_by(CountryConfig.code.asc())
         .all()
@@ -302,15 +301,14 @@ def list_public_countries(db: Session) -> list[dict[str, Any]]:
 def list_public_cities(code: str, db: Session) -> dict[str, Any]:
     """Public cities list â€” no auth, active cities only, for dropdowns."""
     cc = code.upper()
-    country = db.query(CountryConfig).filter(
-        CountryConfig.code == cc,
-        CountryConfig.is_active == True,  # noqa: E712
-    ).first()
+    country = _db_countryconfig_first_4(db, True, cc, code, is_active, noqa)
+
+
     if not country:
         raise HTTPException(status_code=404, detail="Country not found or inactive")
 
     cities = (
-        db.query(CountryCity)
+        _db_countrycity_query_5(db)
         .filter(CountryCity.country_code == cc, CountryCity.is_active == True)
         .order_by(CountryCity.population.desc().nullslast(), CountryCity.name.asc())
         .all()
@@ -340,7 +338,7 @@ def get_public_country_config(code: str, db: Session) -> dict[str, Any]:
 
 def list_admin_countries(current_user: dict, db: Session) -> list[dict[str, Any]]:
     _require_admin(current_user)
-    query = db.query(CountryConfig)
+    query = _db_countryconfig_query_6(db)
     role = str(current_user.get("role") or "").lower()
     if role in ("country_head", "country_manager"):
         assigned = [str(c).strip().upper() for c in (current_user.get("staff_country_codes") or [])]
@@ -362,7 +360,7 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
     if not normalized_code:
         raise HTTPException(status_code=422, detail="Invalid country code")
 
-    existing = db.query(CountryConfig).filter(CountryConfig.code == normalized_code).first()
+    existing = _db_countryconfig_first_7(db, code, normalized_code)
     if existing:
         raise HTTPException(status_code=409, detail="Country already exists")
 
@@ -533,7 +531,6 @@ def create_admin_country(payload: dict[str, Any], current_user: dict, db: Sessio
     return _country_public_payload(country, db)
 
 
-
 def create_tax_draft(code: str, payload: dict[str, Any], current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
     _require_country_access(code, current_user)
@@ -685,7 +682,7 @@ def list_country_versions(code: str, current_user: dict, db: Session, config_typ
     _require_admin(current_user)
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
-    query = db.query(CountryConfigVersion).filter(CountryConfigVersion.country_code == normalized_code)
+    query = _db_countryconfigversion_query_8(db, country_code, normalized_code)
     if config_type:
         query = query.filter(CountryConfigVersion.config_type == config_type)
     rows = query.order_by(CountryConfigVersion.created_at.desc(), CountryConfigVersion.version.desc()).all()
@@ -712,7 +709,7 @@ def approve_country_version(code: str, version_id: int, current_user: dict, db: 
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     row = (
-        db.query(CountryConfigVersion)
+        _db_countryconfigversion_query_9(db)
         .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == normalized_code)
         .first()
     )
@@ -764,7 +761,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if zones is None:
             zones = payload.get("oman_zones")
         if isinstance(zones, list) and country.logistics_model == "zone":
-            existing = {zone.zone_code: zone for zone in db.query(OmanDeliveryZone).all()}
+            existing = _db_omandeliveryzone_all_10(db)
             for zone_payload in zones:
                 if not isinstance(zone_payload, dict):
                     continue
@@ -789,7 +786,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if isinstance(rates, list):
             existing_rows = {
                 (entry.country_code, entry.category_slug): entry
-                for entry in db.query(SupplierCountryCommission)
+                _db_suppliercountrycommission_query_11(db)
                 .filter(SupplierCountryCommission.country_code == row.country_code)
                 .all()
             }
@@ -815,7 +812,7 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
         if isinstance(feature_flags, dict):
             existing_flags = {
                 flag.feature_key: flag
-                for flag in db.query(CountryFeatureFlag)
+                _db_countryfeatureflag_query_12(db)
                 .filter(CountryFeatureFlag.country_code == row.country_code)
                 .all()
             }
@@ -886,13 +883,12 @@ def _apply_version_payload(row: CountryConfigVersion, db: Session) -> None:
     country.updated_at = _utcnow()
 
 
-
 def publish_country_version(code: str, version_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     row = (
-        db.query(CountryConfigVersion)
+        _db_countryconfigversion_query_13(db)
         .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == normalized_code)
         .first()
     )
@@ -924,7 +920,7 @@ def rollback_country_to_version(code: str, version_id: int, current_user: dict, 
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     row = (
-        db.query(CountryConfigVersion)
+        _db_countryconfigversion_query_14(db)
         .filter(
             CountryConfigVersion.id == version_id,
             CountryConfigVersion.country_code == normalized_code,
@@ -971,7 +967,7 @@ def list_country_commissions(code: str, current_user: dict, db: Session) -> list
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     rows = (
-        db.query(SupplierCountryCommission)
+        _db_suppliercountrycommission_query_15(db)
         .filter(SupplierCountryCommission.country_code == normalized_code)
         .order_by(SupplierCountryCommission.category_slug.asc())
         .all()
@@ -1012,7 +1008,7 @@ def get_country_feature_flags(code: str, current_user: dict, db: Session) -> lis
     _require_country_access(code, current_user)
     normalized_code = normalize_country_code(code)
     rows = (
-        db.query(CountryFeatureFlag)
+        _db_countryfeatureflag_query_16(db)
         .filter(CountryFeatureFlag.country_code == normalized_code)
         .order_by(CountryFeatureFlag.feature_key.asc())
         .all()
@@ -1038,7 +1034,7 @@ def list_country_delivery_zones(code: str, current_user: dict, db: Session) -> l
     if str(country.logistics_model or "").lower() != "zone":
         return []
 
-    rows = db.query(OmanDeliveryZone).order_by(OmanDeliveryZone.sort_order.asc(), OmanDeliveryZone.zone_code.asc()).all()
+    rows = _db_omandeliveryzone_all_17(db)
     return [
         {
             "zone_code": row.zone_code,
@@ -1417,7 +1413,7 @@ def list_country_cities(
     cc = code.upper()
 
     # 1. Try the normalized CountryCity table first
-    q = db.query(CountryCity).filter(CountryCity.country_code == cc)
+    q = _db_countrycity_query_18(db, cc, country_code)
     if not include_inactive:
         q = q.filter(CountryCity.is_active == True)
     if query:
@@ -1471,7 +1467,7 @@ def list_country_cities(
                             "longitude": r.get("longitude"),
                             "population": r.get("population") or 0,
                         })
-                        seen.add(name)
+                        seen |= {name}
         except Exception:
             pass
 
@@ -1483,14 +1479,13 @@ def list_country_cities(
 def assign_staff_to_country(country_code: str, user_id: int, role_in_country: str, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
     from data.models import User
-    user = db.query(User).filter(User.id == user_id).first()
+    user = get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     _get_country_or_404(country_code, db)
-    existing = db.query(CountryStaffAssignment).filter(
-        CountryStaffAssignment.user_id == user_id,
-        CountryStaffAssignment.country_code == country_code.upper(),
-    ).first()
+    existing = _db_countrystaffassignment_first_19(db, country_code, upper, user_id)
+
+
     if existing:
         raise HTTPException(status_code=409, detail="Staff already assigned to this country")
     assignment = CountryStaffAssignment(
@@ -1508,13 +1503,12 @@ def assign_staff_to_country(country_code: str, user_id: int, role_in_country: st
 def list_country_staff(country_code: str, current_user: dict, db: Session) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
-    rows = db.query(CountryStaffAssignment).filter(
-        CountryStaffAssignment.country_code == country_code.upper(),
-        CountryStaffAssignment.is_active == True,
-    ).order_by(CountryStaffAssignment.created_at.desc()).all()
+    rows = _db_countrystaffassignment_all_20(db, True, country_code, upper)
+
+
     from data.models import User
     user_ids = [r.user_id for r in rows]
-    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
+    users = _db_user_all_21(db, id, in_, user_ids)
     return [
         {
             "id": r.id,
@@ -1534,10 +1528,9 @@ def list_country_staff(country_code: str, current_user: dict, db: Session) -> li
 
 def unassign_staff_from_country(country_code: str, user_id: int, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    a = db.query(CountryStaffAssignment).filter(
-        CountryStaffAssignment.user_id == user_id,
-        CountryStaffAssignment.country_code == country_code.upper(),
-    ).first()
+    a = _db_countrystaffassignment_first_22(db, country_code, upper, user_id)
+
+
     if not a:
         raise HTTPException(status_code=404, detail="Assignment not found")
     a.is_active = False
@@ -1570,7 +1563,7 @@ def send_country_communication(country_code: str, payload: dict, current_user: d
 def list_country_communications(country_code: str, current_user: dict, db: Session, category: str | None = None) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
-    q = db.query(CountryCommunication).filter(CountryCommunication.country_code == country_code.upper())
+    q = _db_countrycommunication_query_23(db, country_code, upper)
     if category:
         q = q.filter(CountryCommunication.category == category)
     rows = q.order_by(CountryCommunication.created_at.desc()).limit(100).all()
@@ -1593,7 +1586,7 @@ def list_country_communications(country_code: str, current_user: dict, db: Sessi
 
 def mark_communication_read(comm_id: int, current_user: dict, db: Session) -> dict:
     _require_admin(current_user)
-    comm = db.query(CountryCommunication).filter(CountryCommunication.id == comm_id).first()
+    comm = _db_countrycommunication_first_24(db, comm_id, id)
     if not comm:
         raise HTTPException(status_code=404, detail="Communication not found")
     if comm.to_user_id and comm.to_user_id != current_user.get("id"):
@@ -1610,9 +1603,9 @@ def mark_communication_read(comm_id: int, current_user: dict, db: Session) -> di
 def list_cross_country_sessions(country_code: str, current_user: dict, db: Session) -> list[dict]:
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
-    q = db.query(CrossCountryCustomerSession).filter(
-        CrossCountryCustomerSession.target_country_code == country_code.upper(),
-    ).order_by(CrossCountryCustomerSession.created_at.desc()).limit(50).all()
+    q = _db_crosscountrycustomersession_all_25(db, country_code, target_country_code, upper)
+
+
     return [
         {
             "id": r.id,
@@ -1645,10 +1638,9 @@ def is_product_restricted_for_country(
     code = normalize_country_code(country_code)
     if not code:
         return False
-    country = db.query(CountryConfig).filter(
-        CountryConfig.code == code,
-        CountryConfig.is_active == True,
-    ).first()
+    country = _db_countryconfig_first_26(db, True, code, is_active)
+
+
     if not country:
         return False
     raw = country.product_restrictions_json
@@ -1670,7 +1662,7 @@ def list_payout_rules_categories(country_code: str, current_user: dict, db: Sess
     _require_admin(current_user)
     _require_country_access(country_code, current_user)
     normalized_code = normalize_country_code(country_code)
-    country = db.query(CountryConfig).filter(CountryConfig.code == normalized_code).first()
+    country = _db_countryconfig_first_27(db, code, normalized_code)
     if not country:
         return []
     payout_rules_raw = _from_json(country.payout_settings_json, default=[])
@@ -1754,7 +1746,7 @@ def update_country_cities_bulk(code: str, payload: dict, current_user: dict, db)
             source=str(city_data.get('source', 'bulk_update')),
         ))
     bulk_replace_country_cities(db, cc, cities_to_save)
-    all_cities = db.query(CountryCity).filter(CountryCity.country_code == cc).order_by(CountryCity.sort_order.asc(), CountryCity.name.asc()).all()
+    all_cities = _db_countrycity_all_28(db, cc, country_code)
     return {
         'code': cc,
         'updated_count': len(all_cities),

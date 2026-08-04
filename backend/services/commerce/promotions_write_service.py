@@ -1,4 +1,4 @@
-"""Promotions write service — DB write operations for promotions and discounts."""
+"""Promotions write service — DB write operations for promotions and discounts.""" 
 
 from decimal import Decimal
 
@@ -6,67 +6,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from data.models import (
-    Promotion,
+    Banner,
+    Coupon,
+    FlashSale,
     PromotionEngineConfig,
     PromotionLedgerEntry,
     PromotionOrderTier,
-    PromotionRedemption,
-    PromotionRule,
 )
 
 
-def create_promotion(db: Session, **promotion_data) -> Promotion:
-    promotion = Promotion(**promotion_data)
-    db.add(promotion)
+def create_promotion_engine_config(db: Session, **config_data) -> PromotionEngineConfig:
+    config = PromotionEngineConfig(**config_data)
+    db.add(config)
     db.commit()
-    db.refresh(promotion)
-    return promotion
-
-
-def update_promotion(db: Session, promotion: Promotion, updates: dict) -> Promotion:
-    for key, value in updates.items():
-        setattr(promotion, key, value)
-    db.commit()
-    db.refresh(promotion)
-    return promotion
-
-
-def delete_promotion(db: Session, promotion: Promotion) -> None:
-    db.delete(promotion)
-    db.commit()
-
-
-def create_promotion_rule(db: Session, promotion_id: int, **rule_data) -> PromotionRule:
-    rule = PromotionRule(promotion_id=promotion_id, **rule_data)
-    db.add(rule)
-    db.commit()
-    db.refresh(rule)
-    return rule
-
-
-def update_promotion_rule(db: Session, rule: PromotionRule, updates: dict) -> PromotionRule:
-    for key, value in updates.items():
-        setattr(rule, key, value)
-    db.commit()
-    db.refresh(rule)
-    return rule
-
-
-def delete_promotion_rule(db: Session, rule: PromotionRule) -> None:
-    db.delete(rule)
-    db.commit()
-
-
-def create_promotion_redemption(
-    db: Session, promotion_id: int, user_id: int, **redemption_data
-) -> PromotionRedemption:
-    redemption = PromotionRedemption(
-        promotion_id=promotion_id, user_id=user_id, **redemption_data
-    )
-    db.add(redemption)
-    db.commit()
-    db.refresh(redemption)
-    return redemption
+    db.refresh(config)
+    return config
 
 
 def update_promotion_engine_config(
@@ -79,50 +33,116 @@ def update_promotion_engine_config(
     return config
 
 
-def create_promotion_order_tier(db: Session, **tier_data) -> PromotionOrderTier:
-    tier = PromotionOrderTier(**tier_data)
-    db.add(tier)
+def create_flash_sale(db: Session, **sale_data) -> FlashSale:
+    sale = FlashSale(**sale_data)
+    db.add(sale)
     db.commit()
-    db.refresh(tier)
-    return tier
+    db.refresh(sale)
+    return sale
 
 
-def update_promotion_order_tier(
-    db: Session, tier: PromotionOrderTier, updates: dict
-) -> PromotionOrderTier:
+def update_flash_sale(db: Session, sale: FlashSale, updates: dict) -> FlashSale:
     for key, value in updates.items():
-        setattr(tier, key, value)
+        setattr(sale, key, value)
     db.commit()
-    db.refresh(tier)
-    return tier
+    db.refresh(sale)
+    return sale
 
 
-def delete_promotion_order_tier(db: Session, tier: PromotionOrderTier) -> None:
-    db.delete(tier)
+def save_flash_sale(db: Session, sale: FlashSale) -> FlashSale:
+    db.commit()
+    db.refresh(sale)
+    return sale
+
+
+def delete_flash_sale(db: Session, sale: FlashSale) -> None:
+    db.delete(sale)
     db.commit()
 
 
-def create_promotion_ledger_entry(
-    db: Session,
-    order_id: int,
-    user_id: int | None,
-    tier: PromotionOrderTier,
-    discount_amount: Decimal,
-) -> PromotionLedgerEntry:
-    entry = PromotionLedgerEntry(
-        order_id=order_id,
-        user_id=user_id,
-        promotion_type="order_tier",
-        promotion_code=getattr(tier, "tier_name", None),
-        tier_id=getattr(tier, "id", None),
-        discount_amount=discount_amount,
-        points_awarded=0,
-        points_redeemed=0,
-        stacking_flag=bool(getattr(tier, "stacking_allowed", False)),
-        source="checkout",
-        metadata_json=None,
-    )
-    db.add(entry)
+def create_banner(db: Session, **banner_data) -> Banner:
+    banner = Banner(**banner_data)
+    db.add(banner)
     db.commit()
-    db.refresh(entry)
-    return entry
+    db.refresh(banner)
+    return banner
+
+
+def update_banner(db: Session, banner: Banner, updates: dict) -> Banner:
+    for key, value in updates.items():
+        setattr(banner, key, value)
+    db.commit()
+    db.refresh(banner)
+    return banner
+
+
+def save_banner(db: Session, banner: Banner) -> Banner:
+    db.commit()
+    db.refresh(banner)
+    return banner
+
+
+def delete_banner(db: Session, banner: Banner) -> None:
+    db.delete(banner)
+    db.commit()
+
+
+def create_coupon(db: Session, **coupon_data) -> Coupon:
+    coupon = Coupon(**coupon_data)
+    db.add(coupon)
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
+def update_coupon(db: Session, coupon: Coupon, updates: dict) -> Coupon:
+    for key, value in updates.items():
+        setattr(coupon, key, value)
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
+def save_coupon(db: Session, coupon: Coupon) -> Coupon:
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+
+def delete_coupon(db: Session, coupon: Coupon) -> None:
+    db.delete(coupon)
+    db.commit()
+
+
+def persist_flash_sale(db: Session, sale: FlashSale) -> FlashSale:
+    db.add(sale)
+    db.commit()
+    db.refresh(sale)
+    return sale
+
+
+def persist_banner(db: Session, banner: Banner) -> Banner:
+    db.add(banner)
+    db.commit()
+    db.refresh(banner)
+    return banner
+
+
+def persist_coupon(db: Session, coupon: Coupon) -> Coupon:
+    db.add(coupon)
+    db.commit()
+    db.refresh(coupon)
+    return coupon
+
+def soft_delete_banner(
+    db: Session, banner: Banner, admin_id: int | None = None
+) -> Banner:
+    banner.is_deleted = True
+    banner.is_active = False
+    if hasattr(banner, 'deleted_by_id'):
+        banner.deleted_by_id = admin_id
+    if hasattr(banner, 'deleted_at'):
+        from utils.datetime_utils import utcnow
+        banner.deleted_at = utcnow()
+    db.commit()
+    return banner
