@@ -1,4 +1,0 @@
-﻿MODELS_IMPORT: ok
-PROVIDER_INSTANTIATE: FAIL ImportError("cannot import name 'embed_text' from partially initialized module 'providers.ai.text' (most likely due to a circular import) (D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\.\\providers\\ai\\text.py)")
-MAPPER: FAIL AttributeError("'_GuardedMetaData' object has no attribute 'compile'")
-RESULT: HAS_FAILURES

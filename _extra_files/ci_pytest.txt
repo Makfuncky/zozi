@@ -1,9 +1,0 @@
-﻿21:         working-directory: backend
-30:           cache-dependency-path: backend/requirements.txt
-108:   # ── 2. Backend tests ──────────────────────────────────────────────
-109:   backend-tests:
-110:     name: Backend tests
-115:         working-directory: backend
-129:           cache-dependency-path: backend/requirements.txt
-136:       - name: Run pytest
-141:           python -m pytest tests/ -x --timeout=30 -q 2>&1 | tail -30

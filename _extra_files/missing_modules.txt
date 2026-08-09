@@ -1,3 +1,0 @@
-﻿services.admin_analytics_service
-services.country_write_service
-services.logistics_partner_write_service

@@ -1,5 +1,0 @@
-﻿225:     import importlib
-376:             module = importlib.import_module(f"routers.{name}")
-379:                 module = importlib.import_module(f"controllers.{name}")
-409:         lp_module = importlib.import_module("routers.logistics_partner")
-419:         countries_module = importlib.import_module("routers.api_geography_registry")

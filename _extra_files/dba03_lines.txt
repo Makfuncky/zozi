@@ -1,5 +1,0 @@
-﻿497:     "DBA03": "mandatory column set / mixin missing",
-1328:         "DBA01": "P2", "DBA03": "P2", "DBA07": "P2", "DBA08": "P2",
-6253:     score += by.get("DBA03", 0) * 8
-10168:             rep.add(RED, "DBA03", "models", m.rel_path,
-10179:             rep.add(YEL, "DBA03", "models", m.rel_path,

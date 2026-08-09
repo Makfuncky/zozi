@@ -1,7 +1,0 @@
-A2 flagged: 0
-false positives (referenced): 0
-real orphans: 0
-
-REAL ORPHANS:
-
-FALSE POSITIVES (referenced by):
