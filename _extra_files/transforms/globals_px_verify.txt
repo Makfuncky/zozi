@@ -1,5 +1,0 @@
-﻿braces orig {: 1905 }: 1905 | cand {: 1905 }: 1905
-tinycss2 parse errors: 0
-px literals orig: 554 | cand: 411
-non-px changed lines: 0
-OK

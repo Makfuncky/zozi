@@ -1,5 +1,0 @@
-﻿braces orig {: 1905 }: 1905 | cand {: 1905 }: 1905
-tinycss2 parse errors in candidate: 0
-changed line slots: 436 | non-color changed lines: 0
-CANDIDATE off-palette literals remaining: 0 distinct: 0
-OK
