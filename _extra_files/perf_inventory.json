@@ -1,0 +1,1682 @@
+{
+  "perf2": [
+    {
+      "file": "backend/utils/key_rotation.py",
+      "line": 98,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['Model', 'columns'] referenced in query -> per-item lookup",
+      "snippet": "    total_errors = 0\n\n    for Model, columns in _ENCRYPTED_COLUMNS:\n        table_name = Model.__tablename__\n        rows_processed = 0\n        rows_updated = 0\n        errors = 0\n\n        try:\n            offset = 0\n            while True:\n                batch = db.query(Model).offset(offset).limit(BATCH_SIZE).all()\n                if not batch:\n                    break\n                for row in batch:\n                    rows_processed += 1\n                    changed = False\n                    for col in columns:\n                        raw = getattr(row, col, None)\n                        if raw is None:\n                            continue\n                        try:\n                            # Decrypt with old key; will return raw value if not encrypted\n                            plaintext = old_enc.decrypt(raw)"
+    },
+    {
+      "file": "backend/utils/schema_audit.py",
+      "line": 951,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['stmt'] referenced in query -> per-item lookup",
+      "snippet": "            for stmt in sql:\n                print(f\"  {stmt}\")\n            print()\n            if args.apply:\n                from sqlalchemy import text\n\n                from data.db import engine\n                print(\"  Applying fixes...\")\n                with engine.connect() as conn:\n                    for stmt in sql:\n                        try:\n                            conn.execute(text(stmt))\n                            print(f\"  \u2713 {stmt[:60]}...\")\n                        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:\n                            logger.exception(\"main_failed\", error=str(exc))\n                            print(f\"  \u2717 {stmt[:60]}...  {exc}\")\n                    conn.commit()\n                print(\"  Done.\")\n        else:\n            print(\"  No fix SQL generated \u2014 all schema issues require Alembic migrations.\")\n        print()\n\n    final = \"\u2705 SCHEMA IS HEALTHY\" if report.healthy else f\"\u274c {len(report.issues)} ISSUES FOUND\"\n    print(final)"
+    },
+    {
+      "file": "backend/services/advanced_filter_service.py",
+      "line": 154,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['attr_key', 'attr_values'] referenced in query -> per-item lookup",
+      "snippet": "            try:\n                query = query.filter(Product.rating <= float(filters[\"max_rating\"]))\n            except (TypeError, ValueError) as e:\n                logger.exception(\"apply_filters_failed\", error=str(e))\n\n        attributes = filters.get(\"attributes\")\n        if isinstance(attributes, dict):\n            for attr_key, attr_values in attributes.items():\n                if not attr_values:\n                    continue\n                if isinstance(attr_values, list) and attr_values:\n                    query = query.filter(\n                        and_(\n                            Product.filter_attributes.has_key(attr_key),\n                            cast(Product.filter_attributes[attr_key], String).in_([str(v) for v in attr_values]),\n                        )\n                    )\n\n        if filters.get(\"has_video\") is True:\n            query = query.filter(Product.video_count > 0)\n\n        if filters.get(\"has_discount\") is True:\n            query = query.filter(\n                Product.compare_price.isnot(None),"
+    },
+    {
+      "file": "backend/services/advanced_filter_service.py",
+      "line": 299,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['meta'] referenced in query -> per-item lookup",
+      "snippet": "        metadata_query = self.db.query(ProductFilterMetadata)\n        if category_id is not None:\n            metadata_query = metadata_query.filter(ProductFilterMetadata.category_id == category_id)\n        else:\n            metadata_query = metadata_query.filter(ProductFilterMetadata.category_id.is_(None))\n\n        metadata = metadata_query.filter(ProductFilterMetadata.is_active == True).all()\n\n        filters: List[Dict[str, Any]] = []\n        for meta in metadata:\n            options = (\n                self.db.query(ProductFilterOption)\n                .filter(ProductFilterOption.filter_metadata_id == meta.id)\n                .order_by(ProductFilterOption.sort_order)\n                .all()\n            )\n            filters.append(\n                {\n                    \"id\": meta.id,\n                    \"name\": meta.filter_name,\n                    \"type\": meta.filter_type,\n                    \"display_order\": meta.display_order,\n                    \"options\": [\n                        {"
+    },
+    {
+      "file": "backend/services/advanced_search_engine.py",
+      "line": 123,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['word'] referenced in query -> per-item lookup",
+      "snippet": "            \"camera\": [\"photography\", \"digital camera\"],\n            \"book\": [\"novel\", \"publication\", \"textbook\"],\n            \"toy\": [\"game\", \"plaything\", \"childhood\"],\n        }\n\n        expanded = [query]\n        words = query.lower().split()\n\n        for word in words:\n            if word in synonyms:\n                for syn in synonyms[word]:\n                    expanded.append(query.lower().replace(word, syn))\n\n        return list(set(expanded))\n\n    def _apply_text_search(self, db_query, search_term: str):\n        if not search_term:\n            return db_query\n\n        like_pattern = f\"%{search_term}%\"\n\n        if self._is_postgres:\n            tsquery = func.plainto_tsquery(\"english\", search_term)\n            tsvector = func.to_tsvector(\"english\", Product.name + \" \" + func.coalesce(Product.description, \"\"))"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 112,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['jel'] referenced in query -> per-item lookup",
+      "snippet": "    \"\"\"Build candidate ledger entries for matching.\"\"\"\n    candidates = []\n\n    # Exact amount match candidates\n    q = db.query(JournalEntryLine).filter(\n        JournalEntryLine.amount == line.amount,\n    )\n    if country_code:\n        q = q.filter(JournalEntryLine.country_code == country_code)\n\n    for jel in q.all():\n        je = db.query(JournalEntry).get(jel.entry_id)\n        if je:\n            candidates.append({\n                \"id\": je.id,\n                \"amount\": float(jel.amount or 0),\n                \"description\": je.description or \"\",\n                \"date\": je.entry_date.isoformat() if je.entry_date else \"\",\n                \"reference_type\": je.reference_type,\n                \"reference_id\": je.reference_id,\n            })\n\n    # Also get amount-proximate candidates (\u00b15%)\n    if line.amount:"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 135,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['jel'] referenced in query -> per-item lookup",
+      "snippet": "    if line.amount:\n        lo = float(line.amount) * 0.95\n        hi = float(line.amount) * 1.05\n        q2 = db.query(JournalEntryLine).filter(\n            JournalEntryLine.amount >= lo,\n            JournalEntryLine.amount <= hi,\n        )\n        if country_code:\n            q2 = q2.filter(JournalEntryLine.country_code == country_code)\n\n        for jel in q2.all():\n            je = db.query(JournalEntry).get(jel.entry_id)\n            if je and not any(c[\"id\"] == je.id for c in candidates):\n                candidates.append({\n                    \"id\": je.id,\n                    \"amount\": float(jel.amount or 0),\n                    \"description\": je.description or \"\",\n                    \"date\": je.entry_date.isoformat() if je.entry_date else \"\",\n                    \"reference_type\": je.reference_type,\n                    \"reference_id\": je.reference_id,\n                })\n\n    return candidates\n"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 204,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['customer'] referenced in query -> per-item lookup",
+      "snippet": "                                     country_code: str = None) -> list[dict]:\n    period_start = datetime(period_year, period_month, 1)\n    if period_month == 12:\n        period_end = datetime(period_year + 1, 1, 1)\n    else:\n        period_end = datetime(period_year, period_month + 1, 1)\n    customers = db.query(Customer).filter(Customer.is_active == True)\n    if country_code:\n        customers = customers.filter(Customer.country_code == country_code)\n    statements = []\n    for customer in customers.all():\n        invoices = db.query(ARInvoice).filter(\n            ARInvoice.customer_id == customer.id,\n            ARInvoice.invoice_date >= period_start,\n            ARInvoice.invoice_date < period_end,\n        ).all()\n        if not invoices:\n            continue\n        total_invoiced = sum(float(i.amount or 0) for i in invoices)\n        total_paid = sum(\n            float(i.amount or 0) for i in invoices if i.status == \"paid\"\n        )\n        total_outstanding = total_invoiced - total_paid\n        statement_data = {"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 269,
+      "classification": "REAL_N+1",
+      "reason": "4 query-like calls inside loop -> batch candidate",
+      "snippet": "                                  country_code: str = None) -> list[dict]:\n    period_start = datetime(period_year, period_month, 1)\n    if period_month == 12:\n        period_end = datetime(period_year + 1, 1, 1)\n    else:\n        period_end = datetime(period_year, period_month + 1, 1)\n    vendors = db.query(Vendor).filter(Vendor.is_active == True)\n    if country_code:\n        vendors = vendors.filter(Vendor.country_code == country_code)\n    statements = []\n    for vendor in vendors.all():\n        bills = db.query(JournalEntry).join(\n            JournalEntryLine, JournalEntry.id == JournalEntryLine.entry_id\n        ).filter(\n            JournalEntry.reference_type == \"grn\",\n            JournalEntry.entry_date >= period_start,\n            JournalEntry.entry_date < period_end,\n            JournalEntryLine.account_code == \"2010\",\n        ).all()\n        total_amount = sum(\n            float(abs(jl.amount or 0))\n            for je in bills\n            for jl in je.lines if jl.account_code == \"2010\"\n        ) if bills else 0"
+    },
+    {
+      "file": "backend/services/coi_engine.py",
+      "line": 42,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "    def get_related_employees(self, employee_id: int) -> Set[int]:\n        related_ids = set()\n        stack = [employee_id]\n        visited = set()\n        \n        while stack:\n            current_id = stack.pop()\n            if current_id in visited:\n                continue\n            visited.add(current_id)\n            \n            relations = self.db.query(EmployeeRelation).filter(\n                or_(\n                    EmployeeRelation.employee_id == current_id,\n                    EmployeeRelation.internal_employee_id == current_id\n                )\n            ).all()\n            \n            for rel in relations:\n                other_id = rel.internal_employee_id if rel.employee_id == current_id else rel.employee_id\n                if other_id and other_id not in visited:\n                    related_ids.add(other_id)\n                    stack.append(other_id)\n        "
+    },
+    {
+      "file": "backend/services/command_center_service.py",
+      "line": 112,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "            self._log_health_event(\"news_aggregator\", \"fetch_error\", 1, str(e))\n    \n    async def _fetch_rss(self, source: NewsSource):\n        \"\"\"Fetch RSS feed.\"\"\"\n        response = await self.http_client.get(source.url)\n        feed = feedparser.parse(response.text)\n        \n        for entry in feed.entries:\n            external_id = entry.get(\"id\", entry.get(\"link\", \"\"))\n            content_hash = hashlib.sha256(f\"{entry.title}{entry.link}\".encode()).hexdigest()\n            \n            existing = self.db.query(NewsArticle).filter(\n                (NewsArticle.external_id == external_id) | \n                (NewsArticle.content_hash == content_hash)\n            ).first()\n            if existing:\n                continue\n            \n            published_at = datetime.now(timezone.utc)\n            if \"published_parsed\" in entry:\n                published_at = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)\n            \n            article = NewsArticle(\n                source_id=source.id,"
+    },
+    {
+      "file": "backend/services/command_center_service.py",
+      "line": 160,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "        data = response.json()\n        await self._process_api_response(source, data)\n    \n    async def _process_api_response(self, source: NewsSource, data: dict):\n        \"\"\"Process API response and store articles.\"\"\"\n        articles = data.get(\"articles\", data.get(\"results\", []))\n        \n        for item in articles:\n            external_id = str(item.get(\"id\", item.get(\"url\", \"\")))\n            content_hash = hashlib.sha256(f\"{item.get('title', '')}{item.get('url', '')}\".encode()).hexdigest()\n            \n            existing = self.db.query(NewsArticle).filter(\n                (NewsArticle.external_id == external_id) | \n                (NewsArticle.content_hash == content_hash)\n            ).first()\n            if existing:\n                continue\n            \n            article = NewsArticle(\n                source_id=source.id,\n                external_id=external_id,\n                content_hash=content_hash,\n                title=item.get(\"title\", \"\"),\n                summary=item.get(\"description\", item.get(\"summary\", \"\")),"
+    },
+    {
+      "file": "backend/services/dei_auditor.py",
+      "line": 138,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['emp'] referenced in query -> per-item lookup",
+      "snippet": "        ).all()\n        \n        manager_ids = set(e.reporting_manager_id for e in managers)\n        \n        leadership_stats = {\n            \"total_managers\": len(manager_ids),\n            \"male_managers\": 0,\n            \"female_managers\": 0,\n            \"other_managers\": 0\n        }\n        \n        for emp in self.db.query(Employee).filter(Employee.id.in_(manager_ids)).all():\n            gender = emp.gender or \"other\"\n            if gender == \"male\":\n                leadership_stats[\"male_managers\"] += 1\n            elif gender == \"female\":\n                leadership_stats[\"female_managers\"] += 1\n            else:\n                leadership_stats[\"other_managers\"] += 1\n        \n        total = leadership_stats[\"total_managers\"] or 1\n        return {\n            \"analysis_date\": datetime.now(timezone.utc).isoformat(),\n            \"leadership_diversity\": leadership_stats,"
+    },
+    {
+      "file": "backend/services/ediscovery.py",
+      "line": 123,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['model_cls', 'name'] referenced in query -> per-item lookup",
+      "snippet": "        entity_id: Optional[int] = None,\n        date_from: Optional[str] = None,\n        date_to: Optional[str] = None,\n        keyword: Optional[str] = None,\n        limit: int = 100,\n    ) -> Dict[str, Any]:\n        \"\"\"Search across all communication channels for eDiscovery.\"\"\"\n        results = {\"chats\": [], \"emails\": [], \"meetings\": [], \"journal_entries\": []}\n\n        # Direct/Group chat messages\n        for model_cls, name in [(DirectChatMessage, \"direct_chat\"), (GroupChatMessage, \"group_chat\"), (EntityChatMessage, \"entity_chat\")]:\n            q = self.db.query(model_cls)\n            if user_id:\n                q = q.filter(model_cls.sender_id == user_id)\n            if keyword:\n                q = q.filter(model_cls.message.ilike(f\"%{keyword}%\"))\n            msgs = q.order_by(model_cls.created_at.desc()).limit(limit).all()\n            for m in msgs:\n                results[\"chats\"].append({\n                    \"source\": name,\n                    \"id\": m.id,\n                    \"sender_id\": m.sender_id,\n                    \"content\": getattr(m, \"message\", getattr(m, \"content\", \"\")),\n                    \"created_at\": m.created_at.isoformat() if m.created_at else None,"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 431,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "        created_at=now,\n        updated_at=now,\n    )\n    db.add(email)\n    db.flush()\n\n    if not email.thread_id:\n        email.thread_id = str(email.id)\n        db.flush()\n\n    all_uids = list(recipient_ids) + list(cc_ids or [])\n    users_by_id = {}\n    emps_by_user = {}\n    if all_uids:\n        user_rows = db.query(User).filter(User.id.in_(all_uids)).all()\n        for u in user_rows:\n            users_by_id[u.id] = u\n        emp_rows = db.query(Employee).filter(Employee.user_id.in_(all_uids)).all()\n        for e in emp_rows:\n            emps_by_user[e.user_id] = e\n\n    emp_ids = [e.id for e in emps_by_user.values() if e]\n    folders_by_emp = {}\n    if emp_ids:"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 438,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "        email.thread_id = str(email.id)\n        db.flush()\n\n    all_uids = list(recipient_ids) + list(cc_ids or [])\n    users_by_id = {}\n    emps_by_user = {}\n    if all_uids:\n        user_rows = db.query(User).filter(User.id.in_(all_uids)).all()\n        for u in user_rows:\n            users_by_id[u.id] = u\n        emp_rows = db.query(Employee).filter(Employee.user_id.in_(all_uids)).all()\n        for e in emp_rows:\n            emps_by_user[e.user_id] = e\n\n    emp_ids = [e.id for e in emps_by_user.values() if e]\n    folders_by_emp = {}\n    if emp_ids:\n        folder_rows = db.query(EmailFolder).filter(\n            EmailFolder.employee_id.in_(emp_ids),\n            EmailFolder.name == \"inbox\",\n        ).all()\n        for f in folder_rows:\n            folders_by_emp[f.employee_id] = f\n"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 442,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "    users_by_id = {}\n    emps_by_user = {}\n    if all_uids:\n        user_rows = db.query(User).filter(User.id.in_(all_uids)).all()\n        for u in user_rows:\n            users_by_id[u.id] = u\n        emp_rows = db.query(Employee).filter(Employee.user_id.in_(all_uids)).all()\n        for e in emp_rows:\n            emps_by_user[e.user_id] = e\n\n    emp_ids = [e.id for e in emps_by_user.values() if e]\n    folders_by_emp = {}\n    if emp_ids:\n        folder_rows = db.query(EmailFolder).filter(\n            EmailFolder.employee_id.in_(emp_ids),\n            EmailFolder.name == \"inbox\",\n        ).all()\n        for f in folder_rows:\n            folders_by_emp[f.employee_id] = f\n\n    for uid in all_uids:\n        user = users_by_id.get(uid)\n        if not user:\n            continue"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 488,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "        \"thread_id\": email.thread_id,\n        \"subject\": subject,\n        \"recipient_count\": len(recipient_ids),\n    }\n\n\ndef get_inbox(\n    db: Session,\n    employee_id: int,\n    folder: str = \"inbox\",\n    limit: int = 50,\n    offset: int = 0,\n) -> Dict[str, Any]:\n    \"\"\"Get emails in an employee's folder.\"\"\"\n    rows = db.execute(\n        text(\"\"\"\n            SELECT e.id, e.sender_id, e.subject, e.body_html, e.thread_id,\n                   e.recipients, e.created_at, ef.id as folder_id\n            FROM internal_emails e\n            JOIN email_folders ef ON e.folder_id = ef.id\n            WHERE ef.employee_id = :eid AND ef.name = :folder\n            ORDER BY e.created_at DESC\n            LIMIT :limit OFFSET :offset\n        \"\"\"),"
+    },
+    {
+      "file": "backend/services/employee_lifecycle_service.py",
+      "line": 119,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['order', 'step'] referenced in query -> per-item lookup",
+      "snippet": "                VALUES\n                    (:employee_id, :country_code, :current_step, :total_steps,\n                     :completed_steps, :status, :started_at, :due_date)\n                RETURNING id\n            \"\"\"),\n            pipeline_data,\n        )\n        pipeline_id = result.scalar()\n\n        # Insert each step\n        for order, step in enumerate(steps):\n            db.execute(\n                text(\"\"\"\n                    INSERT INTO onboarding_steps\n                        (pipeline_id, employee_id, step_name, label, description,\n                         sla_hours, step_order, status)\n                    VALUES\n                        (:pipeline_id, :employee_id, :step_name, :label, :description,\n                         :sla_hours, :step_order, 'pending')\n                \"\"\"),\n                {\n                    \"pipeline_id\": pipeline_id,\n                    \"employee_id\": employee_id,\n                    \"step_name\": step[\"step_name\"],"
+    },
+    {
+      "file": "backend/services/erp_finance_service.py",
+      "line": 328,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['b'] referenced in query -> per-item lookup",
+      "snippet": "\n\ndef budget_variance(db: Session, fiscal_period_id: int, country_code: Optional[str] = None) -> dict:\n    period = db.query(FiscalPeriod).filter(FiscalPeriod.id == fiscal_period_id).first()\n    budgets = db.query(Budget).filter(Budget.fiscal_period_id == fiscal_period_id)\n    if country_code:\n        budgets = budgets.filter((Budget.country_code == country_code) | (Budget.country_code.is_(None)))\n    rows = []\n    total_budget = Decimal(\"0\")\n    total_actual = Decimal(\"0\")\n    for b in budgets.all():\n        acct = db.query(Account).filter(Account.code == b.account_code).first()\n        actual = Decimal(\"0\")\n        if acct:\n            bal = db.query(AccountBalance).filter(\n                AccountBalance.account_id == acct.id, AccountBalance.currency == b.currency,\n            ).first()\n            if bal:\n                actual = bal.balance if acct.normal_side == \"debit\" else -bal.balance\n        total_budget += b.amount\n        total_actual += actual\n        rows.append({\n            \"account_code\": b.account_code, \"account_name\": acct.name if acct else None,\n            \"budget\": float(b.amount), \"actual\": float(actual),"
+    },
+    {
+      "file": "backend/services/erp_finance_service.py",
+      "line": 331,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['b'] referenced in query -> per-item lookup",
+      "snippet": "    period = db.query(FiscalPeriod).filter(FiscalPeriod.id == fiscal_period_id).first()\n    budgets = db.query(Budget).filter(Budget.fiscal_period_id == fiscal_period_id)\n    if country_code:\n        budgets = budgets.filter((Budget.country_code == country_code) | (Budget.country_code.is_(None)))\n    rows = []\n    total_budget = Decimal(\"0\")\n    total_actual = Decimal(\"0\")\n    for b in budgets.all():\n        acct = db.query(Account).filter(Account.code == b.account_code).first()\n        actual = Decimal(\"0\")\n        if acct:\n            bal = db.query(AccountBalance).filter(\n                AccountBalance.account_id == acct.id, AccountBalance.currency == b.currency,\n            ).first()\n            if bal:\n                actual = bal.balance if acct.normal_side == \"debit\" else -bal.balance\n        total_budget += b.amount\n        total_actual += actual\n        rows.append({\n            \"account_code\": b.account_code, \"account_name\": acct.name if acct else None,\n            \"budget\": float(b.amount), \"actual\": float(actual),\n            \"variance\": float(b.amount - actual),\n        })\n    return {"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 1029,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['payout'] referenced in query -> per-item lookup",
+      "snippet": "            \"provider_name\": self.name,\n            \"supports_direct_execution\": True,\n            \"configured\": _provider_is_configured(self.key, db),\n            \"dispatchable_count\": len(payouts),\n            \"batch_reference\": f\"STRIPE-CONNECT-{uuid4().hex[:10].upper()}\",\n        }\n\n        if dry_run:\n            preview = []\n            for payout in payouts[:10]:\n                bank = (\n                    db.query(SupplierBankAccount)\n                    .filter(\n                        SupplierBankAccount.supplier_id == payout.supplier_id,\n                        SupplierBankAccount.verification_status == \"verified\",\n                    )\n                    .first()\n                )\n                preview.append({\n                    \"reference\": payout.reference,\n                    \"supplier_id\": payout.supplier_id,\n                    \"amount\": float(payout.amount),\n                    \"has_bank_account\": bank is not None,\n                })"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 1057,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['payout'] referenced in query -> per-item lookup",
+      "snippet": "                \"preview\": preview,\n            }\n\n        submitted_count = 0\n        failed_count = 0\n        skipped_count = 0\n        failed_references: list[str] = []\n\n        for payout in payouts:\n            try:\n                bank = (\n                    db.query(SupplierBankAccount)\n                    .filter(\n                        SupplierBankAccount.supplier_id == payout.supplier_id,\n                        SupplierBankAccount.verification_status == \"verified\",\n                    )\n                    .first()\n                )\n                if bank is None:\n                    skipped_count += 1\n                    continue\n\n                # Resolve or create the Stripe Connect account\n                connect_account_id = self._ensure_stripe_connect_account(payout, bank, db)"
+    },
+    {
+      "file": "backend/services/financial_reports_service.py",
+      "line": 566,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['code', 'label', 'kind'] referenced in query -> per-item lookup",
+      "snippet": "        \"2060\": (\"Increase/(Decrease) in Deferred Revenue\", \"liability\"),\n        \"2070\": (\"Increase/(Decrease) in Gateway Payable\", \"liability\"),\n    }\n\n    operating_lines = [\n        CashFlowLine(label=\"Net Income\", amount=Decimal(str(net_income))),\n    ]\n\n    cc_where = \" AND je.country_code = :cc \" if country_code else \" \"\n    cc_p = {\"cc\": country_code} if country_code else {}\n    for code, (label, kind) in operating_codes.items():\n        acct = db.query(Account).filter(Account.code == code).first()\n        if not acct:\n            continue\n        change = Decimal(\n            str(\n                db.execute(text(\"\"\"\n                    SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)\n                    FROM journal_entry_lines jel\n                    JOIN journal_entries je ON jel.entry_id = je.id\n                    WHERE jel.account_id = :aid\n                      AND je.entry_date >= :ps\n                      AND je.entry_date <= :pe\n                \"\"\" + cc_where), {\"aid\": acct.id, \"ps\": period_start, \"pe\": period_end, **cc_p}).scalar() or 0"
+    },
+    {
+      "file": "backend/services/financial_reports_service.py",
+      "line": 571,
+      "classification": "REAL_N+1",
+      "reason": "5 query-like calls inside loop -> batch candidate",
+      "snippet": "        CashFlowLine(label=\"Net Income\", amount=Decimal(str(net_income))),\n    ]\n\n    cc_where = \" AND je.country_code = :cc \" if country_code else \" \"\n    cc_p = {\"cc\": country_code} if country_code else {}\n    for code, (label, kind) in operating_codes.items():\n        acct = db.query(Account).filter(Account.code == code).first()\n        if not acct:\n            continue\n        change = Decimal(\n            str(\n                db.execute(text(\"\"\"\n                    SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)\n                    FROM journal_entry_lines jel\n                    JOIN journal_entries je ON jel.entry_id = je.id\n                    WHERE jel.account_id = :aid\n                      AND je.entry_date >= :ps\n                      AND je.entry_date <= :pe\n                \"\"\" + cc_where), {\"aid\": acct.id, \"ps\": period_start, \"pe\": period_end, **cc_p}).scalar() or 0\n            )\n        )\n        if change != 0:\n            if kind == \"asset\":\n                adjusted = -change"
+    },
+    {
+      "file": "backend/services/fraud_detection.py",
+      "line": 87,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['emp'] referenced in query -> per-item lookup",
+      "snippet": "        return risk_score >= 15.0\n    \n    def detect_ghost_employees(self) -> List[int]:\n        \"\"\"Find employees with zero activity for 5+ working days.\"\"\"\n        five_days_ago = _utcnow() - timedelta(days=5)\n        \n        ghost_employees = []\n        \n        employees = self.db.query(Employee).all()\n        for emp in employees:\n            qr_scans = (\n                self.db.query(AuditLog)\n                .filter(\n                    AuditLog.resource_type == \"attendance\",\n                    AuditLog.resource_id == emp.id,\n                    AuditLog.occurred_at > five_days_ago,\n                )\n                .count()\n            )\n            \n            api_activity = (\n                self.db.query(AuditLog)\n                .filter(\n                    AuditLog.actor_id == emp.user_id,"
+    },
+    {
+      "file": "backend/services/fraud_detection.py",
+      "line": 97,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['emp'] referenced in query -> per-item lookup",
+      "snippet": "            qr_scans = (\n                self.db.query(AuditLog)\n                .filter(\n                    AuditLog.resource_type == \"attendance\",\n                    AuditLog.resource_id == emp.id,\n                    AuditLog.occurred_at > five_days_ago,\n                )\n                .count()\n            )\n            \n            api_activity = (\n                self.db.query(AuditLog)\n                .filter(\n                    AuditLog.actor_id == emp.user_id,\n                    AuditLog.occurred_at > five_days_ago,\n                )\n                .count()\n            )\n            \n            if qr_scans == 0 and api_activity == 0:\n                ghost_employees.append(emp.user_id)\n                self._flag_employee(emp.user_id, \"SUSPENDED_PENDING_REVIEW\")\n        \n        return ghost_employees"
+    },
+    {
+      "file": "backend/services/gateway_auto_enable.py",
+      "line": 112,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['gw'] referenced in query -> per-item lookup",
+      "snippet": "                })\n        return sorted(scores, key=lambda x: x[\"score\"], reverse=True)\n\n    def enable_gateways_for_country(\n        self, country_code: str, user_id: Optional[int] = None\n    ) -> List[Dict[str, Any]]:\n        \"\"\"Enable eligible gateways for a country.\"\"\"\n        gateways = self.get_eligible_gateways(country_code)\n\n        for gw in gateways:\n            existing = (\n                self.db.query(CountryGatewayCredentials)\n                .filter(\n                    CountryGatewayCredentials.country_code == country_code.upper(),\n                    CountryGatewayCredentials.gateway_name == gw[\"gateway_id\"],\n                )\n                .first()\n            )\n\n            if not existing:\n                cred = CountryGatewayCredentials(\n                    country_code=country_code.upper(),\n                    gateway_name=gw[\"gateway_id\"],\n                    environment=\"test\","
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 191,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "    \"\"\"\n    result = {\"groups_updated\": 0, \"accounts_added\": 0}\n\n    # 1. Update existing groups with account_type and normal_side\n    group_fixes = {\n        \"1.1\": (\"Asset\", \"debit\"),\n        \"2.1\": (\"Liability\", \"credit\"),\n        \"4.1\": (\"Revenue\", \"credit\"),\n        \"5.2\": (\"Expense\", \"debit\"),\n    }\n    group_codes = list(group_fixes.keys())\n    grp_by_code = {}\n    if group_codes:\n        grp_rows = db.query(AccountGroup).filter(AccountGroup.code.in_(group_codes)).all()\n        for g in grp_rows:\n            grp_by_code[g.code] = g\n    for code, (acct_type, normal_side) in group_fixes.items():\n        grp = grp_by_code.get(code)\n        if grp:\n            changed = False\n            if not grp.account_type or grp.account_type == \"\":\n                grp.account_type = acct_type\n                changed = True\n            if not grp.normal_side or grp.normal_side == \"\":"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 221,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "    equity_group = db.query(AccountGroup).filter(AccountGroup.code == \"3.1\").first()\n    if not equity_group:\n        equity_group = AccountGroup(\n            name=\"Equity (GCC)\", code=\"3.1\",\n            description=\"GCC retained earnings, owner equity\",\n            account_type=\"Equity\", normal_side=\"credit\",\n        )\n        db.add(equity_group)\n        db.flush()\n        result[\"groups_updated\"] += 1\n\n    # 3. Add equity accounts if missing\n    equity_accounts = [\n        (\"3010\", \"Retained Earnings (GCC)\", \"credit\"),\n        (\"3020\", \"Owner's Equity (GCC)\", \"credit\"),\n    ]\n    equity_codes = [c[0] for c in equity_accounts]\n    acct_by_code = {}\n    if equity_codes:\n        acct_rows = db.query(Account).filter(Account.code.in_(equity_codes)).all()\n        for a in acct_rows:\n            acct_by_code[a.code] = a\n    for code, name, normal_side in equity_accounts:\n        existing = acct_by_code.get(code)"
+    },
+    {
+      "file": "backend/services/ghost_watchdog.py",
+      "line": 45,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['emp'] referenced in query -> per-item lookup",
+      "snippet": "        \n        ghosts = self.db.query(Employee).filter(\n            Employee.employment_status == \"active\",\n            and_(\n                ~Employee.id.in_(recent_attendance),\n                ~Employee.id.in_(recent_work_logs)\n            )\n        ).all()\n        \n        results = []\n        for emp in ghosts:\n            treasury = self.db.query(TreasuryAccount).filter(\n                TreasuryAccount.employee_id == emp.id\n            ).first()\n            \n            results.append({\n                \"employee_id\": emp.id,\n                \"employee_code\": emp.employee_code,\n                \"name\": f\"{emp.first_name} {emp.last_name}\",\n                \"last_active\": self._get_last_activity(emp.id),\n                \"payroll_active\": treasury is not None,\n                \"risk_level\": \"high\" if treasury else \"medium\"\n            })\n        "
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 81,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "        chain.append({\n            \"id\": current.id,\n            \"user_id\": current.user_id,\n            \"employee_code\": current.employee_code,\n            \"department\": current.department,\n            \"position\": current.position,\n            \"authority_level\": current.authority_level,\n            \"reporting_manager_id\": current.reporting_manager_id,\n        })\n        if current.reporting_manager_id:\n            current = (\n                db.query(Employee)\n                .filter(Employee.id == current.reporting_manager_id)\n                .first()\n            )\n        else:\n            current = None\n    return chain\n\n\ndef get_all_subordinates(db: Session, user_id: int) -> List[Dict[str, Any]]:\n    root = (\n        db.query(Employee)\n        .filter(Employee.user_id == user_id)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 105,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "        .first()\n    )\n    if not root:\n        return []\n\n    subordinates: List[Dict[str, Any]] = []\n    queue = [root.id]\n    visited: Set[int] = {root.id}\n    while queue:\n        current_id = queue.pop(0)\n        children = (\n            db.query(Employee)\n            .filter(Employee.reporting_manager_id == current_id)\n            .all()\n        )\n        for child in children:\n            if child.id in visited:\n                continue\n            visited.add(child.id)\n            subordinates.append({\n                \"id\": child.id,\n                \"user_id\": child.user_id,\n                \"employee_code\": child.employee_code,\n                \"department\": child.department,"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 173,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "    )\n    if not lower:\n        return False\n\n    current = lower\n    visited: Set[int] = set()\n    while current and current.id not in visited:\n        visited.add(current.id)\n        if current.reporting_manager_id is None:\n            break\n        manager = (\n            db.query(Employee)\n            .filter(Employee.id == current.reporting_manager_id)\n            .first()\n        )\n        if not manager:\n            break\n        if manager.user_id == upper_user_id:\n            return True\n        current = manager\n    return False\n\n\ndef can_manage(db: Session, manager_user_id: int, target_user_id: int) -> bool:"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 213,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "    if manager.authority_level is not None and target.authority_level is not None:\n        if manager.authority_level <= target.authority_level:\n            return False\n\n    current = target\n    visited: Set[int] = set()\n    while current and current.id not in visited:\n        visited.add(current.id)\n        if current.reporting_manager_id == manager.id:\n            return True\n        current = (\n            db.query(Employee)\n            .filter(Employee.id == current.reporting_manager_id)\n            .first()\n        )\n    return False\n\n\ndef get_org_chart(db: Session, org_unit_id: Optional[int] = None) -> Dict[str, Any]:\n    if org_unit_id is not None:\n        root = db.query(OrgUnit).filter(OrgUnit.id == org_unit_id).first()\n        if not root:\n            return {\"unit\": None, \"children\": []}\n    else:"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 417,
+      "classification": "REAL_N+1",
+      "reason": "4 query-like calls inside loop -> batch candidate",
+      "snippet": "            \"name\": root.name,\n            \"level\": root.level,\n            \"path\": None,\n            \"parent_id\": root.parent_id,\n            \"country_code\": root.country_code,\n            \"is_active\": root.is_active,\n        }]\n        queue = [root.id]\n        while queue:\n            pid = queue.pop(0)\n            children = (\n                db.query(OrgUnit)\n                .filter(OrgUnit.parent_id == pid)\n                .order_by(OrgUnit.level, OrgUnit.name)\n                .all()\n            )\n            for child in children:\n                result.append({\n                    \"id\": child.id,\n                    \"name\": child.name,\n                    \"level\": child.level,\n                    \"path\": None,\n                    \"parent_id\": child.parent_id,\n                    \"country_code\": child.country_code,"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 453,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "    path_list: List[Dict[str, Any]] = []\n    current = unit\n    visited: Set[int] = set()\n    while current and current.id not in visited:\n        visited.add(current.id)\n        path_list.insert(0, {\n            \"id\": current.id,\n            \"name\": current.name,\n            \"level\": current.level,\n        })\n        if current.parent_id:\n            current = db.query(OrgUnit).filter(OrgUnit.id == current.parent_id).first()\n        else:\n            current = None\n    return path_list\n\n\ndef get_employees_in_subtree(db: Session, org_unit_id: int) -> List[Dict[str, Any]]:\n    \"\"\"Get all employees belonging to a unit or any of its descendants.\"\"\"\n    subtree = get_org_unit_subtree(db, org_unit_id)\n    unit_ids = [u[\"id\"] for u in subtree]\n    if not unit_ids:\n        return []\n"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 628,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "    if employee_id == proposed_manager_id:\n        return True\n\n    # Walk up from the proposed manager \u2014 if we ever hit employee_id, it's circular\n    current = db.query(Employee).filter(Employee.id == proposed_manager_id).first()\n    visited: Set[int] = set()\n    while current and current.id not in visited:\n        visited.add(current.id)\n        if current.reporting_manager_id == employee_id:\n            return True\n        if current.reporting_manager_id:\n            current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()\n        else:\n            break\n    return False\n\n\ndef get_approval_chain(\n    db: Session,\n    employee_id: int,\n    resource_type: str = \"leave\",\n    min_authority_level: Optional[int] = None,\n) -> List[Dict[str, Any]]:\n    \"\"\"Get the ordered chain of approvers for an employee, considering"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 656,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "    if not employee:\n        return []\n\n    approvers: List[Dict[str, Any]] = []\n\n    # Solid-line chain\n    current = employee\n    visited: Set[int] = set()\n    while current and current.id not in visited:\n        visited.add(current.id)\n        if current.reporting_manager_id:\n            manager = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()\n            if manager and manager.id not in visited:\n                if min_authority_level is None or (manager.authority_level and int(manager.authority_level) >= min_authority_level):\n                    approvers.append({\n                        \"id\": manager.id,\n                        \"user_id\": manager.user_id,\n                        \"employee_code\": manager.employee_code,\n                        \"authority_level\": int(manager.authority_level) if manager.authority_level else 0,\n                        \"type\": \"solid_line\",\n                    })\n                    visited.add(manager.id)\n                current = manager\n            else:"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 684,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['r'] referenced in query -> per-item lookup",
+      "snippet": "    # Matrix managers (lower priority than solid-line)\n    matrix_relations = (\n        db.query(EmployeeRelation)\n        .filter(\n            EmployeeRelation.employee_id == employee_id,\n            EmployeeRelation.is_internal_employee == True,\n            EmployeeRelation.relation_type.in_([\"matrix_manager\", \"project_manager\", \"dotted_line\"]),\n        )\n        .all()\n    )\n    for r in matrix_relations:\n        mgr = db.query(Employee).filter(Employee.id == r.internal_employee_id).first() if r.internal_employee_id else None\n        if mgr and mgr.id not in visited:\n            if min_authority_level is None or (mgr.authority_level and int(mgr.authority_level) >= min_authority_level):\n                approvers.append({\n                    \"id\": mgr.id,\n                    \"user_id\": mgr.user_id,\n                    \"employee_code\": mgr.employee_code,\n                    \"authority_level\": int(mgr.authority_level) if mgr.authority_level else 0,\n                    \"type\": \"matrix\",\n                })\n                visited.add(mgr.id)\n\n    return approvers"
+    },
+    {
+      "file": "backend/services/import_service.py",
+      "line": 492,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['sl'] referenced in query -> per-item lookup",
+      "snippet": "    if warehouse_id:\n        warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()\n    elif shipment.warehouse_id:\n        warehouse = db.query(Warehouse).filter(Warehouse.id == shipment.warehouse_id).first()\n    if not warehouse:\n        raise ValueError(\"Warehouse is required to finalize landed cost\")\n    total_inventory = Decimal(\"0\")\n    for sl in shipment.lines:\n        if sl.landed_unit_cost and sl.quantity:\n            line_total = sl.landed_unit_cost * sl.quantity\n            total_inventory += line_total\n            product = db.query(Product).filter(Product.id == sl.product_id).first()\n            if product:\n                new_cost = sl.landed_unit_cost\n                product.cost_price = new_cost\n                product.stock = (product.stock or 0) + int(sl.quantity)\n    if total_inventory > 0:\n        try:\n            gl.create_journal_entry(db, JournalEntryCreate(\n                entry_date=_utcnow(),\n                reference_type=\"landed_cost_finalize\", reference_id=shipment.id,\n                description=f\"Landed cost finalization \u2014 {shipment.shipment_ref}\",\n                currency=shipment.currency, country_code=shipment.country_code,\n                lines=["
+    },
+    {
+      "file": "backend/services/order_tracking_service.py",
+      "line": 699,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['order'] referenced in query -> per-item lookup",
+      "snippet": "\ndef get_available_orders_for_logistics(db: Session) -> list[dict]:\n    \"\"\"Return all orders in 'prepared' status available for logistics pickup.\"\"\"\n    orders = (\n        db.query(Order)\n        .filter(Order.status == \"prepared\")\n        .order_by(Order.updated_at.desc())\n        .all()\n    )\n    result = []\n    for order in orders:\n        shipment = db.query(Shipment).filter(Shipment.order_id == order.id).first()\n        result.append({\n            \"order_id\": order.id,\n            \"order_number\": order.order_number,\n            \"status\": order.status,\n            \"customer_name\": order.user.username if order.user else \"Unknown\",\n            \"shipping_address\": order.shipping_address,\n            \"delivery_location\": order.delivery_location,\n            \"scan_code\": shipment.scan_code if shipment else None,\n            \"supplier_id\": shipment.supplier_id if shipment else None,\n            \"created_at\": order.created_at.isoformat() if order.created_at else None,\n            \"prepared_at\": shipment.packaged_at.isoformat() if shipment and shipment.packaged_at else None,\n        })"
+    },
+    {
+      "file": "backend/services/payment_orchestrator.py",
+      "line": 65,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['gateway'] referenced in query -> per-item lookup",
+      "snippet": "                gateways = json.loads(config.payment_gateways_json) if isinstance(config.payment_gateways_json, str) else config.payment_gateways_json\n            except (json.JSONDecodeError, TypeError) as e:\n                logger.exception(\"sync_gateways_failed\", error=str(e))\n                return {\"synced\": 0, \"message\": \"Invalid gateway configuration\"}\n            \n            synced_count = 0\n            for gateway in gateways:\n                gateway_id = gateway.get('id') or gateway.get('gateway_id')\n                if not gateway_id:\n                    continue\n                \n                existing = db.query(PaymentOrchestratorSync).filter(\n                    PaymentOrchestratorSync.country_code == country_code.upper(),\n                    PaymentOrchestratorSync.gateway_id == gateway_id\n                ).first()\n                \n                if existing:\n                    existing.is_active = gateway.get('enabled', True)\n                    existing.gateway_name = gateway.get('name', gateway_id)\n                    existing.environment = gateway.get('environment', 'test')\n                    existing.fee_percent = Decimal(str(gateway.get('fee_percent', 0))) if gateway.get('fee_percent') else None\n                    existing.fee_fixed = Decimal(str(gateway.get('fee_fixed', 0))) if gateway.get('fee_fixed') else None\n                    existing.supported_payment_methods = json.dumps(gateway.get('payment_methods', [])) if gateway.get('payment_methods') else None\n                    existing.status = gateway.get('status', 'active')"
+    },
+    {
+      "file": "backend/services/payroll_engine.py",
+      "line": 272,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['emp'] referenced in query -> per-item lookup",
+      "snippet": "                continue\n\n            payslip_id = self._generate_payslip(emp.id, calc, month)\n            payslips.append({\n                \"employee_id\": emp.id,\n                \"payslip_id\": payslip_id,\n                \"net_salary\": calc[\"net_salary\"],\n                \"currency\": emp.currency,\n            })\n\n            import json\n            self.db.execute(\n                text(\"\"\"\n                    INSERT INTO audit_logs (action, entity_type, entity_id, user_id, details, created_at)\n                    VALUES (:action, :entity_type, :entity_id, :user_id, :details, :now)\n                \"\"\"),\n                {\n                    \"action\": \"process\",\n                    \"entity_type\": \"employee\",\n                    \"entity_id\": emp.id,\n                    \"user_id\": None,\n                    \"details\": json.dumps({k: v for k, v in calc.items() if k != \"deductions\"}),\n                    \"now\": _utcnow(),\n                },"
+    },
+    {
+      "file": "backend/services/performance_service.py",
+      "line": 109,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "            \"year\": y,\n            \"created_by\": owner_employee_id,\n            \"now\": now,\n        },\n    )\n    objective_id = result.scalar()\n\n    # Add key results if provided (single executemany round-trip)\n    if key_results:\n        kpi_params = [\n            {\n                \"objective_id\": objective_id,\n                \"employee_id\": owner_employee_id,\n                \"metric_name\": kr.get(\"name\", \"Key Result\"),\n                \"metric_type\": kr.get(\"unit\", \"percent\"),\n                \"target_value\": kr.get(\"target\", 100),\n                \"weight_pct\": int(kr.get(\"weight\", 1.0) * 100),\n                \"auto_source\": kr.get(\"auto_source_query\"),\n            }\n            for kr in key_results\n        ]\n        db.execute(\n            text(\"\"\"\n                INSERT INTO kpi_metrics"
+    },
+    {
+      "file": "backend/services/performance_service.py",
+      "line": 176,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "        text(\"\"\"\n            SELECT id, title, objective_type as cascade_level, employee_id as owner_employee_id, progress_pct, status\n            FROM okr_objectives WHERE parent_objective_id = :parent_id AND status = 'active'\n            ORDER BY created_at ASC\n        \"\"\"),\n        {\"parent_id\": objective_id},\n    ).mappings().all()\n\n    # Recursively build tree\n    tree = dict(objective)\n    tree[\"children\"] = []\n    owner_ids = [c[\"owner_employee_id\"] for c in children]\n    emp_by_id = {}\n    if owner_ids:\n        emp_rows = db.query(Employee).filter(Employee.id.in_(owner_ids)).all()\n        for e in emp_rows:\n            emp_by_id[e.id] = e\n    for child in children:\n        emp = emp_by_id.get(child[\"owner_employee_id\"])\n        child_dict = dict(child)\n        child_dict[\"owner_name\"] = emp.employee_code if emp else None\n        tree[\"children\"].append(get_objective_tree(db, child[\"id\"]))\n\n    return tree"
+    },
+    {
+      "file": "backend/services/performance_service.py",
+      "line": 323,
+      "classification": "UNKNOWN",
+      "reason": "could not locate enclosing loop",
+      "snippet": "    db.commit()\n    return {\"kpi_id\": kpi_id, \"current_value\": value}\n\n\ndef get_kpi_dashboard(db: Session, employee_id: int) -> Dict[str, Any]:\n    \"\"\"Get all KPIs and objectives for an employee.\"\"\"\n    objectives = db.execute(\n        text(\"\"\"\n            SELECT id, title, objective_type as cascade_level, progress_pct, status, quarter, year\n            FROM okr_objectives\n            WHERE employee_id = :eid AND status = 'active'\n            ORDER BY year DESC, quarter DESC\n        \"\"\"),\n        {\"eid\": employee_id},\n    ).mappings().all()\n\n    objective_ids = [o[\"id\"] for o in objectives]\n    kpis_by_obj = {}\n    if objective_ids:\n        placeholders = \", \".join(f\":oid{i}\" for i in range(len(objective_ids)))\n        params = {f\"oid{i}\": oid for i, oid in enumerate(objective_ids)}\n        kpi_rows = db.execute(\n            text(f\"\"\"\n                SELECT objective_id, id, metric_name, target_value, current_value, metric_type as unit, weight_pct as weight, last_recorded_at"
+    },
+    {
+      "file": "backend/services/permission_service.py",
+      "line": 154,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['a'] referenced in query -> per-item lookup",
+      "snippet": "\ndef get_role_permissions(role_name: str, country_code: Optional[str] = None, db: Session = None) -> dict:\n    q = db.query(RolePermissionAssignment).filter(RolePermissionAssignment.role_name == role_name)\n    if country_code:\n        q = q.filter(\n            (RolePermissionAssignment.country_code == country_code) |\n            (RolePermissionAssignment.country_code.is_(None))\n        )\n    assignments = q.all()\n    permissions = {}\n    for a in assignments:\n        perm = db.query(Permission).filter(Permission.id == a.permission_id).first()\n        if perm:\n            permissions[perm.slug] = {\"granted\": a.is_granted, \"permission_id\": perm.id, \"name\": perm.name}\n    return permissions\n\n\ndef assign_permission_to_role(role_name: str, permission_id: int, actor_id: int, db: Session, country_code: Optional[str] = None) -> RolePermissionAssignment:\n    existing = db.query(RolePermissionAssignment).filter(\n        RolePermissionAssignment.role_name == role_name,\n        RolePermissionAssignment.permission_id == permission_id,\n    ).first()\n    if existing:\n        existing.is_granted = True"
+    },
+    {
+      "file": "backend/services/retention_service.py",
+      "line": 75,
+      "classification": "REAL_N+1",
+      "reason": "5 query-like calls inside loop -> batch candidate",
+      "snippet": "        target_name = str(policy[\"target\"])\n        if _should_skip_recent_run(target_name, db):\n            results.append({\"target\": target_name, \"status\": \"skipped_recent_run\"})\n            continue\n\n        now = _utcnow()\n        cutoff_days = int(policy[\"days\"])\n        cutoff = now - timedelta(days=cutoff_days)\n        model = policy[\"model\"]\n        timestamp_column = getattr(model, str(policy[\"timestamp\"]))\n        rows = (\n            db.query(model)\n            .filter(timestamp_column < cutoff)\n            .order_by(timestamp_column.asc())\n            .limit(_RETENTION_BATCH_SIZE)\n            .all()\n        )\n\n        artifact_path: str | None = None\n        archived_count = 0\n        deleted_count = 0\n        status = \"completed\"\n        if rows:\n            artifact_file = artifact_root / f\"{target_name}-{now.strftime('%Y%m%d%H%M%S')}.jsonl\""
+    },
+    {
+      "file": "backend/services/shift_handover.py",
+      "line": 113,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['s'] referenced in query -> per-item lookup",
+      "snippet": "            \"status\": \"acknowledged\",\n            \"acknowledged_at\": session.acknowledged_at.isoformat(),\n        }\n\n    def get_pending_handovers(self, employee_id: int) -> List[dict]:\n        sessions = self.db.query(ShiftHandoverSession).filter(\n            ShiftHandoverSession.incoming_employee_id == employee_id,\n            ShiftHandoverSession.status == \"pending\",\n        ).order_by(ShiftHandoverSession.shift_date.desc()).all()\n        result = []\n        for s in sessions:\n            tasks = self.db.query(ShiftHandoverTask).filter(\n                ShiftHandoverTask.session_id == s.id,\n                ShiftHandoverTask.status == \"open\",\n            ).all()\n            result.append({\n                \"id\": s.id,\n                \"outgoing_employee_id\": s.outgoing_employee_id,\n                \"shift_date\": s.shift_date.isoformat(),\n                \"notes\": s.notes,\n                \"status\": s.status,\n                \"open_tasks\": len(tasks),\n                \"tasks\": [\n                    {\"id\": t.id, \"description\": t.description, \"priority\": t.priority, \"status\": t.status}"
+    },
+    {
+      "file": "backend/services/shift_roster_service.py",
+      "line": 84,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['leave_type', 'total'] referenced in query -> per-item lookup",
+      "snippet": "    emp = db.query(Employee).filter(Employee.id == employee_id).first()\n    if not emp:\n        raise ValueError(\"Employee not found\")\n    \n    annual_days = 30 if emp.employment_type == \"full_time\" else 15\n    sick_days = 15\n    maternity_days = 90 if emp.gender == \"female\" else 0\n    \n    year = datetime.utcnow().year\n    \n    for leave_type, total in [(\"annual\", annual_days), (\"sick\", sick_days), (\"maternity\", maternity_days)]:\n        existing = db.query(EmployeeLeaveLedger).filter(\n            and_(\n                EmployeeLeaveLedger.employee_id == employee_id,\n                EmployeeLeaveLedger.leave_type == leave_type,\n                EmployeeLeaveLedger.year == year,\n            )\n        ).first()\n        \n        if not existing:\n            ledger = EmployeeLeaveLedger(\n                employee_id=employee_id,\n                leave_type=leave_type,\n                total_days=total,"
+    },
+    {
+      "file": "backend/services/trading_service.py",
+      "line": 706,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['po'] referenced in query -> per-item lookup",
+      "snippet": "    q = db.query(PurchaseOrder).filter(\n        PurchaseOrder.status.in_([\"received\", \"partial\"]),\n    )\n    if country_code:\n        q = q.filter(PurchaseOrder.country_code == country_code)\n    \n    pos = q.all()\n    results[\"scanned\"] = len(pos)\n    \n    for po in pos:\n        # Check if AP bill exists for this PO\n        has_bill = db.query(APBill).filter(\n            APBill.linked_journal_entry_id.isnot(None),\n            APBill.description.contains(f\"PO-{po.po_number}\"),\n        ).first()\n        \n        if not has_bill:\n            # Check if GRN exists\n            has_grn = db.query(GoodsReceiptNote).filter(\n                GoodsReceiptNote.po_id == po.id,\n                GoodsReceiptNote.status == \"confirmed\",\n            ).first()\n            \n            results[\"unmatched\"] += 1"
+    },
+    {
+      "file": "backend/services/trading_service.py",
+      "line": 713,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['po'] referenced in query -> per-item lookup",
+      "snippet": "    results[\"scanned\"] = len(pos)\n    \n    for po in pos:\n        # Check if AP bill exists for this PO\n        has_bill = db.query(APBill).filter(\n            APBill.linked_journal_entry_id.isnot(None),\n            APBill.description.contains(f\"PO-{po.po_number}\"),\n        ).first()\n        \n        if not has_bill:\n            # Check if GRN exists\n            has_grn = db.query(GoodsReceiptNote).filter(\n                GoodsReceiptNote.po_id == po.id,\n                GoodsReceiptNote.status == \"confirmed\",\n            ).first()\n            \n            results[\"unmatched\"] += 1\n            results[\"items\"].append({\n                \"po_id\": po.id,\n                \"po_number\": po.po_number,\n                \"status\": po.status,\n                \"has_grn\": bool(has_grn),\n                \"has_bill\": False,\n                \"vendor_id\": po.vendor_id,"
+    },
+    {
+      "file": "backend/services/trading_service.py",
+      "line": 756,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['order'] referenced in query -> per-item lookup",
+      "snippet": "        Order.payment_method == \"card\",\n        Order.status == \"delivered\",\n        Order.invoice_id.is_(None),\n    )\n    if country_code:\n        orders = orders.filter(Order.country_code == country_code)\n\n    results[\"scanned\"] = orders.count()\n\n    for order in orders.all():\n        try:\n            existing = db.query(ARInvoice).filter(\n                ARInvoice.reference_order_id == order.id,\n            ).first()\n            if existing:\n                results[\"skipped\"] += 1\n                continue\n\n            invoice_number = _next_number(db, \"INV\", ARInvoice.invoice_number)\n            now = _utcnow()\n\n            revenue_acct = db.query(Account).filter(Account.code == \"4010\").first()\n            vat_acct = db.query(Account).filter(Account.code == \"2040\").first()\n"
+    },
+    {
+      "file": "backend/services/trading_service.py",
+      "line": 766,
+      "classification": "REAL_N+1",
+      "reason": "9 query-like calls inside loop -> batch candidate",
+      "snippet": "        try:\n            existing = db.query(ARInvoice).filter(\n                ARInvoice.reference_order_id == order.id,\n            ).first()\n            if existing:\n                results[\"skipped\"] += 1\n                continue\n\n            invoice_number = _next_number(db, \"INV\", ARInvoice.invoice_number)\n            now = _utcnow()\n\n            revenue_acct = db.query(Account).filter(Account.code == \"4010\").first()\n            vat_acct = db.query(Account).filter(Account.code == \"2040\").first()\n\n            if not revenue_acct or not vat_acct:\n                results[\"errors\"] += 1\n                continue\n\n            lines = [\n                JournalLineInput(\n                    account_code=\"1100\",\n                    side=\"debit\",\n                    amount=order.total_amount,\n                    description=f\"AR for delivered order #{order.id}\","
+    },
+    {
+      "file": "backend/services/trading_service.py",
+      "line": 767,
+      "classification": "REAL_N+1",
+      "reason": "9 query-like calls inside loop -> batch candidate",
+      "snippet": "            existing = db.query(ARInvoice).filter(\n                ARInvoice.reference_order_id == order.id,\n            ).first()\n            if existing:\n                results[\"skipped\"] += 1\n                continue\n\n            invoice_number = _next_number(db, \"INV\", ARInvoice.invoice_number)\n            now = _utcnow()\n\n            revenue_acct = db.query(Account).filter(Account.code == \"4010\").first()\n            vat_acct = db.query(Account).filter(Account.code == \"2040\").first()\n\n            if not revenue_acct or not vat_acct:\n                results[\"errors\"] += 1\n                continue\n\n            lines = [\n                JournalLineInput(\n                    account_code=\"1100\",\n                    side=\"debit\",\n                    amount=order.total_amount,\n                    description=f\"AR for delivered order #{order.id}\",\n                    entity_type=\"order\","
+    },
+    {
+      "file": "backend/services/treasury_engine.py",
+      "line": 191,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['cat'] referenced in query -> per-item lookup",
+      "snippet": "        count = self.db.execute(select(func.count()).select_from(JournalEntry)).scalar()\n        return f\"JE-{timestamp}-{count + 1:06d}\"\n    \n    def get_account_hierarchy(self) -> List[Dict]:\n        \"\"\"Get complete 3-layer account hierarchy.\"\"\"\n        categories = self.db.execute(\n            select(AccountGroup).order_by(AccountGroup.display_order)\n        ).scalars().all()\n        \n        result = []\n        for cat in categories:\n            accounts = self.db.execute(\n                select(Account).where(\n                    Account.group_id == cat.id,\n                    Account.is_active == True\n                ).order_by(Account.code)\n            ).scalars().all()\n            \n            result.append({\n                \"category_code\": cat.code,\n                \"category_name\": cat.name,\n                \"normal_side\": cat.normal_side,\n                \"accounts\": [\n                    {"
+    },
+    {
+      "file": "backend/services/users/user_write_ops.py",
+      "line": 236,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['model', 'fk_column', '_'] referenced in query -> per-item lookup",
+      "snippet": "            db.delete(event)\n        db.delete(shipment)\n\n    db.delete(order)\n    db.commit()\n\n    return {\"order_id\": order_id, \"deleted_items\": len(items or []), \"deleted_shipments\": len(shipments or [])}\n\n\ndef _nullify_user_references(db: Session, user_id: int) -> None:\n    for model, fk_column, _ in _NULLABLE_USER_REFERENCE_UPDATES:\n        db.query(model).filter(fk_column == user_id).update({fk_column: None})\n\n\ndef _delete_user_owned_records(db: Session, user_id: int) -> None:\n    for model, fk_column in _DELETABLE_USER_OWNED_MODELS:\n        for record in db.query(model).filter(fk_column == user_id).all():\n            db.delete(record)\n\n\ndef _hard_delete_user_record(user: User, db: Session) -> None:\n    _nullify_user_references(db, user.id)\n    _delete_user_owned_records(db, user.id)\n    db.delete(user)"
+    },
+    {
+      "file": "backend/services/users/user_write_ops.py",
+      "line": 241,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['model', 'fk_column'] referenced in query -> per-item lookup",
+      "snippet": "\n    return {\"order_id\": order_id, \"deleted_items\": len(items or []), \"deleted_shipments\": len(shipments or [])}\n\n\ndef _nullify_user_references(db: Session, user_id: int) -> None:\n    for model, fk_column, _ in _NULLABLE_USER_REFERENCE_UPDATES:\n        db.query(model).filter(fk_column == user_id).update({fk_column: None})\n\n\ndef _delete_user_owned_records(db: Session, user_id: int) -> None:\n    for model, fk_column in _DELETABLE_USER_OWNED_MODELS:\n        for record in db.query(model).filter(fk_column == user_id).all():\n            db.delete(record)\n\n\ndef _hard_delete_user_record(user: User, db: Session) -> None:\n    _nullify_user_references(db, user.id)\n    _delete_user_owned_records(db, user.id)\n    db.delete(user)\n    db.commit()\n\n\ndef _build_user_delete_blocker(\n    user: User,"
+    },
+    {
+      "file": "backend/services/user/user_profile_service.py",
+      "line": 37,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['uid'] referenced in query -> per-item lookup",
+      "snippet": "    user_ids: list[int],\n    country_code: str,\n    is_active: bool,\n) -> int:\n    \"\"\"Set ``is_active`` for the given users within a country and commit once.\n\n    Returns the number of users actually updated.\n    \"\"\"\n    updated = 0\n    for uid in user_ids:\n        u = (\n            db.query(User)\n            .filter(User.id == uid, User.country_code == country_code.upper())\n            .first()\n        )\n        if u:\n            u.is_active = is_active\n            updated += 1\n    db.commit()\n    return updated"
+    },
+    {
+      "file": "backend/services/supplier/admin_supplier_write_service.py",
+      "line": 125,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['sid'] referenced in query -> per-item lookup",
+      "snippet": "\ndef bulk_supplier_action(db: Session, payload: dict) -> dict:\n    \"\"\"Apply verify/reject/suspend/activate/delete/badge across many suppliers.\"\"\"\n    ids = payload.get(\"supplier_ids\") or []\n    action = (payload.get(\"action\") or \"\").lower()\n    badge_level = payload.get(\"badge_level\")\n    if not isinstance(ids, list) or not ids:\n        raise HTTPException(status_code=422, detail=\"supplier_ids is required\")\n\n    processed = 0\n    for sid in ids:\n        supplier = db.query(SupplierProfile).filter(SupplierProfile.id == sid).first()\n        if not supplier:\n            continue\n        if action == \"verify\":\n            supplier.verification_status = \"approved\"\n            if hasattr(supplier, \"verified_at\"):\n                supplier.verified_at = utcnow()\n        elif action == \"reject\":\n            supplier.verification_status = \"rejected\"\n        elif action == \"suspend\":\n            supplier.is_active = False\n            if supplier.user_id:\n                account = db.query(User).filter(User.id == supplier.user_id).first()"
+    },
+    {
+      "file": "backend/services/supplier/admin_supplier_write_service.py",
+      "line": 137,
+      "classification": "REAL_N+1",
+      "reason": "9 query-like calls inside loop -> batch candidate",
+      "snippet": "        if not supplier:\n            continue\n        if action == \"verify\":\n            supplier.verification_status = \"approved\"\n            if hasattr(supplier, \"verified_at\"):\n                supplier.verified_at = utcnow()\n        elif action == \"reject\":\n            supplier.verification_status = \"rejected\"\n        elif action == \"suspend\":\n            supplier.is_active = False\n            if supplier.user_id:\n                account = db.query(User).filter(User.id == supplier.user_id).first()\n                if account:\n                    account.is_active = 0\n        elif action == \"activate\":\n            supplier.is_active = True\n            if supplier.user_id:\n                account = db.query(User).filter(User.id == supplier.user_id).first()\n                if account:\n                    account.is_active = 1\n        elif action == \"delete\":\n            if hasattr(supplier, \"is_deleted\"):\n                supplier.is_deleted = True\n            supplier.is_active = False"
+    },
+    {
+      "file": "backend/services/supplier/admin_supplier_write_service.py",
+      "line": 143,
+      "classification": "REAL_N+1",
+      "reason": "9 query-like calls inside loop -> batch candidate",
+      "snippet": "        elif action == \"reject\":\n            supplier.verification_status = \"rejected\"\n        elif action == \"suspend\":\n            supplier.is_active = False\n            if supplier.user_id:\n                account = db.query(User).filter(User.id == supplier.user_id).first()\n                if account:\n                    account.is_active = 0\n        elif action == \"activate\":\n            supplier.is_active = True\n            if supplier.user_id:\n                account = db.query(User).filter(User.id == supplier.user_id).first()\n                if account:\n                    account.is_active = 1\n        elif action == \"delete\":\n            if hasattr(supplier, \"is_deleted\"):\n                supplier.is_deleted = True\n            supplier.is_active = False\n        elif action == \"badge\":\n            if badge_level is not None and hasattr(supplier, \"badge_level\"):\n                supplier.badge_level = badge_level\n        processed += 1\n    db.commit()\n    return {\"processed\": processed, \"action\": action}"
+    },
+    {
+      "file": "backend/services/supplier/admin_supplier_write_service.py",
+      "line": 165,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['sid'] referenced in query -> per-item lookup",
+      "snippet": "    db.commit()\n    return {\"processed\": processed, \"action\": action}\n\n\ndef bulk_restore_suppliers(db: Session, payload: dict) -> dict:\n    \"\"\"Undelete and reactivate a batch of supplier profiles.\"\"\"\n    ids = payload.get(\"supplier_ids\") or []\n    if not isinstance(ids, list) or not ids:\n        raise HTTPException(status_code=422, detail=\"supplier_ids is required\")\n    processed = 0\n    for sid in ids:\n        supplier = db.query(SupplierProfile).filter(SupplierProfile.id == sid).first()\n        if not supplier:\n            continue\n        if hasattr(supplier, \"is_deleted\"):\n            supplier.is_deleted = False\n        supplier.is_active = True\n        if supplier.user_id:\n            account = db.query(User).filter(User.id == supplier.user_id).first()\n            if account:\n                account.is_active = 1\n        processed += 1\n    db.commit()\n    return {\"processed\": processed}"
+    },
+    {
+      "file": "backend/services/supplier/admin_supplier_write_service.py",
+      "line": 172,
+      "classification": "REAL_N+1",
+      "reason": "6 query-like calls inside loop -> batch candidate",
+      "snippet": "    if not isinstance(ids, list) or not ids:\n        raise HTTPException(status_code=422, detail=\"supplier_ids is required\")\n    processed = 0\n    for sid in ids:\n        supplier = db.query(SupplierProfile).filter(SupplierProfile.id == sid).first()\n        if not supplier:\n            continue\n        if hasattr(supplier, \"is_deleted\"):\n            supplier.is_deleted = False\n        supplier.is_active = True\n        if supplier.user_id:\n            account = db.query(User).filter(User.id == supplier.user_id).first()\n            if account:\n                account.is_active = 1\n        processed += 1\n    db.commit()\n    return {\"processed\": processed}\n\n\ndef restore_supplier(db: Session, supplier_id: int) -> dict:\n    \"\"\"Undelete and reactivate a single supplier profile.\"\"\"\n    supplier = (\n        db.query(SupplierProfile)\n        .filter(SupplierProfile.id == supplier_id)"
+    },
+    {
+      "file": "backend/services/orders/bulk_order_service.py",
+      "line": 21,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['oid'] referenced in query -> per-item lookup",
+      "snippet": "from sqlalchemy.orm import Session\n\nfrom data.models import Order\nimport structlog\nlogger = structlog.get_logger(__name__)\n\n\ndef bulk_update_order_status(ids: List[int], status: str, db: Session) -> dict:\n    \"\"\"Set ``status`` on every order in ``ids`` that exists. Returns a count.\"\"\"\n    updated = 0\n    for oid in ids:\n        o = db.query(Order).filter(Order.id == oid).first()\n        if o:\n            o.status = status\n            updated += 1\n    db.commit()\n    return {\"message\": f\"Status modified for {updated} orders\", \"updated\": updated}"
+    },
+    {
+      "file": "backend/services/geography/country_staff_write_service.py",
+      "line": 188,
+      "classification": "REAL_N+1",
+      "reason": "loop var ['a'] referenced in query -> per-item lookup",
+      "snippet": "        db.query(CountryStaffAssignment)\n        .filter(\n            CountryStaffAssignment.user_id == user_id,\n            CountryStaffAssignment.is_active == True,\n        )\n        .all()\n    )\n\n    result = []\n    for a in assignments:\n        country = (\n            db.query(CountryConfig).filter(CountryConfig.code == a.country_code).first()\n        )\n        result.append(\n            {\n                \"country_code\": a.country_code,\n                \"country_name\": country.name if country else a.country_code,\n                \"flag_url\": country.flag_url if country else None,\n                \"role_in_country\": a.role_in_country,\n                \"assigned_at\": a.created_at.isoformat() if a.created_at else None,\n            }\n        )\n\n    return {\"assigned_countries\": result, \"total\": len(result)}"
+    },
+    {
+      "file": "backend/services/catalog/product_service.py",
+      "line": 172,
+      "classification": "REAL_N+1",
+      "reason": "3 query-like calls inside loop -> batch candidate",
+      "snippet": "        canonical = _FIELD_ALIASES.get(key, key)\n        if canonical in allowed:\n            resolved[canonical] = value\n    return resolved\n\n\ndef unique_slug(db: Session, name: str) -> str:\n    \"\"\"Return a slug for ``name`` that no other product currently holds.\"\"\"\n    base = generate_slug(name)\n    slug = base\n    counter = 1\n    while db.query(Product.id).filter(Product.slug == slug).first() is not None:\n        slug = f\"{base}-{counter}\"\n        counter += 1\n    return slug\n\n\n# \u2500\u2500 Reads \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n\ndef get_product_by_id(db: Session, product_id: int) -> Optional[Product]:\n    \"\"\"Fetch a product by primary key.\"\"\"\n    return db.query(Product).filter(Product.id == product_id).first()\n"
+    }
+  ],
+  "perf4": [
+    {
+      "file": "backend/services/admin_analytics_service.py",
+      "line": 53,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/admin_analytics_service.py",
+      "line": 103,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/advanced_filter_service.py",
+      "line": 294,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ProductFilterMetadata' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/advanced_filter_service.py",
+      "line": 302,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'ProductFilterOption'"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 58,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankStatementLine'"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 111,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'JournalEntryLine' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 134,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'JournalEntryLine' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 282,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/ai_automation_service.py",
+      "line": 503,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/approval_matrix_service.py",
+      "line": 239,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/asset_tracking.py",
+      "line": 82,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeAsset' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/attendance_service.py",
+      "line": 93,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'AuditLog' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/attendance_service.py",
+      "line": 104,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'AuditLog' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 76,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 203,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Customer' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 208,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Customer' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 268,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 276,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'JournalEntry' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 320,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 338,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 359,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 379,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ARInvoice' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 400,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ImportShipment' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/automation_scheduler.py",
+      "line": 438,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'PayoutBatch' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/auto_payout_scheduler.py",
+      "line": 122,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/auto_payout_scheduler.py",
+      "line": 146,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'SupplierBankAccount'"
+    },
+    {
+      "file": "backend/services/auto_payout_scheduler.py",
+      "line": 400,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/auto_payout_scheduler.py",
+      "line": 424,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'LogisticsPartnerBankAccount'"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 150,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Product' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 296,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'OrderItem' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 517,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'OrderLogisticsAllocation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 524,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'OrderLogisticsAllocation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 579,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'OrderItem' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 612,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'TransactionLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 777,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'TransactionLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 791,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'OrderLogisticsAllocation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 799,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'OrderLogisticsAllocation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 808,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1030,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'RefundLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1299,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'TransactionLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1307,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'TransactionLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1310,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'SupplierSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1335,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1344,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1369,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankTransaction'"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1373,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankTransaction'"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1376,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankTransaction'"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1377,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankTransaction'"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1380,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1419,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'SupplierSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1436,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1509,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1566,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'TransactionLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1575,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'TransactionLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1584,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1618,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1637,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsPartnerPayout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1655,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1696,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1708,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsPartnerPayout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1734,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'RefundLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1753,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 1913,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankTransaction'"
+    },
+    {
+      "file": "backend/services/cash_management_service.py",
+      "line": 2228,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsCODRemittanceReceipt' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/chat_system.py",
+      "line": 411,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/chat_system.py",
+      "line": 426,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/chat_system.py",
+      "line": 436,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EntityChatMessage' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/coi_engine.py",
+      "line": 47,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeRelation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/coi_engine.py",
+      "line": 93,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'COIReport' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/coi_service.py",
+      "line": 27,
+      "classification": "REAL_UNBOUNDED",
+      "reason": "large table 'Employee' with NO .filter() -> truly unbounded, needs limit"
+    },
+    {
+      "file": "backend/services/command_center_service.py",
+      "line": 89,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/command_center_service.py",
+      "line": 658,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'User' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/commission_engine.py",
+      "line": 122,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CommissionCategoryRate'"
+    },
+    {
+      "file": "backend/services/commission_engine.py",
+      "line": 135,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CommissionBadgeTier'"
+    },
+    {
+      "file": "backend/services/compliance_engine.py",
+      "line": 51,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeWorkLog' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/compliance_engine.py",
+      "line": 84,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeAttendance' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 52,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryConfig'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 60,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryConfig'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 68,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryConfig'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 86,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryCity'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 114,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryCommunication'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 123,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryConfigVersion'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 167,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryFeatureFlag'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 192,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryStaffAssignment'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 201,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryStaffAssignment'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 214,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'SupplierCountryCommission'"
+    },
+    {
+      "file": "backend/services/country_read_service.py",
+      "line": 229,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'User' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/credit_control_service.py",
+      "line": 167,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Customer' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/credit_control_service.py",
+      "line": 255,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ARInvoice' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/cross_border_detection.py",
+      "line": 82,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryConfig'"
+    },
+    {
+      "file": "backend/services/cross_border_detection.py",
+      "line": 86,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CrossCountryCustomerSession'"
+    },
+    {
+      "file": "backend/services/cross_border_detection.py",
+      "line": 117,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryConfig'"
+    },
+    {
+      "file": "backend/services/customer_health_engine.py",
+      "line": 69,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/customer_health_engine.py",
+      "line": 75,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 82,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 86,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 96,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 98,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 99,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 127,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 222,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 374,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 407,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/db_read.py",
+      "line": 427,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/dei_auditor.py",
+      "line": 103,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/dei_auditor.py",
+      "line": 127,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/dei_auditor.py",
+      "line": 138,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/disputes_write_service.py",
+      "line": 174,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'SupplierDispute' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/employee_activity_logger.py",
+      "line": 158,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/employee_activity_logger.py",
+      "line": 200,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/employee_activity_logger.py",
+      "line": 225,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/employee_activity_logger.py",
+      "line": 232,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/employee_activity_logger.py",
+      "line": 279,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 181,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 355,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 484,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 534,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 593,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/employee_communication_service.py",
+      "line": 613,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/employee_lifecycle_service.py",
+      "line": 267,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/employee_lifecycle_service.py",
+      "line": 296,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/employee_write_service.py",
+      "line": 189,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'DynamicQRSession' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/erp_finance_service.py",
+      "line": 117,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ARInvoice' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/erp_finance_service.py",
+      "line": 205,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/erp_finance_service.py",
+      "line": 282,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankStatementLine'"
+    },
+    {
+      "file": "backend/services/erp_finance_service.py",
+      "line": 327,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/finance_automation.py",
+      "line": 178,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankMappingRule'"
+    },
+    {
+      "file": "backend/services/finance_automation.py",
+      "line": 250,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'BankStatementLine'"
+    },
+    {
+      "file": "backend/services/finance_automation.py",
+      "line": 293,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'FixedAsset' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/finance_automation.py",
+      "line": 503,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 268,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 282,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'SupplierBankAccount'"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 371,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsPartnerPayout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 384,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'LogisticsPartnerBankAccount'"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 474,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsSettlement' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 737,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 739,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/finance_transfer_service.py",
+      "line": 1013,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Payout' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/financial_reporting.py",
+      "line": 65,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'JournalEntry' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/financial_reporting.py",
+      "line": 89,
+      "classification": "REAL_UNBOUNDED",
+      "reason": "large table 'JournalEntry' with NO .filter() -> truly unbounded, needs limit"
+    },
+    {
+      "file": "backend/services/financial_reports_service.py",
+      "line": 292,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/fraud_admin_service.py",
+      "line": 80,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/fraud_admin_service.py",
+      "line": 116,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/fraud_admin_service.py",
+      "line": 150,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ManualReviewQueue' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/fraud_detection.py",
+      "line": 84,
+      "classification": "REAL_UNBOUNDED",
+      "reason": "large table 'Employee' with NO .filter() -> truly unbounded, needs limit"
+    },
+    {
+      "file": "backend/services/fraud_detection.py",
+      "line": 141,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'AuditLog' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/fraud_detection_service.py",
+      "line": 301,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/fraud_detection_service.py",
+      "line": 1066,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/fraud_detection_service.py",
+      "line": 1097,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/fraud_service.py",
+      "line": 71,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/gateway_auto_enable.py",
+      "line": 141,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CountryGatewayCredentials'"
+    },
+    {
+      "file": "backend/services/gateway_reconciliation_service.py",
+      "line": 114,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/gateway_reconciliation_service.py",
+      "line": 204,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/gateway_reconciliation_service.py",
+      "line": 236,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Order' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 47,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 48,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 146,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 173,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 248,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 416,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 474,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 1033,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/general_ledger_service.py",
+      "line": 1044,
+      "classification": "FALSE_POSITIVE",
+      "reason": "no .all() on flagged line (report/scan mismatch)"
+    },
+    {
+      "file": "backend/services/ghost_watchdog.py",
+      "line": 41,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeWorkLog' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 107,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 138,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 235,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'OrgUnit'"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 318,
+      "classification": "REAL_UNBOUNDED",
+      "reason": "large table 'Employee' with NO .filter() -> truly unbounded, needs limit"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 351,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'OrgUnit'"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 361,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'OrgUnit'"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 388,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'OrgUnit'"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 420,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'OrgUnit'"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 469,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 562,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeRelation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 566,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeRelation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 590,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeRelation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 594,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeRelation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hierarchy_service.py",
+      "line": 681,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeRelation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/hr_dashboard_service.py",
+      "line": 71,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/hr_dashboard_service.py",
+      "line": 107,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/hr_dashboard_service.py",
+      "line": 119,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/hr_dashboard_service.py",
+      "line": 149,
+      "classification": "REVIEW",
+      "reason": "list/dict .all() (non-ORM) \u2014 manual check"
+    },
+    {
+      "file": "backend/services/import_service.py",
+      "line": 54,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/import_service.py",
+      "line": 55,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/import_service.py",
+      "line": 542,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'ImportShipment' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/import_service.py",
+      "line": 667,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'ImportCostTemplate'"
+    },
+    {
+      "file": "backend/services/je_reversal_service.py",
+      "line": 56,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'JournalEntryLine' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/leave_accrual.py",
+      "line": 56,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Employee' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/leave_accrual.py",
+      "line": 82,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeLeaveLedger' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/live_tracking_service.py",
+      "line": 36,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/live_tracking_service.py",
+      "line": 95,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsPartnerLocation' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/live_tracking_service.py",
+      "line": 119,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/live_tracking_service.py",
+      "line": 144,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    },
+    {
+      "file": "backend/services/lms_permission_lock.py",
+      "line": 91,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'EmployeeCertification' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/logistics_health_engine.py",
+      "line": 81,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'Shipment' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/logistics_partner_pricing.py",
+      "line": 64,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'CityDistanceMatrix'"
+    },
+    {
+      "file": "backend/services/logistics_partner_pricing.py",
+      "line": 311,
+      "classification": "FALSE_POSITIVE",
+      "reason": "loads reference/small table 'LogisticsCategoryPricingRule'"
+    },
+    {
+      "file": "backend/services/logistics_partner_pricing.py",
+      "line": 360,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsVehicleRule' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/logistics_partner_pricing.py",
+      "line": 403,
+      "classification": "REAL_FILTERED",
+      "reason": "large table 'LogisticsPricingProfile' but .filter()-bounded (low risk)"
+    },
+    {
+      "file": "backend/services/logistics_partner_pricing.py",
+      "line": 952,
+      "classification": "REVIEW",
+      "reason": "ORM .all() model not identified; manual check needed"
+    }
+  ]
+}

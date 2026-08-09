@@ -1,0 +1,40 @@
+w direction",
+    # Content Alignment
+    "CA1":   "file name does not match file content (operations mismatch)",
+    "CA2":   "file contains operations from multiple domains (split candidate)",
+    "CA3":   "surface-inappropriate operation detected",
+    # Middleware
+    "MW1":   "middleware pipeline order violation",
+    "MW2":   "required middleware missing",
+    "MW3":   "middleware imports service/controller (circuit violation)",
+    # Project Files
+    "PF1":   "required project file missing",
+    "PF2":   "required scope document missing",
+    # API Shape
+    "AS1":   "route prefix does not align with surface",
+    "AS2":   "OpenAPI tag does not align with domain",
+    "AS3":   "endpoint naming convention violation",
+    # Advanced Security
+    "SEC5":  "potential SQL injection risk",
+    "SEC6":  "potential SSRF risk",
+    "SEC7":  "potential path traversal risk",
+    "SEC8":  "insecure JWT/token handling",
+    "SEC9":  "missing CSRF protection on state-changing endpoint",
+    "SEC10": "insecure CORS configuration",
+    # ═══ ARCHITECTURE_DIAGRAM §2.4 / §9.3 / §10.4 ═══
+    "SEC11": "multiple independent RLS enforcers — fail-open risk (§10.4)",
+    "SC1":   "DB pool_size exceeds PgBouncer-safe limit (§9.3)",
+    "SC2":   "sync-only SQLAlchemy blocks event loop at scale (§9.3 Phase B)",
+    "SC3":   "in-process WebSocket fan-out won't scale to 100K sockets (§9.3)",
+    # Advanced Performance
+    "PERF3": "missing pagination on list endpoint",
+    "PERF4": "unbounded query detected (no limit clause)",
+    "PERF5": "large transaction risk (multiple writes without savepoint)",
+    "PERF6": "missing database index on frequently queried column",
+    # Advanced Frontend
+    "FE7":   "frontend component in wrong feature folder",
+    "FE8":   "shared package boundary violation",
+    "FE9":   "state management boundary violation",
+    # Architecture Metrics
+    "MET2":  "module instability exceeds threshold",
+    "MET3":  "abstractness below threshold (no interfaces)"

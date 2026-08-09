@@ -1,0 +1,229 @@
+# =============================================================================
+# ZOZI FEATURE DEFINITIONS — SPEC-DRIVEN (v2 schema)
+# =============================================================================
+# You write WHAT the feature must do. Never file names, never paths.
+#   - name        : feature title
+#   - scope       : roles (Customer · Supplier · Logistor · Admin · Employee · Internal)
+#   - description : the FULL binding build spec (paste your complete prompt).
+#                   The tracker auto-extracts checkpoints from it:
+#                     * `schema.table`          -> DB table checkpoint
+#                     * `/route/{param}/...`    -> API route checkpoint
+#                     * UPPER_CASE statuses     -> state-machine checkpoint
+#                     * `snake_case` backticks  -> field/identifier checkpoint
+#                     * **bold phrases**        -> capability checkpoint
+#                     * **Step N — ...** blocks -> milestone checkpoints
+#   - sections    : section-wise job per panel (§I Infra, §II Customer,
+#                   §III Supplier, §IV Logistor, §V Admin). One sentence each.
+# feature_tracker.py does everything else: finds files, tables, routes, tests,
+# and computes the completion percentage.
+# =============================================================================
+
+version: 2
+schema: spec-driven
+
+features:
+
+  # ===========================================================================
+  - id: SYS_001
+    name: Unified Communication Workspace (Chat · Email · Video · Contacts · Files)
+    weight: 8
+    scope: Admin · Employee · Supplier
+    description: |
+      Unified Communication Workspace — a Confluence-style hub combining Chat,
+      Email, Video Conferencing, Contacts and Files for internal staff and
+      entity-to-entity communication.
+
+      Core capabilities:
+      - Direct chat rooms (`DirectChatRoom`) and entity chat threads
+        (`EntityChatThread`) with realtime WebSocket delivery and read receipts.
+      - Internal channels (`InternalChannel`) with masked external contacts
+        (`is_masked`) and proxy communication (`ProxyMessage`, `ProxyChannel`,
+        `ProxySession`); masked proxy numbers protect personal contacts.
+      - Video rooms (`VideoRoom`) with presence, metrics and admin monitoring.
+      - Unified inbox aggregating `conversations` across chat, email and
+        tickets, with `channel_type` routing and thread messages.
+      - Admin communication console, employee communication threads, and a
+        supplier support inbox; full audit trail for compliance (eDiscovery).
+
+      Non-negotiables: realtime presence, message masking for external parties,
+      channel membership management, media attachments, moderation controls,
+      and explicit error states when the realtime feed is unavailable.
+    sections:
+      §I: "Realtime infrastructure: WebSocket chat delivery, channel masking, unified inbox aggregation, seed data."
+      §III: "Supplier support inbox page handling customer conversations."
+      §V: "Admin communication hub, video monitoring panel, employee communications tab, moderation."
+
+  # ===========================================================================
+  - id: SYS_002
+    name: Product & Catalog System
+    weight: 10
+    scope: Customer · Supplier · Admin
+    description: |
+      Product & Catalog System — the full product lifecycle: creation,
+      categories, variants, moderation, verification, search, pricing and
+      flash sales.
+
+      Core capabilities:
+      - Product (`Product`), category (`Category`) and flash-sale models
+        (`FlashSale`, `FlashSaleItem`); full-text search index `fts_products`.
+      - Supplier product CRUD, bulk/batch upload with AI-assisted listing
+        (voice-to-catalog, background removal), draft validation, QR bundles.
+      - Admin: category management, product verification queue, moderation,
+        promotions & flash-sale scheduling, commission overrides per
+        category/product.
+      - Customer storefront: product listing, product detail, search with
+        advanced filters & autocomplete, recommendations, recently viewed,
+        wishlist, barcode scan.
+      - Controllers: `products_controller.py`, search & promotion controllers;
+        tests `test_products.py` and `test_categories.py` must pass.
+
+      Non-negotiables: category-variant bridge consistency, moderation gate
+      before publish, explicit empty/error states on storefront lists.
+    sections:
+      §II: "Customer storefront: browse products, product detail, search/filter, wishlist, barcode scan, checkout entry."
+      §III: "Supplier: create/edit products, bulk & batch upload, AI assist, product pages, analytics."
+      §V: "Admin: categories, product verification, promotions, flash sales, suppliers list, command center."
+
+  # ===========================================================================
+  - id: SYS_031
+    name: Cash Management / Finance / Treasury System
+    weight: 9
+    scope: Admin · Supplier · Logistor
+    description: |
+      Cash Management / Finance / Treasury — double-entry accounting, payouts,
+      settlements and reconciliation across the ZOZI ecosystem.
+
+      Core capabilities:
+      - Double-entry ledger: `JournalEntry` and `JournalEntryLine` posted only
+        through the ledger service; reversals (`je_reversal_service`), orphan
+        detection, period close, general ledger and sub-ledgers.
+      - Supplier settlement (`SupplierSettlement`) and payout batches
+        (`PayoutBatch`, `PayoutBatchItem`) with approve / dispatch workflow,
+        auto payout sweep scheduler and background jobs.
+      - Bank transactions (`BankTransaction`), transaction ledger
+        (`TransactionLedger`), VAT remittance (`VATRemittance`), gateway
+        reconciliation and cash-flow forecasting.
+      - `finance_automation` rules, ERP integration, financial reporting and
+        audit/eDiscovery hooks.
+      - Admin payouts console (verify/process), supplier payout status and
+        bank-account self-service, logistics COD remittance receipts.
+
+      Non-negotiables: refunds only through the ledger, zero-variance nightly
+      reconciliation, mandatory audit on every manual payout action.
+    sections:
+      §III: "Supplier finance: payout status, bank account self-service, settlement visibility."
+      §IV: "Logistics partner: COD remittance receipts, settlement and payout visibility."
+      §V: "Admin: payouts console, treasury dashboard, cash-flow cycle, finance automation, background jobs."
+
+  # ===========================================================================
+  - id: SYS_007
+    name: Order Tracker & Order Management
+    weight: 10
+    scope: Customer · Supplier · Logistor · Admin
+    description: |
+      ## ZOZI ORDER TRACKER & ORDER MANAGEMENT — BINDING BUILD SPEC
+
+      > Scope: Customer → Supplier → Logistic Partner → Customer delivery loop, with Admin oversight. This spec is **constitution-compliant** (`01_DATABASE.md`): events over cross-FKs, media bytes in R2, config-as-data, RLS `country_code`, audit-everything, **no silent/hardcoded fallbacks**.
+
+      ## 1. DETAILED BULLET POINTS
+
+      ### 1.1 Non-negotiables
+      - **One order, one identity:** every order gets a unique Order ID + signed QR token at placement; the QR is the physical "passport" of the parcel across all hands.
+      - **Single source of truth for status:** status lives only in DB; every change is a server-side validated transition (config-driven state machine, **not** UI logic) written to `shipment_events` + published as an outbox event.
+      - **No hardcoded fallbacks:** if QR service / location service / signature capture is unavailable, the system reports an explicit error mode and offers the *audited alternate path* (request→confirm). Never auto-succeed, never fake a scan.
+      - **Universal visibility:** the same order + same timeline is visible to **Customer, Supplier, Logistic Partner, Admin** — each with role-scoped actions.
+      - **Proof at every handover:** pickup = QR scan *or* supplier-confirmed request; delivery = e-signature *or* customer-confirmed request; packaging = packed-parcel photo. All proofs are media files (bytes in R2, metadata in DB).
+      - **Admin is the referee:** Admin can correct any wrongly-set status and cancel any wrong order — always with mandatory reason + audit log + notification to all parties.
+
+      ### 1.2 Canonical lifecycle — EXACTLY as defined (order → delivery)
+      1. **`PENDING`** — Customer places order (payment/COD). Location captured (GPS + IP-geo service). Order appears on Supplier page (new-order alert), Customer "My Orders", Admin. Not shown to logistics yet.
+      2. **`PROCESSING`** — Supplier sees and accepts the order; starts processing. Visible on Supplier / Customer / Admin pages.
+      3. **`PREPARED`** — Supplier finishes packing: prints the parcel sheet, applies tamper seal + QR label, logs weight/dimensions, **uploads photo of the packed parcel**. Status flips to `PREPARED` and the order **flashes on ALL logistic partner pages** as available for pick-up.
+      4. **`PICKING UP`** — One logistic partner confirms pick-up. From this moment the order is **removed from every other logistic partner's page** and visible only to the claiming partner (plus Supplier/Customer/Admin).
+         - Logistic partner **may cancel the pick-up** at this stage (any reason, **before** picked/shipped) → order returns to `PREPARED` and re-flashes to all partners.
+      5. **`PICKED FROM SUPPLIER`** — physical handover, verified by **either** path:
+         - **Path A:** logistic partner **scans the parcel QR** in-app at handover; **or**
+         - **Path B:** logistic sends a pick-up request → supplier gets notified → supplier confirms the handover.
+      6. **Transit (logistic-only sub-statuses, allowed only between `PICKED` and `DELIVERED`):**
+         - `LOGISTIC RECEIVED` (hub receives from rider) → `DISTRIBUTION CHECKPOINT` (reaches distribution center) → `OUT FOR DELIVERY` / *In Transit / Delivering to Customer* (rider out, live GPS on).
+         - Exceptions: `SHIPMENT DELAYED` (problem, resumes later), `SHIPMENT RESCHEDULED` (new slot), `SHIPMENT FAILED` (unresolvable → must **return parcel to supplier** → `SHIPMENT CANCELLED`), `SHIPMENT RETURNED` (customer rejects at door → return to supplier → cancel/refund).
+      7. **`DELIVERED`** — final handover, verified by **either** path:
+         - **Path A:** logistic takes the customer's **e-signature** on the app; **or**
+         - **Path B:** logistic sends a delivery request → customer gets notified → customer confirms receipt.
+      8. **`CANCELLED`** — customer cancels mid-process (before pick-up completes), or Admin cancels a wrong order. Visible everywhere.
+      9. **Post-delivery:** Returns / Replacement window opens (see §1.5).
+
+      ### 1.3 Status & transition rules (who may do what)
+      - **Supplier:** `PENDING→PROCESSING→PREPARED`; confirm pick-up request (Path B); confirm return receipt.
+      - **Logistic partner:** claim `PREPARED→PICKING UP`; cancel own claim; scan QR / request pick-up; all transit sub-statuses; request delivery confirmation.
+      - **Customer:** cancel (early stages); confirm delivery (Path B); reject at door (`SHIPMENT RETURNED`); request return/replacement.
+      - **Admin:** **override/correct any status** (mandatory reason), **cancel any order**, resolve disputes, view everything.
+      - Transition matrix stored in **`configuration.order_status_rules`** (config-as-data) — server enforces it; illegal transitions rejected with explicit error.
+
+      ### 1.4 Packaging & printing material
+      - **Supplier packages by default** (fastest); standardized: tamper-proof seal + QR label + optional weight/dimensions. Optional future **Packaging Manager** role (central hub) — reserved, config-switchable, no schema redesign later.
+      - **"Print Parcel Sheet" button on the Supplier order page** generates a one-page sheet containing:
+        - Customer Name · Contact Number · Full Location **+ Latitude/Longitude** · Landmark
+        - Order Items List (qty, variant attributes) · Invoice · Order Number · **QR code**
+        - Payment method + **COD amount to collect** (if COD) · Supplier return address · Tamper-seal ID · Print timestamp
+      - Label payload served by a **first-class endpoint** (`/orders/{id}/label`) returning structured JSON + printable PDF/HTML; QR encodes a signed token URL resolved server-side (role + status checked on every scan).
+
+      ### 1.5 Returns & replacements (part of tracking, not an afterthought)
+      - Customer requests **Return** or **Replacement** from My Orders within a configurable window (`order_status_rules`/config), with reason + optional photos.
+      - Admin (or auto-policy) approves → **reverse shipment** created and tracked with the same engine: `RETURN_REQUESTED → RETURN_APPROVED → RETURN_IN_TRANSIT (reverse pick-up) → RETURNED_TO_SUPPLIER (inspection)`.
+      - Outcome: **Refund** posted only through the finance **ledger service** (never ad-hoc), or **Replacement** = new order linked via `original_order_uuid`, dispatched through the identical tracking flow.
+
+      ### 1.6 Panel visibility matrix
+      | Status | Customer | Supplier | Claiming Logistic | Other Logistics | Admin |
+      |---|---|---|---|---|---|
+      | PENDING / PROCESSING | ✅ timeline | ✅ queue | — | — | ✅ |
+      | PREPARED | ✅ | ✅ | ✅ **flashing pick-up board** | ✅ flashing | ✅ |
+      | PICKING UP → OUT FOR DELIVERY | ✅ live + GPS | ✅ | ✅ own order only | ❌ **hidden** | ✅ |
+      | DELIVERED / CANCELLED / SHIPMENT CANCELLED / RETURNED | ✅ | ✅ | ✅ history | ❌ | ✅ |
+
+      ### 1.7 Database additions (constitution-compliant)
+      - `commerce.packages`: 1:1 to order · `qr_token_hash` · weight/dimensions · `tamper_seal_id` · `packed_photo_media_id` · `packaged_by/at`.
+      - `logistics.shipments`: claiming partner, claim/cancel timestamps, current sub-status.
+      - `logistics.shipment_events`: **monthly range-partitioned** · `order_uuid`, `actor_role`, `status`, lat/lng, notes, `media_ref` (photo/signature), idempotency key.
+      - `logistics.proof_of_delivery`: method (`qr_scan | supplier_confirm | e_signature | customer_confirm`), `signature_media_id`, confirmer.
+      - `commerce.return_requests` (+ replacement link) · `configuration.order_status_rules`.
+      - All tables: `country_code` + RLS, audit mixins, soft-delete; **media bytes in R2**, metadata in `media_assets`.
+
+      ### 1.8 Events, notifications & reconciliation
+      - Every status change → same-transaction `outbox_events` write → WS push + push notification + email (key transitions) to the 4 panels; UI shows explicit error state if feed unavailable (no silent zeros).
+      - **Reconciliation engine (restored, country-aware):**
+        - `COD:` Delivered → rider collects cash → **Logistic remits → ZOZI Treasury → Supplier payout (− commission)**
+        - `Card:` Gateway → **Treasury → Supplier payout (− commission)** and **Treasury → Logistic delivery fee**
+        - Nightly reconciliation cron with variance alerting; order referenced by `order_uuid` data column + events (no cross-ecosystem FK).
+      - **Location service:** small Python sidecar resolving IP→geo (GeoIP DB) merged with device GPS; stored on order with accuracy; failure → explicit "pin manually" mode, never silent.
+      - **Admin ecosystem wiring:** staff/employees+permissions merged hierarchy; unified Communication tab (video/chat/email); unified Moderator/Tickets/Disputes; Command Center + Analytics merged; Payments/Payouts, Finance CoA + Treasury wired; commission engine restored; full Admin CRUD.
+
+      ### 1.9 Surfaces & sign-off
+      - Implement identically in **web_app** (Customer/Admin/Supplier/Logistic panels) and **mobile_app** (scan, signature, GPS, claim board).
+      - **E2E test matrix:** golden path (place→process→pack+photo+print→claim→QR scan→transit sub-statuses→e-sign→delivered); pick-up cancel; delayed/rescheduled; failed→return→cancelled; door-reject→returned; customer cancel; admin override/cancel; return & replacement; visibility assertions (flash at PREPARED, hide at PICKING UP); no-fallback assertions; COD reconciliation run.
+      - After all green → update `documents/CODEBASE_STATUS_MATRIX_DETAILED.md` section-by-section.
+
+      ## 3. STEP-BY-STEP CONSTRUCTION POINTS
+
+      **Step 1 — Schema & state machine.** Alembic migration (with downgrade + contract test) creating `packages`, `shipments`, `shipment_events` (monthly-partitioned), `proof_of_delivery`, `return_requests`, `order_status_rules`; add `country_code`+RLS + audit mixins; seed the transition matrix as config data. *Done when:* illegal transition rejected in test; drift gate green.
+
+      **Step 2 — Placement, location & QR.** Order creation writes delivery location (GPS + IP-geo sidecar; explicit manual-pin mode on failure); generate signed QR token + `/orders/{id}/label` payload endpoint (all print fields). *Done when:* label renders with QR + COD amount; scan token resolves server-side with role/status checks.
+
+      **Step 3 — Supplier workflow.** Order queue → accept (`PROCESSING`) → pack → **Print Parcel Sheet** button → upload packed photo (bytes→R2) → `PREPARED` + outbox event. *Done when:* photo missing blocks `PREPARED` with explicit error.
+
+      **Step 4 — Logistic claim & handover.** Flashing pick-up board for all partners at `PREPARED`; claim → `PICKING UP` (row-level visibility filter hides from others); claim-cancel returns to `PREPARED`; Path A QR scan + Path B request/confirm → `PICKED FROM SUPPLIER` (idempotent, double-scan rejected). *Done when:* visibility assertions pass.
+
+      **Step 5 — Transit & exceptions.** Transit sub-statuses with GPS trail; DELAYED/RESCHEDULED/FAILED; FAILED enforces return-to-supplier before `SHIPMENT CANCELLED`; door-reject → `SHIPMENT RETURNED`. *Done when:* each exception path leaves a full audited trail.
+
+      **Step 6 — Delivery proof.** In-app e-signature capture (PNG→R2) or customer confirm request → `DELIVERED` + `proof_of_delivery` row + COD flag for reconciliation. *Done when:* both paths produce POD record.
+
+      **Step 7 — Returns/replacements & money.** RMA flow → reverse shipment → inspection → ledger-only refund or linked replacement order; wire reconciliation entries (COD & Card paths) + nightly variance cron. *Done when:* COD run reconciles Order→Logistic→Treasury→Supplier with zero variance.
+
+      **Step 8 — Admin controls & panels.** Status-override + cancel-with-reason (audit + notify); disputes/communication/command-center merges; finance/treasury/commission wiring; build timeline/boards/scan/signature/print UIs in **web_app and mobile_app** with loading + empty + explicit-error states. *Done when:* parity check web vs mobile passes.
+
+      **Step 9 — E2E test & close-out.** Run the full §1.9 matrix (golden + all exception paths + no-fallback checks) on clean Postgres via Alembic; load-test hot lists (p95 < 300ms); then update the status matrix section-by-section. *Done when:* every row green and matrix committed.
+    sections:
+      §II: "Customer: place order (COD/Card) with GPS capture; My Orders live timeline; cancel early; confirm delivery request; e-signature; reject at door; request return/replacement within window."
+      §III: "Supplier: new-order queue + alerts; accept to PROCESSING; pack with tamper seal + QR label + weight/dims; print parcel sheet; upload packed photo to reach PREPARED; confirm pick-up handover; confirm return receipt."
+      §IV: "Logistic partner: flashing pick-up board of PREPARED orders; claim pick-up; cancel claim; QR-scan handover; transit sub-statuses with GPS; delayed/rescheduled/failed exceptions; deliver by e-signature or customer confirm; COD collection & remittance."
+      §V: "Admin: full visibility of all orders; override/correct any status with mandatory reason + audit; cancel wrong orders; resolve disputes; approve returns; monitor COD/Card reconciliation."

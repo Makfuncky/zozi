@@ -1,0 +1,143 @@
+name: CI — Alembic Migration Check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.10"
+  APP_ENV: test
+  DATABASE_URL: "sqlite:///./test_zozi.db"
+
+jobs:
+  # ── 1. Validate migration chain integrity ──────────────────────────
+  migration-check:
+    name: Alembic migration check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check migration head is linear (no duplicate heads)
+        env:
+          APP_ENV: test
+        run: |
+          HEADS=$(python -m alembic heads 2>&1 | grep -cE "^\w{12} \(head\)")
+          if [ "$HEADS" -ne 1 ]; then
+            echo "::error::Alembic has $HEADS heads — expected exactly 1"
+            python -m alembic heads
+            exit 1
+          fi
+          echo "✅ Single migration head confirmed"
+
+      - name: Apply migrations to fresh SQLite database
+        env:
+          APP_ENV: test
+        run: |
+          rm -f test_zozi.db
+          python -m alembic upgrade head
+          echo "✅ All migrations applied to fresh database"
+
+      # NOTE: This drift check compares ORM metadata against the fresh DB
+      # just created by `alembic upgrade head`. It catches naming mismatches,
+      # missing indexes, and constraint drift. It does NOT catch ORM tables
+      # that have no migration at all — those only appear when comparing
+      # against a pre-existing production DB.
+      - name: Check ORM ↔ DB drift
+        env:
+          APP_ENV: test
+        run: |
+          python -c "
+          import sys
+          try:
+              from alembic.migration import MigrationContext
+              from alembic.autogenerate import compare_metadata
+              from sqlalchemy import create_engine
+              from db.base import Base
+              import models
+
+              engine = create_engine(
+                  'sqlite:///./test_zozi.db',
+                  connect_args={'check_same_thread': False}
+              )
+              ctx = MigrationContext.configure(engine.connect())
+              diff = compare_metadata(ctx, Base.metadata)
+              if diff:
+                  print(f'::error::Schema drift detected ({len(diff)} differences)')
+                  for d in diff:
+                      print(f'  - {d}')
+                  sys.exit(1)
+              print('✅ ORM schema matches database — no drift')
+          except Exception as e:
+              print(f'::error::Drift check failed: {e}')
+              sys.exit(1)
+          "
+
+      - name: Verify all ORM models import cleanly
+        env:
+          APP_ENV: test
+        run: |
+          python -c "
+          import sys
+          try:
+              from db.base import Base
+              import models
+              count = len(list(Base.metadata.tables.keys()))
+              print(f'✅ {count} ORM tables registered successfully')
+              if count < 300:
+                  print(f'::warning::Expected 300+ tables, got {count}')
+          except Exception as e:
+              print(f'::error::Model import failed: {e}')
+              sys.exit(1)
+          "
+
+  # ── 2. Backend tests ──────────────────────────────────────────────
+  backend-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    needs: migration-check
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      redis:
+        image: redis:7
+        ports: [6379:6379]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        env:
+          APP_ENV: test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          python -m pytest tests/ -x --timeout=30 -q 2>&1 | tail -30

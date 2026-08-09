@@ -1,0 +1,1618 @@
+{
+  "location_service": [],
+  "models.upload_job": [
+    {
+      "symbol": "UploadJob",
+      "defs": []
+    }
+  ],
+  "routers.chat_api": [
+    {
+      "symbol": "router",
+      "defs": [
+        "routers/accounting.py:37(assign)",
+        "routers/addresses.py:16(assign)",
+        "routers/admin.py:148(assign)",
+        "routers/admin_banners.py:27(assign)",
+        "routers/admin_cash.py:22(assign)",
+        "routers/admin_categories.py:25(assign)",
+        "routers/admin_chat.py:19(assign)",
+        "routers/admin_commission.py:21(assign)",
+        "routers/admin_email.py:15(assign)",
+        "routers/admin_fallback.py:38(assign)",
+        "routers/admin_logistics.py:19(assign)",
+        "routers/admin_orders.py:27(assign)",
+        "routers/admin_payouts.py:30(assign)",
+        "routers/admin_products.py:23(assign)",
+        "routers/admin_promotions.py:26(assign)",
+        "routers/admin_settings.py:8(assign)",
+        "routers/admin_suppliers.py:18(assign)",
+        "routers/admin_treasury.py:51(assign)",
+        "routers/admin_users.py:24(assign)",
+        "routers/admin_video.py:18(assign)",
+        "routers/ai.py:12(assign)",
+        "routers/ai_image.py:8(assign)",
+        "routers/ai_research.py:24(assign)",
+        "routers/ai_upload.py:58(assign)",
+        "routers/audit.py:12(assign)",
+        "routers/auth.py:34(assign)",
+        "routers/automation.py:35(assign)",
+        "routers/banners.py:28(assign)",
+        "routers/batch_upload.py:37(assign)",
+        "routers/cart.py:14(assign)",
+        "routers/cash_management.py:41(assign)",
+        "routers/categories.py:15(assign)",
+        "routers/chat.py:4(assign)",
+        "routers/chatbot.py:15(assign)",
+        "routers/chat_enrichment.py:27(assign)",
+        "routers/comm.py:17(assign)",
+        "routers/command_center.py:4(assign)",
+        "routers/commission.py:16(assign)",
+        "routers/comms_unified.py:18(assign)",
+        "routers/compliance.py:23(assign)",
+        "routers/contact.py:11(assign)",
+        "routers/countries.py:17(assign)",
+        "routers/country_admin.py:19(assign)",
+        "routers/country_auto_populate.py:34(assign)",
+        "routers/country_dropdown.py:13(assign)",
+        "routers/country_maps.py:14(assign)",
+        "routers/country_payouts.py:14(assign)",
+        "routers/country_research.py:17(assign)",
+        "routers/country_staff.py:21(assign)",
+        "routers/coupons.py:13(assign)",
+        "routers/cross_border.py:13(assign)",
+        "routers/csp_reporting.py:17(assign)",
+        "routers/currency.py:12(assign)",
+        "routers/customer_health.py:11(assign)",
+        "routers/ediscovery.py:13(assign)",
+        "routers/email.py:34(assign)",
+        "routers/email_enrichment.py:20(assign)",
+        "routers/employees.py:22(assign)",
+        "routers/entity_chat.py:14(assign)",
+        "routers/entity_communication.py:15(assign)",
+        "routers/escalation.py:12(assign)",
+        "routers/ess.py:18(assign)",
+        "routers/export.py:15(assign)",
+        "routers/finance.py:32(assign)",
+        "routers/finance_automation.py:28(assign)",
+        "routers/finance_erp.py:39(assign)",
+        "routers/flash_sales.py:11(assign)",
+        "routers/fraud_detection.py:44(assign)",
+        "routers/frontend_errors.py:18(assign)",
+        "routers/geo.py:13(assign)",
+        "routers/hierarchy.py:42(assign)",
+        "routers/hr.py:24(assign)",
+        "routers/hr_dashboard.py:23(assign)",
+        "routers/iam.py:19(assign)",
+        "routers/imports.py:15(assign)",
+        "routers/incident.py:14(assign)",
+        "routers/internal_channels.py:11(assign)",
+        "routers/invoices.py:16(assign)",
+        "routers/jobs.py:7(assign)",
+        "routers/lms.py:16(assign)",
+        "routers/location_api.py:19(assign)",
+        "routers/logistics.py:14(assign)",
+        "routers/logistics_health.py:11(assign)",
+        "routers/logistics_locations.py:14(assign)",
+        "routers/logistics_orders.py:9(assign)",
+        "routers/logistics_orders_v2.py:27(assign)",
+        "routers/logistics_partner.py:15(assign)",
+        "routers/messaging.py:4(assign)",
+        "routers/notifications.py:15(assign)",
+        "routers/okr.py:14(assign)",
+        "routers/onboarding.py:16(assign)",
+        "routers/orders.py:38(assign)",
+        "routers/parcel_tracking.py:14(assign)",
+        "routers/payments.py:57(assign)",
+        "routers/payout_approval.py:42(assign)",
+        "routers/payroll.py:20(assign)",
+        "routers/performance.py:18(assign)",
+        "routers/permissions.py:18(assign)",
+        "routers/products.py:27(assign)",
+        "routers/product_moderation.py:16(assign)",
+        "routers/product_verification.py:16(assign)",
+        "routers/product_videos.py:13(assign)",
+        "routers/proxy_communication.py:15(assign)",
+        "routers/public_suppliers.py:15(assign)",
+        "routers/push_notifications.py:16(assign)",
+        "routers/referrals.py:12(assign)",
+        "routers/returns.py:20(assign)",
+        "routers/reviews.py:10(assign)",
+        "routers/risk.py:17(assign)",
+        "routers/search.py:30(assign)",
+        "routers/shift_handover.py:13(assign)",
+        "routers/shipments.py:16(assign)",
+        "routers/shop_locations.py:14(assign)",
+        "routers/succession.py:16(assign)",
+        "routers/supplier.py:31(assign)",
+        "routers/supplier_analytics.py:10(assign)",
+        "routers/supplier_bg_ab_test.py:32(assign)",
+        "routers/supplier_documents.py:12(assign)",
+        "routers/supplier_finance.py:45(assign)",
+        "routers/supplier_health.py:11(assign)",
+        "routers/supplier_orders.py:24(assign)",
+        "routers/supplier_payouts.py:10(assign)",
+        "routers/supplier_products.py:19(assign)",
+        "routers/supplier_profile.py:11(assign)",
+        "routers/tickets.py:9(assign)",
+        "routers/trading.py:14(assign)",
+        "routers/translate.py:13(assign)",
+        "routers/travel.py:13(assign)",
+        "routers/treasury.py:14(assign)",
+        "routers/upload.py:16(assign)",
+        "routers/upload_jobs.py:31(assign)",
+        "routers/users.py:10(assign)",
+        "routers/video.py:14(assign)",
+        "routers/video_controller.py:14(assign)",
+        "routers/wishlist.py:10(assign)",
+        "routers/workflows.py:11(assign)",
+        "routers/ws_chat.py:27(assign)"
+      ]
+    }
+  ],
+  "routers.command_center_api": [
+    {
+      "symbol": "router",
+      "defs": [
+        "routers/accounting.py:37(assign)",
+        "routers/addresses.py:16(assign)",
+        "routers/admin.py:148(assign)",
+        "routers/admin_banners.py:27(assign)",
+        "routers/admin_cash.py:22(assign)",
+        "routers/admin_categories.py:25(assign)",
+        "routers/admin_chat.py:19(assign)",
+        "routers/admin_commission.py:21(assign)",
+        "routers/admin_email.py:15(assign)",
+        "routers/admin_fallback.py:38(assign)",
+        "routers/admin_logistics.py:19(assign)",
+        "routers/admin_orders.py:27(assign)",
+        "routers/admin_payouts.py:30(assign)",
+        "routers/admin_products.py:23(assign)",
+        "routers/admin_promotions.py:26(assign)",
+        "routers/admin_settings.py:8(assign)",
+        "routers/admin_suppliers.py:18(assign)",
+        "routers/admin_treasury.py:51(assign)",
+        "routers/admin_users.py:24(assign)",
+        "routers/admin_video.py:18(assign)",
+        "routers/ai.py:12(assign)",
+        "routers/ai_image.py:8(assign)",
+        "routers/ai_research.py:24(assign)",
+        "routers/ai_upload.py:58(assign)",
+        "routers/audit.py:12(assign)",
+        "routers/auth.py:34(assign)",
+        "routers/automation.py:35(assign)",
+        "routers/banners.py:28(assign)",
+        "routers/batch_upload.py:37(assign)",
+        "routers/cart.py:14(assign)",
+        "routers/cash_management.py:41(assign)",
+        "routers/categories.py:15(assign)",
+        "routers/chat.py:4(assign)",
+        "routers/chatbot.py:15(assign)",
+        "routers/chat_enrichment.py:27(assign)",
+        "routers/comm.py:17(assign)",
+        "routers/command_center.py:4(assign)",
+        "routers/commission.py:16(assign)",
+        "routers/comms_unified.py:18(assign)",
+        "routers/compliance.py:23(assign)",
+        "routers/contact.py:11(assign)",
+        "routers/countries.py:17(assign)",
+        "routers/country_admin.py:19(assign)",
+        "routers/country_auto_populate.py:34(assign)",
+        "routers/country_dropdown.py:13(assign)",
+        "routers/country_maps.py:14(assign)",
+        "routers/country_payouts.py:14(assign)",
+        "routers/country_research.py:17(assign)",
+        "routers/country_staff.py:21(assign)",
+        "routers/coupons.py:13(assign)",
+        "routers/cross_border.py:13(assign)",
+        "routers/csp_reporting.py:17(assign)",
+        "routers/currency.py:12(assign)",
+        "routers/customer_health.py:11(assign)",
+        "routers/ediscovery.py:13(assign)",
+        "routers/email.py:34(assign)",
+        "routers/email_enrichment.py:20(assign)",
+        "routers/employees.py:22(assign)",
+        "routers/entity_chat.py:14(assign)",
+        "routers/entity_communication.py:15(assign)",
+        "routers/escalation.py:12(assign)",
+        "routers/ess.py:18(assign)",
+        "routers/export.py:15(assign)",
+        "routers/finance.py:32(assign)",
+        "routers/finance_automation.py:28(assign)",
+        "routers/finance_erp.py:39(assign)",
+        "routers/flash_sales.py:11(assign)",
+        "routers/fraud_detection.py:44(assign)",
+        "routers/frontend_errors.py:18(assign)",
+        "routers/geo.py:13(assign)",
+        "routers/hierarchy.py:42(assign)",
+        "routers/hr.py:24(assign)",
+        "routers/hr_dashboard.py:23(assign)",
+        "routers/iam.py:19(assign)",
+        "routers/imports.py:15(assign)",
+        "routers/incident.py:14(assign)",
+        "routers/internal_channels.py:11(assign)",
+        "routers/invoices.py:16(assign)",
+        "routers/jobs.py:7(assign)",
+        "routers/lms.py:16(assign)",
+        "routers/location_api.py:19(assign)",
+        "routers/logistics.py:14(assign)",
+        "routers/logistics_health.py:11(assign)",
+        "routers/logistics_locations.py:14(assign)",
+        "routers/logistics_orders.py:9(assign)",
+        "routers/logistics_orders_v2.py:27(assign)",
+        "routers/logistics_partner.py:15(assign)",
+        "routers/messaging.py:4(assign)",
+        "routers/notifications.py:15(assign)",
+        "routers/okr.py:14(assign)",
+        "routers/onboarding.py:16(assign)",
+        "routers/orders.py:38(assign)",
+        "routers/parcel_tracking.py:14(assign)",
+        "routers/payments.py:57(assign)",
+        "routers/payout_approval.py:42(assign)",
+        "routers/payroll.py:20(assign)",
+        "routers/performance.py:18(assign)",
+        "routers/permissions.py:18(assign)",
+        "routers/products.py:27(assign)",
+        "routers/product_moderation.py:16(assign)",
+        "routers/product_verification.py:16(assign)",
+        "routers/product_videos.py:13(assign)",
+        "routers/proxy_communication.py:15(assign)",
+        "routers/public_suppliers.py:15(assign)",
+        "routers/push_notifications.py:16(assign)",
+        "routers/referrals.py:12(assign)",
+        "routers/returns.py:20(assign)",
+        "routers/reviews.py:10(assign)",
+        "routers/risk.py:17(assign)",
+        "routers/search.py:30(assign)",
+        "routers/shift_handover.py:13(assign)",
+        "routers/shipments.py:16(assign)",
+        "routers/shop_locations.py:14(assign)",
+        "routers/succession.py:16(assign)",
+        "routers/supplier.py:31(assign)",
+        "routers/supplier_analytics.py:10(assign)",
+        "routers/supplier_bg_ab_test.py:32(assign)",
+        "routers/supplier_documents.py:12(assign)",
+        "routers/supplier_finance.py:45(assign)",
+        "routers/supplier_health.py:11(assign)",
+        "routers/supplier_orders.py:24(assign)",
+        "routers/supplier_payouts.py:10(assign)",
+        "routers/supplier_products.py:19(assign)",
+        "routers/supplier_profile.py:11(assign)",
+        "routers/tickets.py:9(assign)",
+        "routers/trading.py:14(assign)",
+        "routers/translate.py:13(assign)",
+        "routers/travel.py:13(assign)",
+        "routers/treasury.py:14(assign)",
+        "routers/upload.py:16(assign)",
+        "routers/upload_jobs.py:31(assign)",
+        "routers/users.py:10(assign)",
+        "routers/video.py:14(assign)",
+        "routers/video_controller.py:14(assign)",
+        "routers/wishlist.py:10(assign)",
+        "routers/workflows.py:11(assign)",
+        "routers/ws_chat.py:27(assign)"
+      ]
+    }
+  ],
+  "routers.effective_permissions": [
+    {
+      "symbol": "COUNTRY_ROLE_PERMISSION_MAP",
+      "defs": []
+    },
+    {
+      "symbol": "HR_PERMISSION_MAP",
+      "defs": []
+    },
+    {
+      "symbol": "MAKER_CHECKER_PERMISSIONS",
+      "defs": []
+    },
+    {
+      "symbol": "approve_permission_change",
+      "defs": []
+    },
+    {
+      "symbol": "check_permission",
+      "defs": [
+        "routers/permissions.py:193"
+      ]
+    },
+    {
+      "symbol": "get_effective_permissions",
+      "defs": []
+    },
+    {
+      "symbol": "invalidate_permission_cache",
+      "defs": []
+    },
+    {
+      "symbol": "request_permission_change",
+      "defs": []
+    }
+  ],
+  "routers.email_controller": [
+    {
+      "symbol": "router",
+      "defs": [
+        "routers/accounting.py:37(assign)",
+        "routers/addresses.py:16(assign)",
+        "routers/admin.py:148(assign)",
+        "routers/admin_banners.py:27(assign)",
+        "routers/admin_cash.py:22(assign)",
+        "routers/admin_categories.py:25(assign)",
+        "routers/admin_chat.py:19(assign)",
+        "routers/admin_commission.py:21(assign)",
+        "routers/admin_email.py:15(assign)",
+        "routers/admin_fallback.py:38(assign)",
+        "routers/admin_logistics.py:19(assign)",
+        "routers/admin_orders.py:27(assign)",
+        "routers/admin_payouts.py:30(assign)",
+        "routers/admin_products.py:23(assign)",
+        "routers/admin_promotions.py:26(assign)",
+        "routers/admin_settings.py:8(assign)",
+        "routers/admin_suppliers.py:18(assign)",
+        "routers/admin_treasury.py:51(assign)",
+        "routers/admin_users.py:24(assign)",
+        "routers/admin_video.py:18(assign)",
+        "routers/ai.py:12(assign)",
+        "routers/ai_image.py:8(assign)",
+        "routers/ai_research.py:24(assign)",
+        "routers/ai_upload.py:58(assign)",
+        "routers/audit.py:12(assign)",
+        "routers/auth.py:34(assign)",
+        "routers/automation.py:35(assign)",
+        "routers/banners.py:28(assign)",
+        "routers/batch_upload.py:37(assign)",
+        "routers/cart.py:14(assign)",
+        "routers/cash_management.py:41(assign)",
+        "routers/categories.py:15(assign)",
+        "routers/chat.py:4(assign)",
+        "routers/chatbot.py:15(assign)",
+        "routers/chat_enrichment.py:27(assign)",
+        "routers/comm.py:17(assign)",
+        "routers/command_center.py:4(assign)",
+        "routers/commission.py:16(assign)",
+        "routers/comms_unified.py:18(assign)",
+        "routers/compliance.py:23(assign)",
+        "routers/contact.py:11(assign)",
+        "routers/countries.py:17(assign)",
+        "routers/country_admin.py:19(assign)",
+        "routers/country_auto_populate.py:34(assign)",
+        "routers/country_dropdown.py:13(assign)",
+        "routers/country_maps.py:14(assign)",
+        "routers/country_payouts.py:14(assign)",
+        "routers/country_research.py:17(assign)",
+        "routers/country_staff.py:21(assign)",
+        "routers/coupons.py:13(assign)",
+        "routers/cross_border.py:13(assign)",
+        "routers/csp_reporting.py:17(assign)",
+        "routers/currency.py:12(assign)",
+        "routers/customer_health.py:11(assign)",
+        "routers/ediscovery.py:13(assign)",
+        "routers/email.py:34(assign)",
+        "routers/email_enrichment.py:20(assign)",
+        "routers/employees.py:22(assign)",
+        "routers/entity_chat.py:14(assign)",
+        "routers/entity_communication.py:15(assign)",
+        "routers/escalation.py:12(assign)",
+        "routers/ess.py:18(assign)",
+        "routers/export.py:15(assign)",
+        "routers/finance.py:32(assign)",
+        "routers/finance_automation.py:28(assign)",
+        "routers/finance_erp.py:39(assign)",
+        "routers/flash_sales.py:11(assign)",
+        "routers/fraud_detection.py:44(assign)",
+        "routers/frontend_errors.py:18(assign)",
+        "routers/geo.py:13(assign)",
+        "routers/hierarchy.py:42(assign)",
+        "routers/hr.py:24(assign)",
+        "routers/hr_dashboard.py:23(assign)",
+        "routers/iam.py:19(assign)",
+        "routers/imports.py:15(assign)",
+        "routers/incident.py:14(assign)",
+        "routers/internal_channels.py:11(assign)",
+        "routers/invoices.py:16(assign)",
+        "routers/jobs.py:7(assign)",
+        "routers/lms.py:16(assign)",
+        "routers/location_api.py:19(assign)",
+        "routers/logistics.py:14(assign)",
+        "routers/logistics_health.py:11(assign)",
+        "routers/logistics_locations.py:14(assign)",
+        "routers/logistics_orders.py:9(assign)",
+        "routers/logistics_orders_v2.py:27(assign)",
+        "routers/logistics_partner.py:15(assign)",
+        "routers/messaging.py:4(assign)",
+        "routers/notifications.py:15(assign)",
+        "routers/okr.py:14(assign)",
+        "routers/onboarding.py:16(assign)",
+        "routers/orders.py:38(assign)",
+        "routers/parcel_tracking.py:14(assign)",
+        "routers/payments.py:57(assign)",
+        "routers/payout_approval.py:42(assign)",
+        "routers/payroll.py:20(assign)",
+        "routers/performance.py:18(assign)",
+        "routers/permissions.py:18(assign)",
+        "routers/products.py:27(assign)",
+        "routers/product_moderation.py:16(assign)",
+        "routers/product_verification.py:16(assign)",
+        "routers/product_videos.py:13(assign)",
+        "routers/proxy_communication.py:15(assign)",
+        "routers/public_suppliers.py:15(assign)",
+        "routers/push_notifications.py:16(assign)",
+        "routers/referrals.py:12(assign)",
+        "routers/returns.py:20(assign)",
+        "routers/reviews.py:10(assign)",
+        "routers/risk.py:17(assign)",
+        "routers/search.py:30(assign)",
+        "routers/shift_handover.py:13(assign)",
+        "routers/shipments.py:16(assign)",
+        "routers/shop_locations.py:14(assign)",
+        "routers/succession.py:16(assign)",
+        "routers/supplier.py:31(assign)",
+        "routers/supplier_analytics.py:10(assign)",
+        "routers/supplier_bg_ab_test.py:32(assign)",
+        "routers/supplier_documents.py:12(assign)",
+        "routers/supplier_finance.py:45(assign)",
+        "routers/supplier_health.py:11(assign)",
+        "routers/supplier_orders.py:24(assign)",
+        "routers/supplier_payouts.py:10(assign)",
+        "routers/supplier_products.py:19(assign)",
+        "routers/supplier_profile.py:11(assign)",
+        "routers/tickets.py:9(assign)",
+        "routers/trading.py:14(assign)",
+        "routers/translate.py:13(assign)",
+        "routers/travel.py:13(assign)",
+        "routers/treasury.py:14(assign)",
+        "routers/upload.py:16(assign)",
+        "routers/upload_jobs.py:31(assign)",
+        "routers/users.py:10(assign)",
+        "routers/video.py:14(assign)",
+        "routers/video_controller.py:14(assign)",
+        "routers/wishlist.py:10(assign)",
+        "routers/workflows.py:11(assign)",
+        "routers/ws_chat.py:27(assign)"
+      ]
+    }
+  ],
+  "services.admin_analytics_service": [
+    {
+      "symbol": "_compute_analytics_overview",
+      "defs": []
+    },
+    {
+      "symbol": "_compute_analytics_timeseries_payload",
+      "defs": []
+    },
+    {
+      "symbol": "_compute_top_products_payload",
+      "defs": []
+    },
+    {
+      "symbol": "_compute_user_growth_payload",
+      "defs": []
+    },
+    {
+      "symbol": "_store_admin_analytics_snapshot",
+      "defs": []
+    },
+    {
+      "symbol": "refresh_admin_analytics_snapshots",
+      "defs": []
+    }
+  ],
+  "services.banner_write_service": [
+    {
+      "symbol": "add_banner_if_missing",
+      "defs": []
+    },
+    {
+      "symbol": "bulk_add_banners",
+      "defs": []
+    },
+    {
+      "symbol": "create_banner",
+      "defs": [
+        "controllers/banner_controller.py:316",
+        "routers/admin_banners.py:59",
+        "routers/banners.py:56"
+      ]
+    },
+    {
+      "symbol": "delete_banner",
+      "defs": [
+        "controllers/banner_controller.py:377",
+        "routers/admin_banners.py:89",
+        "routers/banners.py:76"
+      ]
+    },
+    {
+      "symbol": "reorder_banners",
+      "defs": [
+        "controllers/banner_controller.py:433"
+      ]
+    },
+    {
+      "symbol": "update_banner",
+      "defs": [
+        "controllers/banner_controller.py:356",
+        "routers/admin_banners.py:69",
+        "routers/banners.py:61"
+      ]
+    },
+    {
+      "symbol": "update_banner_image",
+      "defs": []
+    }
+  ],
+  "services.commerce_write_service": [
+    {
+      "symbol": "clear_wishlist",
+      "defs": [
+        "controllers/commerce/package.py:82"
+      ]
+    },
+    {
+      "symbol": "create_address",
+      "defs": [
+        "controllers/commerce/package.py:180",
+        "routers/addresses.py:81",
+        "services/commerce/customer_router_service.py:70"
+      ]
+    },
+    {
+      "symbol": "create_review",
+      "defs": [
+        "controllers/commerce/package.py:101",
+        "routers/reviews.py:90"
+      ]
+    },
+    {
+      "symbol": "create_wishlist_item",
+      "defs": []
+    },
+    {
+      "symbol": "delete_address",
+      "defs": [
+        "controllers/commerce/package.py:232",
+        "routers/addresses.py:117",
+        "services/commerce/customer_router_service.py:123"
+      ]
+    },
+    {
+      "symbol": "delete_wishlist_item",
+      "defs": []
+    },
+    {
+      "symbol": "set_default_address",
+      "defs": [
+        "controllers/commerce/package.py:248",
+        "routers/addresses.py:124",
+        "services/commerce/customer_router_service.py:131"
+      ]
+    },
+    {
+      "symbol": "soft_delete_review",
+      "defs": []
+    },
+    {
+      "symbol": "unset_other_default_addresses",
+      "defs": []
+    },
+    {
+      "symbol": "update_address",
+      "defs": [
+        "controllers/commerce/package.py:209",
+        "routers/addresses.py:105",
+        "services/commerce/customer_router_service.py:107"
+      ]
+    },
+    {
+      "symbol": "update_review",
+      "defs": [
+        "controllers/commerce/package.py:146"
+      ]
+    }
+  ],
+  "services.commission_write_service": [
+    {
+      "symbol": "create_commission_agreement",
+      "defs": []
+    },
+    {
+      "symbol": "create_product_commission_override",
+      "defs": []
+    },
+    {
+      "symbol": "delete_commission_agreement",
+      "defs": []
+    },
+    {
+      "symbol": "delete_product_commission_override",
+      "defs": [
+        "controllers/commission_controller.py:312",
+        "routers/commission.py:279"
+      ]
+    },
+    {
+      "symbol": "update_commission_badge_tier",
+      "defs": []
+    },
+    {
+      "symbol": "update_commission_category_rate",
+      "defs": []
+    },
+    {
+      "symbol": "update_commission_global_config",
+      "defs": []
+    },
+    {
+      "symbol": "update_commission_ledger_entry",
+      "defs": []
+    },
+    {
+      "symbol": "update_product_commission_override",
+      "defs": []
+    }
+  ],
+  "services.communication_write_service": [
+    {
+      "symbol": "create_chat_thread",
+      "defs": [
+        "controllers/comm_controller.py:37",
+        "controllers/comms/comm_controller.py:44",
+        "services/comms/communication_write_service.py:102"
+      ]
+    },
+    {
+      "symbol": "create_incident_room",
+      "defs": [
+        "controllers/comm_controller.py:61",
+        "controllers/comms/comm_controller.py:68",
+        "services/comms/communication_write_service.py:120"
+      ]
+    },
+    {
+      "symbol": "create_video_room",
+      "defs": [
+        "controllers/comm_controller.py:19",
+        "controllers/comms/comm_controller.py:23",
+        "services/comms/communication_write_service.py:78"
+      ]
+    },
+    {
+      "symbol": "send_masked_message",
+      "defs": [
+        "controllers/comm_controller.py:49",
+        "controllers/comms/comm_controller.py:56",
+        "services/comms/communication_write_service.py:142"
+      ]
+    }
+  ],
+  "services.country_write_service": [
+    {
+      "symbol": "add_country_city",
+      "defs": [
+        "routers/countries.py:586",
+        "services/geography/country_write_service.py:411"
+      ]
+    },
+    {
+      "symbol": "add_country_city_and_commit",
+      "defs": [
+        "services/geography/country_write_service.py:503"
+      ]
+    },
+    {
+      "symbol": "add_country_communication",
+      "defs": [
+        "services/geography/country_write_service.py:450"
+      ]
+    },
+    {
+      "symbol": "add_country_feature_flag",
+      "defs": [
+        "services/geography/country_write_service.py:528"
+      ]
+    },
+    {
+      "symbol": "add_country_staff_assignment",
+      "defs": [
+        "services/geography/country_write_service.py:464"
+      ]
+    },
+    {
+      "symbol": "add_delivery_zone",
+      "defs": [
+        "services/geography/country_write_service.py:438"
+      ]
+    },
+    {
+      "symbol": "add_feature_flag",
+      "defs": [
+        "services/geography/country_write_service.py:446"
+      ]
+    },
+    {
+      "symbol": "add_oman_delivery_zone",
+      "defs": [
+        "services/geography/country_write_service.py:520"
+      ]
+    },
+    {
+      "symbol": "add_supplier_commission",
+      "defs": [
+        "services/geography/country_write_service.py:442"
+      ]
+    },
+    {
+      "symbol": "add_supplier_commission_entry",
+      "defs": [
+        "services/geography/country_write_service.py:524"
+      ]
+    },
+    {
+      "symbol": "add_tax_entry",
+      "defs": [
+        "services/geography/country_write_service.py:510"
+      ]
+    },
+    {
+      "symbol": "add_to_session",
+      "defs": [
+        "services/geography/country_write_service.py:415"
+      ]
+    },
+    {
+      "symbol": "bulk_replace_country_cities",
+      "defs": [
+        "services/geography/country_write_service.py:420"
+      ]
+    },
+    {
+      "symbol": "commit_and_refresh",
+      "defs": [
+        "services/write_helpers.py:24",
+        "services/geography/country_write_service.py:82"
+      ]
+    },
+    {
+      "symbol": "commit_and_refresh_obj",
+      "defs": [
+        "services/geography/country_write_service.py:514"
+      ]
+    },
+    {
+      "symbol": "commit_country_changes",
+      "defs": [
+        "services/geography/country_write_service.py:532"
+      ]
+    },
+    {
+      "symbol": "commit_country_config",
+      "defs": [
+        "services/geography/country_write_service.py:402"
+      ]
+    },
+    {
+      "symbol": "create_country_city",
+      "defs": [
+        "services/geography/country_write_service.py:180"
+      ]
+    },
+    {
+      "symbol": "create_country_communication",
+      "defs": [
+        "services/geography/country_write_service.py:343"
+      ]
+    },
+    {
+      "symbol": "create_country_config_version",
+      "defs": [
+        "services/geography/country_write_service.py:214"
+      ]
+    },
+    {
+      "symbol": "create_country_config_version_and_commit",
+      "defs": [
+        "services/geography/country_write_service.py:471"
+      ]
+    },
+    {
+      "symbol": "create_country_staff_assignment",
+      "defs": [
+        "services/geography/country_write_service.py:376"
+      ]
+    },
+    {
+      "symbol": "create_delivery_zone",
+      "defs": [
+        "services/geography/country_write_service.py:246"
+      ]
+    },
+    {
+      "symbol": "create_rollback_version",
+      "defs": [
+        "services/geography/country_write_service.py:536"
+      ]
+    },
+    {
+      "symbol": "create_supplier_country_commission",
+      "defs": [
+        "services/geography/country_write_service.py:279"
+      ]
+    },
+    {
+      "symbol": "deactivate_country_staff_assignment",
+      "defs": [
+        "services/geography/country_write_service.py:396"
+      ]
+    },
+    {
+      "symbol": "delete_country_cities_by_country",
+      "defs": [
+        "services/geography/country_write_service.py:428"
+      ]
+    },
+    {
+      "symbol": "mark_communication_read",
+      "defs": [
+        "controllers/country_controller.py:1598",
+        "controllers/geography/country_controller.py:1539",
+        "routers/countries.py:709",
+        "routers/country_admin.py:162",
+        "services/geography/country_write_service.py:369"
+      ]
+    },
+    {
+      "symbol": "mark_communication_read_at",
+      "defs": [
+        "services/geography/country_write_service.py:457"
+      ]
+    },
+    {
+      "symbol": "record_admin_change",
+      "defs": [
+        "controllers/country_controller.py:170",
+        "services/geography/country_write_service.py:36"
+      ]
+    },
+    {
+      "symbol": "refresh",
+      "defs": [
+        "routers/auth.py:227",
+        "services/geography/country_write_service.py:86"
+      ]
+    },
+    {
+      "symbol": "refresh_country_config",
+      "defs": [
+        "services/geography/country_write_service.py:406"
+      ]
+    },
+    {
+      "symbol": "update_country_config",
+      "defs": [
+        "services/geography/country_write_service.py:99"
+      ]
+    },
+    {
+      "symbol": "update_country_config_json",
+      "defs": [
+        "services/geography/country_write_service.py:433"
+      ]
+    },
+    {
+      "symbol": "update_country_config_version_status",
+      "defs": [
+        "services/geography/country_write_service.py:495"
+      ]
+    }
+  ],
+  "services.disputes_write_service": [
+    {
+      "symbol": "bulk_update_disputes",
+      "defs": []
+    },
+    {
+      "symbol": "create_dispute_notification",
+      "defs": []
+    },
+    {
+      "symbol": "create_dispute_notification_for_update",
+      "defs": []
+    },
+    {
+      "symbol": "create_supplier_dispute",
+      "defs": [
+        "controllers/disputes_controller.py:149",
+        "routers/supplier.py:223"
+      ]
+    },
+    {
+      "symbol": "create_supplier_notification_preference",
+      "defs": []
+    },
+    {
+      "symbol": "update_supplier_dispute",
+      "defs": []
+    },
+    {
+      "symbol": "update_supplier_notification_preference",
+      "defs": []
+    }
+  ],
+  "services.employee_write_service": [
+    {
+      "symbol": "approve_work_log",
+      "defs": [
+        "controllers/employees_controller.py:260",
+        "routers/employees.py:409"
+      ]
+    },
+    {
+      "symbol": "create_dynamic_qr_session",
+      "defs": []
+    },
+    {
+      "symbol": "create_employee",
+      "defs": [
+        "controllers/employees_controller.py:108",
+        "routers/employees.py:229"
+      ]
+    },
+    {
+      "symbol": "create_employee_attendance",
+      "defs": []
+    },
+    {
+      "symbol": "create_employee_document",
+      "defs": [
+        "controllers/employees_controller.py:149",
+        "routers/employees.py:271"
+      ]
+    },
+    {
+      "symbol": "create_employee_relation",
+      "defs": [
+        "controllers/employees_controller.py:229"
+      ]
+    },
+    {
+      "symbol": "create_employee_role",
+      "defs": [
+        "controllers/employees_controller.py:293",
+        "routers/employees.py:450"
+      ]
+    },
+    {
+      "symbol": "create_employee_work_log",
+      "defs": []
+    },
+    {
+      "symbol": "create_leave_request",
+      "defs": [
+        "controllers/employees_controller.py:300",
+        "routers/employees.py:500"
+      ]
+    },
+    {
+      "symbol": "create_office",
+      "defs": [
+        "controllers/employees_controller.py:53",
+        "routers/employees.py:178"
+      ]
+    },
+    {
+      "symbol": "create_revoked_token",
+      "defs": []
+    },
+    {
+      "symbol": "create_shift_roster",
+      "defs": [
+        "controllers/employees_controller.py:305",
+        "routers/employees.py:533",
+        "services/shift_roster_service.py:13"
+      ]
+    },
+    {
+      "symbol": "delete_employee",
+      "defs": [
+        "controllers/employees_controller.py:137",
+        "routers/employees.py:478"
+      ]
+    },
+    {
+      "symbol": "delete_employee_relation",
+      "defs": []
+    },
+    {
+      "symbol": "delete_office",
+      "defs": [
+        "controllers/employees_controller.py:66",
+        "routers/employees.py:201"
+      ]
+    },
+    {
+      "symbol": "update_dynamic_qr_session",
+      "defs": []
+    },
+    {
+      "symbol": "update_employee",
+      "defs": [
+        "controllers/employees_controller.py:123",
+        "routers/employees.py:466"
+      ]
+    },
+    {
+      "symbol": "update_employee_attendance",
+      "defs": []
+    },
+    {
+      "symbol": "update_employee_document",
+      "defs": []
+    },
+    {
+      "symbol": "update_office",
+      "defs": [
+        "controllers/employees_controller.py:58",
+        "routers/employees.py:189"
+      ]
+    },
+    {
+      "symbol": "update_qr_sessions_expiry",
+      "defs": []
+    }
+  ],
+  "services.hr_write_service": [
+    {
+      "symbol": "create_coi_report",
+      "defs": [
+        "controllers/hr_controller.py:82"
+      ]
+    },
+    {
+      "symbol": "create_disciplinary_case",
+      "defs": [
+        "controllers/hr_controller.py:136"
+      ]
+    },
+    {
+      "symbol": "create_employee_address",
+      "defs": []
+    },
+    {
+      "symbol": "create_employee_dependent",
+      "defs": []
+    },
+    {
+      "symbol": "create_offboarding_case",
+      "defs": [
+        "controllers/hr_controller.py:160"
+      ]
+    },
+    {
+      "symbol": "upsert_employee_risk_score",
+      "defs": []
+    }
+  ],
+  "services.iam_write_service": [
+    {
+      "symbol": "create_employee_biometric",
+      "defs": []
+    },
+    {
+      "symbol": "create_geo_fence_log",
+      "defs": []
+    },
+    {
+      "symbol": "create_physical_id_card",
+      "defs": []
+    },
+    {
+      "symbol": "update_employee_biometric",
+      "defs": []
+    },
+    {
+      "symbol": "update_physical_id_card",
+      "defs": []
+    }
+  ],
+  "services.invoice_write_service": [
+    {
+      "symbol": "create_invoice_with_items",
+      "defs": []
+    },
+    {
+      "symbol": "update_invoice",
+      "defs": []
+    }
+  ],
+  "services.logistics_partner_write_service": [
+    {
+      "symbol": "create_city_distance_matrix",
+      "defs": []
+    },
+    {
+      "symbol": "create_coding_remittance_receipt",
+      "defs": []
+    },
+    {
+      "symbol": "create_logistics_partner",
+      "defs": [
+        "services/auth_write_service.py:290"
+      ]
+    },
+    {
+      "symbol": "create_logistics_partner_bank_account",
+      "defs": []
+    },
+    {
+      "symbol": "create_logistics_partner_document",
+      "defs": []
+    },
+    {
+      "symbol": "create_logistics_partner_payout",
+      "defs": []
+    },
+    {
+      "symbol": "create_logistics_partner_service_area",
+      "defs": []
+    },
+    {
+      "symbol": "create_notification",
+      "defs": [
+        "services/comms/tickets_write_service.py:124"
+      ]
+    },
+    {
+      "symbol": "create_pricing_profile",
+      "defs": []
+    },
+    {
+      "symbol": "create_pricing_rule",
+      "defs": []
+    },
+    {
+      "symbol": "create_settlement",
+      "defs": []
+    },
+    {
+      "symbol": "create_shipment",
+      "defs": [
+        "controllers/logistics_controller.py:577",
+        "routers/imports.py:97",
+        "routers/logistics.py:109",
+        "routers/shipments.py:31"
+      ]
+    },
+    {
+      "symbol": "create_shipment_confirmation",
+      "defs": []
+    },
+    {
+      "symbol": "create_shipment_event",
+      "defs": []
+    },
+    {
+      "symbol": "create_transaction_ledger_entry",
+      "defs": []
+    },
+    {
+      "symbol": "create_vehicle_rule",
+      "defs": []
+    },
+    {
+      "symbol": "delete_category_pricing_rule",
+      "defs": []
+    },
+    {
+      "symbol": "delete_city_distance_matrix",
+      "defs": []
+    },
+    {
+      "symbol": "delete_logistics_partner",
+      "defs": []
+    },
+    {
+      "symbol": "delete_logistics_partner_bank_account",
+      "defs": []
+    },
+    {
+      "symbol": "delete_logistics_partner_document",
+      "defs": []
+    },
+    {
+      "symbol": "delete_logistics_partner_payout",
+      "defs": []
+    },
+    {
+      "symbol": "delete_logistics_partner_service_area",
+      "defs": []
+    },
+    {
+      "symbol": "delete_notification",
+      "defs": [
+        "services/comms/communication_write_service.py:26"
+      ]
+    },
+    {
+      "symbol": "delete_pricing_profile",
+      "defs": []
+    },
+    {
+      "symbol": "delete_pricing_rule",
+      "defs": []
+    },
+    {
+      "symbol": "delete_shipment",
+      "defs": []
+    },
+    {
+      "symbol": "delete_vehicle_rule",
+      "defs": []
+    },
+    {
+      "symbol": "update_city_distance_matrix",
+      "defs": []
+    },
+    {
+      "symbol": "update_logistics_partner",
+      "defs": []
+    },
+    {
+      "symbol": "update_logistics_partner_bank_account",
+      "defs": []
+    },
+    {
+      "symbol": "update_logistics_partner_document",
+      "defs": []
+    },
+    {
+      "symbol": "update_logistics_partner_payout",
+      "defs": []
+    },
+    {
+      "symbol": "update_logistics_partner_service_area",
+      "defs": []
+    },
+    {
+      "symbol": "update_notification",
+      "defs": []
+    },
+    {
+      "symbol": "update_order",
+      "defs": []
+    },
+    {
+      "symbol": "update_order_logistics_allocation",
+      "defs": []
+    },
+    {
+      "symbol": "update_pricing_profile",
+      "defs": []
+    },
+    {
+      "symbol": "update_pricing_rule",
+      "defs": []
+    },
+    {
+      "symbol": "update_settlement",
+      "defs": []
+    },
+    {
+      "symbol": "update_shipment",
+      "defs": [
+        "routers/shipments.py:37"
+      ]
+    },
+    {
+      "symbol": "update_transaction_ledger",
+      "defs": []
+    },
+    {
+      "symbol": "update_vehicle_rule",
+      "defs": []
+    }
+  ],
+  "services.logistics_write_service": [
+    {
+      "symbol": "add_and_flush",
+      "defs": [
+        "services/write_helpers.py:16"
+      ]
+    },
+    {
+      "symbol": "commit_only",
+      "defs": [
+        "services/write_helpers.py:32"
+      ]
+    },
+    {
+      "symbol": "create_shipping_carrier",
+      "defs": []
+    },
+    {
+      "symbol": "create_shipping_zone",
+      "defs": []
+    },
+    {
+      "symbol": "delete_shipping_zone",
+      "defs": [
+        "controllers/logistics_controller.py:490",
+        "routers/logistics.py:86"
+      ]
+    },
+    {
+      "symbol": "refresh_model",
+      "defs": []
+    },
+    {
+      "symbol": "update_shipment",
+      "defs": [
+        "routers/shipments.py:37"
+      ]
+    },
+    {
+      "symbol": "update_shipment_event",
+      "defs": []
+    },
+    {
+      "symbol": "update_shipping_carrier",
+      "defs": []
+    },
+    {
+      "symbol": "update_shipping_zone",
+      "defs": [
+        "routers/logistics.py:75"
+      ]
+    }
+  ],
+  "services.misc_write_service": [
+    {
+      "symbol": "create_cash_account",
+      "defs": [
+        "services/treasury/cash_write_service.py:12"
+      ]
+    },
+    {
+      "symbol": "create_cash_transaction",
+      "defs": [
+        "services/treasury/cash_write_service.py:33"
+      ]
+    },
+    {
+      "symbol": "hard_delete_record",
+      "defs": []
+    },
+    {
+      "symbol": "reset_demo_data",
+      "defs": []
+    },
+    {
+      "symbol": "restore_record",
+      "defs": []
+    },
+    {
+      "symbol": "soft_delete_record",
+      "defs": []
+    }
+  ],
+  "services.payments_write_service": [
+    {
+      "symbol": "add_notification",
+      "defs": []
+    },
+    {
+      "symbol": "add_processed_webhook_event",
+      "defs": []
+    },
+    {
+      "symbol": "commit_only",
+      "defs": [
+        "services/write_helpers.py:32"
+      ]
+    },
+    {
+      "symbol": "create_notification",
+      "defs": [
+        "services/comms/tickets_write_service.py:124"
+      ]
+    },
+    {
+      "symbol": "create_or_update_gateway_connection",
+      "defs": []
+    },
+    {
+      "symbol": "create_payment",
+      "defs": []
+    },
+    {
+      "symbol": "create_payment_provider_config",
+      "defs": []
+    },
+    {
+      "symbol": "flush_model",
+      "defs": []
+    },
+    {
+      "symbol": "update_gateway_connection",
+      "defs": []
+    },
+    {
+      "symbol": "update_payment",
+      "defs": []
+    },
+    {
+      "symbol": "update_payment_provider_config",
+      "defs": []
+    },
+    {
+      "symbol": "update_payment_provider_config_no_refresh",
+      "defs": []
+    }
+  ],
+  "services.products_write_service": [
+    {
+      "symbol": "archive_product_reviews",
+      "defs": []
+    },
+    {
+      "symbol": "clear_product_carts",
+      "defs": []
+    },
+    {
+      "symbol": "clear_product_wishlists",
+      "defs": []
+    },
+    {
+      "symbol": "create_category",
+      "defs": [
+        "controllers/commerce/package.py:323",
+        "routers/admin_categories.py:43",
+        "routers/categories.py:47",
+        "routers/permissions.py:70",
+        "services/permission_service.py:51"
+      ]
+    },
+    {
+      "symbol": "create_flash_sale",
+      "defs": [
+        "controllers/flash_sale_controller.py:85",
+        "routers/admin_promotions.py:176",
+        "routers/flash_sales.py:31"
+      ]
+    },
+    {
+      "symbol": "create_product",
+      "defs": [
+        "controllers/products_controller.py:702",
+        "routers/products.py:136",
+        "routers/supplier.py:446"
+      ]
+    },
+    {
+      "symbol": "create_product_verification",
+      "defs": []
+    },
+    {
+      "symbol": "delete_category",
+      "defs": [
+        "routers/admin_categories.py:134",
+        "routers/categories.py:123",
+        "routers/permissions.py:94",
+        "services/permission_service.py:81"
+      ]
+    },
+    {
+      "symbol": "delete_flash_sale",
+      "defs": [
+        "controllers/flash_sale_controller.py:151"
+      ]
+    },
+    {
+      "symbol": "reorder_categories",
+      "defs": [
+        "routers/admin_categories.py:103"
+      ]
+    },
+    {
+      "symbol": "update_category",
+      "defs": [
+        "controllers/commerce/package.py:333",
+        "routers/admin_categories.py:63",
+        "routers/categories.py:69",
+        "routers/permissions.py:80",
+        "services/permission_service.py:68"
+      ]
+    },
+    {
+      "symbol": "update_flash_sale",
+      "defs": [
+        "controllers/flash_sale_controller.py:116",
+        "routers/admin_promotions.py:205"
+      ]
+    },
+    {
+      "symbol": "update_product",
+      "defs": [
+        "controllers/products_controller.py:733",
+        "routers/products.py:195",
+        "routers/supplier.py:1043"
+      ]
+    },
+    {
+      "symbol": "update_product_rating",
+      "defs": []
+    },
+    {
+      "symbol": "update_product_verification",
+      "defs": []
+    }
+  ],
+  "services.promotion_engine_service": [
+    {
+      "symbol": "ensure_promotion_tables",
+      "defs": []
+    },
+    {
+      "symbol": "get_or_create_config",
+      "defs": []
+    }
+  ],
+  "services.users_write_service": [
+    {
+      "symbol": "_build_user_delete_blocker",
+      "defs": []
+    },
+    {
+      "symbol": "_delete_order_records",
+      "defs": []
+    },
+    {
+      "symbol": "_hard_delete_user_record",
+      "defs": []
+    },
+    {
+      "symbol": "create_chatbot_query_event",
+      "defs": []
+    },
+    {
+      "symbol": "create_staff_user",
+      "defs": []
+    },
+    {
+      "symbol": "delete_bank_account_record",
+      "defs": [
+        "controllers/admin/users.py:937"
+      ]
+    },
+    {
+      "symbol": "force_reset_password",
+      "defs": []
+    },
+    {
+      "symbol": "toggle_user_active",
+      "defs": [
+        "controllers/admin/users.py:233"
+      ]
+    },
+    {
+      "symbol": "update_bank_account_verification",
+      "defs": []
+    },
+    {
+      "symbol": "update_staff_user",
+      "defs": []
+    },
+    {
+      "symbol": "update_user_browsing_history",
+      "defs": []
+    },
+    {
+      "symbol": "update_user_role",
+      "defs": [
+        "controllers/admin/users.py:205"
+      ]
+    }
+  ]
+}

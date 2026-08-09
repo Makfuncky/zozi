@@ -1,0 +1,46 @@
+﻿python : C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\pytest_asyncio\plugin.py:208: 
+PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+At line:4 char:55
++ ... i\backend"; python -m pytest "D:\Projects\10- E-COMMERCE WEBSITE\zozi ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\user\A...cope" is unset.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of 
+pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop 
+scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", 
+"class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+...                                                                      [100%]
+============================== warnings summary ===============================
+models\catalog\products.py:254
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\catalog\products.py:254: SADeprecationWarning: User-placed attribute Product.variants on Mapper[Product(products)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    Product.variants = relationship(
+
+models\communication\suppliers.py:79
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\communication\suppliers.py:79: SADeprecationWarning: User-placed attribute SupplierProfile.documents on Mapper[SupplierProfile(supplier_profiles)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    SupplierProfile.documents = relationship("SupplierDocument", back_populates="supplier", cascade="all, delete-orphan")
+
+models\communication\marketing.py:43
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\communication\marketing.py:43: SADeprecationWarning: User-placed attribute FlashSale.items on Mapper[FlashSale(flash_sales)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    FlashSale.items = relationship("FlashSaleItem", back_populates="flash_sale", cascade="all, delete-orphan")
+
+models\communication\marketing.py:118
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\communication\marketing.py:118: SADeprecationWarning: User-placed attribute EmailCampaign.recipients on Mapper[EmailCampaign(email_campaigns)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    EmailCampaign.recipients = relationship("CampaignRecipient", back_populates="campaign", cascade="all, delete-orphan")
+
+models\communication\communication.py:145
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\communication\communication.py:145: SADeprecationWarning: User-placed attribute ProxyChannel.sessions on Mapper[ProxyChannel(proxy_channels)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    ProxyChannel.sessions = relationship("ProxySession", back_populates="channel", cascade="all, delete-orphan")
+
+models\communication\communication.py:146
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\communication\communication.py:146: SADeprecationWarning: User-placed attribute ProxyChannel.call_logs on Mapper[ProxyChannel(proxy_channels)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    ProxyChannel.call_logs = relationship("ProxyCallLog", back_populates="channel", cascade="all, delete-orphan")
+
+models\communication\communication.py:147
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\communication\communication.py:147: SADeprecationWarning: User-placed attribute ProxySession.messages on Mapper[ProxySession(proxy_sessions)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    ProxySession.messages = relationship("ProxyMessage", back_populates="session", cascade="all, delete-orphan")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+3 passed, 7 warnings in 1.30s

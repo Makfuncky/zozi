@@ -1,0 +1,105 @@
+                   graph: ModuleGraph) -> None:
+    """
+    CA3: Detect surface-inappropriate operations.
+    Checks function names in router/controller files against
+    surface-exclusive and surface-forbidden operation lists.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
+    reported = 0
+
+    for layer_name in ("routers", "controllers"):
+        layer_dir = backend / layer_name
+        if not layer_dir.exists():
+            continue
+
+        for f in iter_text_files(layer_dir, eff):
+            if f.suffix.lower() != ".py":
+                continue
+
+            tree = parse_safe(f)
+            if tree is None:
+                continue
+
+            # Determine surface
+            try:
+                parts = [p.lower() for p in f.relative_to(layer_dir).parts]
+            except ValueError:
+                continue
+
+            surface = None
+            if parts and parts[0] in surfaces:
+                surface = parts[0]
+            else:
+                stem_tokens = set(re.split(r"[_\-]+", f.stem.lower()))
+                for s in surfaces:
+                    if s in stem_tokens:
+                        surface = s
+                        break
+
+            if not surface:
+                continue
+
+            forbidden_ops = SURFACE_FORBIDDEN_OPERATIONS.get(surface, set())
+            if not forbidden_ops:
+                continue
+
+            # Check function names
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    func_tokens = set(re.split(r"[_\-]+", node.name.lower()))
+
+                    violations = func_tokens & forbidden_ops
+                    if violations:
+                        rep.add(
+                            RED, "CA3", layer_name,
+                            rel(f, repo),
+                            f"surface-inappropriate operation '{node.name}' "
+                            f"in {surface} {layer_name} "
+                            f"(forbidden: {', '.join(sorted(violations))})",
+                            intended=f"move '{node.name}' to the appropriate "
+                                     f"surface (likely admin) or extract to "
+                                     f"a shared service",
+                            line=node.lineno,
+                        )
+                        reported += 1
+
+            if reported >= 150:
+                return
+
+
+# ============================================================================
+# SECTION 26: MIDDLEWARE PIPELINE VALIDATION
+# ============================================================================
+"""
+Validates middleware structure and pipeline order.
+Expected layers:
+  1. Foundation (GZip, CORS, IP, RequestID, ApiVersion)
+  2. Security (SecurityHeaders, ImpossibleTravel, CSRF)
+  3. Rate Limit
+  4. Geo/Country
+  5. Observability (RequestLogging)
+  6. Compliance (PCI-DSS, prod only)
+"""
+
+EXPECTED_MIDDLEWARE_ORDER = [
+    # (category, expected_file_patterns)
+    ("foundation", ["gzip", "cors", "ip_extraction", "request_id", "api_version"]),
+    ("security", ["security_header", "impossible_travel", "csrf"]),
+    ("rate_limit", ["rate_limit"]),
+    ("geo", ["country_context", "geo"]),
+    ("observability", ["request_logging", "logging"]),
+    ("compliance", ["pci", "compliance"]),
+]
+
+REQUIRED_MIDDLEWARE = [
+    "cors",
+    "rate_limit",
+    "request_id",
+]
+
+
+def check_middleware_pipeline(repo: Path, rep: Report, eff: dic

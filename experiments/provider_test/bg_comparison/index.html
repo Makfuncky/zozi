@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BG Strategy Comparison — Zozi</title>
+<style>
+    body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+           margin: 20px; background: #f8f9fa; color: #333; }
+    h1 { color: #1a1a2e; }
+    h2 { color: #16213e; border-bottom: 2px solid #0f3460; padding-bottom: 4px; margin-top: 30px; }
+    .summary { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13px; }
+    th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #dee2e6; }
+    th { background: #1a1a2e; color: #fff; position: sticky; top: 0; }
+    tr:hover { background: #f0f4ff; }
+    .error td { background: #fff5f5; color: #c53030; }
+    .best { background: #f0fff4 !important; font-weight: bold; }
+    .winner { width: auto; }
+    .grid-section { margin: 20px 0; background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .grid-section img { cursor: zoom-in; }
+    .winner h3 { margin-top: 15px; color: #2d3748; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+    .badge-ok { background: #c6f6d5; color: #22543d; }
+    .badge-warn { background: #fefcbf; color: #744210; }
+    .badge-bad { background: #fed7d7; color: #9b2c2c; }
+    @media (max-width: 768px) { table { font-size: 11px; } th,td { padding: 4px; } }
+</style>
+</head>
+<body>
+<h1>🧪 BG Strategy Comparison Report</h1>
+<p class="summary">
+    Generated: 2026-07-27 02:57:00<br>
+    <strong>6 strategies</strong> × <strong>3 categories</strong> = <strong>72 total tests</strong><br>
+    Max dimension: 1024px · Heavy models: <span class="badge badge-ok">SKIPPED</span><br>
+    Errors: <span class="badge badge-ok">72 OK</span>
+    <span class="badge badge-bad">0 FAIL</span>
+</p>
+
+<h2>🏆 Per-Category Winners</h2>
+<h3>🏆 Clothing</h3>
+        <table class="winner"><tr><th>Rank</th><th>Strategy</th><th>Composite Score</th></tr>
+<tr class='best'><td>1</td><td>br_13 · Lite Variant</td><td>0.75</td></tr>
+<tr><td>2</td><td>br_08 · Production</td><td>0.38</td></tr>
+<tr><td>3</td><td>br_11 · Ultimate Gap</td><td>0.28</td></tr>
+<tr><td>4</td><td>br_06 · Precision Geo</td><td>-0.43</td></tr>
+<tr><td>5</td><td>br_05 · Clean Edge</td><td>-0.44</td></tr>
+<tr><td>6</td><td>br_12 · Marketing</td><td>-0.54</td></tr>
+</table>
+<h3>🏆 Electronics</h3>
+        <table class="winner"><tr><th>Rank</th><th>Strategy</th><th>Composite Score</th></tr>
+<tr class='best'><td>1</td><td>br_13 · Lite Variant</td><td>0.85</td></tr>
+<tr><td>2</td><td>br_08 · Production</td><td>0.46</td></tr>
+<tr><td>3</td><td>br_11 · Ultimate Gap</td><td>-0.07</td></tr>
+<tr><td>4</td><td>br_06 · Precision Geo</td><td>-0.27</td></tr>
+<tr><td>5</td><td>br_05 · Clean Edge</td><td>-0.41</td></tr>
+<tr><td>6</td><td>br_12 · Marketing</td><td>-0.56</td></tr>
+</table>
+<h3>🏆 Beauty & Personal Care</h3>
+        <table class="winner"><tr><th>Rank</th><th>Strategy</th><th>Composite Score</th></tr>
+<tr class='best'><td>1</td><td>br_13 · Lite Variant</td><td>0.81</td></tr>
+<tr><td>2</td><td>br_08 · Production</td><td>0.57</td></tr>
+<tr><td>3</td><td>br_11 · Ultimate Gap</td><td>-0.17</td></tr>
+<tr><td>4</td><td>br_06 · Precision Geo</td><td>-0.27</td></tr>
+<tr><td>5</td><td>br_05 · Clean Edge</td><td>-0.31</td></tr>
+<tr><td>6</td><td>br_12 · Marketing</td><td>-0.63</td></tr>
+</table>
+
+
+<h2>📊 Detailed Metrics Table</h2>
+<div style="overflow-x:auto">
+<table>
+<thead><tr>
+    <th>Category</th><th>Image</th><th>Strategy</th>
+    <th>⏱ Time</th><th>📐 Coverage</th><th>🎯 Alpha Conf</th>
+    <th>🔪 Edge Clarity</th><th>✨ Edge Smooth</th>
+    <th>🧹 Artifacts</th><th>📏 Main Ratio</th>
+</tr></thead>
+<tbody>
+<tr>
+            <td>Clothing</td>
+            <td title="387x516">image_05</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>4.3s</td>
+            <td>23.6%</td>
+            <td>0.87</td>
+            <td>14.1</td>
+            <td>53.1</td>
+            <td>✅ 0</td>
+            <td>0.87</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="387x516">image_05</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.3s</td>
+            <td>23.6%</td>
+            <td>0.87</td>
+            <td>47.0</td>
+            <td>46.2</td>
+            <td>✅ 0</td>
+            <td>0.87</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="387x516">image_05</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.4s</td>
+            <td>20.3%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>✅ 0</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="387x516">image_05</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.3s</td>
+            <td>21.0%</td>
+            <td>0.94</td>
+            <td>3450.4</td>
+            <td>213.1</td>
+            <td>✅ 0</td>
+            <td>0.94</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="387x516">image_05</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.2s</td>
+            <td>3.1%</td>
+            <td>0.88</td>
+            <td>2622.9</td>
+            <td>178.1</td>
+            <td>⚠️ 1</td>
+            <td>0.85</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="387x516">image_05</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>13.7s</td>
+            <td>20.3%</td>
+            <td>0.96</td>
+            <td>3859.2</td>
+            <td>213.5</td>
+            <td>✅ 0</td>
+            <td>0.97</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="720x720">image_07</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.5s</td>
+            <td>28.2%</td>
+            <td>0.76</td>
+            <td>10.5</td>
+            <td>71.1</td>
+            <td>✅ 0</td>
+            <td>0.79</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="720x720">image_07</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.5s</td>
+            <td>28.4%</td>
+            <td>0.76</td>
+            <td>30.5</td>
+            <td>52.6</td>
+            <td>⚠️ 2</td>
+            <td>0.77</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="720x720">image_07</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.6s</td>
+            <td>6.9%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 417</td>
+            <td>0.91</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="720x720">image_07</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.6s</td>
+            <td>23.4%</td>
+            <td>0.86</td>
+            <td>327.6</td>
+            <td>190.3</td>
+            <td>✅ 0</td>
+            <td>0.90</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="720x720">image_07</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.3s</td>
+            <td>4.1%</td>
+            <td>0.85</td>
+            <td>2813.7</td>
+            <td>203.8</td>
+            <td>⚠️🔴 8</td>
+            <td>0.38</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="720x720">image_07</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.1s</td>
+            <td>16.1%</td>
+            <td>0.89</td>
+            <td>2462.8</td>
+            <td>172.5</td>
+            <td>✅ 0</td>
+            <td>0.49</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="1000x1000">image_08</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.8s</td>
+            <td>34.8%</td>
+            <td>0.82</td>
+            <td>17.7</td>
+            <td>60.7</td>
+            <td>⚠️ 2</td>
+            <td>0.50</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="1000x1000">image_08</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.9s</td>
+            <td>35.0%</td>
+            <td>0.82</td>
+            <td>47.9</td>
+            <td>42.1</td>
+            <td>⚠️ 3</td>
+            <td>0.51</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="1000x1000">image_08</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.8s</td>
+            <td>11.7%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 482</td>
+            <td>0.36</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="1000x1000">image_08</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.8s</td>
+            <td>30.9%</td>
+            <td>0.87</td>
+            <td>774.8</td>
+            <td>236.0</td>
+            <td>⚠️ 2</td>
+            <td>0.54</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="1000x1000">image_08</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.7s</td>
+            <td>10.6%</td>
+            <td>0.90</td>
+            <td>2568.1</td>
+            <td>196.3</td>
+            <td>⚠️🔴 20</td>
+            <td>0.38</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="1000x1000">image_08</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.6s</td>
+            <td>32.2%</td>
+            <td>0.94</td>
+            <td>2224.9</td>
+            <td>179.1</td>
+            <td>⚠️ 2</td>
+            <td>0.52</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="768x1023">image_12</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>3.0s</td>
+            <td>69.0%</td>
+            <td>0.94</td>
+            <td>15.1</td>
+            <td>58.1</td>
+            <td>✅ 0</td>
+            <td>0.94</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="768x1023">image_12</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.9s</td>
+            <td>69.4%</td>
+            <td>0.94</td>
+            <td>43.3</td>
+            <td>41.5</td>
+            <td>✅ 0</td>
+            <td>0.95</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="768x1023">image_12</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.9s</td>
+            <td>64.7%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 24</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="768x1023">image_12</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.8s</td>
+            <td>65.5%</td>
+            <td>0.98</td>
+            <td>1345.7</td>
+            <td>242.3</td>
+            <td>✅ 0</td>
+            <td>0.98</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="768x1023">image_12</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.5s</td>
+            <td>2.5%</td>
+            <td>0.77</td>
+            <td>2731.6</td>
+            <td>204.1</td>
+            <td>⚠️🔴 20</td>
+            <td>0.34</td>
+        </tr>
+<tr>
+            <td>Clothing</td>
+            <td title="768x1023">image_12</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.5s</td>
+            <td>65.2%</td>
+            <td>0.98</td>
+            <td>1635.6</td>
+            <td>176.9</td>
+            <td>✅ 0</td>
+            <td>0.98</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="800x800">image_04</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.7s</td>
+            <td>31.8%</td>
+            <td>0.93</td>
+            <td>11.6</td>
+            <td>54.3</td>
+            <td>✅ 0</td>
+            <td>0.93</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="800x800">image_04</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.7s</td>
+            <td>31.8%</td>
+            <td>0.93</td>
+            <td>41.4</td>
+            <td>38.1</td>
+            <td>✅ 0</td>
+            <td>0.93</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="800x800">image_04</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.9s</td>
+            <td>24.3%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 54</td>
+            <td>0.99</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="800x800">image_04</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.7s</td>
+            <td>30.4%</td>
+            <td>0.96</td>
+            <td>313.3</td>
+            <td>166.9</td>
+            <td>✅ 0</td>
+            <td>0.96</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="800x800">image_04</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.8s</td>
+            <td>8.6%</td>
+            <td>0.97</td>
+            <td>2877.5</td>
+            <td>162.0</td>
+            <td>✅ 0</td>
+            <td>0.97</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="800x800">image_04</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.6s</td>
+            <td>31.8%</td>
+            <td>0.97</td>
+            <td>1438.8</td>
+            <td>196.2</td>
+            <td>⚠️ 1</td>
+            <td>0.93</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="725x1024">image_15</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.7s</td>
+            <td>5.2%</td>
+            <td>0.44</td>
+            <td>16.5</td>
+            <td>53.2</td>
+            <td>✅ 0</td>
+            <td>0.43</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="725x1024">image_15</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.8s</td>
+            <td>5.6%</td>
+            <td>0.47</td>
+            <td>64.0</td>
+            <td>37.1</td>
+            <td>✅ 0</td>
+            <td>0.47</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="725x1024">image_15</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.7s</td>
+            <td>2.3%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>✅ 0</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="725x1024">image_15</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.7s</td>
+            <td>2.4%</td>
+            <td>0.62</td>
+            <td>2697.8</td>
+            <td>195.4</td>
+            <td>⚠️🔴 13</td>
+            <td>0.28</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="725x1024">image_15</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.8s</td>
+            <td>0.0%</td>
+            <td>0.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>✅ 0</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="725x1024">image_15</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.5s</td>
+            <td>2.3%</td>
+            <td>0.69</td>
+            <td>3060.8</td>
+            <td>181.7</td>
+            <td>⚠️ 2</td>
+            <td>0.51</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="762x1024">image_17</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.9s</td>
+            <td>12.7%</td>
+            <td>0.71</td>
+            <td>55.4</td>
+            <td>60.4</td>
+            <td>✅ 0</td>
+            <td>0.64</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="762x1024">image_17</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.8s</td>
+            <td>10.0%</td>
+            <td>0.86</td>
+            <td>47.0</td>
+            <td>34.9</td>
+            <td>✅ 0</td>
+            <td>0.81</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="762x1024">image_17</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.9s</td>
+            <td>8.3%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 16</td>
+            <td>0.98</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="762x1024">image_17</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.9s</td>
+            <td>23.6%</td>
+            <td>0.39</td>
+            <td>49.8</td>
+            <td>82.5</td>
+            <td>⚠️🔴 5</td>
+            <td>0.34</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="762x1024">image_17</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.8s</td>
+            <td>2.3%</td>
+            <td>0.89</td>
+            <td>2409.5</td>
+            <td>182.4</td>
+            <td>⚠️ 1</td>
+            <td>0.89</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="762x1024">image_17</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.6s</td>
+            <td>26.1%</td>
+            <td>0.97</td>
+            <td>1523.6</td>
+            <td>184.8</td>
+            <td>⚠️ 1</td>
+            <td>0.93</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="1024x682">image_23</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.7s</td>
+            <td>45.6%</td>
+            <td>0.69</td>
+            <td>14.2</td>
+            <td>58.8</td>
+            <td>⚠️🔴 7</td>
+            <td>0.11</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="1024x682">image_23</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.8s</td>
+            <td>47.0%</td>
+            <td>0.71</td>
+            <td>39.2</td>
+            <td>44.7</td>
+            <td>⚠️ 2</td>
+            <td>0.11</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="1024x682">image_23</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>3.1s</td>
+            <td>30.6%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 58</td>
+            <td>0.19</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="1024x682">image_23</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.8s</td>
+            <td>33.7%</td>
+            <td>0.81</td>
+            <td>1205.7</td>
+            <td>232.3</td>
+            <td>⚠️🔴 25</td>
+            <td>0.14</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="1024x682">image_23</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>5.0s</td>
+            <td>8.5%</td>
+            <td>0.82</td>
+            <td>2576.3</td>
+            <td>198.2</td>
+            <td>⚠️🔴 21</td>
+            <td>0.77</td>
+        </tr>
+<tr>
+            <td>Electronics</td>
+            <td title="1024x682">image_23</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.7s</td>
+            <td>31.7%</td>
+            <td>0.87</td>
+            <td>2426.7</td>
+            <td>208.8</td>
+            <td>⚠️🔴 49</td>
+            <td>0.14</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="768x1024">image_14</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>3.0s</td>
+            <td>9.9%</td>
+            <td>0.57</td>
+            <td>19.2</td>
+            <td>58.7</td>
+            <td>⚠️ 3</td>
+            <td>0.53</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="768x1024">image_14</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.9s</td>
+            <td>9.1%</td>
+            <td>0.62</td>
+            <td>54.5</td>
+            <td>36.1</td>
+            <td>⚠️ 2</td>
+            <td>0.58</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="768x1024">image_14</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.8s</td>
+            <td>5.7%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️ 4</td>
+            <td>0.92</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="768x1024">image_14</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.7s</td>
+            <td>9.6%</td>
+            <td>0.51</td>
+            <td>322.8</td>
+            <td>178.8</td>
+            <td>⚠️ 2</td>
+            <td>0.47</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="768x1024">image_14</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.7s</td>
+            <td>1.1%</td>
+            <td>0.71</td>
+            <td>2735.1</td>
+            <td>201.8</td>
+            <td>⚠️ 3</td>
+            <td>0.61</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="768x1024">image_14</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>15.0s</td>
+            <td>6.1%</td>
+            <td>0.80</td>
+            <td>1186.1</td>
+            <td>219.6</td>
+            <td>⚠️ 1</td>
+            <td>0.80</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="763x1024">image_16</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.8s</td>
+            <td>37.0%</td>
+            <td>0.80</td>
+            <td>11.6</td>
+            <td>53.6</td>
+            <td>⚠️🔴 7</td>
+            <td>0.82</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="763x1024">image_16</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.8s</td>
+            <td>37.1%</td>
+            <td>0.80</td>
+            <td>18.3</td>
+            <td>42.0</td>
+            <td>✅ 0</td>
+            <td>0.82</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="763x1024">image_16</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.9s</td>
+            <td>33.5%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 52</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="763x1024">image_16</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>3.0s</td>
+            <td>35.4%</td>
+            <td>0.79</td>
+            <td>159.9</td>
+            <td>122.3</td>
+            <td>⚠️🔴 42</td>
+            <td>0.81</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="763x1024">image_16</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.7s</td>
+            <td>0.0%</td>
+            <td>0.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>✅ 0</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="763x1024">image_16</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>15.1s</td>
+            <td>23.4%</td>
+            <td>0.95</td>
+            <td>1221.6</td>
+            <td>233.5</td>
+            <td>✅ 0</td>
+            <td>0.89</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="720x720">image_29</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>3.4s</td>
+            <td>36.4%</td>
+            <td>0.87</td>
+            <td>11.1</td>
+            <td>52.9</td>
+            <td>✅ 0</td>
+            <td>0.87</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="720x720">image_29</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.8s</td>
+            <td>36.8%</td>
+            <td>0.87</td>
+            <td>40.8</td>
+            <td>37.6</td>
+            <td>✅ 0</td>
+            <td>0.87</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="720x720">image_29</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>2.6s</td>
+            <td>33.7%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>✅ 0</td>
+            <td>1.00</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="720x720">image_29</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.8s</td>
+            <td>31.9%</td>
+            <td>0.94</td>
+            <td>1243.9</td>
+            <td>216.1</td>
+            <td>✅ 0</td>
+            <td>0.95</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="720x720">image_29</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.5s</td>
+            <td>1.8%</td>
+            <td>0.52</td>
+            <td>1761.6</td>
+            <td>189.2</td>
+            <td>⚠️🔴 16</td>
+            <td>0.30</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="720x720">image_29</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.4s</td>
+            <td>31.7%</td>
+            <td>0.94</td>
+            <td>1362.6</td>
+            <td>211.8</td>
+            <td>⚠️ 3</td>
+            <td>0.94</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="934x1000">image_30</td>
+            <td><strong>br_05 <br> Clean Edge</strong></td>
+            <td>2.9s</td>
+            <td>19.9%</td>
+            <td>0.65</td>
+            <td>27.0</td>
+            <td>57.9</td>
+            <td>⚠️ 1</td>
+            <td>0.70</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="934x1000">image_30</td>
+            <td><strong>br_06 <br> Precision Geo</strong></td>
+            <td>2.9s</td>
+            <td>19.9%</td>
+            <td>0.65</td>
+            <td>31.9</td>
+            <td>46.4</td>
+            <td>⚠️ 1</td>
+            <td>0.70</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="934x1000">image_30</td>
+            <td><strong>br_08 <br> Production</strong></td>
+            <td>3.5s</td>
+            <td>12.2%</td>
+            <td>1.00</td>
+            <td>999.0</td>
+            <td>0.0</td>
+            <td>⚠️🔴 31</td>
+            <td>0.99</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="934x1000">image_30</td>
+            <td><strong>br_11 <br> Ultimate Gap</strong></td>
+            <td>2.8s</td>
+            <td>34.0%</td>
+            <td>0.39</td>
+            <td>53.1</td>
+            <td>85.6</td>
+            <td>⚠️ 1</td>
+            <td>0.39</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="934x1000">image_30</td>
+            <td><strong>br_12 <br> Marketing</strong></td>
+            <td>4.7s</td>
+            <td>8.2%</td>
+            <td>0.90</td>
+            <td>2703.4</td>
+            <td>187.6</td>
+            <td>⚠️🔴 13</td>
+            <td>0.28</td>
+        </tr>
+<tr>
+            <td>Beauty & Personal Care</td>
+            <td title="934x1000">image_30</td>
+            <td><strong>br_13 <br> Lite Variant</strong></td>
+            <td>14.6s</td>
+            <td>55.2%</td>
+            <td>0.97</td>
+            <td>1303.9</td>
+            <td>187.8</td>
+            <td>✅ 0</td>
+            <td>0.98</td>
+        </tr>
+
+</tbody>
+</table>
+</div>
+
+<h2>🖼️ Side-by-Side Grid Comparison</h2>
+<div class="grid-section">
+            <h2>Clothing — <em>Casual Wear (Light)</em></h2>
+            <a href="strategy_grid_Clothing_image_05.png" target="_blank">
+                <img src="strategy_grid_Clothing_image_05.png" alt="Clothing Casual Wear (Light)" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Clothing — <em>Warm-toned Garment</em></h2>
+            <a href="strategy_grid_Clothing_image_07.png" target="_blank">
+                <img src="strategy_grid_Clothing_image_07.png" alt="Clothing Warm-toned Garment" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Clothing — <em>Fashion Product</em></h2>
+            <a href="strategy_grid_Clothing_image_08.png" target="_blank">
+                <img src="strategy_grid_Clothing_image_08.png" alt="Clothing Fashion Product" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Clothing — <em>Textile Close-up</em></h2>
+            <a href="strategy_grid_Clothing_image_12.png" target="_blank">
+                <img src="strategy_grid_Clothing_image_12.png" alt="Clothing Textile Close-up" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Electronics — <em>Gadget (Neutral)</em></h2>
+            <a href="strategy_grid_Electronics_image_04.png" target="_blank">
+                <img src="strategy_grid_Electronics_image_04.png" alt="Electronics Gadget (Neutral)" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Electronics — <em>Dark Device</em></h2>
+            <a href="strategy_grid_Electronics_image_15.png" target="_blank">
+                <img src="strategy_grid_Electronics_image_15.png" alt="Electronics Dark Device" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Electronics — <em>Electronic Component</em></h2>
+            <a href="strategy_grid_Electronics_image_17.png" target="_blank">
+                <img src="strategy_grid_Electronics_image_17.png" alt="Electronics Electronic Component" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Electronics — <em>Tech Product</em></h2>
+            <a href="strategy_grid_Electronics_image_23.png" target="_blank">
+                <img src="strategy_grid_Electronics_image_23.png" alt="Electronics Tech Product" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Beauty & Personal Care — <em>Blue-tone Product</em></h2>
+            <a href="strategy_grid_Beauty & Personal Care_image_14.png" target="_blank">
+                <img src="strategy_grid_Beauty & Personal Care_image_14.png" alt="Beauty & Personal Care Blue-tone Product" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Beauty & Personal Care — <em>Red/Orange Cosmetic</em></h2>
+            <a href="strategy_grid_Beauty & Personal Care_image_16.png" target="_blank">
+                <img src="strategy_grid_Beauty & Personal Care_image_16.png" alt="Beauty & Personal Care Red/Orange Cosmetic" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Beauty & Personal Care — <em>Pink Beauty Item</em></h2>
+            <a href="strategy_grid_Beauty & Personal Care_image_29.png" target="_blank">
+                <img src="strategy_grid_Beauty & Personal Care_image_29.png" alt="Beauty & Personal Care Pink Beauty Item" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+<div class="grid-section">
+            <h2>Beauty & Personal Care — <em>Personal Care</em></h2>
+            <a href="strategy_grid_Beauty & Personal Care_image_30.png" target="_blank">
+                <img src="strategy_grid_Beauty & Personal Care_image_30.png" alt="Beauty & Personal Care Personal Care" style="max-width:100%;border:1px solid #ddd;">
+            </a>
+        </div>
+
+
+<p class="summary" style="text-align:center;color:#718096;margin-top:30px">
+    <em>Higher edge clarity = sharper transitions. Higher alpha confidence = more solid foreground.
+    Fewer artifacts = cleaner result. Composite Z-score averages all metrics for overall ranking.</em>
+</p>
+</body>
+</html>

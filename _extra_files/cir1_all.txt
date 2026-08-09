@@ -1,0 +1,13 @@
+  by rule: A1=19, A2=14, API2=100, BC1=14, BC3=4, CA1=7, CA2=100, CFG5=1, CIR1=3, CIR2=110, D1=6, D3=14, DG2=23, DG3=5, DG4=2, DG5=9, DOM2=12, DOM6=13, DOM7=18, DOM8=1, F2=1, F4=10, F9=10, FE3=3, FE6=48, FE7=30, FT1=5, H1=10, I1=1, I2=1, I3=1, I4=1, L1=1, LC1=4, M1=1, MET1=1, MET2=15, MET3=6, MV1=17, MV2=2, MW2=1, NM=7, P1=2, P3=2, P5=7, PERF2=6, PERF4=23, PF1=1, PF2=8, Q1=21, QUAL1=47, QUAL2=4, QUAL3=78, QUAL4=10, REG1=3, RN1=8, S2=1, SYM1=100, SYM2=100, W1=3, W4=47
+  🔴 CIR1  [backend ] backend\controllers\finance\accounting_controller.py:20
+        circuit violation: controllers -> db (db.schemas) is outside the allowed circuit
+  🔴 CIR1  [backend ] backend\routers\api_geography_communications.py:34
+        circuit violation: routers -> db (db.models_country_control) is outside the allowed circuit
+  🔴 CIR1  [backend ] backend\routers\effective_permissions.py:34
+        circuit violation: routers -> db (db.models_country_control) is outside the allowed circuit
+  [RED] CIR1  backend\controllers\finance\accounting_controller.py:20
+        circuit violation: controllers -> db (db.schemas) is outside the allowed circuit
+  [RED] CIR1  backend\routers\api_geography_communications.py:34
+        circuit violation: routers -> db (db.models_country_control) is outside the allowed circuit
+  [RED] CIR1  backend\routers\effective_permissions.py:34
+        circuit violation: routers -> db (db.models_country_control) is outside the allowed circuit

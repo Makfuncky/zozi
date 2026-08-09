@@ -1,0 +1,7 @@
+Contact: security@zozi.com
+Expires: 2027-06-26T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://zozi.com/.well-known/security.txt
+Policy: https://zozi.com/security
+HackerOne: https://hackerone.com/zozi
+Encryption: https://zozi.com/.well-known/security-key.asc

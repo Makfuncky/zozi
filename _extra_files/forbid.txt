@@ -1,0 +1,44 @@
+ions that should NEVER appear in certain surfaces
+SURFACE_FORBIDDEN_OPERATIONS: dict[str, set[str]] = {
+    "customer": {
+        "approve", "reject", "moderate", "suspend", "ban", "configure",
+        "manage_roles", "manage_permissions", "override", "view_all",
+        "admin", "approve_supplier", "configure_commission",
+    },
+    "supplier": {
+        "configure_platform", "manage_roles", "manage_permissions",
+        "view_all_orders", "moderate_all", "ban_user", "configure_rates",
+    },
+    "logistics": {
+        "create_product", "approve_supplier", "configure_commission",
+        "manage_users", "view_ledger",
+    },
+}
+
+
+def check_surface_operations(repo: Path, rep: Report, eff: dict,
+                             graph: ModuleGraph) -> None:
+    """
+    CA3: Detect surface-inappropriate operations.
+    Checks function names in router/controller files against
+    surface-exclusive and surface-forbidden operation lists.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
+    reported = 0
+
+    for layer_name in ("routers", "controllers"):
+        layer_dir = backend / layer_name
+        if not layer_dir.exists():
+            continue
+
+        for f in iter_text_files(layer_dir, eff):
+            if f.suffix.lower() != ".py":
+                continue
+
+            tree = parse_safe(f)
+            if tree is None:
+      

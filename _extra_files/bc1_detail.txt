@@ -1,0 +1,28 @@
+        cross-domain import cash_management_service -> logistics violates explicit ownership rules
+        cross-domain import finance -> general_ledger_service violates explicit ownership rules
+        cross-domain import finance -> general_ledger_service violates explicit ownership rules
+        cross-domain import treasury -> general_ledger_service violates explicit ownership rules
+        cross-domain import treasury -> general_ledger_service violates explicit ownership rules
+        cross-domain import cash_management_service -> logistics violates explicit ownership rules
+        cross-domain import finance -> general_ledger_service violates explicit ownership rules
+        cross-domain import finance -> general_ledger_service violates explicit ownership rules
+        cross-domain import treasury -> general_ledger_service violates explicit ownership rules
+        cross-domain import treasury -> general_ledger_service violates explicit ownership rules
+        cross-domain import cash_management_service → logistics bypasses event/facade boundary
+        cross-domain import finance → general_ledger_service bypasses event/facade boundary
+        cross-domain import finance → general_ledger_service bypasses event/facade boundary
+        cross-domain import general_ledger_service → finance bypasses event/facade boundary
+        cross-domain import general_ledger_service → treasury bypasses event/facade boundary
+        cross-domain import general_ledger_service → finance bypasses event/facade boundary
+        cross-domain import general_ledger_service → finance bypasses event/facade boundary
+        cross-domain import general_ledger_service → treasury bypasses event/facade boundary
+        cross-domain import general_ledger_service → finance bypasses event/facade boundary
+        cross-domain import general_ledger_service → treasury bypasses event/facade boundary
+        cross-domain import general_ledger_service → finance bypasses event/facade boundary
+        cross-domain import treasury → general_ledger_service bypasses event/facade boundary
+        cross-domain import treasury → general_ledger_service bypasses event/facade boundary
+        cross-domain import treasury → general_ledger_service bypasses event/facade boundary
+        bounded context leakage: audit service directly imports treasury models
+        bounded context leakage: communication service directly imports logistics models
+        bounded context leakage: hr service directly imports communication models
+        bounded context leakage: treasury service directly imports orders models

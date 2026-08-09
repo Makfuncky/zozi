@@ -1,0 +1,60 @@
+{
+  "globals_lines": 9601,
+  "total_top_items": 1661,
+  "top_level_rule_shapes": {
+    "utility": 1622
+  },
+  "top_level_atrule_shapes": {
+    "at-other": 28,
+    "utility": 11
+  },
+  "at_media_breakdown": {
+    "all-utility": 11,
+    "all-custom": 0,
+    "mixed": 0
+  },
+  "at_layer_shapes": {},
+  "keep_sample": [],
+  "drop_sample": [
+    "* ,   : : before ,   : : after",
+    ": : backdrop",
+    "* , \n : : before , \n : : after",
+    ": : before , \n : : after",
+    "html , \n : host",
+    "body",
+    "hr",
+    "abbr : where([title])",
+    "h1 , \n h2 , \n h3 , \n h4 , \n h5 , \n h6",
+    "a",
+    "b , \n strong",
+    "code , \n kbd , \n samp , \n pre",
+    "small",
+    "sub , \n sup",
+    "sub",
+    "sup",
+    "table",
+    "button , \n input , \n optgroup , \n select , \n textarea",
+    "button , \n select",
+    "button , \n input : where([type=\"button\"]) , \n input : where([type=\"reset\"]) , \n input : where([type=\"submit\"])",
+    ": -moz-focusring",
+    ": -moz-ui-invalid",
+    "progress",
+    ": : -webkit-inner-spin-button , \n : : -webkit-outer-spin-button",
+    "[type=\"search\"]",
+    ": : -webkit-search-decoration",
+    ": : -webkit-file-upload-button",
+    "summary",
+    "blockquote , \n dl , \n dd , \n h1 , \n h2 , \n h3 , \n h4 , \n h5 , \n h6 , \n hr , \n figure , \n p , \n pre",
+    "fieldset",
+    "legend",
+    "ol , \n ul , \n menu",
+    "dialog",
+    "textarea",
+    "input : : -moz-placeholder ,   textarea : : -moz-placeholder",
+    "input : : placeholder , \n textarea : : placeholder",
+    "button , \n [role=\"button\"]",
+    ": disabled",
+    "img , \n svg , \n video , \n canvas , \n audio , \n iframe , \n embed , \n object",
+    "img , \n video"
+  ]
+}

@@ -1,0 +1,40 @@
+     93  utils.datetime_utils
+     64  data.dependencies_auth
+     64  utils.dependencies
+     60  utils.config
+     58  data.schemas
+     47  data.services_write_helpers
+
+Top fan-out:
+    120  services._registry
+     43  main
+     33  models._exports
+     22  tests.conftest
+     21  controllers.supplier.supplier_controller
+     19  routers.admin_core_console
+     17  controllers.security.auth_controller
+     17  controllers.orders.orders_controller
+     15  providers
+     15  controllers.logistics.logistics_partner_controller
+
+Frontend workspace metrics:
+    mobile_app: source_files=307, dirs=63
+    shared: source_files=101, dirs=7
+    web_app: source_files=640, dirs=216
+
+Auto-discovery:
+    domains=20
+    features=698
+    frontend_features=9
+    backend_top_dirs=19
+    learned_domain_edges=77
+
+============================================================================
+  Registry written: documents/scope/domains.yaml
+
+============================================================================
+  REPORT WRITTEN: D:\Projects\10- E-COMMERCE WEBSITE\zozi\ARCHITECTURE_AUDIT_REPORT.md
+  Total findings: 1122
+  🔴 RED: 22  🟡 YEL: 1058  🟢 GRN: 42
+  Debt Score: 23795
+============================================================================

@@ -1,0 +1,400 @@
+﻿> **Result:** 🔴 295 violations · 🟡 5753 advisories · 🟢 79 info
+| DBA27 | 1 | 🔴 VIOLATION | broken or suspicious migration file (ADR-018 risk) |
+| DOM3 | 1 | 🔴 VIOLATION | surface folder used where domain folder is required |
+| DS02 | 8 | 🔴 VIOLATION | hardcoded CSS: <style> tag inside a component file |
+| DS06 | 4 | 🔴 VIOLATION | !important usage (specificity war) |
+| DS10 | 3 | 🔴 VIOLATION | magic z-index (>=1000) |
+| LC1 | 1 | 🔴 VIOLATION | layer contract violation: forbidden operation in layer |
+| MET5 | 1 | 🔴 VIOLATION | god module detected (excessive responsibility) |
+| SEC101 | 4 | 🔴 VIOLATION | raw SQL string concatenation (injection risk) |
+| W1 | 244 | 🔴 VIOLATION | controller/router writes to DB (must be a service) |
+| 🔴 | DBA07 | database | `backend\models\comms\marketing.py:171` | dangerous CASCADE into protected table: points_transactions.user_id → users.id | never CASCADE into finance/audit/security/identity/orders/hr — use RESTRICT |
+| 🔴 | DBA07 | database | `backend\models\comms\marketing.py:185` | dangerous CASCADE into protected table: user_points.user_id → users.id | never CASCADE into finance/audit/security/identity/orders/hr — use RESTRICT |
+| 🔴 | DBA27 | migrations | `backend\alembic\versions\2026_08_06_0005-dba03_version_column_backfill.py` | migration file is not valid Python (broken head risk) | fix syntax/import error; ADR-018 requires a runnable Alembic chain |
+| 🔴 | DG2 | backend | `domain-graph` | circular domain dependency: comms -> notification_engine -> communication -> comms | redefine bounded-context boundaries; introduce explicit service contracts / events |
+| 🔴 | DG2 | backend | `domain-graph` | circular domain dependency: comms -> employee_models -> comms | redefine bounded-context boundaries; introduce explicit service contracts / events |
+| 🔴 | DG2 | backend | `domain-graph` | circular domain dependency: comms -> orders -> comms | redefine bounded-context boundaries; introduce explicit service contracts / events |
+| 🔴 | DOM3 | controllers | `backend\controllers\admin` | SURFACE folder 'admin/' inside DOMAIN layer controllers/ | remove controllers/admin/; move its files into the correct domain folder or rename to a real domain (finance/orders/catalog/supplier/...) |
+| 🔴 | DS02 | web_app | `frontend\web_app\src\components\BannerCanvasEditor.tsx` | 3 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | web_app | `frontend\web_app\src\components\TickerBar.tsx` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | web_app | `frontend\web_app\src\components\supplier\PhotoEditorModal.tsx` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | web_app | `frontend\web_app\src\components\supplier\ProductImageCanvas.tsx` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | web_app | `frontend\web_app\src\components\admin\commandCenter\hud.tsx` | 2 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | web_app | `frontend\web_app\src\app\supplier\labels\[id]\page.tsx` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | mobile_app | `frontend\mobile_app\lib\invoiceService.ts` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS02 | mobile_app | `frontend\mobile_app\app\supplier\label.tsx` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+| 🔴 | DS06 | web_app | `frontend\web_app\src\styles\globals.css` | !important used 38× | fix specificity; never !important in design system |
+| 🔴 | DS06 | web_app | `frontend\web_app\src\app\supplier\labels\[id]\page.tsx` | !important used 4× | fix specificity; never !important in design system |
+| 🔴 | DS06 | web_app | `frontend\web_app\src\styles\comm.css` | !important used 2× | fix specificity; never !important in design system |
+| 🔴 | DS06 | web_app | `frontend\web_app\src\styles\panel-modern.css` | !important used 2× | fix specificity; never !important in design system |
+| 🔴 | DS10 | web_app | `frontend\web_app\src\styles\globals.css` | magic z-index: 10000 | use z-index scale token; never 9999+ |
+| 🔴 | DS10 | web_app | `frontend\web_app\src\app\layout.tsx` | magic z-index: 10000 | use z-index scale token; never 9999+ |
+| 🔴 | DS10 | web_app | `frontend\web_app\src\components\BannerCanvasEditor.tsx` | magic z-index: 1000, 1001 | use z-index scale token; never 9999+ |
+| 🔴 | F4 | backend | `backend\zozi.db` | must not sit at backend (damages structure/scale) | delete + add to .gitignore |
+| 🔴 | F4 | repo | `zozi.db` | must not sit at . (damages structure/scale) | delete + add to .gitignore |
+| 🔴 | LC1 | controllers | `backend\controllers\cash_management_controller.py:870` | layer contract violation: write operation 'session\.(add|commit|delete|merge|flush)\(' found in controllers/ | controllers must not perform DB writes; move write operations to services/ |
+| 🔴 | MET5 | backend | `backend\models\__init__.py` | god module: Ca=145, Ce=23, total coupling=168 | split this module; it has too many responsibilities |
+| 🔴 | SEC101 | security | `backend\utils\rls_interceptor.py` | raw SQL concatenation (lines: 424, 426) | use parameterized queries / SQLAlchemy ORM |
+| 🔴 | SEC101 | security | `backend\services\financial_reports_service.py` | raw SQL concatenation (lines: 524, 535, 571) | use parameterized queries / SQLAlchemy ORM |
+| 🔴 | SEC101 | security | `backend\jobs\seed_all.py` | raw SQL concatenation (lines: 295) | use parameterized queries / SQLAlchemy ORM |
+| 🔴 | SEC101 | security | `backend\controllers\admin\database.py` | raw SQL concatenation (lines: 42) | use parameterized queries / SQLAlchemy ORM |
+| 🔴 | SEC5 | services | `backend\services\command_center_background.py:42` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\fraud_detection_service.py:951` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\logistics_engine.py:160` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\order_tracking_service.py:744` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\order_tracking_service.py:382` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\permission_service.py:77` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\permission_service.py:85` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | services | `backend\services\transactional_email_service.py:146` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | routers | `backend\routers\admin_orders.py:195` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | routers | `backend\routers\admin_users.py:131` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | routers | `backend\routers\hierarchy.py:265` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | providers | `backend\providers\legacy\br_08.py:377` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | middleware | `backend\middleware\behavioral_analytics.py:102` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | middleware | `backend\middleware\rate_limit_middleware.py:224` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | jobs | `backend\jobs\seed_all.py:295` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | controllers | `backend\controllers\logistics_partner_controller.py:3245` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | controllers | `backend\controllers\orders_controller.py:211` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | controllers | `backend\controllers\supplier_controller.py:1114` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | controllers | `backend\controllers\admin\database.py:42` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | controllers | `backend\controllers\admin\users.py:791` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | SEC5 | controllers | `backend\controllers\admin\users.py:369` | potential SQL injection: string interpolation in SQL query without visible parameterization | use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL |
+| 🔴 | W1 | routers | `backend\routers\admin_commission.py` | 6 session write(s) in this file; move writes into services/<domain>/ (lines: 66, 85, 108, 125) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_email.py` | 4 session write(s) in this file; move writes into services/<domain>/ (lines: 64, 77) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_logistics.py` | 3 session write(s) in this file; move writes into services/<domain>/ (lines: 44, 58, 72) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_orders.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 194) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_payouts.py` | 4 session write(s) in this file; move writes into services/<domain>/ (lines: 66, 135, 194) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_promotions.py` | 16 session write(s) in this file; move writes into services/<domain>/ (lines: 56, 114, 115, 198, 199, 235, 359, 360, 434, 455 +6 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_suppliers.py` | 8 session write(s) in this file; move writes into services/<domain>/ (lines: 139, 159, 178, 197, 216, 402, 424, 440) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_treasury.py` | 15 session write(s) in this file; move writes into services/<domain>/ (lines: 237, 238, 248, 250, 282, 316, 445, 446, 1092, 1093 +5 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_users.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 49, 151) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\admin_video.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 87, 165) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\ai_upload.py` | 16 session write(s) in this file; move writes into services/<domain>/ (lines: 183, 207, 213, 214, 218, 220, 230, 237, 273, 274 +6 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\batch_upload.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 261, 282) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\cash_management.py` | 15 session write(s) in this file; move writes into services/<domain>/ (lines: 160, 267, 279, 291, 309, 321, 334, 347, 367, 379 +5 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\countries.py` | 21 session write(s) in this file; move writes into services/<domain>/ (lines: 438, 439, 471, 519, 520, 607, 608, 630, 647, 648 +11 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\country_admin.py` | 12 session write(s) in this file; move writes into services/<domain>/ (lines: 111, 112, 172, 246, 247, 283, 298, 357, 358, 377 +2 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\country_auto_populate.py` | 6 session write(s) in this file; move writes into services/<domain>/ (lines: 108, 109, 124, 135, 145, 147) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\country_payouts.py` | 8 session write(s) in this file; move writes into services/<domain>/ (lines: 85, 86, 105, 106, 160, 161, 180, 181) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\country_staff.py` | 5 session write(s) in this file; move writes into services/<domain>/ (lines: 128, 140, 141, 174, 198) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\email.py` | 12 session write(s) in this file; move writes into services/<domain>/ (lines: 212, 241, 242, 266, 267, 290, 304, 305, 358, 359 +2 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\ess.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 84, 140) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\ess.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 122) | move this write into services/<domain>/; routers/controllers must not mutate data |
+| 🔴 | W1 | routers | `backend\routers\finance_automation.py` | 7 session write(s) in this file; move writes into services/<domain>/ (lines: 83, 84, 85, 86, 99, 251, 252) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\finance_erp.py` | 3 session write(s) in this file; move writes into services/<domain>/ (lines: 93, 510, 511) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\flash_sales.py` | 4 session write(s) in this file; move writes into services/<domain>/ (lines: 34, 36, 37) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\hierarchy.py` | 11 session write(s) in this file; move writes into services/<domain>/ (lines: 126, 127, 129, 159, 161, 207, 254, 264, 286, 297 +1 more) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\logistics.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 178, 179) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\logistics_locations.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 79, 80) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\parcel_tracking.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 68, 69) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\payout_approval.py` | 5 session write(s) in this file; move writes into services/<domain>/ (lines: 268, 299, 344, 386, 459) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\push_notifications.py` | 5 session write(s) in this file; move writes into services/<domain>/ (lines: 53, 61, 62, 83, 84) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\referrals.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 34) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\returns.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 106) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\shipments.py` | 5 session write(s) in this file; move writes into services/<domain>/ (lines: 33, 41, 49) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\shop_locations.py` | 3 session write(s) in this file; move writes into services/<domain>/ (lines: 68, 69, 95) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\supplier_documents.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 57) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\supplier_finance.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 378, 387) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\supplier_orders.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 270) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\supplier_payouts.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 54, 55) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\supplier_profile.py` | 4 session write(s) in this file; move writes into services/<domain>/ (lines: 24, 25, 33) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\tickets.py` | 8 session write(s) in this file; move writes into services/<domain>/ (lines: 71, 72, 74, 75, 102, 103, 123, 124) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\users.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 24, 43) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | routers | `backend\routers\ws_chat.py` | 7 session write(s) in this file; move writes into services/<domain>/ (lines: 135, 136, 143, 144, 151, 152, 193) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | controllers | `backend\controllers\cash_management_controller.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 870) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | controllers | `backend\controllers\admin\orders.py` | 1 session write(s) in this file; move writes into services/<domain>/ (lines: 133) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+| 🔴 | W1 | middleware | `backend\middleware\impossible_travel_middleware.py` | 2 session write(s) in this file; move writes into services/<domain>/ (lines: 160, 161) | move this write into services/<domain>/; routers/controllers are read-only orchestration |
+- 🔴 **F4** `zozi.db` — must not sit at . (damages structure/scale) → *delete + add to .gitignore*
+- 🔴 **F4** `backend\zozi.db` — must not sit at backend (damages structure/scale) → *delete + add to .gitignore*
+- 🔴 **DG2** `domain-graph` — circular domain dependency: comms -> notification_engine -> communication -> comms → *redefine bounded-context boundaries; introduce explicit service contracts / events*
+- 🔴 **DG2** `domain-graph` — circular domain dependency: comms -> employee_models -> comms → *redefine bounded-context boundaries; introduce explicit service contracts / events*
+- 🔴 **DG2** `domain-graph` — circular domain dependency: comms -> orders -> comms → *redefine bounded-context boundaries; introduce explicit service contracts / events*
+- 🔴 **MET5** `backend\models\__init__.py` — god module: Ca=145, Ce=23, total coupling=168 → *split this module; it has too many responsibilities*
+- 🔴 **DBA07** `backend\models\comms\marketing.py:171` — dangerous CASCADE into protected table: points_transactions.user_id → users.id → *never CASCADE into finance/audit/security/identity/orders/hr — use RESTRICT*
+- 🔴 **DBA07** `backend\models\comms\marketing.py:185` — dangerous CASCADE into protected table: user_points.user_id → users.id → *never CASCADE into finance/audit/security/identity/orders/hr — use RESTRICT*
+- 🔴 **SEC101** `backend\utils\rls_interceptor.py` — raw SQL concatenation (lines: 424, 426) → *use parameterized queries / SQLAlchemy ORM*
+- 🔴 **SEC101** `backend\services\financial_reports_service.py` — raw SQL concatenation (lines: 524, 535, 571) → *use parameterized queries / SQLAlchemy ORM*
+- 🔴 **SEC101** `backend\jobs\seed_all.py` — raw SQL concatenation (lines: 295) → *use parameterized queries / SQLAlchemy ORM*
+- 🔴 **SEC101** `backend\controllers\admin\database.py` — raw SQL concatenation (lines: 42) → *use parameterized queries / SQLAlchemy ORM*
+- 🔴 **LC1** `backend\controllers\cash_management_controller.py:870` — layer contract violation: write operation 'session\.(add|commit|delete|merge|flush)\(' found in controllers/ → *controllers must not perform DB writes; move write operations to services/*
+- 🔴 **SEC5** `backend\controllers\logistics_partner_controller.py:3245` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\controllers\orders_controller.py:211` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\controllers\supplier_controller.py:1114` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\controllers\admin\database.py:42` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\controllers\admin\users.py:791` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\controllers\admin\users.py:369` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **DOM3** `backend\controllers\admin` — SURFACE folder 'admin/' inside DOMAIN layer controllers/ → *remove controllers/admin/; move its files into the correct domain folder or rename to a real domain (finance/orders/catalog/supplier/...)*
+- 🔴 **W1** `backend\controllers\cash_management_controller.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 870) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\controllers\admin\orders.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 133) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **SEC5** `backend\jobs\seed_all.py:295` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\middleware\behavioral_analytics.py:102` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\middleware\rate_limit_middleware.py:224` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **W1** `backend\middleware\impossible_travel_middleware.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 160, 161) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **DBA27** `backend\alembic\versions\2026_08_06_0005-dba03_version_column_backfill.py` — migration file is not valid Python (broken head risk) → *fix syntax/import error; ADR-018 requires a runnable Alembic chain*
+- 🔴 **DS02** `frontend\mobile_app\lib\invoiceService.ts` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS02** `frontend\mobile_app\app\supplier\label.tsx` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **SEC5** `backend\providers\legacy\br_08.py:377` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\routers\admin_orders.py:195` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\routers\admin_users.py:131` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\routers\hierarchy.py:265` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **W1** `backend\routers\admin_commission.py` — 6 session write(s) in this file; move writes into services/<domain>/ (lines: 66, 85, 108, 125) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_email.py` — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 64, 77) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_logistics.py` — 3 session write(s) in this file; move writes into services/<domain>/ (lines: 44, 58, 72) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_orders.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 194) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_payouts.py` — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 66, 135, 194) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_promotions.py` — 16 session write(s) in this file; move writes into services/<domain>/ (lines: 56, 114, 115, 198, 199, 235, 359, 360, 434, 455 +6 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_suppliers.py` — 8 session write(s) in this file; move writes into services/<domain>/ (lines: 139, 159, 178, 197, 216, 402, 424, 440) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_treasury.py` — 15 session write(s) in this file; move writes into services/<domain>/ (lines: 237, 238, 248, 250, 282, 316, 445, 446, 1092, 1093 +5 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_users.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 49, 151) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\admin_video.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 87, 165) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\ai_upload.py` — 16 session write(s) in this file; move writes into services/<domain>/ (lines: 183, 207, 213, 214, 218, 220, 230, 237, 273, 274 +6 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\batch_upload.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 261, 282) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\cash_management.py` — 15 session write(s) in this file; move writes into services/<domain>/ (lines: 160, 267, 279, 291, 309, 321, 334, 347, 367, 379 +5 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\countries.py` — 21 session write(s) in this file; move writes into services/<domain>/ (lines: 438, 439, 471, 519, 520, 607, 608, 630, 647, 648 +11 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\country_admin.py` — 12 session write(s) in this file; move writes into services/<domain>/ (lines: 111, 112, 172, 246, 247, 283, 298, 357, 358, 377 +2 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\country_auto_populate.py` — 6 session write(s) in this file; move writes into services/<domain>/ (lines: 108, 109, 124, 135, 145, 147) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\country_payouts.py` — 8 session write(s) in this file; move writes into services/<domain>/ (lines: 85, 86, 105, 106, 160, 161, 180, 181) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\country_staff.py` — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 128, 140, 141, 174, 198) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\email.py` — 12 session write(s) in this file; move writes into services/<domain>/ (lines: 212, 241, 242, 266, 267, 290, 304, 305, 358, 359 +2 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\ess.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 84, 140) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\ess.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 122) → *move this write into services/<domain>/; routers/controllers must not mutate data*
+- 🔴 **W1** `backend\routers\finance_automation.py` — 7 session write(s) in this file; move writes into services/<domain>/ (lines: 83, 84, 85, 86, 99, 251, 252) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\finance_erp.py` — 3 session write(s) in this file; move writes into services/<domain>/ (lines: 93, 510, 511) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\flash_sales.py` — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 34, 36, 37) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\hierarchy.py` — 11 session write(s) in this file; move writes into services/<domain>/ (lines: 126, 127, 129, 159, 161, 207, 254, 264, 286, 297 +1 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\logistics.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 178, 179) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\logistics_locations.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 79, 80) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\parcel_tracking.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 68, 69) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\payout_approval.py` — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 268, 299, 344, 386, 459) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\push_notifications.py` — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 53, 61, 62, 83, 84) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\referrals.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 34) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\returns.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 106) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\shipments.py` — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 33, 41, 49) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\shop_locations.py` — 3 session write(s) in this file; move writes into services/<domain>/ (lines: 68, 69, 95) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\supplier_documents.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 57) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\supplier_finance.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 378, 387) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\supplier_orders.py` — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 270) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\supplier_payouts.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 54, 55) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\supplier_profile.py` — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 24, 25, 33) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\tickets.py` — 8 session write(s) in this file; move writes into services/<domain>/ (lines: 71, 72, 74, 75, 102, 103, 123, 124) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\users.py` — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 24, 43) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** `backend\routers\ws_chat.py` — 7 session write(s) in this file; move writes into services/<domain>/ (lines: 135, 136, 143, 144, 151, 152, 193) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **SEC5** `backend\services\command_center_background.py:42` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\fraud_detection_service.py:951` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\logistics_engine.py:160` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\order_tracking_service.py:744` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\order_tracking_service.py:382` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\permission_service.py:77` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\permission_service.py:85` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5** `backend\services\transactional_email_service.py:146` — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **DS02** `frontend\web_app\src\components\BannerCanvasEditor.tsx` — 3 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS02** `frontend\web_app\src\components\TickerBar.tsx` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS02** `frontend\web_app\src\components\supplier\PhotoEditorModal.tsx` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS02** `frontend\web_app\src\components\supplier\ProductImageCanvas.tsx` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS02** `frontend\web_app\src\components\admin\commandCenter\hud.tsx` — 2 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS02** `frontend\web_app\src\app\supplier\labels\[id]\page.tsx` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS06** `frontend\web_app\src\styles\globals.css` — !important used 38× → *fix specificity; never !important in design system*
+- 🔴 **DS06** `frontend\web_app\src\app\supplier\labels\[id]\page.tsx` — !important used 4× → *fix specificity; never !important in design system*
+- 🔴 **DS06** `frontend\web_app\src\styles\comm.css` — !important used 2× → *fix specificity; never !important in design system*
+- 🔴 **DS06** `frontend\web_app\src\styles\panel-modern.css` — !important used 2× → *fix specificity; never !important in design system*
+- 🔴 **DS10** `frontend\web_app\src\styles\globals.css` — magic z-index: 10000 → *use z-index scale token; never 9999+*
+- 🔴 **DS10** `frontend\web_app\src\app\layout.tsx` — magic z-index: 10000 → *use z-index scale token; never 9999+*
+- 🔴 **DS10** `frontend\web_app\src\components\BannerCanvasEditor.tsx` — magic z-index: 1000, 1001 → *use z-index scale token; never 9999+*
+| Feature | 🔴 | 🟡 | Total | Top codes |
+### `domain-graph`  (🔴 3 · 🟡 0)
+- 🔴 **DG2** — circular domain dependency: comms -> notification_engine -> communication -> comms → *redefine bounded-context boundaries; introduce explicit service contracts / events*
+- 🔴 **DG2** — circular domain dependency: comms -> employee_models -> comms → *redefine bounded-context boundaries; introduce explicit service contracts / events*
+- 🔴 **DG2** — circular domain dependency: comms -> orders -> comms → *redefine bounded-context boundaries; introduce explicit service contracts / events*
+### `backend\models\comms\marketing.py`  (🔴 2 · 🟡 17)
+- 🔴 **DBA07**:171 — dangerous CASCADE into protected table: points_transactions.user_id → users.id → *never CASCADE into finance/audit/security/identity/orders/hr — use RESTRICT*
+- 🔴 **DBA07**:185 — dangerous CASCADE into protected table: user_points.user_id → users.id → *never CASCADE into finance/audit/security/identity/orders/hr — use RESTRICT*
+### `backend\services\order_tracking_service.py`  (🔴 2 · 🟡 8)
+- 🔴 **SEC5**:744 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5**:382 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\controllers\cash_management_controller.py`  (🔴 2 · 🟡 7)
+- 🔴 **LC1**:870 — layer contract violation: write operation 'session\.(add|commit|delete|merge|flush)\(' found in controllers/ → *controllers must not perform DB writes; move write operations to services/*
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 870) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\controllers\admin\users.py`  (🔴 2 · 🟡 7)
+- 🔴 **SEC5**:791 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5**:369 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\routers\ess.py`  (🔴 2 · 🟡 6)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 84, 140) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 122) → *move this write into services/<domain>/; routers/controllers must not mutate data*
+### `backend\jobs\seed_all.py`  (🔴 2 · 🟡 5)
+- 🔴 **SEC5**:295 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC101** — raw SQL concatenation (lines: 295) → *use parameterized queries / SQLAlchemy ORM*
+### `backend\routers\hierarchy.py`  (🔴 2 · 🟡 5)
+- 🔴 **SEC5**:265 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **W1** — 11 session write(s) in this file; move writes into services/<domain>/ (lines: 126, 127, 129, 159, 161, 207, 254, 264, 286, 297 +1 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\controllers\admin\database.py`  (🔴 2 · 🟡 5)
+- 🔴 **SEC5**:42 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC101** — raw SQL concatenation (lines: 42) → *use parameterized queries / SQLAlchemy ORM*
+### `backend\routers\admin_orders.py`  (🔴 2 · 🟡 4)
+- 🔴 **SEC5**:195 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 194) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_users.py`  (🔴 2 · 🟡 4)
+- 🔴 **SEC5**:131 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 49, 151) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `frontend\web_app\src\components\BannerCanvasEditor.tsx`  (🔴 2 · 🟡 4)
+- 🔴 **DS02** — 3 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS10** — magic z-index: 1000, 1001 → *use z-index scale token; never 9999+*
+### `backend\services\permission_service.py`  (🔴 2 · 🟡 2)
+- 🔴 **SEC5**:77 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+- 🔴 **SEC5**:85 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `frontend\web_app\src\app\supplier\labels\[id]\page.tsx`  (🔴 2 · 🟡 2)
+- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+- 🔴 **DS06** — !important used 4× → *fix specificity; never !important in design system*
+### `frontend\web_app\src\styles\globals.css`  (🔴 2 · 🟡 0)
+- 🔴 **DS06** — !important used 38× → *fix specificity; never !important in design system*
+- 🔴 **DS10** — magic z-index: 10000 → *use z-index scale token; never 9999+*
+### `backend\controllers\supplier_controller.py`  (🔴 1 · 🟡 23)
+- 🔴 **SEC5**:1114 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\models\__init__.py`  (🔴 1 · 🟡 21)
+- 🔴 **MET5** — god module: Ca=145, Ce=23, total coupling=168 → *split this module; it has too many responsibilities*
+### `backend\routers\countries.py`  (🔴 1 · 🟡 19)
+- 🔴 **W1** — 21 session write(s) in this file; move writes into services/<domain>/ (lines: 438, 439, 471, 519, 520, 607, 608, 630, 647, 648 +11 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\controllers\orders_controller.py`  (🔴 1 · 🟡 18)
+- 🔴 **SEC5**:211 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\controllers\logistics_partner_controller.py`  (🔴 1 · 🟡 14)
+- 🔴 **SEC5**:3245 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\routers\admin_treasury.py`  (🔴 1 · 🟡 13)
+- 🔴 **W1** — 15 session write(s) in this file; move writes into services/<domain>/ (lines: 237, 238, 248, 250, 282, 316, 445, 446, 1092, 1093 +5 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\services\fraud_detection_service.py`  (🔴 1 · 🟡 12)
+- 🔴 **SEC5**:951 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\routers\finance_erp.py`  (🔴 1 · 🟡 12)
+- 🔴 **W1** — 3 session write(s) in this file; move writes into services/<domain>/ (lines: 93, 510, 511) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\batch_upload.py`  (🔴 1 · 🟡 10)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 261, 282) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\ws_chat.py`  (🔴 1 · 🟡 10)
+- 🔴 **W1** — 7 session write(s) in this file; move writes into services/<domain>/ (lines: 135, 136, 143, 144, 151, 152, 193) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\supplier_orders.py`  (🔴 1 · 🟡 10)
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 270) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\providers\legacy\br_08.py`  (🔴 1 · 🟡 9)
+- 🔴 **SEC5**:377 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\services\financial_reports_service.py`  (🔴 1 · 🟡 9)
+- 🔴 **SEC101** — raw SQL concatenation (lines: 524, 535, 571) → *use parameterized queries / SQLAlchemy ORM*
+### `backend\routers\ai_upload.py`  (🔴 1 · 🟡 8)
+- 🔴 **W1** — 16 session write(s) in this file; move writes into services/<domain>/ (lines: 183, 207, 213, 214, 218, 220, 230, 237, 273, 274 +6 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\country_auto_populate.py`  (🔴 1 · 🟡 8)
+- 🔴 **W1** — 6 session write(s) in this file; move writes into services/<domain>/ (lines: 108, 109, 124, 135, 145, 147) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\email.py`  (🔴 1 · 🟡 7)
+- 🔴 **W1** — 12 session write(s) in this file; move writes into services/<domain>/ (lines: 212, 241, 242, 266, 267, 290, 304, 305, 358, 359 +2 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\controllers\admin\orders.py`  (🔴 1 · 🟡 7)
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 133) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_logistics.py`  (🔴 1 · 🟡 6)
+- 🔴 **W1** — 3 session write(s) in this file; move writes into services/<domain>/ (lines: 44, 58, 72) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_promotions.py`  (🔴 1 · 🟡 6)
+- 🔴 **W1** — 16 session write(s) in this file; move writes into services/<domain>/ (lines: 56, 114, 115, 198, 199, 235, 359, 360, 434, 455 +6 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_suppliers.py`  (🔴 1 · 🟡 6)
+- 🔴 **W1** — 8 session write(s) in this file; move writes into services/<domain>/ (lines: 139, 159, 178, 197, 216, 402, 424, 440) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\finance_automation.py`  (🔴 1 · 🟡 6)
+- 🔴 **W1** — 7 session write(s) in this file; move writes into services/<domain>/ (lines: 83, 84, 85, 86, 99, 251, 252) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\payout_approval.py`  (🔴 1 · 🟡 6)
+- 🔴 **W1** — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 268, 299, 344, 386, 459) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\supplier_finance.py`  (🔴 1 · 🟡 6)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 378, 387) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\cash_management.py`  (🔴 1 · 🟡 5)
+- 🔴 **W1** — 15 session write(s) in this file; move writes into services/<domain>/ (lines: 160, 267, 279, 291, 309, 321, 334, 347, 367, 379 +5 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\country_staff.py`  (🔴 1 · 🟡 5)
+- 🔴 **W1** — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 128, 140, 141, 174, 198) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\logistics.py`  (🔴 1 · 🟡 5)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 178, 179) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\tickets.py`  (🔴 1 · 🟡 5)
+- 🔴 **W1** — 8 session write(s) in this file; move writes into services/<domain>/ (lines: 71, 72, 74, 75, 102, 103, 123, 124) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\services\logistics_engine.py`  (🔴 1 · 🟡 4)
+- 🔴 **SEC5**:160 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\routers\admin_commission.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 6 session write(s) in this file; move writes into services/<domain>/ (lines: 66, 85, 108, 125) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_email.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 64, 77) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_payouts.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 66, 135, 194) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\admin_video.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 87, 165) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\country_admin.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 12 session write(s) in this file; move writes into services/<domain>/ (lines: 111, 112, 172, 246, 247, 283, 298, 357, 358, 377 +2 more) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\country_payouts.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 8 session write(s) in this file; move writes into services/<domain>/ (lines: 85, 86, 105, 106, 160, 161, 180, 181) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\flash_sales.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 34, 36, 37) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\push_notifications.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 53, 61, 62, 83, 84) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\returns.py`  (🔴 1 · 🟡 4)
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 106) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\middleware\behavioral_analytics.py`  (🔴 1 · 🟡 4)
+- 🔴 **SEC5**:102 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\services\command_center_background.py`  (🔴 1 · 🟡 3)
+- 🔴 **SEC5**:42 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\routers\parcel_tracking.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 68, 69) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\referrals.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 34) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\shop_locations.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 3 session write(s) in this file; move writes into services/<domain>/ (lines: 68, 69, 95) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\users.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 24, 43) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\middleware\rate_limit_middleware.py`  (🔴 1 · 🟡 3)
+- 🔴 **SEC5**:224 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\routers\logistics_locations.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 79, 80) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\supplier_documents.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 1 session write(s) in this file; move writes into services/<domain>/ (lines: 57) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\supplier_payouts.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 54, 55) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\middleware\impossible_travel_middleware.py`  (🔴 1 · 🟡 3)
+- 🔴 **W1** — 2 session write(s) in this file; move writes into services/<domain>/ (lines: 160, 161) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\routers\shipments.py`  (🔴 1 · 🟡 2)
+- 🔴 **W1** — 5 session write(s) in this file; move writes into services/<domain>/ (lines: 33, 41, 49) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\services\transactional_email_service.py`  (🔴 1 · 🟡 2)
+- 🔴 **SEC5**:146 — potential SQL injection: string interpolation in SQL query without visible parameterization → *use parameterized queries or SQLAlchemy ORM; never interpolate user input into SQL*
+### `backend\utils\rls_interceptor.py`  (🔴 1 · 🟡 2)
+- 🔴 **SEC101** — raw SQL concatenation (lines: 424, 426) → *use parameterized queries / SQLAlchemy ORM*
+### `frontend\mobile_app\lib\invoiceService.ts`  (🔴 1 · 🟡 1)
+- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+### `frontend\web_app\src\components\supplier\PhotoEditorModal.tsx`  (🔴 1 · 🟡 1)
+- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+### `frontend\web_app\src\components\supplier\ProductImageCanvas.tsx`  (🔴 1 · 🟡 1)
+- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+### `backend\alembic\versions\2026_08_06_0005-dba03_version_column_backfill.py`  (🔴 1 · 🟡 1)
+- 🔴 **DBA27** — migration file is not valid Python (broken head risk) → *fix syntax/import error; ADR-018 requires a runnable Alembic chain*
+### `frontend\web_app\src\components\admin\commandCenter\hud.tsx`  (🔴 1 · 🟡 1)
+- 🔴 **DS02** — 2 <style> tag(s) inside component → *delete; styles belong in design system*
+### `frontend\mobile_app\app\supplier\label.tsx`  (🔴 1 · 🟡 1)
+- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+### `frontend\web_app\src\app\layout.tsx`  (🔴 1 · 🟡 1)
+- 🔴 **DS10** — magic z-index: 10000 → *use z-index scale token; never 9999+*
+### `backend\routers\supplier_profile.py`  (🔴 1 · 🟡 1)
+- 🔴 **W1** — 4 session write(s) in this file; move writes into services/<domain>/ (lines: 24, 25, 33) → *move this write into services/<domain>/; routers/controllers are read-only orchestration*
+### `backend\zozi.db`  (🔴 1 · 🟡 0)
+- 🔴 **F4** — must not sit at backend (damages structure/scale) → *delete + add to .gitignore*
+### `zozi.db`  (🔴 1 · 🟡 0)
+- 🔴 **F4** — must not sit at . (damages structure/scale) → *delete + add to .gitignore*
+### `backend\controllers\admin`  (🔴 1 · 🟡 0)
+- 🔴 **DOM3** — SURFACE folder 'admin/' inside DOMAIN layer controllers/ → *remove controllers/admin/; move its files into the correct domain folder or rename to a real domain (finance/orders/catalog/supplier/...)*
+### `frontend\web_app\src\components\TickerBar.tsx`  (🔴 1 · 🟡 0)
+- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+### `frontend\web_app\src\styles\comm.css`  (🔴 1 · 🟡 0)
+- 🔴 **DS06** — !important used 2× → *fix specificity; never !important in design system*
+### `frontend\web_app\src\styles\panel-modern.css`  (🔴 1 · 🟡 0)
+- 🔴 **DS06** — !important used 2× → *fix specificity; never !important in design system*
+### `backend\models\finance.py`  (🔴 0 · 🟡 228)
+### `backend\models\admin.py`  (🔴 0 · 🟡 174)
+### `backend\models\fraud.py`  (🔴 0 · 🟡 76)
+### `frontend/`  (🔴 0 · 🟡 62)
+### `backend\models\employee_models.py`  (🔴 0 · 🟡 60)
+### `backend\models\logistics.py`  (🔴 0 · 🟡 53)
+### `backend\models\comms\core.py`  (🔴 0 · 🟡 48)
+### `backend\models\products.py`  (🔴 0 · 🟡 45)
+### `backend\services\cash_management_service.py`  (🔴 0 · 🟡 38)
+### `backend\models\payments.py`  (🔴 0 · 🟡 33)
+### `backend\services`  (🔴 0 · 🟡 31)
+### `backend\models\commission.py`  (🔴 0 · 🟡 31)
+### `backend\models\country_control.py`  (🔴 0 · 🟡 31)
+### `backend\models\comms\communication.py`  (🔴 0 · 🟡 31)
+### `backend\models\orders.py`  (🔴 0 · 🟡 30)
+### `backend\providers\payments\config.py`  (🔴 0 · 🟡 29)
+### `backend\models\user.py`  (🔴 0 · 🟡 29)
+### `backend\models\permissions.py`  (🔴 0 · 🟡 28)
+### `backend\models\onboarding.py`  (🔴 0 · 🟡 27)
+### `backend\models\geography\country_enhancements.py`  (🔴 0 · 🟡 27)
+| 🔴 P0 (fix today) | 284 | Production / security risk |

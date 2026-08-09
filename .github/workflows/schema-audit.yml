@@ -1,0 +1,160 @@
+name: Schema Audit (Deployment Gate)
+
+on:
+  pull_request:
+    paths:
+      - "backend/models/**"
+      - "backend/db/**"
+      - "backend/alembic/**"
+      - "backend/utils/schema_audit.py"
+    branches: [main, develop]
+
+  push:
+    paths:
+      - "backend/models/**"
+      - "backend/db/**"
+      - "backend/alembic/**"
+      - "backend/utils/schema_audit.py"
+    branches: [main]
+
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+jobs:
+  schema-audit:
+    runs-on: ubuntu-latest
+
+    services:
+      # Spin up a PostgreSQL service so the audit can connect to a real DB
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: zozimarketplace
+          POSTGRES_USER: zozimarketplace
+          POSTGRES_PASSWORD: zozimarketplace
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install alembic psycopg2-binary
+
+      - name: Configure env for CI
+        run: |
+          echo "DATABASE_URL=postgresql://zozimarketplace:zozimarketplace@localhost:5432/zozimarketplace" >> $GITHUB_ENV
+          echo "SECRET_KEY=ci-secret-key-not-for-production" >> $GITHUB_ENV
+          echo "FIELD_ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> $GITHUB_ENV
+
+      - name: Apply Alembic migrations to test DB
+        run: |
+          cd backend
+          alembic upgrade head
+
+      - name: Run Schema Audit (Deployment Gate)
+        id: audit
+        continue-on-error: false
+        run: |
+          cd backend
+          python -m utils.schema_audit --json > schema-audit-report.json 2>&1
+          python scripts/schema_audit_ci.py --github-annotation < schema-audit-report.json 2>&1 || true
+          # Gate: fail if issues exist
+          python -c "
+import json, sys
+try:
+    with open('schema-audit-report.json') as f:
+        report = json.load(f)
+        if report.get('healthy', False):
+            sys.exit(0)
+        else:
+            print('[@] SCHEMA AUDIT BLOCKED - issues found', file=sys.stderr)
+            sys.exit(1)
+except Exception as exc:
+    print(f'[!] Failed to parse audit report: {exc}', file=sys.stderr)
+    sys.exit(1)
+"
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-audit-report
+          path: backend/schema-audit-report.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Comment PR with audit summary
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const output = execSync('cd backend && python -m utils.schema_audit --json 2>&1', { encoding: 'utf-8' });
+            // Extract JSON from the output (skip stderr lines like "FIELD_ENCRYPTION_KEY not set")
+            const lines = output.split('\n').filter(l => l.trim().startsWith('{'));
+            if (lines.length === 0) {
+              core.info('Could not parse audit JSON for PR comment');
+              return;
+            }
+            const report = JSON.parse(lines.join(''));
+            const healthy = report.healthy;
+            const count = report.issue_count;
+            const alembic = report.alembic || {};
+
+            let body = '## 🔍 Schema Audit Report\n\n';
+            if (healthy) {
+              body += '✅ **Schema is healthy** — no ORM/database drift detected.';
+            } else {
+              body += `❌ **${count} issue(s) found** — review and fix before merging.\n\n`;
+            }
+
+            if (alembic.stamped_version) {
+              const match = alembic.head_matches_stamp ? '✅' : '❌';
+              const linear = alembic.is_linear ? '✅ linear' : '❌ NOT linear';
+              body += `\n| Check | Status |\n|-------|--------|\n`;
+              body += `| Migration tree | ${linear} |\n`;
+              body += `| Stamped version | \`${alembic.stamped_version}\` |\n`;
+              body += `| Head version | \`${alembic.head_version || 'N/A'}\` |\n`;
+              body += `| Stamp matches head | ${match} |\n`;
+            }
+
+            if (report.issues && report.issues.length > 0) {
+              body += '\n### Issues by type\n\n';
+              const counts = {};
+              for (const issue of report.issues) {
+                counts[issue.kind] = (counts[issue.kind] || 0) + 1;
+              }
+              for (const [kind, count] of Object.entries(counts).sort((a,b) => b[1] - a[1])) {
+                body += `- \`${kind}\`: ${count}\n`;
+              }
+            }
+
+            const fs = require('fs');
+            const reportPath = 'backend/schema-audit-report.json';
+            fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));

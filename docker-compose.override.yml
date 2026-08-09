@@ -1,0 +1,25 @@
+services:
+  # PgBouncer — connection pooler between the API and Postgres.
+  # Prevents connection storms when many API workers start simultaneously.
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - MAX_CLIENT_CONN=200
+      - DEFAULT_POOL_SIZE=20
+      - POOL_MODE=transaction
+      - SERVER_RESET_QUERY=DISCARD ALL
+    ports:
+      - "6432:5432"
+    depends_on:
+      db:
+        condition: service_healthy
+  backend:
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pgbouncer:6432/${POSTGRES_DB}
+      - DB_POOL_SIZE=10
+      - DB_MAX_OVERFLOW=10
+      - DB_POOL_RECYCLE=600
+    depends_on:
+      pgbouncer:
+        condition: service_started

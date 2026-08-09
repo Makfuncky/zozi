@@ -1,0 +1,3651 @@
+{
+  "palette_token_count": 88,
+  "palette_sources": [
+    "frontend\\shared\\src\\theme.ts",
+    "frontend\\web_app\\tailwind.config.js"
+  ],
+  "DS01_files_ge3": [
+    [
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      74
+    ],
+    [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx",
+      62
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx",
+      52
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      51
+    ],
+    [
+      "frontend\\mobile_app\\app\\checkout.tsx",
+      46
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      46
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\analytics.tsx",
+      40
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+      38
+    ],
+    [
+      "frontend\\mobile_app\\app\\suppliers\\[id].tsx",
+      36
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      34
+    ],
+    [
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      33
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+      33
+    ],
+    [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+      33
+    ],
+    [
+      "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+      33
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\bulk.tsx",
+      31
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\coupons.tsx",
+      29
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      28
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\register.tsx",
+      28
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      27
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\[id].tsx",
+      26
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\flash-sales.tsx",
+      26
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\credibility.tsx",
+      25
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\scan.tsx",
+      24
+    ],
+    [
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      23
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      23
+    ],
+    [
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      23
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\payouts.tsx",
+      22
+    ],
+    [
+      "frontend\\mobile_app\\app\\tracking\\[id].tsx",
+      22
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\profile.tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\reports.tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\products\\new.tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      20
+    ],
+    [
+      "frontend\\mobile_app\\app\\ticket-detail.tsx",
+      20
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\cart.tsx",
+      20
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\payouts.tsx",
+      19
+    ],
+    [
+      "frontend\\mobile_app\\components\\BackgroundJobCenter.tsx",
+      19
+    ],
+    [
+      "frontend\\mobile_app\\app\\settings.tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\tickets.tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\returns\\[id].tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\offers.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\banners.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\product-verification.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\components\\AddressesScreen.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\invoices.tsx",
+      15
+    ],
+    [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx",
+      15
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\logistics-partners.tsx",
+      14
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\users.tsx",
+      14
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx",
+      14
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\audit-logs.tsx",
+      13
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\invoices.tsx",
+      13
+    ],
+    [
+      "frontend\\web_app\\src\\app\\admin\\command-center\\page.tsx",
+      13
+    ],
+    [
+      "frontend\\mobile_app\\app\\change-password.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\help.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\orders\\[id].tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\returns.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\suppliers.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\label.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\chatbot.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\coupons.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\referrals.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\orders.tsx",
+      11
+    ],
+    [
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\login.tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\_layout.tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\bank-accounts.tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\products\\[id].tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\app\\edit-profile.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\register.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\support.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\products\\index.tsx",
+      9
+    ],
+    [
+      "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\archive.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\wishlist.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\promotions.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\orders.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\returns.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\guide.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\profile.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\returns.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\terms.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\write-review.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\exports.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\analytics.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\notification-preferences.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\components\\AuthRequiredModal.tsx",
+      6
+    ],
+    [
+      "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+      6
+    ],
+    [
+      "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+      6
+    ],
+    [
+      "frontend\\web_app\\src\\app\\brand\\page.tsx",
+      6
+    ],
+    [
+      "frontend\\web_app\\src\\logo\\ZoziLogo.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\app\\newsletter.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\app\\orders.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\reset-password.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\components\\LocationPicker.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\components\\OrderCard.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\components\\ProductCard.tsx",
+      5
+    ],
+    [
+      "frontend\\web_app\\src\\components\\supplier\\PhotoEditorModal.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\forgot-password.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\verify-email.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\login.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\regions.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\SearchableSelect.tsx",
+      4
+    ],
+    [
+      "frontend\\web_app\\src\\components\\BannerCarousel.tsx",
+      4
+    ],
+    [
+      "frontend\\web_app\\src\\components\\ems\\ChatEnrichment.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\analytics.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\r\\[code].tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\CartItem.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\QuickViewModal.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\HeaderBar.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\LanguageSheet.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\ListSkeleton.tsx",
+      3
+    ],
+    [
+      "frontend\\shared\\src\\components\\EnterpriseDataTable.tsx",
+      3
+    ],
+    [
+      "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+      3
+    ],
+    [
+      "frontend\\shared\\src\\logo\\LogoAnimation.tsx",
+      3
+    ],
+    [
+      "frontend\\web_app\\src\\app\\admin\\ess\\page.tsx",
+      3
+    ],
+    [
+      "frontend\\web_app\\src\\app\\admin\\treasury\\_components\\treasury-content.tsx",
+      3
+    ],
+    [
+      "frontend\\web_app\\src\\app\\products\\page.tsx",
+      3
+    ],
+    [
+      "frontend\\web_app\\src\\app\\suppliers\\[id]\\page.tsx",
+      3
+    ],
+    [
+      "frontend\\web_app\\src\\components\\comms\\Stage\\renderers\\ChatStream.tsx",
+      3
+    ],
+    [
+      "frontend\\web_app\\src\\components\\map\\MapView.tsx",
+      3
+    ]
+  ],
+  "DS01_count_reported": 60,
+  "DS02": [
+    [
+      "frontend\\web_app\\src\\app\\supplier\\labels\\[id]\\print.css",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\components\\banner-effects.css",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.css",
+      1
+    ]
+  ],
+  "DS03_total_off_literals": 140,
+  "DS03_reported": [
+    {
+      "hex": "#2fb43d",
+      "count": 24,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\glow.css"
+      ]
+    },
+    {
+      "hex": "#facc15",
+      "count": 20,
+      "files": [
+        "frontend\\mobile_app\\app\\write-review.tsx",
+        "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx",
+        "frontend\\mobile_app\\components\\ProductCard.tsx",
+        "frontend\\mobile_app\\components\\QuickViewModal.tsx",
+        "frontend\\mobile_app\\components\\Recommendations.tsx",
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\glow.css"
+      ]
+    },
+    {
+      "hex": "#8b5cf6",
+      "count": 17,
+      "files": [
+        "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+        "frontend\\mobile_app\\app\\admin\\users.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\analytics.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\scan.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+        "frontend\\mobile_app\\theme\\index.ts",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\ChartComponents.tsx"
+      ]
+    },
+    {
+      "hex": "#fde68a",
+      "count": 13,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\banner-effects.css"
+      ]
+    },
+    {
+      "hex": "#1e293b",
+      "count": 12,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+        "frontend\\mobile_app\\components\\ui\\SearchBar.tsx",
+        "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx",
+        "frontend\\shared\\src\\components\\ui\\SearchBar.native.tsx",
+        "frontend\\shared\\src\\components\\ui\\SearchBar.web.tsx",
+        "frontend\\shared\\src\\components\\ui\\ThemeToggle.native.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#a3b3c8",
+      "count": 8,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\SupplierBadge.native.tsx",
+        "frontend\\shared\\src\\components\\ui\\SupplierBadge.web.tsx"
+      ]
+    },
+    {
+      "hex": "#a78bfa",
+      "count": 8,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx",
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#6ae022",
+      "count": 7,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\Footer.tsx",
+        "frontend\\mobile_app\\components\\ui\\HeaderBar.tsx",
+        "frontend\\mobile_app\\components\\ui\\ScreenHeader.tsx",
+        "frontend\\web_app\\src\\styles\\comm.css"
+      ]
+    },
+    {
+      "hex": "#d08c00",
+      "count": 7,
+      "files": [
+        "frontend\\mobile_app\\components\\ProductCard.tsx",
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#7f1d1d",
+      "count": 6,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#cccccc",
+      "count": 6,
+      "files": [
+        "frontend\\mobile_app\\lib\\printStyles.ts",
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\components\\ColorPickerField.tsx",
+        "frontend\\web_app\\src\\app\\supplier\\products\\add\\page.tsx",
+        "frontend\\web_app\\src\\components\\supplier\\ProductImageCanvas.tsx"
+      ]
+    },
+    {
+      "hex": "#dc2626",
+      "count": 6,
+      "files": [
+        "frontend\\mobile_app\\app\\flash-sales.tsx",
+        "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+        "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+      ]
+    },
+    {
+      "hex": "#22d3ee",
+      "count": 5,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+      ]
+    },
+    {
+      "hex": "#a86000",
+      "count": 5,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#f0c800",
+      "count": 5,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#fff550",
+      "count": 5,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#00c800",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#080d18",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\glow.css"
+      ]
+    },
+    {
+      "hex": "#10233e",
+      "count": 4,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx",
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx"
+      ]
+    },
+    {
+      "hex": "#1e1b4b",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#233a61",
+      "count": 4,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#2828ff",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#2dd4bf",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#325a24",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\panel-modern.css"
+      ]
+    },
+    {
+      "hex": "#3d8018",
+      "count": 4,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#60a5fa",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+      ]
+    },
+    {
+      "hex": "#ff2828",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#ffdc28",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#064e3b",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#1e3a8a",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    }
+  ],
+  "DS03_all": [
+    {
+      "hex": "#2fb43d",
+      "count": 24,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\glow.css"
+      ]
+    },
+    {
+      "hex": "#facc15",
+      "count": 20,
+      "files": [
+        "frontend\\mobile_app\\app\\write-review.tsx",
+        "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx",
+        "frontend\\mobile_app\\components\\ProductCard.tsx",
+        "frontend\\mobile_app\\components\\QuickViewModal.tsx",
+        "frontend\\mobile_app\\components\\Recommendations.tsx",
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\glow.css"
+      ]
+    },
+    {
+      "hex": "#8b5cf6",
+      "count": 17,
+      "files": [
+        "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+        "frontend\\mobile_app\\app\\admin\\users.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\analytics.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\scan.tsx",
+        "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+        "frontend\\mobile_app\\theme\\index.ts",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\ChartComponents.tsx"
+      ]
+    },
+    {
+      "hex": "#fde68a",
+      "count": 13,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\banner-effects.css"
+      ]
+    },
+    {
+      "hex": "#1e293b",
+      "count": 12,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+        "frontend\\mobile_app\\components\\ui\\SearchBar.tsx",
+        "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx",
+        "frontend\\shared\\src\\components\\ui\\SearchBar.native.tsx",
+        "frontend\\shared\\src\\components\\ui\\SearchBar.web.tsx",
+        "frontend\\shared\\src\\components\\ui\\ThemeToggle.native.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#a3b3c8",
+      "count": 8,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\SupplierBadge.native.tsx",
+        "frontend\\shared\\src\\components\\ui\\SupplierBadge.web.tsx"
+      ]
+    },
+    {
+      "hex": "#a78bfa",
+      "count": 8,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx",
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#6ae022",
+      "count": 7,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\Footer.tsx",
+        "frontend\\mobile_app\\components\\ui\\HeaderBar.tsx",
+        "frontend\\mobile_app\\components\\ui\\ScreenHeader.tsx",
+        "frontend\\web_app\\src\\styles\\comm.css"
+      ]
+    },
+    {
+      "hex": "#d08c00",
+      "count": 7,
+      "files": [
+        "frontend\\mobile_app\\components\\ProductCard.tsx",
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#7f1d1d",
+      "count": 6,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#cccccc",
+      "count": 6,
+      "files": [
+        "frontend\\mobile_app\\lib\\printStyles.ts",
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\components\\ColorPickerField.tsx",
+        "frontend\\web_app\\src\\app\\supplier\\products\\add\\page.tsx",
+        "frontend\\web_app\\src\\components\\supplier\\ProductImageCanvas.tsx"
+      ]
+    },
+    {
+      "hex": "#dc2626",
+      "count": 6,
+      "files": [
+        "frontend\\mobile_app\\app\\flash-sales.tsx",
+        "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+        "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+      ]
+    },
+    {
+      "hex": "#22d3ee",
+      "count": 5,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+      ]
+    },
+    {
+      "hex": "#a86000",
+      "count": 5,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#f0c800",
+      "count": 5,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#fff550",
+      "count": 5,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#00c800",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#080d18",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\glow.css"
+      ]
+    },
+    {
+      "hex": "#10233e",
+      "count": 4,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx",
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx"
+      ]
+    },
+    {
+      "hex": "#1e1b4b",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#233a61",
+      "count": 4,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#2828ff",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#2dd4bf",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#325a24",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css",
+        "frontend\\web_app\\src\\styles\\panel-modern.css"
+      ]
+    },
+    {
+      "hex": "#3d8018",
+      "count": 4,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#60a5fa",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+      ]
+    },
+    {
+      "hex": "#ff2828",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#ffdc28",
+      "count": 4,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\upload\\bg-compare\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#064e3b",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#1e3a8a",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#34d399",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+      ]
+    },
+    {
+      "hex": "#76b900",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#808080",
+      "count": 3,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\LanguageSheet.tsx",
+        "frontend\\web_app\\src\\styles\\comm.css"
+      ]
+    },
+    {
+      "hex": "#a06800",
+      "count": 3,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+        "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+        "frontend\\web_app\\src\\logo\\ZoziLogo.tsx"
+      ]
+    },
+    {
+      "hex": "#b45309",
+      "count": 3,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+        "frontend\\mobile_app\\lib\\homeInsights.ts",
+        "frontend\\web_app\\src\\components\\banner-effects.css"
+      ]
+    },
+    {
+      "hex": "#fb923c",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#fffbeb",
+      "count": 3,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#0369a1",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\ErrorAlert.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#112233",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\app\\admin\\employees\\_tabs\\CommunicationsTab.tsx",
+        "frontend\\web_app\\src\\components\\admin\\AdminChatPanel.tsx"
+      ]
+    },
+    {
+      "hex": "#1877f2",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\app\\(auth)\\login.tsx",
+        "frontend\\mobile_app\\lib\\authPrompt.tsx"
+      ]
+    },
+    {
+      "hex": "#2ecc71",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#314a73",
+      "count": 2,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#40542e",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#4e6790",
+      "count": 2,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+        "frontend\\shared\\src\\logo\\Logo.native.tsx"
+      ]
+    },
+    {
+      "hex": "#4f8ef7",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#5d76a0",
+      "count": 2,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#65a30d",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\lib\\homeInsights.ts",
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts"
+      ]
+    },
+    {
+      "hex": "#666666",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\lib\\printStyles.ts"
+      ]
+    },
+    {
+      "hex": "#6d28d9",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\app\\offers.tsx",
+        "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#6fd648",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#7c2d12",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#991b1b",
+      "count": 2,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+      ]
+    },
+    {
+      "hex": "#a37e0e",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#b91c1c",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\app\\flash-sales.tsx",
+        "frontend\\mobile_app\\components\\ui\\ErrorAlert.tsx"
+      ]
+    },
+    {
+      "hex": "#bbf7d0",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\ErrorAlert.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#c0392b",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#cdff5c",
+      "count": 2,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#db4437",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\app\\(auth)\\login.tsx",
+        "frontend\\mobile_app\\lib\\authPrompt.tsx"
+      ]
+    },
+    {
+      "hex": "#dcf674",
+      "count": 2,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+        "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+      ]
+    },
+    {
+      "hex": "#fca5a5",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\ErrorAlert.tsx",
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#fcd34d",
+      "count": 2,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#ff4500",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#ff6b35",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#fff7d6",
+      "count": 2,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+        "frontend\\web_app\\src\\components\\banner-effects.css"
+      ]
+    },
+    {
+      "hex": "#020617",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#060e1c",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#065f46",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#080d1a",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\app\\(tabs)\\_layout.tsx"
+      ]
+    },
+    {
+      "hex": "#082f49",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#0a1e2e",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#0a2e0a",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#0c4a6e",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#0d9488",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#0e7490",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#0ea5a4",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx"
+      ]
+    },
+    {
+      "hex": "#0f766e",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\lib\\homeInsights.ts"
+      ]
+    },
+    {
+      "hex": "#104808",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#142a08",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#15803d",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\ErrorAlert.tsx"
+      ]
+    },
+    {
+      "hex": "#163040",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#166534",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#1a0a2e",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#1a1a2e",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#1a2e45",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#1a4a1a",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#1b5e20",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#1d3c10",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#1d4ed8",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\app\\flash-sales.tsx"
+      ]
+    },
+    {
+      "hex": "#2026aa",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\admin\\suppliers\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#23812c",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#2a5a0a",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#2d1650",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#2d1b00",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#312e81",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#444444",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\lib\\printStyles.ts"
+      ]
+    },
+    {
+      "hex": "#451a03",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#46a800",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#4a2800",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\HeroBanner.tsx"
+      ]
+    },
+    {
+      "hex": "#4c1d95",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#555555",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\lib\\printStyles.ts"
+      ]
+    },
+    {
+      "hex": "#558b2f",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#6d4c41",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts"
+      ]
+    },
+    {
+      "hex": "#6ee7b7",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts"
+      ]
+    },
+    {
+      "hex": "#787878",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css"
+      ]
+    },
+    {
+      "hex": "#7dd3fc",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\ui\\ErrorAlert.tsx"
+      ]
+    },
+    {
+      "hex": "#86efac",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#8bc34a",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#96d264",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#999999",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\app\\supplier\\credibility.tsx"
+      ]
+    },
+    {
+      "hex": "#9adb00",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#9ca3fc",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\theme\\index.ts"
+      ]
+    },
+    {
+      "hex": "#aeea00",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#bae6fd",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#bef264",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#c2410c",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\app\\flash-sales.tsx"
+      ]
+    },
+    {
+      "hex": "#c3b091",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts"
+      ]
+    },
+    {
+      "hex": "#d1fae5",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#d8f500",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#db2777",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\lib\\homeInsights.ts"
+      ]
+    },
+    {
+      "hex": "#dce7f9",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#dcfce7",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#ddd6fe",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#e8edf5",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#e8f5de",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\theme.native.ts"
+      ]
+    },
+    {
+      "hex": "#ebff64",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#f43f5e",
+      "count": 1,
+      "files": [
+        "frontend\\mobile_app\\app\\offers.tsx"
+      ]
+    },
+    {
+      "hex": "#f5f5dc",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts"
+      ]
+    },
+    {
+      "hex": "#f7931e",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#f9a825",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#fecaca",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+      ]
+    },
+    {
+      "hex": "#fed7aa",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#fef08a",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    },
+    {
+      "hex": "#ffac00",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#ffb400",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#ffb627",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+      ]
+    },
+    {
+      "hex": "#ffe100",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#fff176",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\app\\brand\\page.tsx"
+      ]
+    },
+    {
+      "hex": "#fff27a",
+      "count": 1,
+      "files": [
+        "frontend\\shared\\src\\components\\logo\\logoArt.ts"
+      ]
+    },
+    {
+      "hex": "#fff7bf",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\styles\\globals.css"
+      ]
+    },
+    {
+      "hex": "#fff7ed",
+      "count": 1,
+      "files": [
+        "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+      ]
+    }
+  ],
+  "DS04": [
+    {
+      "total": 6,
+      "members": [
+        {
+          "hex": "#060e1c",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#080d18",
+          "count": 4,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css",
+            "frontend\\web_app\\src\\styles\\glow.css"
+          ]
+        },
+        {
+          "hex": "#080d1a",
+          "count": 1,
+          "files": [
+            "frontend\\mobile_app\\app\\(tabs)\\_layout.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 56,
+      "members": [
+        {
+          "hex": "#0f172a",
+          "count": 54,
+          "files": [
+            "frontend\\mobile_app\\components\\SignaturePad.tsx",
+            "frontend\\mobile_app\\components\\ui\\SearchBar.tsx",
+            "frontend\\mobile_app\\theme\\index.ts",
+            "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx",
+            "frontend\\shared\\src\\components\\ui\\SearchBar.native.tsx",
+            "frontend\\shared\\src\\components\\ui\\SearchBar.web.tsx",
+            "frontend\\web_app\\src\\app\\admin\\dashboard\\_tabs\\BannerTab.tsx",
+            "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+            "frontend\\web_app\\src\\components\\SignaturePad.tsx",
+            "frontend\\web_app\\src\\components\\map\\mapMarker.ts",
+            "frontend\\web_app\\src\\styles\\globals.css",
+            "frontend\\web_app\\src\\styles\\panel-modern.css"
+          ]
+        },
+        {
+          "hex": "#111827",
+          "count": 2,
+          "files": [
+            "frontend\\mobile_app\\components\\ui\\Card.tsx",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 11,
+      "members": [
+        {
+          "hex": "#1a1a1a",
+          "count": 9,
+          "files": [
+            "frontend\\mobile_app\\theme\\index.ts",
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#1c1917",
+          "count": 2,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 4,
+      "members": [
+        {
+          "hex": "#475569",
+          "count": 3,
+          "files": [
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#4b5563",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 13,
+      "members": [
+        {
+          "hex": "#cbd5e1",
+          "count": 8,
+          "files": [
+            "frontend\\mobile_app\\components\\SignaturePad.tsx",
+            "frontend\\shared\\src\\components\\ui\\ThemeToggle.native.tsx",
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+            "frontend\\web_app\\src\\components\\SignaturePad.tsx",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#d1d5db",
+          "count": 5,
+          "files": [
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 6,
+      "members": [
+        {
+          "hex": "#f0fdf0",
+          "count": 2,
+          "files": [
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f3f8ee",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f4f8ee",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f5f9ef",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f5faf0",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 8,
+      "members": [
+        {
+          "hex": "#f1f5f9",
+          "count": 7,
+          "files": [
+            "frontend\\mobile_app\\lib\\printStyles.ts",
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+            "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f5f5f5",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 5,
+      "members": [
+        {
+          "hex": "#f3f6ee",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f5f7ef",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f7faf3",
+          "count": 3,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 28,
+      "members": [
+        {
+          "hex": "#f8faf5",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f8fafc",
+          "count": 14,
+          "files": [
+            "frontend\\mobile_app\\components\\ui\\SearchBar.tsx",
+            "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+            "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx",
+            "frontend\\shared\\src\\components\\ui\\SearchBar.native.tsx",
+            "frontend\\shared\\src\\components\\ui\\SearchBar.web.tsx",
+            "frontend\\shared\\src\\components\\ui\\ThemeToggle.native.tsx",
+            "frontend\\shared\\src\\theme.native.ts",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f8fbf4",
+          "count": 3,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f8fcf3",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f8fcf4",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#f9fbf5",
+          "count": 2,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#fafcf6",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#fbfcf8",
+          "count": 5,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 4,
+      "members": [
+        {
+          "hex": "#fef3c7",
+          "count": 3,
+          "files": [
+            "frontend\\web_app\\src\\app\\supplier\\bulk\\draftUtils.ts",
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        },
+        {
+          "hex": "#fff7bf",
+          "count": 1,
+          "files": [
+            "frontend\\web_app\\src\\styles\\globals.css"
+          ]
+        }
+      ]
+    },
+    {
+      "total": 11,
+      "members": [
+        {
+          "hex": "#ffd440",
+          "count": 4,
+          "files": [
+            "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+            "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+          ]
+        },
+        {
+          "hex": "#ffd740",
+          "count": 7,
+          "files": [
+            "frontend\\shared\\src\\components\\logo\\Logo.native.tsx",
+            "frontend\\shared\\src\\components\\logo\\ZoziLogo.tsx",
+            "frontend\\shared\\src\\logo\\Logo.native.tsx",
+            "frontend\\shared\\src\\logo\\ZoziLogo.tsx",
+            "frontend\\web_app\\src\\logo\\ZoziLogo.tsx",
+            "frontend\\web_app\\src\\styles\\globals.css",
+            "frontend\\web_app\\src\\styles\\tokens.css"
+          ]
+        }
+      ]
+    }
+  ],
+  "DS05": [],
+  "DS06": [],
+  "DS10": [],
+  "DS14": [],
+  "DS07_font_sizes": {
+    "0.75rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0.7rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0.875rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0.8rem": [
+      "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css"
+    ],
+    "1.05rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.125rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.15rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.25rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.35rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.5rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.6rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.7rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.875rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "10": [
+      "frontend\\mobile_app\\app\\(auth)\\register.tsx",
+      "frontend\\mobile_app\\app\\(tabs)\\cart.tsx",
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx",
+      "frontend\\mobile_app\\app\\admin\\audit-logs.tsx",
+      "frontend\\mobile_app\\app\\admin\\coupons.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      "frontend\\mobile_app\\app\\admin\\users.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\help.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+      "frontend\\mobile_app\\app\\supplier\\bulk.tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      "frontend\\mobile_app\\app\\supplier\\returns.tsx",
+      "frontend\\mobile_app\\components\\BackgroundJobCenter.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx"
+    ],
+    "100%": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "10px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "11": [
+      "frontend\\mobile_app\\app\\admin\\bank-accounts.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\orders.tsx",
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      "frontend\\mobile_app\\app\\admin\\returns.tsx",
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      "frontend\\mobile_app\\app\\checkout.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      "frontend\\mobile_app\\app\\returns.tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\app\\supplier\\label.tsx",
+      "frontend\\mobile_app\\app\\supplier\\returns.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx",
+      "frontend\\mobile_app\\components\\OrderCard.tsx",
+      "frontend\\mobile_app\\components\\QuickViewModal.tsx",
+      "frontend\\mobile_app\\components\\ui\\QuickFilters.tsx",
+      "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx"
+    ],
+    "11px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "12": [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\[id].tsx",
+      "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\suppliers.tsx",
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\scan.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      "frontend\\mobile_app\\app\\returns\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\app\\supplier\\label.tsx",
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      "frontend\\mobile_app\\app\\supplier\\products\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\products\\new.tsx",
+      "frontend\\mobile_app\\app\\supplier\\profile.tsx",
+      "frontend\\mobile_app\\components\\LocationPicker.tsx",
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx",
+      "frontend\\mobile_app\\components\\QuickViewModal.tsx",
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx",
+      "frontend\\mobile_app\\components\\ui\\SearchableSelect.tsx",
+      "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx"
+    ],
+    "12px": [
+      "frontend\\web_app\\src\\styles\\comm.css",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "13": [
+      "frontend\\mobile_app\\app\\admin\\bank-accounts.tsx",
+      "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      "frontend\\mobile_app\\app\\r\\[code].tsx",
+      "frontend\\mobile_app\\app\\returns.tsx",
+      "frontend\\mobile_app\\app\\returns\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\app\\supplier\\label.tsx",
+      "frontend\\mobile_app\\components\\AuthRequiredModal.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      "frontend\\mobile_app\\components\\ui\\Input.tsx",
+      "frontend\\mobile_app\\components\\ui\\SearchableSelect.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+      "frontend\\shared\\src\\components\\ui\\Input.native.tsx"
+    ],
+    "13px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "14": [
+      "frontend\\mobile_app\\app\\admin\\coupons.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\admin\\login.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      "frontend\\mobile_app\\app\\orders.tsx",
+      "frontend\\mobile_app\\app\\returns.tsx",
+      "frontend\\mobile_app\\app\\returns\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      "frontend\\mobile_app\\components\\AuthRequiredModal.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx",
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorAlert.native.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+    ],
+    "14px": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "15": [
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\app\\r\\[code].tsx",
+      "frontend\\mobile_app\\app\\returns.tsx",
+      "frontend\\mobile_app\\app\\returns\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\app\\supplier\\label.tsx",
+      "frontend\\mobile_app\\app\\supplier\\returns.tsx",
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx"
+    ],
+    "15px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "16": [
+      "frontend\\mobile_app\\app\\admin\\analytics.tsx",
+      "frontend\\mobile_app\\app\\admin\\banners.tsx",
+      "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\exports.tsx",
+      "frontend\\mobile_app\\app\\admin\\invoices.tsx",
+      "frontend\\mobile_app\\app\\admin\\logistics-partners.tsx",
+      "frontend\\mobile_app\\app\\admin\\orders.tsx",
+      "frontend\\mobile_app\\app\\admin\\product-verification.tsx",
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      "frontend\\mobile_app\\app\\admin\\promotions.tsx",
+      "frontend\\mobile_app\\app\\admin\\returns.tsx",
+      "frontend\\mobile_app\\app\\admin\\suppliers.tsx",
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx"
+    ],
+    "17": [
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx"
+    ],
+    "18": [
+      "frontend\\mobile_app\\app\\(tabs)\\_layout.tsx",
+      "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+      "frontend\\mobile_app\\app\\edit-profile.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\supplier\\invoices.tsx"
+    ],
+    "1em": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "2.25rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "20": [
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      "frontend\\mobile_app\\app\\suppliers\\[id].tsx",
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "22": [
+      "frontend\\mobile_app\\app\\(tabs)\\_layout.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\logistics-partners.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\credibility.tsx"
+    ],
+    "24": [
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      "frontend\\mobile_app\\components\\ui\\HeaderBar.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "26": [
+      "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx"
+    ],
+    "28": [
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx"
+    ],
+    "2rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "3.75rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "32": [
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\suppliers\\[id].tsx"
+    ],
+    "36px": [
+      "frontend\\web_app\\src\\app\\brand\\page.tsx"
+    ],
+    "3rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "4.5rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "40": [
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\edit-profile.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx"
+    ],
+    "48": [
+      "frontend\\mobile_app\\app\\flash-sales.tsx"
+    ],
+    "52": [
+      "frontend\\mobile_app\\app\\supplier\\credibility.tsx"
+    ],
+    "6rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "7": [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+    ],
+    "75%": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "7px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "80%": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "8px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "9": [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\supplier\\credibility.tsx"
+    ],
+    "9px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "clamp(11px, 1.5vw, 15px)": [
+      "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+      "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+    ],
+    "clamp(3.5rem, 9vw, 8.5rem)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "clamp(58px, 8.5vw, 96px)": [
+      "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+      "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+    ],
+    "inherit": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ]
+  },
+  "DS07_font_families": {
+    "\"Arabic UI\"": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "Sora', 'Montserrat', system-ui, sans-serif": [
+      "frontend\\web_app\\src\\app\\brand\\page.tsx"
+    ],
+    "inherit": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "system-ui, sans-serif": [
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--font-arabic), \"Arabic UI\", \"Noto Naskh Arabic\", \"Noto Sans Arabic\", \"Segoe UI\", Tahoma,\n               \"Arial Unicode MS\", sans-serif": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--font-body), Sora, sans-serif": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--font-body), Sora, system-ui, sans-serif": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--font-body, 'Sora', system-ui, sans-serif)": [
+      "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+      "frontend\\shared\\src\\logo\\LogoAnimation.tsx"
+    ],
+    "var(--font-display), Fraunces, serif": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--font-display, ui-sans-serif)": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "var(--font-nunito, 'Nunito', var(--font-body, 'Sora', system-ui, sans-serif))": [
+      "frontend\\shared\\src\\components\\logo\\Logo.web.tsx",
+      "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+      "frontend\\shared\\src\\logo\\Logo.web.tsx",
+      "frontend\\shared\\src\\logo\\LogoAnimation.tsx",
+      "frontend\\web_app\\src\\logo\\Logo.web.tsx"
+    ]
+  },
+  "DS08_total_px": 2443,
+  "DS08_by_file": [
+    [
+      "frontend\\web_app\\src\\styles\\globals.css",
+      899
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      81
+    ],
+    [
+      "frontend\\web_app\\src\\styles\\comm.css",
+      63
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx",
+      62
+    ],
+    [
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      62
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      61
+    ],
+    [
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      43
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      43
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+      38
+    ],
+    [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx",
+      36
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\documents.tsx",
+      35
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\profile.tsx",
+      34
+    ],
+    [
+      "frontend\\web_app\\src\\styles\\panel-modern.css",
+      34
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      33
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partners\\[id].tsx",
+      31
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      30
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\analytics.tsx",
+      26
+    ],
+    [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+      26
+    ],
+    [
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      25
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\dashboard.tsx",
+      23
+    ],
+    [
+      "frontend\\web_app\\src\\components\\banner-effects.css",
+      23
+    ],
+    [
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      22
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\coupons.tsx",
+      22
+    ],
+    [
+      "frontend\\mobile_app\\app\\returns\\[id].tsx",
+      22
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\products\\new.tsx",
+      22
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\flash-sales.tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\app\\tracking\\[id].tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx",
+      21
+    ],
+    [
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx",
+      21
+    ],
+    [
+      "frontend\\mobile_app\\app\\checkout.tsx",
+      20
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\orders.tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\bulk.tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\suppliers\\[id].tsx",
+      17
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\[id].tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\returns.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\credibility.tsx",
+      16
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\orders\\[id].tsx",
+      14
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\scan.tsx",
+      14
+    ],
+    [
+      "frontend\\mobile_app\\components\\NewsletterSignup.tsx",
+      14
+    ],
+    [
+      "frontend\\mobile_app\\app\\returns.tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\products\\[id].tsx",
+      12
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\audit-logs.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\barcode.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\register.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\returns.tsx",
+      11
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\cart.tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partners\\index.tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\HeaderBar.tsx",
+      10
+    ],
+    [
+      "frontend\\web_app\\src\\components\\BannerCanvasEditor.tsx",
+      10
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\product-verification.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\suppliers.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\label.tsx",
+      9
+    ],
+    [
+      "frontend\\mobile_app\\app\\offers.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\wishlist.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\(tabs)\\_layout.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\banners.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\logistics-partners.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\users.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\logistics-partner\\payouts.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\payouts.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\components\\BackgroundJobCenter.tsx",
+      8
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\bank-accounts.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\invoices.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\components\\AddressesScreen.tsx",
+      7
+    ],
+    [
+      "frontend\\mobile_app\\app\\chatbot.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\app\\settings.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\components\\AuthRequiredModal.tsx",
+      6
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\promotions.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\profile.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\SearchableSelect.tsx",
+      5
+    ],
+    [
+      "frontend\\shared\\src\\components\\logo\\LogoAnimation.tsx",
+      5
+    ],
+    [
+      "frontend\\shared\\src\\logo\\LogoAnimation.tsx",
+      5
+    ],
+    [
+      "frontend\\mobile_app\\app\\coupons.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\help.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\tickets.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\register.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\login.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\invoices.tsx",
+      4
+    ],
+    [
+      "frontend\\mobile_app\\app\\archive.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\change-password.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\edit-profile.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\orders.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\ticket-detail.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\admin\\exports.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\r\\[code].tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\LocationPicker.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\QuickViewModal.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\ListSkeleton.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\QuickFilters.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\Screen.tsx",
+      3
+    ],
+    [
+      "frontend\\shared\\src\\components\\ui\\QuickFilters.native.tsx",
+      3
+    ],
+    [
+      "frontend\\mobile_app\\app\\newsletter.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\referrals.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\(auth)\\login.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\orders.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\reports.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\support.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\terms.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\supplier\\products\\index.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\components\\OrderCard.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\components\\ProductCard.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\LoadingSkeleton.tsx",
+      2
+    ],
+    [
+      "frontend\\shared\\src\\components\\EnterpriseDataTable.tsx",
+      2
+    ],
+    [
+      "frontend\\shared\\src\\components\\logo\\Logo.web.tsx",
+      2
+    ],
+    [
+      "frontend\\shared\\src\\logo\\Logo.web.tsx",
+      2
+    ],
+    [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx",
+      2
+    ],
+    [
+      "frontend\\web_app\\src\\logo\\Logo.web.tsx",
+      2
+    ],
+    [
+      "frontend\\mobile_app\\app\\notifications.tsx",
+      1
+    ],
+    [
+      "frontend\\mobile_app\\app\\push_notifications.tsx",
+      1
+    ],
+    [
+      "frontend\\mobile_app\\app\\write-review.tsx",
+      1
+    ],
+    [
+      "frontend\\mobile_app\\app\\newsletter\\preferences.tsx",
+      1
+    ],
+    [
+      "frontend\\mobile_app\\app\\newsletter\\unsubscribe.tsx",
+      1
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\Input.tsx",
+      1
+    ],
+    [
+      "frontend\\mobile_app\\components\\ui\\LanguageSheet.tsx",
+      1
+    ],
+    [
+      "frontend\\shared\\src\\components\\ui\\ErrorAlert.native.tsx",
+      1
+    ],
+    [
+      "frontend\\shared\\src\\components\\ui\\Input.native.tsx",
+      1
+    ],
+    [
+      "frontend\\shared\\src\\components\\ui\\SupplierBadge.web.tsx",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\app\\brand\\page.tsx",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.css",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\components\\supplier\\PhotoEditorModal.tsx",
+      1
+    ],
+    [
+      "frontend\\web_app\\src\\components\\supplier\\ProductImageCanvas.tsx",
+      1
+    ]
+  ],
+  "DS09_radii": {
+    "0": [
+      "frontend\\mobile_app\\app\\(tabs)\\cart.tsx"
+    ],
+    "0 0 4px 4px": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "0.25rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0.5rem": [
+      "frontend\\web_app\\src\\components\\supplier\\editor-buttons.css",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0.75rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1": [
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+    ],
+    "1.25rem": [
+      "frontend\\web_app\\src\\app\\supplier\\labels\\[id]\\page.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.2rem": [
+      "frontend\\web_app\\src\\components\\HeaderSearchBar.tsx"
+    ],
+    "1.4rem": [
+      "frontend\\web_app\\src\\app\\products\\page.tsx",
+      "frontend\\web_app\\src\\components\\UnifiedSearchBar.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.5rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.6rem": [
+      "frontend\\web_app\\src\\components\\FilterSearchBar.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.75rem": [
+      "frontend\\web_app\\src\\app\\admin\\staff\\_components\\staff-content.tsx",
+      "frontend\\web_app\\src\\app\\products\\page.tsx",
+      "frontend\\web_app\\src\\app\\supplier\\labels\\[id]\\page.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1.7rem": [
+      "frontend\\web_app\\src\\app\\products\\[id]\\page.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "10": [
+      "frontend\\mobile_app\\app\\(tabs)\\profile.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      "frontend\\mobile_app\\app\\barcode-scan.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+      "frontend\\mobile_app\\app\\offers.tsx",
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      "frontend\\mobile_app\\app\\suppliers\\[id].tsx",
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "10px": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "12": [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\[id].tsx",
+      "frontend\\mobile_app\\app\\(tabs)\\profile.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\payouts.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\profile.tsx",
+      "frontend\\mobile_app\\app\\supplier\\payouts.tsx",
+      "frontend\\mobile_app\\app\\supplier\\products\\[id].tsx",
+      "frontend\\mobile_app\\app\\supplier\\products\\new.tsx",
+      "frontend\\mobile_app\\components\\ui\\ErrorBoundary.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "120": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "12px": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "130": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "14": [
+      "frontend\\mobile_app\\app\\(tabs)\\profile.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+    ],
+    "140": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "150": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "16": [
+      "frontend\\mobile_app\\app\\(tabs)\\cart.tsx",
+      "frontend\\mobile_app\\app\\checkout.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\scan.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+    ],
+    "160": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "18": [
+      "frontend\\mobile_app\\app\\admin\\promotions.tsx"
+    ],
+    "1px": [
+      "frontend\\web_app\\src\\components\\banner-effects.css"
+    ],
+    "1rem": [
+      "frontend\\web_app\\src\\styles\\globals.css",
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "2": [
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\change-password.tsx",
+      "frontend\\mobile_app\\app\\supplier\\register.tsx"
+    ],
+    "20": [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx",
+      "frontend\\mobile_app\\app\\admin\\coupons.tsx",
+      "frontend\\mobile_app\\app\\admin\\flash-sales.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "20px": [
+      "frontend\\web_app\\src\\components\\Chatbot.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "22": [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx"
+    ],
+    "22px": [
+      "frontend\\web_app\\src\\components\\Header.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "28px": [
+      "frontend\\web_app\\src\\components\\Chatbot.tsx",
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "2px": [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+    ],
+    "2rem": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "3": [
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+    ],
+    "3px": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "3px 3px 0 0": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "3px 3px 14px 14px": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "4": [
+      "frontend\\mobile_app\\app\\admin\\analytics.tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx"
+    ],
+    "40": [
+      "frontend\\mobile_app\\app\\checkout.tsx"
+    ],
+    "40% 40% 46% 46%": [
+      "frontend\\web_app\\src\\components\\banner-effects.css"
+    ],
+    "45": [
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+    ],
+    "4px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "50%": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx",
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "50% 50% 30% 30% / 60% 60% 40% 40%": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "50% 50% 48% 48%": [
+      "frontend\\web_app\\src\\components\\banner-effects.css"
+    ],
+    "50% 50% 50% 50% / 58% 58% 42% 42%": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "6": [
+      "frontend\\mobile_app\\app\\admin\\coupons.tsx",
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\admin\\orders.tsx",
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      "frontend\\mobile_app\\app\\admin\\returns.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx"
+    ],
+    "70": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "8": [
+      "frontend\\mobile_app\\app\\(tabs)\\products\\index.tsx",
+      "frontend\\mobile_app\\app\\(tabs)\\profile.tsx",
+      "frontend\\mobile_app\\app\\admin\\bank-accounts.tsx",
+      "frontend\\mobile_app\\app\\admin\\email.tsx",
+      "frontend\\mobile_app\\app\\admin\\orders.tsx",
+      "frontend\\mobile_app\\app\\admin\\products.tsx",
+      "frontend\\mobile_app\\app\\admin\\returns.tsx",
+      "frontend\\mobile_app\\app\\flash-sales.tsx",
+      "frontend\\mobile_app\\app\\invoice.tsx",
+      "frontend\\mobile_app\\app\\logistics-partner\\shipments.tsx",
+      "frontend\\mobile_app\\app\\supplier\\credibility.tsx",
+      "frontend\\mobile_app\\app\\supplier\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\wishlist.tsx",
+      "frontend\\mobile_app\\components\\ui\\HeaderBar.tsx",
+      "frontend\\shared\\src\\components\\ui\\ErrorBoundary.tsx"
+    ],
+    "80": [
+      "frontend\\mobile_app\\components\\MobileBackgroundEffect.tsx"
+    ],
+    "8px": [
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "999": [
+      "frontend\\mobile_app\\app\\admin\\dashboard.tsx",
+      "frontend\\mobile_app\\app\\chatbot.tsx",
+      "frontend\\mobile_app\\app\\offers.tsx",
+      "frontend\\mobile_app\\app\\supplier\\logistics.tsx",
+      "frontend\\mobile_app\\components\\MobileSeasonalBanner.tsx"
+    ],
+    "9999px": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "999px": [
+      "frontend\\web_app\\src\\components\\banner-effects.css",
+      "frontend\\web_app\\src\\styles\\comm.css",
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "inherit": [
+      "frontend\\web_app\\src\\styles\\globals.css",
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "var(--radius-card)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ]
+  },
+  "DS11_shadows": {
+    "-4px 0 24px rgba(0, 0, 0, 0.12)": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "0 -4px 24px rgba(0, 0, 0, 0.12)": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "0 0 0 3px color-mix(in srgb, var(--color-brand) 12%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 0 0 3px color-mix(in srgb, var(--color-brand) 18%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 0 0 3px color-mix(in srgb, var(--color-brand) 28%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 0 0 3px rgba(47, 180, 61, 0.12), 0 10px 24px -18px rgba(47, 180, 61, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 0 0 3px rgba(47, 180, 61, 0.12), inset 0 1.5px 3px rgba(74, 93, 53, 0.04)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 0 16px #22d3ee30": [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+    ],
+    "0 0 18px rgba(245,158,11,.8)": [
+      "frontend\\web_app\\src\\components\\banner-effects.css"
+    ],
+    "0 0 24px color-mix(in srgb, var(--color-accent) 40%, transparent)": [
+      "frontend\\web_app\\src\\components\\admin\\commandCenter\\hud.tsx"
+    ],
+    "0 0 30px rgba(253,230,138,.9)": [
+      "frontend\\web_app\\src\\components\\banner-effects.css"
+    ],
+    "0 0 4px rgba(212,175,55,0.5)": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "0 0 50px rgba(212,175,55,0.4), 0 0 100px rgba(212,175,55,0.2)": [
+      "frontend\\web_app\\src\\components\\BackgroundEffect.tsx"
+    ],
+    "0 10px 26px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.08)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 12px 20px -16px rgba(47, 148, 64, 0.42), 0 8px 16px -18px rgba(242, 201, 76, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 12px 24px -22px rgba(15, 23, 42, 0.14)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 12px 24px -24px color-mix(in srgb, var(--color-text) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.16)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 12px 28px -12px rgba(0, 0, 0, 0.18), 0 0 0 1.5px color-mix(in srgb, var(--color-brand) 6%, transparent)": [
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "0 12px 28px -12px rgba(15, 23, 42, 0.08), 0 4px 8px -4px rgba(50, 90, 36, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.92)": [
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "0 12px 32px -18px rgba(15, 23, 42, 0.14), 0 4px 12px -8px rgba(47, 180, 61, 0.1), inset 0 1.5px 0 rgba(255, 255, 255, 1)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 14px 24px -16px rgba(47, 148, 64, 0.48), 0 10px 18px -18px rgba(242, 201, 76, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.26)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 14px 36px -28px color-mix(in srgb, var(--color-brand) 56%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.08)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 16px 28px -24px rgba(15, 23, 42, 0.14)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 16px 30px -24px rgba(15, 23, 42, 0.18)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 16px 36px -28px rgba(15, 23, 42, 0.16), 0 6px 14px -10px rgba(47, 180, 61, 0.12)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 16px 40px -8px rgba(0, 0, 0, 0.14), 0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 28px -24px color-mix(in srgb, var(--color-text) 28%, transparent), 0 8px 18px -20px color-mix(in srgb, var(--color-brand) 15%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 30px -22px color-mix(in srgb, var(--color-accent) 50%, transparent), 0 10px 22px -22px color-mix(in srgb, var(--color-brand) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 30px -22px rgba(242, 201, 76, 0.72), 0 10px 22px -20px rgba(47, 180, 61, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 32px -18px rgba(47, 180, 61, 0.48), 0 10px 20px -20px rgba(242, 201, 76, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 32px -22px color-mix(in srgb, var(--color-brand) 45%, transparent), 0 10px 24px -20px color-mix(in srgb, var(--color-accent) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 32px -22px color-mix(in srgb, var(--color-danger) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.15)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 32px -22px rgba(47, 180, 61, 0.68), 0 10px 24px -20px rgba(242, 201, 76, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.2)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 34px -22px rgba(15, 23, 42, 0.12), 0 10px 18px -16px rgba(47, 180, 61, 0.1), inset 0 1.5px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(74, 93, 53, 0.06)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 34px -28px rgba(15, 23, 42, 0.18)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 35px -26px rgba(15, 23, 42, 0.45)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 40px -12px rgba(0, 0, 0, 0.25), 0 4px 12px -4px rgba(0, 0, 0, 0.08), inset 0 1px 0 color-mix(in srgb, var(--color-text) 6%, transparent)": [
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "0 18px 40px -28px rgba(15, 23, 42, 0.34)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 40px -28px rgba(15, 23, 42, 0.4)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 40px -30px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.7)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 44px -20px rgba(15, 23, 42, 0.18), 0 8px 20px -10px rgba(47, 180, 61, 0.16), inset 0 1.5px 0 rgba(255, 255, 255, 1)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 50px -40px color-mix(in srgb, black 48%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 18px 60px -34px color-mix(in srgb, var(--color-brand-dark) 32%, transparent), inset 0 1px 0 color-mix(in srgb, white 8%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 1px 0 rgba(64, 84, 46, 0.08), 0 18px 40px -32px rgba(15, 23, 42, 0.16)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 1px 3px rgba(0, 0, 0, 0.04)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 1px 4px rgba(0,0,0,0.06)": [
+      "frontend\\web_app\\src\\styles\\comm.css"
+    ],
+    "0 20px 34px -20px color-mix(in srgb, var(--color-brand) 35%, transparent), 0 12px 24px -20px color-mix(in srgb, var(--color-accent) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 34px -22px color-mix(in srgb, var(--color-accent) 50%, transparent), 0 10px 20px -20px color-mix(in srgb, var(--color-brand) 20%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 36px -14px rgba(242, 201, 76, 0.68), 0 10px 22px -18px rgba(47, 180, 61, 0.22), inset 0 1.5px 0 rgba(255, 255, 255, 0.56), inset 0 -1px 0 rgba(163, 126, 14, 0.1)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 38px -28px rgba(15, 23, 42, 0.16)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 40px rgba(15, 23, 42, 0.08)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 46px -38px rgba(15, 23, 42, 0.14), 0 10px 22px -26px rgba(47, 148, 64, 0.14)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 48px -28px rgba(15, 23, 42, 0.15), inset 0 1.5px 0 rgba(255, 255, 255, 1), 0 1px 0 rgba(255, 255, 255, 0.9)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 20px 48px -8px rgba(0, 0, 0, 0.42), 0 8px 20px -4px rgba(0, 0, 0, 0.22), inset 0 1.5px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.04)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 22px 38px -18px rgba(242, 201, 76, 0.74), 0 12px 22px -20px rgba(47, 180, 61, 0.26), inset 0 1.5px 0 rgba(255, 255, 255, 0.52)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 22px 38px -24px color-mix(in srgb, var(--color-brand) 50%, transparent), 0 12px 26px -24px color-mix(in srgb, var(--color-accent) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 22px 44px -26px rgba(15, 23, 42, 0.16), 0 10px 18px -12px rgba(47, 180, 61, 0.14)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 22px 48px -28px rgba(15, 23, 42, 0.14), 0 8px 22px -18px rgba(47, 180, 61, 0.12)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 34px -18px color-mix(in srgb, var(--color-accent) 55%, transparent), 0 12px 24px -22px color-mix(in srgb, var(--color-brand) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 34px -20px rgba(242, 201, 76, 0.86), 0 14px 26px -22px rgba(47, 180, 61, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.28)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 36px -22px rgba(47, 180, 61, 0.8), 0 14px 28px -24px rgba(242, 201, 76, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.24)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 38px -20px color-mix(in srgb, var(--color-brand) 50%, transparent), 0 16px 28px -24px color-mix(in srgb, var(--color-accent) 35%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 38px -20px color-mix(in srgb, var(--color-danger) 55%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 52px -30px rgba(15, 23, 42, 0.16), 0 8px 22px -16px rgba(47, 180, 61, 0.1), inset 0 1.5px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(74, 93, 53, 0.03)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 64px -24px rgb(0 0 0 / 0.6), 0 8px 24px -16px rgb(0 0 0 / 0.45)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 24px 70px -34px color-mix(in srgb, var(--color-brand) 42%, transparent), inset 0 1px 0 color-mix(in srgb, white 14%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 26px 38px -20px color-mix(in srgb, var(--color-accent) 60%, transparent), 0 14px 26px -22px color-mix(in srgb, var(--color-brand) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.3)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 26px 42px -12px rgba(242, 201, 76, 0.78), 0 14px 26px -18px rgba(47, 180, 61, 0.3), inset 0 1.5px 0 rgba(255, 255, 255, 0.62)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 28px 42px -24px color-mix(in srgb, var(--color-brand) 60%, transparent), 0 16px 30px -26px color-mix(in srgb, var(--color-accent) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 28px 44px -16px rgba(242, 201, 76, 0.86), 0 16px 28px -22px rgba(47, 180, 61, 0.34), inset 0 1.5px 0 rgba(255, 255, 255, 0.62)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 28px 60px -36px rgba(15, 23, 42, 0.34)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 2px 12px color-mix(in srgb, var(--color-brand) 14%, black / 8%), 0 0 0 3px color-mix(in srgb, var(--color-brand) 16%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 2px 8px color-mix(in srgb, var(--color-brand) 45%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 2px 8px rgba(50, 205, 50, 0.12)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 40px 120px -48px color-mix(in srgb, black 60%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 44px 110px -48px rgba(15, 23, 42, 0.24), inset 0 1.5px 0 rgba(255, 255, 255, 1)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 4px 12px -4px rgba(0, 0, 0, 0.1), 0 0 0 1px color-mix(in srgb, var(--color-brand) 8%, transparent)": [
+      "frontend\\web_app\\src\\styles\\panel-modern.css"
+    ],
+    "0 4px 32px -8px color-mix(in srgb, var(--color-brand-dark) 40%, transparent), 0 2px 8px -2px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 color-mix(in srgb, white 28%, transparent), inset 0 -1px 0 rgba(0, 0, 0, 0.06)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 6px 18px rgba(0,0,0,0.08), 0 0 0 4px color-mix(in srgb, var(--color-brand) 14%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 6px 28px color-mix(in srgb, var(--color-accent) 28%, black / 12%), 0 0 0 4px color-mix(in srgb, var(--color-accent) 18%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 6px 28px color-mix(in srgb, var(--color-brand) 28%, black / 12%), 0 0 0 4px color-mix(in srgb, var(--color-brand) 22%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "0 8px 20px -14px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.96)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1px 0 0 rgba(64, 84, 46, 0.08), 18px 0 44px -26px rgba(15, 23, 42, 0.12)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "24px 0 60px -44px color-mix(in srgb, black 48%, transparent)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "inset -6px -8px 12px rgba(0,0,0,.18)": [
+      "frontend\\web_app\\src\\components\\banner-effects.css"
+    ],
+    "inset 0 1.5px 3px rgba(74, 93, 53, 0.06), 0 1px 0 rgba(255, 255, 255, 0.9)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "inset 0 1px 0 rgba(255, 255, 255, 0.04)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "inset 0 1px 0 rgba(255, 255, 255, 0.05)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "inset 0 1px 0 rgba(255, 255, 255, 0.06)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "inset 0 1px 0 rgba(255, 255, 255, 0.72)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "none": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "tw:0_0_0_9999px_rgba(0,0,0,0.45)": [
+      "frontend\\web_app\\src\\components\\supplier\\PhotoEditorModal.tsx"
+    ],
+    "var(--shadow-card)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--shadow-card-hover)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ]
+  },
+  "DS15": [],
+  "DS16_durations": {
+    "0ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "1000ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "120ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "150ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "180ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "200ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "300ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "500ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ],
+    "700ms": [
+      "frontend\\web_app\\src\\styles\\globals.css"
+    ]
+  },
+  "DS17_unused_tokens": [],
+  "DS18_breakpoints": []
+}

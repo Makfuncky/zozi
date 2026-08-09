@@ -1,0 +1,1333 @@
+﻿python : C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\pytest_asyncio\plugin.py:208: 
+PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+At line:4 char:53
++ ... ozi\tests"; python -c "import pytest, glob; pytest.main(['-q','--no-h ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\user\A...cope" is unset.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of 
+pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop 
+scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", 
+"class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+FFF....FFFFFF.FF.............FF......FF...FF.....FFF.FF.......FF........ [ 37%]
+...FF.FF.........FF..FF...FF..FF..FFF..FFF....................FF...FF... [ 74%]
+........FF...FFFF.........................FF.FFFFF                       [100%]
+================================== FAILURES ===================================
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_addresses_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.addresses'
+import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.addresses'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\addresses.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/addresses.py').exists
+
+test_addresses_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_addresses_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/addresses.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\addresses.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_admin_cash_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.admin_cash'
+import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.admin_cash'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\admin_cash.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_cash.py').exists
+
+test_admin_cash_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_admin_cash_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_cash.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_cash.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_admin_chat_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.admin_chat'
+import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.admin_chat'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\admin_chat.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_chat.py').exists
+
+test_admin_chat_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_admin_chat_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_chat.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_chat.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\admin_commission.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_commission.py').exists
+
+test_admin_commission_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_admin_commission_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_commission.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_commission.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\admin_payouts.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_payouts.py').exists
+
+test_admin_payouts_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_admin_payouts_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_payouts.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_payouts.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+___________________ test_router_has_no_direct_session_reads ___________________
+
+    def test_router_has_no_direct_session_reads() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_admin_q1_rescue.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_admin_q1_rescue.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+___________________ test_router_has_no_direct_session_reads ___________________
+
+    def test_router_has_no_direct_session_reads() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_admin_suppliers_q1_rescue.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_suppliers.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_suppliers.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must actually import the shared data-access layer."""
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_admin_suppliers_q1_rescue.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_suppliers.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_suppliers.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_admin_users_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.admin_users'
+import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.admin_users'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\admin_users.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_users.py').exists
+
+test_admin_users_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_admin_users_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/admin_users.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\admin_users.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\ai_upload.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/ai_upload.py').exists
+
+test_ai_upload_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_ai_upload_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/ai_upload.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\ai_upload.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\cash_management.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/cash_management.py').exists
+
+test_cash_management_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_cash_management_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/cash_management.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\cash_management.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\country_maps.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/country_maps.py').exists
+
+test_country_maps_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_country_maps_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/country_maps.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\country_maps.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\cross_border.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/cross_border.py').exists
+
+test_cross_border_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_cross_border_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/cross_border.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\cross_border.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\finance_automation.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/finance_automation.py').exists
+
+test_finance_automation_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_finance_automation_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/finance_automation.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\finance_automation.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+___________________ test_router_has_no_direct_session_reads ___________________
+
+    def test_router_has_no_direct_session_reads() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_finance_erp_q1_rescue.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/finance_erp.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\finance_erp.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_finance_erp_q1_rescue.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/finance_erp.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\finance_erp.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+___________________ test_router_has_no_direct_session_reads ___________________
+
+    def test_router_has_no_direct_session_reads() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_finance_q1_rescue.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/finance.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\finance.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+>       source = _ROUTER_FILE.read_text(encoding="utf-8")
+
+test_finance_q1_rescue.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/finance.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\finance.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\flash_sales.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/flash_sales.py').exists
+
+test_flash_sales_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_flash_sales_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/flash_sales.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\flash_sales.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_geo_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.geo', import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.geo'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\geo.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/geo.py').exists
+
+test_geo_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_geo_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/geo.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\geo.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_hr_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.hr', import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.hr'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\hr.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/hr.py').exists
+
+test_hr_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_hr_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/hr.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\hr.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\onboarding.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/onboarding.py').exists
+
+test_onboarding_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_onboarding_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/onboarding.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\onboarding.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\payout_approval.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/payout_approval.py').exists
+
+test_payout_approval_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_payout_approval_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/payout_approval.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\payout_approval.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\risk.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/risk.py').exists
+
+test_risk_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_risk_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/risk.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\risk.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+__________________________ test_delegates_to_db_read __________________________
+
+    def test_delegates_to_db_read():
+>       assert_imports_db_read("controllers/security/admin_users.py")
+
+test_security_admin_users_q1_rescue.py:7: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+backend_rel = 'controllers/security/admin_users.py'
+
+    def assert_imports_db_read(backend_rel: str) -> None:
+        """File must import read helpers from services.db_read (all names valid)."""
+        path = BACKEND_ROOT / backend_rel
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        imported: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module == "services.db_read":
+                for alias in node.names:
+                    imported.add(alias.name)
+>       assert imported, f"{backend_rel} does not import from services.db_read"
+E       AssertionError: controllers/security/admin_users.py does not import from services.db_read
+
+q1_rescue_utils.py:68: AssertionError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_shipments_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.shipments'
+import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.shipments'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\shipments.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/shipments.py').exists
+
+test_shipments_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_shipments_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/shipments.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\shipments.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\tickets.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/tickets.py').exists
+
+test_tickets_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_tickets_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/tickets.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\tickets.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: routers must not call db.query() / db.execute() directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\users.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/users.py').exists
+
+test_users_q1_rescue.py:52: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """The router must import its read helpers from services.db_read."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_users_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/users.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\users.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+_____________________________ test_router_imports _____________________________
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_ws_chat_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'routers.ws_chat', import_ = <function _gcd_import at 0x0000025C8E6E3490>
+
+>   ???
+E   ModuleNotFoundError: No module named 'routers.ws_chat'
+
+<frozen importlib._bootstrap>:1004: ModuleNotFoundError
+______________________ test_router_has_no_session_reads _______________________
+
+    def test_router_has_no_session_reads() -> None:
+        """Q1: the router must not call ``db.query()`` / ``db.execute()`` directly."""
+>       assert _ROUTER_FILE.exists(), f"router file missing: {_ROUTER_FILE}"
+E       AssertionError: router file missing: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\routers\ws_chat.py
+E       assert False
+E        +  where False = exists()
+E        +    where exists = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/ws_chat.py').exists
+
+test_ws_chat_q1_rescue.py:58: AssertionError
+______________________ test_router_delegates_to_db_read _______________________
+
+    def test_router_delegates_to_db_read() -> None:
+        """Read helpers must be imported from the shared ``services.db_read`` layer."""
+>       tree = ast.parse(_ROUTER_FILE.read_text(encoding="utf-8"))
+
+test_ws_chat_q1_rescue.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1134: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend/routers/ws_chat.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return self._accessor.open(self, mode, buffering, encoding, errors,
+                                   newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: 'D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\routers\\ws_chat.py'
+
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\pathlib.py:1119: FileNotFoundError
+============================== warnings summary ===============================
+test_admin_commission_q1_rescue.py::test_router_imports_cleanly
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\products.py:297: SADeprecationWarning: User-placed attribute Product.variants on Mapper[Product(products)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    Product.variants = relationship('ProductVariant', back_populates='product', order_by='ProductVariant.id', cascade='all, delete-orphan')
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED test_addresses_q1_rescue.py::test_router_imports - ModuleNotFoundError...
+FAILED test_addresses_q1_rescue.py::test_router_has_no_session_reads - Assert...
+FAILED test_addresses_q1_rescue.py::test_router_delegates_to_db_read - FileNo...
+FAILED test_admin_cash_q1_rescue.py::test_router_imports - ModuleNotFoundErro...
+FAILED test_admin_cash_q1_rescue.py::test_router_has_no_session_reads - Asser...
+FAILED test_admin_cash_q1_rescue.py::test_router_delegates_to_db_read - FileN...
+FAILED test_admin_chat_q1_rescue.py::test_router_imports - ModuleNotFoundErro...
+FAILED test_admin_chat_q1_rescue.py::test_router_has_no_session_reads - Asser...
+FAILED test_admin_chat_q1_rescue.py::test_router_delegates_to_db_read - FileN...
+FAILED test_admin_commission_q1_rescue.py::test_router_has_no_session_reads
+FAILED test_admin_commission_q1_rescue.py::test_router_delegates_to_db_read
+FAILED test_admin_payouts_q1_rescue.py::test_router_has_no_session_reads - As...
+FAILED test_admin_payouts_q1_rescue.py::test_router_delegates_to_db_read - Fi...
+FAILED test_admin_q1_rescue.py::test_router_has_no_direct_session_reads - Fil...
+FAILED test_admin_q1_rescue.py::test_router_delegates_to_db_read - FileNotFou...
+FAILED test_admin_suppliers_q1_rescue.py::test_router_has_no_direct_session_reads
+FAILED test_admin_suppliers_q1_rescue.py::test_router_delegates_to_db_read - ...
+FAILED test_admin_users_q1_rescue.py::test_router_imports - ModuleNotFoundErr...
+FAILED test_admin_users_q1_rescue.py::test_router_has_no_session_reads - Asse...
+FAILED test_admin_users_q1_rescue.py::test_router_delegates_to_db_read - File...
+FAILED test_ai_upload_q1_rescue.py::test_router_has_no_session_reads - Assert...
+FAILED test_ai_upload_q1_rescue.py::test_router_delegates_to_db_read - FileNo...
+FAILED test_cash_management_q1_rescue.py::test_router_has_no_session_reads - ...
+FAILED test_cash_management_q1_rescue.py::test_router_delegates_to_db_read - ...
+FAILED test_country_maps_q1_rescue.py::test_router_has_no_session_reads - Ass...
+FAILED test_country_maps_q1_rescue.py::test_router_delegates_to_db_read - Fil...
+FAILED test_cross_border_q1_rescue.py::test_router_has_no_session_reads - Ass...
+FAILED test_cross_border_q1_rescue.py::test_router_delegates_to_db_read - Fil...
+FAILED test_finance_automation_q1_rescue.py::test_router_has_no_session_reads
+FAILED test_finance_automation_q1_rescue.py::test_router_delegates_to_db_read
+FAILED test_finance_erp_q1_rescue.py::test_router_has_no_direct_session_reads
+FAILED test_finance_erp_q1_rescue.py::test_router_delegates_to_db_read - File...
+FAILED test_finance_q1_rescue.py::test_router_has_no_direct_session_reads - F...
+FAILED test_finance_q1_rescue.py::test_router_delegates_to_db_read - FileNotF...
+FAILED test_flash_sales_q1_rescue.py::test_router_has_no_session_reads - Asse...
+FAILED test_flash_sales_q1_rescue.py::test_router_delegates_to_db_read - File...
+FAILED test_geo_q1_rescue.py::test_router_imports - ModuleNotFoundError: No m...
+FAILED test_geo_q1_rescue.py::test_router_has_no_session_reads - AssertionErr...
+FAILED test_geo_q1_rescue.py::test_router_delegates_to_db_read - FileNotFound...
+FAILED test_hr_q1_rescue.py::test_router_imports - ModuleNotFoundError: No mo...
+FAILED test_hr_q1_rescue.py::test_router_has_no_session_reads - AssertionErro...
+FAILED test_hr_q1_rescue.py::test_router_delegates_to_db_read - FileNotFoundE...
+FAILED test_onboarding_q1_rescue.py::test_router_has_no_session_reads - Asser...
+FAILED test_onboarding_q1_rescue.py::test_router_delegates_to_db_read - FileN...
+FAILED test_payout_approval_q1_rescue.py::test_router_has_no_session_reads - ...
+FAILED test_payout_approval_q1_rescue.py::test_router_delegates_to_db_read - ...
+FAILED test_risk_q1_rescue.py::test_router_has_no_session_reads - AssertionEr...
+FAILED test_risk_q1_rescue.py::test_router_delegates_to_db_read - FileNotFoun...
+FAILED test_security_admin_users_q1_rescue.py::test_delegates_to_db_read - As...
+FAILED test_shipments_q1_rescue.py::test_router_imports - ModuleNotFoundError...
+FAILED test_shipments_q1_rescue.py::test_router_has_no_session_reads - Assert...
+FAILED test_shipments_q1_rescue.py::test_router_delegates_to_db_read - FileNo...
+FAILED test_tickets_q1_rescue.py::test_router_has_no_session_reads - Assertio...
+FAILED test_tickets_q1_rescue.py::test_router_delegates_to_db_read - FileNotF...
+FAILED test_users_q1_rescue.py::test_router_has_no_session_reads - AssertionE...
+FAILED test_users_q1_rescue.py::test_router_delegates_to_db_read - FileNotFou...
+FAILED test_ws_chat_q1_rescue.py::test_router_imports - ModuleNotFoundError: ...
+FAILED test_ws_chat_q1_rescue.py::test_router_has_no_session_reads - Assertio...
+FAILED test_ws_chat_q1_rescue.py::test_router_delegates_to_db_read - FileNotF...
+59 failed, 135 passed, 1 warning in 29.10s

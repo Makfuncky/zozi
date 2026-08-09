@@ -1,0 +1,21 @@
+/* HUD command-center keyframes — relocated from inline <style> blocks (DS02). */
+
+@keyframes cc-scan {
+  0%   { transform: translateY(-20px); opacity: 0; }
+  10%  { opacity: .8; }
+  90%  { opacity: .8; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+@keyframes cc-pulse {
+  0%   { transform: scale(0.9); opacity: .7; }
+  50%  { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(0.9); opacity: .7; }
+}
+@keyframes cc-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes cc-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}

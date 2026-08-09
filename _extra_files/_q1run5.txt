@@ -1,0 +1,803 @@
+﻿python : C:\Users\user\AppData\Local\Programs\Python\Python310\lib\site-packages\pytest_asyncio\plugin.py:208: 
+PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+At line:4 char:53
++ ... ozi\tests"; python -c "import pytest, glob; pytest.main(['-q','--no-h ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\user\A...cope" is unset.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of 
+pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop 
+scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", 
+"class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+...................................F....F........F..F........F.......... [ 37%]
+........................................................................ [ 74%]
+.................F............F...F...............                       [100%]
+================================== FAILURES ===================================
+_____________________________ test_router_imports _____________________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_router_imports() -> None:
+>       assert importlib.import_module(_MODULE) is not None
+
+test_admin_q1_rescue.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\admin_core_management.py:14: in <module>
+    from controllers.admin_controller import (
+..\backend\controllers\admin_controller.py:18: in <module>
+    from controllers.supplier.suppliers import *  # noqa: F401, F403
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+------------------------------ Captured log call ------------------------------
+ERROR    utils.config:config.py:275 __getattribute___failed: 'Settings' object has no attribute 'hf_api_token'
+Traceback (most recent call last):
+  File "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\utils\config.py", line 273, in __getattribute__
+    return object.__getattribute__(self, name)
+AttributeError: 'Settings' object has no attribute 'hf_api_token'
+_____________________________ test_router_imports _____________________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_router_imports() -> None:
+>       assert importlib.import_module(_MODULE) is not None
+
+test_admin_suppliers_q1_rescue.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\admin_suppliers_governance.py:8: in <module>
+    from controllers.admin_controller import (
+..\backend\controllers\admin_controller.py:18: in <module>
+    from controllers.supplier.suppliers import *  # noqa: F401, F403
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+_____________________________ test_router_imports _____________________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_router_imports() -> None:
+        """The refactored router (and the shared read layer) must import cleanly."""
+        importlib.import_module("services.db_read")
+>       module = importlib.import_module(_MODULE)
+
+test_admin_users_q1_rescue.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\admin_users_governance.py:5: in <module>
+    from controllers.admin_controller import (
+..\backend\controllers\admin_controller.py:18: in <module>
+    from controllers.supplier.suppliers import *  # noqa: F401, F403
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+_________________________ test_router_imports_cleanly _________________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_router_imports_cleanly() -> None:
+        importlib.import_module("services.db_read")
+>       assert importlib.import_module(_MODULE) is not None
+
+test_ai_upload_q1_rescue.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\public_ai_upload_access.py:46: in <module>
+    from controllers.admin_controller import require_roles
+..\backend\controllers\admin_controller.py:18: in <module>
+    from controllers.supplier.suppliers import *  # noqa: F401, F403
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+_________________________ test_router_imports_cleanly _________________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_router_imports_cleanly() -> None:
+        importlib.import_module("services.db_read")
+>       assert importlib.import_module(_MODULE) is not None
+
+test_cash_management_q1_rescue.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\public_cash_management_access.py:17: in <module>
+    from controllers.admin_controller import require_admin, require_permission
+..\backend\controllers\admin_controller.py:18: in <module>
+    from controllers.supplier.suppliers import *  # noqa: F401, F403
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+______________________ test_controller_module_importable ______________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_controller_module_importable() -> None:
+>       assert importlib.import_module("controllers.supplier_controller") is not None
+
+test_supplier_controller_q1_rescue.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+_____________________________ test_router_imports _____________________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_router_imports() -> None:
+>       assert importlib.import_module(_MODULE) is not None
+
+test_supplier_orders_q1_rescue.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\supplier_orders.py:16: in <module>
+    from controllers.supplier.orders import mark_order_prepared_if_processing
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+______________________ test_shared_lookup_helpers_exist _______________________
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+>       from data.employee_models import InternalEmail
+E       ImportError: cannot import name 'InternalEmail' from 'data.employee_models' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\data\employee_models.py)
+
+..\backend\utils\realtime.py:27: ImportError
+
+During handling of the above exception, another exception occurred:
+
+    def test_shared_lookup_helpers_exist() -> None:
+        """The de-duplicated supplier/order lookups stay in the router layer."""
+>       mod = importlib.import_module(_MODULE)
+
+test_supplier_orders_q1_rescue.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1050: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1027: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:688: in _load_unlocked
+    ???
+<frozen importlib._bootstrap_external>:883: in exec_module
+    ???
+<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+    ???
+..\backend\routers\supplier_orders.py:16: in <module>
+    from controllers.supplier.orders import mark_order_prepared_if_processing
+..\backend\controllers\supplier\__init__.py:11: in <module>
+    from controllers.supplier_controller import *  # noqa: F401, F403
+..\backend\controllers\supplier_controller.py:93: in <module>
+    from utils.realtime import logistics_realtime_hub
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    from __future__ import annotations
+    
+    import asyncio
+    import json
+    import logging
+    import threading
+    from collections import defaultdict
+    from typing import Any
+    
+    from fastapi import WebSocket
+    from sqlalchemy import and_, event
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.orm import Session as OrmSession
+    
+    from data.models import (
+        AuditLog,
+        Notification,
+        Payout,
+        Product,
+        SupplierDispute,
+        SupplierProfile,
+        SupportTicket,
+        TicketReply,
+        User,
+    )
+    try:
+        from data.employee_models import InternalEmail
+    except ImportError as e:
+>       logger.warning("optional_dependency_unavailable", error=str(e))
+E       NameError: name 'logger' is not defined
+
+..\backend\utils\realtime.py:29: NameError
+============================== warnings summary ===============================
+test_addresses_q1_rescue.py::test_router_imports
+  D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\models\products.py:297: SADeprecationWarning: User-placed attribute Product.variants on Mapper[Product(products)] is replacing an existing ORM-mapped attribute.  Behavior is not fully defined in this case.  This use is deprecated and will raise an error in a future release
+    Product.variants = relationship('ProductVariant', back_populates='product', order_by='ProductVariant.id', cascade='all, delete-orphan')
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED test_admin_q1_rescue.py::test_router_imports - NameError: name 'logger...
+FAILED test_admin_suppliers_q1_rescue.py::test_router_imports - NameError: na...
+FAILED test_admin_users_q1_rescue.py::test_router_imports - NameError: name '...
+FAILED test_ai_upload_q1_rescue.py::test_router_imports_cleanly - NameError: ...
+FAILED test_cash_management_q1_rescue.py::test_router_imports_cleanly - NameE...
+FAILED test_supplier_controller_q1_rescue.py::test_controller_module_importable
+FAILED test_supplier_orders_q1_rescue.py::test_router_imports - NameError: na...
+FAILED test_supplier_orders_q1_rescue.py::test_shared_lookup_helpers_exist - ...
+8 failed, 186 passed, 1 warning in 33.93s

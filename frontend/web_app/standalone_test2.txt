@@ -1,0 +1,26 @@
+Error: Cannot find module '@babel/types'
+Require stack:
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@babel\generator\lib\node\parentheses.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@babel\generator\lib\node\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@babel\generator\lib\printer.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@babel\generator\lib\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-snapshot\build\InlineSnapshots.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-snapshot\build\State.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-snapshot\build\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-runtime\build\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@jest\core\build\cli\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@jest\core\build\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-cli\build\run.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-cli\build\index.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest-cli\bin\jest.js
+- D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\jest\bin\jest.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (D:\Projects\10- E-COMMERCE WEBSITE\zozi\frontend\web_app\node_modules\@babel\generator\lib\node\parentheses.js:32:10)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)

@@ -1,0 +1,23 @@
+﻿
+> _extra_files\_q1run2.txt:51:test_admin_chat_q1_rescue.py:52: 
+  _extra_files\_q1run2.txt:52:_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  _extra_files\_q1run2.txt:53:C:\Users\user\AppData\Local\Programs\Python\Python310\lib\importlib\__init__.py:126: in import_module
+  _extra_files\_q1run2.txt:54:    return _bootstrap._gcd_import(name[level:], package, level)
+  _extra_files\_q1run2.txt:55:<frozen importlib._bootstrap>:1050: in _gcd_import
+  _extra_files\_q1run2.txt:56:    ???
+  _extra_files\_q1run2.txt:57:<frozen importlib._bootstrap>:1027: in _find_and_load
+  _extra_files\_q1run2.txt:58:    ???
+  _extra_files\_q1run2.txt:59:<frozen importlib._bootstrap>:1006: in _find_and_load_unlocked
+  _extra_files\_q1run2.txt:60:    ???
+  _extra_files\_q1run2.txt:61:<frozen importlib._bootstrap>:688: in _load_unlocked
+  _extra_files\_q1run2.txt:62:    ???
+  _extra_files\_q1run2.txt:63:<frozen importlib._bootstrap_external>:883: in exec_module
+  _extra_files\_q1run2.txt:64:    ???
+  _extra_files\_q1run2.txt:65:<frozen importlib._bootstrap>:241: in _call_with_frames_removed
+  _extra_files\_q1run2.txt:66:    ???
+> _extra_files\_q1run2.txt:129:FAILED test_admin_chat_q1_rescue.py::test_router_imports - NameError: name 'l...
+  _extra_files\_q1run2.txt:130:FAILED test_security_admin_users_q1_rescue.py::test_delegates_to_db_read - As...
+  _extra_files\_q1run2.txt:131:2 failed, 192 passed, 1 warning in 31.96s
+
+
+

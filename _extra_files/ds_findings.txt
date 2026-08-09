@@ -1,0 +1,233 @@
+﻿428|| DS01 | 60 | 🟡 ADVISORY | hardcoded CSS: inline style={{...}} object in component |
+429|| DS02 | 3 | 🔴 VIOLATION | hardcoded CSS:- <style> </style> tag inside a component file |
+430|| DS03 | 30 | 🟡 ADVISORY | raw/off-palette color literal (bypasses design tokens) |
+431|| DS04 | 11 | 🟡 ADVISORY | color theme drift: near-duplicate colors used as if different |
+432|| DS07 | 2 | 🟡 ADVISORY | hardcoded typography (font size / family literal) |
+433|| DS08 | 1 | 🟡 ADVISORY | hardcoded spacing/dimension (raw px) |
+434|| DS09 | 1 | 🟡 ADVISORY | inconsistent border-radius values |
+435|| DS11 | 1 | 🟡 ADVISORY | inconsistent box-shadow values |
+436|| DS16 | 1 | 🟡 ADVISORY | inconsistent motion durations (transition/animation) |
+535|| 🔴 | DS02 | web_app | `frontend\web_app\src\components\banner-effects.css` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+536|| 🔴 | DS02 | web_app | `frontend\web_app\src\components\admin\commandCenter\hud.css` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+537|| 🔴 | DS02 | web_app | `frontend\web_app\src\app\supplier\labels\[id]\print.css` | 1 <style> tag(s) inside component | delete; styles belong in design system |
+1140|| 🟡 | DS03 | design | `frontend/` | off-palette color #2fb43d used 24× | replace with nearest design token |
+1141|| 🟡 | DS03 | design | `frontend/` | off-palette color #facc15 used 20× | replace with nearest design token |
+1142|| 🟡 | DS03 | design | `frontend/` | off-palette color #8b5cf6 used 17× | replace with nearest design token |
+1143|| 🟡 | DS03 | design | `frontend/` | off-palette color #fde68a used 13× | replace with nearest design token |
+1144|| 🟡 | DS03 | design | `frontend/` | off-palette color #1e293b used 12× | replace with nearest design token |
+1145|| 🟡 | DS03 | design | `frontend/` | off-palette color #a3b3c8 used 8× | replace with nearest design token |
+1146|| 🟡 | DS03 | design | `frontend/` | off-palette color #a78bfa used 8× | replace with nearest design token |
+1147|| 🟡 | DS03 | design | `frontend/` | off-palette color #6ae022 used 7× | replace with nearest design token |
+1148|| 🟡 | DS03 | design | `frontend/` | off-palette color #d08c00 used 7× | replace with nearest design token |
+1149|| 🟡 | DS03 | design | `frontend/` | off-palette color #7f1d1d used 6× | replace with nearest design token |
+1150|| 🟡 | DS03 | design | `frontend/` | off-palette color #cccccc used 6× | replace with nearest design token |
+1151|| 🟡 | DS03 | design | `frontend/` | off-palette color #dc2626 used 6× | replace with nearest design token |
+1152|| 🟡 | DS03 | design | `frontend/` | off-palette color #22d3ee used 5× | replace with nearest design token |
+1153|| 🟡 | DS03 | design | `frontend/` | off-palette color #a86000 used 5× | replace with nearest design token |
+1154|| 🟡 | DS03 | design | `frontend/` | off-palette color #f0c800 used 5× | replace with nearest design token |
+1155|| 🟡 | DS03 | design | `frontend/` | off-palette color #fff550 used 5× | replace with nearest design token |
+1156|| 🟡 | DS03 | design | `frontend/` | off-palette color #00c800 used 4× | replace with nearest design token |
+1157|| 🟡 | DS03 | design | `frontend/` | off-palette color #080d18 used 4× | replace with nearest design token |
+1158|| 🟡 | DS03 | design | `frontend/` | off-palette color #10233e used 4× | replace with nearest design token |
+1159|| 🟡 | DS03 | design | `frontend/` | off-palette color #1e1b4b used 4× | replace with nearest design token |
+1160|| 🟡 | DS03 | design | `frontend/` | off-palette color #233a61 used 4× | replace with nearest design token |
+1161|| 🟡 | DS03 | design | `frontend/` | off-palette color #2828ff used 4× | replace with nearest design token |
+1162|| 🟡 | DS03 | design | `frontend/` | off-palette color #2dd4bf used 4× | replace with nearest design token |
+1163|| 🟡 | DS03 | design | `frontend/` | off-palette color #325a24 used 4× | replace with nearest design token |
+1164|| 🟡 | DS03 | design | `frontend/` | off-palette color #3d8018 used 4× | replace with nearest design token |
+1165|| 🟡 | DS03 | design | `frontend/` | off-palette color #60a5fa used 4× | replace with nearest design token |
+1166|| 🟡 | DS03 | design | `frontend/` | off-palette color #ff2828 used 4× | replace with nearest design token |
+1167|| 🟡 | DS03 | design | `frontend/` | off-palette color #ffdc28 used 4× | replace with nearest design token |
+1168|| 🟡 | DS03 | design | `frontend/` | off-palette color #064e3b used 3× | replace with nearest design token |
+1169|| 🟡 | DS03 | design | `frontend/` | off-palette color #1e3a8a used 3× | replace with nearest design token |
+3715|- 🟡 **DS03** `frontend/` — off-palette color #2fb43d used 24× → *replace with nearest design token*
+3716|- 🟡 **DS03** `frontend/` — off-palette color #facc15 used 20× → *replace with nearest design token*
+3717|- 🟡 **DS03** `frontend/` — off-palette color #8b5cf6 used 17× → *replace with nearest design token*
+3718|- 🟡 **DS03** `frontend/` — off-palette color #fde68a used 13× → *replace with nearest design token*
+3719|- 🟡 **DS03** `frontend/` — off-palette color #1e293b used 12× → *replace with nearest design token*
+3720|- 🟡 **DS03** `frontend/` — off-palette color #a3b3c8 used 8× → *replace with nearest design token*
+3721|- 🟡 **DS03** `frontend/` — off-palette color #a78bfa used 8× → *replace with nearest design token*
+3722|- 🟡 **DS03** `frontend/` — off-palette color #6ae022 used 7× → *replace with nearest design token*
+3723|- 🟡 **DS03** `frontend/` — off-palette color #d08c00 used 7× → *replace with nearest design token*
+3724|- 🟡 **DS03** `frontend/` — off-palette color #7f1d1d used 6× → *replace with nearest design token*
+3725|- 🟡 **DS03** `frontend/` — off-palette color #cccccc used 6× → *replace with nearest design token*
+3726|- 🟡 **DS03** `frontend/` — off-palette color #dc2626 used 6× → *replace with nearest design token*
+3727|- 🟡 **DS03** `frontend/` — off-palette color #22d3ee used 5× → *replace with nearest design token*
+3728|- 🟡 **DS03** `frontend/` — off-palette color #a86000 used 5× → *replace with nearest design token*
+3729|- 🟡 **DS03** `frontend/` — off-palette color #f0c800 used 5× → *replace with nearest design token*
+3730|- 🟡 **DS03** `frontend/` — off-palette color #fff550 used 5× → *replace with nearest design token*
+3731|- 🟡 **DS03** `frontend/` — off-palette color #00c800 used 4× → *replace with nearest design token*
+3732|- 🟡 **DS03** `frontend/` — off-palette color #080d18 used 4× → *replace with nearest design token*
+3733|- 🟡 **DS03** `frontend/` — off-palette color #10233e used 4× → *replace with nearest design token*
+3734|- 🟡 **DS03** `frontend/` — off-palette color #1e1b4b used 4× → *replace with nearest design token*
+3735|- 🟡 **DS03** `frontend/` — off-palette color #233a61 used 4× → *replace with nearest design token*
+3736|- 🟡 **DS03** `frontend/` — off-palette color #2828ff used 4× → *replace with nearest design token*
+3737|- 🟡 **DS03** `frontend/` — off-palette color #2dd4bf used 4× → *replace with nearest design token*
+3738|- 🟡 **DS03** `frontend/` — off-palette color #325a24 used 4× → *replace with nearest design token*
+3739|- 🟡 **DS03** `frontend/` — off-palette color #3d8018 used 4× → *replace with nearest design token*
+3740|- 🟡 **DS03** `frontend/` — off-palette color #60a5fa used 4× → *replace with nearest design token*
+3741|- 🟡 **DS03** `frontend/` — off-palette color #ff2828 used 4× → *replace with nearest design token*
+3742|- 🟡 **DS03** `frontend/` — off-palette color #ffdc28 used 4× → *replace with nearest design token*
+3743|- 🟡 **DS03** `frontend/` — off-palette color #064e3b used 3× → *replace with nearest design token*
+3744|- 🟡 **DS03** `frontend/` — off-palette color #1e3a8a used 3× → *replace with nearest design token*
+3745|- 🟡 **DS04** `frontend/` — color drift (6× total): #060e1c (×1) ≈ #080d18 (×4) ≈ #080d1a (×1) → *pick ONE token; these are visually the same color*
+3746|- 🟡 **DS04** `frontend/` — color drift (56× total): #0f172a (×54) ≈ #111827 (×2) → *pick ONE token; these are visually the same color*
+3747|- 🟡 **DS04** `frontend/` — color drift (11× total): #1a1a1a (×9) ≈ #1c1917 (×2) → *pick ONE token; these are visually the same color*
+3748|- 🟡 **DS04** `frontend/` — color drift (4× total): #475569 (×3) ≈ #4b5563 (×1) → *pick ONE token; these are visually the same color*
+3749|- 🟡 **DS04** `frontend/` — color drift (13× total): #cbd5e1 (×8) ≈ #d1d5db (×5) → *pick ONE token; these are visually the same color*
+3750|- 🟡 **DS04** `frontend/` — color drift (6× total): #f0fdf0 (×2) ≈ #f3f8ee (×1) ≈ #f4f8ee (×1) ≈ #f5f9ef (×1) ≈ #f5faf0 (×1) → *pick ONE token; these are visually the same color*
+3751|- 🟡 **DS04** `frontend/` — color drift (8× total): #f1f5f9 (×7) ≈ #f5f5f5 (×1) → *pick ONE token; these are visually the same color*
+3752|- 🟡 **DS04** `frontend/` — color drift (5× total): #f3f6ee (×1) ≈ #f5f7ef (×1) ≈ #f7faf3 (×3) → *pick ONE token; these are visually the same color*
+3753|- 🟡 **DS04** `frontend/` — color drift (28× total): #f8faf5 (×1) ≈ #f8fafc (×14) ≈ #f8fbf4 (×3) ≈ #f8fcf3 (×1) ≈ #f8fcf4 (×1) ≈ #f9fbf5 (×2) ≈ #fafcf6 (×1) ≈ #fbfcf8 (×5) → *pick ONE token; these are visually the same color*
+3754|- 🟡 **DS04** `frontend/` — color drift (4× total): #fef3c7 (×3) ≈ #fff7bf (×1) → *pick ONE token; these are visually the same color*
+3755|- 🟡 **DS04** `frontend/` — color drift (11× total): #ffd440 (×4) ≈ #ffd740 (×7) → *pick ONE token; these are visually the same color*
+3756|- 🟡 **DS07** `frontend/` — 58 distinct hardcoded font sizes → *collapse onto a type scale; max ~8 steps*
+3757|- 🟡 **DS07** `frontend/` — 12 distinct font families → *one brand family + one mono; reference from theme token*
+3758|- 🟡 **DS08** `frontend/` — 2443 raw px values across files → *use the spacing scale (p-2/gap-4...) or design tokens*
+3759|- 🟡 **DS09** `frontend/` — 59 distinct border-radius values → *standardize on 3-4 radii tokens (sm/md/lg/full)*
+3760|- 🟡 **DS11** `frontend/` — 96 distinct shadow definitions — no elevation system → *define 3 elevation tokens (shadow-sm/md/lg) and reuse them*
+3761|- 🟡 **DS16** `frontend/` — 9 distinct animation durations → *standardize on 2-3 motion tokens (150ms/250ms/400ms)*
+4156|- 🟡 **DS01** `frontend\mobile_app\app\admin\dashboard.tsx` — 74 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4157|- 🟡 **DS01** `frontend\mobile_app\app\(tabs)\products\index.tsx` — 52 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4158|- 🟡 **DS01** `frontend\mobile_app\app\admin\email.tsx` — 51 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4159|- 🟡 **DS01** `frontend\mobile_app\app\checkout.tsx` — 46 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4160|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partner\profile.tsx` — 46 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4161|- 🟡 **DS01** `frontend\mobile_app\app\admin\analytics.tsx` — 40 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4162|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partner\shipments.tsx` — 38 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4163|- 🟡 **DS01** `frontend\mobile_app\app\suppliers\[id].tsx` — 36 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4164|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partners\[id].tsx` — 34 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4165|- 🟡 **DS01** `frontend\mobile_app\app\invoice.tsx` — 33 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4166|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partner\dashboard.tsx` — 33 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4167|- 🟡 **DS01** `frontend\mobile_app\app\supplier\bulk.tsx` — 31 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4168|- 🟡 **DS01** `frontend\mobile_app\app\admin\coupons.tsx` — 29 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4169|- 🟡 **DS01** `frontend\mobile_app\app\supplier\documents.tsx` — 28 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4170|- 🟡 **DS01** `frontend\mobile_app\app\supplier\register.tsx` — 28 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4171|- 🟡 **DS01** `frontend\mobile_app\app\supplier\dashboard.tsx` — 27 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4172|- 🟡 **DS01** `frontend\mobile_app\app\admin\flash-sales.tsx` — 26 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4173|- 🟡 **DS01** `frontend\mobile_app\app\(tabs)\products\[id].tsx` — 26 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4174|- 🟡 **DS01** `frontend\mobile_app\app\supplier\credibility.tsx` — 25 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4175|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partner\scan.tsx` — 24 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4176|- 🟡 **DS01** `frontend\mobile_app\components\MobileSeasonalBanner.tsx` — 23 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4177|- 🟡 **DS01** `frontend\mobile_app\app\barcode-scan.tsx` — 23 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4178|- 🟡 **DS01** `frontend\mobile_app\app\supplier\logistics.tsx` — 23 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4179|- 🟡 **DS01** `frontend\mobile_app\app\tracking\[id].tsx` — 22 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4180|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partner\payouts.tsx` — 22 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4181|- 🟡 **DS01** `frontend\mobile_app\app\supplier\reports.tsx` — 21 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4182|- 🟡 **DS01** `frontend\mobile_app\app\supplier\products\new.tsx` — 21 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4183|- 🟡 **DS01** `frontend\mobile_app\app\(tabs)\profile.tsx` — 21 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4184|- 🟡 **DS01** `frontend\mobile_app\app\flash-sales.tsx` — 20 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4185|- 🟡 **DS01** `frontend\mobile_app\app\ticket-detail.tsx` — 20 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4186|- 🟡 **DS01** `frontend\mobile_app\app\(tabs)\cart.tsx` — 20 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4187|- 🟡 **DS01** `frontend\mobile_app\components\BackgroundJobCenter.tsx` — 19 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4188|- 🟡 **DS01** `frontend\mobile_app\app\supplier\payouts.tsx` — 19 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4189|- 🟡 **DS01** `frontend\mobile_app\app\settings.tsx` — 17 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4190|- 🟡 **DS01** `frontend\mobile_app\app\tickets.tsx` — 17 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4191|- 🟡 **DS01** `frontend\mobile_app\app\returns\[id].tsx` — 17 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4192|- 🟡 **DS01** `frontend\mobile_app\app\admin\barcode.tsx` — 17 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4193|- 🟡 **DS01** `frontend\mobile_app\components\AddressesScreen.tsx` — 16 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4194|- 🟡 **DS01** `frontend\mobile_app\app\offers.tsx` — 16 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4195|- 🟡 **DS01** `frontend\mobile_app\app\admin\banners.tsx` — 16 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4196|- 🟡 **DS01** `frontend\mobile_app\app\admin\product-verification.tsx` — 16 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4197|- 🟡 **DS01** `frontend\mobile_app\app\admin\products.tsx` — 16 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4198|- 🟡 **DS01** `frontend\mobile_app\components\MobileBackgroundEffect.tsx` — 15 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4199|- 🟡 **DS01** `frontend\mobile_app\app\supplier\invoices.tsx` — 15 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4200|- 🟡 **DS01** `frontend\mobile_app\components\ui\ErrorBoundary.tsx` — 14 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4201|- 🟡 **DS01** `frontend\mobile_app\app\admin\logistics-partners.tsx` — 14 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4202|- 🟡 **DS01** `frontend\mobile_app\app\admin\users.tsx` — 14 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4203|- 🟡 **DS01** `frontend\mobile_app\app\admin\audit-logs.tsx` — 13 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4204|- 🟡 **DS01** `frontend\mobile_app\app\admin\invoices.tsx` — 13 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4205|- 🟡 **DS01** `frontend\mobile_app\components\NewsletterSignup.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4206|- 🟡 **DS01** `frontend\mobile_app\app\change-password.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4207|- 🟡 **DS01** `frontend\mobile_app\app\help.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4208|- 🟡 **DS01** `frontend\mobile_app\app\supplier\label.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4209|- 🟡 **DS01** `frontend\mobile_app\app\logistics-partners\index.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4210|- 🟡 **DS01** `frontend\mobile_app\app\admin\returns.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+4211|- 🟡 **DS01** `frontend\mobile_app\app\admin\suppliers.tsx` — 12 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+5178|- 🟡 **DS01** `frontend\web_app\src\components\admin\commandCenter\hud.tsx` — 62 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+5179|- 🟡 **DS01** `frontend\web_app\src\components\BackgroundEffect.tsx` — 33 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+5180|- 🟡 **DS01** `frontend\web_app\src\components\BannerCanvasEditor.tsx` — 33 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+5181|- 🟡 **DS01** `frontend\web_app\src\app\admin\command-center\page.tsx` — 13 inline style object(s) → *move to Tailwind classes / StyleSheet.create*
+5182|- 🔴 **DS02** `frontend\web_app\src\components\banner-effects.css` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+5183|- 🔴 **DS02** `frontend\web_app\src\components\admin\commandCenter\hud.css` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+5184|- 🔴 **DS02** `frontend\web_app\src\app\supplier\labels\[id]\print.css` — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+5193|| `frontend/web_app/app/supplier` | 1 | 26 | 27 | DS02, FE6, FEH101, FEH301, FEH401, FEH601, FEH801 |
+5194|| `frontend/web_app/components/admin` | 1 | 13 | 14 | DS01, DS02, FE6, FE7, FEH101, FEH401 |
+5195|| `frontend/web_app/components/banner-effects.css` | 1 | 0 | 1 | DS02 |
+5201|| `frontend` | 0 | 52 | 52 | DS03, DS04, DS07, DS08, DS09, DS11, DS16, FEH201 |
+5202|| `frontend/web_app/app/admin` | 0 | 42 | 42 | DS01, FE6, FEH101, FEH301, FEH401, FEH701, FEH801 |
+5214|| `frontend/mobile_app/app/admin` | 0 | 17 | 17 | DS01, FEH101 |
+5221|| `frontend/mobile_app/app/supplier` | 0 | 15 | 15 | DS01, FEH101, FEH301 |
+5225|| `frontend/mobile_app/app/(tabs)` | 0 | 13 | 13 | DS01, FEH101, FEH301, FEH401, FEH601 |
+5258|| `frontend/mobile_app/app/logistics-partner` | 0 | 8 | 8 | DS01, FEH101 |
+5311|| `frontend/web_app/components/bannercanvaseditor.tsx` | 0 | 4 | 4 | DS01, FEH101, FEH401, FEH504 |
+5352|| `frontend/mobile_app/app/logistics-partners` | 0 | 3 | 3 | DS01, FEH301 |
+5401|| `frontend/mobile_app/components/ui` | 0 | 2 | 2 | DS01, FE6 |
+5410|| `frontend/mobile_app/app/checkout.tsx` | 0 | 2 | 2 | DS01, FEH101 |
+5411|| `frontend/mobile_app/app/suppliers` | 0 | 2 | 2 | DS01, FEH101 |
+5412|| `frontend/mobile_app/app/barcode-scan.tsx` | 0 | 2 | 2 | DS01, FEH601 |
+5413|| `frontend/mobile_app/app/tracking` | 0 | 2 | 2 | DS01, FEH101 |
+5414|| `frontend/mobile_app/components/addressesscreen.tsx` | 0 | 2 | 2 | DS01, FEH801 |
+5415|| `frontend/mobile_app/app/offers.tsx` | 0 | 2 | 2 | DS01, FEH101 |
+5686|| `frontend/web_app/components/backgroundeffect.tsx` | 0 | 1 | 1 | DS01 |
+5687|| `frontend/mobile_app/app/invoice.tsx` | 0 | 1 | 1 | DS01 |
+5688|| `frontend/mobile_app/components/mobileseasonalbanner.tsx` | 0 | 1 | 1 | DS01 |
+5689|| `frontend/mobile_app/app/flash-sales.tsx` | 0 | 1 | 1 | DS01 |
+5690|| `frontend/mobile_app/app/ticket-detail.tsx` | 0 | 1 | 1 | DS01 |
+5691|| `frontend/mobile_app/components/backgroundjobcenter.tsx` | 0 | 1 | 1 | DS01 |
+5692|| `frontend/mobile_app/app/settings.tsx` | 0 | 1 | 1 | DS01 |
+5693|| `frontend/mobile_app/app/tickets.tsx` | 0 | 1 | 1 | DS01 |
+5694|| `frontend/mobile_app/app/returns` | 0 | 1 | 1 | DS01 |
+5695|| `frontend/mobile_app/components/mobilebackgroundeffect.tsx` | 0 | 1 | 1 | DS01 |
+5696|| `frontend/mobile_app/components/newslettersignup.tsx` | 0 | 1 | 1 | DS01 |
+5697|| `frontend/mobile_app/app/change-password.tsx` | 0 | 1 | 1 | DS01 |
+5698|| `frontend/mobile_app/app/help.tsx` | 0 | 1 | 1 | DS01 |
+5747|- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+5751|- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+5755|- 🔴 **DS02** — 1 <style> tag(s) inside component → *delete; styles belong in design system*
+5759|- 🟡 **DS03** — off-palette color #2fb43d used 24× → *replace with nearest design token*
+5760|- 🟡 **DS03** — off-palette color #facc15 used 20× → *replace with nearest design token*
+5761|- 🟡 **DS03** — off-palette color #8b5cf6 used 17× → *replace with nearest design token*
+5762|- 🟡 **DS03** — off-palette color #fde68a used 13× → *replace with nearest design token*
+5763|- 🟡 **DS03** — off-palette color #1e293b used 12× → *replace with nearest design token*
+5764|- 🟡 **DS03** — off-palette color #a3b3c8 used 8× → *replace with nearest design token*
+5765|- 🟡 **DS03** — off-palette color #a78bfa used 8× → *replace with nearest design token*
+5766|- 🟡 **DS03** — off-palette color #6ae022 used 7× → *replace with nearest design token*
+5767|- 🟡 **DS03** — off-palette color #d08c00 used 7× → *replace with nearest design token*
+5768|- 🟡 **DS03** — off-palette color #7f1d1d used 6× → *replace with nearest design token*
+5769|- 🟡 **DS03** — off-palette color #cccccc used 6× → *replace with nearest design token*
+5770|- 🟡 **DS03** — off-palette color #dc2626 used 6× → *replace with nearest design token*
+5771|- 🟡 **DS03** — off-palette color #22d3ee used 5× → *replace with nearest design token*
+5772|- 🟡 **DS03** — off-palette color #a86000 used 5× → *replace with nearest design token*
+5773|- 🟡 **DS03** — off-palette color #f0c800 used 5× → *replace with nearest design token*
+5774|- 🟡 **DS03** — off-palette color #fff550 used 5× → *replace with nearest design token*
+5775|- 🟡 **DS03** — off-palette color #00c800 used 4× → *replace with nearest design token*
+5776|- 🟡 **DS03** — off-palette color #080d18 used 4× → *replace with nearest design token*
+5777|- 🟡 **DS03** — off-palette color #10233e used 4× → *replace with nearest design token*
+5778|- 🟡 **DS03** — off-palette color #1e1b4b used 4× → *replace with nearest design token*
+5779|- 🟡 **DS03** — off-palette color #233a61 used 4× → *replace with nearest design token*
+5780|- 🟡 **DS03** — off-palette color #2828ff used 4× → *replace with nearest design token*
+5781|- 🟡 **DS03** — off-palette color #2dd4bf used 4× → *replace with nearest design token*
+5782|- 🟡 **DS03** — off-palette color #325a24 used 4× → *replace with nearest design token*
+5783|- 🟡 **DS03** — off-palette color #3d8018 used 4× → *replace with nearest design token*
+5784|- 🟡 **DS03** — off-palette color #60a5fa used 4× → *replace with nearest design token*
+5785|- 🟡 **DS03** — off-palette color #ff2828 used 4× → *replace with nearest design token*
+5786|- 🟡 **DS03** — off-palette color #ffdc28 used 4× → *replace with nearest design token*
+5787|- 🟡 **DS03** — off-palette color #064e3b used 3× → *replace with nearest design token*
+5788|- 🟡 **DS03** — off-palette color #1e3a8a used 3× → *replace with nearest design token*
+5789|- 🟡 **DS04** — color drift (6× total): #060e1c (×1) ≈ #080d18 (×4) ≈ #080d1a (×1) → *pick ONE token; these are visually the same color*
+5790|- 🟡 **DS04** — color drift (56× total): #0f172a (×54) ≈ #111827 (×2) → *pick ONE token; these are visually the same color*
+5791|- 🟡 **DS04** — color drift (11× total): #1a1a1a (×9) ≈ #1c1917 (×2) → *pick ONE token; these are visually the same color*
+5792|- 🟡 **DS04** — color drift (4× total): #475569 (×3) ≈ #4b5563 (×1) → *pick ONE token; these are visually the same color*
+5793|- 🟡 **DS04** — color drift (13× total): #cbd5e1 (×8) ≈ #d1d5db (×5) → *pick ONE token; these are visually the same color*
+5794|- 🟡 **DS04** — color drift (6× total): #f0fdf0 (×2) ≈ #f3f8ee (×1) ≈ #f4f8ee (×1) ≈ #f5f9ef (×1) ≈ #f5faf0 (×1) → *pick ONE token; these are visually the same color*
+5795|- 🟡 **DS04** — color drift (8× total): #f1f5f9 (×7) ≈ #f5f5f5 (×1) → *pick ONE token; these are visually the same color*
+5796|- 🟡 **DS04** — color drift (5× total): #f3f6ee (×1) ≈ #f5f7ef (×1) ≈ #f7faf3 (×3) → *pick ONE token; these are visually the same color*
+5797|- 🟡 **DS04** — color drift (28× total): #f8faf5 (×1) ≈ #f8fafc (×14) ≈ #f8fbf4 (×3) ≈ #f8fcf3 (×1) ≈ #f8fcf4 (×1) ≈ #f9fbf5 (×2) ≈ #fafcf6 (×1) ≈ #fbfcf8 (×5) → *pick ONE token; these are visually the same color*
+5798|- 🟡 **DS04** — color drift (4× total): #fef3c7 (×3) ≈ #fff7bf (×1) → *pick ONE token; these are visually the same color*
+5799|- 🟡 **DS04** — color drift (11× total): #ffd440 (×4) ≈ #ffd740 (×7) → *pick ONE token; these are visually the same color*
+5800|- 🟡 **DS07** — 58 distinct hardcoded font sizes → *collapse onto a type scale; max ~8 steps*
+5801|- 🟡 **DS07** — 12 distinct font families → *one brand family + one mono; reference from theme token*
+5802|- 🟡 **DS08** — 2443 raw px values across files → *use the spacing scale (p-2/gap-4...) or design tokens*
+5803|- 🟡 **DS09** — 59 distinct border-radius values → *standardize on 3-4 radii tokens (sm/md/lg/full)*
+5804|- 🟡 **DS11** — 96 distinct shadow definitions — no elevation system → *define 3 elevation tokens (shadow-sm/md/lg) and reuse them*
+5805|- 🟡 **DS16** — 9 distinct animation durations → *standardize on 2-3 motion tokens (150ms/250ms/400ms)*

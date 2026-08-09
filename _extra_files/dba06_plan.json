@@ -1,0 +1,3245 @@
+[
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Product",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "supplier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Product",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Review",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "WishlistItem",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "WishlistItem",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Wishlist",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Wishlist",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProductVideo",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "VideoAnalytics",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Warehouse",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "StockMovement",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PurchaseOrder",
+    "local_col": "warehouse_id",
+    "remote_class": "Warehouse",
+    "remote_col": "id",
+    "fk_target": "logistics.warehouses.id",
+    "rel_keys": [
+      "warehouse"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PurchaseOrder",
+    "local_col": "supplier_id",
+    "remote_class": "Vendor",
+    "remote_col": "id",
+    "fk_target": "finance.vendors.id",
+    "rel_keys": [
+      "vendor"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PurchaseOrder",
+    "local_col": "vendor_id",
+    "remote_class": "Vendor",
+    "remote_col": "id",
+    "fk_target": "finance.vendors.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PurchaseOrder",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PurchaseOrderLine",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GoodsReceiptNote",
+    "local_col": "warehouse_id",
+    "remote_class": "Warehouse",
+    "remote_col": "id",
+    "fk_target": "logistics.warehouses.id",
+    "rel_keys": [
+      "warehouse"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GoodsReceiptNote",
+    "local_col": "supplier_id",
+    "remote_class": "Vendor",
+    "remote_col": "id",
+    "fk_target": "finance.vendors.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GoodsReceiptNote",
+    "local_col": "received_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GoodsReceiptLine",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SalesOrder",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SalesOrder",
+    "local_col": "customer_id",
+    "remote_class": "Customer",
+    "remote_col": "id",
+    "fk_target": "finance.customers.id",
+    "rel_keys": [
+      "customer"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SalesOrder",
+    "local_col": "warehouse_id",
+    "remote_class": "Warehouse",
+    "remote_col": "id",
+    "fk_target": "logistics.warehouses.id",
+    "rel_keys": [
+      "warehouse"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SalesOrderLine",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TradeDeal",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FinanceReport",
+    "local_col": "generated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Notification",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TicketMessage",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProxySession",
+    "local_col": "participant_two_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "participant_two"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProxySession",
+    "local_col": "participant_one_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "participant_one"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProxyMessage",
+    "local_col": "recipient_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "recipient"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProxyMessage",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProxyCallLog",
+    "local_col": "caller_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "caller"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProxyCallLog",
+    "local_col": "callee_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "callee"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmployeeCommunicationThread",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ExternalContactMasking",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CommunicationAuditTrail",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "InternalChannel",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "InternalChannelMember",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "InternalMessage",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "InternalEmail",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmailFolder",
+    "local_col": "employee_id",
+    "remote_class": "Employee",
+    "remote_col": "id",
+    "fk_target": "hr.employees.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "MaskedMessage",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Address",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Cart",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CartItem",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AuditLog",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupportTicket",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupportTicketReply",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CityDistanceMatrix",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CityDistanceMatrix",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "UserBrowsingHistory",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CommandCenterView",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "NewsArticle",
+    "local_col": "source_id",
+    "remote_class": "NewsSource",
+    "remote_col": "id",
+    "fk_target": "communication.news_sources.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EntityChatMessage",
+    "local_col": "thread_id",
+    "remote_class": "EntityChatThread",
+    "remote_col": "id",
+    "fk_target": "customer.entity_chat_threads.id",
+    "rel_keys": [
+      "thread"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EntityChatMessage",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "VideoRoom",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "creator"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "VideoRoomParticipant",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "VideoRoomRecording",
+    "local_col": "room_id",
+    "remote_class": "VideoRoom",
+    "remote_col": "id",
+    "fk_target": "customer.video_rooms.id",
+    "rel_keys": [
+      "room"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "VideoRoomRecording",
+    "local_col": "started_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "starter"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DirectChatRoom",
+    "local_col": "participant_one",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DirectChatRoom",
+    "local_col": "participant_two",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DirectChatMessage",
+    "local_col": "room_id",
+    "remote_class": "DirectChatRoom",
+    "remote_col": "id",
+    "fk_target": "customer.direct_chat_rooms.id",
+    "rel_keys": [
+      "room"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DirectChatMessage",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GroupChatMember",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GroupChatMember",
+    "local_col": "room_id",
+    "remote_class": "GroupChatRoom",
+    "remote_col": "id",
+    "fk_target": "communication.group_chat_rooms.id",
+    "rel_keys": [
+      "room"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "GroupChatMessage",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverSession",
+    "local_col": "incoming_employee_id",
+    "remote_class": "Employee",
+    "remote_col": "id",
+    "fk_target": "hr.employees.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverSession",
+    "local_col": "outgoing_employee_id",
+    "remote_class": "Employee",
+    "remote_col": "id",
+    "fk_target": "hr.employees.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverTask",
+    "local_col": "session_id",
+    "remote_class": "ShiftHandoverSession",
+    "remote_col": "id",
+    "fk_target": "customer.shift_handover_sessions.id",
+    "rel_keys": [
+      "session"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverTask",
+    "local_col": "assigned_to",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EscalationSLALog",
+    "local_col": "escalated_to_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EscalationSLALog",
+    "local_col": "original_recipient_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FlashSale",
+    "local_col": "deleted_by_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FlashSale",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FlashSaleItem",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmailCampaign",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmailTemplate",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CampaignRecipient",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierProfile",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierProfile",
+    "local_col": "deleted_by_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierProfile",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDocument",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "reviewer"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDocument",
+    "local_col": "verified_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "verifier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPartner",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPartner",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPricingProfile",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsVehicleRule",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsCategoryPricingRule",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Shipment",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [
+      "order"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Shipment",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "supplier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentEvent",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentEvent",
+    "local_col": "actor_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentEvent",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommunication",
+    "local_col": "from_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "from_user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommunication",
+    "local_col": "to_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "to_user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PayoutRule",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShippingRule",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Message",
+    "local_col": "to_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "to_user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Message",
+    "local_col": "from_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "from_user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PayoutRuleProduct",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [
+      "product"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryFeatureFlag",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryStaffAssignment",
+    "local_col": "assigned_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "assigned_by_user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryStaffAssignment",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryStaffAssignment",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CrossCountryCustomerSession",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [
+      "order"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CrossCountryCustomerSession",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryConfigVersion",
+    "local_col": "draft_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryConfigVersion",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryConfigVersion",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommissionRate",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryLocalization",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryPaymentAlias",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryLegalContract",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCategoryTaxRate",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCategoryTaxRate",
+    "local_col": "category_id",
+    "remote_class": "Category",
+    "remote_col": "id",
+    "fk_target": "commerce.categories.id",
+    "rel_keys": [
+      "category"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryHolidayCalendar",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryGatewayConfig",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommunicationThread",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommissionRateHistory",
+    "local_col": "changed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommissionRateHistory",
+    "local_col": "category_id",
+    "remote_class": "Category",
+    "remote_col": "id",
+    "fk_target": "commerce.categories.id",
+    "rel_keys": [
+      "category"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryCommissionRateHistory",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryLogisticsZone",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryPayoutRule",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FiscalPeriod",
+    "local_col": "closed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "closed_by_user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TransactionLedger",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TransactionLedger",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TransactionLedger",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TransactionLedger",
+    "local_col": "shipment_id",
+    "remote_class": "Shipment",
+    "remote_col": "id",
+    "fk_target": "logistics.shipments.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TransactionLedger",
+    "local_col": "order_item_id",
+    "remote_class": "OrderItem",
+    "remote_col": "id",
+    "fk_target": "commerce.order_items.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TransactionLedger",
+    "local_col": "logistics_partner_id",
+    "remote_class": "LogisticsPartner",
+    "remote_col": "id",
+    "fk_target": "logistics.logistics_partners.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierSettlement",
+    "local_col": "shipment_id",
+    "remote_class": "Shipment",
+    "remote_col": "id",
+    "fk_target": "logistics.shipments.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierSettlement",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierSettlement",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierSettlement",
+    "local_col": "payout_id",
+    "remote_class": "Payout",
+    "remote_col": "id",
+    "fk_target": "treasury.payouts.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierSettlement",
+    "local_col": "deleted_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "JournalEntry",
+    "local_col": "deleted_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "JournalEntry",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AccountBalance",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ARLedgerEntry",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ARLedgerEntry",
+    "local_col": "customer_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "customer"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ARLedgerEntry",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "APLedger",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "APLedger",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "supplier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "APLedger",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Invoice",
+    "local_col": "deleted_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Invoice",
+    "local_col": "shipment_id",
+    "remote_class": "Shipment",
+    "remote_col": "id",
+    "fk_target": "logistics.shipments.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Invoice",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Invoice",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "supplier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "InvoiceItem",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "RefundLedger",
+    "local_col": "return_request_id",
+    "remote_class": "ReturnRequest",
+    "remote_col": "id",
+    "fk_target": "commerce.return_requests.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "RefundLedger",
+    "local_col": "performed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "RefundLedger",
+    "local_col": "deleted_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "RefundLedger",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BankTransaction",
+    "local_col": "linked_supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BankTransaction",
+    "local_col": "reconciled_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BankTransaction",
+    "local_col": "linked_order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "VATRemittance",
+    "local_col": "remitted_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CashTransaction",
+    "local_col": "performed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TreasuryAccount",
+    "local_col": "employee_id",
+    "remote_class": "Employee",
+    "remote_col": "id",
+    "fk_target": "hr.employees.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PendingJournalEntry",
+    "local_col": "rejected_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PendingJournalEntry",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "approver"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PendingJournalEntry",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "creator"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PayoutBatch",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "approver"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PayoutBatch",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "creator"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BankStatementImport",
+    "local_col": "imported_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ScannedExpense",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ScannedExpense",
+    "local_col": "employee_id",
+    "remote_class": "Employee",
+    "remote_col": "id",
+    "fk_target": "hr.employees.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ARInvoice",
+    "local_col": "reference_order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [
+      "order"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Budget",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BankReconciliation",
+    "local_col": "matched_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "RecurringTemplate",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FinanceAuditLog",
+    "local_col": "actor_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FinanceAutomationLog",
+    "local_col": "run_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AutomationRule",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SystemAlert",
+    "local_col": "acknowledged_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AdminChangeAuditLog",
+    "local_col": "admin_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "admin"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AdminActivityLog",
+    "local_col": "admin_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BadgeBillingRecord",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BadgeBillingRecord",
+    "local_col": "bank_transaction_id",
+    "remote_class": "BankTransaction",
+    "remote_col": "id",
+    "fk_target": "finance.bank_transactions.id",
+    "rel_keys": [
+      "bank_transaction"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BadgeBillingRecord",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "BadgeTransaction",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CommissionGlobalConfig",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TicketReply",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CouponUsage",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CouponUsage",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PaymentProviderConfig",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmailProviderConfig",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShippingCarrier",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShippingZone",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FinanceBankAccount",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FinanceBankAccount",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PromotionEngineConfig",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PromotionEngineConfig",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PromotionLedgerEntry",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PromotionOrderTier",
+    "local_col": "updated_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PromotionOrderTier",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsCODRemittanceReceipt",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPartnerBankAccount",
+    "local_col": "verified_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPartnerDocument",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsSettlement",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsSettlement",
+    "local_col": "payout_id",
+    "remote_class": "Payout",
+    "remote_col": "id",
+    "fk_target": "treasury.payouts.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentConfirmation",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentConfirmation",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentConfirmation",
+    "local_col": "target_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShipmentConfirmation",
+    "local_col": "requester_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ChatbotQueryEvent",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ChatbotQueryEvent",
+    "local_col": "clicked_product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PushNotificationToken",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProductVerification",
+    "local_col": "verified_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ProductVerification",
+    "local_col": "shipment_id",
+    "remote_class": "Shipment",
+    "remote_col": "id",
+    "fk_target": "logistics.shipments.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierBankAccount",
+    "local_col": "verified_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierBankAccount",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmployeeExpense",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "approver"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDispute",
+    "local_col": "resolved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDispute",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDispute",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDispute",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierDispute",
+    "local_col": "return_request_id",
+    "remote_class": "ReturnRequest",
+    "remote_col": "id",
+    "fk_target": "commerce.return_requests.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierCountryCommission",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudEvent",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "reviewer"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudEvent",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudEvent",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ManualReviewQueue",
+    "local_col": "assigned_to",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DeviceFingerprint",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ReturnAbusePattern",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierFraudIndicator",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "IPAccountLinkage",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudScoringLog",
+    "local_col": "order_id",
+    "remote_class": "Order",
+    "remote_col": "id",
+    "fk_target": "commerce.orders.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudScoringLog",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudCase",
+    "local_col": "assigned_to",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "assignee"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudCase",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "creator"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudCaseAssignment",
+    "local_col": "assigned_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "assigner"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "FraudCaseAssignment",
+    "local_col": "assigned_to",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "assignee"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DLPViolation",
+    "local_col": "sender_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "sender"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DLPViolation",
+    "local_col": "reviewed_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "reviewer"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "MeetingActionItem",
+    "local_col": "assigned_to",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "assignee"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "MeetingRecording",
+    "local_col": "started_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "starter"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverLog",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverLog",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShiftHandoverLog",
+    "local_col": "handover_to_user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "handover_to"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "PaymentOrchestratorSync",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierOnboardingSync",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "supplier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "SupplierOnboardingSync",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LegalContractTemplate",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "DataResidencyRecord",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "CountryMapConfig",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ShopWarehouseLocation",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPartnerLocation",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "LogisticsPartnerLocation",
+    "local_col": "partner_id",
+    "remote_class": "LogisticsPartner",
+    "remote_col": "id",
+    "fk_target": "logistics.logistics_partners.id",
+    "rel_keys": [
+      "partner"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ParcelLocationTracker",
+    "local_col": "parcel_id",
+    "remote_class": "Shipment",
+    "remote_col": "id",
+    "fk_target": "logistics.shipments.id",
+    "rel_keys": [
+      "parcel"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ParcelLocationTracker",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Employee",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Employee",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "user"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "Employee",
+    "local_col": "hiring_manager_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "hiring_manager"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmployeeLeaveRequest",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "approver"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmployeeDocument",
+    "local_col": "verified_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "verifier"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "EmployeeAddress",
+    "local_col": "country_code",
+    "remote_class": "CountryConfig",
+    "remote_col": "code",
+    "fk_target": "country.country_configs.code",
+    "rel_keys": [
+      "country"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "COIReport",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "approver"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "TravelRequest",
+    "local_col": "approved_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "approver"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ActivityLog",
+    "local_col": "user_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ApprovalRequest",
+    "local_col": "requester_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "ApprovalRequest",
+    "local_col": "assignee_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "IncidentWarRoom",
+    "local_col": "created_by",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "creator"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "IncidentThread",
+    "local_col": "participant_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "participant"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "IncidentActionItem",
+    "local_col": "assignee_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [
+      "assignee"
+    ],
+    "rel_count": 1
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AIUploadJob",
+    "local_col": "created_product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AIUploadJob",
+    "local_col": "supplier_id",
+    "remote_class": "User",
+    "remote_col": "id",
+    "fk_target": "core.users.id",
+    "rel_keys": [],
+    "rel_count": 0
+  },
+  {
+    "kind": "inline",
+    "file": null,
+    "local_class": "AIStagingProduct",
+    "local_col": "product_id",
+    "remote_class": "Product",
+    "remote_col": "id",
+    "fk_target": "commerce.products.id",
+    "rel_keys": [],
+    "rel_count": 0
+  }
+]

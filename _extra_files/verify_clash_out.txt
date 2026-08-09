@@ -1,0 +1,14 @@
+﻿mv_daily_sales           version_cols=1 ok
+mv_monthly_sales         version_cols=1 ok
+kpi_customer             version_cols=1 ok
+kpi_supplier             version_cols=1 ok
+kpi_country              version_cols=1 ok
+kpi_revenue              version_cols=1 ok
+kpi_orders               version_cols=1 ok
+kpi_retention            version_cols=1 ok
+kpi_conversion           version_cols=1 ok
+mv_cash_position         version_cols=1 ok
+mv_facet_counts          version_cols=1 ok
+admin_analytics_snapshots version_cols=1 ok
+video_analytics          version_cols=1 ok
+RESULT: NO_CLASH

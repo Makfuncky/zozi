@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<evaluation>
+  <qa_pair>
+    <question>List the ZOZI products and identify the name of the product with ID 1.</question>
+    <answer>Wireless Mouse</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List all products in the catalog — how many products are returned in total?</question>
+    <answer>2</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the Laptop Stand in the product catalog and report its price.</question>
+    <answer>34.0</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Fetch the product whose barcode is ABC123 and report its name.</question>
+    <answer>Barcode Item</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Get order 501 and report its current status.</question>
+    <answer>pending</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Get order 501 and report its order total.</question>
+    <answer>99.0</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List the country registry and find which country uses the currency code OMR.</question>
+    <answer>Oman</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the country with code OM in the registry and report its region.</question>
+    <answer>Middle East</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List all users and report how many users exist in the system.</question>
+    <answer>2</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Fetch the user with ID 2 and report their role.</question>
+    <answer>customer</answer>
+  </qa_pair>
+</evaluation>

@@ -1,0 +1,138 @@
+name: Architecture Gate
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "backend/**/*.py"
+      - "tests/test_architecture_gates.py"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/**/*.py"
+      - "tests/test_architecture_gates.py"
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.10"
+  SECRET_KEY: ci-test-secret-key-not-for-production
+
+jobs:
+  architecture-gate:
+    name: Architecture Gate Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run architecture gate tests
+        env:
+          SECRET_KEY: ${{ env.SECRET_KEY }}
+          APP_ENV: test
+        run: |
+          python -m pytest ../tests/test_architecture_gates.py -v --tb=short --timeout=120 2>&1 | tee ../gate-results.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_ENV
+
+      - name: Upload gate test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-gate-results
+          path: gate-results.txt
+          retention-days: 30
+
+      - name: Fail if gate tests failed
+        if: env.exit_code != '0'
+        run: |
+          echo "::error::Architecture gate tests failed — see uploaded results."
+          exit 1
+
+  # ── Secondary check: forbidden folder scan ──────────────────────────
+  forbidden-folder-scan:
+    name: Forbidden Folder Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for forbidden folders with real code
+        run: |
+          echo "Scanning for forbidden folders with real .py files …"
+          VIOLATIONS=0
+
+          for FOLDER in "services/admin" "controllers/admin" "models/misc"; do
+            if [ -d "$FOLDER" ]; then
+              PY_COUNT=$(find "$FOLDER" -name "*.py" ! -name "__init__.py" | wc -l)
+              if [ "$PY_COUNT" -gt 0 ]; then
+                echo "::error file=$FOLDER::Forbidden folder $FOLDER/ has $PY_COUNT real .py files"
+                find "$FOLDER" -name "*.py" ! -name "__init__.py" -exec echo "  {}" \;
+                VIOLATIONS=$((VIOLATIONS + PY_COUNT))
+              fi
+            fi
+          done
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "::error::$VIOLATIONS file(s) found in forbidden folders"
+            exit 1
+          fi
+          echo "✅ No forbidden folders with real code"
+
+      - name: Scan for stale non-canonical imports outside shims
+        run: |
+          echo "Scanning for banned imports outside shim directories …"
+          VIOLATIONS=0
+
+          # Directories that ARE allowed to contain old-style imports
+          SHIM_DIRS=("services/communication" "services/country" "services/admin" \
+                     "models/communication" "models/country" \
+                     "controllers/communication" "controllers/country" "controllers/admin" \
+                     "providers/country" "data")
+
+          BANNED_PREFIXES=(
+            "from services.communication." "from models.communication." "from controllers.communication."
+            "from services.country." "from models.country." "from controllers.country." "from providers.country."
+            "from services.admin." "from controllers.admin." "from models.misc."
+          )
+
+          while IFS= read -r FILE; do
+            # Skip shim directories
+            SKIP=false
+            for SD in "${SHIM_DIRS[@]}"; do
+              if [[ "$FILE" == "$SD/"* ]]; then
+                SKIP=true
+                break
+              fi
+            done
+            if $SKIP; then continue; fi
+
+            for PREFIX in "${BANNED_PREFIXES[@]}"; do
+              MATCHES=$(grep -n "^${PREFIX}" "$FILE" 2>/dev/null || true)
+              if [ -n "$MATCHES" ]; then
+                echo "::error file=$FILE::Banned import: $MATCHES"
+                VIOLATIONS=$((VIOLATIONS + 1))
+              fi
+            done
+          done < <(find . -name "*.py" -not -path "*/__pycache__/*" -not -path "*/_extra_files/*")
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "::error::$VIOLATIONS banned import(s) found outside shim directories"
+            exit 1
+          fi
+          echo "✅ No stale non-canonical imports"

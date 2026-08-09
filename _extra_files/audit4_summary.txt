@@ -1,0 +1,9 @@
+TAIL:
+=========================================================
+  REPORT WRITTEN: D:\Projects\10- E-COMMERCE WEBSITE\zozi\ARCHITECTURE_AUDIT_REPORT.md
+  Total findings: 1109
+  🔴 RED: 16  🟡 YEL: 1051  🟢 GRN: 42
+  Debt Score: 22822
+========================================================
+
+RED by rule: {'VIOLATIONS': 1, 'F4': 1, 'DG3': 5, 'DG2': 3, 'W1': 3, 'LC1': 4}
