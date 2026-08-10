@@ -23,7 +23,7 @@ from controllers.comms.chat_write_controller import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["websocket"])
+router = APIRouter(tags=["websocket"], prefix="/api/v1")
 
 
 def _decode_ws_token(token: str) -> Optional[dict]:

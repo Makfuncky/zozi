@@ -41,7 +41,7 @@ from utils.config import BASE_DIR
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["ai-upload"])
+router = APIRouter(tags=["ai-upload"], prefix="/api/v1/ai")
 
 _AUTH = Depends(require_roles("supplier", "admin"))
 

@@ -32,7 +32,7 @@ from providers.bg_remover import _bytes_to_image
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/supplier")
 
 # The 6 production strategies mapped to their display names
 AB_TEST_STRATEGIES = [

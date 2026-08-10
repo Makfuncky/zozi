@@ -9,7 +9,7 @@ from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from decimal import Decimal
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 @router.get("/{country_code}/accounts", response_model=list[CashAccountOut])

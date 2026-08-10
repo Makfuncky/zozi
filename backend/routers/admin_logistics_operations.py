@@ -145,7 +145,7 @@ from controllers.promotion_controller import (
 from controllers import disputes_controller
 from utils.backup import get_backup_manager
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 # ── Users ──────────────────────────────────────────────────────────────────────

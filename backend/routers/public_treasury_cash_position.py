@@ -10,7 +10,7 @@ from services.treasury_service import (
 from controllers.auth_controller import get_current_user
 from controllers.audit_controller import AuditAction, audit_log
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/metrics")

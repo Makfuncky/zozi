@@ -17,7 +17,7 @@ from controllers.admin_controller import (
     hard_delete_entity,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 def _user_ctx(u: User) -> dict:

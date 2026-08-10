@@ -16,7 +16,7 @@ from controllers.country_versioning_controller import router as versioning_route
 from middleware.rls_dependency import get_country_scope as _get_country_scope
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 class TaxDraftBody(BaseModel):

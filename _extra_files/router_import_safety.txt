@@ -1,0 +1,18 @@
+=== IMPORT-SAFETY CHECK (orphaned duplicates + orphaned empty) ===
+orphan duplicate files checked: 218
+orphan empty (non-dup) files checked: 2
+
+--- DUPLICATE files referenced elsewhere (DO NOT delete blindly) ---
+  admin_identity_operations_api.py: backend\controllers\identity_admin_controller.py
+  admin_permissions_validation.py: backend\controllers\permissions_admin_controller.py
+  admin_security_health.py: backend\controllers\risk_admin_controller.py
+  admin_security_operations.py: backend\controllers\incident_admin_controller.py
+  public_analytics_command_center_api.py: backend\routers\admin_analytics_command_center_dashboard.py, backend\routers\public_analytics_command_center_dashboard.py
+  public_chat_api_access.py: backend\routers\internal_chat_api_access.py, backend\routers\public_chat_api_access.py
+  public_effective_permissions_access.py: backend\routers\admin_effective_permissions_access.py, backend\routers\admin_permissions_primitives_access.py, backend\routers\public_effective_permissions_access.py, backend\routers\public_permission_primitives_access.py
+  public_email_controller_access.py: backend\routers\admin_email_controller_access.py, backend\routers\public_comms_messaging_center.py, backend\routers\public_email_controller_access.py, backend\routers\system_comms_messaging_center.py
+  public_permission_primitives_access.py: backend\routers\admin_effective_permissions_access.py, backend\routers\public_effective_permissions_access.py, backend\tests\test_recovery_write_services.py
+  public_treasury_api_access.py: backend\routers\admin_treasury_api_access.py, backend\routers\public_treasury_api_access.py, backend\tests\test_treasury_isolated.py
+
+--- EMPTY (non-dup) orphan files referenced elsewhere ---
+  public_auth_access.py: backend\routers\public_configuration_jobs_status.py, backend\routers\system_configuration_jobs_status.py, backend\tests\test_security_module.py

@@ -1,0 +1,1056 @@
+﻿- ðŸŸ¡ **SC2** `backend/db/` â€” 100% sync SQLAlchemy â€” blocks the event loop under concurrent load (Â§9.3 Phase B blocker). Sync drivers serialise all DB I/O. â†’ *convert hot read/write paths to AsyncPG + SQLAlchemy 2.0 async sessions (create_async_engine + AsyncSession)*
+- ðŸŸ¡ **SC1** `backend/db/database.py` â€” no read-replica configuration found (Â§9.2 Phase A) â†’ *configure read replica URL for read-heavy paths*
+- ðŸŸ¡ **SC2** `backend/db/` â€” no async SQLAlchemy engine found â€” sync drivers block the event loop at ~50K+ concurrent (Â§9.2 Phase B) â†’ *convert hot paths to AsyncPG + SQLAlchemy 2.0 async sessions*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_analytics_fallback_dashboard.py:135` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_catalog_orders.py:24` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_commerce_configuration.py:289` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_comms_geography.py:47` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_finance_geography.py:44` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_logistics_fallback.py:136` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_logistics_geography.py:23` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_logistics_imports.py:122` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_logistics_operations.py:156` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_orders_status.py:39` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_supplier_reviews.py:54` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_supplier_trading.py:158` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_treasury_reporting.py:515` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\admin_treasury_status.py:38` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\internal_comms_channels.py:92` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\logistics_logistics_status.py:98` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_catalog_operations.py:30` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_catalog_supplier.py:65` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_commerce_operations.py:23` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_commerce_validation.py:119` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_comms_entity_chat.py:59` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_comms_entity_communication.py:55` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_comms_internal_channels.py:94` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_comms_tickets_handling.py:69` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_comms_tracking.py:473` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_customer_operations.py:61` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_finance_chart_of_accounts.py:96` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_finance_reviews.py:95` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_gateway_payment_processing.py:94` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_identity_operations.py:28` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_logistics_creation.py:87` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_logistics_messaging.py:58` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_search_operations.py:144` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_security_detection.py:68` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_supplier_security.py:25` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\public_treasury_payments.py:145` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\supplier_finance.py:260` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **DBA32** `backend\routers\supplier_supplier_sync.py:24` â€” OFFSET pagination on hot table detected â†’ *use cursor-based (keyset) pagination for hot lists*
+- ðŸŸ¡ **M1** `backend\db\employee_models.py` â€” forbidden under backend â†’ *move into backend/models/<domain>/ and add __table_args__ schema*
+- ðŸŸ¡ **G1** `backend\db\migrations\new_tables.py` â€” forbidden under backend â†’ *fold into an Alembic revision or delete (no second migrations home)*
+- ðŸŸ¡ **M1** `backend\db\employee_models.py` â€” forbidden under backend/db â†’ *move into backend/models/<domain>/ and add __table_args__ schema*
+- ðŸŸ¡ **G1** `backend\db\migrations\new_tables.py` â€” forbidden under backend/db â†’ *fold into an Alembic revision or delete (no second migrations home)*
+- ðŸŸ¡ **DB1** `backend\models\finance.py:544` â€” model 'PayoutBatch' has __tablename__ but no __table_args__ â†’ *declare schema ownership with __table_args__={'schema': '<domain>'}*
+- ðŸŸ¡ **DB1** `backend\models\media_models.py:46` â€” model 'MediaUploadSession' has __tablename__ but no __table_args__ â†’ *declare schema ownership with __table_args__={'schema': '<domain>'}*
+- ðŸŸ¡ **DBA04** `backend/models/` â€” country_code width mismatch (10: 192 tables; 3: 101 tables) â†’ *unify country_code width in one migration*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:63` â€” FK column 'system_alerts.acknowledged_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:63` â€” FK 'system_alerts.acknowledged_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:73` â€” FK column 'admin_change_audit_logs.admin_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:73` â€” FK 'admin_change_audit_logs.admin_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:90` â€” FK column 'admin_activity_logs.admin_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:90` â€” FK 'admin_activity_logs.admin_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:120` â€” FK column 'api_keys.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:120` â€” FK 'api_keys.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:129` â€” FK column 'badge_billing_records.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:129` â€” FK 'badge_billing_records.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:130` â€” FK column 'badge_billing_records.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:130` â€” FK 'badge_billing_records.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:147` â€” FK column 'badge_billing_records.bank_transaction_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:147` â€” FK 'badge_billing_records.bank_transaction_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:159` â€” FK column 'badge_transactions.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:159` â€” FK 'badge_transactions.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:193` â€” FK column 'commission_badge_tiers.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:193` â€” FK 'commission_badge_tiers.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:209` â€” FK column 'commission_global_configs.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:209` â€” FK 'commission_global_configs.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:219` â€” FK column 'ticket_replies.ticket_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:219` â€” FK 'ticket_replies.ticket_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:220` â€” FK column 'ticket_replies.sender_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:220` â€” FK 'ticket_replies.sender_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:230` â€” FK column 'coupon_usage.coupon_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:230` â€” FK 'coupon_usage.coupon_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:231` â€” FK column 'coupon_usage.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:231` â€” FK 'coupon_usage.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:232` â€” FK column 'coupon_usage.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:232` â€” FK 'coupon_usage.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:233` â€” FK 'coupon_usage.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:249` â€” FK column 'payment_provider_configs.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:249` â€” FK 'payment_provider_configs.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:261` â€” FK column 'email_provider_configs.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:261` â€” FK 'email_provider_configs.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:288` â€” FK column 'shipping_carriers.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:288` â€” FK 'shipping_carriers.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:301` â€” FK column 'shipping_zones.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:301` â€” FK 'shipping_zones.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:329` â€” FK column 'finance_bank_accounts.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:329` â€” FK 'finance_bank_accounts.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:330` â€” FK column 'finance_bank_accounts.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:330` â€” FK 'finance_bank_accounts.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:340` â€” FK 'promotion_engine_configs.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:361` â€” FK column 'promotion_engine_configs.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:361` â€” FK 'promotion_engine_configs.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:373` â€” FK column 'promotion_ledger_entries.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:373` â€” FK 'promotion_ledger_entries.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:394` â€” FK column 'promotion_order_tiers.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:394` â€” FK 'promotion_order_tiers.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:395` â€” FK 'promotion_order_tiers.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:405` â€” FK column 'logistics_cod_remittance_receipts.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:405` â€” FK 'logistics_cod_remittance_receipts.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:406` â€” FK column 'logistics_cod_remittance_receipts.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:406` â€” FK 'logistics_cod_remittance_receipts.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:407` â€” FK column 'logistics_cod_remittance_receipts.settlement_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:407` â€” FK 'logistics_cod_remittance_receipts.settlement_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:413` â€” FK column 'logistics_cod_remittance_receipts.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:413` â€” FK 'logistics_cod_remittance_receipts.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:426` â€” FK column 'logistics_partner_bank_accounts.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:426` â€” FK 'logistics_partner_bank_accounts.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:443` â€” FK column 'logistics_partner_bank_accounts.verified_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:443` â€” FK 'logistics_partner_bank_accounts.verified_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:454` â€” FK column 'logistics_partner_documents.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:454` â€” FK 'logistics_partner_documents.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:457` â€” FK column 'logistics_partner_documents.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:457` â€” FK 'logistics_partner_documents.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:468` â€” FK column 'logistics_settlements.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:468` â€” FK 'logistics_settlements.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:469` â€” FK column 'logistics_settlements.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:469` â€” FK 'logistics_settlements.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:471` â€” FK column 'logistics_settlements.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:471` â€” FK 'logistics_settlements.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:483` â€” FK column 'logistics_settlements.payout_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:483` â€” FK 'logistics_settlements.payout_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:493` â€” FK column 'shipment_confirmations.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:493` â€” FK 'shipment_confirmations.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:494` â€” FK column 'shipment_confirmations.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:494` â€” FK 'shipment_confirmations.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:495` â€” FK column 'shipment_confirmations.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:495` â€” FK 'shipment_confirmations.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:496` â€” FK column 'shipment_confirmations.requester_user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:496` â€” FK 'shipment_confirmations.requester_user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:498` â€” FK column 'shipment_confirmations.target_user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:498` â€” FK 'shipment_confirmations.target_user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:531` â€” FK 'chatbot_query_events.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:540` â€” FK 'chatbot_query_events.clicked_product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:553` â€” FK column 'push_notification_tokens.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:553` â€” FK 'push_notification_tokens.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:564` â€” FK column 'product_verifications.product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:564` â€” FK 'product_verifications.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:566` â€” FK column 'product_verifications.verified_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:566` â€” FK 'product_verifications.verified_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:567` â€” FK column 'product_verifications.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:567` â€” FK 'product_verifications.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:577` â€” FK column 'product_verifications.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:577` â€” FK 'product_verifications.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:585` â€” FK column 'supplier_bank_accounts.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:585` â€” FK 'supplier_bank_accounts.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:602` â€” FK column 'supplier_bank_accounts.verified_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:602` â€” FK 'supplier_bank_accounts.verified_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:660` â€” FK 'employee_expenses.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:665` â€” FK column 'employee_expenses.approved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:665` â€” FK 'employee_expenses.approved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:679` â€” FK column 'supplier_disputes.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:679` â€” FK 'supplier_disputes.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:680` â€” FK column 'supplier_disputes.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:680` â€” FK 'supplier_disputes.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:685` â€” FK column 'supplier_disputes.return_request_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:685` â€” FK 'supplier_disputes.return_request_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:693` â€” FK column 'supplier_disputes.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:693` â€” FK 'supplier_disputes.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:696` â€” FK column 'supplier_disputes.resolved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:696` â€” FK 'supplier_disputes.resolved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\admin.py:708` â€” FK column 'supplier_country_commissions.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\admin.py:708` â€” FK 'supplier_country_commissions.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:55` â€” FK 'ai_upload_jobs.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\ai_upload.py:61` â€” FK column 'ai_upload_jobs.created_product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:61` â€” FK 'ai_upload_jobs.created_product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:79` â€” FK 'ai_staging_products.job_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\ai_upload.py:80` â€” FK column 'ai_staging_products.product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:80` â€” FK 'ai_staging_products.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:115` â€” FK 'ai_staging_variants.job_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:116` â€” FK 'ai_staging_variants.staging_product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\ai_upload.py:144` â€” FK 'ai_generation_logs.job_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:15` â€” FK column 'commission_agreements.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:15` â€” FK 'commission_agreements.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:19` â€” FK column 'commission_agreements.set_by_admin_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:19` â€” FK 'commission_agreements.set_by_admin_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:31` â€” FK column 'product_commission_overrides.product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:31` â€” FK 'product_commission_overrides.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:32` â€” FK column 'product_commission_overrides.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:32` â€” FK 'product_commission_overrides.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:34` â€” FK column 'product_commission_overrides.set_by_admin_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:34` â€” FK 'product_commission_overrides.set_by_admin_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:44` â€” FK column 'commission_ledger_entries.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:44` â€” FK 'commission_ledger_entries.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:45` â€” FK column 'commission_ledger_entries.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:45` â€” FK 'commission_ledger_entries.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:46` â€” FK column 'commission_ledger_entries.order_item_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:46` â€” FK 'commission_ledger_entries.order_item_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:47` â€” FK column 'commission_ledger_entries.product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:47` â€” FK 'commission_ledger_entries.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:66` â€” FK column 'commission_ledger_entries.adjusted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:66` â€” FK 'commission_ledger_entries.adjusted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:78` â€” FK 'commission_category_rates.category_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\commission.py:81` â€” FK column 'commission_category_rates.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\commission.py:81` â€” FK 'commission_category_rates.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:25` â€” FK column 'addresses.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:25` â€” FK 'addresses.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:45` â€” FK column 'carts.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:45` â€” FK 'carts.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:56` â€” FK column 'cart_items.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:56` â€” FK 'cart_items.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:57` â€” FK column 'cart_items.product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:57` â€” FK 'cart_items.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:75` â€” FK column 'audit_logs.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:75` â€” FK 'audit_logs.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:87` â€” FK column 'support_tickets.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:87` â€” FK 'support_tickets.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:103` â€” FK column 'support_ticket_replies.ticket_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:103` â€” FK 'support_ticket_replies.ticket_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:104` â€” FK column 'support_ticket_replies.sender_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:104` â€” FK 'support_ticket_replies.sender_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:116` â€” FK column 'ticket_attachments.ticket_reply_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:116` â€” FK 'ticket_attachments.ticket_reply_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:117` â€” FK column 'ticket_attachments.ticket_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:117` â€” FK 'ticket_attachments.ticket_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:135` â€” FK column 'city_distance_matrix.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:135` â€” FK 'city_distance_matrix.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:136` â€” FK column 'city_distance_matrix.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:136` â€” FK 'city_distance_matrix.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:161` â€” FK 'user_browsing_history.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:162` â€” FK 'user_browsing_history.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:181` â€” FK 'user_sessions.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:196` â€” FK column 'command_center_views.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:196` â€” FK 'command_center_views.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:222` â€” FK column 'news_articles.source_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:222` â€” FK 'news_articles.source_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:290` â€” FK column 'entity_chat_messages.thread_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:290` â€” FK 'entity_chat_messages.thread_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:291` â€” FK column 'entity_chat_messages.sender_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:291` â€” FK 'entity_chat_messages.sender_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:309` â€” FK column 'video_rooms.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:309` â€” FK 'video_rooms.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:310` â€” FK column 'video_rooms.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:310` â€” FK 'video_rooms.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:331` â€” FK 'video_room_participants.room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:332` â€” FK 'video_room_participants.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:344` â€” FK column 'video_room_recordings.room_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:344` â€” FK 'video_room_recordings.room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:345` â€” FK column 'video_room_recordings.started_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:345` â€” FK 'video_room_recordings.started_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:359` â€” FK 'direct_chat_rooms.participant_one' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:360` â€” FK 'direct_chat_rooms.participant_two' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:361` â€” FK column 'direct_chat_rooms.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:361` â€” FK 'direct_chat_rooms.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:374` â€” FK column 'direct_chat_messages.room_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:374` â€” FK 'direct_chat_messages.room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:375` â€” FK column 'direct_chat_messages.sender_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:375` â€” FK 'direct_chat_messages.sender_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:390` â€” FK column 'group_chat_rooms.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:390` â€” FK 'group_chat_rooms.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:393` â€” FK column 'group_chat_rooms.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:393` â€” FK 'group_chat_rooms.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:404` â€” FK 'group_chat_members.room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:405` â€” FK 'group_chat_members.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:416` â€” FK column 'group_chat_messages.room_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:416` â€” FK 'group_chat_messages.room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:417` â€” FK column 'group_chat_messages.sender_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:417` â€” FK 'group_chat_messages.sender_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:433` â€” FK column 'shift_handover_sessions.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:433` â€” FK 'shift_handover_sessions.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:434` â€” FK 'shift_handover_sessions.outgoing_employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:435` â€” FK 'shift_handover_sessions.incoming_employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:449` â€” FK column 'shift_handover_tasks.session_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:449` â€” FK 'shift_handover_tasks.session_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:453` â€” FK column 'shift_handover_tasks.assigned_to' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:453` â€” FK 'shift_handover_tasks.assigned_to' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:462` â€” FK column 'escalation_sla_rules.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:462` â€” FK 'escalation_sla_rules.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:479` â€” FK column 'escalation_sla_logs.original_recipient_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:479` â€” FK 'escalation_sla_logs.original_recipient_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\core.py:480` â€” FK column 'escalation_sla_logs.escalated_to_user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\core.py:480` â€” FK 'escalation_sla_logs.escalated_to_user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:20` â€” FK 'shift_handover_logs.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:21` â€” FK 'shift_handover_logs.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\country_control.py:25` â€” FK column 'shift_handover_logs.handover_to_user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:25` â€” FK 'shift_handover_logs.handover_to_user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:41` â€” FK 'payment_orchestrator_sync.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:64` â€” FK 'supplier_onboarding_sync.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:65` â€” FK 'supplier_onboarding_sync.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:86` â€” FK 'legal_contract_templates.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:104` â€” FK 'data_residency_records.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:123` â€” FK 'country_map_configs.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:141` â€” FK 'shop_warehouse_locations.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:159` â€” FK 'logistics_partner_locations.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:160` â€” FK 'logistics_partner_locations.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:179` â€” FK 'parcel_location_trackers.parcel_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\country_control.py:180` â€” FK 'parcel_location_trackers.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:45` â€” FK 'physical_id_cards.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:60` â€” FK 'dynamic_qr_sessions.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:78` â€” FK 'employee_biometrics.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:93` â€” FK column 'geo_fence_logs.employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:93` â€” FK 'geo_fence_logs.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:122` â€” FK column 'org_units.parent_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:122` â€” FK 'org_units.parent_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸ”´ **DBA07** `backend\models\employee_models.py:138` â€” CASCADE into shared reference table: employees.user_id â†’ users.id â†’ *shared references (users/roles/country) must use RESTRICT â€” deleting a user must not cascade-delete business data*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:147` â€” FK column 'employees.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:147` â€” FK 'employees.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:156` â€” FK column 'employees.reporting_manager_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:156` â€” FK 'employees.reporting_manager_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:157` â€” FK column 'employees.hiring_manager_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:157` â€” FK 'employees.hiring_manager_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:159` â€” FK column 'employees.org_unit_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:159` â€” FK 'employees.org_unit_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:235` â€” FK column 'employee_leave_requests.approved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:235` â€” FK 'employee_leave_requests.approved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:325` â€” FK column 'employee_documents.verified_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:325` â€” FK 'employee_documents.verified_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:359` â€” FK column 'employee_relations.internal_employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:359` â€” FK 'employee_relations.internal_employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:378` â€” FK column 'employee_addresses.country_code' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:378` â€” FK 'employee_addresses.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:391` â€” FK column 'coi_reports.employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:391` â€” FK 'coi_reports.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:395` â€” FK column 'coi_reports.internal_employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:395` â€” FK 'coi_reports.internal_employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:398` â€” FK column 'coi_reports.approved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:398` â€” FK 'coi_reports.approved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:411` â€” FK column 'employee_travel_requests.employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:411` â€” FK 'employee_travel_requests.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\employee_models.py:417` â€” FK column 'employee_travel_requests.approved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:417` â€” FK 'employee_travel_requests.approved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:432` â€” FK 'alumni_network.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:446` â€” FK 'disciplinary_cases.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\employee_models.py:461` â€” FK 'offboarding_cases.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:34` â€” FK column 'fiscal_periods.closed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:34` â€” FK 'fiscal_periods.closed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:47` â€” FK column 'transaction_ledgers.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:47` â€” FK 'transaction_ledgers.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:48` â€” FK column 'transaction_ledgers.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:48` â€” FK 'transaction_ledgers.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:49` â€” FK column 'transaction_ledgers.logistics_partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:49` â€” FK 'transaction_ledgers.logistics_partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:50` â€” FK column 'transaction_ledgers.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:50` â€” FK 'transaction_ledgers.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:51` â€” FK column 'transaction_ledgers.order_item_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:51` â€” FK 'transaction_ledgers.order_item_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:52` â€” FK column 'transaction_ledgers.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:52` â€” FK 'transaction_ledgers.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:86` â€” FK column 'supplier_settlements.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:86` â€” FK 'supplier_settlements.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:87` â€” FK column 'supplier_settlements.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:87` â€” FK 'supplier_settlements.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:88` â€” FK column 'supplier_settlements.ledger_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:88` â€” FK 'supplier_settlements.ledger_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:89` â€” FK column 'supplier_settlements.payout_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:89` â€” FK 'supplier_settlements.payout_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:90` â€” FK column 'supplier_settlements.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:90` â€” FK 'supplier_settlements.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:107` â€” FK column 'supplier_settlements.deleted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:107` â€” FK 'supplier_settlements.deleted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:124` â€” FK column 'journal_entries.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:124` â€” FK 'journal_entries.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:127` â€” FK 'journal_entries.period_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:128` â€” FK 'journal_entries.reversal_of_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:131` â€” FK column 'journal_entries.deleted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:131` â€” FK 'journal_entries.deleted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:144` â€” FK 'journal_entry_lines.entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:145` â€” FK 'journal_entry_lines.account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:146` â€” FK 'journal_entry_lines.cost_center_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:163` â€” FK 'accounts.group_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:198` â€” FK 'account_balances.account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:199` â€” FK 'account_balances.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:217` â€” FK 'ar_ledger_entries.customer_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:218` â€” FK column 'ar_ledger_entries.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:218` â€” FK 'ar_ledger_entries.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:219` â€” FK column 'ar_ledger_entries.invoice_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:219` â€” FK 'ar_ledger_entries.invoice_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:230` â€” FK column 'ar_ledger_entries.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:230` â€” FK 'ar_ledger_entries.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:246` â€” FK 'ap_ledger_entries.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:247` â€” FK column 'ap_ledger_entries.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:247` â€” FK 'ap_ledger_entries.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:248` â€” FK column 'ap_ledger_entries.invoice_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:248` â€” FK 'ap_ledger_entries.invoice_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:249` â€” FK column 'ap_ledger_entries.settlement_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:249` â€” FK 'ap_ledger_entries.settlement_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:260` â€” FK column 'ap_ledger_entries.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:260` â€” FK 'ap_ledger_entries.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:289` â€” FK column 'invoices.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:289` â€” FK 'invoices.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:290` â€” FK column 'invoices.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:290` â€” FK 'invoices.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:291` â€” FK column 'invoices.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:291` â€” FK 'invoices.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:313` â€” FK column 'invoices.deleted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:313` â€” FK 'invoices.deleted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:323` â€” FK column 'invoice_items.invoice_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:323` â€” FK 'invoice_items.invoice_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:324` â€” FK column 'invoice_items.product_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:324` â€” FK 'invoice_items.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:341` â€” FK column 'refund_ledger.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:341` â€” FK 'refund_ledger.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:342` â€” FK column 'refund_ledger.return_request_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:342` â€” FK 'refund_ledger.return_request_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:355` â€” FK column 'refund_ledger.performed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:355` â€” FK 'refund_ledger.performed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:363` â€” FK column 'refund_ledger.deleted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:363` â€” FK 'refund_ledger.deleted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:377` â€” FK column 'bank_transactions.linked_order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:377` â€” FK 'bank_transactions.linked_order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:378` â€” FK column 'bank_transactions.linked_supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:378` â€” FK 'bank_transactions.linked_supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:383` â€” FK column 'bank_transactions.reconciled_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:383` â€” FK 'bank_transactions.reconciled_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:406` â€” FK column 'vat_remittances.remitted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:406` â€” FK 'vat_remittances.remitted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:424` â€” FK column 'cash_accounts.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:424` â€” FK 'cash_accounts.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:434` â€” FK column 'cash_transactions.account_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:434` â€” FK 'cash_transactions.account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:441` â€” FK column 'cash_transactions.performed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:441` â€” FK 'cash_transactions.performed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:456` â€” FK column 'treasury_accounts.employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:456` â€” FK 'treasury_accounts.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:468` â€” FK column 'treasury_transactions.from_account_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:468` â€” FK 'treasury_transactions.from_account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:469` â€” FK column 'treasury_transactions.to_account_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:469` â€” FK 'treasury_transactions.to_account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:470` â€” FK column 'treasury_transactions.account_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:470` â€” FK 'treasury_transactions.account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:499` â€” FK column 'cash_position_snapshots.account_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:499` â€” FK 'cash_position_snapshots.account_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:510` â€” FK column 'gateway_settlement_schedules.gateway_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:510` â€” FK 'gateway_settlement_schedules.gateway_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:532` â€” FK 'pending_journal_entries.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:533` â€” FK column 'pending_journal_entries.approved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:533` â€” FK 'pending_journal_entries.approved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:534` â€” FK column 'pending_journal_entries.rejected_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:534` â€” FK 'pending_journal_entries.rejected_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:537` â€” FK column 'pending_journal_entries.journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:537` â€” FK 'pending_journal_entries.journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:554` â€” FK column 'payout_batches.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:554` â€” FK 'payout_batches.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:555` â€” FK column 'payout_batches.approved_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:555` â€” FK 'payout_batches.approved_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:571` â€” FK column 'payout_batch_items.batch_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:571` â€” FK 'payout_batch_items.batch_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:600` â€” FK column 'bank_mapping_rules.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:600` â€” FK 'bank_mapping_rules.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:619` â€” FK column 'bank_statement_imports.imported_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:619` â€” FK 'bank_statement_imports.imported_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:632` â€” FK 'bank_statement_lines.import_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:640` â€” FK column 'bank_statement_lines.mapping_rule_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:640` â€” FK 'bank_statement_lines.mapping_rule_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:642` â€” FK column 'bank_statement_lines.posted_journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:642` â€” FK 'bank_statement_lines.posted_journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:643` â€” FK column 'bank_statement_lines.reconciled_transaction_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:643` â€” FK 'bank_statement_lines.reconciled_transaction_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:667` â€” FK column 'fixed_assets.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:667` â€” FK 'fixed_assets.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:685` â€” FK column 'accruals.journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:685` â€” FK 'accruals.journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:686` â€” FK column 'accruals.reversal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:686` â€” FK 'accruals.reversal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:688` â€” FK column 'accruals.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:688` â€” FK 'accruals.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:697` â€” FK column 'scanned_expenses.employee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:697` â€” FK 'scanned_expenses.employee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:711` â€” FK column 'scanned_expenses.posted_journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:711` â€” FK 'scanned_expenses.posted_journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:712` â€” FK column 'scanned_expenses.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:712` â€” FK 'scanned_expenses.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:773` â€” FK 'ap_bills.vendor_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:782` â€” FK column 'ap_bills.linked_journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:782` â€” FK 'ap_bills.linked_journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:783` â€” FK column 'ap_bills.paid_journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:783` â€” FK 'ap_bills.paid_journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:785` â€” FK column 'ap_bills.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:785` â€” FK 'ap_bills.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:800` â€” FK 'ar_invoices.customer_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:809` â€” FK column 'ar_invoices.linked_journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:809` â€” FK 'ar_invoices.linked_journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:810` â€” FK column 'ar_invoices.paid_journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:810` â€” FK 'ar_invoices.paid_journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:812` â€” FK column 'ar_invoices.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:812` â€” FK 'ar_invoices.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:844` â€” FK 'budgets.fiscal_period_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:849` â€” FK column 'budgets.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:849` â€” FK 'budgets.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:863` â€” FK 'bank_reconciliations.statement_line_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:864` â€” FK column 'bank_reconciliations.journal_entry_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:864` â€” FK 'bank_reconciliations.journal_entry_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:868` â€” FK column 'bank_reconciliations.matched_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:868` â€” FK 'bank_reconciliations.matched_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:887` â€” FK column 'recurring_templates.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:887` â€” FK 'recurring_templates.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:901` â€” FK 'finance_audit_logs.actor_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\finance.py:919` â€” FK column 'finance_automation_logs.run_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\finance.py:919` â€” FK 'finance_automation_logs.run_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:24` â€” FK 'fraud_events.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:25` â€” FK column 'fraud_events.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:25` â€” FK 'fraud_events.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:35` â€” FK column 'fraud_events.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:35` â€” FK 'fraud_events.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:90` â€” FK column 'manual_review_queue.assigned_to' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:90` â€” FK 'manual_review_queue.assigned_to' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:121` â€” FK column 'device_fingerprints.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:121` â€” FK 'device_fingerprints.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:152` â€” FK column 'return_abuse_patterns.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:152` â€” FK 'return_abuse_patterns.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:166` â€” FK column 'supplier_fraud_indicators.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:166` â€” FK 'supplier_fraud_indicators.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:178` â€” FK column 'logistics_fraud_indicators.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:178` â€” FK 'logistics_fraud_indicators.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:208` â€” FK column 'ip_account_linkages.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:208` â€” FK 'ip_account_linkages.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:240` â€” FK column 'fraud_scoring_logs.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:240` â€” FK 'fraud_scoring_logs.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:241` â€” FK column 'fraud_scoring_logs.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:241` â€” FK 'fraud_scoring_logs.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:270` â€” FK column 'fraud_cases.assigned_to' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:270` â€” FK 'fraud_cases.assigned_to' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:271` â€” FK column 'fraud_cases.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:271` â€” FK 'fraud_cases.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:288` â€” FK column 'fraud_case_assignments.case_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:288` â€” FK 'fraud_case_assignments.case_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:289` â€” FK column 'fraud_case_assignments.assigned_to' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:289` â€” FK 'fraud_case_assignments.assigned_to' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:290` â€” FK column 'fraud_case_assignments.assigned_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:290` â€” FK 'fraud_case_assignments.assigned_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:308` â€” FK column 'dlp_violations.sender_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:308` â€” FK 'dlp_violations.sender_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:313` â€” FK column 'dlp_violations.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:313` â€” FK 'dlp_violations.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:343` â€” FK 'meeting_action_items.meeting_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:349` â€” FK column 'meeting_action_items.assigned_to' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:349` â€” FK 'meeting_action_items.assigned_to' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\fraud.py:364` â€” FK column 'meeting_recordings.started_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\fraud.py:364` â€” FK 'meeting_recordings.started_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\incident.py:19` â€” FK column 'incident_war_rooms.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\incident.py:19` â€” FK 'incident_war_rooms.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\incident.py:33` â€” FK column 'incident_threads.war_room_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\incident.py:33` â€” FK 'incident_threads.war_room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\incident.py:34` â€” FK column 'incident_threads.participant_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\incident.py:34` â€” FK 'incident_threads.participant_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\incident.py:45` â€” FK column 'incident_action_items.war_room_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\incident.py:45` â€” FK 'incident_action_items.war_room_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\incident.py:46` â€” FK column 'incident_action_items.assignee_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\incident.py:46` â€” FK 'incident_action_items.assignee_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:18` â€” FK column 'logistics_partners.user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:18` â€” FK 'logistics_partners.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:32` â€” FK 'logistics_partners.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:64` â€” FK 'logistics_partner_profiles.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:74` â€” FK 'logistics_partner_profiles.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:84` â€” FK column 'logistics_partner_service_areas.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:84` â€” FK 'logistics_partner_service_areas.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:116` â€” FK column 'logistics_pricing_profiles.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:116` â€” FK 'logistics_pricing_profiles.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:117` â€” FK column 'logistics_pricing_profiles.service_area_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:117` â€” FK 'logistics_pricing_profiles.service_area_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:132` â€” FK column 'logistics_pricing_profiles.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:132` â€” FK 'logistics_pricing_profiles.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:145` â€” FK column 'logistics_vehicle_rules.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:145` â€” FK 'logistics_vehicle_rules.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:146` â€” FK column 'logistics_vehicle_rules.service_area_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:146` â€” FK 'logistics_vehicle_rules.service_area_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:156` â€” FK column 'logistics_vehicle_rules.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:156` â€” FK 'logistics_vehicle_rules.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:169` â€” FK column 'logistics_category_pricing_rules.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:169` â€” FK 'logistics_category_pricing_rules.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:170` â€” FK column 'logistics_category_pricing_rules.service_area_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:170` â€” FK 'logistics_category_pricing_rules.service_area_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:178` â€” FK column 'logistics_category_pricing_rules.reviewed_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:178` â€” FK 'logistics_category_pricing_rules.reviewed_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:192` â€” FK 'shipments.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:193` â€” FK column 'shipments.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:193` â€” FK 'shipments.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:194` â€” FK column 'shipments.assigned_partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:194` â€” FK 'shipments.assigned_partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:195` â€” FK column 'shipments.carrier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:195` â€” FK 'shipments.carrier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:235` â€” FK 'shipment_events.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:236` â€” FK 'shipment_events.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:237` â€” FK column 'shipment_events.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:237` â€” FK 'shipment_events.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\logistics.py:238` â€” FK column 'shipment_events.actor_user_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\logistics.py:238` â€” FK 'shipment_events.actor_user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\media_models.py:18` â€” FK 'media_assets.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\media_models.py:19` â€” FK 'media_assets.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\media_models.py:36` â€” FK column 'media_assets.uploaded_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\media_models.py:36` â€” FK 'media_assets.uploaded_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\media_models.py:63` â€” FK column 'media_upload_sessions.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\media_models.py:63` â€” FK 'media_upload_sessions.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:15` â€” FK 'onboarding_pipelines.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\onboarding.py:31` â€” FK column 'onboarding_steps.pipeline_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:31` â€” FK 'onboarding_steps.pipeline_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\onboarding.py:44` â€” FK column 'document_verifications.pipeline_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:44` â€” FK 'document_verifications.pipeline_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\onboarding.py:49` â€” FK column 'document_verifications.verifier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:49` â€” FK 'document_verifications.verifier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:58` â€” FK 'ocr_results.document_verification_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:70` â€” FK 'kyc_verifications.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\onboarding.py:77` â€” FK column 'kyc_verifications.reviewer_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\onboarding.py:77` â€” FK 'kyc_verifications.reviewer_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:22` â€” FK 'orders.customer_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:23` â€” FK 'orders.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:60` â€” FK 'orders.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:78` â€” FK 'order_items.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:79` â€” FK 'order_items.product_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:91` â€” FK 'order_items.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:101` â€” FK column 'order_logistics_allocations.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:101` â€” FK 'order_logistics_allocations.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:102` â€” FK column 'order_logistics_allocations.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:102` â€” FK 'order_logistics_allocations.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:103` â€” FK column 'order_logistics_allocations.shipment_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:103` â€” FK 'order_logistics_allocations.shipment_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:104` â€” FK column 'order_logistics_allocations.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:104` â€” FK 'order_logistics_allocations.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:105` â€” FK column 'order_logistics_allocations.service_area_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:105` â€” FK 'order_logistics_allocations.service_area_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:126` â€” FK 'order_logistics_allocations.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:136` â€” FK column 'return_requests.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:136` â€” FK 'return_requests.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\orders.py:138` â€” FK column 'return_requests.customer_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:138` â€” FK 'return_requests.customer_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\orders.py:153` â€” FK 'return_requests.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:32` â€” FK 'payments.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:39` â€” FK 'payments.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:81` â€” FK column 'coupons.deleted_by_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:81` â€” FK 'coupons.deleted_by_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:82` â€” FK 'coupons.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:100` â€” FK column 'banners.deleted_by_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:100` â€” FK 'banners.deleted_by_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:115` â€” FK column 'banners.created_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:115` â€” FK 'banners.created_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:116` â€” FK 'banners.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:163` â€” FK column 'payment_gateway_connections.updated_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:163` â€” FK 'payment_gateway_connections.updated_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:172` â€” FK column 'payouts.order_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:172` â€” FK 'payouts.order_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:173` â€” FK column 'payouts.supplier_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:173` â€” FK 'payouts.supplier_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:186` â€” FK 'payouts.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\payments.py:197` â€” FK column 'logistics_partner_payouts.partner_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:197` â€” FK 'logistics_partner_payouts.partner_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\payments.py:205` â€” FK 'logistics_partner_payouts.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\permissions.py:38` â€” FK column 'permissions.category_id' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:38` â€” FK 'permissions.category_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:56` â€” FK 'role_permission_assignments.permission_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:57` â€” FK 'role_permission_assignments.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\permissions.py:58` â€” FK column 'role_permission_assignments.granted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:58` â€” FK 'role_permission_assignments.granted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:69` â€” FK 'user_permission_overrides.user_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:70` â€” FK 'user_permission_overrides.permission_id' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:71` â€” FK 'user_permission_overrides.country_code' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA08** `backend\models\permissions.py:73` â€” FK column 'user_permission_overrides.granted_by' has no explicit index signal â†’ *every FK should have an explicit index*
+- ðŸŸ¡ **DBA07** `backend\models\permissions.py:73` â€” FK 'user_permission_overrides.granted_by' missing ON DELETE rule â†’ *default RESTRICT; CASCADE only for composition*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:49` â€” JSONB column 'role_permission_settings.permissions_json' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:92` â€” JSONB column 'admin_activity_logs.details' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:117` â€” JSONB column 'api_keys.permissions' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:173` â€” JSONB column 'badge_tiers.benefits' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:247` â€” JSONB column 'payment_provider_configs.config' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:303` â€” JSONB column 'shipping_zones.countries' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:689` â€” JSONB column 'supplier_disputes.evidence_urls' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\admin.py:690` â€” JSONB column 'supplier_disputes.metadata_json' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\ai_upload.py:89` â€” JSONB column 'ai_staging_products.tags' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\ai_upload.py:90` â€” JSONB column 'ai_staging_products.sizes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\ai_upload.py:91` â€” JSONB column 'ai_staging_products.materials' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\ai_upload.py:93` â€” JSONB column 'ai_staging_products.additional_media' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\ai_upload.py:95` â€” JSONB column 'ai_staging_products.variant_axes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\ai_upload.py:96` â€” JSONB column 'ai_staging_products.attributes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\core.py:78` â€” JSONB column 'audit_logs.details' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\core.py:198` â€” JSONB column 'command_center_views.config' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\core.py:233` â€” JSONB column 'news_articles.ai_tags' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\employee_models.py:109` â€” JSONB column 'employee_roles.permissions' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\employee_models.py:419` â€” JSONB column 'employee_travel_requests.per_diem_json' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\finance.py:279` â€” JSONB column 'financial_reports.data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\finance.py:883` â€” JSONB column 'recurring_templates.lines' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\finance.py:906` â€” JSONB column 'finance_audit_logs.detail' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\finance.py:918` â€” JSONB column 'finance_automation_logs.detail' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\fraud.py:32` â€” JSONB column 'fraud_events.details' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\fraud.py:246` â€” JSONB column 'fraud_scoring_logs.triggered_rules' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\fraud.py:247` â€” JSONB column 'fraud_scoring_logs.metadata_json' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\fraud.py:328` â€” JSONB column 'meeting_transcripts.segments' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\fraud.py:329` â€” JSONB column 'meeting_transcripts.action_items' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\fraud.py:347` â€” JSONB column 'meeting_action_items.metadata_json' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\incident.py:23` â€” JSONB column 'incident_war_rooms.context_data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\incident.py:65` â€” JSONB column 'war_room_templates.template_data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\logistics.py:25` â€” JSONB column 'logistics_partners.coverage_regions' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\logistics.py:26` â€” JSONB column 'logistics_partners.service_types' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\logistics.py:46` â€” JSONB column 'logistics_partners.social_links' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\onboarding.py:19` â€” JSONB column 'onboarding_pipelines.steps_data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\onboarding.py:34` â€” JSONB column 'onboarding_steps.data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\onboarding.py:46` â€” JSONB column 'document_verifications.document_data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\onboarding.py:61` â€” JSONB column 'ocr_results.fields' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\onboarding.py:73` â€” JSONB column 'kyc_verifications.verification_data' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\onboarding.py:74` â€” JSONB column 'kyc_verifications.document_types' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\payments.py:131` â€” JSONB column 'payment_gateway_connections.credentials' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\payments.py:132` â€” JSONB column 'payment_gateway_connections.fee_config' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\payments.py:133` â€” JSONB column 'payment_gateway_connections.supported_methods' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:55` â€” JSONB column 'products.materials' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:57` â€” JSONB column 'products.images' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:60` â€” JSONB column 'products.tags' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:61` â€” JSONB column 'products.attributes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:71` â€” JSONB column 'products.sizes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:82` â€” JSONB column 'products.filter_attributes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:83` â€” JSONB column 'products.search_vector' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\products.py:85` â€” JSONB column 'products.variant_axes' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\user.py:45` â€” JSONB column 'users.staff_assigned_tasks' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\models\user.py:46` â€” JSONB column 'users.staff_assigned_projects' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA09** `backend\db\employee_models.py:101` â€” JSONB column 'employee_roles.permissions' has no GIN index signal â†’ *add GIN index for JSONB filters/facets*
+- ðŸŸ¡ **DBA31** `backend\models\admin.py:704` â€” table 'supplier_country_commissions' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\commission.py:11` â€” table 'commission_agreements' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\commission.py:73` â€” table 'commission_category_rates' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:140` â€” table 'executive_news' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:217` â€” table 'news_articles' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:300` â€” table 'video_rooms' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:355` â€” table 'direct_chat_rooms' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:384` â€” table 'group_chat_rooms' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:426` â€” table 'shift_handover_sessions' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\core.py:458` â€” table 'escalation_sla_rules' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\employee_models.py:117` â€” table 'org_units' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\employee_models.py:131` â€” table 'employees' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\employee_models.py:368` â€” table 'employee_addresses' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\finance.py:110` â€” table 'journal_entries' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\finance.py:519` â€” table 'pending_journal_entries' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\fraud.py:60` â€” table 'fraud_rules' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\fraud.py:97` â€” table 'ip_reputations' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\logistics.py:80` â€” table 'logistics_partner_service_areas' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\media_models.py:46` â€” table 'media_upload_sessions' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\payments.py:122` â€” table 'payment_gateway_connections' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\permissions.py:17` â€” table 'permission_categories' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\permissions.py:34` â€” table 'permissions' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\permissions.py:50` â€” table 'role_permission_assignments' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\permissions.py:64` â€” table 'user_permission_overrides' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\models\permissions.py:78` â€” table 'permission_audit_log' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\db\employee_models.py:310` â€” table 'employee_addresses' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA31** `backend\db\media_models.py:48` â€” table 'media_upload_sessions' has country_code + created_at but no composite index â†’ *add composite index (country_code, created_at)*
+- ðŸŸ¡ **DBA18** `backend\models\core.py:68` â€” audit_logs model missing expected columns: log_type, actor, entity, country_code, old/new_value_json â†’ *audit_logs should have log_type, actor, entity, old/new_value_json, country_code*
+- ðŸŸ¡ **L1** `middleware/ + dependencies/` â€” 7 RLS-named modules -> two enforcers = fail-open risk â†’ *pick ONE canonical enforcer (ADR); alias/delete rest: backend\utils\country_rls.py, backend\utils\rls_context.py, backend\utils\rls_interceptor.py, backend\utils\rls_middleware.py, backend\middleware\rls_dependency.py, backend\dependencies\country_rls.py, backend\data\pg_rls_policies.sql*
+- ðŸ”´ **DBA05** `backend/middleware/` â€” no middleware signal setting app.current_country_code â†’ *set RLS context per request; fail closed*
+- ðŸŸ¡ **DBA02** `backend\tests\conftest.py:61` â€” create_all present but appears dev-gated â†’ *ensure impossible in production*
+- ðŸ”´ **DBA02** `backend\tests\test_search_endpoints.py:26` â€” create_all present without visible dev gate â†’ *gate behind APP_ENV=development*
+- ðŸŸ¡ **DBA02** `backend\services\promotion_engine_service.py:36` â€” create_all present but appears dev-gated â†’ *ensure impossible in production*
+- ðŸ”´ **DBA02** `backend\scripts\test_create_all.py:4` â€” create_all present without visible dev gate â†’ *gate behind APP_ENV=development*
+- ðŸŸ¡ **DBA02** `backend\db\database.py:255` â€” create_all present but appears dev-gated â†’ *ensure impossible in production*
+- ðŸ”´ **DBA02** `backend\db\init_db.py:32` â€” create_all present without visible dev gate â†’ *gate behind APP_ENV=development*
+- ðŸ”´ **DBA02** `backend\controllers\promotion_controller.py:24` â€” create_all present without visible dev gate â†’ *gate behind APP_ENV=development*
+- ðŸ”´ **DBA02** `backend\alembic\versions\2026_07_26_16_09-b81bfc888610_baseline_canonical_orm_schema_clean.py:23` â€” create_all present without visible dev gate â†’ *gate behind APP_ENV=development*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_08_08_21_02-02ebc285f66f_merge_divergent_heads_20260806_0009_and_.py (empty downgrade)` â€” migration missing usable downgrade() â†’ *every migration must have a real downgrade path*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_07_26_21_30_c9e8f7d6a5b4_add_communication_gap_tables.py:281` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_07_28_0000_employee_hr_tables.py:183` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_07_30_0001-20260730_0001_create_user_points_table.py:47` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_07_30_0002-20260730_0002_create_points_transactions_table.py:52` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_07_30_0003-20260730_0003_create_upload_jobs_table.py:63` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_07_30_0004-20260730_0004_create_event_tables.py:260` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_08_06_0006-upload_jobs_table.py:56` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸŸ¡ **DBA12** `backend\alembic\versions\2026_08_06_0007_supplier_badge_and_risk_tables.py:153` â€” destructive migration operation detected â†’ *constitution: keep all tables; drop/rename only via controlled ADR*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:24` â€” ORM model 'Office' table 'offices' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:37` â€” ORM model 'PhysicalIDCard' table 'physical_id_cards' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:52` â€” ORM model 'DynamicQRSession' table 'dynamic_qr_sessions' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:68` â€” ORM model 'EmployeeBiometric' table 'employee_biometrics' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:82` â€” ORM model 'GeoFenceLog' table 'geo_fence_logs' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:96` â€” ORM model 'EmployeeRole' table 'employee_roles' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:104` â€” ORM model 'Employee' table 'employees' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:155` â€” ORM model 'EmployeeAttendance' table 'employee_attendance' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:176` â€” ORM model 'EmployeeWorkLog' table 'employee_work_logs' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:192` â€” ORM model 'EmployeeLeaveRequest' table 'employee_leave_requests' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:212` â€” ORM model 'EmployeeShiftRoster' table 'employee_shift_rosters' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:229` â€” ORM model 'EmployeeAsset' table 'employee_assets' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:246` â€” ORM model 'EmployeeCertification' table 'employee_certifications' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:262` â€” ORM model 'EmployeeDocument' table 'employee_documents' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:279` â€” ORM model 'EmployeeDependent' table 'employee_dependents' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:294` â€” ORM model 'EmployeeRelation' table 'employee_relations' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:310` â€” ORM model 'EmployeeAddress' table 'employee_addresses' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\employee_models.py:329` â€” ORM model 'COIReport' table 'coi_reports' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\media_models.py:10` â€” ORM model 'MediaAsset' table 'media_assets' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸ”´ **DBA26** `backend\db\media_models.py:48` â€” ORM model 'MediaUploadSession' table 'media_upload_sessions' is outside backend/models/ â†’ *move ORM models into backend/models/<domain>/*
+- ðŸŸ¡ **DBA01** `backend\models\admin.py:44` â€” model 'RolePermissionSetting' table 'role_permission_settings' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\admin.py:111` â€” model 'APIKey' table 'api_keys' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\core.py:157` â€” model 'UserBrowsingHistory' table 'user_browsing_history' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\permissions.py:17` â€” model 'PermissionCategory' table 'permission_categories' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\permissions.py:34` â€” model 'Permission' table 'permissions' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\permissions.py:50` â€” model 'RolePermissionAssignment' table 'role_permission_assignments' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\permissions.py:64` â€” model 'UserPermissionOverride' table 'user_permission_overrides' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\permissions.py:78` â€” model 'PermissionAuditLog' table 'permission_audit_log' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\user.py:16` â€” model 'User' table 'users' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\user.py:77` â€” model 'UserLoginHistory' table 'user_login_history' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\user.py:91` â€” model 'UserDevice' table 'user_devices' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\user.py:137` â€” model 'PasswordResetToken' table 'password_reset_tokens' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\user.py:151` â€” model 'EmailVerificationToken' table 'email_verification_tokens' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA01** `backend\models\user.py:165` â€” model 'RevokedToken' table 'revoked_tokens' declares forbidden schema 'core' â†’ *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:28` â€” model 'AdminAnalyticsSnapshot' table 'admin_analytics_snapshots' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:44` â€” model 'RolePermissionSetting' table 'role_permission_settings' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:54` â€” model 'SystemAlert' table 'system_alerts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:69` â€” model 'AdminChangeAuditLog' table 'admin_change_audit_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:86` â€” model 'AdminActivityLog' table 'admin_activity_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:98` â€” model 'SystemSetting' table 'system_settings' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:111` â€” model 'APIKey' table 'api_keys' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:125` â€” model 'BadgeBillingRecord' table 'badge_billing_records' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:155` â€” model 'BadgeTransaction' table 'badge_transactions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:167` â€” model 'BadgeTier' table 'badge_tiers' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:178` â€” model 'CommissionBadgeTier' table 'commission_badge_tiers' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:199` â€” model 'CommissionGlobalConfig' table 'commission_global_configs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:215` â€” model 'TicketReply' table 'ticket_replies' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:226` â€” model 'CouponUsage' table 'coupon_usage' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:242` â€” model 'PaymentProviderConfig' table 'payment_provider_configs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:255` â€” model 'EmailProviderConfig' table 'email_provider_configs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:284` â€” model 'ShippingCarrier' table 'shipping_carriers' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:297` â€” model 'ShippingZone' table 'shipping_zones' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:310` â€” model 'FinanceBankAccount' table 'finance_bank_accounts' missing: uuid, soft-delete, version â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:336` â€” model 'PromotionEngineConfig' table 'promotion_engine_configs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:368` â€” model 'PromotionLedgerEntry' table 'promotion_ledger_entries' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:380` â€” model 'PromotionOrderTier' table 'promotion_order_tiers' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:401` â€” model 'LogisticsCODRemittanceReceipt' table 'logistics_cod_remittance_receipts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:422` â€” model 'LogisticsPartnerBankAccount' table 'logistics_partner_bank_accounts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:450` â€” model 'LogisticsPartnerDocument' table 'logistics_partner_documents' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:464` â€” model 'LogisticsSettlement' table 'logistics_settlements' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:489` â€” model 'ShipmentConfirmation' table 'shipment_confirmations' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:518` â€” model 'ChatbotQueryEvent' table 'chatbot_query_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:549` â€” model 'PushNotificationToken' table 'push_notification_tokens' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:560` â€” model 'ProductVerification' table 'product_verifications' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:581` â€” model 'SupplierBankAccount' table 'supplier_bank_accounts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:609` â€” model 'ProcessedWebhookEvent' table 'processed_webhook_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:631` â€” model 'NormalizedWebhookEvent' table 'normalized_webhook_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:656` â€” model 'EmployeeExpense' table 'employee_expenses' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:675` â€” model 'SupplierDispute' table 'supplier_disputes' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:704` â€” model 'SupplierCountryCommission' table 'supplier_country_commissions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\admin.py:717` â€” model 'RetentionJobRun' table 'retention_job_runs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\ai_upload.py:49` â€” model 'AIUploadJob' table 'ai_upload_jobs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\ai_upload.py:73` â€” model 'AIStagingProduct' table 'ai_staging_products' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\ai_upload.py:109` â€” model 'AIStagingVariant' table 'ai_staging_variants' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\ai_upload.py:138` â€” model 'AIGenerationLog' table 'ai_generation_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\commission.py:11` â€” model 'CommissionAgreement' table 'commission_agreements' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\commission.py:27` â€” model 'ProductCommissionOverride' table 'product_commission_overrides' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\commission.py:40` â€” model 'CommissionLedgerEntry' table 'commission_ledger_entries' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\commission.py:73` â€” model 'CommissionCategoryRate' table 'commission_category_rates' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:21` â€” model 'Address' table 'addresses' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:41` â€” model 'Cart' table 'carts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:52` â€” model 'CartItem' table 'cart_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:68` â€” model 'AuditLog' table 'audit_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:83` â€” model 'SupportTicket' table 'support_tickets' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:99` â€” model 'SupportTicketReply' table 'support_ticket_replies' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:112` â€” model 'TicketAttachment' table 'ticket_attachments' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:125` â€” model 'CityDistanceMatrix' table 'city_distance_matrix' missing: uuid, created_at/updated_at, soft-delete, version â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:140` â€” model 'ExecutiveNews' table 'executive_news' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:157` â€” model 'UserBrowsingHistory' table 'user_browsing_history' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:166` â€” model 'SystemHealthEvent' table 'system_health_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:178` â€” model 'UserSession' table 'user_sessions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:192` â€” model 'CommandCenterView' table 'command_center_views' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:204` â€” model 'NewsSource' table 'news_sources' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:217` â€” model 'NewsArticle' table 'news_articles' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:238` â€” model 'InternalNotice' table 'internal_notices' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:251` â€” model 'PredictiveSimulation' table 'predictive_simulations' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:261` â€” model 'AlertEscalationRule' table 'alert_escalation_rules' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:273` â€” model 'EntityChatThread' table 'entity_chat_threads' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:286` â€” model 'EntityChatMessage' table 'entity_chat_messages' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:300` â€” model 'VideoRoom' table 'video_rooms' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:326` â€” model 'VideoRoomParticipant' table 'video_room_participants' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:340` â€” model 'VideoRoomRecording' table 'video_room_recordings' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:355` â€” model 'DirectChatRoom' table 'direct_chat_rooms' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:370` â€” model 'DirectChatMessage' table 'direct_chat_messages' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:384` â€” model 'GroupChatRoom' table 'group_chat_rooms' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:400` â€” model 'GroupChatMember' table 'group_chat_members' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:412` â€” model 'GroupChatMessage' table 'group_chat_messages' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:426` â€” model 'ShiftHandoverSession' table 'shift_handover_sessions' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:445` â€” model 'ShiftHandoverTask' table 'shift_handover_tasks' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:458` â€” model 'EscalationSLARule' table 'escalation_sla_rules' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\core.py:471` â€” model 'EscalationSLALog' table 'escalation_sla_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:14` â€” model 'ShiftHandoverLog' table 'shift_handover_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:34` â€” model 'PaymentOrchestratorSync' table 'payment_orchestrator_sync' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:57` â€” model 'SupplierOnboardingSync' table 'supplier_onboarding_sync' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:79` â€” model 'LegalContractTemplate' table 'legal_contract_templates' missing: uuid, soft-delete, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:97` â€” model 'DataResidencyRecord' table 'data_residency_records' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:117` â€” model 'CountryMapConfig' table 'country_map_configs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:135` â€” model 'ShopWarehouseLocation' table 'shop_warehouse_locations' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:153` â€” model 'LogisticsPartnerLocation' table 'logistics_partner_locations' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\country_control.py:172` â€” model 'ParcelLocationTracker' table 'parcel_location_trackers' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:25` â€” model 'Office' table 'offices' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:41` â€” model 'PhysicalIDCard' table 'physical_id_cards' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:57` â€” model 'DynamicQRSession' table 'dynamic_qr_sessions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:74` â€” model 'EmployeeBiometric' table 'employee_biometrics' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:89` â€” model 'GeoFenceLog' table 'geo_fence_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:104` â€” model 'EmployeeRole' table 'employee_roles' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:117` â€” model 'OrgUnit' table 'org_units' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:131` â€” model 'Employee' table 'employees' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:186` â€” model 'EmployeeAttendance' table 'employee_attendance' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:208` â€” model 'EmployeeWorkLog' table 'employee_work_logs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:225` â€” model 'EmployeeLeaveRequest' table 'employee_leave_requests' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:246` â€” model 'EmployeeLeaveLedger' table 'employee_leave_ledgers' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:264` â€” model 'EmployeeShiftRoster' table 'employee_shift_rosters' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:282` â€” model 'EmployeeAsset' table 'employee_assets' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:300` â€” model 'EmployeeCertification' table 'employee_certifications' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:317` â€” model 'EmployeeDocument' table 'employee_documents' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:335` â€” model 'EmployeeDependent' table 'employee_dependents' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:351` â€” model 'EmployeeRelation' table 'employee_relations' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:368` â€” model 'EmployeeAddress' table 'employee_addresses' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:387` â€” model 'COIReport' table 'coi_reports' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:407` â€” model 'TravelRequest' table 'employee_travel_requests' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:428` â€” model 'AlumniNetwork' table 'alumni_network' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:442` â€” model 'DisciplinaryCase' table 'disciplinary_cases' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\employee_models.py:457` â€” model 'OffboardingCase' table 'offboarding_cases' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:20` â€” model 'FiscalPeriod' table 'fiscal_periods' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:40` â€” model 'TransactionLedger' table 'transaction_ledgers' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:79` â€” model 'SupplierSettlement' table 'supplier_settlements' missing: uuid, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:110` â€” model 'JournalEntry' table 'journal_entries' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:138` â€” model 'JournalEntryLine' table 'journal_entry_lines' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:158` â€” model 'Account' table 'accounts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:176` â€” model 'AccountGroup' table 'account_groups' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:191` â€” model 'AccountBalance' table 'account_balances' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:211` â€” model 'ARLedgerEntry' table 'ar_ledger_entries' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:240` â€” model 'APLedger' table 'ap_ledger_entries' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:271` â€” model 'FinancialReport' table 'financial_reports' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:285` â€” model 'Invoice' table 'invoices' missing: uuid, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:319` â€” model 'InvoiceItem' table 'invoice_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:337` â€” model 'RefundLedger' table 'refund_ledger' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:366` â€” model 'BankTransaction' table 'bank_transactions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:393` â€” model 'VATRemittance' table 'vat_remittances' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:414` â€” model 'CashAccount' table 'cash_accounts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:430` â€” model 'CashTransaction' table 'cash_transactions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:446` â€” model 'TreasuryAccount' table 'treasury_accounts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:464` â€” model 'TreasuryTransaction' table 'treasury_transactions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:480` â€” model 'CashFlowForecast' table 'cash_flow_forecasts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:494` â€” model 'CashPositionSnapshot' table 'cash_position_snapshots' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:506` â€” model 'GatewaySettlementSchedule' table 'gateway_settlement_schedules' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:519` â€” model 'PendingJournalEntry' table 'pending_journal_entries' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:544` â€” model 'PayoutBatch' table 'payout_batches' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:567` â€” model 'PayoutBatchItem' table 'payout_batch_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:583` â€” model 'BankMappingRule' table 'bank_mapping_rules' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:605` â€” model 'BankStatementImport' table 'bank_statement_imports' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:624` â€” model 'BankStatementLine' table 'bank_statement_lines' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:648` â€” model 'FixedAsset' table 'fixed_assets' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:672` â€” model 'Accrual' table 'accruals' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:692` â€” model 'ScannedExpense' table 'scanned_expenses' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:718` â€” model 'Vendor' table 'vendors' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:734` â€” model 'Customer' table 'customers' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:751` â€” model 'CostCenter' table 'cost_centers' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:764` â€” model 'APBill' table 'ap_bills' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:791` â€” model 'ARInvoice' table 'ar_invoices' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:818` â€” model 'BankAccount' table 'bank_accounts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:836` â€” model 'Budget' table 'budgets' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:855` â€” model 'BankReconciliation' table 'bank_reconciliations' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:874` â€” model 'RecurringTemplate' table 'recurring_templates' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:892` â€” model 'FinanceAuditLog' table 'finance_audit_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\finance.py:910` â€” model 'FinanceAutomationLog' table 'finance_automation_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:16` â€” model 'FraudEvent' table 'fraud_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:44` â€” model 'FraudBlacklist' table 'fraud_blacklist' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:60` â€” model 'FraudRule' table 'fraud_rules' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:77` â€” model 'ManualReviewQueue' table 'manual_review_queue' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:97` â€” model 'IPReputation' table 'ip_reputations' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:116` â€” model 'DeviceFingerprint' table 'device_fingerprints' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:136` â€” model 'CreditCardBin' table 'credit_card_bins' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:148` â€” model 'ReturnAbusePattern' table 'return_abuse_patterns' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:162` â€” model 'SupplierFraudIndicator' table 'supplier_fraud_indicators' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:174` â€” model 'LogisticsFraudIndicator' table 'logistics_fraud_indicators' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:186` â€” model 'FraudAlert' table 'fraud_alerts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:203` â€” model 'IPAccountLinkage' table 'ip_account_linkages' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:218` â€” model 'VelocityCounter' table 'fraud_velocity_counters' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:232` â€” model 'FraudScoringLog' table 'fraud_scoring_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:255` â€” model 'FraudCase' table 'fraud_cases' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:282` â€” model 'FraudCaseAssignment' table 'fraud_case_assignments' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:299` â€” model 'DLPViolation' table 'dlp_violations' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:321` â€” model 'MeetingTranscript' table 'meeting_transcripts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:336` â€” model 'MeetingActionItem' table 'meeting_action_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\fraud.py:357` â€” model 'MeetingRecording' table 'meeting_recordings' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\incident.py:11` â€” model 'IncidentWarRoom' table 'incident_war_rooms' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\incident.py:29` â€” model 'IncidentThread' table 'incident_threads' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\incident.py:41` â€” model 'IncidentActionItem' table 'incident_action_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\incident.py:58` â€” model 'WarRoomTemplate' table 'war_room_templates' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:14` â€” model 'LogisticsPartner' table 'logistics_partners' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:60` â€” model 'LogisticsPartnerProfile' table 'logistics_partner_profiles' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:80` â€” model 'LogisticsPartnerServiceArea' table 'logistics_partner_service_areas' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:112` â€” model 'LogisticsPricingProfile' table 'logistics_pricing_profiles' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:141` â€” model 'LogisticsVehicleRule' table 'logistics_vehicle_rules' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:165` â€” model 'LogisticsCategoryPricingRule' table 'logistics_category_pricing_rules' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:187` â€” model 'Shipment' table 'shipments' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\logistics.py:229` â€” model 'ShipmentEvent' table 'shipment_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\media_models.py:9` â€” model 'MediaAsset' table 'media_assets' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\media_models.py:46` â€” model 'MediaUploadSession' table 'media_upload_sessions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\onboarding.py:11` â€” model 'OnboardingPipeline' table 'onboarding_pipelines' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\onboarding.py:27` â€” model 'OnboardingStep' table 'onboarding_steps' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\onboarding.py:40` â€” model 'DocumentVerification' table 'document_verifications' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\onboarding.py:54` â€” model 'OCRResult' table 'ocr_results' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\onboarding.py:66` â€” model 'KYCVerification' table 'kyc_verifications' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\orders.py:14` â€” model 'Order' table 'orders' missing: uuid, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\orders.py:72` â€” model 'OrderItem' table 'order_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\orders.py:97` â€” model 'OrderLogisticsAllocation' table 'order_logistics_allocations' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\orders.py:132` â€” model 'ReturnRequest' table 'return_requests' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:25` â€” model 'Payment' table 'payments' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:46` â€” model 'PaymentReconciliationRun' table 'payment_reconciliation_runs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:65` â€” model 'Coupon' table 'coupons' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:88` â€” model 'Banner' table 'banners' missing: uuid, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:122` â€” model 'PaymentGatewayConnection' table 'payment_gateway_connections' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:167` â€” model 'Payout' table 'payouts' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\payments.py:193` â€” model 'LogisticsPartnerPayout' table 'logistics_partner_payouts' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\permissions.py:17` â€” model 'PermissionCategory' table 'permission_categories' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\permissions.py:34` â€” model 'Permission' table 'permissions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\permissions.py:50` â€” model 'RolePermissionAssignment' table 'role_permission_assignments' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\permissions.py:64` â€” model 'UserPermissionOverride' table 'user_permission_overrides' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\permissions.py:78` â€” model 'PermissionAuditLog' table 'permission_audit_log' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:11` â€” model 'Category' table 'categories' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:37` â€” model 'Product' table 'products' missing: uuid, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:106` â€” model 'Review' table 'reviews' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:125` â€” model 'WishlistItem' table 'wishlist_items' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:137` â€” model 'Wishlist' table 'wishlists' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:149` â€” model 'ProductVariant' table 'product_variants' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:182` â€” model 'ProductVideo' table 'product_videos' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:202` â€” model 'VideoAnalytics' table 'video_analytics' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:215` â€” model 'ProductFilterMetadata' table 'product_filter_metadata' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\products.py:230` â€” model 'ProductFilterOption' table 'product_filter_options' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:16` â€” model 'User' table 'users' missing: uuid, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:77` â€” model 'UserLoginHistory' table 'user_login_history' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:91` â€” model 'UserDevice' table 'user_devices' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:107` â€” model 'Referral' table 'referrals' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:122` â€” model 'ReferralPointEvent' table 'referral_point_events' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:137` â€” model 'PasswordResetToken' table 'password_reset_tokens' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:151` â€” model 'EmailVerificationToken' table 'email_verification_tokens' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\models\user.py:165` â€” model 'RevokedToken' table 'revoked_tokens' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:24` â€” model 'Office' table 'offices' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:37` â€” model 'PhysicalIDCard' table 'physical_id_cards' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:52` â€” model 'DynamicQRSession' table 'dynamic_qr_sessions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:68` â€” model 'EmployeeBiometric' table 'employee_biometrics' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:82` â€” model 'GeoFenceLog' table 'geo_fence_logs' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:96` â€” model 'EmployeeRole' table 'employee_roles' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:104` â€” model 'Employee' table 'employees' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:155` â€” model 'EmployeeAttendance' table 'employee_attendance' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:176` â€” model 'EmployeeWorkLog' table 'employee_work_logs' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:192` â€” model 'EmployeeLeaveRequest' table 'employee_leave_requests' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:212` â€” model 'EmployeeShiftRoster' table 'employee_shift_rosters' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:229` â€” model 'EmployeeAsset' table 'employee_assets' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:246` â€” model 'EmployeeCertification' table 'employee_certifications' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:262` â€” model 'EmployeeDocument' table 'employee_documents' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:279` â€” model 'EmployeeDependent' table 'employee_dependents' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:294` â€” model 'EmployeeRelation' table 'employee_relations' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:310` â€” model 'EmployeeAddress' table 'employee_addresses' missing: uuid, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\employee_models.py:329` â€” model 'COIReport' table 'coi_reports' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\media_models.py:10` â€” model 'MediaAsset' table 'media_assets' missing: uuid, created_at/updated_at, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA03** `backend\db\media_models.py:48` â€” model 'MediaUploadSession' table 'media_upload_sessions' missing: uuid, created_at/updated_at, soft-delete, version, created_by/updated_by â†’ *use AuditMixin + SoftDeleteMixin + TenantMixin*
+- ðŸŸ¡ **DBA11** `backend\models\core.py:125` â€” table 'city_distance_matrix': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\core.py:157` â€” table 'user_browsing_history': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\country_control.py:34` â€” table 'payment_orchestrator_sync': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\country_control.py:57` â€” table 'supplier_onboarding_sync': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\employee_models.py:186` â€” table 'employee_attendance': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\employee_models.py:428` â€” table 'alumni_network': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\finance.py:337` â€” table 'refund_ledger': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\fraud.py:44` â€” table 'fraud_blacklist': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\fraud.py:77` â€” table 'manual_review_queue': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\permissions.py:78` â€” table 'permission_audit_log': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\products.py:215` â€” table 'product_filter_metadata': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\user.py:77` â€” table 'user_login_history': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\permissions\permission_entities.py:93` â€” table 'permission_audit_log': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\geography\country_enhancements.py:198` â€” table 'country_localization': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\geography\country_enhancements.py:378` â€” table 'country_commission_rate_history': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\geography\country_legal.py:11` â€” table 'country_legal': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\geography\country_tax.py:11` â€” table 'country_tax': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\finance\general_ledger.py:373` â€” table 'refund_ledger': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\communication.py:226` â€” table 'external_contact_masking': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\communication.py:246` â€” table 'communication_audit_trail': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\core.py:163` â€” table 'city_distance_matrix': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\core.py:205` â€” table 'user_browsing_history': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\marketing.py:212` â€” table 'email_runtime_config': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\suppliers.py:95` â€” table 'supplier_badge_catalog': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\models\comms\suppliers.py:160` â€” table 'supplier_badge_billing_history': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA11** `backend\db\employee_models.py:155` â€” table 'employee_attendance': should be plural â†’ *snake_case plural table names*
+- ðŸŸ¡ **DBA23** `backend/alembic/versions/` â€” no partition signal for expected hot tables: chat_messages, journal_entries â†’ *add monthly range partitioning for journal_entries/audit_logs/chat_messages/shipment_events*

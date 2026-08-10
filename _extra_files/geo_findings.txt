@@ -1,0 +1,180 @@
+﻿RED CG1      backend\routers\admin_comms_geography.py:49  forbidden call: routers.create_campaign() → models.EmailCampaign() | routers must not call models directly |
+RED CG1      backend\routers\admin_finance_geography.py:16  forbidden call: routers._build_category_rate() → models.CommissionCategoryRate() | routers must not call models directly |
+RED CG1      backend\routers\admin_finance_geography.py:20  forbidden call: routers._build_badge_tier() → models.CommissionBadgeTier() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_configuration.py:316  forbidden call: routers.create_country_feature_flag() → models.CountryFeatureFlag() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_configuration.py:414  forbidden call: routers.add_country_city() → models.CountryCity() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_configuration.py:629  forbidden call: routers.create_country_commission_rate() → models.CountryCommissionRate() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_orders.py:42  forbidden call: routers.get_cross_border_session() → db.get_db_context() | routers must not call db directly |
+RED CG1      backend\routers\admin_geography_payments.py:43  forbidden call: routers.create_payout_rule_category() → models.PayoutRuleCategory() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_payments.py:72  forbidden call: routers.create_payout_rule_product() → models.PayoutRuleProduct() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_populate.py:57  forbidden call: routers.save_country_from_suggestion() → models.CountryConfig() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_populate.py:69  forbidden call: routers.save_country_from_suggestion() → models.SupplierKYCRequirement() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_populate.py:62  forbidden call: routers.save_country_from_suggestion() → models.CountryCity() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_populate.py:66  forbidden call: routers.save_country_from_suggestion() → models.CountryCommissionRate() | routers must not call models directly |
+RED CG1      backend\routers\admin_geography_staff.py:66  forbidden call: routers.assign_staff_to_country() → models.CountryStaffAssignment() | routers must not call models directly |
+RED CG1      backend\middleware\country_context.py:227  forbidden call: middleware.set_session_rls() → services.execute() | middleware must not call services directly |
+RED CG1      backend\middleware\country_context.py:181  forbidden call: middleware.resolve_user_country_scope() → services.query() | middleware must not call services directly |
+RED CG1      backend\middleware\country_context.py:204  forbidden call: middleware.dispatch() → services.query() | middleware must not call services directly |
+RED CG2      backend\utils\country_detection_middleware.py:34  upward call: utils._detect_country() → db.get_db_session() | calls must flow downward in the circuit; extract shared logic to a lower layer |
+RED CG2      backend\utils\country_detection_middleware.py:35  upward call: utils._detect_country() → services.CountryDetectionService() | calls must flow downward in the circuit; extract shared logic to a lower layer |
+RED CG2      backend\utils\rls_context.py:49  upward call: utils.rls_context_for_user() → db.SessionLocal() | calls must flow downward in the circuit; extract shared logic to a lower layer |
+RED CG2      backend\utils\rls_interceptor.py:511  upward call: utils.install_rls_policies() → db.connect() | calls must flow downward in the circuit; extract shared logic to a lower layer |
+RED CIR1     backend\db\models_country_enhancements.py:10  circuit violation: db -> models (models.country_enhancements) is outside the allowed circuit | db may import only: utils |
+RED CIR1     backend\routers\api_geography_location.py:17  circuit violation: routers -> location_service (location_service.geo_resolver) is outside the allowed circuit | routers may import only: controllers, data, db, dependencies, events, utils |
+RED CIR1     backend\utils\country_detection_middleware.py:7  circuit violation: utils -> db (db.session) is outside the allowed circuit | utils may import only: none |
+RED CIR1     backend\utils\country_rls.py:9  circuit violation: utils -> db (db.session) is outside the allowed circuit | utils may import only: none |
+RED CIR1     backend\utils\rls_context.py:7  circuit violation: utils -> db (db.session) is outside the allowed circuit | utils may import only: none |
+RED CIR1     backend\utils\rls_interceptor.py:288  circuit violation: utils -> db (db.session) is outside the allowed circuit | utils may import only: none |
+RED DG       backend\dependencies\country_detection.py:23  forbidden dependency edge: dependencies -> services.country_detection | layer contract: dependencies may not depend on services; route via services/ |
+RED DG       backend\dependencies\country_rls.py:12  forbidden dependency edge: dependencies -> services.logistics_partner_pricing | layer contract: dependencies may not depend on services; route via services/ |
+RED DG       backend\middleware\country_context.py:4  forbidden dependency edge: middleware -> services.db_read | layer contract: middleware may not depend on services; route via services/ |
+RED DG       backend\utils\country_detection_middleware.py:8  forbidden dependency edge: utils -> services.country_detection | layer contract: utils may not depend on services; route via services/ |
+RED MW3      backend\middleware\country_context.py:4  middleware imports from 'services.db_read' (circuit violation) | middleware must not import from services/controllers/routers/models; use dependency injection or events |
+RED R1       backend\services\country_auto_populate.py:26  APIRouter outside routers/ -> endpoint mis-registered/shadowed | backend/routers/ |
+RED R1       backend\api\country_communications.py:12  APIRouter outside routers/ -> endpoint mis-registered/shadowed | backend/routers/ |
+RED SEC101   backend\utils\rls_interceptor.py  raw SQL concatenation (lines: 515, 517) | use parameterized queries / SQLAlchemy ORM |
+YEL A1       backend\utils\country_rls.py  architecture hotspot: fan_in=34, fan_out=3, instability=0.08 | reduce coupling; split responsibilities or introduce an abstraction layer |
+YEL A2       backend\controllers\country_admin_controller.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\controllers\country_payouts_controller.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\controllers\geography\country_controller.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\db\models_country_enhancements.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_admin_write_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_auto_populate_write_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_dropdown_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_maps_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_restriction_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_router_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_staff_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_staff_write_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\country_tax_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\geography\geo_service.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\services\location_service\geo_resolver.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL A2       backend\utils\country_detection_middleware.py  module has no inbound imports and is not an obvious entrypoint | verify usage; delete if unused, or wire it through the correct layer |
+YEL API2     backend\routers\admin_commerce_geography.py:23  private symbol '_admin_context' used in 4 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\controllers\country_controller.py:292  private symbol '_apply_version_payload' used in 2 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\services\country_ai_research.py:457  private symbol '_build_ai_input' used in 4 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\services\country_auto_populate.py:46  private symbol '_cache_key' used in 7 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\routers\api_geography_location.py:31  private symbol '_client_meta' used in 6 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\services\country_ai_research.py:492  private symbol '_compact_evidence' used in 2 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\controllers\country_controller.py:109  private symbol '_country_public_payload' used in 10 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\controllers\country_controller.py:104  private symbol '_create_draft_version' used in 11 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL API2     backend\services\country_detection.py:114  private symbol '_default_country' used in 6 external module(s) | make it public (remove _) or keep internal and refactor external usages |
+YEL CA2      backend\services\country_write_service.py  file contains signals for 7 domains: geography(40), configuration(17), comms(8), finance(5), identity(4), supplier(4), logistics(3) — consider splitting if sub-domains are independently reusable | split only if a sub-domain is independently reusable; multi-domain orchestration services are normal |
+YEL CA2      backend\controllers\country_controller.py  file contains signals for 6 domains: geography(31), configuration(8), treasury(8), finance(5), catalog(5), logistics(4) — consider splitting if sub-domains are independently reusable | split only if a sub-domain is independently reusable; multi-domain orchestration services are normal |
+YEL CA2      backend\controllers\geography\country_controller.py  file contains signals for 6 domains: geography(31), configuration(8), treasury(7), finance(5), catalog(5), logistics(4) — consider splitting if sub-domains are independently reusable | split only if a sub-domain is independently reusable; multi-domain orchestration services are normal |
+YEL CIR2     backend\routers\admin_commerce_geography.py:5  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_comms_geography.py:1  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_comms_geography.py:8  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_finance_geography.py:1  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_finance_geography.py:6  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_audit.py:1  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_audit.py:10  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_configuration.py:3  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_configuration.py:315  circuit bypass: routers -> models (models.country_enhancements) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_dropdown.py:3  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_dropdown.py:8  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_maps.py:1  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_maps.py:9  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_orders.py:4  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_orders.py:40  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_payments.py:4  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_payments.py:10  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_populate.py:4  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_populate.py:10  circuit bypass: routers -> models (models.countries) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_geography_search.py:13  circuit bypass: routers -> services (services.country_auto_populate) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_staff.py:4  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_geography_staff.py:11  circuit bypass: routers -> models (models.country_enhancements) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_logistics_geography.py:1  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_logistics_geography.py:6  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\admin_media_geography.py:1  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\admin_media_geography.py:9  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\customer_geography_lookup.py:4  circuit bypass: routers -> services (services.db_read) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL CIR2     backend\routers\customer_geography_lookup.py:29  circuit bypass: routers -> models (models) | routers should not read models directly; use controllers/services |
+YEL CIR2     backend\routers\system_ai_country_research.py:10  circuit bypass: routers -> services (services.ai_research_jobs) | routers should call controllers; direct router -> service usage skips the orchestration layer |
+YEL D3       providers.country, providers.geography.country:17  class name 'CountrySearchProvider' is defined in 2 modules | rename or consolidate; duplicate class names create import/confusion drift |
+YEL D3       location_service.main, routers.api_geography_location, routers.system_geography_location_api:27  class name 'ResolveRequest' is defined in 3 modules | rename or consolidate; duplicate class names create import/confusion drift |
+YEL D3       location_service.main, routers.api_geography_location, routers.system_geography_location_api:22  class name 'ReverseRequest' is defined in 3 modules | rename or consolidate; duplicate class names create import/confusion drift |
+YEL D3       tests.test_country_ai_research, tests.test_free_country_research:74  class name 'TestBuildAIInput' is defined in 2 modules | rename or consolidate; duplicate class names create import/confusion drift |
+YEL D3       tests.test_country_ai_research, tests.test_free_country_research:134  class name 'TestCompactEvidence' is defined in 2 modules | rename or consolidate; duplicate class names create import/confusion drift |
+YEL D3       tests.test_country_ai_research, tests.test_free_country_research:168  class name 'TestParseJsonText' is defined in 2 modules | rename or consolidate; duplicate class names create import/confusion drift |
+YEL DG2      backend\models\geography\__init__.py  circular module dependency: models.geography -> models.geography.country_basics -> models.geography | break the cycle by extracting shared logic into a lower layer (utils/service interface) |
+YEL DG2      backend\models\geography\__init__.py  circular module dependency: models.geography -> models.geography.country_enhancements -> models.geography | break the cycle by extracting shared logic into a lower layer (utils/service interface) |
+YEL DG2      backend\models\geography\__init__.py  circular module dependency: models.geography -> models.geography.country_economics -> models.geography | break the cycle by extracting shared logic into a lower layer (utils/service interface) |
+YEL DG2      backend\models\geography\__init__.py  circular module dependency: models.geography -> models.geography.country_legal -> models.geography | break the cycle by extracting shared logic into a lower layer (utils/service interface) |
+YEL DG2      backend\models\geography\__init__.py  circular module dependency: models.geography -> models.geography.countries -> models.geography | break the cycle by extracting shared logic into a lower layer (utils/service interface) |
+YEL DG2      backend\models\geography\__init__.py  circular module dependency: models.geography -> models.geography.country_tax -> models.geography | break the cycle by extracting shared logic into a lower layer (utils/service interface) |
+INF DOM6     backend/services|models/country  new domain candidate auto-detected: 'country' | create backend/<layer>/country/ and group related files; or merge into nearest existing domain if this is not a real bounded context. Examples: backend\controllers\country_admin_controller.py, backend\controllers\country_controller.py, backend\controllers\country_payouts_controller.py, backend\models\country_control.py, backend\models\country_enhancements.py, backend\providers\country.py, backend\services\country_ai_research.py, backend\services\country_auto_populate.py |
+YEL FE6      frontend\web_app\src\lib\api\country.ts  frontend debug statements present (1 console/debugger) | remove console/debugger before merge; use proper logging/error reporting |
+YEL FE6      frontend\web_app\src\app\admin\countries\CountryLedgerTable.tsx  frontend debug statements present (1 console/debugger) | remove console/debugger before merge; use proper logging/error reporting |
+YEL FE7      frontend\web_app\src\components\country\CountryMapView.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\CountryStaffAssignmentModal.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\GhostRowForm.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\InternalCommunicationsSystem.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\LegalContractGenerator.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\ParcelTracker.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\ShiftHandoverModal.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL FE7      frontend\web_app\src\components\country\tabs\OverviewTab.tsx  component in 'country/' imports from 'ui/' | extract shared component to shared/ or ui/ folder |
+YEL HL601    backend\services\country_ai_research.py  sequential external calls: _fetch_web_evidence (2 calls), _generate_ai_modules (2 calls) | use asyncio.gather or ThreadPoolExecutor; add timeout + retry |
+YEL HL601    backend\services\country_data_orchestrator.py  sequential external calls: __aenter__ (2 calls) | use asyncio.gather or ThreadPoolExecutor; add timeout + retry |
+YEL HL601    backend\services\country_detection.py  sequential external calls: _lookup_ipapi (2 calls) | use asyncio.gather or ThreadPoolExecutor; add timeout + retry |
+YEL HL601    backend\providers\geography\geo.py  sequential external calls: _lookup_ipapi (2 calls) | use asyncio.gather or ThreadPoolExecutor; add timeout + retry |
+YEL HL601    backend\middleware\country_context.py  sequential external calls: _lookup_country_from_ip (2 calls) | use asyncio.gather or ThreadPoolExecutor; add timeout + retry |
+YEL HL602    backend\services\country_ai_research.py  external call(s) missing timeout: _fetch_web_evidence:370, _generate_ai_modules:403 | always set timeout; add retry + circuit breaker |
+YEL HL602    backend\services\country_data_orchestrator.py  external call(s) missing timeout: __aenter__:32 | always set timeout; add retry + circuit breaker |
+YEL HL602    backend\services\country_detection.py  external call(s) missing timeout: _lookup_ipapi:106 | always set timeout; add retry + circuit breaker |
+YEL HL602    backend\providers\geography\geo.py  external call(s) missing timeout: _lookup_ipapi:114 | always set timeout; add retry + circuit breaker |
+YEL HL602    backend\middleware\country_context.py  external call(s) missing timeout: _lookup_country_from_ip:281 | always set timeout; add retry + circuit breaker |
+YEL PERF2    backend\utils\rls_interceptor.py  2 possible DB query inside loop (N+1 risk); batch queries / use joins / preload relationships (lines: 514, 517) | batch the query / use joins / preload relationships instead of querying per item |
+YEL PERF2    backend\services\geography\country_staff_write_service.py  1 possible DB query inside loop (N+1 risk); batch queries / use joins / preload relationships (lines: 188) | batch the query / use joins / preload relationships instead of querying per item |
+YEL PERF4    backend\services\country_read_service.py:52  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:60  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:68  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:86  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:114  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:123  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:167  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:192  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:201  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:214  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PERF4    backend\services\country_read_service.py:229  unbounded query: .all() without .limit() | add .limit() to prevent loading entire tables into memory |
+YEL PG103    backend\routers\admin_geography_maps.py  CPU-bound in request path: get_country_map | offload to worker (Celery/arq) or Node.js worker thread |
+YEL PG103    backend\routers\admin_geography_populate.py  CPU-bound in request path: save_country_from_suggestion | offload to worker (Celery/arq) or Node.js worker thread |
+YEL Q1       backend\dependencies\country_rls.py  2 DB read(s) via .query() in this file; delegate reads to a service (lines: 19, 92) | delegate DB reads to services/<domain>/; routers/controllers should call service methods |
+YEL QUAL1    backend\utils\country_detection_middleware.py  1 weak exception handling location(s); log or re-raise instead of swallowing exceptions (lines: 45) | log or re-raise; silent swallowing hides bugs |
+YEL QUAL1    backend\services\country_ai_research.py  1 weak exception handling location(s); log or re-raise instead of swallowing exceptions (lines: 469) | log or re-raise; silent swallowing hides bugs |
+YEL QUAL1    backend\services\country_detection.py  3 weak exception handling location(s); log or re-raise instead of swallowing exceptions (lines: 99, 124, 143) | log or re-raise; silent swallowing hides bugs |
+YEL QUAL1    backend\routers\system_ai_country_research.py  3 weak exception handling location(s); log or re-raise instead of swallowing exceptions (lines: 57, 101, 123) | log or re-raise; silent swallowing hides bugs |
+YEL QUAL1    backend\middleware\country_context.py  2 weak exception handling location(s); log or re-raise instead of swallowing exceptions (lines: 267, 273) | log or re-raise; silent swallowing hides bugs |
+YEL QUAL1    backend\controllers\country_controller.py  1 weak exception handling location(s); log or re-raise instead of swallowing exceptions (lines: 764) | log or re-raise; silent swallowing hides bugs |
+YEL QUAL3    backend\services\country_auto_populate.py:461  oversized function 'auto_populate_country' (268 lines) | extract smaller functions / service methods; long functions hide side effects |
+YEL QUAL3    backend\services\country_research.py:287  oversized function 'build_country_research' (186 lines) | extract smaller functions / service methods; long functions hide side effects |
+YEL QUAL3    backend\controllers\country_controller.py:292  oversized function '_apply_version_payload' (130 lines) | extract smaller functions / service methods; long functions hide side effects |
+YEL QUAL3    backend\controllers\geography\country_controller.py  oversized file (1709 lines) | split by domain/responsibility; large files become change bottlenecks |
+YEL QUAL3    backend\controllers\geography\country_controller.py:366  oversized function 'create_admin_country' (175 lines) | extract smaller functions / service methods; long functions hide side effects |
+YEL QUAL3    backend\controllers\geography\country_controller.py:740  oversized function '_apply_version_payload' (143 lines) | extract smaller functions / service methods; long functions hide side effects |
+YEL RN1      backend\routers\system_ai_country_research.py  flat router filename 'system_ai_country_research.py' is not comprehensive; missing surface | rename to {surface}_{domain}_{operation}.py, e.g. admin_orders_management.py, supplier_orders_fulfillment.py, customer_orders_tracking.py |
+YEL SEC6     backend\location_service\geo_resolver.py:194  potential SSRF: URL from variable used in HTTP request | validate/whitelist URLs before making requests |
+YEL SYM1     backend\routers\system_ai_country_research.py:27  symbol 'AIResearchRequest' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\system_ai_country_research.py:36  symbol 'AIResearchResponse' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:540  symbol 'ArchivePayload' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:455  symbol 'AssignStaffBody' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:387  symbol 'AutoPopulateBody' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:543  symbol 'BulkIdsPayload' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_dropdown.py:27  symbol 'CategoryResponse' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_dropdown.py:12  symbol 'CityResponse' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:114  symbol 'CommissionDraftBody' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:183  symbol 'CommissionTierItem' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:189  symbol 'CommissionTiersDraftBody' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\middleware\country_context.py:309  symbol 'CountryAccessScope' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:604  symbol 'CountryCommissionRateItem' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:25  symbol 'CountryCreateBody' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\utils\country_detection_middleware.py:17  symbol 'CountryDetectionMiddleware' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_dropdown.py:20  symbol 'CountryDropdownResponse' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\routers\admin_geography_configuration.py:95  symbol 'CountryIdentityUpdateBody' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\providers\geography\country.py:14  symbol 'CountryProviderSettings' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM1     backend\services\country_rls_service.py:13  symbol 'CountryRLSService' (class) defined but never referenced outside its module | verify usage; delete if dead code |
+YEL SYM2     providers.country:17, providers.geography.country:29  class 'CountrySearchProvider' defined in 2 modules | consolidate into one canonical definition |
+YEL SYM2     routers.api_geography_location:27, routers.system_geography_location_api:29, location_service.main:70  class 'ResolveRequest' defined in 3 modules | consolidate into one canonical definition |
+YEL SYM2     routers.api_geography_location:22, routers.system_geography_location_api:24, location_service.main:65  class 'ReverseRequest' defined in 3 modules | consolidate into one canonical definition |
+YEL W4       backend\controllers\country_admin_controller.py:7  controller imports another controller ('controllers.country_controller') | extract shared logic into a service or util; controllers stay thin |
+YEL W4       backend\controllers\country_payouts_controller.py:14  controller imports another controller ('controllers.admin_controller') | extract shared logic into a service or util; controllers stay thin |

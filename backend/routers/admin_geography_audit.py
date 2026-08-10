@@ -17,7 +17,7 @@ from controllers.auth_controller import get_current_user
 from services.legal_contract_service import LegalContractService
 from services.audit_trail_service import AuditTrailService
 
-router = APIRouter(tags=["country-admin"])
+router = APIRouter(tags=["country-admin"], prefix="/api/v1/admin")
 
 
 @router.get("/{country_code}/legal-contracts/generate")

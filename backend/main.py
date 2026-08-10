@@ -194,181 +194,42 @@ async def websocket_background_jobs(websocket: WebSocket):
 def _load_routers():
     """Lazy load routers to avoid circular imports."""
     import importlib
+    import glob
     
-    router_names = [
-        ("auth", "/api/v1/auth"),
-        ("users", "/api/v1/users"),
-        ("products", "/api/v1/products"),
-        ("orders", "/api/v1/orders"),
-        ("cart", "/api/v1/cart"),
-        ("payments", "/api/v1/payments"),
-        ("categories", "/api/v1/categories"),
-        ("countries", "/api/v1/countries"),
-        ("logistics", "/api/v1/logistics"),
-        ("logistics_health", "/api/v1/logistics-health"),
-        ("logistics_partner", "/api/v1/logistics-partner"),
-        ("logistics_orders", "/api/v1/logistics-orders"),
-        ("logistics_locations", "/api/v1/logistics-locations"),
-        ("finance", "/api/v1/finance"),
-        ("jobs", "/api/v1/jobs"),
-        ("treasury", "/api/v1/treasury"),
-        ("admin_treasury", "/api/v1/admin/treasury"),
-        ("admin", "/api/v1/admin"),
-        ("notifications", "/api/v1/notifications"),
-        ("search", "/api/v1/search"),
-        ("reviews", "/api/v1/reviews"),
-        ("wishlist", "/api/v1/wishlist"),
-        ("coupons", "/api/v1/coupons"),
-        ("banners", "/api/v1/banners"),
-        ("chat", "/api/v1/chat"),
-        ("chatbot", "/api/v1/chatbot"),
-        ("employees", "/api/v1"),
-        ("hr", "/api/v1/hr"),
-        ("hr_dashboard", "/api/v1"),
-        ("expenses", "/api/v1/expenses"),
-        ("export", "/api/v1/admin/export"),
-        ("cash_management", "/api/v1/cash-management"),
-        ("invoices", "/api/v1/invoices"),
-        ("commission", "/api/v1/commission"),
-        ("compliance", "/api/v1/compliance"),
-        ("risk", "/api/v1/risk"),
-        ("audit", "/api/v1/audit"),
-        ("supplier_documents", "/api/v1/supplier-documents"),
-        ("supplier", "/api/v1/supplier"),
-        ("supplier_health", "/api/v1/supplier-health"),
-        ("supplier_analytics", "/api/v1/supplier-analytics"),
-        ("supplier_orders", "/api/v1/supplier-orders"),
-        ("supplier_orders", "/api/v1/supplier/orders"),
-        ("supplier_payouts", "/api/v1/supplier-payouts"),
-        ("supplier_payouts", "/api/v1/supplier/payouts"),
-        ("supplier_finance", "/api/v1/supplier-finance"),
-        ("supplier_finance", "/api/v1/supplier/finance"),
-        ("supplier_products", "/api/v1/supplier-products"),
-        ("supplier_profile", "/api/v1/supplier-profile"),
-        ("logistics_orders_v2", "/api/v1/logistics-orders-v2"),
-        ("parcel_tracking", "/api/v1/parcel-tracking"),
-        ("shop_locations", "/api/v1/shop-locations"),
-        ("cross_border", "/api/v1/cross-border"),
-        ("country_maps", "/api/v1/country-maps"),
-        ("country_admin", "/api/v1/country-admin"),
-        ("country_dropdown", "/api/v1/country-dropdown"),
-        ("country_staff", "/api/v1/country-staff"),
-        ("country_payouts", "/api/v1/country-payouts"),
-        ("country_auto_populate", "/api/v1/country-auto-populate"),
-        ("command_center", "/api/v1"),
-        ("ai", "/api/v1/ai"),
-        ("ai_image", "/api/v1/ai-image"),
-        ("ai_upload", "/api/v1/ai-upload"),
-        ("entity_chat", "/api/v1/entity-chat"),
-        ("entity_communication", "/api/v1/entity-communication"),
-        ("internal_channels", "/api/v1/internal-channels"),
-        ("onboarding", "/api/v1/onboarding"),
-        ("proxy_communication", "/api/v1/proxy-communication"),
-        ("translate", "/api/v1/translate"),
-        ("video_controller", "/api/v1/video-controller"),
-        ("travel", "/api/v1/travel"),
-        ("shift_handover", "/api/v1/shift-handover"),
-        ("succession", "/api/v1/succession"),
-        ("performance", "/api/v1"),
-        ("okr", "/api/v1/okr"),
-        ("ediscovery", "/api/v1/ediscovery"),
-        ("workflows", "/api/v1/workflows"),
-        ("tickets", "/api/v1/tickets"),
-        ("video", "/api/v1/video"),
-        ("upload", "/api/v1/upload"),
-        ("flash_sales", "/api/v1/flash-sales"),
-        ("admin_users", "/api/v1/admin"),
-        ("admin_products", "/api/v1/admin"),
-        ("admin_orders", "/api/v1/admin"),
-        ("admin_settings", "/api/v1/admin/settings"),
-        ("admin_promotions", "/api/v1/admin/promotions"),
-        ("admin_categories", "/api/v1/admin"),
-        ("admin_banners", "/api/v1/admin"),
-        ("admin_payouts", "/api/v1/admin"),
-        ("payout_approval", "/api/v1/admin/payout-approval"),
-        ("admin_cash", "/api/v1/admin"),
-        ("admin_commission", "/api/v1/admin"),
-        ("admin_logistics", "/api/v1/admin"),
-        ("admin_email", "/api/v1/admin"),
-        ("admin_suppliers", "/api/v1/admin"),
-        ("admin_analytics", "/api/v1/admin"),
-        ("admin_chat", "/api/v1/admin"),
-        ("admin_video", "/api/v1/admin"),
-        ("admin_fallback", "/api/v1/admin"),
-        ("accounting", "/api/v1/accounting"),
-        ("finance_automation", "/api/v1/accounting"),
-        ("finance_erp", "/api/v1/accounting"),
-        ("addresses", "/api/v1/addresses"),
-        ("returns", "/api/v1/returns"),
-        ("geo", "/api/v1/geo"),
-        ("iam", "/api/v1/iam"),
-        ("currency", "/api/v1/currency"),
-        ("csp_reporting", "/api/v1/csp-reporting"),
-        ("product_videos", "/api/v1/product-videos"),
-        ("referrals", "/api/v1/referrals"),
-        ("fraud_detection", "/api/v1/fraud-detection"),
-        ("product_verification", "/api/v1/product-verifications"),
-        ("public_suppliers", "/api/v1/suppliers"),
-        ("push_notifications", "/api/v1/push-notifications"),
-        ("messaging", "/api/v1/messaging"),
-        ("ws_chat", "/api/v1/ws-chat"),
-        ("contact", "/api/v1/contact"),
-        ("email", "/api/v1/email"),
-        ("customer_health", "/api/v1/customer-health"),
-        ("permissions", "/api/v1/permissions"),
-        ("payroll", "/api/v1/payroll"),
-        ("comm", "/api/v1/comm"),
-        ("comms_unified", "/api/v1/comms"),
-        ("escalation", "/api/v1/escalation"),
-        ("incident", "/api/v1/incident"),
-        ("hierarchy", "/api/v1/hierarchy"),
-        ("lms", "/api/v1/lms"),
-        ("product_moderation", "/api/v1/product-moderation"),
-        ("shipments", "/api/v1/shipments"),
-        ("location_api", "/api/v1/location"),
-        ("supplier_bg_ab_test", "/api/v1/supplier"),
-        ("upload_jobs", "/api/v1"),
-        ("batch_upload", "/api/v1/supplier"),
-        ("trading", "/api/v1/trading"),
-        ("imports", "/api/v1/imports"),
-        ("automation", "/api/v1/automation"),
-        ("country_research", "/api/v1/country-research"),
-        ("ai_research", "/api/v1/country-research/ai"),
-        ("frontend_errors", "/api/v1"),
-        ("chat_enrichment", "/api/v1/chat-enrichment"),
-        ("email_enrichment", "/api/v1/email-enrichment"),
-        ("ess", "/api/v1/ess"),
-        ("email_controller", "/api/v1/email-gateway"),
-    ]
-
+    # Routers are auto-discovered from the ``routers`` package -- no central
+    # registry. Each router carries its own prefix (co-located on
+    # ``APIRouter(prefix=...)``); thin delegator modules that re-export a
+    # router from a controller expose it through a module-level
+    # ``__router_prefix__`` so the prefix stays next to the route definition.
     failed_routers = []
-    for name, prefix in router_names:
+    _routers_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "routers")
+    for _path in sorted(glob.glob(os.path.join(_routers_dir, "*.py"))):
+        _modname = os.path.splitext(os.path.basename(_path))[0]
+        if _modname == "__init__":
+            continue
         try:
-            module = importlib.import_module(f"routers.{name}")
-        except ImportError:
-            try:
-                module = importlib.import_module(f"controllers.{name}")
-            except ImportError as e:
-                failed_routers.append((name, str(e)))
-                continue
-        if hasattr(module, "router"):
-            app.include_router(module.router, prefix=prefix)
-        # Mount public/unauthenticated routers (e.g. payment & email webhooks)
-        # alongside the authenticated router so webhook callbacks are reachable.
-        if hasattr(module, "public_router"):
-            app.include_router(module.public_router, prefix=prefix)
+            _module = importlib.import_module(f"routers.{_modname}")
+        except Exception as e:  # noqa: BLE001
+            failed_routers.append((_modname, str(e)))
+            continue
+        _router = getattr(_module, "router", None)
+        if _router is None:
+            continue
+        _prefix = getattr(_module, "__router_prefix__", None)
+        if _prefix:
+            app.include_router(_router, prefix=_prefix)
+        else:
+            app.include_router(_router)
+        if getattr(_module, "public_router", None) is not None:
+            app.include_router(_module.public_router, prefix=_prefix or "")
 
     if failed_routers:
-        names = ", ".join(n for n, _ in failed_routers)
-        logger.error(
-            "Failed to load %d router(s): %s",
-            len(failed_routers),
-            names,
-        )
+        _names = ", ".join(n for n, _ in failed_routers)
+        logger.error("Failed to load %d router(s): %s", len(failed_routers), _names)
 
     # Register country-scoped routers that expose /admin/{code}/... paths
     try:
-        from routers.admin_promotions import country_router as promotions_country_router
+        from routers.admin_promotions_routes import country_router as promotions_country_router
         app.include_router(promotions_country_router, prefix="/admin")
     except Exception as e:
         logger.warning(f"Could not register promotions country router: {e}")
@@ -377,7 +238,7 @@ def _load_routers():
     # app so both web ('/logistics-partner') and mobile ('/logistics-partners')
     # clients can reach shipments/scan/status endpoints.
     try:
-        lp_module = importlib.import_module("routers.logistics_partner")
+        lp_module = importlib.import_module("routers.logistics_partner_verify")
         if hasattr(lp_module, "router"):
             app.include_router(lp_module.router, prefix="/logistics-partners")
     except Exception as e:
@@ -387,7 +248,7 @@ def _load_routers():
     # /admin/countries. The admin UI calls /admin/countries/{code}/... while the
     # public/legacy surface uses /countries/admin/{code}/..., so both must work.
     try:
-        countries_module = importlib.import_module("routers.countries")
+        countries_module = importlib.import_module("routers.core_countries_routes")
         if hasattr(countries_module, "router"):
             app.include_router(countries_module.router, prefix="/admin/countries")
     except Exception as e:

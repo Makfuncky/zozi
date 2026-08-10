@@ -4,7 +4,7 @@ from utils.dependencies import require_admin
 from utils.config import settings
 from models import User
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 @router.get("/")
 def get_settings(_: User = Depends(require_admin)):

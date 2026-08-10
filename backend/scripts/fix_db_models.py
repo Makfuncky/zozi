@@ -5,7 +5,7 @@ from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 DB_DIR = BACKEND_DIR / "db"
-SCHEMA_MAPPING_PATH = BACKEND_DIR / "docs" / "schema_mapping.json"
+SCHEMA_MAPPING_PATH = BACKEND_DIR / "var" / "artifacts" / "schema_mapping.json"
 
 
 def load_schema_mapping() -> dict[str, str]:

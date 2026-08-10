@@ -9292,7 +9292,7 @@ def target_architecture_diagrams() -> str:
         '        CDN[("CDN / static + images")]\n'
         '    end\n'
         '    CDN --> FE\n'
-        '    FEA --> FEL --> BER\n'
+        '    FEA --> FEL --> BEM --> BER\n'
         '    FES -. state .- FEA\n'
         '    BER --> BEC --> BES\n'
         '    BES --> BEP\n'

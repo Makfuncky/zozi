@@ -1,6 +1,6 @@
 """Phase 2: Add schema declarations to all ORM models.
 
-Reads backend/docs/schema_mapping.json and updates each model file to
+Reads backend/var/artifacts/schema_mapping.json and updates each model file to
 include the bounded-context schema in __table_args__. This is the
 metadata-only prerequisite for the ALTER TABLE SET SCHEMA migration.
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 MODELS_DIR = BACKEND_DIR / "models"
-SCHEMA_MAPPING_PATH = BACKEND_DIR / "docs" / "schema_mapping.json"
+SCHEMA_MAPPING_PATH = BACKEND_DIR / "var" / "artifacts" / "schema_mapping.json"
 
 
 def load_schema_mapping() -> dict[str, str]:

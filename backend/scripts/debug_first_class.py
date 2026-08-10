@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-SCHEMA_MAPPING_PATH = BACKEND_DIR / "docs" / "schema_mapping.json"
+SCHEMA_MAPPING_PATH = BACKEND_DIR / "var" / "artifacts" / "schema_mapping.json"
 with SCHEMA_MAPPING_PATH.open("r", encoding="utf-8") as f:
     SCHEMA_MAPPING = json.load(f)
 

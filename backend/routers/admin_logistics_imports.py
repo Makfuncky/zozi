@@ -12,7 +12,7 @@ from db.database import get_db
 from controllers.admin_controller import require_admin
 from services import import_service as svc
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 # ── Schemas ──

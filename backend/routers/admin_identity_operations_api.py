@@ -6,7 +6,7 @@ from models import User
 from db.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse
 from utils.dependencies import get_current_user, require_admin
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 @router.get("/me", response_model=UserOut)
 def get_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):

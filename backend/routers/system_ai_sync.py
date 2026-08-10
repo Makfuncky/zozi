@@ -5,10 +5,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 
-from routers.auth import get_current_user
+from routers.core_auth_routes import get_current_user
 import controllers.ai_controller as ctrl
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/ai")
 
 
 @router.post("/suggest")

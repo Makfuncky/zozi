@@ -35,7 +35,7 @@ from utils.constants import (
     CASH_ACCOUNT, PAYABLES_ACCOUNT, OUTPUT_VAT_ACCOUNT, INPUT_VAT_ACCOUNT,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 def get_engine(db: Session = Depends(get_db)) -> TreasuryEngine:
     return TreasuryEngine(db)

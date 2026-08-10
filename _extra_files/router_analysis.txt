@@ -1,0 +1,570 @@
+TOTAL FILES: 382
+STUB/EMPTY (no route decorators): 124
+
+===== EXACT DUPLICATES (same sha256) =====
+Groups with identical content: 109
+
+Hash 5bea8120357b8a96  (x2)
+  admin_analytics_command_center_api.py         lines=14   routes=0   prefix=None
+  public_analytics_command_center_api.py        lines=14   routes=0   prefix=None
+
+Hash 6cf68bde057d49cb  (x2)
+  admin_analytics_command_center_dashboard.py   lines=7    routes=0   prefix=None
+  public_analytics_command_center_dashboard.py  lines=7    routes=0   prefix=None
+
+Hash 34be2932a0946cee  (x2)
+  admin_audit_ediscovery_search.py              lines=62   routes=3   prefix=None
+  public_audit_ediscovery_search.py             lines=62   routes=3   prefix=None
+
+Hash 13cd041b86527f18  (x2)
+  admin_audit_export.py                         lines=48   routes=2   prefix=None
+  public_audit_export.py                        lines=48   routes=2   prefix=None
+
+Hash ff73ac8587196382  (x2)
+  admin_audit_operations.py                     lines=4    routes=0   prefix=None
+  public_audit_operations.py                    lines=4    routes=0   prefix=None
+
+Hash 1b6c49857bdf787e  (x2)
+  admin_catalog_categories.py                   lines=132  routes=6   prefix=None
+  public_catalog_operations.py                  lines=132  routes=6   prefix=None
+
+Hash 703d65f5b1a5771c  (x2)
+  admin_commerce_flash_sales.py                 lines=44   routes=3   prefix=None
+  public_commerce_flash_sales.py                lines=44   routes=3   prefix=None
+
+Hash d62e51dcffd506cd  (x2)
+  admin_commerce_media.py                       lines=72   routes=7   prefix=None
+  public_commerce_media.py                      lines=72   routes=7   prefix=None
+
+Hash ac695728dd3a55f8  (x2)
+  admin_comms_contact_messaging.py              lines=47   routes=1   prefix=None
+  public_comms_contact_messaging.py             lines=47   routes=1   prefix=None
+
+Hash 2a4948b8281c789d  (x2)
+  admin_comms_enrichment.py                     lines=161  routes=10  prefix=None
+  public_comms_enrichment.py                    lines=161  routes=10  prefix=None
+
+Hash e09908135bf7c6ab  (x2)
+  admin_comms_entity_chat.py                    lines=77   routes=4   prefix=None
+  public_comms_entity_chat.py                   lines=77   routes=4   prefix=None
+
+Hash 75d921cfb85c2e71  (x2)
+  admin_comms_entity_communication.py           lines=83   routes=4   prefix=None
+  public_comms_entity_communication.py          lines=83   routes=4   prefix=None
+
+Hash cf2f5fd85982c8af  (x2)
+  admin_comms_messaging_ops.py                  lines=51   routes=6   prefix=None
+  public_comms_messaging.py                     lines=51   routes=6   prefix=None
+
+Hash dc030a4a71bad75e  (x2)
+  admin_comms_operations.py                     lines=5    routes=0   prefix=None
+  public_comms_operations.py                    lines=5    routes=0   prefix=None
+
+Hash e1d028e9f1d4ab8b  (x2)
+  admin_comms_proxy_communication.py            lines=186  routes=8   prefix=None
+  public_comms_proxy_communication.py           lines=186  routes=8   prefix=None
+
+Hash 95b3ae2d01541bfc  (x2)
+  admin_comms_tickets_handling.py               lines=136  routes=5   prefix=None
+  public_comms_tickets_handling.py              lines=136  routes=5   prefix=None
+
+Hash cd94ce476db20a1d  (x2)
+  admin_country_versioning_access.py            lines=13   routes=0   prefix=None
+  public_country_versioning_access.py           lines=13   routes=0   prefix=None
+
+Hash 89277413160d9074  (x2)
+  admin_effective_permissions_access.py         lines=23   routes=0   prefix=None
+  public_effective_permissions_access.py        lines=23   routes=0   prefix=None
+
+Hash da9a92b0b96b5428  (x2)
+  admin_email_controller_access.py              lines=14   routes=0   prefix=None
+  public_email_controller_access.py             lines=14   routes=0   prefix=None
+
+Hash d1cdcc9b2c36ca68  (x2)
+  admin_finance_chart_of_accounts.py            lines=513  routes=25  prefix=None
+  public_finance_chart_of_accounts.py           lines=513  routes=25  prefix=None
+
+Hash 7c03d40ffe101099  (x2)
+  admin_finance_operations.py                   lines=316  routes=15  prefix=None
+  public_finance_operations.py                  lines=316  routes=15  prefix=None
+
+Hash 439ef9d6e8c84c04  (x2)
+  admin_finance_reporting.py                    lines=454  routes=19  prefix=None
+  public_finance_reporting.py                   lines=454  routes=19  prefix=None
+
+Hash d796b139103fd8dd  (x2)
+  admin_finance_reviews.py                      lines=317  routes=18  prefix=None
+  public_finance_reviews.py                     lines=317  routes=18  prefix=None
+
+Hash 4f0da196f2c10d09  (x2)
+  admin_finance_status.py                       lines=99   routes=7   prefix=None
+  public_finance_status.py                      lines=99   routes=7   prefix=None
+
+Hash 46715c1ec9b10e69  (x2)
+  admin_geography_dropdown.py                   lines=119  routes=3   prefix=None
+  public_geography_dropdown.py                  lines=119  routes=3   prefix=None
+
+Hash c8b74cd389252a4f  (x2)
+  admin_geography_maps.py                       lines=113  routes=2   prefix=None
+  public_geography_maps.py                      lines=113  routes=2   prefix=None
+
+Hash c8e912f4ae819346  (x2)
+  admin_geography_operations.py                 lines=42   routes=3   prefix=None
+  public_geography_operations.py                lines=42   routes=3   prefix=None
+
+Hash 1df80c7756f2eeb6  (x2)
+  admin_geography_orders.py                     lines=149  routes=7   prefix=None
+  public_geography_orders.py                    lines=149  routes=7   prefix=None
+
+Hash 360526db1fbcf58e  (x2)
+  admin_geography_payments.py                   lines=185  routes=6   prefix=None
+  public_geography_payments.py                  lines=185  routes=6   prefix=None
+
+Hash 243d989b201735da  (x2)
+  admin_geography_populate.py                   lines=151  routes=2   prefix=None
+  public_geography_populate.py                  lines=151  routes=2   prefix=None
+
+Hash 3296caa0bc2a079f  (x2)
+  admin_geography_search.py                     lines=52   routes=1   prefix=None
+  public_geography_search.py                    lines=52   routes=1   prefix=None
+
+Hash 1e9dc68bdeb0c533  (x2)
+  admin_geography_staff.py                      lines=249  routes=6   prefix=None
+  public_geography_staff.py                     lines=249  routes=6   prefix=None
+
+Hash ba827eef9e3e1182  (x2)
+  admin_identity_operations_api.py              lines=44   routes=5   prefix=None
+  public_identity_operations.py                 lines=44   routes=5   prefix=None
+
+Hash e67c34f7dd1261b2  (x2)
+  admin_orders_status_ops.py                    lines=108  routes=6   prefix=None
+  public_orders_status.py                       lines=108  routes=6   prefix=None
+
+Hash c066e0a95fdff982  (x2)
+  admin_orders_sync.py                          lines=151  routes=7   prefix=None
+  public_orders_sync.py                         lines=151  routes=7   prefix=None
+
+Hash 64f4cfe04dd7fb32  (x2)
+  admin_orders_tracking.py                      lines=156  routes=9   prefix=None
+  public_orders_tracking.py                     lines=156  routes=9   prefix=None
+
+Hash 1e39e59875f3bad2  (x2)
+  admin_permissions_primitives_access.py        lines=269  routes=0   prefix=None
+  public_permission_primitives_access.py        lines=269  routes=0   prefix=None
+
+Hash 2330e71d1f212705  (x2)
+  admin_permissions_validation.py               lines=306  routes=18  prefix=None
+  public_permissions_validation.py              lines=306  routes=18  prefix=None
+
+Hash adfbecf32b808491  (x2)
+  admin_reporting_operations.py                 lines=67   routes=1   prefix=None
+  public_reporting_operations.py                lines=67   routes=1   prefix=None
+
+Hash f6c54d4b050f5b22  (x2)
+  admin_reporting_pay_equity.py                 lines=63   routes=1   prefix=None
+  public_reporting_pay_equity.py                lines=63   routes=1   prefix=None
+
+Hash 6425d2133461cd01  (x2)
+  admin_reviews_operations.py                   lines=108  routes=5   prefix=None
+  public_reviews_operations.py                  lines=108  routes=5   prefix=None
+
+Hash b122d3517c690442  (x2)
+  admin_security_escalation_handling.py         lines=46   routes=3   prefix=None
+  public_security_escalation_handling.py        lines=46   routes=3   prefix=None
+
+Hash cad9edef4448a81d  (x2)
+  admin_security_health.py                      lines=73   routes=6   prefix=None
+  public_security_health.py                     lines=73   routes=6   prefix=None
+
+Hash 7f6a8fb1f5f06116  (x2)
+  admin_security_operations.py                  lines=80   routes=4   prefix=None
+  public_security_operations.py                 lines=80   routes=4   prefix=None
+
+Hash 31df6f2914a502e9  (x2)
+  admin_security_validation.py                  lines=52   routes=7   prefix=None
+  public_security_validation.py                 lines=52   routes=7   prefix=None
+
+Hash 1186e5ba01a18f8f  (x2)
+  admin_treasury_api_access.py                  lines=25   routes=0   prefix=None
+  public_treasury_api_access.py                 lines=25   routes=0   prefix=None
+
+Hash abf18ac26e5b2fad  (x2)
+  admin_treasury_operations.py                  lines=558  routes=34  prefix=None
+  public_treasury_operations.py                 lines=558  routes=34  prefix=None
+
+Hash 0f13fa6d9452e127  (x2)
+  customer_contact.py                           lines=45   routes=1   prefix=None
+  public_customer_contact.py                    lines=45   routes=1   prefix=None
+
+Hash 5fa5c77e9981be84  (x2)
+  customer_creation.py                          lines=37   routes=2   prefix=None
+  public_customer_creation.py                   lines=37   routes=2   prefix=None
+
+Hash c4a9444be477233c  (x2)
+  customer_geography_lookup.py                  lines=68   routes=2   prefix=None
+  public_geography_lookup.py                    lines=68   routes=2   prefix=None
+
+Hash 29a7ff62fb425acf  (x2)
+  customer_operations.py                        lines=131  routes=5   prefix=None
+  public_customer_operations.py                 lines=131  routes=5   prefix=None
+
+Hash d2cee589b4e87bc3  (x2)
+  customer_payments.py                          lines=299  routes=9   prefix=None
+  public_customer_payments.py                   lines=299  routes=9   prefix=None
+
+Hash 8f305ab03d841864  (x2)
+  customer_referrals_config.py                  lines=35   routes=2   prefix=None
+  public_commerce_configuration.py              lines=35   routes=2   prefix=None
+
+Hash 0c4f6945aba785ba  (x2)
+  customer_referrals_tracking.py                lines=30   routes=2   prefix=None
+  public_commerce_referrals_tracking.py         lines=30   routes=2   prefix=None
+
+Hash 39749017310a0f34  (x2)
+  customer_reporting.py                         lines=56   routes=1   prefix=None
+  public_customer_reporting.py                  lines=56   routes=1   prefix=None
+
+Hash 83cd25383d00e961  (x2)
+  customer_status.py                            lines=28   routes=1   prefix=None
+  public_customer_status.py                     lines=28   routes=1   prefix=None
+
+Hash b5a095ab42c96626  (x2)
+  customer_translate.py                         lines=66   routes=1   prefix=None
+  public_customer_translate.py                  lines=66   routes=1   prefix=None
+
+Hash 6a8ae1aa8b2f91de  (x2)
+  customer_wishlist_mgmt.py                     lines=55   routes=3   prefix=None
+  public_commerce_operations.py                 lines=55   routes=3   prefix=None
+
+Hash cc06a56e4419ddca  (x2)
+  employee_hr_ess_portal.py                     lines=285  routes=9   prefix=None
+  public_hr_ess_portal.py                       lines=285  routes=9   prefix=None
+
+Hash 12b067cd2e8d5548  (x2)
+  employee_hr_expenses_tracking.py              lines=3    routes=0   prefix=None
+  public_hr_expenses_tracking.py                lines=3    routes=0   prefix=None
+
+Hash 7e9dc6f646160b29  (x2)
+  employee_hr_health.py                         lines=237  routes=2   prefix=None
+  public_hr_health.py                           lines=237  routes=2   prefix=None
+
+Hash f6ad5e1a7a6af9a4  (x2)
+  employee_hr_okr.py                            lines=336  routes=11  prefix=None
+  public_hr_okr.py                              lines=336  routes=11  prefix=None
+
+Hash eb7b53a24563b7e6  (x2)
+  employee_hr_okr_tracking.py                   lines=76   routes=3   prefix=None
+  public_hr_okr_tracking.py                     lines=76   routes=3   prefix=None
+
+Hash 7c6f85eded8446d8  (x2)
+  employee_hr_operations.py                     lines=38   routes=5   prefix=None
+  public_hr_operations.py                       lines=38   routes=5   prefix=None
+
+Hash cb00cb64c20da6ae  (x2)
+  employee_hr_reporting.py                      lines=153  routes=13  prefix=None
+  public_hr_reporting.py                        lines=153  routes=13  prefix=None
+
+Hash 2ac8a200afccc141  (x2)
+  employee_hr_sessions.py                       lines=68   routes=5   prefix=None
+  public_hr_sessions.py                         lines=68   routes=5   prefix=None
+
+Hash d379dabbbf509d89  (x2)
+  employee_hr_status.py                         lines=183  routes=7   prefix=None
+  public_hr_status.py                           lines=183  routes=7   prefix=None
+
+Hash ca830544f3ebd2e5  (x2)
+  employee_hr_successors.py                     lines=53   routes=4   prefix=None
+  public_hr_successors.py                       lines=53   routes=4   prefix=None
+
+Hash 806a82d745a9191e  (x2)
+  employee_hr_travel_requests.py                lines=63   routes=3   prefix=None
+  public_hr_travel_requests.py                  lines=63   routes=3   prefix=None
+
+Hash 89b818650f9ad8ba  (x2)
+  employee_hr_validation.py                     lines=652  routes=36  prefix=None
+  public_hr_validation.py                       lines=652  routes=36  prefix=None
+
+Hash 5aa1392ed62981fe  (x2)
+  internal_chat_api_access.py                   lines=14   routes=0   prefix=None
+  public_chat_api_access.py                     lines=14   routes=0   prefix=None
+
+Hash 69dc1b1407816a99  (x2)
+  internal_comms_internal_channels.py           lines=98   routes=7   prefix=None
+  public_comms_internal_channels.py             lines=98   routes=7   prefix=None
+
+Hash 8e32a81c1cdfb4f4  (x2)
+  logistics_center.py                           lines=5    routes=0   prefix=None
+  public_logistics_center.py                    lines=5    routes=0   prefix=None
+
+Hash 2beb9bd706822acf  (x2)
+  logistics_creation.py                         lines=298  routes=28  prefix=None
+  public_logistics_creation.py                  lines=298  routes=28  prefix=None
+
+Hash b65778dc335974bf  (x2)
+  logistics_export.py                           lines=60   routes=3   prefix=None
+  public_logistics_export.py                    lines=60   routes=3   prefix=None
+
+Hash 9a74282097f25da9  (x2)
+  logistics_locations_api.py                    lines=97   routes=3   prefix=None
+  public_logistics_locations.py                 lines=97   routes=3   prefix=None
+
+Hash f730ab54bf226dc8  (x2)
+  logistics_messaging.py                        lines=132  routes=5   prefix=None
+  public_logistics_messaging.py                 lines=132  routes=5   prefix=None
+
+Hash 62535052506d4929  (x2)
+  logistics_okr.py                              lines=73   routes=3   prefix=None
+  public_logistics_okr.py                       lines=73   routes=3   prefix=None
+
+Hash 7a609bea06accb37  (x2)
+  logistics_operations.py                       lines=44   routes=3   prefix=None
+  public_logistics_operations.py                lines=44   routes=3   prefix=None
+
+Hash 5260aa76e4ead12b  (x2)
+  logistics_parcel_track.py                     lines=71   routes=2   prefix=None
+  public_logistics_parcel_track.py              lines=71   routes=2   prefix=None
+
+Hash 799a0b6de4740e18  (x2)
+  logistics_reporting.py                        lines=508  routes=23  prefix=None
+  public_logistics_reporting.py                 lines=508  routes=23  prefix=None
+
+Hash 7e81ced7c45a4cac  (x2)
+  logistics_sales.py                            lines=38   routes=3   prefix=None
+  public_logistics_sales.py                     lines=38   routes=3   prefix=None
+
+Hash 66a804332101d53b  (x2)
+  logistics_shop_locations.py                   lines=74   routes=3   prefix=None
+  public_logistics_shop_locations.py            lines=74   routes=3   prefix=None
+
+Hash b819832f7731a40c  (x2)
+  logistics_track.py                            lines=44   routes=5   prefix=None
+  public_logistics_track.py                     lines=44   routes=5   prefix=None
+
+Hash 587a65690e1432fa  (x2)
+  public_analytics_frontend_telemetry.py        lines=56   routes=1   prefix=None
+  system_analytics_frontend_telemetry.py        lines=56   routes=1   prefix=None
+
+Hash aaa577707d102808  (x2)
+  public_badge_billing_access.py                lines=214  routes=4   prefix=None
+  supplier_badge_billing_access.py              lines=214  routes=4   prefix=None
+
+Hash 960284909b912d83  (x2)
+  public_catalog_moderate.py                    lines=92   routes=2   prefix=None
+  supplier_catalog_moderate.py                  lines=92   routes=2   prefix=None
+
+Hash bec9f1e229c48339  (x2)
+  public_catalog_supplier.py                    lines=253  routes=10  prefix=None
+  supplier_catalog.py                           lines=253  routes=10  prefix=None
+
+Hash bdf537d8f33a905f  (x2)
+  public_catalog_verify.py                      lines=93   routes=5   prefix=None
+  supplier_catalog_verify.py                    lines=93   routes=5   prefix=None
+
+Hash fb4f3c54b2f8a034  (x2)
+  public_catalog_videos.py                      lines=87   routes=5   prefix=None
+  supplier_catalog_videos.py                    lines=87   routes=5   prefix=None
+
+Hash a782876f364b4d5a  (x2)
+  public_comms_email_enrichment.py              lines=73   routes=4   prefix=None
+  system_comms_email_enrichment.py              lines=73   routes=4   prefix=None
+
+Hash febc7f0ad03e58b6  (x2)
+  public_comms_messaging_center.py              lines=7    routes=0   prefix=None
+  system_comms_messaging_center.py              lines=7    routes=0   prefix=None
+
+Hash 63f89b558f5e9698  (x2)
+  public_comms_registration.py                  lines=108  routes=3   prefix=None
+  system_comms_registration.py                  lines=108  routes=3   prefix=None
+
+Hash ed06eaad9b115182  (x2)
+  public_comms_tracking.py                      lines=481  routes=19  prefix=None
+  system_comms_tracking.py                      lines=481  routes=19  prefix=None
+
+Hash c14e1ebd9433a84a  (x2)
+  public_configuration_health_status.py         lines=116  routes=3   prefix=None
+  system_configuration_health_status.py         lines=116  routes=3   prefix=None
+
+Hash 65872037bfb73304  (x2)
+  public_configuration_jobs_status.py           lines=30   routes=1   prefix=None
+  system_configuration_jobs_status.py           lines=30   routes=1   prefix=None
+
+Hash 9ffb6250c877f297  (x2)
+  public_configuration_translate_text.py        lines=68   routes=1   prefix=None
+  system_configuration_translate_text.py        lines=68   routes=1   prefix=None
+
+Hash 882b7b380ce1dcdc  (x2)
+  public_configuration_workflow_automation.py   lines=39   routes=2   prefix=None
+  system_configuration_workflow_automation.py   lines=39   routes=2   prefix=None
+
+Hash d3a0c0e4388de2b2  (x2)
+  public_gateway_payment_processing.py          lines=339  routes=31  prefix=None
+  system_gateway_payment_processing.py          lines=339  routes=31  prefix=None
+
+Hash 828529421cddeb1f  (x2)
+  public_geography_location_api.py              lines=75   routes=4   prefix=None
+  system_geography_location_api.py              lines=75   routes=4   prefix=None
+
+Hash 43b2e05b480e1b43  (x2)
+  public_media_operations.py                    lines=62   routes=2   prefix=None
+  system_media_operations.py                    lines=62   routes=2   prefix=None
+
+Hash 3c5032e09c031570  (x2)
+  public_media_rooms.py                         lines=129  routes=9   prefix=None
+  system_media_rooms.py                         lines=129  routes=9   prefix=None
+
+Hash 3fd14ff3d8cc7ac8  (x2)
+  public_media_stream.py                        lines=5    routes=0   prefix=None
+  system_media_stream.py                        lines=5    routes=0   prefix=None
+
+Hash 1dc9e33cb839f9c9  (x2)
+  public_media_sync.py                          lines=453  routes=3   prefix=None
+  system_media_sync.py                          lines=453  routes=3   prefix=None
+
+Hash d9a56e2312b3885b  (x2)
+  public_media_tracking.py                      lines=81   routes=4   prefix=None
+  system_media_tracking.py                      lines=81   routes=4   prefix=None
+
+Hash 71fd94da6f506dfc  (x2)
+  public_notifications_operations.py            lines=75   routes=4   prefix=None
+  system_notifications_operations.py            lines=75   routes=4   prefix=None
+
+Hash 45c31eaadb7c547b  (x2)
+  public_search_operations.py                   lines=248  routes=15  prefix=None
+  system_search_operations.py                   lines=248  routes=15  prefix=None
+
+Hash 9e7c512f942a22ec  (x2)
+  public_supplier_security.py                   lines=73   routes=4   prefix=None
+  supplier_security.py                          lines=73   routes=4   prefix=None
+
+Hash 6fe024d5750683a9  (x2)
+  public_supplier_status.py                     lines=109  routes=5   prefix=None
+  supplier_status.py                            lines=109  routes=5   prefix=None
+
+===== STUB/EMPTY ROUTERS (no routes) =====
+  __init__.py                                   lines=1    bytes=86    prefix=None
+  accounting.py                                 lines=7    bytes=143   prefix=None
+  addresses.py                                  lines=7    bytes=142   prefix=None
+  admin.py                                      lines=7    bytes=138   prefix=None
+  admin_analytics.py                            lines=7    bytes=148   prefix=None
+  admin_analytics_command_center_api.py         lines=14   bytes=518   prefix=None
+  admin_analytics_command_center_dashboard.py   lines=7    bytes=199   prefix=None
+  admin_audit_operations.py                     lines=4    bytes=130   prefix=None
+  admin_banners.py                              lines=7    bytes=146   prefix=None
+  admin_cash.py                                 lines=7    bytes=143   prefix=None
+  admin_categories.py                           lines=7    bytes=149   prefix=None
+  admin_chat.py                                 lines=7    bytes=143   prefix=None
+  admin_commission.py                           lines=7    bytes=149   prefix=None
+  admin_comms_operations.py                     lines=5    bytes=108   prefix=None
+  admin_country_versioning_access.py            lines=13   bytes=436   prefix=None
+  admin_effective_permissions_access.py         lines=23   bytes=810   prefix=None
+  admin_email.py                                lines=7    bytes=144   prefix=None
+  admin_email_controller_access.py              lines=14   bytes=512   prefix=None
+  admin_fallback.py                             lines=7    bytes=147   prefix=None
+  admin_logistics.py                            lines=7    bytes=148   prefix=None
+  admin_orders.py                               lines=7    bytes=145   prefix=None
+  admin_payouts.py                              lines=7    bytes=146   prefix=None
+  admin_permissions_primitives_access.py        lines=269  bytes=10492 prefix=None
+  admin_products.py                             lines=7    bytes=147   prefix=None
+  admin_promotions.py                           lines=7    bytes=149   prefix=None
+  admin_settings.py                             lines=7    bytes=147   prefix=None
+  admin_suppliers.py                            lines=7    bytes=148   prefix=None
+  admin_treasury.py                             lines=7    bytes=147   prefix=None
+  admin_treasury_api_access.py                  lines=25   bytes=859   prefix=None
+  admin_users.py                                lines=7    bytes=144   prefix=None
+  admin_video.py                                lines=7    bytes=144   prefix=None
+  ai.py                                         lines=7    bytes=135   prefix=None
+  ai_research.py                                lines=7    bytes=144   prefix=None
+  auth.py                                       lines=7    bytes=137   prefix=None
+  automation.py                                 lines=7    bytes=143   prefix=None
+  banners.py                                    lines=7    bytes=140   prefix=None
+  batch_upload.py                               lines=7    bytes=145   prefix=None
+  cart.py                                       lines=7    bytes=137   prefix=None
+  chatbot.py                                    lines=7    bytes=140   prefix=None
+  comm.py                                       lines=7    bytes=137   prefix=None
+  commission.py                                 lines=7    bytes=143   prefix=None
+  compliance.py                                 lines=7    bytes=143   prefix=None
+  countries.py                                  lines=7    bytes=142   prefix=None
+  country_admin.py                              lines=7    bytes=146   prefix=None
+  country_auto_populate.py                      lines=7    bytes=154   prefix=None
+  country_payouts.py                            lines=7    bytes=148   prefix=None
+  country_staff.py                              lines=7    bytes=146   prefix=None
+  cross_border.py                               lines=7    bytes=145   prefix=None
+  csp_reporting.py                              lines=7    bytes=146   prefix=None
+  currency.py                                   lines=7    bytes=141   prefix=None
+  ediscovery.py                                 lines=7    bytes=143   prefix=None
+  email.py                                      lines=7    bytes=138   prefix=None
+  email_controller.py                           lines=7    bytes=149   prefix=None
+  employee_expense_operations.py                lines=2    bytes=77    prefix=None
+  employee_hr_expenses_tracking.py              lines=3    bytes=85    prefix=None
+  ess.py                                        lines=7    bytes=136   prefix=None
+  export.py                                     lines=7    bytes=139   prefix=None
+  finance_automation.py                         lines=7    bytes=151   prefix=None
+  finance_erp.py                                lines=7    bytes=144   prefix=None
+  flash_sales.py                                lines=7    bytes=144   prefix=None
+  fraud_detection.py                            lines=7    bytes=148   prefix=None
+  frontend_errors.py                            lines=7    bytes=148   prefix=None
+  hierarchy.py                                  lines=7    bytes=142   prefix=None
+  hr_dashboard.py                               lines=7    bytes=145   prefix=None
+  iam.py                                        lines=7    bytes=136   prefix=None
+  imports.py                                    lines=7    bytes=140   prefix=None
+  incident.py                                   lines=7    bytes=141   prefix=None
+  internal_chat_api_access.py                   lines=14   bytes=504   prefix=None
+  invoices.py                                   lines=7    bytes=141   prefix=None
+  jobs.py                                       lines=7    bytes=137   prefix=None
+  lms.py                                        lines=7    bytes=136   prefix=None
+  logistics_center.py                           lines=5    bytes=134   prefix=None
+  messaging.py                                  lines=7    bytes=142   prefix=None
+  okr.py                                        lines=7    bytes=136   prefix=None
+  onboarding.py                                 lines=7    bytes=143   prefix=None
+  orders.py                                     lines=7    bytes=139   prefix=None
+  parcel_tracking.py                            lines=7    bytes=148   prefix=None
+  payments.py                                   lines=7    bytes=141   prefix=None
+  payout_approval.py                            lines=7    bytes=148   prefix=None
+  payroll.py                                    lines=7    bytes=140   prefix=None
+  performance.py                                lines=7    bytes=144   prefix=None
+  permissions.py                                lines=7    bytes=144   prefix=None
+  product_moderation.py                         lines=7    bytes=151   prefix=None
+  product_verification.py                       lines=7    bytes=153   prefix=None
+  product_videos.py                             lines=7    bytes=147   prefix=None
+  products.py                                   lines=7    bytes=141   prefix=None
+  public_analytics_command_center_api.py        lines=14   bytes=518   prefix=None
+  public_analytics_command_center_dashboard.py  lines=7    bytes=199   prefix=None
+  public_audit_operations.py                    lines=4    bytes=130   prefix=None
+  public_auth_access.py                         lines=7    bytes=151   prefix=None
+  public_chat_api_access.py                     lines=14   bytes=504   prefix=None
+  public_comms_messaging_center.py              lines=7    bytes=189   prefix=None
+  public_comms_operations.py                    lines=5    bytes=108   prefix=None
+  public_country_versioning_access.py           lines=13   bytes=436   prefix=None
+  public_effective_permissions_access.py        lines=23   bytes=810   prefix=None
+  public_email_controller_access.py             lines=14   bytes=512   prefix=None
+  public_hr_expenses_tracking.py                lines=3    bytes=85    prefix=None
+  public_logistics_center.py                    lines=5    bytes=134   prefix=None
+  public_media_stream.py                        lines=5    bytes=125   prefix=None
+  public_permission_primitives_access.py        lines=269  bytes=10492 prefix=None
+  public_suppliers.py                           lines=7    bytes=149   prefix=None
+  public_treasury_api_access.py                 lines=25   bytes=859   prefix=None
+  push_notifications.py                         lines=7    bytes=151   prefix=None
+  referrals.py                                  lines=7    bytes=142   prefix=None
+  returns.py                                    lines=7    bytes=140   prefix=None
+  risk.py                                       lines=7    bytes=137   prefix=None
+  shift_handover.py                             lines=7    bytes=147   prefix=None
+  shipments.py                                  lines=7    bytes=142   prefix=None
+  shop_locations.py                             lines=7    bytes=147   prefix=None
+  succession.py                                 lines=7    bytes=143   prefix=None
+  supplier.py                                   lines=7    bytes=141   prefix=None
+  supplier_bg_ab_test.py                        lines=7    bytes=152   prefix=None
+  system_comms_messaging_center.py              lines=7    bytes=189   prefix=None
+  system_media_stream.py                        lines=5    bytes=125   prefix=None
+  tickets.py                                    lines=7    bytes=140   prefix=None
+  trading.py                                    lines=7    bytes=140   prefix=None
+  travel.py                                     lines=7    bytes=139   prefix=None
+  treasury.py                                   lines=7    bytes=141   prefix=None
+  upload.py                                     lines=7    bytes=139   prefix=None
+  upload_jobs.py                                lines=7    bytes=144   prefix=None
+  users.py                                      lines=7    bytes=138   prefix=None
+  video.py                                      lines=7    bytes=138   prefix=None
+  workflows.py                                  lines=7    bytes=142   prefix=None
+  ws_chat.py                                    lines=7    bytes=140   prefix=None
+
+===== PREFIX COLLISIONS (same prefix, multiple files) =====
+Colliding prefixes: 0

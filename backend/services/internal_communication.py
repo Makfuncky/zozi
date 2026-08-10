@@ -11,7 +11,7 @@ from models.communication import (
     InternalChannelMember,
     InternalMessage,
 )
-from models.employee_models import EmailFolder, InternalEmail
+from models.comms.communication import EmailFolder, InternalEmail
 
 logger = logging.getLogger("zozi.internal_comm")
 

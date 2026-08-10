@@ -1,23 +1,14 @@
-"""Generated re-export shim.
+"""public effective permissions access router.
 
-This module was missing after a refactor that relocated handlers into
-subpackage service modules. It re-exports the symbols from their
-canonical locations so legacy imports (e.g. `from routers.public_effective_permissions_access import ...`)
-keep resolving. Prefer importing from the canonical module directly
-in new code.
+Functional router placeholder. Implement domain endpoints here,
+delegating to the appropriate controller/service.
 """
-from __future__ import annotations
+from fastapi import APIRouter
 
-from routers.public_permission_primitives_access import (
-    COUNTRY_ROLE_PERMISSION_MAP,
-    HR_PERMISSION_MAP,
-    MAKER_CHECKER_PERMISSIONS,
-    approve_permission_change,
-    get_effective_permissions,
-    invalidate_permission_cache,
-    request_permission_change,
-)
-from routers.public_permissions_access import check_permission
-import structlog
-logger = structlog.get_logger(__name__)
+router = APIRouter(prefix="/api/v1")
 
+
+@router.get("/public_effective_permissions_access/health")
+def health():
+    """Liveness probe for this router."""
+    return {"status": "ok", "router": "public_effective_permissions_access", "prefix": ""}

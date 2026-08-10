@@ -15,7 +15,7 @@ import controllers.supplier_controller as ctrl
 import controllers.returns_controller as returns_ctrl
 import controllers.disputes_controller as disputes_ctrl
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/supplier")
 
 
 @router.get("/upload/history")

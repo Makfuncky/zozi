@@ -28,6 +28,7 @@ from .onboarding import *
 from .incident import *
 from .permissions import *
 from .ai_upload import *
+from .erp import *
 
 __all__ = [
     "User", "UserDevice", "Referral", "ReferralPointEvent", "UserLoginHistory",

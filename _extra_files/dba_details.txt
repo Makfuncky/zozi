@@ -1,0 +1,111 @@
+- ?? **DBA09** `backend\models\admin.py:49` — JSONB column 'role_permission_settings.permissions_json' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:92` — JSONB column 'admin_activity_logs.details' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:117` — JSONB column 'api_keys.permissions' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:173` — JSONB column 'badge_tiers.benefits' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:247` — JSONB column 'payment_provider_configs.config' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:303` — JSONB column 'shipping_zones.countries' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:689` — JSONB column 'supplier_disputes.evidence_urls' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\admin.py:690` — JSONB column 'supplier_disputes.metadata_json' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\ai_upload.py:89` — JSONB column 'ai_staging_products.tags' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\ai_upload.py:90` — JSONB column 'ai_staging_products.sizes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\ai_upload.py:91` — JSONB column 'ai_staging_products.materials' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\ai_upload.py:93` — JSONB column 'ai_staging_products.additional_media' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\ai_upload.py:95` — JSONB column 'ai_staging_products.variant_axes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\ai_upload.py:96` — JSONB column 'ai_staging_products.attributes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\core.py:78` — JSONB column 'audit_logs.details' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\core.py:198` — JSONB column 'command_center_views.config' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\core.py:233` — JSONB column 'news_articles.ai_tags' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\employee_models.py:109` — JSONB column 'employee_roles.permissions' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\employee_models.py:419` — JSONB column 'employee_travel_requests.per_diem_json' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\employee_models.py:491` — JSONB column 'employee_activity_logs.metadata_json' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\finance.py:279` — JSONB column 'financial_reports.data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\finance.py:883` — JSONB column 'recurring_templates.lines' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\finance.py:906` — JSONB column 'finance_audit_logs.detail' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\finance.py:918` — JSONB column 'finance_automation_logs.detail' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\fraud.py:32` — JSONB column 'fraud_events.details' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\fraud.py:246` — JSONB column 'fraud_scoring_logs.triggered_rules' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\fraud.py:247` — JSONB column 'fraud_scoring_logs.metadata_json' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\fraud.py:328` — JSONB column 'meeting_transcripts.segments' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\fraud.py:329` — JSONB column 'meeting_transcripts.action_items' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\fraud.py:347` — JSONB column 'meeting_action_items.metadata_json' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\incident.py:23` — JSONB column 'incident_war_rooms.context_data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\incident.py:65` — JSONB column 'war_room_templates.template_data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\logistics.py:25` — JSONB column 'logistics_partners.coverage_regions' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\logistics.py:26` — JSONB column 'logistics_partners.service_types' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\logistics.py:46` — JSONB column 'logistics_partners.social_links' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\onboarding.py:19` — JSONB column 'onboarding_pipelines.steps_data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\onboarding.py:34` — JSONB column 'onboarding_steps.data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\onboarding.py:46` — JSONB column 'document_verifications.document_data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\onboarding.py:61` — JSONB column 'ocr_results.fields' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\onboarding.py:73` — JSONB column 'kyc_verifications.verification_data' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\onboarding.py:74` — JSONB column 'kyc_verifications.document_types' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\payments.py:131` — JSONB column 'payment_gateway_connections.credentials' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\payments.py:132` — JSONB column 'payment_gateway_connections.fee_config' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\payments.py:133` — JSONB column 'payment_gateway_connections.supported_methods' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:55` — JSONB column 'products.materials' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:57` — JSONB column 'products.images' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:60` — JSONB column 'products.tags' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:61` — JSONB column 'products.attributes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:71` — JSONB column 'products.sizes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:82` — JSONB column 'products.filter_attributes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:83` — JSONB column 'products.search_vector' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\products.py:85` — JSONB column 'products.variant_axes' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\user.py:45` — JSONB column 'users.staff_assigned_tasks' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA09** `backend\models\user.py:46` — JSONB column 'users.staff_assigned_projects' has no GIN index signal ? *add GIN index for JSONB filters/facets*
+- ?? **DBA31** `backend\models\admin.py:704` — table 'supplier_country_commissions' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\commission.py:11` — table 'commission_agreements' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\core.py:140` — table 'executive_news' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\core.py:217` — table 'news_articles' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\employee_models.py:117` — table 'org_units' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\finance.py:110` — table 'journal_entries' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\finance.py:519` — table 'pending_journal_entries' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\fraud.py:60` — table 'fraud_rules' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\fraud.py:97` — table 'ip_reputations' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\logistics.py:80` — table 'logistics_partner_service_areas' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\media_models.py:46` — table 'media_upload_sessions' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\payments.py:122` — table 'payment_gateway_connections' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\permissions.py:17` — table 'permission_categories' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\permissions.py:34` — table 'permissions' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\permissions.py:50` — table 'role_permission_assignments' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\permissions.py:64` — table 'user_permission_overrides' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA31** `backend\models\permissions.py:78` — table 'permission_audit_log' has country_code + created_at but no composite index ? *add composite index (country_code, created_at)*
+- ?? **DBA01** `backend\models\admin.py:44` — model 'RolePermissionSetting' table 'role_permission_settings' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\admin.py:111` — model 'APIKey' table 'api_keys' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\core.py:157` — model 'UserBrowsingHistory' table 'user_browsing_history' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\permissions.py:17` — model 'PermissionCategory' table 'permission_categories' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\permissions.py:34` — model 'Permission' table 'permissions' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\permissions.py:50` — model 'RolePermissionAssignment' table 'role_permission_assignments' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\permissions.py:64` — model 'UserPermissionOverride' table 'user_permission_overrides' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\permissions.py:78` — model 'PermissionAuditLog' table 'permission_audit_log' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\user.py:16` — model 'User' table 'users' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\user.py:77` — model 'UserLoginHistory' table 'user_login_history' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\user.py:91` — model 'UserDevice' table 'user_devices' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\user.py:137` — model 'PasswordResetToken' table 'password_reset_tokens' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\user.py:151` — model 'EmailVerificationToken' table 'email_verification_tokens' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA01** `backend\models\user.py:165` — model 'RevokedToken' table 'revoked_tokens' declares forbidden schema 'core' ? *use a domain schema (e.g. schema='customer'); core/platform/identity are forbidden*
+- ?? **DBA11** `backend\models\core.py:125` — table 'city_distance_matrix': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\core.py:157` — table 'user_browsing_history': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\country_control.py:34` — table 'payment_orchestrator_sync': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\country_control.py:57` — table 'supplier_onboarding_sync': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\employee_models.py:186` — table 'employee_attendance': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\employee_models.py:428` — table 'alumni_network': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\finance.py:337` — table 'refund_ledger': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\fraud.py:44` — table 'fraud_blacklist': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\fraud.py:77` — table 'manual_review_queue': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\permissions.py:78` — table 'permission_audit_log': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\products.py:215` — table 'product_filter_metadata': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\user.py:77` — table 'user_login_history': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\permissions\permission_entities.py:93` — table 'permission_audit_log': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\geography\country_enhancements.py:198` — table 'country_localization': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\geography\country_enhancements.py:378` — table 'country_commission_rate_history': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\geography\country_legal.py:11` — table 'country_legal': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\geography\country_tax.py:11` — table 'country_tax': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\finance\general_ledger.py:373` — table 'refund_ledger': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\communication.py:226` — table 'external_contact_masking': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\communication.py:246` — table 'communication_audit_trail': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\core.py:163` — table 'city_distance_matrix': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\core.py:205` — table 'user_browsing_history': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\marketing.py:212` — table 'email_runtime_config': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\suppliers.py:95` — table 'supplier_badge_catalog': should be plural ? *snake_case plural table names*
+- ?? **DBA11** `backend\models\comms\suppliers.py:160` — table 'supplier_badge_billing_history': should be plural ? *snake_case plural table names*
+| `backend/models/employee_models.py` | 0 | 32 | 32 | A1, DBA03, DBA09, DBA11, DBA31 |

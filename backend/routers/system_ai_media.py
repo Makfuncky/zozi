@@ -4,7 +4,7 @@ from utils.dependencies import require_supplier
 from utils.config import settings
 from models import User
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/ai")
 
 @router.post("/analyze-image")
 async def analyze_image(file: UploadFile = File(...), current_user: User = Depends(require_supplier)):

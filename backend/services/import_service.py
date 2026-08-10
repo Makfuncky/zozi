@@ -9,12 +9,15 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
 from models import (
-    ImportShipment, ImportShipmentLine, LandedCostAllocation,
+    LandedCostAllocation,
     CustomsEntry, ImportCostTemplate,
-    PurchaseOrder, PurchaseOrderLine,
     Warehouse, Vendor, Product,
     Account, AccountGroup, AccountBalance,
     JournalEntry, JournalEntryLine,
+)
+from models.erp import (
+    ImportShipment, ImportShipmentLine,
+    PurchaseOrder, PurchaseOrderLine,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl

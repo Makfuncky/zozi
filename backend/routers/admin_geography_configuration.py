@@ -15,7 +15,7 @@ from services.country_auto_populate import router as auto_populate_router
 from controllers.country_versioning_controller import router as versioning_router
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 class TaxDraftBody(BaseModel):

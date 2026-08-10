@@ -36,7 +36,7 @@ from services.credit_control_service import (
     get_customer_credit_summary,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/ai")
 
 
 @router.post("/run", summary="Run full automation suite")

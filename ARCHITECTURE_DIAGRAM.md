@@ -48,7 +48,7 @@ real and taken from `backend/main.py`, `middleware/orchestrator.py`, `db/databas
         end
 
         CDN --> FE
-        FEA --> FEL --> BER
+        FEA --> FEL --> BEM --> BER
         FES -. state .- FEA
         BER --> BEC --> BES
         BES --> BEP

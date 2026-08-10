@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMember, GroupChatMessage
 from models import User
-from models.employee_models import ChatAttachment
+from models.comms.communication import ChatAttachment
 from services.storage import storage as _storage
 
 logger = logging.getLogger("zozi.chat")

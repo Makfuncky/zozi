@@ -12,7 +12,7 @@ from db.database import get_db
 from models import User
 from utils.dependencies import get_current_user_optional
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/ai")
 
 
 class ChatRequest(BaseModel):

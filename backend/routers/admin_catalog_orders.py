@@ -10,7 +10,7 @@ from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.category_tree import rebuild_category_paths
 from controllers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 @router.get("/categories/{country_code}")

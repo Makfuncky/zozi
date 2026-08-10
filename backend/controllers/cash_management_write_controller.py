@@ -14,7 +14,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from controllers.cash_management_controller import (
-    serialize_finance_bank_settings,
+    _serialize_finance_bank_settings,
     admin_queue_dispatch_transfer_batch,
 )
 from services.finance import cash_management_write_service as write_service

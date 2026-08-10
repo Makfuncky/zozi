@@ -11,7 +11,7 @@ from utils.country_rls import enforce_country_access, get_country_or_404
 from utils.rls_interceptor import set_rls_context
 import math
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 @router.get("/orders/{country_code}")

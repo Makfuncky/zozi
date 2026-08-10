@@ -11,7 +11,7 @@ from utils.pagination import paginated_response
 from controllers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, bulk_product_moderation, bulk_category_change
 from controllers.products_controller import _bump_product_cache_version
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 @router.get("/products/{country_code}")

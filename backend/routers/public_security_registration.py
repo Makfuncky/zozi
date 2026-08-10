@@ -31,7 +31,7 @@ from utils.dependencies import get_current_user
 from utils.ip_utils import get_request_ip
 from middleware.csrf_middleware import generate_csrf_token
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/auth")
 bearer_scheme = HTTPBearer(auto_error=False)
 
 

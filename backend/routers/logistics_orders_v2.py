@@ -24,7 +24,7 @@ from services.order_tracking_service import (
 )
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/logistics")
 
 
 # ── Pydantic schemas for POST bodies ───────────────────────────────

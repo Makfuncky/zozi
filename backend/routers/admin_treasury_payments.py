@@ -39,14 +39,14 @@ from models import (
 )
 from utils.dependencies import require_admin
 from controllers.treasury.payout_approval_controller import (
-    approve_payout_action,
-    reject_payout_action,
-    approve_batch_action,
-    reject_batch_action,
-    dispatch_batch_action,
+    approve_payout as approve_payout_action,
+    reject_payout as reject_payout_action,
+    approve_batch as approve_batch_action,
+    reject_batch as reject_batch_action,
+    dispatch_batch as dispatch_batch_action,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 class ActionRequest(BaseModel):

@@ -32,7 +32,7 @@ from utils.audit import AuditAction, audit_log
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 class ReportPeriod(BaseModel):

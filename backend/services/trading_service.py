@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
 from models import (
-    PurchaseOrder, PurchaseOrderLine,
     GoodsReceiptNote, GoodsReceiptLine,
     SalesOrder, SalesOrderLine,
     Warehouse, StockMovement,
     Vendor, Customer, Product, ProductVariant,
     APBill, ARInvoice, JournalEntry, Account, JournalEntryLine,
+)
+from models.erp import (
+    PurchaseOrder, PurchaseOrderLine,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
 from services import general_ledger_service as gl

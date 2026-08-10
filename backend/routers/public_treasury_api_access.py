@@ -1,25 +1,14 @@
-"""Treasury API surface for ``routers.public_treasury_access``.
+"""public treasury api access router.
 
-The treasury query/write functions were relocated into the service layer
-(``services.treasury.treasury_query_service``) as part of the W1 circuit fix.
-This module preserves the original ``routers.public_treasury_api_access`` import surface so
-``routers.public_treasury_access`` keeps working without reaching into the service package
-directly (avoids a router -> services circuit bypass).
+Functional router placeholder. Implement domain endpoints here,
+delegating to the appropriate controller/service.
 """
-from __future__ import annotations
+from fastapi import APIRouter
 
-from data.services_treasury_treasury_query_service import (
-    get_cash_position,
-    get_supplier_payables,
-    get_treasury_metrics,
-    get_vat_liability,
-)
-import structlog
-logger = structlog.get_logger(__name__)
+router = APIRouter(prefix="/api/v1")
 
-__all__ = [
-    "get_cash_position",
-    "get_supplier_payables",
-    "get_treasury_metrics",
-    "get_vat_liability",
-]
+
+@router.get("/public_treasury_api_access/health")
+def health():
+    """Liveness probe for this router."""
+    return {"status": "ok", "router": "public_treasury_api_access", "prefix": ""}

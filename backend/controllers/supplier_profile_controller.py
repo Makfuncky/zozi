@@ -1,6 +1,6 @@
 """Controller for the supplier profile router.
 
-Thin orchestration between `routers.supplier_profile` and
+Thin orchestration between `routers.supplier_profile_create` and
 `services.supplier.supplier_profile_write_service`. 400/404 handling stays in
 the controller so the router remains a thin boundary (no db writes).
 """

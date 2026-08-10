@@ -33,7 +33,7 @@ from models import (
     ShippingZone,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 # ── Dashboard (fallback when no country code is given) ────────────────────

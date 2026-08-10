@@ -40,7 +40,7 @@ from controllers.audit_controller import audit_log, AuditAction
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 class ActionRequest(BaseModel):

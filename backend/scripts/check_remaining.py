@@ -5,7 +5,7 @@ from pathlib import Path
 
 BACKEND_DIR = Path("D:/Projects/10- E-COMMERCE WEBSITE/zozi/backend")
 MODELS_DIR = BACKEND_DIR / "models"
-SCHEMA_MAPPING_PATH = BACKEND_DIR / "docs" / "schema_mapping.json"
+SCHEMA_MAPPING_PATH = BACKEND_DIR / "var" / "artifacts" / "schema_mapping.json"
 
 with SCHEMA_MAPPING_PATH.open("r", encoding="utf-8") as f:
     SCHEMA_MAPPING = json.load(f)

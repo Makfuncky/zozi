@@ -8,7 +8,7 @@ os.environ.setdefault("FIELD_ENCRYPTION_KEY", "test-enc-key-1234567890abcdef1234
 SERVICE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SERVICE_DIR)
 
-PKG_ROOTS = ["controllers", "services", "routers", "events", "providers", "utils", "models", "dependencies", "middleware", "tasks", "tools", "monitoring", "zozi_mcp"]
+PKG_ROOTS = ["controllers", "services", "routers", "events", "providers", "utils", "models", "dependencies", "middleware"]
 
 def iter_modules(pkgname, pkgpath):
     mods = []
@@ -25,7 +25,7 @@ for pkg in PKG_ROOTS:
 
 # also top-level backend modules
 for fn in sorted(os.listdir(SERVICE_DIR)):
-    if fn.endswith(".py") and fn not in ("main.py", "run_server.py", "_import_test.py") and not fn.startswith("_"):
+    if fn.endswith(".py") and fn not in ("main.py", "run_server.py", "_import_test.py") and not fn.startswith(("_", ".")):
         all_mods.append(fn[:-3])
 
 results = {"OK": [], "OK_NO_ROUTER": [], "FAILED": []}

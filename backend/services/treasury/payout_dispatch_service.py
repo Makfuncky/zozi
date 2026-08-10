@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from services.finance_transfer_service import execute_transfer_batch
 from utils.audit import AuditAction, audit_log
-from utils.dependencies import SessionLocal
+from db.database import SessionLocal
 import structlog
 logger = structlog.get_logger(__name__)
 

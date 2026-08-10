@@ -2,7 +2,7 @@
 Auth Controller — all authentication and account business logic.
 
 The `get_current_user` dependency lives here and is re-exported by
-`routers/auth.py` so that all existing `from routers.auth import get_current_user`
+`routers/auth.py` so that all existing `from routers.core_auth_routes import get_current_user`
 imports continue to work unchanged.
 """
 import os

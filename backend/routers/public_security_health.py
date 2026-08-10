@@ -11,7 +11,7 @@ from controllers.risk_controller import (
 )
 from db.database import get_db
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/{employee_id}/risk-score")

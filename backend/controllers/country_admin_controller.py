@@ -5,10 +5,10 @@ from typing import Any
 from fastapi import Response
 
 from controllers.country_controller import (
-    get_country_or_404,
-    require_admin,
-    require_country_access,
-    require_full_admin,
+    _get_country_or_404,
+    _require_admin,
+    _require_country_access,
+    _require_full_admin,
 )
 from services.geography.country_config_write_service import (
     add_country_city,

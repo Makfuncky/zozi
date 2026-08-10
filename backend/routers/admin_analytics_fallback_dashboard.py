@@ -43,7 +43,7 @@ from services.db_read import (
 import structlog
 logger = structlog.get_logger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 # ── Dashboard (fallback when no country code is given) ────────────────────

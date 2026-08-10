@@ -18,7 +18,7 @@ from services.auto_payout_scheduler import (
     run_auto_logistics_payout_sweep as _run_logistics_sweep,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 class PayoutVerifyRequest(BaseModel):

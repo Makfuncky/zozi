@@ -7,10 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from routers.auth import get_current_user
+from routers.core_auth_routes import get_current_user
 import controllers.logistics_controller as ctrl
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/logistics")
 
 
 # ── Summary ────────────────────────────────────────────────────────────────────

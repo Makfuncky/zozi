@@ -16,7 +16,7 @@ from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 
 logger = logging.getLogger("zozi.api.admin_chat")
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 def _resolve_country(request: Request, default: str = "AE") -> str:

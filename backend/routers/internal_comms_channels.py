@@ -8,7 +8,7 @@ from db.database import get_db
 from services.internal_communication import get_internal_communication_service
 
 logger = logging.getLogger("zozi.api.internal")
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 @router.post("/channels")

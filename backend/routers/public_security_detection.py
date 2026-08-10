@@ -22,7 +22,7 @@ from utils.dependencies import require_admin
 from utils.redis_client import get_redis
 import json
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 def get_fraud_engine(db: Session = Depends(get_db)) -> FraudScoringEngine:

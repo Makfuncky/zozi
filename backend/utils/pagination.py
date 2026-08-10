@@ -4,7 +4,7 @@ Enforces hard caps so an unbounded query never OOMs the server.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, Iterator, Optional, Sequence
 
 from sqlalchemy import func
 from sqlalchemy.orm import Query
@@ -75,3 +75,32 @@ def paginated_response(
         "size": size,
         "pages": pages,
     }
+
+
+def windowed_iterate(query: Query, window_size: int = SAFE_QUERY_LIMIT) -> Iterator[Any]:
+    """Yield every row from ``query`` in bounded windows to cap memory use.
+
+    The query is expected to already specify its ORDER BY (and may carry an
+    optional ``.limit(n)`` that acts as a total cap). Windowing uses offset/limit
+    pagination so a very large result set never loads fully into memory.
+
+    Each call is generative — the caller's ``query`` object is not mutated.
+    """
+    total_cap = getattr(query, "_limit", None)
+    remaining = int(total_cap) if total_cap is not None else None
+    offset = 0
+    while True:
+        if remaining is not None and remaining <= 0:
+            return
+        size = window_size if remaining is None else min(window_size, remaining)
+        window = query.offset(offset).limit(size).all()
+        if not window:
+            return
+        for row in window:
+            yield row
+        n = len(window)
+        if remaining is not None:
+            remaining -= n
+        offset += n
+        if n < size:
+            return

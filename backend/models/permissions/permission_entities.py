@@ -3,7 +3,7 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
-from . import Base
+from .. import Base
 from utils.datetime_utils import utcnow as _utcnow
 __all__ = ['PermissionCategory', 'Permission', 'RolePermissionAssignment', 'UserPermissionOverride', 'PermissionAuditLog']
 

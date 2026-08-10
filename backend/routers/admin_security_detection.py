@@ -10,19 +10,25 @@ from models import (
     IPReputation, DeviceFingerprint, User
 )
 from db.schemas import (
-    FraudScoreRequest, FraudScoreResponse, FraudEventOut,
+    FraudScoreRequest, FraudScoreResponse,
     FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut,
     ManualReviewOut, ManualReviewAssign, ManualReviewResolve,
     IPReputationOut, DeviceFingerprintOut, ThreatFeedStatus,
     FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck,
-    ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
+    ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck,
+    FraudEventOut,
 )
 from services.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
+from services.fraud_admin_service import (
+    add_to_blacklist as _svc_add_to_blacklist,
+    create_rule as _svc_create_rule,
+    get_threat_feed_status as _svc_get_threat_feed_status,
+)
 from utils.dependencies import require_admin
 from utils.redis_client import get_redis
 import json
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 def get_fraud_engine(db: Session = Depends(get_db)) -> FraudScoringEngine:
@@ -69,17 +75,17 @@ def list_fraud_events(
     
     results = []
     for e in items:
-        results.append(FraudEventOut(
-            id=e.id,
-            user_id=e.user_id,
-            event_type=e.event_type,
-            ip_address=e.ip_address,
-            device_hash=e.device_hash,
-            fraud_score=e.fraud_score,
-            triggered_rules=json.loads(e.triggered_rules) if e.triggered_rules else [],
-            status=e.status,
-            created_at=e.created_at,
-        ))
+        results.append({
+            "id": e.id,
+            "user_id": e.user_id,
+            "event_type": e.event_type,
+            "ip_address": e.ip_address,
+            "device_hash": e.device_hash,
+            "fraud_score": e.fraud_score,
+            "triggered_rules": json.loads(e.triggered_rules) if e.triggered_rules else [],
+            "status": e.status,
+            "created_at": e.created_at,
+        })
     return results
 
 

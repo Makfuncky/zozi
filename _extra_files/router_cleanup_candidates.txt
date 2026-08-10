@@ -1,0 +1,571 @@
+=== LIVE (registered in main._load_routers) vs ORPHAN ===
+total files: 382   live: 107   orphan: 275
+
+===== CATEGORY 1: EMPTY ROUTERS (0 route decorators) =====
+EMPTY TOTAL (excl __init__): 123   of which true stubs(<=12 lines): 109   code-but-no-routes(>12): 14
+
+-- 1a. EMPTY STUBS (<=12 lines) --
+  accounting.py                                    L7    R0   LIVE   git=??
+  addresses.py                                     L7    R0   LIVE   git=??
+  admin.py                                         L7    R0   LIVE   git=??
+  admin_analytics.py                               L7    R0   LIVE   git=??
+  admin_analytics_command_center_dashboard.py      L7    R0   orphan git=?
+  admin_audit_operations.py                        L4    R0   orphan git=?
+  admin_banners.py                                 L7    R0   LIVE   git=??
+  admin_cash.py                                    L7    R0   LIVE   git=??
+  admin_categories.py                              L7    R0   LIVE   git=??
+  admin_chat.py                                    L7    R0   LIVE   git=??
+  admin_commission.py                              L7    R0   LIVE   git=??
+  admin_comms_operations.py                        L5    R0   orphan git=?
+  admin_email.py                                   L7    R0   LIVE   git=??
+  admin_fallback.py                                L7    R0   LIVE   git=??
+  admin_logistics.py                               L7    R0   LIVE   git=??
+  admin_orders.py                                  L7    R0   LIVE   git=??
+  admin_payouts.py                                 L7    R0   LIVE   git=??
+  admin_products.py                                L7    R0   LIVE   git=??
+  admin_promotions.py                              L7    R0   LIVE   git=??
+  admin_settings.py                                L7    R0   LIVE   git=??
+  admin_suppliers.py                               L7    R0   LIVE   git=??
+  admin_treasury.py                                L7    R0   LIVE   git=??
+  admin_users.py                                   L7    R0   LIVE   git=??
+  admin_video.py                                   L7    R0   LIVE   git=??
+  ai.py                                            L7    R0   LIVE   git=??
+  ai_research.py                                   L7    R0   LIVE   git=??
+  auth.py                                          L7    R0   LIVE   git=??
+  automation.py                                    L7    R0   LIVE   git=??
+  banners.py                                       L7    R0   LIVE   git=??
+  batch_upload.py                                  L7    R0   LIVE   git=??
+  cart.py                                          L7    R0   LIVE   git=??
+  chatbot.py                                       L7    R0   LIVE   git=??
+  comm.py                                          L7    R0   LIVE   git=??
+  commission.py                                    L7    R0   LIVE   git=??
+  compliance.py                                    L7    R0   LIVE   git=??
+  countries.py                                     L7    R0   LIVE   git=??
+  country_admin.py                                 L7    R0   LIVE   git=??
+  country_auto_populate.py                         L7    R0   LIVE   git=??
+  country_payouts.py                               L7    R0   LIVE   git=??
+  country_staff.py                                 L7    R0   LIVE   git=??
+  cross_border.py                                  L7    R0   LIVE   git=??
+  csp_reporting.py                                 L7    R0   LIVE   git=??
+  currency.py                                      L7    R0   LIVE   git=??
+  ediscovery.py                                    L7    R0   LIVE   git=??
+  email.py                                         L7    R0   LIVE   git=??
+  email_controller.py                              L7    R0   LIVE   git=??
+  employee_expense_operations.py                   L2    R0   orphan git=?
+  employee_hr_expenses_tracking.py                 L3    R0   orphan git=?
+  ess.py                                           L7    R0   LIVE   git=??
+  export.py                                        L7    R0   LIVE   git=??
+  finance_automation.py                            L7    R0   LIVE   git=??
+  finance_erp.py                                   L7    R0   LIVE   git=??
+  flash_sales.py                                   L7    R0   LIVE   git=??
+  fraud_detection.py                               L7    R0   LIVE   git=??
+  frontend_errors.py                               L7    R0   LIVE   git=??
+  hierarchy.py                                     L7    R0   LIVE   git=??
+  hr_dashboard.py                                  L7    R0   LIVE   git=??
+  iam.py                                           L7    R0   LIVE   git=??
+  imports.py                                       L7    R0   LIVE   git=??
+  incident.py                                      L7    R0   LIVE   git=??
+  invoices.py                                      L7    R0   LIVE   git=??
+  jobs.py                                          L7    R0   LIVE   git=??
+  lms.py                                           L7    R0   LIVE   git=??
+  logistics_center.py                              L5    R0   orphan git=?
+  messaging.py                                     L7    R0   LIVE   git=??
+  okr.py                                           L7    R0   LIVE   git=??
+  onboarding.py                                    L7    R0   LIVE   git=??
+  orders.py                                        L7    R0   LIVE   git=??
+  parcel_tracking.py                               L7    R0   LIVE   git=??
+  payments.py                                      L7    R0   LIVE   git=??
+  payout_approval.py                               L7    R0   LIVE   git=??
+  payroll.py                                       L7    R0   LIVE   git=??
+  performance.py                                   L7    R0   LIVE   git=??
+  permissions.py                                   L7    R0   LIVE   git=??
+  product_moderation.py                            L7    R0   LIVE   git=??
+  product_verification.py                          L7    R0   LIVE   git=??
+  product_videos.py                                L7    R0   LIVE   git=??
+  products.py                                      L7    R0   LIVE   git=??
+  public_analytics_command_center_dashboard.py     L7    R0   orphan git=?
+  public_audit_operations.py                       L4    R0   orphan git=?
+  public_auth_access.py                            L7    R0   orphan git=??
+  public_comms_messaging_center.py                 L7    R0   orphan git=?
+  public_comms_operations.py                       L5    R0   orphan git=?
+  public_hr_expenses_tracking.py                   L3    R0   orphan git=?
+  public_logistics_center.py                       L5    R0   orphan git=?
+  public_media_stream.py                           L5    R0   orphan git=?
+  public_suppliers.py                              L7    R0   LIVE   git=??
+  push_notifications.py                            L7    R0   LIVE   git=??
+  referrals.py                                     L7    R0   LIVE   git=??
+  returns.py                                       L7    R0   LIVE   git=??
+  risk.py                                          L7    R0   LIVE   git=??
+  shift_handover.py                                L7    R0   LIVE   git=??
+  shipments.py                                     L7    R0   LIVE   git=??
+  shop_locations.py                                L7    R0   LIVE   git=??
+  succession.py                                    L7    R0   LIVE   git=??
+  supplier.py                                      L7    R0   LIVE   git=??
+  supplier_bg_ab_test.py                           L7    R0   LIVE   git=??
+  system_comms_messaging_center.py                 L7    R0   orphan git=?
+  system_media_stream.py                           L5    R0   orphan git=?
+  tickets.py                                       L7    R0   LIVE   git=??
+  trading.py                                       L7    R0   LIVE   git=??
+  travel.py                                        L7    R0   LIVE   git=??
+  treasury.py                                      L7    R0   LIVE   git=??
+  upload.py                                        L7    R0   LIVE   git=??
+  upload_jobs.py                                   L7    R0   LIVE   git=??
+  users.py                                         L7    R0   LIVE   git=??
+  video.py                                         L7    R0   LIVE   git=??
+  workflows.py                                     L7    R0   LIVE   git=??
+  ws_chat.py                                       L7    R0   LIVE   git=??
+
+-- 1b. HAS CODE BUT 0 ROUTES (>12 lines) --
+  admin_analytics_command_center_api.py            L14   R0   orphan git=?
+  admin_country_versioning_access.py               L13   R0   orphan git=?
+  admin_effective_permissions_access.py            L23   R0   orphan git=?
+  admin_email_controller_access.py                 L14   R0   orphan git=?
+  admin_permissions_primitives_access.py           L269  R0   orphan git=?
+  admin_treasury_api_access.py                     L25   R0   orphan git=?
+  internal_chat_api_access.py                      L14   R0   orphan git=?
+  public_analytics_command_center_api.py           L14   R0   orphan git=?
+  public_chat_api_access.py                        L14   R0   orphan git=?
+  public_country_versioning_access.py              L13   R0   orphan git=?
+  public_effective_permissions_access.py           L23   R0   orphan git=?
+  public_email_controller_access.py                L14   R0   orphan git=?
+  public_permission_primitives_access.py           L269  R0   orphan git=?
+  public_treasury_api_access.py                    L25   R0   orphan git=?
+
+===== CATEGORY 2: EXACT DUPLICATES (identical content hash) =====
+duplicate groups: 109   files involved: 218
+
+* ALL-ORPHAN  hash=5bea8120357b8a
+    admin_analytics_command_center_api.py            L14   R0   orphan git=?
+    public_analytics_command_center_api.py           L14   R0   orphan git=?
+
+* ALL-ORPHAN  hash=6cf68bde057d49
+    admin_analytics_command_center_dashboard.py      L7    R0   orphan git=?
+    public_analytics_command_center_dashboard.py     L7    R0   orphan git=?
+
+* ALL-ORPHAN  hash=34be2932a0946c
+    admin_audit_ediscovery_search.py                 L62   R3   orphan git=?
+    public_audit_ediscovery_search.py                L62   R3   orphan git=?
+
+* ALL-ORPHAN  hash=13cd041b86527f
+    admin_audit_export.py                            L48   R2   orphan git=?
+    public_audit_export.py                           L48   R2   orphan git=?
+
+* ALL-ORPHAN  hash=ff73ac85871963
+    admin_audit_operations.py                        L4    R0   orphan git=?
+    public_audit_operations.py                       L4    R0   orphan git=?
+
+* ALL-ORPHAN  hash=1b6c49857bdf78
+    admin_catalog_categories.py                      L132  R6   orphan git=?
+    public_catalog_operations.py                     L132  R6   orphan git=?
+
+* ALL-ORPHAN  hash=703d65f5b1a577
+    admin_commerce_flash_sales.py                    L44   R3   orphan git=?
+    public_commerce_flash_sales.py                   L44   R3   orphan git=?
+
+* ALL-ORPHAN  hash=d62e51dcffd506
+    admin_commerce_media.py                          L72   R7   orphan git=?
+    public_commerce_media.py                         L72   R7   orphan git=?
+
+* ALL-ORPHAN  hash=ac695728dd3a55
+    admin_comms_contact_messaging.py                 L47   R1   orphan git=?
+    public_comms_contact_messaging.py                L47   R1   orphan git=?
+
+* ALL-ORPHAN  hash=2a4948b8281c78
+    admin_comms_enrichment.py                        L161  R10  orphan git=?
+    public_comms_enrichment.py                       L161  R10  orphan git=?
+
+* ALL-ORPHAN  hash=e09908135bf7c6
+    admin_comms_entity_chat.py                       L77   R4   orphan git=?
+    public_comms_entity_chat.py                      L77   R4   orphan git=?
+
+* ALL-ORPHAN  hash=75d921cfb85c2e
+    admin_comms_entity_communication.py              L83   R4   orphan git=?
+    public_comms_entity_communication.py             L83   R4   orphan git=?
+
+* ALL-ORPHAN  hash=cf2f5fd85982c8
+    admin_comms_messaging_ops.py                     L51   R6   orphan git=?
+    public_comms_messaging.py                        L51   R6   orphan git=?
+
+* ALL-ORPHAN  hash=dc030a4a71bad7
+    admin_comms_operations.py                        L5    R0   orphan git=?
+    public_comms_operations.py                       L5    R0   orphan git=?
+
+* ALL-ORPHAN  hash=e1d028e9f1d4ab
+    admin_comms_proxy_communication.py               L186  R8   orphan git=?
+    public_comms_proxy_communication.py              L186  R8   orphan git=?
+
+* ALL-ORPHAN  hash=95b3ae2d01541b
+    admin_comms_tickets_handling.py                  L136  R5   orphan git=?
+    public_comms_tickets_handling.py                 L136  R5   orphan git=?
+
+* ALL-ORPHAN  hash=cd94ce476db20a
+    admin_country_versioning_access.py               L13   R0   orphan git=?
+    public_country_versioning_access.py              L13   R0   orphan git=?
+
+* ALL-ORPHAN  hash=89277413160d90
+    admin_effective_permissions_access.py            L23   R0   orphan git=?
+    public_effective_permissions_access.py           L23   R0   orphan git=?
+
+* ALL-ORPHAN  hash=da9a92b0b96b54
+    admin_email_controller_access.py                 L14   R0   orphan git=?
+    public_email_controller_access.py                L14   R0   orphan git=?
+
+* ALL-ORPHAN  hash=d1cdcc9b2c36ca
+    admin_finance_chart_of_accounts.py               L513  R25  orphan git=?
+    public_finance_chart_of_accounts.py              L513  R25  orphan git=?
+
+* ALL-ORPHAN  hash=7c03d40ffe1010
+    admin_finance_operations.py                      L316  R15  orphan git=?
+    public_finance_operations.py                     L316  R15  orphan git=?
+
+* ALL-ORPHAN  hash=439ef9d6e8c84c
+    admin_finance_reporting.py                       L454  R19  orphan git=?
+    public_finance_reporting.py                      L454  R19  orphan git=?
+
+* ALL-ORPHAN  hash=d796b139103fd8
+    admin_finance_reviews.py                         L317  R18  orphan git=?
+    public_finance_reviews.py                        L317  R18  orphan git=?
+
+* ALL-ORPHAN  hash=4f0da196f2c10d
+    admin_finance_status.py                          L99   R7   orphan git=?
+    public_finance_status.py                         L99   R7   orphan git=?
+
+* ALL-ORPHAN  hash=46715c1ec9b10e
+    admin_geography_dropdown.py                      L119  R3   orphan git=?
+    public_geography_dropdown.py                     L119  R3   orphan git=?
+
+* ALL-ORPHAN  hash=c8b74cd389252a
+    admin_geography_maps.py                          L113  R2   orphan git=?
+    public_geography_maps.py                         L113  R2   orphan git=?
+
+* ALL-ORPHAN  hash=c8e912f4ae8193
+    admin_geography_operations.py                    L42   R3   orphan git=?
+    public_geography_operations.py                   L42   R3   orphan git=?
+
+* ALL-ORPHAN  hash=1df80c7756f2ee
+    admin_geography_orders.py                        L149  R7   orphan git=?
+    public_geography_orders.py                       L149  R7   orphan git=?
+
+* ALL-ORPHAN  hash=360526db1fbcf5
+    admin_geography_payments.py                      L185  R6   orphan git=?
+    public_geography_payments.py                     L185  R6   orphan git=?
+
+* ALL-ORPHAN  hash=243d989b201735
+    admin_geography_populate.py                      L151  R2   orphan git=?
+    public_geography_populate.py                     L151  R2   orphan git=?
+
+* ALL-ORPHAN  hash=3296caa0bc2a07
+    admin_geography_search.py                        L52   R1   orphan git=?
+    public_geography_search.py                       L52   R1   orphan git=?
+
+* ALL-ORPHAN  hash=1e9dc68bdeb0c5
+    admin_geography_staff.py                         L249  R6   orphan git=?
+    public_geography_staff.py                        L249  R6   orphan git=?
+
+* ALL-ORPHAN  hash=ba827eef9e3e11
+    admin_identity_operations_api.py                 L44   R5   orphan git=?
+    public_identity_operations.py                    L44   R5   orphan git=?
+
+* ALL-ORPHAN  hash=e67c34f7dd1261
+    admin_orders_status_ops.py                       L108  R6   orphan git=?
+    public_orders_status.py                          L108  R6   orphan git=?
+
+* ALL-ORPHAN  hash=c066e0a95fdff9
+    admin_orders_sync.py                             L151  R7   orphan git=?
+    public_orders_sync.py                            L151  R7   orphan git=?
+
+* ALL-ORPHAN  hash=64f4cfe04dd7fb
+    admin_orders_tracking.py                         L156  R9   orphan git=?
+    public_orders_tracking.py                        L156  R9   orphan git=?
+
+* ALL-ORPHAN  hash=1e39e59875f3ba
+    admin_permissions_primitives_access.py           L269  R0   orphan git=?
+    public_permission_primitives_access.py           L269  R0   orphan git=?
+
+* ALL-ORPHAN  hash=2330e71d1f2127
+    admin_permissions_validation.py                  L306  R18  orphan git=?
+    public_permissions_validation.py                 L306  R18  orphan git=?
+
+* ALL-ORPHAN  hash=adfbecf32b8084
+    admin_reporting_operations.py                    L67   R1   orphan git=?
+    public_reporting_operations.py                   L67   R1   orphan git=?
+
+* ALL-ORPHAN  hash=f6c54d4b050f5b
+    admin_reporting_pay_equity.py                    L63   R1   orphan git=?
+    public_reporting_pay_equity.py                   L63   R1   orphan git=?
+
+* ALL-ORPHAN  hash=6425d2133461cd
+    admin_reviews_operations.py                      L108  R5   orphan git=?
+    public_reviews_operations.py                     L108  R5   orphan git=?
+
+* ALL-ORPHAN  hash=b122d3517c6904
+    admin_security_escalation_handling.py            L46   R3   orphan git=?
+    public_security_escalation_handling.py           L46   R3   orphan git=?
+
+* ALL-ORPHAN  hash=cad9edef4448a8
+    admin_security_health.py                         L73   R6   orphan git=?
+    public_security_health.py                        L73   R6   orphan git=?
+
+* ALL-ORPHAN  hash=7f6a8fb1f5f061
+    admin_security_operations.py                     L80   R4   orphan git=?
+    public_security_operations.py                    L80   R4   orphan git=?
+
+* ALL-ORPHAN  hash=31df6f2914a502
+    admin_security_validation.py                     L52   R7   orphan git=?
+    public_security_validation.py                    L52   R7   orphan git=?
+
+* ALL-ORPHAN  hash=1186e5ba01a18f
+    admin_treasury_api_access.py                     L25   R0   orphan git=?
+    public_treasury_api_access.py                    L25   R0   orphan git=?
+
+* ALL-ORPHAN  hash=abf18ac26e5b2f
+    admin_treasury_operations.py                     L558  R34  orphan git=?
+    public_treasury_operations.py                    L558  R34  orphan git=?
+
+* ALL-ORPHAN  hash=0f13fa6d9452e1
+    customer_contact.py                              L45   R1   orphan git=?
+    public_customer_contact.py                       L45   R1   orphan git=?
+
+* ALL-ORPHAN  hash=5fa5c77e9981be
+    customer_creation.py                             L37   R2   orphan git=?
+    public_customer_creation.py                      L37   R2   orphan git=?
+
+* ALL-ORPHAN  hash=c4a9444be47723
+    customer_geography_lookup.py                     L68   R2   orphan git=?
+    public_geography_lookup.py                       L68   R2   orphan git=?
+
+* ALL-ORPHAN  hash=29a7ff62fb425a
+    customer_operations.py                           L131  R5   orphan git=?
+    public_customer_operations.py                    L131  R5   orphan git=?
+
+* ALL-ORPHAN  hash=d2cee589b4e87b
+    customer_payments.py                             L299  R9   orphan git=?
+    public_customer_payments.py                      L299  R9   orphan git=?
+
+* ALL-ORPHAN  hash=8f305ab03d8418
+    customer_referrals_config.py                     L35   R2   orphan git=?
+    public_commerce_configuration.py                 L35   R2   orphan git=?
+
+* ALL-ORPHAN  hash=0c4f6945aba785
+    customer_referrals_tracking.py                   L30   R2   orphan git=?
+    public_commerce_referrals_tracking.py            L30   R2   orphan git=?
+
+* ALL-ORPHAN  hash=39749017310a0f
+    customer_reporting.py                            L56   R1   orphan git=?
+    public_customer_reporting.py                     L56   R1   orphan git=?
+
+* ALL-ORPHAN  hash=83cd25383d00e9
+    customer_status.py                               L28   R1   orphan git=?
+    public_customer_status.py                        L28   R1   orphan git=?
+
+* ALL-ORPHAN  hash=b5a095ab42c966
+    customer_translate.py                            L66   R1   orphan git=?
+    public_customer_translate.py                     L66   R1   orphan git=?
+
+* ALL-ORPHAN  hash=6a8ae1aa8b2f91
+    customer_wishlist_mgmt.py                        L55   R3   orphan git=?
+    public_commerce_operations.py                    L55   R3   orphan git=?
+
+* ALL-ORPHAN  hash=cc06a56e4419dd
+    employee_hr_ess_portal.py                        L285  R9   orphan git=?
+    public_hr_ess_portal.py                          L285  R9   orphan git=?
+
+* ALL-ORPHAN  hash=12b067cd2e8d55
+    employee_hr_expenses_tracking.py                 L3    R0   orphan git=?
+    public_hr_expenses_tracking.py                   L3    R0   orphan git=?
+
+* ALL-ORPHAN  hash=7e9dc6f646160b
+    employee_hr_health.py                            L237  R2   orphan git=?
+    public_hr_health.py                              L237  R2   orphan git=?
+
+* ALL-ORPHAN  hash=f6ad5e1a7a6af9
+    employee_hr_okr.py                               L336  R11  orphan git=?
+    public_hr_okr.py                                 L336  R11  orphan git=?
+
+* ALL-ORPHAN  hash=eb7b53a24563b7
+    employee_hr_okr_tracking.py                      L76   R3   orphan git=?
+    public_hr_okr_tracking.py                        L76   R3   orphan git=?
+
+* ALL-ORPHAN  hash=7c6f85eded8446
+    employee_hr_operations.py                        L38   R5   orphan git=?
+    public_hr_operations.py                          L38   R5   orphan git=?
+
+* ALL-ORPHAN  hash=cb00cb64c20da6
+    employee_hr_reporting.py                         L153  R13  orphan git=?
+    public_hr_reporting.py                           L153  R13  orphan git=?
+
+* ALL-ORPHAN  hash=2ac8a200afccc1
+    employee_hr_sessions.py                          L68   R5   orphan git=?
+    public_hr_sessions.py                            L68   R5   orphan git=?
+
+* ALL-ORPHAN  hash=d379dabbbf509d
+    employee_hr_status.py                            L183  R7   orphan git=?
+    public_hr_status.py                              L183  R7   orphan git=?
+
+* ALL-ORPHAN  hash=ca830544f3ebd2
+    employee_hr_successors.py                        L53   R4   orphan git=?
+    public_hr_successors.py                          L53   R4   orphan git=?
+
+* ALL-ORPHAN  hash=806a82d745a919
+    employee_hr_travel_requests.py                   L63   R3   orphan git=?
+    public_hr_travel_requests.py                     L63   R3   orphan git=?
+
+* ALL-ORPHAN  hash=89b818650f9ad8
+    employee_hr_validation.py                        L652  R36  orphan git=?
+    public_hr_validation.py                          L652  R36  orphan git=?
+
+* ALL-ORPHAN  hash=5aa1392ed62981
+    internal_chat_api_access.py                      L14   R0   orphan git=?
+    public_chat_api_access.py                        L14   R0   orphan git=?
+
+* ALL-ORPHAN  hash=69dc1b1407816a
+    internal_comms_internal_channels.py              L98   R7   orphan git=?
+    public_comms_internal_channels.py                L98   R7   orphan git=?
+
+* ALL-ORPHAN  hash=8e32a81c1cdfb4
+    logistics_center.py                              L5    R0   orphan git=?
+    public_logistics_center.py                       L5    R0   orphan git=?
+
+* ALL-ORPHAN  hash=2beb9bd706822a
+    logistics_creation.py                            L298  R28  orphan git=?
+    public_logistics_creation.py                     L298  R28  orphan git=?
+
+* ALL-ORPHAN  hash=b65778dc335974
+    logistics_export.py                              L60   R3   orphan git=?
+    public_logistics_export.py                       L60   R3   orphan git=?
+
+* ALL-ORPHAN  hash=9a74282097f25d
+    logistics_locations_api.py                       L97   R3   orphan git=?
+    public_logistics_locations.py                    L97   R3   orphan git=?
+
+* ALL-ORPHAN  hash=f730ab54bf226d
+    logistics_messaging.py                           L132  R5   orphan git=?
+    public_logistics_messaging.py                    L132  R5   orphan git=?
+
+* ALL-ORPHAN  hash=62535052506d49
+    logistics_okr.py                                 L73   R3   orphan git=?
+    public_logistics_okr.py                          L73   R3   orphan git=?
+
+* ALL-ORPHAN  hash=7a609bea06accb
+    logistics_operations.py                          L44   R3   orphan git=?
+    public_logistics_operations.py                   L44   R3   orphan git=?
+
+* ALL-ORPHAN  hash=5260aa76e4ead1
+    logistics_parcel_track.py                        L71   R2   orphan git=?
+    public_logistics_parcel_track.py                 L71   R2   orphan git=?
+
+* ALL-ORPHAN  hash=799a0b6de4740e
+    logistics_reporting.py                           L508  R23  orphan git=?
+    public_logistics_reporting.py                    L508  R23  orphan git=?
+
+* ALL-ORPHAN  hash=7e81ced7c45a4c
+    logistics_sales.py                               L38   R3   orphan git=?
+    public_logistics_sales.py                        L38   R3   orphan git=?
+
+* ALL-ORPHAN  hash=66a804332101d5
+    logistics_shop_locations.py                      L74   R3   orphan git=?
+    public_logistics_shop_locations.py               L74   R3   orphan git=?
+
+* ALL-ORPHAN  hash=b819832f7731a4
+    logistics_track.py                               L44   R5   orphan git=?
+    public_logistics_track.py                        L44   R5   orphan git=?
+
+* ALL-ORPHAN  hash=587a65690e1432
+    public_analytics_frontend_telemetry.py           L56   R1   orphan git=?
+    system_analytics_frontend_telemetry.py           L56   R1   orphan git=?
+
+* ALL-ORPHAN  hash=aaa577707d1028
+    public_badge_billing_access.py                   L214  R4   orphan git=?
+    supplier_badge_billing_access.py                 L214  R4   orphan git=?
+
+* ALL-ORPHAN  hash=960284909b912d
+    public_catalog_moderate.py                       L92   R2   orphan git=?
+    supplier_catalog_moderate.py                     L92   R2   orphan git=?
+
+* ALL-ORPHAN  hash=bec9f1e229c483
+    public_catalog_supplier.py                       L253  R10  orphan git=?
+    supplier_catalog.py                              L253  R10  orphan git=?
+
+* ALL-ORPHAN  hash=bdf537d8f33a90
+    public_catalog_verify.py                         L93   R5   orphan git=?
+    supplier_catalog_verify.py                       L93   R5   orphan git=?
+
+* ALL-ORPHAN  hash=fb4f3c54b2f8a0
+    public_catalog_videos.py                         L87   R5   orphan git=?
+    supplier_catalog_videos.py                       L87   R5   orphan git=?
+
+* ALL-ORPHAN  hash=a782876f364b4d
+    public_comms_email_enrichment.py                 L73   R4   orphan git=?
+    system_comms_email_enrichment.py                 L73   R4   orphan git=?
+
+* ALL-ORPHAN  hash=febc7f0ad03e58
+    public_comms_messaging_center.py                 L7    R0   orphan git=?
+    system_comms_messaging_center.py                 L7    R0   orphan git=?
+
+* ALL-ORPHAN  hash=63f89b558f5e96
+    public_comms_registration.py                     L108  R3   orphan git=?
+    system_comms_registration.py                     L108  R3   orphan git=?
+
+* ALL-ORPHAN  hash=ed06eaad9b1151
+    public_comms_tracking.py                         L481  R19  orphan git=?
+    system_comms_tracking.py                         L481  R19  orphan git=?
+
+* ALL-ORPHAN  hash=c14e1ebd9433a8
+    public_configuration_health_status.py            L116  R3   orphan git=?
+    system_configuration_health_status.py            L116  R3   orphan git=?
+
+* ALL-ORPHAN  hash=65872037bfb733
+    public_configuration_jobs_status.py              L30   R1   orphan git=?
+    system_configuration_jobs_status.py              L30   R1   orphan git=?
+
+* ALL-ORPHAN  hash=9ffb6250c877f2
+    public_configuration_translate_text.py           L68   R1   orphan git=?
+    system_configuration_translate_text.py           L68   R1   orphan git=?
+
+* ALL-ORPHAN  hash=882b7b380ce1dc
+    public_configuration_workflow_automation.py      L39   R2   orphan git=?
+    system_configuration_workflow_automation.py      L39   R2   orphan git=?
+
+* ALL-ORPHAN  hash=d3a0c0e4388de2
+    public_gateway_payment_processing.py             L339  R31  orphan git=?
+    system_gateway_payment_processing.py             L339  R31  orphan git=?
+
+* ALL-ORPHAN  hash=828529421cddeb
+    public_geography_location_api.py                 L75   R4   orphan git=?
+    system_geography_location_api.py                 L75   R4   orphan git=?
+
+* ALL-ORPHAN  hash=43b2e05b480e1b
+    public_media_operations.py                       L62   R2   orphan git=?
+    system_media_operations.py                       L62   R2   orphan git=?
+
+* ALL-ORPHAN  hash=3c5032e09c0315
+    public_media_rooms.py                            L129  R9   orphan git=?
+    system_media_rooms.py                            L129  R9   orphan git=?
+
+* ALL-ORPHAN  hash=3fd14ff3d8cc7a
+    public_media_stream.py                           L5    R0   orphan git=?
+    system_media_stream.py                           L5    R0   orphan git=?
+
+* ALL-ORPHAN  hash=1dc9e33cb839f9
+    public_media_sync.py                             L453  R3   orphan git=?
+    system_media_sync.py                             L453  R3   orphan git=?
+
+* ALL-ORPHAN  hash=d9a56e2312b388
+    public_media_tracking.py                         L81   R4   orphan git=?
+    system_media_tracking.py                         L81   R4   orphan git=?
+
+* ALL-ORPHAN  hash=71fd94da6f506d
+    public_notifications_operations.py               L75   R4   orphan git=?
+    system_notifications_operations.py               L75   R4   orphan git=?
+
+* ALL-ORPHAN  hash=45c31eaadb7c54
+    public_search_operations.py                      L248  R15  orphan git=?
+    system_search_operations.py                      L248  R15  orphan git=?
+
+* ALL-ORPHAN  hash=9e7c512f942a22
+    public_supplier_security.py                      L73   R4   orphan git=?
+    supplier_security.py                             L73   R4   orphan git=?
+
+* ALL-ORPHAN  hash=6fe024d5750683
+    public_supplier_status.py                        L109  R5   orphan git=?
+    supplier_status.py                               L109  R5   orphan git=?

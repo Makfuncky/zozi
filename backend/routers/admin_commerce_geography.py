@@ -17,7 +17,7 @@ from controllers.banner_controller import (
     upload_banner_image,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 def _admin_context(admin: User) -> dict:

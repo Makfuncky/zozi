@@ -1,4 +1,4 @@
-"""Smoke tests for the ZOZI MCP server (backend/zozi_mcp/zozi_mcp.py).
+"""Smoke tests for the ZOZI MCP server (backend/services/mcp/zozi_mcp.py).
 
 Uses an httpx.MockTransport so every tool's request path, payload, pagination
 envelope, formatting, and error handling can be verified without a live API.
@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from zozi_mcp import zozi_mcp  # noqa: E402
+from services.mcp import zozi_mcp  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

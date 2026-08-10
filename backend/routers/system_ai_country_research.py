@@ -21,7 +21,7 @@ from utils.config import settings
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/country-research", tags=["country-research-ai"])
+router = APIRouter(tags=["country-research-ai"], prefix="/api/v1")
 
 
 class AIResearchRequest(BaseModel):

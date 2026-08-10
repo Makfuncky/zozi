@@ -16,7 +16,7 @@ from db.database import get_db
 from services import permission_service as svc
 from utils.country_rls import get_country_or_404
 
-router = APIRouter(tags=["permissions"])
+router = APIRouter(tags=["permissions"], prefix="/api/v1/admin")
 
 
 class CategoryCreate(BaseModel):

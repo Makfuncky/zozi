@@ -15,7 +15,7 @@ from utils.ip_utils import get_ip_for_logging
 
 logger = logging.getLogger("zozi.api.comms")
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 @router.get("/unified-inbox/reset")

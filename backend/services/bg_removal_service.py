@@ -176,7 +176,7 @@ PRESET_ALIASES = {
 }
 
 # Visual-regression metrics for auto-strategy selection.
-_METRICS_PATH = Path(__file__).resolve().parent.parent / "provider_test" / "visual_regression" / "metrics.json"
+_METRICS_PATH = Path(__file__).resolve().parent.parent / ".archive" / "provider_test" / "visual_regression" / "metrics.json"
 _STRATEGY_NAME_MAP = {
     "br_06 Precision Geo": "precision_geometry",
     "br_08 Production": "birefnet_production",

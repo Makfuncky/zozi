@@ -10,7 +10,7 @@ from services.incident_service import get_incident_service, IncidentService
 from db.database import get_db
 from controllers.auth_controller import get_current_user
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin")
 
 
 @router.post("/incidents", response_model=dict)

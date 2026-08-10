@@ -790,6 +790,7 @@ class Migrator:
             "alembic_test.json",
             "schema-audit-report.json",
             "schema_mapping.json",
+            "docs/schema_mapping.json",
             "backend.log",
             "server_stderr.log",
             "server_stdout.log",

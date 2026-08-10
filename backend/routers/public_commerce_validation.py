@@ -10,7 +10,7 @@ from db.database import get_db
 from models import Coupon, CouponUsage
 from utils.datetime_utils import utcnow
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1")
 
 
 def _normalize_discount_type(value: object) -> str | None:

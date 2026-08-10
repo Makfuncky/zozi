@@ -5,7 +5,7 @@ from pathlib import Path
 
 backend_dir = Path(__file__).resolve().parent.parent
 models_dir = backend_dir / "models"
-docs_dir = backend_dir / "docs"
+docs_dir = backend_dir / "var" / "artifacts"
 
 with open(docs_dir / "schema_mapping.json") as f:
     table_to_schema = json.load(f)

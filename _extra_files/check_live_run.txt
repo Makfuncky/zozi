@@ -1,0 +1,130 @@
+﻿python : FIELD_ENCRYPTION_KEY not set. Field encryption is disabled in development mode.
+At line:4 char:47
++ ... BSITE\zozi"; python "_extra_files/check_live_renamed.py" 2>&1 | Out-S ...
++                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FIELD_ENCRYPTIO...velopment mode.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Renamed modules that are registered in router_names: 83
+  core_accounting_routes                     OK
+  core_addresses_routes                      OK
+  admin_core_routes                          OK
+  admin_analytics_routes                     OK
+  admin_banners_routes                       OK
+  admin_cash_routes                          OK
+  admin_categories_routes                    OK
+  admin_chat_routes                          OK
+  admin_commission_routes                    OK
+  admin_email_routes                         OK
+  admin_fallback_routes                      OK
+  admin_logistics_routes                     OK
+  admin_orders_routes                        OK
+  admin_payouts_routes                       OK
+  admin_products_routes                      OK
+  admin_promotions_routes                    OK
+  admin_settings_routes                      OK
+  admin_suppliers_routes                     OK
+  admin_treasury_routes                      OK
+  admin_users_routes                         OK
+  admin_video_routes                         OK
+  core_ai_routes                             OK
+  core_auth_routes                           OK
+  core_automation_routes                     OK
+  store_banners_routes                       OK
+  store_cart_routes                          OK
+  core_chatbot_routes                        OK
+  core_comm_routes                           OK
+  core_commission_routes                     OK
+  core_compliance_routes                     OK
+  core_countries_routes                      OK
+  country_admin_routes                       OK
+  country_payouts_routes                     OK
+  country_staff_routes                       OK
+  store_currency_routes                      OK
+  customer_health_list                       OK
+  core_ediscovery_routes                     OK
+  core_email_routes                          OK
+  core_ess_routes                            OK
+  core_export_routes                         OK
+  core_hierarchy_routes                      OK
+  core_iam_routes                            OK
+  core_imports_routes                        OK
+  core_incident_routes                       OK
+  core_invoices_routes                       OK
+  core_jobs_routes                           OK
+  core_lms_routes                            OK
+  logistics_health_list                      OK
+  logistics_locations_create                 OK
+  logistics_orders_list                      OK
+  logistics_partner_verify                   FAIL:ImportError:cannot import name 'get_current_user' from 'routers.core_aut
+  core_messaging_routes                      OK
+  core_okr_routes                            OK
+  core_onboarding_routes                     OK
+  store_orders_routes                        OK
+  store_payments_routes                      OK
+  core_payroll_routes                        OK
+  core_performance_routes                    OK
+  core_permissions_routes                    OK
+  store_products_routes                      OK
+  public_suppliers_routes                    OK
+  store_referrals_routes                     OK
+  store_returns_routes                       OK
+  core_risk_routes                           OK
+  store_shipments_routes                     OK
+  core_succession_routes                     OK
+  supplier_core_routes                       OK
+  supplier_analytics_analytics               OK
+  supplier_documents_review                  OK
+  supplier_finance_status                    OK
+  supplier_health_list                       OK
+  supplier_orders_verify                     OK
+  supplier_payouts_pay                       OK
+  supplier_products_upload                   OK
+  supplier_profile_create                    OK
+  core_tickets_routes                        OK
+  core_trading_routes                        OK
+  core_travel_routes                         OK
+  core_treasury_routes                       OK
+  core_upload_routes                         OK
+  core_users_routes                          OK
+  core_video_routes                          OK
+  core_workflows_routes                      OK
+
+TOTAL registered names: 144
+TOTAL failing: 35
+  FAIL categories FAIL:ModuleNotFoundError:No module named 'routers.categories'
+  FAIL logistics FAIL:ModuleNotFoundError:No module named 'routers.logistics'
+  FAIL logistics_partner_verify FAIL:ImportError:cannot import name 'get_current_user' from 'routers.core_aut
+  FAIL finance FAIL:ModuleNotFoundError:No module named 'routers.finance'
+  FAIL notifications FAIL:ModuleNotFoundError:No module named 'routers.notifications'
+  FAIL search FAIL:ModuleNotFoundError:No module named 'routers.search'
+  FAIL reviews FAIL:ModuleNotFoundError:No module named 'routers.reviews'
+  FAIL wishlist FAIL:ModuleNotFoundError:No module named 'routers.wishlist'
+  FAIL coupons FAIL:ModuleNotFoundError:No module named 'routers.coupons'
+  FAIL chat FAIL:ModuleNotFoundError:No module named 'routers.chat'
+  FAIL employees FAIL:ModuleNotFoundError:No module named 'routers.employees'
+  FAIL hr FAIL:ModuleNotFoundError:No module named 'routers.hr'
+  FAIL expenses FAIL:ModuleNotFoundError:No module named 'routers.expenses'
+  FAIL cash_management FAIL:ModuleNotFoundError:No module named 'routers.cash_management'
+  FAIL audit FAIL:ModuleNotFoundError:No module named 'routers.audit'
+  FAIL country_maps FAIL:ModuleNotFoundError:No module named 'routers.country_maps'
+  FAIL country_dropdown FAIL:ModuleNotFoundError:No module named 'routers.country_dropdown'
+  FAIL command_center FAIL:ModuleNotFoundError:No module named 'routers.command_center'
+  FAIL ai_image FAIL:ModuleNotFoundError:No module named 'routers.ai_image'
+  FAIL ai_upload FAIL:ModuleNotFoundError:No module named 'routers.ai_upload'
+  FAIL entity_chat FAIL:ModuleNotFoundError:No module named 'routers.entity_chat'
+  FAIL entity_communication FAIL:ModuleNotFoundError:No module named 'routers.entity_communication'
+  FAIL internal_channels FAIL:ModuleNotFoundError:No module named 'routers.internal_channels'
+  FAIL proxy_communication FAIL:ModuleNotFoundError:No module named 'routers.proxy_communication'
+  FAIL translate FAIL:ModuleNotFoundError:No module named 'routers.translate'
+  FAIL video_controller FAIL:ModuleNotFoundError:No module named 'routers.video_controller'
+  FAIL geo FAIL:ModuleNotFoundError:No module named 'routers.geo'
+  FAIL contact FAIL:ModuleNotFoundError:No module named 'routers.contact'
+  FAIL comms_unified FAIL:ModuleNotFoundError:No module named 'routers.comms_unified'
+  FAIL escalation FAIL:ModuleNotFoundError:No module named 'routers.escalation'
+  FAIL location_api FAIL:ModuleNotFoundError:No module named 'routers.location_api'
+  FAIL country_research FAIL:ModuleNotFoundError:No module named 'routers.country_research'
+  FAIL chat_enrichment FAIL:ModuleNotFoundError:No module named 'routers.chat_enrichment'
+  FAIL email_enrichment FAIL:ModuleNotFoundError:No module named 'routers.email_enrichment'
+  FAIL STORAGE_BACKEND FAIL:ModuleNotFoundError:No module named 'routers.STORAGE_BACKEND'
+
