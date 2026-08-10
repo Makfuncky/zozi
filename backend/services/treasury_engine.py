@@ -178,16 +178,25 @@ class TreasuryEngine:
         categories = self.db.execute(
             select(AccountGroup).order_by(AccountGroup.display_order)
         ).scalars().all()
-        
+
+        # Batch-load accounts for all groups in one query (avoids N+1).
+        group_ids = [cat.id for cat in categories]
+        accounts_by_group: dict[int, list] = {}
+        if group_ids:
+            all_accounts = self.db.execute(
+                select(Account)
+                .where(
+                    Account.group_id.in_(group_ids),
+                    Account.is_active == True,
+                )
+                .order_by(Account.group_id, Account.code)
+            ).scalars().all()
+            for acc in all_accounts:
+                accounts_by_group.setdefault(acc.group_id, []).append(acc)
+
         result = []
         for cat in categories:
-            accounts = self.db.execute(
-                select(Account).where(
-                    Account.group_id == cat.id,
-                    Account.is_active == True
-                ).order_by(Account.code)
-            ).scalars().all()
-            
+            accounts = accounts_by_group.get(cat.id, [])
             result.append({
                 "category_code": cat.code,
                 "category_name": cat.name,

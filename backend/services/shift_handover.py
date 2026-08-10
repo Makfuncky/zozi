@@ -107,12 +107,19 @@ class ShiftHandoverService:
             ShiftHandoverSession.incoming_employee_id == employee_id,
             ShiftHandoverSession.status == "pending",
         ).order_by(ShiftHandoverSession.shift_date.desc()).all()
-        result = []
-        for s in sessions:
-            tasks = self.db.query(ShiftHandoverTask).filter(
-                ShiftHandoverTask.session_id == s.id,
+        # Batch-load open tasks for all sessions in one query (avoids N+1).
+        session_ids = [s.id for s in sessions]
+        tasks_by_session: dict[int, list[ShiftHandoverTask]] = {}
+        if session_ids:
+            open_tasks = self.db.query(ShiftHandoverTask).filter(
+                ShiftHandoverTask.session_id.in_(session_ids),
                 ShiftHandoverTask.status == "open",
             ).all()
+            for t in open_tasks:
+                tasks_by_session.setdefault(t.session_id, []).append(t)
+        result = []
+        for s in sessions:
+            tasks = tasks_by_session.get(s.id, [])
             result.append({
                 "id": s.id,
                 "outgoing_employee_id": s.outgoing_employee_id,
