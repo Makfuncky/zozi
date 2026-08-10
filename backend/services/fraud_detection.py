@@ -5,8 +5,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 
+from sqlalchemy import text, func
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from models import AuditLog, Employee, User
 from utils.datetime_utils import utcnow as _utcnow
@@ -82,26 +82,47 @@ class FraudDetectionService:
         ghost_employees = []
         
         employees = self.db.query(Employee).all()
-        for emp in employees:
-            qr_scans = (
-                self.db.query(AuditLog)
+        employee_ids = [emp.id for emp in employees]
+        user_ids = [emp.user_id for emp in employees]
+
+        qr_scan_counts: dict[int, int] = {}
+        api_activity_counts: dict[int, int] = {}
+
+        if employee_ids:
+            qr_rows = (
+                self.db.query(
+                    AuditLog.resource_id,
+                    func.count().label("cnt"),
+                )
                 .filter(
                     AuditLog.resource_type == "attendance",
-                    AuditLog.resource_id == emp.id,
+                    AuditLog.resource_id.in_(employee_ids),
                     AuditLog.occurred_at > five_days_ago,
                 )
-                .count()
+                .group_by(AuditLog.resource_id)
+                .all()
             )
-            
-            api_activity = (
-                self.db.query(AuditLog)
+            qr_scan_counts = {row.resource_id: row.cnt for row in qr_rows}
+
+        if user_ids:
+            api_rows = (
+                self.db.query(
+                    AuditLog.actor_id,
+                    func.count().label("cnt"),
+                )
                 .filter(
-                    AuditLog.actor_id == emp.user_id,
+                    AuditLog.actor_id.in_(user_ids),
                     AuditLog.occurred_at > five_days_ago,
                 )
-                .count()
+                .group_by(AuditLog.actor_id)
+                .all()
             )
-            
+            api_activity_counts = {row.actor_id: row.cnt for row in api_rows}
+
+        for emp in employees:
+            qr_scans = qr_scan_counts.get(emp.id, 0)
+            api_activity = api_activity_counts.get(emp.user_id, 0)
+
             if qr_scans == 0 and api_activity == 0:
                 ghost_employees.append(emp.user_id)
                 self._flag_employee(emp.user_id, "SUSPENDED_PENDING_REVIEW")

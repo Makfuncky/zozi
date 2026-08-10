@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from models import User
 from models.communication import Notification
-from models.employee_models import InternalEmail, EmailFolder, Employee
+from models.comms.communication import InternalEmail, EmailFolder`r`nfrom models.employee_models import Employee
 from models.fraud import DLPViolation
 from utils.email_service import send_email, get_email_sender_address, build_email_open_tracking_url
 

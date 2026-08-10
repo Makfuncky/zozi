@@ -186,13 +186,23 @@ def generate_distributor_statements(db: Session, period_year: int, period_month:
     customers = db.query(Customer).filter(Customer.is_active == True)
     if country_code:
         customers = customers.filter(Customer.country_code == country_code)
-    statements = []
-    for customer in customers.all():
-        invoices = db.query(ARInvoice).filter(
-            ARInvoice.customer_id == customer.id,
+    all_customers = customers.all()
+    customer_ids = [c.id for c in all_customers]
+
+    # Batch load invoices for all customers
+    invoices_by_customer: dict[int, list[ARInvoice]] = {}
+    if customer_ids:
+        all_invoices = db.query(ARInvoice).filter(
+            ARInvoice.customer_id.in_(customer_ids),
             ARInvoice.invoice_date >= period_start,
             ARInvoice.invoice_date < period_end,
         ).all()
+        for inv in all_invoices:
+            invoices_by_customer.setdefault(inv.customer_id, []).append(inv)
+
+    statements = []
+    for customer in all_customers:
+        invoices = invoices_by_customer.get(customer.id, [])
         if not invoices:
             continue
         total_invoiced = sum(float(i.amount or 0) for i in invoices)
@@ -249,16 +259,21 @@ def generate_supplier_statements(db: Session, period_year: int, period_month: in
     vendors = db.query(Vendor).filter(Vendor.is_active == True)
     if country_code:
         vendors = vendors.filter(Vendor.country_code == country_code)
+    all_vendors = vendors.all()
+
+    # Batch-load all bills once (not vendor-specific, avoids N+1)
+    all_bills = db.query(JournalEntry).join(
+        JournalEntryLine, JournalEntry.id == JournalEntryLine.entry_id
+    ).filter(
+        JournalEntry.reference_type == "grn",
+        JournalEntry.entry_date >= period_start,
+        JournalEntry.entry_date < period_end,
+        JournalEntryLine.account_code == "2010",
+    ).all()
+
     statements = []
-    for vendor in vendors.all():
-        bills = db.query(JournalEntry).join(
-            JournalEntryLine, JournalEntry.id == JournalEntryLine.entry_id
-        ).filter(
-            JournalEntry.reference_type == "grn",
-            JournalEntry.entry_date >= period_start,
-            JournalEntry.entry_date < period_end,
-            JournalEntryLine.account_code == "2010",
-        ).all()
+    for vendor in all_vendors:
+        bills = all_bills
         total_amount = sum(
             float(abs(jl.amount or 0))
             for je in bills

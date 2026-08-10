@@ -13,6 +13,9 @@ from sqlalchemy.orm import Query
 MAX_PAGE_SIZE = 100
 MAX_EXPORT_SIZE = 5000
 
+# Absolute hard limit for any single query to prevent OOM.
+SAFE_QUERY_LIMIT = 1000
+
 
 def safe_page(page: Optional[int], size: Optional[int], max_size: int = MAX_PAGE_SIZE) -> tuple[int, int]:
     """Return a (page, size) tuple clamped to safe bounds."""

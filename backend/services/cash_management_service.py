@@ -143,8 +143,14 @@ def _build_order_logistics_allocations(
     shipment_quotes: list[dict[str, object]] | None = None,
 ) -> list[OrderLogisticsAllocation]:
     supplier_items: dict[int, list[OrderItem]] = {}
+    item_ids = [item.product_id for item in items if item.product_id]
+    product_map: dict[int, Product] = {}
+    if item_ids:
+        product_map = {
+            p.id: p for p in db.query(Product).filter(Product.id.in_(item_ids)).all()
+        }
     for item in items:
-        product = item.product or db.query(Product).filter(Product.id == item.product_id).first()
+        product = item.product or product_map.get(item.product_id)
         supplier_id = product.supplier_id if product else None
         if supplier_id:
             supplier_items.setdefault(supplier_id, []).append(item)
@@ -278,8 +284,16 @@ def _compute_allocation_pricing_breakdown_json(
     items = list(order.items or [])
     if not items:
         items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+    if not items:
+        return None
+    product_ids = [item.product_id for item in items if item.product_id]
+    product_map: dict[int, Product] = {}
+    if product_ids:
+        product_map = {
+            p.id: p for p in db.query(Product).filter(Product.id.in_(product_ids)).all()
+        }
     for item in items:
-        product = item.product or db.query(Product).filter(Product.id == item.product_id).first()
+        product = item.product or product_map.get(item.product_id)
         weight = to_decimal(getattr(product, "weight", None) or 0)
         qty = to_decimal(getattr(item, "quantity", 1) or 1)
         total_weight += weight * qty
@@ -558,9 +572,15 @@ def _supplier_return_window_days(order: Order, db: Session) -> dict[int, int]:
     if not items:
         items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
 
+    item_ids = [item.product_id for item in items if item.product_id]
+    product_map: dict[int, Product] = {}
+    if item_ids:
+        product_map = {
+            p.id: p for p in db.query(Product).filter(Product.id.in_(item_ids)).all()
+        }
     supplier_windows: dict[int, int] = {}
     for item in items:
-        product = item.product or db.query(Product).filter(Product.id == item.product_id).first()
+        product = item.product or product_map.get(item.product_id)
         supplier_id = cast(int | None, getattr(product, "supplier_id", None)) if product else None
         if not supplier_id:
             continue
@@ -596,8 +616,14 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
 
     # Group items by supplier
     supplier_items: dict[int, list[OrderItem]] = {}
+    item_ids = [item.product_id for item in items if item.product_id]
+    product_map: dict[int, Product] = {}
+    if item_ids:
+        product_map = {
+            p.id: p for p in db.query(Product).filter(Product.id.in_(item_ids)).all()
+        }
     for item in items:
-        product = item.product or db.query(Product).filter(Product.id == item.product_id).first()
+        product = item.product or product_map.get(item.product_id)
         supplier_id = product.supplier_id if product else None
         if supplier_id:
             supplier_items.setdefault(supplier_id, []).append(item)
@@ -654,7 +680,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
             item_discount = round_money(discount_share * (item_value / product_subtotal)) if product_subtotal > 0 else Decimal(0)
             item_taxable = round_money(item_value - item_discount)
             # Resolve category slug from product.category (tolower + spaces→hyphens)
-            prod = item.product or db.query(Product).filter(Product.id == item.product_id).first()
+            prod = item.product or product_map.get(item.product_id)
             raw_category = str(getattr(prod, "category", "") or "").lower().replace(" & ", "-").replace(" ", "-")
             category_slug = raw_category if raw_category else None
             rate_result = _commission_engine.get_effective_rate(
@@ -719,7 +745,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
         # Persist immutable CommissionLedgerEntry records (one per order item)
         try:
             for item, _item_commission, rate_result, eng_result in item_commissions:
-                prod = item.product or db.query(Product).filter(Product.id == item.product_id).first()
+                prod = item.product or product_map.get(item.product_id)
                 item_value = round_money(to_decimal(item.price) * to_decimal(item.quantity))
                 item_discount = round_money(discount_share * (item_value / product_subtotal)) if product_subtotal > 0 else Decimal(0)
                 item_taxable = round_money(item_value - item_discount)
@@ -768,6 +794,35 @@ def create_settlements_on_delivery(order: Order, db: Session) -> None:
         for allocation in db.query(OrderLogisticsAllocation).filter(OrderLogisticsAllocation.order_id == order.id).all()
     }
 
+    # Batch pre-load existing settlements to avoid N+1 in the loop below
+    supplier_ids = [cast(int, entry.supplier_id) for entry in ledger_entries]
+    logistics_partner_ids = [
+        cast(int, entry.logistics_partner_id) for entry in ledger_entries
+        if entry.logistics_partner_id
+    ]
+    existing_supplier_settlements: dict[tuple[int, int], SupplierSettlement] = {}
+    if supplier_ids:
+        for ss in (
+            db.query(SupplierSettlement)
+            .filter(
+                SupplierSettlement.order_id == order.id,
+                SupplierSettlement.supplier_id.in_(supplier_ids),
+            )
+            .all()
+        ):
+            existing_supplier_settlements[(order.id, ss.supplier_id)] = ss
+    existing_logistics_settlements: dict[tuple[int, int], LogisticsSettlement] = {}
+    if logistics_partner_ids:
+        for ls in (
+            db.query(LogisticsSettlement)
+            .filter(
+                LogisticsSettlement.order_id == order.id,
+                LogisticsSettlement.partner_id.in_(logistics_partner_ids),
+            )
+            .all()
+        ):
+            existing_logistics_settlements[(order.id, ls.partner_id)] = ls
+
     for entry in ledger_entries:
         allocation = allocations_by_supplier.get(cast(int, entry.supplier_id))
         logistics_amounts = effective_allocation_delivery_amounts(
@@ -780,10 +835,7 @@ def create_settlements_on_delivery(order: Order, db: Session) -> None:
         payout_pickup_charge = logistics_amounts["pickup_charge"]
         payout_dropoff_charge = logistics_amounts["dropoff_charge"]
         # Supplier settlement
-        existing_ss = db.query(SupplierSettlement).filter(
-            SupplierSettlement.order_id == order.id,
-            SupplierSettlement.supplier_id == entry.supplier_id,
-        ).first()
+        existing_ss = existing_supplier_settlements.get((order.id, cast(int, entry.supplier_id)))
         if not existing_ss:
             gateway_fee_deducted = gateway_fee_allocations.get(entry.supplier_id, Decimal(0))
             supplier_return_window = supplier_return_windows.get(cast(int, entry.supplier_id), 10)
@@ -807,10 +859,9 @@ def create_settlements_on_delivery(order: Order, db: Session) -> None:
 
         # Logistics settlement
         if entry.logistics_partner_id:
-            existing_ls = db.query(LogisticsSettlement).filter(
-                LogisticsSettlement.order_id == order.id,
-                LogisticsSettlement.partner_id == entry.logistics_partner_id,
-            ).first()
+            existing_ls = existing_logistics_settlements.get(
+                (order.id, cast(int, entry.logistics_partner_id))
+            )
             if not existing_ls:
                 payment_method = str(entry.payment_method or "card").lower()
                 ls = LogisticsSettlement(
@@ -1393,12 +1444,18 @@ def process_supplier_payout_batch(db: Session, settlement_ids: Optional[list[int
         supplier_totals[sid] = supplier_totals.get(sid, Decimal(0)) + to_decimal(s.net_amount)
         supplier_settlements.setdefault(sid, []).append(s)
 
+    # Batch-load orders to avoid N+1 when resolving payout country code
+    order_ids = [ss.order_id for ss_list in supplier_settlements.values() for ss in ss_list if ss.order_id]
+    order_map: dict[int, Order] = {}
+    if order_ids:
+        order_map = {o.id: o for o in db.query(Order).filter(Order.id.in_(order_ids)).all()}
+
     results = []
     for supplier_id, total in supplier_totals.items():
         payout_country_code = None
         sample_settlement = supplier_settlements[supplier_id][0] if supplier_settlements.get(supplier_id) else None
         if sample_settlement is not None:
-            sample_order = db.query(Order).filter(Order.id == sample_settlement.order_id).first()
+            sample_order = order_map.get(sample_settlement.order_id)
             if sample_order is not None:
                 payout_country_code = getattr(sample_order, "shipping_country", None) or getattr(sample_order, "country_code", None)
 
@@ -1526,20 +1583,42 @@ def _refresh_order_ledger_settlement_status(order_id: int, db: Session) -> None:
     if not entries:
         return
 
+    # Batch pre-load settlements to avoid N+1 in the loop below
+    supplier_ids = [entry.supplier_id for entry in entries if entry.supplier_id is not None]
+    logistics_partner_ids = [
+        entry.logistics_partner_id for entry in entries if entry.logistics_partner_id
+    ]
+    ss_map: dict[tuple[int, int], SupplierSettlement] = {}
+    if supplier_ids:
+        for ss in (
+            db.query(SupplierSettlement)
+            .filter(
+                SupplierSettlement.order_id == order_id,
+                SupplierSettlement.supplier_id.in_(supplier_ids),
+            )
+            .all()
+        ):
+            ss_map[(order_id, ss.supplier_id)] = ss
+    ls_map: dict[tuple[int, int], LogisticsSettlement] = {}
+    if logistics_partner_ids:
+        for ls in (
+            db.query(LogisticsSettlement)
+            .filter(
+                LogisticsSettlement.order_id == order_id,
+                LogisticsSettlement.partner_id.in_(logistics_partner_ids),
+            )
+            .all()
+        ):
+            ls_map[(order_id, ls.partner_id)] = ls
+
     for entry in entries:
         if str(entry.settlement_status or "") == "refunded":
             continue
 
-        supplier_settlement = db.query(SupplierSettlement).filter(
-            SupplierSettlement.order_id == order_id,
-            SupplierSettlement.supplier_id == entry.supplier_id,
-        ).first()
+        supplier_settlement = ss_map.get((order_id, entry.supplier_id))
         logistics_settlement = None
         if entry.logistics_partner_id:
-            logistics_settlement = db.query(LogisticsSettlement).filter(
-                LogisticsSettlement.order_id == order_id,
-                LogisticsSettlement.partner_id == entry.logistics_partner_id,
-            ).first()
+            logistics_settlement = ls_map.get((order_id, entry.logistics_partner_id))
 
         supplier_done = bool(supplier_settlement and supplier_settlement.status == "settled")
         logistics_done = True if entry.logistics_partner_id is None else bool(
@@ -1855,9 +1934,20 @@ def import_bank_transactions(
     reconciled_items: list[dict] = []
     unmatched_items: list[dict] = []
 
+    # Batch pre-load existing transactions to avoid N+1 duplicate check
+    refs = [entry["transaction_ref"] for entry in entries if entry.get("transaction_ref")]
+    existing_by_ref: dict[str, BankTransaction] = {}
+    if refs:
+        existing_by_ref = {
+            t.transaction_ref: t
+            for t in db.query(BankTransaction)
+            .filter(BankTransaction.transaction_ref.in_(refs))
+            .all()
+        }
+
     for entry in entries:
         transaction_ref = entry["transaction_ref"]
-        existing = db.query(BankTransaction).filter(BankTransaction.transaction_ref == transaction_ref).first()
+        existing = existing_by_ref.get(transaction_ref)
         if existing:
             duplicate_items.append({
                 "id": existing.id,

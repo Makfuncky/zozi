@@ -111,32 +111,32 @@ class AdvancedFilterService:
             "in_stock": base_query.filter(Product.stock > 0).count(),
         }
 
-    def apply_filters(self, query, filters: Dict[str, Any]):
+    def apply_filters(self, q, filters: Dict[str, Any]):
         if filters.get("min_price") is not None:
             try:
-                query = query.filter(Product.price >= float(filters["min_price"]))
+                q = q.filter(Product.price >= float(filters["min_price"]))
             except (TypeError, ValueError):
                 pass
         if filters.get("max_price") is not None:
             try:
-                query = query.filter(Product.price <= float(filters["max_price"]))
+                q = q.filter(Product.price <= float(filters["max_price"]))
             except (TypeError, ValueError):
                 pass
 
         brands = filters.get("brands")
         if brands:
             if isinstance(brands, list):
-                query = query.filter(Product.brand.in_(brands))
+                q = q.filter(Product.brand.in_(brands))
 
         if filters.get("min_rating") is not None:
             try:
-                query = query.filter(Product.rating >= float(filters["min_rating"]))
+                q = q.filter(Product.rating >= float(filters["min_rating"]))
             except (TypeError, ValueError):
                 pass
 
         if filters.get("max_rating") is not None:
             try:
-                query = query.filter(Product.rating <= float(filters["max_rating"]))
+                q = q.filter(Product.rating <= float(filters["max_rating"]))
             except (TypeError, ValueError):
                 pass
 
@@ -146,7 +146,7 @@ class AdvancedFilterService:
                 if not attr_values:
                     continue
                 if isinstance(attr_values, list) and attr_values:
-                    query = query.filter(
+                    q = q.filter(
                         and_(
                             Product.filter_attributes.has_key(attr_key),
                             cast(Product.filter_attributes[attr_key], String).in_([str(v) for v in attr_values]),
@@ -154,29 +154,29 @@ class AdvancedFilterService:
                     )
 
         if filters.get("has_video") is True:
-            query = query.filter(Product.video_count > 0)
+            q = q.filter(Product.video_count > 0)
 
         if filters.get("has_discount") is True:
-            query = query.filter(
+            q = q.filter(
                 Product.compare_price.isnot(None),
                 Product.compare_price > Product.price,
             )
 
         if filters.get("in_stock") is True:
-            query = query.filter(Product.stock > 0)
+            q = q.filter(Product.stock > 0)
 
         if filters.get("new_arrivals") is True:
             from datetime import datetime, timedelta, timezone
             cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=60)
-            query = query.filter(Product.created_at >= cutoff)
+            q = q.filter(Product.created_at >= cutoff)
 
         if filters.get("best_sellers") is True:
-            query = query.filter(Product.sales_count >= 5)
+            q = q.filter(Product.sales_count >= 5)
 
         if filters.get("trending") is True:
-            query = query.filter(Product.sales_count >= 1).order_by(Product.sales_count.desc())
+            q = q.filter(Product.sales_count >= 1).order_by(Product.sales_count.desc())
 
-        return query
+        return q
 
     def get_filtered_products(self, filters: Dict[str, Any], limit: int = 20, offset: int = 0) -> Dict[str, Any]:
         cache_key = self._get_cache_key(None, None, filters)
@@ -288,14 +288,22 @@ class AdvancedFilterService:
 
         metadata = metadata_query.filter(ProductFilterMetadata.is_active == True).all()
 
-        filters: List[Dict[str, Any]] = []
-        for meta in metadata:
-            options = (
+        # Batch-load all options for the metadata set
+        meta_ids = [m.id for m in metadata]
+        options_by_meta: dict[int, list[ProductFilterOption]] = {}
+        if meta_ids:
+            all_options = (
                 self.db.query(ProductFilterOption)
-                .filter(ProductFilterOption.filter_metadata_id == meta.id)
+                .filter(ProductFilterOption.filter_metadata_id.in_(meta_ids))
                 .order_by(ProductFilterOption.sort_order)
                 .all()
             )
+            for opt in all_options:
+                options_by_meta.setdefault(opt.filter_metadata_id, []).append(opt)
+
+        filters: List[Dict[str, Any]] = []
+        for meta in metadata:
+            options = options_by_meta.get(meta.id, [])
             filters.append(
                 {
                     "id": meta.id,

@@ -166,7 +166,7 @@ def get_email_delivery_status():
 # Backwards-compatible alias for the user realtime socket. The ws_chat router is
 # mounted under the "/ws-chat" prefix (=> /ws-chat/ws/user), but mobile/web
 # clients connect to the bare "/ws/user" path. Keep both working.
-from routers.ws_chat import websocket_user  # noqa: E402
+from routers.public_comms_status import websocket_user  # noqa: E402
 
 app.add_api_websocket_route("/ws/user", websocket_user)
 

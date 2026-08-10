@@ -147,9 +147,17 @@ def get_role_permissions(role_name: str, country_code: Optional[str] = None, db:
             (RolePermissionAssignment.country_code.is_(None))
         )
     assignments = q.all()
+    permission_ids = [a.permission_id for a in assignments]
+    perm_map: dict[int, Permission] = {}
+    if permission_ids:
+        perm_map = {
+            p.id: p for p in db.query(Permission).filter(
+                Permission.id.in_(permission_ids)
+            ).all()
+        }
     permissions = {}
     for a in assignments:
-        perm = db.query(Permission).filter(Permission.id == a.permission_id).first()
+        perm = perm_map.get(a.permission_id)
         if perm:
             permissions[perm.slug] = {"granted": a.is_granted, "permission_id": perm.id, "name": perm.name}
     return permissions

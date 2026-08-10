@@ -95,21 +95,37 @@ class NewsAggregatorService:
         response = await self.http_client.get(source.url)
         feed = feedparser.parse(response.text)
         
+        # Collect candidates, then batch-check existence to avoid N+1
+        candidates: list[tuple] = []
+        pending_ids: set = set()
+        pending_hashes: set = set()
         for entry in feed.entries:
             external_id = entry.get("id", entry.get("link", ""))
             content_hash = hashlib.sha256(f"{entry.title}{entry.link}".encode()).hexdigest()
-            
-            existing = self.db.query(NewsArticle).filter(
-                (NewsArticle.external_id == external_id) | 
-                (NewsArticle.content_hash == content_hash)
-            ).first()
-            if existing:
+            candidates.append((entry, external_id, content_hash))
+            pending_ids.add(external_id)
+            pending_hashes.add(content_hash)
+
+        existing_ids: set = set()
+        existing_hashes: set = set()
+        if pending_ids or pending_hashes:
+            from sqlalchemy import or_ as _or_, false as _false_
+            conds = []
+            if pending_ids:
+                conds.append(NewsArticle.external_id.in_(list(pending_ids)))
+            if pending_hashes:
+                conds.append(NewsArticle.content_hash.in_(list(pending_hashes)))
+            existing_articles = self.db.query(NewsArticle).filter(_or_(*conds)).all()
+            existing_ids = {a.external_id for a in existing_articles}
+            existing_hashes = {a.content_hash for a in existing_articles}
+
+        for entry, external_id, content_hash in candidates:
+            if external_id in existing_ids or content_hash in existing_hashes:
                 continue
-            
             published_at = datetime.now(timezone.utc)
             if "published_parsed" in entry:
                 published_at = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
-            
+
             article = NewsArticle(
                 source_id=source.id,
                 external_id=external_id,
@@ -118,7 +134,7 @@ class NewsAggregatorService:
                 summary=entry.get("summary", ""),
                 content=entry.get("content", [{}])[0].get("value", "") if entry.get("content") else "",
                 url=entry.link,
-                image_url=entry.get("top_level_image", entry.get("image", "")),
+                image_url=entry.get("top_level_images", entry.get("image", "")),
                 published_at=published_at,
                 country_code=self._extract_country(source, entry),
                 ai_sentiment=self._detect_sentiment(entry.title + " " + entry.get("summary", "")),
@@ -126,7 +142,7 @@ class NewsAggregatorService:
                 is_published=True,
             )
             self.db.add(article)
-        
+
         self.db.commit()
     
     async def _fetch_api(self, source: NewsSource):
@@ -142,18 +158,34 @@ class NewsAggregatorService:
     async def _process_api_response(self, source: NewsSource, data: dict):
         """Process API response and store articles."""
         articles = data.get("articles", data.get("results", []))
-        
+
+        # Collect candidates, then batch-check existence to avoid N+1
+        candidates: list[tuple] = []
+        pending_ids: set = set()
+        pending_hashes: set = set()
         for item in articles:
             external_id = str(item.get("id", item.get("url", "")))
             content_hash = hashlib.sha256(f"{item.get('title', '')}{item.get('url', '')}".encode()).hexdigest()
-            
-            existing = self.db.query(NewsArticle).filter(
-                (NewsArticle.external_id == external_id) | 
-                (NewsArticle.content_hash == content_hash)
-            ).first()
-            if existing:
+            candidates.append((item, external_id, content_hash))
+            pending_ids.add(external_id)
+            pending_hashes.add(content_hash)
+
+        existing_ids: set = set()
+        existing_hashes: set = set()
+        if pending_ids or pending_hashes:
+            from sqlalchemy import or_ as _or_
+            conds = []
+            if pending_ids:
+                conds.append(NewsArticle.external_id.in_(list(pending_ids)))
+            if pending_hashes:
+                conds.append(NewsArticle.content_hash.in_(list(pending_hashes)))
+            existing_articles = self.db.query(NewsArticle).filter(_or_(*conds)).all()
+            existing_ids = {a.external_id for a in existing_articles}
+            existing_hashes = {a.content_hash for a in existing_articles}
+
+        for item, external_id, content_hash in candidates:
+            if external_id in existing_ids or content_hash in existing_hashes:
                 continue
-            
             article = NewsArticle(
                 source_id=source.id,
                 external_id=external_id,
@@ -170,7 +202,7 @@ class NewsAggregatorService:
                 is_published=True,
             )
             self.db.add(article)
-        
+
         self.db.commit()
     
     def _extract_country(self, source: NewsSource, entry) -> Optional[str]:

@@ -111,18 +111,7 @@ def _build_journal_candidates(db: Session, line: BankStatementLine, country_code
     )
     if country_code:
         q = q.filter(JournalEntryLine.country_code == country_code)
-
-    for jel in q.all():
-        je = db.query(JournalEntry).get(jel.entry_id)
-        if je:
-            candidates.append({
-                "id": je.id,
-                "amount": float(jel.amount or 0),
-                "description": je.description or "",
-                "date": je.entry_date.isoformat() if je.entry_date else "",
-                "reference_type": je.reference_type,
-                "reference_id": je.reference_id,
-            })
+    candidate_lines = list(q.all())
 
     # Also get amount-proximate candidates (±5%)
     if line.amount:
@@ -134,18 +123,28 @@ def _build_journal_candidates(db: Session, line: BankStatementLine, country_code
         )
         if country_code:
             q2 = q2.filter(JournalEntryLine.country_code == country_code)
+        candidate_lines.extend(q2.all())
 
-        for jel in q2.all():
-            je = db.query(JournalEntry).get(jel.entry_id)
-            if je and not any(c["id"] == je.id for c in candidates):
-                candidates.append({
-                    "id": je.id,
-                    "amount": float(jel.amount or 0),
-                    "description": je.description or "",
-                    "date": je.entry_date.isoformat() if je.entry_date else "",
-                    "reference_type": je.reference_type,
-                    "reference_id": je.reference_id,
-                })
+    # Batch-load JournalEntry objects to avoid N+1
+    entry_ids = {jel.entry_id for jel in candidate_lines if jel.entry_id}
+    je_map: dict[int, JournalEntry] = {}
+    if entry_ids:
+        for je in db.query(JournalEntry).filter(JournalEntry.id.in_(entry_ids)).all():
+            je_map[je.id] = je
+
+    seen_ids: set[int] = set()
+    for jel in candidate_lines:
+        je = je_map.get(jel.entry_id)
+        if je and je.id not in seen_ids:
+            seen_ids.add(je.id)
+            candidates.append({
+                "id": je.id,
+                "amount": float(jel.amount or 0),
+                "description": je.description or "",
+                "date": je.entry_date.isoformat() if je.entry_date else "",
+                "reference_type": je.reference_type,
+                "reference_id": je.reference_id,
+            })
 
     return candidates
 

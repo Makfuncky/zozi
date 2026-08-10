@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from models.employee_models import Employee, EmployeeWorkLog, EmployeeAttendance
@@ -37,36 +37,65 @@ class GhostEmployeeWatchdog:
                 ~Employee.id.in_(recent_work_logs)
             )
         ).all()
-        
+
+        ghost_ids = [emp.id for emp in ghosts]
+
+        treasury_map: dict[int, "TreasuryAccount"] = {}
+        if ghost_ids:
+            treasury_map = {
+                t.employee_id: t for t in self.db.query(TreasuryAccount).filter(
+                    TreasuryAccount.employee_id.in_(ghost_ids)
+                ).all()
+            }
+
+        last_attendance_map: dict[int, datetime] = {}
+        last_worklog_map: dict[int, datetime] = {}
+        if ghost_ids:
+            att_rows = (
+                self.db.query(
+                    EmployeeAttendance.employee_id,
+                    func.max(EmployeeAttendance.scan_in_time).label("max_scan"),
+                )
+                .filter(
+                    EmployeeAttendance.employee_id.in_(ghost_ids)
+                )
+                .group_by(EmployeeAttendance.employee_id)
+                .all()
+            )
+            last_attendance_map = {row.employee_id: row.max_scan for row in att_rows}
+
+            wl_rows = (
+                self.db.query(
+                    EmployeeWorkLog.employee_id,
+                    func.max(EmployeeWorkLog.work_date).label("max_date"),
+                )
+                .filter(
+                    EmployeeWorkLog.employee_id.in_(ghost_ids)
+                )
+                .group_by(EmployeeWorkLog.employee_id)
+                .all()
+            )
+            last_worklog_map = {row.employee_id: row.max_date for row in wl_rows}
+
         results = []
         for emp in ghosts:
-            treasury = self.db.query(TreasuryAccount).filter(
-                TreasuryAccount.employee_id == emp.id
-            ).first()
-            
+            treasury = treasury_map.get(emp.id)
+            last_attendance = last_attendance_map.get(emp.id)
+            last_worklog = last_worklog_map.get(emp.id)
+            activities = [a for a in [last_attendance, last_worklog] if a]
+            last_active = max(activities) if activities else None
+
             results.append({
                 "employee_id": emp.id,
                 "employee_code": emp.employee_code,
                 "name": f"{emp.first_name} {emp.last_name}",
-                "last_active": self._get_last_activity(emp.id),
+                "last_active": last_active,
                 "payroll_active": treasury is not None,
                 "risk_level": "high" if treasury else "medium"
             })
-        
+
         return results
-    
-    def _get_last_activity(self, employee_id: int) -> Optional[datetime]:
-        last_attendance = self.db.query(EmployeeAttendance.scan_in_time).filter(
-            EmployeeAttendance.employee_id == employee_id
-        ).order_by(EmployeeAttendance.scan_in_time.desc()).first()
-        
-        last_worklog = self.db.query(EmployeeWorkLog.work_date).filter(
-            EmployeeWorkLog.employee_id == employee_id
-        ).order_by(EmployeeWorkLog.work_date.desc()).first()
-        
-        activities = [a[0] for a in [last_attendance, last_worklog] if a]
-        return max(activities) if activities else None
-    
+
     def flag_for_review(self, employee_id: int, reason: str) -> dict:
         return {
             "employee_id": employee_id,
