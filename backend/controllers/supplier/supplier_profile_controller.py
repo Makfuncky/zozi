@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from data.models import SupplierProfile, User
-from services.db_read import exists
+from services.common.db_read import exists
 from services.supplier.supplier_profile_write_service import (
     create_supplier_profile,
     update_supplier_profile,

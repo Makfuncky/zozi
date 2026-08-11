@@ -11,7 +11,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_country_access
+from controllers.admin.admin_controller import require_country_access
 from services.geography.country_payout_write_service import (
     create_payout_rule_category as _create_payout_rule_category,
     create_payout_rule_product as _create_payout_rule_product,

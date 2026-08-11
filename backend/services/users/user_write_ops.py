@@ -3,7 +3,7 @@
 Recovered from commit 624a1a2 (the real implementations that were replaced by
 `_missing_symbol` stubs in 3d1f49a "fixed_voliations_04-08-2026"). This module
 holds the genuine DB-write logic for staff accounts, password resets, bank-account
-verification, and the user hard-delete cascade. `services.users_write_service`
+verification, and the user hard-delete cascade. `services.users.users_write_service`
 re-exports these so legacy imports keep resolving.
 
 Import path fixed from the original `from models import ...` to `from data.models import ...`.
@@ -330,3 +330,10 @@ def update_user_browsing_history(
     history = history[:max_items]
     setattr(user, "browsing_history_json", json.dumps(history))
     db.commit()
+
+
+# Private-name aliases expected by the legacy shim re-export contract and the
+# recovery tests. The recovered implementations are the public names above.
+_build_user_delete_blocker = build_user_delete_blocker
+_delete_order_records = delete_order_records
+_hard_delete_user_record = hard_delete_user_record

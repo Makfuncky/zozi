@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import String, func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from controllers.products_controller import bump_product_cache_version
+from controllers.products.products_controller import _bump_product_cache_version
 from data.models import (
     Order,
     OrderItem,
@@ -18,15 +18,23 @@ from data.models import (
 from utils.audit import AuditAction, audit_log
 from utils.auth import require_permission
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
-from services.db_read import all_rows, count, first
-from services.products_write_service import (
+from services.common.db_read import all_rows, count, first
+from services.catalog.products_write_service import (
     archive_product_reviews,
     clear_product_carts,
     clear_product_wishlists,
 )
-from services.suppliers_write_service import (
+from services.catalog.product_admin_write_service import (
+    approve_product as _approve_product,
+    bulk_moderate_products,
+    bulk_soft_delete_products,
+    reject_product as _reject_product,
+    restore_product as _restore_product,
+    set_product_badge,
+    soft_delete_product,
+)
+from services.supplier.suppliers_write_service import (
     add_notification,
-    commit_only,
 )
 import structlog
 logger = structlog.get_logger(__name__)
@@ -70,19 +78,20 @@ def bulk_delete_products_admin(product_ids: List[int], acting_user: dict, db: Se
     deleted: List[dict] = []
     skipped: List[dict] = []
 
+    deleted_products: List[Product] = []
     for product in products:
         if bool(cast(Any, getattr(product, "is_deleted"))):
             skipped.append({"id": product.id, "reason": "Already deleted"})
             continue
-        setattr(product, "is_deleted", True)
+        deleted_products.append(product)
         deleted.append({"id": product.id, "name": product.name})
 
     for pid in product_ids:
         if pid not in found_ids:
             skipped.append({"id": pid, "reason": "Not found"})
 
-    if deleted:
-        commit_only(db)
+    if deleted_products:
+        bulk_soft_delete_products(db, deleted_products)
         audit_log(
             db=db,
             action=AuditAction.PRODUCT_DELETE,
@@ -125,11 +134,10 @@ def bulk_product_moderation(
     found_ids = {cast(int, p.id) for p in products}
     processed: List[dict] = []
     skipped: List[dict] = []
+    moderated: List[Product] = []
 
     for product in products:
         if action == "approve":
-            setattr(product, "is_approved", True)
-            setattr(product, "is_active", True)
             add_notification(
                 db=db,
                 user_id=product.supplier_id,
@@ -139,8 +147,6 @@ def bulk_product_moderation(
                 link=f"/products/{product.id}",
             )
         else:
-            setattr(product, "is_approved", False)
-            setattr(product, "is_active", False)
             add_notification(
                 db=db,
                 user_id=product.supplier_id,
@@ -149,14 +155,15 @@ def bulk_product_moderation(
                 message=f'Your product "{product.name}" was not approved. Reason: {note or "Does not meet listing standards."}',
                 link="/supplier/products",
             )
+        moderated.append(product)
         processed.append({"id": product.id, "name": product.name})
 
     for pid in product_ids:
         if pid not in found_ids:
             skipped.append({"id": pid, "reason": "Not found or deleted"})
 
-    if processed:
-        commit_only(db)
+    if moderated:
+        bulk_moderate_products(db, moderated, action)
         audit_log(
             db=db,
             action="PRODUCT_APPROVED" if action == "approve" else "PRODUCT_REJECTED",
@@ -289,8 +296,7 @@ def delete_product_admin(product_id: int, acting_user: dict, db: Session) -> dic
         )
 
     # --- Soft-delete the product itself ---
-    setattr(product, "is_deleted", True)
-    commit_only(db)
+    soft_delete_product(db, product)
     _bump_product_cache_version()
 
     audit_log(
@@ -320,8 +326,7 @@ def restore_product_admin(product_id: int, acting_user: dict, db: Session) -> di
         raise HTTPException(status_code=404, detail="Product not found")
     if not bool(cast(Any, getattr(product, "is_deleted"))):
         raise HTTPException(status_code=400, detail="Product is not archived")
-    setattr(product, "is_deleted", False)
-    commit_only(db)
+    _restore_product(db, product)
     _bump_product_cache_version()
     audit_log(
         db=db,
@@ -380,8 +385,7 @@ def toggle_product_badge(
     product = first(db, Product, [Product.id == product_id, Product.is_deleted.is_(False)])
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    setattr(product, field, value)
-    commit_only(db)
+    set_product_badge(db, product, field, value)
     audit_log(
         db=db,
         action=f"PRODUCT_BADGE_{field.upper()}_{'ON' if value else 'OFF'}",
@@ -401,7 +405,7 @@ def approve_product(product_id: int, acting_user: dict, db: Session) -> dict:
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    from controllers.country_controller import is_product_restricted_for_country
+    from controllers.geography.country_controller import is_product_restricted_for_country
     supplier = first(db, User, [User.id == product.supplier_id])
     if supplier:
         supplier_country = str(getattr(supplier, "preferred_country", "") or "").strip()
@@ -413,8 +417,6 @@ def approve_product(product_id: int, acting_user: dict, db: Session) -> dict:
                     detail=f"Product category '{product_category}' is restricted in the supplier's country ({supplier_country}).",
                 )
 
-    setattr(product, "is_approved", True)
-    setattr(product, "is_active", True)
     add_notification(
         db=db,
         user_id=product.supplier_id,
@@ -423,7 +425,7 @@ def approve_product(product_id: int, acting_user: dict, db: Session) -> dict:
         message=f'Your product "{product.name}" has been approved and is now live.',
         link=f"/products/{product.id}",
     )
-    commit_only(db)
+    _approve_product(db, product)
     audit_log(
         db=db,
         action="PRODUCT_APPROVED",
@@ -442,8 +444,6 @@ def reject_product(product_id: int, note: Optional[str], acting_user: dict, db: 
     product = first(db, Product, [Product.id == product_id, Product.is_deleted.is_(False)])
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    setattr(product, "is_approved", False)
-    setattr(product, "is_active", False)
     add_notification(
         db=db,
         user_id=product.supplier_id,
@@ -452,7 +452,7 @@ def reject_product(product_id: int, note: Optional[str], acting_user: dict, db: 
         message=f'Your product "{product.name}" was not approved. Reason: {note or "Does not meet listing standards."}',
         link="/supplier/products",
     )
-    commit_only(db)
+    _reject_product(db, product)
     audit_log(
         db=db,
         action="PRODUCT_REJECTED",

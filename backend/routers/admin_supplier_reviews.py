@@ -9,7 +9,7 @@ from models import SupplierProfile, User
 from db.schemas import ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import enforce_country_access
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     archive_entity,
     restore_entity,
     bulk_archive_entities,
@@ -466,7 +466,7 @@ def list_supplier_documents_frontend(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    import controllers.supplier_document_controller as doc_ctrl
+    import controllers.supplier.supplier_document_controller as doc_ctrl
     return doc_ctrl.admin_list_documents(
         {"id": 0, "role": "admin"},
         db,
@@ -485,7 +485,7 @@ def review_supplier_document_frontend(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    import controllers.supplier_document_controller as doc_ctrl
+    import controllers.supplier.supplier_document_controller as doc_ctrl
     return doc_ctrl.admin_review_document(doc_id, data, {"id": 0, "role": "admin"}, db)
 
 

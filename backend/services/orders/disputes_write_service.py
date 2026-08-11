@@ -1,7 +1,7 @@
 """Backward-compatible re-export shim for supplier dispute write operations.
 
 This module intentionally performs NO imports at module-load time. It used to
-re-export handler functions from `controllers.disputes_controller`, which
+re-export handler functions from `controllers.orders.disputes_controller`, which
 created an import-time circular-import cycle (`disputes_controller` ->
 `disputes_write_service` -> `disputes_controller`). Resolving names lazily via
 module-level `__getattr__` breaks that cycle: the underlying controller module
@@ -14,7 +14,7 @@ import importlib
 from typing import Any
 
 _REEXPORTS: dict[str, tuple[str, str]] = {
-    "create_supplier_dispute": ("controllers.disputes_controller", "create_supplier_dispute"),
+    "create_supplier_dispute": ("controllers.orders.disputes_controller", "create_supplier_dispute"),
 }
 
 

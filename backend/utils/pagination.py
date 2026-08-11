@@ -104,3 +104,63 @@ def windowed_iterate(query: Query, window_size: int = SAFE_QUERY_LIMIT) -> Itera
         offset += n
         if n < size:
             return
+
+import base64
+import json
+from dataclasses import dataclass
+
+from sqlalchemy.orm import Query
+
+
+@dataclass
+class CursorPage:
+    items: list
+    next_cursor: 'str | None'
+    page_size: int
+
+
+def _encode_cursor(last_id):
+    return base64.urlsafe_b64encode(json.dumps({'id': last_id}).encode('utf-8')).decode('utf-8')
+
+
+def _decode_cursor(cursor):
+    if not cursor:
+        return None
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(cursor.encode('utf-8')).decode('utf-8'))
+        return int(payload['id'])
+    except Exception:
+        return None
+
+
+def _cursor_paginate(query, cursor, page_size, serializer, descending):
+    page_size = max(1, min(int(page_size or MAX_PAGE_SIZE), MAX_PAGE_SIZE))
+    last_id = _decode_cursor(cursor)
+    model = query.column_descriptions[0]['entity']
+    pk = getattr(model, 'id')
+    if last_id is not None:
+        query = query.filter(pk < last_id) if descending else query.filter(pk > last_id)
+    ordered = query.order_by(pk.desc() if descending else pk.asc())
+    rows = ordered.limit(page_size + 1).all()
+    has_next = len(rows) > page_size
+    page_rows = rows[:page_size]
+    items = [serializer(r) for r in page_rows] if serializer else page_rows
+    next_cursor = _encode_cursor(page_rows[-1].id) if (has_next and page_rows) else None
+    return CursorPage(items=items, next_cursor=next_cursor, page_size=page_size)
+
+
+def cursor_paginate_asc(query, cursor=None, page_size=MAX_PAGE_SIZE, serializer=None):
+    return _cursor_paginate(query, cursor, page_size, serializer, descending=False)
+
+
+def cursor_paginate_desc(query, cursor=None, page_size=MAX_PAGE_SIZE, serializer=None):
+    return _cursor_paginate(query, cursor, page_size, serializer, descending=True)
+
+
+def build_cursor_pagination_payload(items, next_cursor, page_size):
+    return {
+        'items': items,
+        'next_cursor': next_cursor,
+        'page_size': page_size,
+        'has_next': next_cursor is not None,
+    }

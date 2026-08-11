@@ -1,6 +1,6 @@
 """Regression test for the orders write-service shim re-wire.
 
-`services.orders_write_service` is a lazy re-export shim. Three ORM row-writer
+`services.orders.orders_write_service` is a lazy re-export shim. Three ORM row-writer
 symbols (`create_order`, `create_order_item`, `update_order`) were stubbed with
 `_missing_symbol` but their real implementations exist in the canonical
 `services.orders.orders_write_service` module. This test guards that the shim
@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 import services.orders.orders_write_service as canon
-import services.orders_write_service as shim
+import services.orders.orders_write_service as shim
 
 _REWIRED = ["create_order", "create_order_item", "update_order"]
 

@@ -4,6 +4,7 @@ from typing import List
 
 from typing import Optional
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from models import CashAccount, CashTransaction
@@ -53,6 +54,39 @@ def delete_cash_transaction(db: Session, transaction: CashTransaction) -> None:
     db.commit()
 
 
+def create_country_cash_account(db: Session, country_code: str, payload) -> CashAccount:
+    """Create a country-scoped cash account and commit."""
+    account = CashAccount(**payload.model_dump(), country_code=country_code.upper())
+    db.add(account)
+    db.commit()
+    db.refresh(account)
+    return account
+
+
+def create_country_cash_transaction(db: Session, country_code: str, payload, current_user) -> CashTransaction:
+    """Record a cash transaction against an account, adjusting its balance, and commit."""
+    account = db.query(CashAccount).filter(
+        CashAccount.id == payload.account_id,
+        CashAccount.country_code == country_code.upper(),
+    ).first()
+    if not account:
+        raise HTTPException(404, 'Account not found')
+    if payload.transaction_type == 'debit':
+        account.balance -= payload.amount
+    else:
+        account.balance += payload.amount
+    tx = CashTransaction(
+        **payload.model_dump(),
+        balance_after=account.balance,
+        performed_by=getattr(current_user, 'id', None),
+        country_code=country_code.upper(),
+    )
+    db.add(tx)
+    db.commit()
+    db.refresh(tx)
+    return tx
+
+
 # ── Read helpers ─────────────────────────────────────────────────────────────
 
 def list_cash_accounts(db: Session, country_code: str, skip: int = 0, limit: int = 20) -> list[CashAccount]:
@@ -73,3 +107,11 @@ def get_cash_account(db: Session, account_id: int, country_code: str) -> Optiona
         CashAccount.id == account_id,
         CashAccount.country_code == country_code,
     ).first()
+
+
+def list_active_country_cash_accounts(db: Session, country_code: str) -> list[CashAccount]:
+    """Return all active cash accounts for a country (no pagination)."""
+    return db.query(CashAccount).filter(
+        CashAccount.is_active == True,
+        CashAccount.country_code == country_code,
+    ).all()

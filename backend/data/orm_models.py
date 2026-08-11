@@ -18,7 +18,7 @@ from models import Base  # noqa: F401  -- commonly referenced declarative base
 from models.geography.country_enhancements import *  # noqa: F401,F403
 from models.geography.countries import *  # noqa: F401,F403
 from models.employee_models import *  # noqa: F401,F403
-from models.logistics.country_control import *  # noqa: F401,F403
-from models.security.permissions import *  # noqa: F401,F403
+from models.country_control import *  # noqa: F401,F403
+from models.permissions import *  # noqa: F401,F403
 import structlog
 logger = structlog.get_logger(__name__)

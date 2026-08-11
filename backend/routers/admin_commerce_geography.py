@@ -6,7 +6,7 @@ from models import User
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
-from controllers.banner_controller import (
+from controllers.catalog.banner_controller import (
     BannerCreate,
     BannerUpdate,
     create_banner as create_banner_controller,

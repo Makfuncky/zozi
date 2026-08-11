@@ -114,7 +114,7 @@ async def health_ready():
     from utils.config import settings
     from utils.auth import _get_redis
     from db.database import check_connection_health
-    from controllers import payments_controller
+    from services.gateways.payments import _payment_provider_runtime_status
     from types import SimpleNamespace
     
     db_ok = check_connection_health()
@@ -136,7 +136,7 @@ async def health_ready():
     
     if settings.readiness_require_payments:
         try:
-            payments = payments_controller._payment_provider_runtime_status(db)
+            payments = _payment_provider_runtime_status(db)
             if not payments.get("online_provider"):
                 deps["payments"] = "unavailable"
                 blocking.append("payments")
@@ -256,6 +256,11 @@ def _load_routers():
 
 
 _load_routers()
+
+# Auto-generated routers (Design 3) are emitted by `routers/generated/auto_router.py`
+# directly into the `routers/` surface folder, so the auto-discovery above already
+# includes them. Keep them in sync after controller changes with
+# `python routers/generated/auto_router.py` (CI runs `--verify`).
 
 # Serve uploaded media files — only mount local disk when using local storage
 if str(getattr(settings, "storage_backend", "") or os.getenv("STORAGE_BACKEND", "local")).lower() != "s3":

@@ -48,6 +48,28 @@ SECRET_KEY=test-secret-key-for-dev-only python -m pytest \
 
 EXIT_CODE=${PIPESTATUS[0]}
 
+# ── Router generation drift gate (Design 3) ────────────────────────
+# If a controller / the @route decorator / the generator changed, the committed
+# routers in routers/ must be regenerated. Block the commit on drift.
+ROUTER_RELEVANT=$(git diff --cached --name-only --diff-filter=ACM \
+    | grep -E '^backend/(controllers/|routers/generated/auto_router\.py)' \
+    | head -1 || true)
+
+if [ -n "$ROUTER_RELEVANT" ]; then
+    echo -e "${YELLOW}🔍 Verifying generated routers are in sync …${NC}"
+    SECRET_KEY=test-secret-key-for-dev-only python routers/generated/auto_router.py --verify 2>&1 | tail -20
+    REXIT=${PIPESTATUS[0]}
+    if [ "$REXIT" -ne 0 ]; then
+        echo ""
+        echo -e "${RED}❌ Router generation drift — commit blocked.${NC}"
+        echo -e "${RED}   Run: make routers  (or: cd backend && python routers/generated/auto_router.py)${NC}"
+        echo ""
+        echo "   To bypass (not recommended):  git commit --no-verify"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Generated routers in sync.${NC}"
+fi
+
 if [ "$EXIT_CODE" -eq 0 ]; then
     echo ""
     echo -e "${GREEN}✅ Architecture gate passed — commit allowed.${NC}"

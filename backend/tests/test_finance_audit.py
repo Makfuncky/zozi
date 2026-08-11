@@ -150,8 +150,8 @@ def test_sub_ledger_shim_removed():
 
 
 def test_no_stale_payments_or_shim_imports():
-    """No remaining references to the old `services.payments` package or the
-    flat `controllers.sub_ledger_controller` shim path."""
+    """No remaining references to the old `services.gateways.payments` package or the
+    flat `controllers.finance.sub_ledger_controller` shim path."""
     import re
 
     stale = [

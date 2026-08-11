@@ -15,7 +15,7 @@ from services.finance.erp_read_service import (
     list_accounts_paged,
 )
 from services.treasury.treasury_query_service import get_trial_balance
-from services.treasury.treasury_seeder_service import seed_chart_of_accounts
+from db.treasury_seeder import seed_chart_of_accounts
 from services.treasury.treasury_service import create_journal_entry
 import structlog
 logger = structlog.get_logger(__name__)

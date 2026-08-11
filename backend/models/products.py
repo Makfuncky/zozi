@@ -15,7 +15,7 @@ class Category(Base):
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, index=True)
     description = Column(Text, nullable=True)
-    parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True)
     icon = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -56,11 +56,11 @@ class Product(Base):
     image_url = Column(String, nullable=True)
     images = Column(JSON, nullable=True)
     category = Column(String, nullable=True)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    category_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True)
     tags = Column(JSON, nullable=True)
     attributes = Column(JSON, nullable=True)
-    supplier_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True, index=True)
+    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     is_active = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
     is_digital = Column(Boolean, default=False)
@@ -107,8 +107,8 @@ class Review(Base):
     __tablename__ = "reviews"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     rating = Column(Integer, nullable=False)
     title = Column(String, nullable=True)
     comment = Column(Text, nullable=True)
@@ -126,8 +126,8 @@ class WishlistItem(Base):
     __tablename__ = "wishlist_items"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(10), nullable=True, index=True)
     user = relationship("User", back_populates="wishlist_items")
@@ -138,8 +138,8 @@ class Wishlist(Base):
     __tablename__ = "wishlists"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(10), nullable=True, index=True)
     user = relationship("User", back_populates="wishlists")
@@ -149,7 +149,7 @@ class Wishlist(Base):
 class ProductVariant(Base):
     __tablename__ = "product_variants"
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     sku = Column(String, unique=True, nullable=True)
     title = Column(String, nullable=True)
     size = Column(String, nullable=True, index=True)
@@ -167,7 +167,7 @@ class ProductVariant(Base):
     sort_order = Column(Integer, default=0)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
     # Deterministic variant identity (Phase 3b). sha256 of the normalized
     # product_id + axes. Enables idempotent upserts and prevents duplicate
@@ -183,7 +183,7 @@ class ProductVideo(Base):
     __tablename__ = "product_videos"
     __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False, index=True)
     video_url = Column(String(500), nullable=False)
     thumbnail_url = Column(String(500), nullable=True)
     duration_seconds = Column(Integer, nullable=True)
@@ -203,8 +203,8 @@ class VideoAnalytics(Base):
     __tablename__ = "video_analytics"
     __table_args__ = ({"schema": "media"},)
     id = Column(Integer, primary_key=True, index=True)
-    video_id = Column(Integer, ForeignKey("product_videos.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    video_id = Column(Integer, ForeignKey("media.product_videos.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
     event_type = Column(String(50), nullable=False)
     watch_duration_seconds = Column(Integer, nullable=True)
     device_type = Column(String(50), nullable=True)
@@ -216,7 +216,7 @@ class ProductFilterMetadata(Base):
     __tablename__ = "product_filter_metadata"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True, index=True)
+    category_id = Column(Integer, ForeignKey("commerce.categories.id"), nullable=True, index=True)
     filter_name = Column(String(100), nullable=False)
     filter_type = Column(String(50), nullable=False)
     display_order = Column(Integer, nullable=False, server_default="0")
@@ -231,7 +231,7 @@ class ProductFilterOption(Base):
     __tablename__ = "product_filter_options"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    filter_metadata_id = Column(Integer, ForeignKey("product_filter_metadata.id"), nullable=False, index=True)
+    filter_metadata_id = Column(Integer, ForeignKey("commerce.product_filter_metadata.id"), nullable=False, index=True)
     option_value = Column(String(255), nullable=False)
     option_display_name = Column(String(255), nullable=False)
     product_count = Column(Integer, nullable=False, server_default="0")

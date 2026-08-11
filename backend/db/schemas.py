@@ -579,6 +579,35 @@ class CartOut(BaseModel):
     subtotal: float
 
 
+class CartSyncRequest(BaseModel):
+    items: List[CartItemIn] = []
+
+
+class ProductCartViewOut(BaseModel):
+    id: int
+    name: str
+    price: Optional[float] = None
+    image_url: Optional[str] = None
+    selected_size: str = ""
+    selected_color: str = ""
+
+
+class CartItemViewOut(BaseModel):
+    product_id: int
+    quantity: int
+    selected_size: str = ""
+    selected_color: str = ""
+    product: Optional[ProductCartViewOut] = None
+    unit_price: Optional[float] = None
+    line_total: Optional[float] = None
+
+
+class CartViewOut(BaseModel):
+    items: List[CartItemViewOut] = []
+    total_items: int = 0
+    subtotal: float = 0.0
+
+
 # ── Orders ────────────────────────────────────────────────────────────────────
 
 class OrderItemCreate(BaseModel):
@@ -2185,6 +2214,14 @@ class LogisticsFraudCheck(BaseModel):
     missing_proof: bool
     score: int
 
+
+class CartItemIn(BaseModel):
+    """A single line item in a server-side cart (variant-aware)."""
+
+    product_id: int
+    quantity: int
+    selected_size: str = ""
+    selected_color: str = ""
 
 
 

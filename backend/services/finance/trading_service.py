@@ -19,7 +19,7 @@ from models.erp import (
     PurchaseOrder, PurchaseOrderLine,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
-from services import general_ledger_service as gl
+from services.finance import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -516,7 +516,7 @@ def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
             })
             # Send dunning emails
             try:
-                from services.transactional_email_service import enqueue_dunning_email
+                from services.comms.transactional_email_service import enqueue_dunning_email
                 for reminder in reminders:
                     enqueue_dunning_email(inv.id, reminder["type"], reminder["message"])
             except Exception as e:

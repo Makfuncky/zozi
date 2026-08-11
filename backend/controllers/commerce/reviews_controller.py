@@ -4,6 +4,9 @@ Canonical coordinator for the product-reviews feature. Enforces reviews
 business rules (authorization, duplicate prevention, verified-purchase
 detection, rating recompute) and delegates ALL persistence to
 services.commerce.reviews_service. It must not issue db.query directly.
+
+The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+so the auto-router emits ``routers/public_commerce_reviews.py``.
 """
 from __future__ import annotations
 
@@ -11,8 +14,10 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
-from data.db_schemas import ReviewCreate
+from data.db_schemas import ReviewCreate, ReviewOut
 from sqlalchemy.orm import Session
+
+from routers.generated.auto_router import delete, get, post, put
 
 from services.commerce.reviews_service import (
     create_review as service_create_review,
@@ -60,9 +65,11 @@ def _serialize(review, username: Optional[str] = None) -> dict:
     }
 
 
+@get("/api/v1/reviews/products/{product_id}", deps=["db"], query=["limit", "cursor"], response_model=List[ReviewOut], tags=["reviews"])
 def get_product_reviews(
-    product_id: int, limit: int, cursor: Optional[int], db: Session
+    product_id: int, db: Session, limit: int = 50, cursor: Optional[int] = None
 ) -> List[dict]:
+    limit = max(1, min(200, limit))
     rows = service_get_product_reviews(db, product_id, limit=limit, cursor=cursor)
     return [
         _serialize(r, username=r.user.username if getattr(r, "user", None) else None)
@@ -70,6 +77,21 @@ def get_product_reviews(
     ]
 
 
+@get("/api/v1/reviews", deps=["db"], query=["product_id", "limit", "cursor"], response_model=List[ReviewOut], tags=["reviews"])
+def list_reviews(
+    db: Session, product_id: Optional[int] = None, limit: int = 50, cursor: Optional[int] = None
+) -> List[dict]:
+    """Mirrors the legacy router's GET /api/v1/reviews (list reviews for a product supplied
+    as a query parameter). The auto-router renders query params as ``Query(None)``,
+    so the original ``required`` contract is preserved by rejecting a missing
+    ``product_id`` here."""
+    if product_id is None:
+        raise HTTPException(status_code=400, detail="product_id query parameter is required")
+    limit = max(1, min(200, limit))
+    return get_product_reviews(product_id, db=db, limit=limit, cursor=cursor)
+
+
+@get("/api/v1/reviews/{review_id}", deps=["db"], response_model=ReviewOut, tags=["reviews"])
 def get_review(review_id: int, db: Session) -> dict:
     review = get_review_by_id(db, review_id)
     if not review:
@@ -77,6 +99,7 @@ def get_review(review_id: int, db: Session) -> dict:
     return _serialize(review)
 
 
+@post("/api/v1/reviews/products/{product_id}", deps=["db", "user"], body=ReviewCreate, response_model=ReviewOut, status_code=201, tags=["reviews"])
 def create_review(product_id: int, review: ReviewCreate, current_user, db: Session) -> dict:
     user = _to_user_map(current_user)
     if not product_exists(db, product_id):
@@ -101,6 +124,7 @@ def create_review(product_id: int, review: ReviewCreate, current_user, db: Sessi
     return _serialize(new_review, username=user.get("username"))
 
 
+@put("/api/v1/reviews/{review_id}", deps=["db", "user"], body=ReviewCreate, response_model=ReviewOut, tags=["reviews"], skip=True)
 def update_review(review_id: int, review: ReviewCreate, current_user, db: Session) -> dict:
     user = _to_user_map(current_user)
     existing = get_review_by_id(db, review_id)
@@ -120,6 +144,7 @@ def update_review(review_id: int, review: ReviewCreate, current_user, db: Sessio
     return _serialize(updated, username=user.get("username"))
 
 
+@delete("/api/v1/reviews/{review_id}", deps=["db", "user"], response_model=ReviewOut, tags=["reviews"])
 def delete_review(review_id: int, current_user, db: Session) -> dict:
     user = _to_user_map(current_user)
     review = get_review_by_id(db, review_id)

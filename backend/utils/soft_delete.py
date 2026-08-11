@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Tuple, Type, Union
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 
 
 def _now() -> datetime:

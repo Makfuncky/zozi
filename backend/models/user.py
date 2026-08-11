@@ -48,7 +48,7 @@ class User(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
     referral_code = Column(String, unique=True, nullable=True, index=True)
-    referred_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    referred_by_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     referral_points = Column(Integer, default=0)
@@ -57,7 +57,7 @@ class User(Base):
     totp_secret = Column(String, nullable=True)
     last_seen_at = Column(DateTime, nullable=True)
     is_current = Column(Boolean, default=True)
-    country_code = Column(String(10), ForeignKey("country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
     # Encrypted at-rest JSON store for the customer's saved delivery profile(s).
     address_book = Column(EncryptedString(length=4000), nullable=True)
@@ -78,7 +78,7 @@ class UserLoginHistory(Base):
     __tablename__ = "user_login_history"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
     ip_address = Column(String, nullable=False)
     user_agent = Column(String, nullable=True)
     timestamp = Column(DateTime, default=_utcnow)
@@ -92,7 +92,7 @@ class UserDevice(Base):
     __tablename__ = "user_devices"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
     device_id = Column(String(255), nullable=False)
     device_type = Column(String(50), nullable=True)
     last_seen_at = Column(DateTime, default=_utcnow)
@@ -108,8 +108,8 @@ class Referral(Base):
     __tablename__ = "referrals"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
-    referrer_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    referred_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    referrer_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
+    referred_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, unique=True, index=True)
     status = Column(String, default="pending")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -123,10 +123,10 @@ class ReferralPointEvent(Base):
     __tablename__ = "referral_point_events"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
     event_type = Column(String(40), nullable=False)
     points = Column(Integer, nullable=False)
-    referred_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    referred_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(10), nullable=True, index=True)
     
@@ -138,7 +138,7 @@ class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), index=True)
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
@@ -152,7 +152,7 @@ class EmailVerificationToken(Base):
     __tablename__ = "email_verification_tokens"
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), index=True)
     token = Column(String, unique=True, index=True)
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
@@ -167,7 +167,7 @@ class RevokedToken(Base):
     __table_args__ = ({"schema": "core"},)
     id = Column(Integer, primary_key=True, index=True)
     jti = Column(String(64), nullable=False, unique=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     expires_at = Column(DateTime, nullable=False)
     revoked_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(10), nullable=True, index=True)

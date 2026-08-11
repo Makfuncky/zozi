@@ -7,12 +7,29 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
-from controllers import country_controller
-from controllers import employees_controller as ctrl
+from controllers.security.auth_controller import get_current_user
+from controllers.geography import country_controller
+from controllers.geography.country_controller import _require_admin
+from controllers.hr import employees_controller as ctrl
 from db.database import get_db
-from services.country_auto_populate import router as auto_populate_router
-from controllers.country_versioning_controller import router as versioning_router
+from services.geography.country_auto_populate import router as auto_populate_router
+from services.geography.country_config_admin_service import (
+    add_country_city as svc_add_country_city,
+    archive_country as svc_archive_country,
+    bulk_archive_countries as svc_bulk_archive_countries,
+    bulk_restore_countries as svc_bulk_restore_countries,
+    create_country_commission_rate as svc_create_country_commission_rate,
+    create_feature_flag as svc_create_feature_flag,
+    delete_country_commission_rate as svc_delete_country_commission_rate,
+    delete_country_city as svc_delete_country_city,
+    delete_feature_flag as svc_delete_feature_flag,
+    hard_delete_country as svc_hard_delete_country,
+    list_country_commission_rates as svc_list_country_commission_rates,
+    patch_country_city as svc_patch_country_city,
+    restore_country as svc_restore_country,
+    toggle_country_active as svc_toggle_country_active,
+    update_feature_flag as svc_update_feature_flag,
+)
 from middleware.rls_dependency import get_country_scope as _get_country_scope
 
 
@@ -407,21 +424,7 @@ def create_country_feature_flag(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.country_enhancements import CountryFeatureFlag
-
-    flag = CountryFeatureFlag(
-        country_code=code.upper(),
-        feature_key=str(body.get("feature_key", "")).strip(),
-        feature_name=body.get("feature_name"),
-        is_enabled=bool(body.get("is_enabled", True)),
-        config=body.get("config"),
-        rollout_audience=body.get("rollout_audience"),
-        notes=body.get("notes"),
-    )
-    db.add(flag)
-    db.commit()
-    db.refresh(flag)
-    return {"id": flag.id, "feature_key": flag.feature_key, "is_enabled": flag.is_enabled}
+    return svc_create_feature_flag(code, body, db)
 
 
 @router.patch("/{code}/feature-flags/{key}")
@@ -432,28 +435,7 @@ def update_country_feature_flag(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.country_enhancements import CountryFeatureFlag
-
-    flag = (
-        db.query(CountryFeatureFlag)
-        .filter(CountryFeatureFlag.country_code == code.upper(), CountryFeatureFlag.feature_key == key)
-        .first()
-    )
-    if not flag:
-        raise HTTPException(status_code=404, detail="Feature flag not found")
-    if "is_enabled" in body:
-        flag.is_enabled = bool(body["is_enabled"])
-    if "config" in body:
-        flag.config = body["config"]
-    if "feature_name" in body:
-        flag.feature_name = body["feature_name"]
-    if "rollout_audience" in body:
-        flag.rollout_audience = body["rollout_audience"]
-    if "notes" in body:
-        flag.notes = body["notes"]
-    db.commit()
-    db.refresh(flag)
-    return {"id": flag.id, "feature_key": flag.feature_key, "is_enabled": flag.is_enabled}
+    return svc_update_feature_flag(code, key, body, db)
 
 
 @router.get("/{code}/promotions")
@@ -490,18 +472,7 @@ def update_country_localization(code: str, body: dict, current_user: dict = Depe
 
 @router.delete("/{code}/feature-flags/{key}")
 def delete_country_feature_flag(code: str, key: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from models.country_enhancements import CountryFeatureFlag
-
-    flag = (
-        db.query(CountryFeatureFlag)
-        .filter(CountryFeatureFlag.country_code == code.upper(), CountryFeatureFlag.feature_key == key)
-        .first()
-    )
-    if not flag:
-        raise HTTPException(status_code=404, detail="Feature flag not found")
-    db.delete(flag)
-    db.commit()
-    return {"message": "Feature flag deleted", "feature_key": key}
+    return svc_delete_feature_flag(code, key, db)
 
 
 @router.get("/{code}/delivery-zones")
@@ -542,7 +513,7 @@ class AutoPopulateBody(BaseModel):
 @router.post("/auto-populate")
 async def auto_populate_country(body: AutoPopulateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Fetch country data from external APIs and curated profiles."""
-    from controllers.country_controller import _require_admin
+    from controllers.geography.country_controller import _require_admin
     _require_admin(current_user)
     return await country_controller.auto_populate_async(body.search_term)
 
@@ -572,25 +543,8 @@ def add_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity, CountryConfig
-    country = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
-    if not country:
-        raise HTTPException(status_code=404, detail="Country not found")
-    city = CountryCity(
-        country_code=code.upper(),
-        name=str(body.get("name", "")).strip(),
-        region=str(body.get("region", "")).strip() or None,
-        latitude=float(body["lat"]) if body.get("lat") is not None else None,
-        longitude=float(body["lng"]) if body.get("lng") is not None else None,
-        population=int(body["population"]) if body.get("population") is not None else None,
-        source=str(body.get("source", "manual")),
-    )
-    db.add(city)
-    db.commit()
-    db.refresh(city)
-    return {"id": city.id, "name": city.name, "region": city.region, "is_active": city.is_active}
+    return svc_add_country_city(code, body, db)
 
 
 @router.patch("/{code}/cities/{city_id}")
@@ -601,17 +555,8 @@ def patch_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity
-    city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
-    if not city:
-        raise HTTPException(status_code=404, detail="City not found")
-    for field in ("name", "region", "is_active", "sort_order"):
-        if field in body:
-            setattr(city, field, body[field])
-    db.commit()
-    return {"id": city.id, "name": city.name}
+    return svc_patch_country_city(code, city_id, body, db)
 
 
 @router.delete("/{code}/cities/{city_id}")
@@ -621,14 +566,8 @@ def delete_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity
-    city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
-    if not city:
-        raise HTTPException(status_code=404, detail="City not found")
-    db.delete(city)
-    db.commit()
+    svc_delete_country_city(code, city_id, db)
     return Response(status_code=204)
 
 @router.put("/{code}/cities")
@@ -747,15 +686,7 @@ def delete_payout_rule_product(code: str, rule_id: str, current_user: dict = Dep
 
 @router.post("/{code}/toggle-active")
 def toggle_country_active(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_admin
-    _require_admin(current_user)
-    from models import CountryConfig
-    c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
-    if not c:
-        raise HTTPException(status_code=404, detail="Country not found")
-    c.is_active = not c.is_active
-    db.commit()
-    return {"message": f"Country {'enabled' if c.is_active else 'disabled'}"}
+    return svc_toggle_country_active(code, current_user, db)
 
 
 class ArchivePayload(BaseModel):
@@ -769,70 +700,31 @@ class BulkIdsPayload(BaseModel):
 
 @router.post("/{code}/archive")
 def archive_country(code: str, payload: ArchivePayload = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_full_admin, _get_country_or_404, _record_admin_change
-    _require_full_admin(current_user)
-    c = _get_country_or_404(code, db)
-    c.is_deleted = True
-    _record_admin_change(db, actor_id=current_user.get("id"), action="archive", entity="country_config",
-                         entity_key=code.upper(), before={"is_deleted": False}, after={"is_deleted": True})
-    db.commit()
-    return {"message": "Country archived"}
+    return svc_archive_country(code, current_user, db)
 
 
 @router.post("/{code}/restore")
 def restore_country(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_full_admin, _get_country_or_404, _record_admin_change
-    _require_full_admin(current_user)
-    c = _get_country_or_404(code, db)
-    c.is_deleted = False
-    _record_admin_change(db, actor_id=current_user.get("id"), action="restore", entity="country_config",
-                         entity_key=code.upper(), before={"is_deleted": True}, after={"is_deleted": False})
-    db.commit()
-    return {"message": "Country restored"}
+    return svc_restore_country(code, current_user, db)
 
 
 @router.post("/bulk/archive")
 def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_full_admin, _record_admin_change
-    _require_full_admin(current_user)
-    from models import CountryConfig
-    rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
-    for c in rows:
-        c.is_deleted = True
-        _record_admin_change(db, actor_id=current_user.get("id"), action="bulk_archive", entity="country_config",
-                             entity_key=c.code, before={"is_deleted": False}, after={"is_deleted": True})
-    db.commit()
-    return {"message": f"{len(rows)} countries archived"}
+    return svc_bulk_archive_countries(payload.ids, current_user, db)
 
 
 @router.post("/bulk/restore")
 def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_full_admin, _record_admin_change
-    _require_full_admin(current_user)
-    from models import CountryConfig
-    rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
-    for c in rows:
-        c.is_deleted = False
-        _record_admin_change(db, actor_id=current_user.get("id"), action="bulk_restore", entity="country_config",
-                             entity_key=c.code, before={"is_deleted": True}, after={"is_deleted": False})
-    db.commit()
-    return {"message": f"{len(rows)} countries restored"}
+    return svc_bulk_restore_countries(payload.ids, current_user, db)
 
 
 @router.delete("/{code}")
 def hard_delete_country(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_full_admin
-    _require_full_admin(current_user)
-    c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
-    if not c:
-        raise HTTPException(status_code=404, detail="Country not found")
-    db.delete(c)
-    db.commit()
+    svc_hard_delete_country(code, current_user, db)
     return Response(status_code=204)
 
 
 router.include_router(auto_populate_router)
-router.include_router(versioning_router)
 
 
 # ── Country Commission Rates ─────────────────────────────────────────────────────
@@ -846,60 +738,15 @@ class CountryCommissionRateItem(BaseModel):
 
 @router.get("/countries/{code}/commission-rates")
 def list_country_commission_rates(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_admin, _require_country_access
-    _require_admin(current_user)
-    _require_country_access(code, current_user)
-    from models import CountryCommissionRate
-    rows = db.query(CountryCommissionRate).filter(
-        CountryCommissionRate.country_code == code.upper()
-    ).order_by(CountryCommissionRate.supplier_tier, CountryCommissionRate.name).all()
-    return [{"supplier_tier": r.supplier_tier, "name": r.name, "commission_percentage": float(r.rate_percent) * 100, "fixed_fee": float(r.fixed_fee) if r.fixed_fee else 0.0} for r in rows]
+    return svc_list_country_commission_rates(code, current_user, db)
 
 
 @router.post("/countries/{code}/commission-rates")
 def create_country_commission_rate(code: str, body: CountryCommissionRateItem, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_admin, _require_country_access, _get_country_or_404, _record_admin_change
-    _require_admin(current_user)
-    _require_country_access(code, current_user)
-    _get_country_or_404(code, db)
-    from models import CountryCommissionRate
-    existing = db.query(CountryCommissionRate).filter(
-        CountryCommissionRate.country_code == code.upper(),
-        CountryCommissionRate.supplier_tier == body.supplier_tier,
-        CountryCommissionRate.name == body.name,
-    ).first()
-    if existing:
-        raise HTTPException(status_code=409, detail="Commission rate already exists for this tier and name")
-    rate = CountryCommissionRate(
-        country_code=code.upper(),
-        supplier_tier=body.supplier_tier,
-        name=body.name,
-        rate_percent=Decimal(str(body.commission_percentage / 100)),
-    )
-    if body.fixed_fee:
-        rate.fixed_fee = Decimal(str(body.fixed_fee))
-    db.add(rate)
-    _record_admin_change(db, actor_id=current_user.get("id"), action="create_commission_rate", entity="country_commission_rate", entity_key=f"{code}:{body.supplier_tier}:{body.name}", before=None, after=body.model_dump())
-    db.commit()
-    db.refresh(rate)
-    return {"id": rate.id, **body.model_dump()}
+    return svc_create_country_commission_rate(code, body, current_user, db)
 
 
 @router.delete("/countries/{code}/commission-rates/{tier}/{name}")
 def delete_country_commission_rate(code: str, tier: str, name: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_admin, _require_country_access, _record_admin_change
-    _require_admin(current_user)
-    _require_country_access(code, current_user)
-    from models import CountryCommissionRate
-    rate = db.query(CountryCommissionRate).filter(
-        CountryCommissionRate.country_code == code.upper(),
-        CountryCommissionRate.supplier_tier == tier,
-        CountryCommissionRate.name == name,
-    ).first()
-    if not rate:
-        raise HTTPException(status_code=404, detail="Commission rate not found")
-    db.delete(rate)
-    _record_admin_change(db, actor_id=current_user.get("id"), action="delete_commission_rate", entity="country_commission_rate", entity_key=f"{code}:{tier}:{name}", before={"commission_percentage": float(rate.rate_percent)}, after=None)
-    db.commit()
-    return {"message": "Commission rate deleted"}
+    return svc_delete_country_commission_rate(code, tier, name, current_user, db)
 

@@ -43,5 +43,12 @@ from services.users.user_write_ops import (
     update_staff_user,
     update_user_browsing_history,
 )
+
+# Private-name aliases re-exported for legacy imports and the recovery tests.
+# The recovered implementations are the public names imported above.
+_build_user_delete_blocker = build_user_delete_blocker
+_delete_order_records = delete_order_records
+_hard_delete_user_record = hard_delete_user_record
+
 import structlog
 logger = structlog.get_logger(__name__)

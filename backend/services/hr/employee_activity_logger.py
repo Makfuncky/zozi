@@ -166,7 +166,7 @@ def get_team_activity(
     since: Optional[datetime] = None,
 ) -> List[Dict[str, Any]]:
     """Get activity log for all employees under a manager's subtree."""
-    from services.hierarchy_service import get_all_subordinates as get_subs
+    from services.hierarchy.hierarchy_service import get_all_subordinates as get_subs
     from models.employee_models import Employee
     mgr_emp = db.query(Employee).filter(Employee.id == manager_employee_id).first()
     if not mgr_emp:

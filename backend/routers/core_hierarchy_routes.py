@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.hierarchy_controller as _ctrl
+    import controllers.hr.hierarchy_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:
@@ -27,5 +27,5 @@ except Exception:
 @router.get("/core_hierarchy_routes/status")
 def status():
     """Report whether a backing controller is importable."""
-    return {"router": "core_hierarchy_routes", "controller": "controllers.hierarchy_controller" if _HAS_CTRL else None,
+    return {"router": "core_hierarchy_routes", "controller": "controllers.hr.hierarchy_controller" if _HAS_CTRL else None,
             "public_functions": _CTRL_PUBLIC}

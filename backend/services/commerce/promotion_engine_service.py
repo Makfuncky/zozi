@@ -1,6 +1,6 @@
 """Promotion engine configuration service.
 
-Implements the previously-stubbed helpers used by ``controllers.promotion_controller``:
+Implements the previously-stubbed helpers used by ``controllers.commerce.promotion_controller``:
 ensuring the promotion tables exist and getting-or-creating the engine config row.
 """
 from __future__ import annotations

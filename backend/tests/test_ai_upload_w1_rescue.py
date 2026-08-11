@@ -92,7 +92,7 @@ def test_router_delegates_to_controller(router_src: str) -> None:
 
 def test_modules_import() -> None:
     importlib.import_module("routers.public_ai_upload_access")
-    importlib.import_module("controllers.ai_upload_controller")
+    importlib.import_module("controllers.core.ai_upload_controller")
     mod = importlib.import_module("services.ai.ai_upload_write_service")
     for fn in (
         "create_ai_upload_job",
@@ -107,7 +107,7 @@ def test_modules_import() -> None:
 def test_controller_delegates_to_service(monkeypatch) -> None:
     from unittest.mock import MagicMock
 
-    import controllers.ai_upload_controller as ctrl
+    import controllers.core.ai_upload_controller as ctrl
 
     _isolate_serializers(ctrl, monkeypatch)
 

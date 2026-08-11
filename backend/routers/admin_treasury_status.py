@@ -9,8 +9,8 @@ from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.datetime_utils import utcnow
-from controllers.audit_controller import audit_log, AuditAction
-from services.auto_payout_scheduler import (
+from utils.audit import audit_log, AuditAction
+from services.treasury.auto_payout_scheduler import (
     get_background_job_status as _get_bg_status,
     start_auto_payout_background_job as _start_bg_job,
     stop_auto_payout_background_job as _stop_bg_job,
@@ -320,7 +320,7 @@ def _update_bg_status_after_manual_trigger(
     logistics_result: dict,
 ) -> None:
     """Update the in-memory background job status after a manual trigger."""
-    from services.auto_payout_scheduler import update_background_status
+    from services.treasury.auto_payout_scheduler import update_background_status
 
     supplier_status = supplier_result.get("status", "error")
     logistics_status = logistics_result.get("status", "error")

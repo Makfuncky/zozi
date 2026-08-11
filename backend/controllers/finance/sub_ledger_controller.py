@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from services.sub_ledger_service import (
+from services.finance.sub_ledger_service import (
     get_ar_summary,
     post_ar_invoice,
     post_ar_payment,
@@ -16,7 +16,7 @@ from services.sub_ledger_service import (
     post_ap_payable,
     post_ap_payment,
 )
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 

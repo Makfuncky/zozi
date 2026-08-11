@@ -10,7 +10,7 @@ from sqlalchemy import text
 from db.database import get_db
 from models import User
 from utils.dependencies import get_current_user, require_admin
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 from utils.ip_utils import get_ip_for_logging
 
 logger = logging.getLogger("zozi.api.comms")

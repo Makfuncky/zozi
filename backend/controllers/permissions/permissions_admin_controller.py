@@ -3,7 +3,7 @@
 The ``routers.admin_permissions_validation`` router delegates to this controller so
 it stays within the allowed circuit (routers -> controllers/schemas/auth-deps only).
 Persistence and the 3-layer effective-permission resolution are owned by
-``services.permission_service`` and ``services.effective_permissions`` respectively.
+``services.security.permission_service`` and ``services.security.effective_permissions`` respectively.
 """
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from services import permission_service as svc
-from services.effective_permissions import (
+from services.security import permission_service as svc
+from services.security.effective_permissions import (
     get_effective_permissions as _resolve_effective_perms,
     check_permission as _resolve_check_perm,
     request_permission_change,
@@ -23,7 +23,7 @@ from services.effective_permissions import (
     COUNTRY_ROLE_PERMISSION_MAP,
     MAKER_CHECKER_PERMISSIONS,
 )
-from controllers.admin_controller import require_admin
+from controllers.admin.admin_controller import require_admin
 
 
 def list_categories(db: Session) -> list[dict]:

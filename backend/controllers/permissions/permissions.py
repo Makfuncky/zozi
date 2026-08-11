@@ -8,8 +8,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from data.models import RolePermissionSetting
-from services.db_read import all_rows
-from services.permissions_write_service import (
+from services.common.db_read import all_rows
+from services.security.permissions_write_service import (
     upsert_role_permission_setting as _upsert_role_permission_setting,
 )
 from utils.staff_permissions import (

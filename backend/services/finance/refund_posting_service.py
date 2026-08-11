@@ -29,7 +29,7 @@ from models import (
     FinanceAuditLog,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
-from services import general_ledger_service as gl
+from services.finance import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

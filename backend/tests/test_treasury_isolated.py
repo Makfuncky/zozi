@@ -2,14 +2,14 @@
 
 These deliberately avoid importing ``main`` or building a live DB schema, so
 they keep working even when an unrelated module (e.g. the missing
-``services.auth_write_service`` used by ``auth_controller``) breaks the rest of
+``services.security.auth_write_service`` used by ``auth_controller``) breaks the rest of
 the app. They validate that:
 
   * ``routers.public_treasury_api_access`` exposes the four query functions that
     ``routers.public_treasury_access`` depends on (regression guard for the W1 relocation
     bug where ``treasury_api`` was moved into ``services.treasury`` but the
     router import was never updated).
-  * ``services.write_helpers`` provides the session helpers consumed by the
+  * ``scripts.maintenance.write_helpers`` provides the session helpers consumed by the
     treasury service layer.
 
 The DB session is a MagicMock, so no real database or model metadata is needed.
@@ -39,7 +39,7 @@ def test_treasury_api_reexports_resolve():
 def test_write_helpers_roundtrip():
     from sqlalchemy.orm import Session
 
-    from services.write_helpers import (
+    from services.common.write_helpers import (
         add_and_flush,
         commit_and_refresh,
         commit_only,

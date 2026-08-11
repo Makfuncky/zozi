@@ -12,7 +12,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from services.db_read import execute as db_read_execute
+from services.common.db_read import execute as db_read_execute
 
 
 def get_risk_scores(db: Session, employee_id: int) -> list[dict]:

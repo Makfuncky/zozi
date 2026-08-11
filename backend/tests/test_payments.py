@@ -79,9 +79,9 @@ def _mock_payment_intent(intent_id="pi_test_001", amount=3000, currency="usd"):
 
 @pytest.mark.integration
 def test_create_payment_intent(client, customer_headers, order_in_db):
-    with patch("controllers.payments_controller.stripe") as mock_stripe, \
-         patch("controllers.payments_controller._stripe_configured", return_value=True), \
-         patch("controllers.payments_controller._payment_provider_mode_allows", return_value=True):
+    with patch("services.gateways.payments.stripe") as mock_stripe, \
+         patch("services.gateways.payments._stripe_configured", return_value=True), \
+         patch("services.gateways.payments._payment_provider_mode_allows", return_value=True):
         mock_stripe.PaymentIntent.create.return_value = _mock_payment_intent()
         resp = client.post(
             "/api/v1/payments/create-payment-intent",
@@ -94,8 +94,8 @@ def test_create_payment_intent(client, customer_headers, order_in_db):
 
 @pytest.mark.integration
 def test_create_payment_intent_invalid_amount(client, customer_headers, order_in_db):
-    with patch("controllers.payments_controller._stripe_configured", return_value=True), \
-         patch("controllers.payments_controller._payment_provider_mode_allows", return_value=True):
+    with patch("services.gateways.payments._stripe_configured", return_value=True), \
+         patch("services.gateways.payments._payment_provider_mode_allows", return_value=True):
         resp = client.post(
             "/api/v1/payments/create-payment-intent",
             headers=customer_headers,
@@ -121,7 +121,7 @@ def test_stripe_webhook_misconfigured(client):
 
 @pytest.mark.integration
 def test_stripe_webhook_bad_payload(client):
-    with patch("controllers.payments_controller.settings") as mock_settings:
+    with patch("services.gateways.payments.settings") as mock_settings:
         mock_settings.stripe_webhook_secret = "whsec_test"
         resp = client.post(
             "/api/v1/payments/webhook",
@@ -170,8 +170,8 @@ def test_payment_unauthorized(client):
 
 @pytest.mark.integration
 def test_payment_intent_for_nonexistent_order(client, customer_headers):
-    with patch("controllers.payments_controller._stripe_configured", return_value=True), \
-         patch("controllers.payments_controller._payment_provider_mode_allows", return_value=True):
+    with patch("services.gateways.payments._stripe_configured", return_value=True), \
+         patch("services.gateways.payments._payment_provider_mode_allows", return_value=True):
         resp = client.post(
             "/api/v1/payments/create-payment-intent",
             headers=customer_headers,

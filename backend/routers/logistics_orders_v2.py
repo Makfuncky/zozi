@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models import User, LogisticsPartner, Shipment
 from utils.dependencies import require_logistics, require_admin
-from services.order_tracking_service import (
+from services.orders.order_tracking_service import (
     get_available_orders_for_logistics,
     get_order_shipment_label,
     logistics_confirm_pickup,

@@ -1,0 +1,41 @@
+name: CI — Router Generation Drift Check
+
+# Ensures the auto-generated routers in routers/ stay in sync with the
+# @route decorators declared in controllers/. If a controller route is added or
+# changed without re-running the generator, this job fails.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.10"
+  APP_ENV: test
+
+jobs:
+  router-generation-check:
+    name: Router generation drift check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify generated routers match controllers
+        run: |
+          python routers/generated/auto_router.py --verify

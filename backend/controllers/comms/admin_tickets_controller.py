@@ -15,9 +15,11 @@ from services.comms.tickets_write_service import (
     count_tickets,
     get_ticket_with_details,
     get_ticket_by_id,
+    admin_reply_to_ticket,
+    update_ticket_status as _update_ticket_status,
 )
-
-from data.services_write_helpers import add_and_flush, commit_and_refresh
+import structlog
+logger = structlog.get_logger(__name__)
 
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
@@ -28,9 +30,6 @@ def _build_list_page_payload(items: list, total: int, offset: int, page_size: in
         "pageSize": page_size,
     }
 
-from services.write_helpers import add_and_flush, commit_and_refresh
-import structlog
-logger = structlog.get_logger(__name__)
 
 def _serialize_ticket_attachment(attachment: TicketAttachment) -> dict[str, Any]:
     return {
@@ -81,6 +80,7 @@ def _serialize_support_ticket(ticket: SupportTicket, *, include_message: bool = 
         payload["replies"] = [_serialize_ticket_message(reply) for reply in list(getattr(ticket, "messages", []) or [])]
     return payload
 
+
 def list_tickets(db: Session, status: Optional[str] = None, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     resolved_limit = 200 if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
     tickets = _fetch_tickets(db, status=status, limit=resolved_limit, offset=offset)
@@ -102,25 +102,7 @@ def reply_to_ticket(ticket_id: int, message: str, acting_user: dict, db: Session
         raise HTTPException(status_code=404, detail="Ticket not found")
     if not message or not message.strip():
         raise HTTPException(status_code=400, detail="Reply message cannot be empty")
-    reply = TicketMessage(
-        ticket_id=ticket_id,
-        sender_id=acting_user["id"],
-        message=message.strip(),
-        is_admin=True,
-    )
-    add_and_flush(db, reply)
-    if cast(str, getattr(ticket, "status")) in {"open", "pending", "resolved", "closed"}:
-        setattr(ticket, "status", "in_progress")
-    add_and_flush(db, 
-   Notification(
-            user_id=ticket.user_id,
-            type="support",
-            title="Support Reply Received",
-            message=f'Admin replied to your ticket: "{ticket.subject}"',
-            link=f"/tickets/{ticket.id}",
-        )
-    )
-    commit_and_refresh(db, ticket)
+    ticket = admin_reply_to_ticket(db, ticket, message.strip(), acting_user["id"])
     return _serialize_support_ticket(ticket, include_message=True, include_replies=True)
 
 
@@ -131,8 +113,5 @@ def update_ticket_status(ticket_id: int, status: str, acting_user: dict, db: Ses
     ticket = get_ticket_by_id(db, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    setattr(ticket, "status", status)
-    commit_and_refresh(db, ticket)
+    ticket = _update_ticket_status(db, ticket, status)
     return _serialize_support_ticket(ticket, include_message=True, include_replies=True)
-
-

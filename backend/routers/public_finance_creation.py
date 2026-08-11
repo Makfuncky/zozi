@@ -9,18 +9,18 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from controllers.admin_controller import require_admin
-from controllers import accounting_controller
-from services.financial_reporting import FinancialReportingService
-from services.period_close_service import (
+from controllers.admin.admin_controller import require_admin
+from controllers.finance import accounting_controller
+from services.finance.financial_reporting import FinancialReportingService
+from services.finance.period_close_service import (
     get_or_create_fiscal_period,
     get_current_fiscal_period,
     close_period,
     list_periods,
 )
-from services.je_reversal_service import reverse_journal_entry
-from services.cash_flow_forecast_service import generate_forecast as generate_cash_forecast
-from controllers.sub_ledger_controller import (
+from services.finance.je_reversal_service import reverse_journal_entry
+from services.treasury.cash_flow_forecast_service import generate_forecast as generate_cash_forecast
+from controllers.finance.sub_ledger_controller import (
     controller_get_ar_summary,
     controller_get_ap_summary,
     controller_post_ar_invoice,
@@ -28,7 +28,7 @@ from controllers.sub_ledger_controller import (
     controller_post_ap_payable,
     controller_post_ap_payment,
 )
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 

@@ -12,7 +12,7 @@ import re
 
 import pytest
 
-from services.misc_write_service import reset_demo_data
+from services.common.misc_write_service import reset_demo_data
 from utils.config import settings
 
 _MISC_WRITE_SERVICE = (

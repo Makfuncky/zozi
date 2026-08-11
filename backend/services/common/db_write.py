@@ -3,7 +3,7 @@
 Routers, controllers and middleware must not call ``db.add()`` / ``db.commit()``
 etc. directly (auditor rule **W1**). Instead they delegate every session mutation
 to the helpers here — the write-side mirror of the read access owned by
-``services.db_read``.
+``services.common.db_read``.
 
 Why this exists
 ---------------
@@ -23,7 +23,7 @@ Design rules
 * Signatures accept ``*args`` / ``**kwargs`` so they forward exactly to the
   underlying SQLAlchemy ``Session`` method — this is a thin delegation layer, not
   a behavioural change, and callers keep working unchanged.
-* Reads never belong here — use ``services.db_read``.
+* Reads never belong here — use ``services.common.db_read``.
 """
 from __future__ import annotations
 

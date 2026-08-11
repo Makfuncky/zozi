@@ -25,7 +25,7 @@ class CrossBorderTracker:
         user_id: Optional[int] = None
     ) -> Optional[Dict[str, Any]]:
         """Track a customer session with country detection."""
-        from services.cross_border_service import GeoDetectionService
+        from services.geography.cross_border_service import GeoDetectionService
         
         country_code = GeoDetectionService.detect_country_from_ip(ip_address)
         if not country_code:

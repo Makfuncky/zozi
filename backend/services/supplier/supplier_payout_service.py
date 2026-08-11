@@ -12,6 +12,16 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
+def list_supplier_payouts(db: Session, supplier_id: int) -> list[Payout]:
+    """Return payout requests for a supplier, newest first."""
+    return (
+        db.query(Payout)
+        .filter(Payout.supplier_id == supplier_id)
+        .order_by(Payout.created_at.desc())
+        .all()
+    )
+
+
 def create_supplier_payout(
     db: Session,
     supplier_id: int,

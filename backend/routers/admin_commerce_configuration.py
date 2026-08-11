@@ -9,7 +9,7 @@ from models import PromotionEngineConfig, PromotionOrderTier, FlashSale, Banner,
 from db.schemas import ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import enforce_country_access
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     archive_entity,
     restore_entity,
     bulk_archive_entities,

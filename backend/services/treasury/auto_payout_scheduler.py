@@ -281,7 +281,7 @@ def run_auto_payout_sweep(
         # â”€â”€ 7. Send payout notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         notifications: list[dict[str, Any]] = []
         try:
-            from services.payout_notification_service import notify_suppliers_of_payout
+            from services.comms.payout_notification_service import notify_suppliers_of_payout
 
             summary = {
                 "payout_ids": [
@@ -555,7 +555,7 @@ def run_auto_logistics_payout_sweep(
         # â”€â”€ 8. Send payout notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         logistics_notifications: list[dict[str, Any]] = []
         try:
-            from services.payout_notification_service import notify_logistics_partners_of_payout
+            from services.comms.payout_notification_service import notify_logistics_partners_of_payout
 
             summary = {
                 "payout_ids": [

@@ -46,17 +46,17 @@ from data.models import (
     User,
 )
 
-import services.logistics_write_service as logistics
-import services.employee_write_service as emp
-import services.hr_write_service as hr
-import services.iam_write_service as iam
-import services.banner_write_service as banner
-import services.disputes_write_service as disputes
-import services.misc_write_service as misc
-import services.permissions_write_service as perms
-import services.promotion_engine_service as promo
-import services.returns_write_service as ret
-import services.supplier_badge_service as badge
+import services.logistics.logistics_write_service as logistics
+import services.hr.employee_write_service as emp
+import services.hr.hr_write_service as hr
+import services.security.iam_write_service as iam
+import services.commerce.banner_write_service as banner
+import services.orders.disputes_write_service as disputes
+import services.common.misc_write_service as misc
+import services.security.permissions_write_service as perms
+import services.commerce.promotion_engine_service as promo
+import services.orders.returns_write_service as ret
+import services.supplier.supplier_badge_service as badge
 import routers.public_permission_primitives_access as prim
 
 

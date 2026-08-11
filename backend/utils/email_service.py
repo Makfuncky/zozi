@@ -441,7 +441,7 @@ def send_email(
     event_db: Session | None = None,
 ) -> None:
     """Dispatch an email using the active runtime configuration."""
-    from services.email_event_service import is_email_suppressed, record_email_delivery_event
+    from services.comms.email_event_service import is_email_suppressed, record_email_delivery_event
 
     transport = _get_runtime_email_config()
     resolved_from = from_address or get_email_sender_address(purpose)

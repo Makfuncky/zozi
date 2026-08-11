@@ -4,12 +4,18 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import func as sqlfunc
 
 from db.database import get_db
 from models import User
 from models.core import VideoRoom
-from services.video_conferencing import get_video_conference
+from services.comms.video_conferencing import get_video_conference
+from services.comms.video_room_service import (
+    ensure_video_room_country,
+    list_all_video_rooms,
+    list_video_rooms,
+    list_video_rooms_for_country,
+    video_room_metrics,
+)
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
@@ -43,7 +49,7 @@ def admin_list_all_rooms(
     db: Session = Depends(get_db),
 ):
     """List all video rooms across all countries (consolidated view)."""
-    rooms = db.query(VideoRoom).order_by(VideoRoom.created_at.desc()).limit(200).all()
+    rooms = list_all_video_rooms(db)
     return [_serialize_room(r) for r in rooms]
 
 
@@ -55,10 +61,7 @@ def admin_list_video_rooms(
 ):
     """List video rooms, filtered by the X-Country-Code header when present."""
     country = _resolve_country(request, "")
-    q = db.query(VideoRoom)
-    if country:
-        q = q.filter(VideoRoom.country_code == country)
-    rooms = q.order_by(VideoRoom.created_at.desc()).limit(200).all()
+    rooms = list_video_rooms(db, country)
     return [_serialize_room(r) for r in rooms]
 
 
@@ -81,10 +84,7 @@ def admin_create_video_room(
     part_list = participants or ([creator] if creator is not None else [])
     vc = get_video_conference(db)
     result = vc.create_room(name, part_list, boardroom, country_code=country, employee_id=creator)
-    db_room = db.query(VideoRoom).filter(VideoRoom.room_id == result["room_id"]).first()
-    if db_room and not db_room.country_code:
-        db_room.country_code = country
-        db.commit()
+    db_room = ensure_video_room_country(db, result["room_id"], country)
     return {
         "id": db_room.id if db_room else None,
         "room_uuid": result.get("room_uuid"),
@@ -104,14 +104,7 @@ def admin_video_metrics(
     db: Session = Depends(get_db),
 ):
     """Video room metrics across all countries."""
-    total_rooms = db.query(sqlfunc.count(VideoRoom.id)).scalar() or 0
-    active_rooms = db.query(sqlfunc.count(VideoRoom.id)).filter(VideoRoom.status == "active").scalar() or 0
-    max_part_sum = db.query(sqlfunc.coalesce(sqlfunc.sum(VideoRoom.max_participants), 0)).scalar() or 0
-    return {
-        "total_rooms": total_rooms,
-        "active_rooms": active_rooms,
-        "total_max_participants": max_part_sum,
-    }
+    return video_room_metrics(db)
 
 
 @router.get("/video/rooms/{country_code}")
@@ -123,20 +116,8 @@ def admin_list_rooms(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        rooms = db.query(VideoRoom).filter(VideoRoom.country_code == country_code.upper()).order_by(VideoRoom.created_at.desc()).limit(100).all()
-        return [
-            {
-                "id": r.id,
-                "room_uuid": r.room_uuid,
-                "name": r.name,
-                "purpose": "boardroom" if r.is_boardroom else "meeting",
-                "status": r.status,
-                "max_participants": r.max_participants,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
-                "invite_link": f"/meet/{r.room_uuid}" if r.room_uuid else None,
-            }
-            for r in rooms
-        ]
+        rooms = list_video_rooms_for_country(db, country_code)
+        return [_serialize_room(r) for r in rooms]
     finally:
         clear_rls_context()
 
@@ -159,11 +140,7 @@ def admin_create_room(
         is_boardroom = purpose == "boardroom"
         result = vc.create_room(name, participants, is_boardroom, employee_id=created_by)
 
-        db_room = db.query(VideoRoom).filter(VideoRoom.room_id == result["room_id"]).first()
-        if db_room and not db_room.country_code:
-            db_room.country_code = country_code.upper()
-            db.commit()
-            db.refresh(db_room)
+        db_room = ensure_video_room_country(db, result["room_id"], country_code)
         return {
             "id": db_room.id if db_room else None,
             "room_uuid": result.get("room_uuid"),
@@ -176,4 +153,3 @@ def admin_create_room(
         }
     finally:
         clear_rls_context()
-

@@ -2,7 +2,7 @@
 
 Routers call these wrappers instead of touching the session directly. The
 wrappers perform no DB writes of their own — they forward ``db`` to
-``services.fraud_admin_service`` (circuit LAYER 3 contract: controllers may
+``services.security.fraud_admin_service`` (circuit LAYER 3 contract: controllers may
 call services).
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from services.fraud_admin_service import (
+from services.security.fraud_admin_service import (
     add_to_blacklist as _add_to_blacklist,
     assign_review as _assign_review,
     create_rule as _create_rule,

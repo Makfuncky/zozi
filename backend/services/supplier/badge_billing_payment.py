@@ -21,7 +21,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from data.models import BadgeBillingRecord, BankTransaction
-from services.cash_management_service import log_bank_transaction
+from services.treasury.cash_management_service import log_bank_transaction
 from utils.datetime_utils import utcnow
 from utils.money import round_money, to_decimal
 import structlog

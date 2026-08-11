@@ -27,8 +27,8 @@ from data.models import (
     SupportTicket,
     User,
 )
-from services.db_read import all_rows, column_values, count, first
-from services.misc_write_service import (
+from services.common.db_read import all_rows, column_values, count, first
+from services.common.misc_write_service import (
     hard_delete_record as _hard_delete_record,
     restore_record as _restore_record,
     soft_delete_record as _soft_delete_record,

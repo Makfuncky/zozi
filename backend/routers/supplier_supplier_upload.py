@@ -20,8 +20,8 @@ from PIL import Image
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
-from controllers.admin_controller import require_roles
-from services.bg_removal_service import (
+from controllers.admin.admin_controller import require_roles
+from services.ai.bg_removal_service import (
     VALID_STRATEGIES,
     remove_background,
     _HAS_CV2,
@@ -131,7 +131,7 @@ async def ab_test_bg_strategies(
     """
     import uuid
     from utils.background_jobs import enqueue_ml_job
-    from services.storage import storage as _storage
+    from services.common.storage import storage as _storage
 
     raw = await image.read()
     if not raw:
@@ -144,7 +144,7 @@ async def ab_test_bg_strategies(
     _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
 
     def _run_ab_test() -> dict:
-        from services.bg_removal_service import remove_background, VALID_STRATEGIES
+        from services.ai.bg_removal_service import remove_background, VALID_STRATEGIES
         from providers.bg_remover import _bytes_to_image, _compute_quality_score
         from PIL import Image
         import base64, time, gc
@@ -278,7 +278,7 @@ async def get_bg_recommendations(
     metrics only change when a new comparison run is executed.
     """
     import time
-    from services.bg_removal_service import _get_category_recommendations
+    from services.ai.bg_removal_service import _get_category_recommendations
 
     now = time.time()
     cache_key = "bg_category_recommendations"

@@ -29,7 +29,39 @@ from typing import Any, Dict, Optional
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from mcp.server.fastmcp import FastMCP
+try:
+    from mcp.server.fastmcp import FastMCP
+except ImportError:
+    class FastMCP:
+        """Minimal stand-in used only when the optional ``mcp`` SDK is absent.
+
+        The ZOZI MCP server requires the SDK at runtime; this stub merely lets the
+        module import so the rest of the package stays import-clean.
+        """
+
+        def __init__(self, name, lifespan=None):
+            self.name = name
+
+        def tool(self, *args, **kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+        def resource(self, *args, **kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+        def prompt(self, *args, **kwargs):
+            def decorator(func):
+                return func
+            return decorator
+
+        def run(self, transport=None):
+            raise RuntimeError(
+                "The 'mcp' package is not installed. Install it to run the ZOZI MCP "
+                "server (e.g. `pip install mcp`)."
+            )
 
 # ---------------------------------------------------------------------------
 # Lifespan (defined before the server instance so FastMCP is constructed with

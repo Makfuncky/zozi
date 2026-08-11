@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from pydantic import BaseModel, Field
 
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 from models import (
     TreasuryAccount, TreasuryTransaction,
     JournalEntry, JournalEntryLine

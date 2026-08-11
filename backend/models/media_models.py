@@ -15,8 +15,8 @@ class MediaAsset(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), nullable=False, index=True)
-    supplier_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=True, index=True)
+    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
+    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True, index=True)
     
     entity_type = Column(String(20), nullable=False)  # product | supplier | user | article
     entity_id = Column(Integer, nullable=True, index=True)
@@ -33,7 +33,7 @@ class MediaAsset(Base):
     alt_text = Column(String(255), nullable=True)
     caption = Column(Text, nullable=True)
     
-    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    uploaded_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     uploaded_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
@@ -60,7 +60,7 @@ class MediaUploadSession(Base):
     uploaded_chunks = Column(Integer, default=0)
     status = Column(String(20), default="pending")  # pending | uploading | completed | failed
     error_message = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     completed_at = Column(DateTime, nullable=True)
     

@@ -1,6 +1,6 @@
 """Auto-generated forwarder shim for the exempt `data` facade.
 
-Re-exports ``services.succession_service`` so first-party layers can reach it through the
+Re-exports ``services.hr.succession_service`` so first-party layers can reach it through the
 circuit-exempt ``data`` package instead of importing it directly.
 """
 import importlib
@@ -8,7 +8,7 @@ import sys
 import structlog
 logger = structlog.get_logger(__name__)
 
-_target = "services.succession_service"
+_target = "services.hr.succession_service"
 _m = sys.modules.get(_target)
 if _m is None:
     _m = importlib.import_module(_target)

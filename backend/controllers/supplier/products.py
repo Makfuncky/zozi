@@ -3,7 +3,7 @@
 Re-exports product-related functions from the monolithic supplier_controller.
 New product-related business logic should be added here.
 """
-from controllers.supplier_controller import (  # noqa: F401
+from controllers.supplier.supplier_controller import (  # noqa: F401
     get_supplier_products,
     get_supplier_product,
     create_supplier_product,

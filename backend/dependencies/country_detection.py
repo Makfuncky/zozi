@@ -2,7 +2,7 @@
 
 The circuit allows middleware to import only ``db``, ``utils``,
 ``dependencies`` and ``data`` — never ``services``. This adapter owns the
-``services.country_detection`` call (the dependencies layer is permitted to
+``services.geography.country_detection`` call (the dependencies layer is permitted to
 reach services), so ``middleware.country_context`` stays inside the circuit.
 
 Behavior matches the previous in-middleware implementation exactly: the
@@ -20,7 +20,7 @@ _service = None
 def _get_service():
     global _service
     if _service is None:
-        from services.country_detection import CountryDetectionService
+        from services.geography.country_detection import CountryDetectionService
         _service = CountryDetectionService()
     return _service
 

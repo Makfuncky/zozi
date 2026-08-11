@@ -9,13 +9,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from data.models import Coupon
-from services.coupons_write_service import (
+from services.commerce.coupons_write_service import (
     create_coupon as _create_coupon,
     delete_coupon as _delete_coupon,
     get_coupon_usage_count as _get_coupon_usage_count,
     update_coupon as _update_coupon,
 )
-from services.db_read import all_rows, exists, first, scalar_with_filters
+from services.common.db_read import all_rows, exists, first, scalar_with_filters
 from utils.audit import audit_log
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 import structlog

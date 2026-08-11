@@ -71,7 +71,7 @@ def test_auto_payout_sweep_creates_payout_and_batch(
     settlement_id: int = settlement.id
 
     # ── 3. Run the sweep (mock email to avoid side effects) ───────────────
-    from services.auto_payout_scheduler import run_auto_payout_sweep
+    from services.treasury.auto_payout_scheduler import run_auto_payout_sweep
 
     # Patch email_service.send_email — the notification service imports it
     # via ``from email_service import send_email`` inside the function body.
@@ -147,7 +147,7 @@ def test_auto_payout_sweep_no_eligible_settlements(
 ) -> None:
     """When no eligible settlements exist, the sweep returns
     ``no_eligible_settlements`` status."""
-    from services.auto_payout_scheduler import run_auto_payout_sweep
+    from services.treasury.auto_payout_scheduler import run_auto_payout_sweep
 
     with patch("email_service.send_email"):
         result = run_auto_payout_sweep(db_session)
@@ -183,7 +183,7 @@ def test_auto_payout_sweep_skips_future_eligible(
     db_session.add(settlement)
     db_session.flush()
 
-    from services.auto_payout_scheduler import run_auto_payout_sweep
+    from services.treasury.auto_payout_scheduler import run_auto_payout_sweep
 
     with patch("email_service.send_email"):
         result = run_auto_payout_sweep(db_session)
@@ -220,7 +220,7 @@ def test_auto_payout_sweep_dry_run(
     db_session.add(settlement)
     db_session.flush()
 
-    from services.auto_payout_scheduler import run_auto_payout_sweep
+    from services.treasury.auto_payout_scheduler import run_auto_payout_sweep
 
     with patch("email_service.send_email"):
         result = run_auto_payout_sweep(db_session, dry_run=True)

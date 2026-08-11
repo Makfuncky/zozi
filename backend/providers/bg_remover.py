@@ -93,6 +93,11 @@ def _image_to_bytes(img: Image.Image, fmt: str = "PNG") -> bytes:
     return buf.getvalue()
 
 
+def bytes_to_image(data: bytes) -> Image.Image:
+    """Inverse of :func:`_image_to_bytes` — load raw image bytes into a PIL image."""
+    return Image.open(io.BytesIO(data)).convert("RGBA")
+
+
 # ========================== ENUMS & CONSTANTS ==========================
 
 class ProcessingStrategy(str, Enum):

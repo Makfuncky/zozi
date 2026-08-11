@@ -34,7 +34,7 @@ async def list_cross_border_sessions(country_code: str, db: Session = Depends(ge
 
 @router.get("/admin/countries/{country_code}/legal-contracts")
 async def list_legal_contracts(country_code: str, db: Session = Depends(get_db)):
-    from db.models_country_control import LegalContractTemplate
+    from models.country_control import LegalContractTemplate
     contracts = db.query(LegalContractTemplate).filter(
         LegalContractTemplate.country_code == country_code.upper(),
         LegalContractTemplate.is_active == True
@@ -55,7 +55,7 @@ async def list_legal_contracts(country_code: str, db: Session = Depends(get_db))
 
 @router.get("/admin/countries/{country_code}/warehouses")
 async def list_warehouses(country_code: str, db: Session = Depends(get_db)):
-    from db.models_country_control import ShopWarehouseLocation
+    from models.country_control import ShopWarehouseLocation
     warehouses = db.query(ShopWarehouseLocation).filter(
         ShopWarehouseLocation.country_code == country_code.upper(),
         ShopWarehouseLocation.is_active == True

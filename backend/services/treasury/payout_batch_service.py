@@ -27,7 +27,7 @@ from models import (
     FinanceAuditLog,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
-from services import general_ledger_service as gl
+from services.finance import general_ledger_service as gl
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ def generate_supplier_payout_batches(
         
         # Send approval email to supplier
         try:
-            from services.transactional_email_service import enqueue_supplier_approval_email
+            from services.comms.transactional_email_service import enqueue_supplier_approval_email
             enqueue_supplier_approval_email(
                 supplier_id, batch.id, batch.batch_number, float(total_amount)
             )

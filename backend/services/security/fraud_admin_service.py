@@ -2,7 +2,7 @@
 
 All database reads/writes for the fraud admin surface live here (services
 layer). Routers must NOT perform ``db.query`` / ``session.add`` / ``commit``
-directly — they delegate through ``controllers.fraud_controller`` wrappers,
+directly — they delegate through ``controllers.security.fraud_controller`` wrappers,
 which call the functions in this module. This keeps the router layer a thin
 HTTP/validation boundary (circuit LAYER 2 contract).
 

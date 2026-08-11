@@ -448,7 +448,7 @@ def create_commission_ledger_entry(
 import json as _json
 
 from models import CountryConfig
-from services.logistics_partner_pricing import normalize_country_code as _normalize_country
+from services.logistics.logistics_partner_pricing import normalize_country_code as _normalize_country
 
 
 def resolve_country_commission_tiers(

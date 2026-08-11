@@ -14,7 +14,7 @@ from db.database import get_db
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
-import controllers.promotion_admin_controller as promo_ctrl
+import controllers.commerce.promotion_admin_controller as promo_ctrl
 
 router = APIRouter(prefix="/api/v1/promotions")
 
@@ -40,7 +40,7 @@ except Exception:
 def status():
     """Report whether a backing controller is importable."""
     return {"router": "admin_promotions_routes",
-            "controller": "controllers.promotion_admin_controller",
+            "controller": "controllers.commerce.promotion_admin_controller",
             "public_functions": _CTRL_PUBLIC}
 
 

@@ -61,6 +61,40 @@ jobs:
           echo "::error::Architecture gate tests failed — see uploaded results."
           exit 1
 
+  # ── Auto-Router drift check ─────────────────────────────────────────
+  auto-router-gate:
+    name: Auto-Router Drift Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify generated routers are in sync with controllers
+        # Hard gate: fails if a @get/@post controller drifted from its
+        # generated router (routers/public_commerce_*.py, etc.).
+        run: python routers/generated/auto_router.py --verify
+
+      - name: Surface forbidden patterns in routers (advisory)
+        # Informational only — many legacy hand-written routers still contain
+        # raw db.* writes; tracking them here without failing the build until
+        # that separate migration lands.
+        continue-on-error: true
+        run: python routers/generated/auto_router.py --validate
+
   # ── Secondary check: forbidden folder scan ──────────────────────────
   forbidden-folder-scan:
     name: Forbidden Folder Scan

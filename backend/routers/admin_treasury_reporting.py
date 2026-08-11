@@ -24,8 +24,8 @@ from models.payments import Payout, Payment, LogisticsPartnerPayout
 from models.logistics import LogisticsPartner
 from models.orders import Order as OrderModel
 from models.employee_models import Employee
-from services.treasury_engine import TreasuryEngine
-from controllers.auth_controller import get_current_user
+from services.treasury.treasury_engine import TreasuryEngine
+from controllers.security.auth_controller import get_current_user
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.constants import (
@@ -950,7 +950,7 @@ def admin_reconciliation_pipeline(
         from models.payments import Payment as PaymentModel, Payout
         from models.logistics import LogisticsPartner
         from models.admin import LogisticsCODRemittanceReceipt
-        from services.commission_engine import get_effective_rate
+        from services.finance.commission_engine import get_effective_rate
 
         pipeline = []
         orders = db.query(OrderModel).filter(
@@ -1087,7 +1087,7 @@ def admin_record_cod_remittance(
         db.refresh(receipt)
         # Keep the double-entry ledger in sync with the reconciliation engine.
         try:
-            from services.general_ledger_service import post_logistics_cod_remittance_journal
+            from services.finance.general_ledger_service import post_logistics_cod_remittance_journal
             post_logistics_cod_remittance_journal(db, receipt.id, Decimal(str(amount)), country_code=cc)
         except Exception as gl_err:
             logger.warning(f"COD remittance GL post skipped: {gl_err}")
@@ -1162,7 +1162,7 @@ def admin_approve_settlement(
         settlement.status = "paid"
         db.commit()
         try:
-            from services.general_ledger_service import post_supplier_settlement_journal
+            from services.finance.general_ledger_service import post_supplier_settlement_journal
             post_supplier_settlement_journal(
                 db,
                 settlement.id,

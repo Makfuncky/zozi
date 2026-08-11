@@ -1,7 +1,7 @@
 from __future__ import annotations
 """Treasury metrics orchestration controller.
 
-Routers delegate here instead of importing ``services.treasury_service``
+Routers delegate here instead of importing ``services.treasury.treasury_service``
 directly, preserving the routers -> controllers -> services circuit (CIR2).
 """
 from services.treasury.treasury_service import (

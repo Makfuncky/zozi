@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.returns_controller as _ctrl
+    import controllers.orders.returns_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:
@@ -27,5 +27,5 @@ except Exception:
 @router.get("/store_returns_routes/status")
 def status():
     """Report whether a backing controller is importable."""
-    return {"router": "store_returns_routes", "controller": "controllers.returns_controller" if _HAS_CTRL else None,
+    return {"router": "store_returns_routes", "controller": "controllers.orders.returns_controller" if _HAS_CTRL else None,
             "public_functions": _CTRL_PUBLIC}

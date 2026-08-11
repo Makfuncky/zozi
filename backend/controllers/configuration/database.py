@@ -11,7 +11,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session
 
 from data.base import Base
-from services.db_read import scalar
+from services.common.db_read import scalar
 from utils.auth import get_redis_health_status
 from utils.backup import get_backup_manager
 from utils.cache import cache_get_json, cache_set_json

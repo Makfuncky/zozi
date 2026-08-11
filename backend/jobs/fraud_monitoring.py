@@ -4,7 +4,7 @@ import logging
 
 
 from db.database import SessionLocal
-from services.fraud_detection import FraudDetectionService
+from services.security.fraud_detection import FraudDetectionService
 from services.comms.notification_service import NotificationService
 import structlog
 logger = structlog.get_logger(__name__)

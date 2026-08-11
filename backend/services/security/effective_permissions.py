@@ -235,7 +235,7 @@ def _resolve_country_role_permissions(user_id: int, country_code: str, db: Sessi
 
 def _resolve_hierarchy_permissions(employee: Employee, db: Session) -> Set[str]:
     """Layer 3: Hierarchy-derived permissions based on authority_level and subtree."""
-    from services.hierarchy_service import get_all_subordinates
+    from services.hierarchy.hierarchy_service import get_all_subordinates
 
     permissions: Set[str] = set()
 
@@ -513,7 +513,7 @@ def _apply_permission_change(
 def require_permission(permission_slug: str):
     """FastAPI dependency that checks a specific permission."""
     from fastapi import Depends, HTTPException
-    from controllers.auth_controller import get_current_user
+    from utils.dependencies import get_current_user
 
     def _checker(
         current_user: dict = Depends(get_current_user),

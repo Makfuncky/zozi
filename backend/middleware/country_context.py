@@ -56,7 +56,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
 
     def _get_country_detection_service(self):
         if self._country_detection_service is None:
-            from services.country_detection import CountryDetectionService
+            from services.geography.country_detection import CountryDetectionService
             self._country_detection_service = CountryDetectionService()
         return self._country_detection_service
 
@@ -147,7 +147,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
         if not client_ip:
             return None
         try:
-            from services.country_detection import CountryDetectionService
+            from services.geography.country_detection import CountryDetectionService
             svc = self._get_country_detection_service()
             ip = svc._extract_ip(dict(request.headers), client_ip)
             if ip and not svc._is_private_ip(ip):

@@ -26,9 +26,12 @@ from data.models import (
     User,
 )
 from utils.audit import AuditAction, audit_log
-from services.db_read import first
-from services.suppliers_write_service import commit_only
-from utils.soft_delete import bulk_restore, bulk_soft_delete
+from services.common.db_read import first
+from services.catalog.bulk_ops_write_service import (
+    bulk_archive_entities as _archive_entities,
+    bulk_restore_entities as _restore_entities,
+    bulk_change_product_category as _change_product_category,
+)
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -52,7 +55,7 @@ def bulk_archive_entities(
     model = model_map.get(model_name)
     if not model:
         raise HTTPException(status_code=400, detail=f"Unknown entity type: {model_name}")
-    result = bulk_soft_delete(db, model, record_ids, acting_user, reason)
+    result = _archive_entities(db, model, record_ids, acting_user, reason)
     return {"message": f"{len(record_ids)} {model_name}(s) archived", **result}
 
 
@@ -74,7 +77,7 @@ def bulk_restore_entities(
     model = model_map.get(model_name)
     if not model:
         raise HTTPException(status_code=400, detail=f"Unknown entity type: {model_name}")
-    result = bulk_restore(db, model, record_ids, acting_user)
+    result = _restore_entities(db, model, record_ids, acting_user)
     return {"message": f"{len(record_ids)} {model_name}(s) restored", **result}
 
 
@@ -86,17 +89,10 @@ def bulk_category_change(
     reason: Optional[str] = None,
 ) -> dict:
     """Change category for multiple products at once."""
-    category = first(db, Category, [Category.id == category_id])
-    if not category:
+    try:
+        updated = _change_product_category(db, product_ids, category_id)
+    except ValueError:
         raise HTTPException(status_code=404, detail="Category not found")
-    updated = 0
-    for pid in product_ids:
-        product = first(db, Product, [Product.id == pid])
-        if product and not product.is_deleted:
-            product.category_id = category_id
-            product.category = category.name
-            updated += 1
-    commit_only(db)
     audit_log(
         db=db,
         action=AuditAction.PRODUCT_UPDATE,
@@ -109,5 +105,3 @@ def bulk_category_change(
         status="success",
     )
     return {"message": f"Category changed for {updated} products", "updated": updated}
-
-

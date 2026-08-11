@@ -19,7 +19,7 @@ from models import (
     FinanceAuditLog,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
-from services import general_ledger_service as gl
+from services.finance import general_ledger_service as gl
 from providers.finance_ai import (
     suggest_reconciliation_match,
     parse_email_to_ledger,

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from models import LogisticsPartnerLocation, CountryConfig, LogisticsPartner
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 
 router = APIRouter(tags=["logistics-locations"], prefix="/api/v1/logistics")
 logger = logging.getLogger(__name__)

@@ -1113,7 +1113,7 @@ def get_country_payout_settings(country_code: str, db: Session) -> dict[str, Any
 
     Returns default values if the country or its settings are not configured.
     """
-    from services.logistics_partner_pricing import normalize_country_code
+    from services.logistics.logistics_partner_pricing import normalize_country_code
 
     code = normalize_country_code(country_code)
     if not code:

@@ -73,7 +73,7 @@ def enrich_one(
     image_url: str,
 ) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     """Run AI enrichment for a single image. Returns staging product, its variants, and logs."""
-    from services import ai_service
+    from services.ai import ai_service
 
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)

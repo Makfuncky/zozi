@@ -16,7 +16,7 @@ client = TestClient(app)
 class TestQueueAIResearch:
     def test_queue_ai_research_returns_job_id(self):
         with patch("utils.auth._get_redis", return_value=None), \
-             patch("services.country_ai_research.CountryAIResearchService.enrich", new_callable=AsyncMock) as mock_enrich, \
+             patch("services.ai.country_ai_research.CountryAIResearchService.enrich", new_callable=AsyncMock) as mock_enrich, \
              patch("routers.ai_research._run_ai_job") as mock_run:
             mock_enrich.return_value = {"module_01_country_identity": {"official_name": "India"}}
             payload = {
@@ -65,7 +65,7 @@ class TestGetAIResearchJob:
         assert response.status_code == 404
 
     def test_get_job_returns_queued_status(self):
-        from services.ai_research_jobs import enqueue_job
+        from services.ai.ai_research_jobs import enqueue_job
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")
         assert response.status_code == 200
@@ -75,7 +75,7 @@ class TestGetAIResearchJob:
         assert data["country_code"] == "IN"
 
     def test_get_job_returns_completed_status_with_result(self):
-        from services.ai_research_jobs import enqueue_job, mark_job_completed
+        from services.ai.ai_research_jobs import enqueue_job, mark_job_completed
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         mark_job_completed(job["job_id"], {"module_01_country_identity": {"official_name": "India"}}, ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")
@@ -85,7 +85,7 @@ class TestGetAIResearchJob:
         assert data["result"] is not None
 
     def test_get_job_returns_failed_status(self):
-        from services.ai_research_jobs import enqueue_job, mark_job_failed
+        from services.ai.ai_research_jobs import enqueue_job, mark_job_failed
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         mark_job_failed(job["job_id"], "Test error", ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")

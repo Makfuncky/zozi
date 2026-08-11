@@ -17,8 +17,8 @@ from models import (
     Account, AccountGroup, JournalEntry, JournalEntryLine,
     AccountBalance, PendingJournalEntry,
 )
-from services.general_ledger_service import seed_chart_of_accounts as gl_seed_chart_of_accounts
-from services.general_ledger_service import get_trial_balance as gl_get_trial_balance
+from services.finance.general_ledger_service import seed_chart_of_accounts as gl_seed_chart_of_accounts
+from services.finance.general_ledger_service import get_trial_balance as gl_get_trial_balance
 
 logger = logging.getLogger(__name__)
 

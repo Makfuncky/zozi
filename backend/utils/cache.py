@@ -163,3 +163,16 @@ def cache_or_compute(
         return value
     finally:
         _release_lock(key)
+
+
+_PRODUCT_CACHE_VERSION_KEY = "products:cache:version"
+
+
+def bump_product_cache_version() -> None:
+    """Invalidate cached product listings by advancing the version counter."""
+    try:
+        redis_client = get_redis_client()
+        if redis_client is not None:
+            redis_client.incr(_PRODUCT_CACHE_VERSION_KEY)
+    except Exception:
+        pass

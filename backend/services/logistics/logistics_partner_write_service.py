@@ -45,8 +45,8 @@ logger = structlog.get_logger(__name__)
 # Backward-compatible lazy re-exports. These targets live in modules that
 # previously imported this shim, so resolving them lazily breaks the cycle.
 _REEXPORTS: dict[str, tuple[str, str]] = {
-    "create_shipment": ("controllers.logistics_controller", "create_shipment"),
-    "create_logistics_partner": ("services.auth_write_service", "create_logistics_partner"),
+    "create_shipment": ("controllers.orders.logistics_controller", "create_shipment"),
+    "create_logistics_partner": ("services.security.auth_write_service", "create_logistics_partner"),
     "delete_notification": ("services.comms.communication_write_service", "delete_notification"),
     "create_notification": ("services.comms.tickets_write_service", "create_notification"),
 }

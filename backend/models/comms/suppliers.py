@@ -23,7 +23,7 @@ class SupplierProfile(Base, TenantMixin):
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey('security.users.id', ondelete='RESTRICT'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey('core.users.id', ondelete='RESTRICT'), nullable=False, index=True)
     business_name = Column(String(200), nullable=False)
     country_code = Column(String(3), nullable=True, index=True)
     address = Column(String(255), nullable=True)

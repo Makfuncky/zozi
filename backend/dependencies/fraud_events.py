@@ -19,7 +19,7 @@ def record_impossible_travel_event(
     try:
         from db.database import get_service_session
         from db.models import FraudEvent
-        from services import db_write
+        from services.common import db_write
 
         db = get_service_session()
         try:

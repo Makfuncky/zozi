@@ -223,7 +223,6 @@ def _suggest_gateways(
     region: str, gdp: float | None, internet: float | None, country_code: str,
 ) -> list[dict[str, Any]]:
     """Suggest payment gateways ranked by integration feasibility score."""
-    from services.gateways.registry import PaymentGatewayRegistry
 
     scored: list[dict[str, Any]] = []
     for gid, profile in _GATEWAY_PROFILES.items():

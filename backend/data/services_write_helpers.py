@@ -2,7 +2,7 @@
 
 Thin wrappers over the SQLAlchemy ``Session`` API so service modules can
 perform add/flush/commit/refresh/delete without importing models or the
-services-layer helper directly. Mirrors ``services.write_helpers`` and adds
+services-layer helper directly. Mirrors ``scripts.maintenance.write_helpers`` and adds
 the ``delete_only`` / ``flush_only`` variants some modules rely on.
 """
 from __future__ import annotations

@@ -11,7 +11,7 @@ from sqlalchemy import text
 
 from models.employee_models import Employee, PhysicalIDCard, DynamicQRSession
 from models import User, TreasuryAccount
-from services.notification_service import NotificationService
+from services.comms.notification_service import NotificationService
 
 
 logger = logging.getLogger("zozi.offboarding")

@@ -12,7 +12,7 @@ The worker (``process_ai_upload_job``) runs outside the request context (RLS
 restricted flag is False, so it can read/write across the job's country) and:
 
     1. saves uploaded media to ``uploads/ai_upload/<job_id>/``
-    2. calls ``services.ai_service`` to enrich each image (category/tags/description/
+    2. calls ``services.ai.ai_service`` to enrich each image (category/tags/description/
        color/variant template) — falls back to rule-based results if the HF token
        is absent
     3. writes ``ai_staging_products`` / ``ai_staging_variants`` (+ ``ai_generation_logs``)
@@ -34,7 +34,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from controllers.admin_controller import require_roles
+from controllers.admin.admin_controller import require_roles
 from models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
 from utils.variant_key import compute_variant_key
 from utils.config import BASE_DIR
@@ -60,7 +60,7 @@ def _save_upload(file: UploadFile, job_dir: str) -> tuple[str, str, bytes]:
 
     Returns ``(storage_key, public_url, content_bytes)``.
     """
-    from services.storage import storage as _storage
+    from services.common.storage import storage as _storage
 
     ext = os.path.splitext(file.filename or "")[1] or ".bin"
     fname = f"{uuid.uuid4().hex}{ext}"
@@ -73,7 +73,7 @@ def _save_upload(file: UploadFile, job_dir: str) -> tuple[str, str, bytes]:
 
 def _enrich_one(img_bytes: bytes, idx: int, job: AIUploadJob, image_url: str) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     """Run AI enrichment for a single image. Returns staging product, its variants, and logs."""
-    from services import ai_service
+    from services.ai import ai_service
 
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)
@@ -182,7 +182,7 @@ def process_ai_upload_job(job_id: int) -> None:
                 if image_bytes_str:
                     img_bytes = bytes(image_bytes_str) if isinstance(image_bytes_str, str) else image_bytes_str
                 elif media.get("key"):
-                    from services.storage import storage as _storage
+                    from services.common.storage import storage as _storage
                     img_bytes = _storage.read(media["key"])
                 else:
                     continue

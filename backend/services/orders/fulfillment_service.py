@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from models import Order, Payment
 from events import PaymentConfirmedEvent
-from services.notification_service import NotificationService
+from services.comms.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 

@@ -438,61 +438,153 @@ class TestShimPaths:
 
 
 # ═══════════════════════════════════════════════════════
-# NEW: No raw DB writes in controllers
+# W1: No raw DB writes in controllers (HARD GATE)
 # ═══════════════════════════════════════════════════════
 
-class TestNoRawDbWrites:
-    """Controllers must not call db.add/commit/flush directly."""
+def _is_shim_controller(relpath: str) -> bool:
+    """Backward-compat shim controllers just re-export and must be skipped."""
+    return any(
+        seg in relpath
+        for seg in (
+            "controllers/admin/",
+            "controllers/communication/",
+            "controllers/country/",
+        )
+    )
 
-    DB_WRITE_PATTERNS = [
-        r"\.add\(",
-        r"\.commit\(\)",
-        r"\.flush\(\)",
-        r"\.delete\(",
-        r"\.merge\(",
-    ]
+
+class TestNoRawDbWrites:
+    """Controllers must not own DB writes/transactions (W1).
+
+    This is a HARD gate — it fails the build on any violation. Writes and
+    transaction boundaries belong exclusively in ``services``. The controller is
+    only allowed to *call* a service.
+
+    NOTE: legacy hand-written ``routers/*.py`` still contain raw writes and are a
+    separate migration; this gate scopes to ``controllers/`` (the G1 deliverable).
+    """
+
+    FORBIDDEN_DB_METHODS = {"add", "commit", "flush", "delete", "merge"}
+    FORBIDDEN_WRITE_CALLS = {"commit_and_refresh", "add_and_flush", "commit_only"}
 
     def test_no_raw_db_writes_in_controllers(self):
-        """Controller files should delegate DB writes to services."""
         violations = []
-        # Only check files that are NOT shims (shims just re-export)
-        skip_dirs = {"admin", "communication", "country", "admin_controller.py"}
         controllers_dir = os.path.join(BACKEND, "controllers")
-        if not os.path.isdir(controllers_dir):
-            pytest.skip("controllers/ directory not found")
-
         for fpath, relpath in iter_py_files(controllers_dir):
-            # Skip shim directories
-            parts = relpath.split(os.sep)
-            if len(parts) >= 3 and parts[1] in skip_dirs:
+            if os.path.basename(fpath) == "__init__.py":
                 continue
-            fname = os.path.basename(fpath)
-            if fname == "__init__.py":
+            if _is_shim_controller(relpath):
                 continue
             try:
                 with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
                     source = f.read()
-                # Quick check: skip if no 'db' variable usage
-                if "db." not in source:
-                    continue
                 tree = ast.parse(source)
-                for node in ast.walk(tree):
-                    if not isinstance(node, ast.Attribute):
-                        continue
-                    # Check for db.add, db.commit, db.flush, db.delete, db.merge
-                    if not isinstance(node.value, ast.Name):
-                        continue
-                    if node.value.id != "db":
-                        continue
-                    if node.attr in ("add", "commit", "flush", "delete", "merge"):
-                        violations.append("%s:%d: db.%s() in controller" % (
-                            relpath, node.lineno, node.attr))
             except SyntaxError:
-                pass
-        # Soft check — log but don't fail (some controllers legitimately write during migration)
-        if violations:
-            pytest.skip("Found %d raw DB writes in controllers (non-blocking): %s" % (
-                len(violations), violations[0]))
+                continue
+            for node in ast.walk(tree):
+                # db.<method>(...) / session.<method>(...)
+                if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                    if node.value.id in ("db", "session") and node.attr in self.FORBIDDEN_DB_METHODS:
+                        violations.append("%s:%d: %s.%s() in controller" % (
+                            relpath, node.lineno, node.value.id, node.attr))
+                # commit_and_refresh(...)/add_and_flush(...)/commit_only(...)
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                    if node.func.id in self.FORBIDDEN_WRITE_CALLS:
+                        violations.append("%s:%d: %s() called in controller" % (
+                            relpath, node.lineno, node.func.id))
+        assert not violations, (
+            "Raw DB writes found in controllers (violates W1):\n"
+            + "\n".join(sorted(violations))
+        )
+
+
+class TestControllersUseNoFastAPIRouters:
+    """Controllers must not define routes (AUTO_ROUTER.md).
+
+    Per AUTO_ROUTER.md, controllers import ONLY decorator helpers from
+    ``routers.generated.auto_router`` (get/post/put/delete/patch/route). Raw
+    FastAPI routing symbols (``APIRouter``, ``@router.<verb>``) belong in
+    ``routers/``. This is a HARD gate.
+    """
+
+    ROUTER_DECORATORS = (
+        "@router.get", "@router.post", "@router.put",
+        "@router.patch", "@router.delete", "@router.api_route",
+    )
+
+    def test_no_router_decorators_in_controllers(self):
+        violations = []
+        controllers_dir = os.path.join(BACKEND, "controllers")
+        for fpath, relpath in iter_py_files(controllers_dir):
+            if os.path.basename(fpath) == "__init__.py":
+                continue
+            if _is_shim_controller(relpath):
+                continue
+            try:
+                with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                    source = f.read()
+                tree = ast.parse(source)
+            except SyntaxError:
+                continue
+            for i, line in enumerate(source.splitlines(), 1):
+                stripped = line.strip()
+                if stripped.startswith("#"):
+                    continue
+                if any(stripped.startswith(d) for d in self.ROUTER_DECORATORS):
+                    violations.append("%s:%d: %s" % (relpath, i, stripped))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                    if node.func.id == "APIRouter":
+                        violations.append("%s:%d: APIRouter() instantiated in controller" % (
+                            relpath, node.lineno))
+                if isinstance(node, ast.ImportFrom) and node.module == "fastapi":
+                    for alias in (node.names or []):
+                        if alias.name == "APIRouter":
+                            violations.append("%s:%d: from fastapi import APIRouter in controller" % (
+                                relpath, node.lineno))
+        assert not violations, (
+            "Route definitions found in controllers (violates AUTO_ROUTER.md):\n"
+            + "\n".join(sorted(violations))
+        )
+
+
+class TestNoRawDbReadsInControllers:
+    """Controllers must not issue raw ORM reads (W1 / G2).
+
+    Reads (``db.query``, ``db.execute``, ``session.query``, ``session.execute``,
+    ``db_read_query``) belong in ``services``. This is a HARD gate that closes the
+    controller→service read shift.
+    """
+
+    FORBIDDEN_READ_CALLS = {"db_read_query"}
+
+    def test_no_raw_db_reads_in_controllers(self):
+        violations = []
+        controllers_dir = os.path.join(BACKEND, "controllers")
+        for fpath, relpath in iter_py_files(controllers_dir):
+            if os.path.basename(fpath) == "__init__.py":
+                continue
+            if _is_shim_controller(relpath):
+                continue
+            try:
+                with open(fpath, "r", encoding="utf-8", errors="ignore") as f:
+                    source = f.read()
+                tree = ast.parse(source)
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                    if node.value.id in ("db", "session") and node.attr in ("query", "execute"):
+                        violations.append("%s:%d: %s.%s() read in controller" % (
+                            relpath, node.lineno, node.value.id, node.attr))
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                    if node.func.id in self.FORBIDDEN_READ_CALLS:
+                        violations.append("%s:%d: %s() called in controller" % (
+                            relpath, node.lineno, node.func.id))
+        assert not violations, (
+            "Raw DB reads found in controllers (violates W1):\n"
+            + "\n".join(sorted(violations))
+        )
 
 
 # ═══════════════════════════════════════════════════════

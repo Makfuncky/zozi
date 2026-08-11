@@ -18,7 +18,7 @@ from services.comms.email_write_service import (
     create_email_campaign,
     delete_email_campaign,
 )
-from services.db_read import first
+from services.common.db_read import first
 from utils.country_access import get_country_or_404
 from utils.rls_interceptor import clear_rls_context, set_rls_context
 import structlog

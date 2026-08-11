@@ -7,7 +7,7 @@ The single write previously inlined in ``routers.public_returns_access.update_re
 (``db.query`` + ``db.commit``) now lives here so the router stays a thin,
 read-only orchestration surface (fixes the W1 violation at the router boundary).
 
-NOTE: ``controllers.returns_controller`` still performs write operations for the
+NOTE: ``controllers.orders.returns_controller`` still performs write operations for the
 other return endpoints. Those are being migrated into this service incrementally;
 this module owns the status-update write as the first extracted operation.
 """

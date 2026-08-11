@@ -21,7 +21,7 @@ from models import (
     JournalEntry,
     JournalEntryLine,
 )
-from services.general_ledger_service import create_journal_entry, get_account_by_code
+from services.finance.general_ledger_service import create_journal_entry, get_account_by_code
 from db.schemas import JournalEntryCreate, JournalLineInput
 from utils.money import round_money
 

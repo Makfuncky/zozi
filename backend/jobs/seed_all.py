@@ -40,7 +40,7 @@ from models.comms.communication import EmailFolder, InternalEmail
 from models.orders import Order, OrderItem
 from models.products import Category, Product, Review
 from models.user import User
-from services.commission_engine import get_global_config, seed_defaults
+from services.finance.commission_engine import get_global_config, seed_defaults
 from utils.auth import get_password_hash
 import structlog
 logger = structlog.get_logger(__name__)

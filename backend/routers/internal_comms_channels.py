@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from services.internal_communication import get_internal_communication_service
+from services.comms.internal_communication import get_internal_communication_service
 
 logger = logging.getLogger("zozi.api.internal")
 router = APIRouter(prefix="/api/v1")

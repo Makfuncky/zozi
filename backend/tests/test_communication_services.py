@@ -8,7 +8,7 @@ import pytest
 
 from models import User
 from models.employee_models import Employee, EmailFolder, InternalEmail, ChatAttachment
-from services.employee_communication_service import (
+from services.hr.employee_communication_service import (
     get_or_create_direct_room,
     send_chat_message,
     get_chat_history,
@@ -19,8 +19,8 @@ from services.employee_communication_service import (
     get_employee_directory,
     _resolve_attachments,
 )
-from services.email_gateway import EmailGateway
-from services.communication_audit import get_communication_audit_service
+from services.comms.email_gateway import EmailGateway
+from services.comms.communication_audit import get_communication_audit_service
 
 
 @pytest.fixture

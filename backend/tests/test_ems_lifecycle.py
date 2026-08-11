@@ -82,7 +82,7 @@ class TestOnboardingPipeline:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # ── Step 1: Create pipeline ──
-        from services.employee_lifecycle_service import create_onboarding_pipeline
+        from services.hr.employee_lifecycle_service import create_onboarding_pipeline
 
         pipeline = create_onboarding_pipeline(db=db_session, employee_id=emp_id)
         assert pipeline["status"] == "in_progress"
@@ -90,7 +90,7 @@ class TestOnboardingPipeline:
         pipeline_id = pipeline["id"]
 
         # ── Step 2: Complete all 7 steps ──
-        from services.employee_lifecycle_service import complete_onboarding_step
+        from services.hr.employee_lifecycle_service import complete_onboarding_step
 
         step_names = [
             "document_collection", "background_check", "biometric_enrollment",
@@ -107,7 +107,7 @@ class TestOnboardingPipeline:
             assert result["progress"] == expected_progress
 
         # ── Step 3: Verify pipeline completed ──
-        from services.employee_lifecycle_service import get_onboarding_progress
+        from services.hr.employee_lifecycle_service import get_onboarding_progress
 
         progress = get_onboarding_progress(db=db_session, pipeline_id=pipeline_id)
         assert progress["pipeline"]["status"] == "completed"
@@ -138,7 +138,7 @@ class TestOffboarding:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # ── Step 1: Initiate offboarding ──
-        from services.employee_lifecycle_service import initiate_offboarding
+        from services.hr.employee_lifecycle_service import initiate_offboarding
 
         offboarding = initiate_offboarding(
             db=db_session,
@@ -156,7 +156,7 @@ class TestOffboarding:
         assert emp.employment_status == "terminating"
 
         # ── Step 2: Complete exit_interview step ──
-        from services.employee_lifecycle_service import complete_offboarding_step, get_offboarding_status
+        from services.hr.employee_lifecycle_service import complete_offboarding_step, get_offboarding_status
 
         result = complete_offboarding_step(db=db_session, case_id=case_id, step_name="exit_interview")
         assert result["completed"] is True
@@ -198,7 +198,7 @@ class TestOffboarding:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.employee_lifecycle_service import initiate_offboarding, cancel_offboarding
+        from services.hr.employee_lifecycle_service import initiate_offboarding, cancel_offboarding
 
         offboarding = initiate_offboarding(
             db=db_session, employee_id=emp_id,
@@ -241,7 +241,7 @@ class TestPayrollAutoDisburse:
         db_session.add(emp)
         db_session.flush()
 
-        from services.payroll_engine import PayrollEngine
+        from services.hr.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp.id)
@@ -282,7 +282,7 @@ class TestPayrollAutoDisburse:
             db_session.flush()
             emp_ids.append(emp.id)
 
-        from services.payroll_engine import PayrollEngine
+        from services.hr.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         result = engine.process_payroll_batch(country_code="OM")
@@ -315,7 +315,7 @@ class TestPayrollAutoDisburse:
         db_session.add(emp)
         db_session.flush()
 
-        from services.payroll_engine import PayrollEngine
+        from services.hr.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         bonus = engine.calculate_performance_bonus(emp.id)
@@ -350,7 +350,7 @@ class TestPayrollAutoDisburse:
         db_session.add(emp)
         db_session.flush()
 
-        from services.payroll_engine import PayrollEngine
+        from services.hr.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         eosb = engine.calculate_eosb(emp.id)
@@ -378,7 +378,7 @@ class TestHrDashboard:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # Log an activity
-        from services.employee_activity_logger import log_activity
+        from services.hr.employee_activity_logger import log_activity
         log_activity(
             db=db_session,
             actor_employee_id=emp_id,

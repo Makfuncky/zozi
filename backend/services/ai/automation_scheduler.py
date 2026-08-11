@@ -17,24 +17,24 @@ from models import (
     Order, OrderItem, JournalEntryLine, SupplierSettlement,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
-from services import general_ledger_service as gl
-from services.finance_automation import run_daily_automation as run_finance_daily
-from services.financial_reports_service import (
+from services.finance import general_ledger_service as gl
+from services.finance.finance_automation import run_daily_automation as run_finance_daily
+from services.finance.financial_reports_service import (
     generate_income_statement, generate_balance_sheet, generate_cash_flow_statement,
     save_report,
 )
-from services.gateway_reconciliation_service import run_gateway_3way_reconciliation
-from services.payout_batch_service import (
+from services.gateways.gateway_reconciliation_service import run_gateway_3way_reconciliation
+from services.treasury.payout_batch_service import (
     generate_supplier_payout_batches,
     generate_logistics_payout_batches,
 )
-from services.credit_control_service import enforce_auto_credit_holds
-from services.ai_automation_service import (
+from services.finance.credit_control_service import enforce_auto_credit_holds
+from services.ai.ai_automation_service import (
     run_ai_bank_reconciliation,
     process_email_inbox,
     batch_categorize_all,
 )
-from services.period_close_service import close_period
+from services.finance.period_close_service import close_period
 from utils.datetime_utils import utcnow as _utcnow
 
 from utils.config import settings
@@ -234,7 +234,7 @@ def generate_distributor_statements(db: Session, period_year: int, period_month:
         
         # Send statement email to distributor
         try:
-            from services.transactional_email_service import enqueue_distributor_statement_email
+            from services.comms.transactional_email_service import enqueue_distributor_statement_email
             enqueue_distributor_statement_email(
                 customer.id, statement_data["period"], statement_data
             )
@@ -413,7 +413,7 @@ def _check_fx_exposure(db: Session, country_code: str = None) -> list[dict]:
 
 def _check_orphan_journals(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from services.treasury_engine import TreasuryEngine
+    from services.treasury.treasury_engine import TreasuryEngine
     try:
         orphans = TreasuryEngine(db).run_orphan_detector()
         if orphans:
@@ -474,7 +474,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # FX revaluation (#17) - daily for open import shipments
     try:
-        from services.import_service import run_fx_revaluation
+        from services.common.import_service import run_fx_revaluation
         results["fx_revaluation"] = run_fx_revaluation(db, country_code=country_code)
     except Exception as e:
         logger.warning("FX revaluation failed: %s", e)
@@ -482,7 +482,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # 3-way match scan (#10) - daily for unmatched POs
     try:
-        from services.trading_service import scan_unmatched_pos
+        from services.finance.trading_service import scan_unmatched_pos
         results["three_way_match"] = scan_unmatched_pos(db, country_code=country_code)
     except Exception as e:
         logger.warning("3-way match scan failed: %s", e)
@@ -491,7 +491,7 @@ def run_full_automation(db: Session, country_code: str = None,
     # Dunning engine (#12) - weekly on Mondays
     if today.weekday() == 0:  # Monday
         try:
-            from services.trading_service import run_dunning_engine
+            from services.finance.trading_service import run_dunning_engine
             results["dunning"] = run_dunning_engine(db)
         except Exception as e:
             logger.warning("Dunning engine failed: %s", e)
@@ -499,7 +499,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # E-commerce auto-invoice on delivery (#11) - daily
     try:
-        from services.trading_service import auto_invoice_ecommerce_orders
+        from services.finance.trading_service import auto_invoice_ecommerce_orders
         results["ecommerce_invoice"] = auto_invoice_ecommerce_orders(db, country_code=country_code)
     except Exception as e:
         logger.warning("E-commerce auto-invoice failed: %s", e)
@@ -507,7 +507,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # COD batch reconciliation (#5) - daily
     try:
-        from services.gateway_reconciliation_service import reconcile_all_cod_deposits
+        from services.gateways.gateway_reconciliation_service import reconcile_all_cod_deposits
         results["cod_reconciliation"] = reconcile_all_cod_deposits(db, country_code=country_code)
     except Exception as e:
         logger.warning("COD reconciliation failed: %s", e)
@@ -544,7 +544,7 @@ def run_full_automation(db: Session, country_code: str = None,
         
         # Period close (#28) - auto-close previous period on month-end
         try:
-            from services.period_close_service import close_period
+            from services.finance.period_close_service import close_period
             from models import FiscalPeriod
             prev_period = db.query(FiscalPeriod).filter(
                 FiscalPeriod.period_year == prev.year,

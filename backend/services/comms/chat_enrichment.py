@@ -435,7 +435,7 @@ def _log_activity(
     target_employee_id: Optional[int] = None,
 ) -> None:
     try:
-        from services.employee_activity_logger import log_activity
+        from services.hr.employee_activity_logger import log_activity
         log_activity(
             db=db,
             actor_employee_id=actor_employee_id,

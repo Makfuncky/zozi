@@ -5,39 +5,28 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import SupplierDocument, SupplierProfile, User
+from models import User
 from db.schemas import SupplierDocumentOut
 from utils.dependencies import get_current_user, require_admin, require_supplier
+from services.supplier.supplier_document_service import (
+    list_all_supplier_documents,
+    list_supplier_documents,
+    review_supplier_document,
+)
+from services.supplier.supplier_profile_write_service import get_supplier_profile
 
 router = APIRouter(prefix="/api/v1/supplier")
 
 
 @router.get("", response_model=list[SupplierDocumentOut])
-def list_my_documents(
-    current_user: User = Depends(require_supplier),
-    db: Session = Depends(get_db),
-):
-    profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
-    if not profile:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-    return (
-        db.query(SupplierDocument)
-        .filter(SupplierDocument.supplier_id == profile.id, SupplierDocument.is_deleted == False)  # noqa: E712
-        .order_by(SupplierDocument.id.desc())
-        .all()
-    )
+def list_my_documents(current_user: User = Depends(require_supplier), db: Session = Depends(get_db)):
+    profile = get_supplier_profile(current_user, db)
+    return list_supplier_documents(db, profile.id)
 
 
 @router.get("/all", response_model=list[SupplierDocumentOut])
-def list_all_documents(
-    status_filter: str | None = Query(None),
-    _: User = Depends(require_admin),
-    db: Session = Depends(get_db),
-):
-    q = db.query(SupplierDocument).filter(SupplierDocument.is_deleted == False)  # noqa: E712
-    if status_filter:
-        q = q.filter(SupplierDocument.status == status_filter)
-    return q.order_by(SupplierDocument.id.desc()).all()
+def list_all_documents(status_filter: str | None = Query(None), _: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return list_all_supplier_documents(db, status_filter)
 
 
 @router.put("/{document_id}/review")
@@ -48,11 +37,4 @@ def review_document(
     admin_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    doc = db.query(SupplierDocument).filter(SupplierDocument.id == document_id).first()
-    if not doc:
-        raise HTTPException(status_code=404, detail="Document not found")
-    doc.status = new_status
-    doc.review_note = note
-    doc.reviewed_by = admin_user.id
-    db.commit()
-    return {"message": "Reviewed", "status": new_status}
+    return review_supplier_document(db, document_id, new_status, note, admin_user.id)

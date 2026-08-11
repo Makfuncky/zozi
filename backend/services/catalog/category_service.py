@@ -7,7 +7,7 @@ session directly (audit rules LC1 / W1 / Q1).
 Historical damage this module repairs
 -------------------------------------
 ``services/products_write_service.py`` used to re-export ``create_category`` /
-``update_category`` / ``delete_category`` from ``services.permission_service``.
+``update_category`` / ``delete_category`` from ``services.security.permission_service``.
 Those functions operate on :class:`PermissionCategory` (an RBAC grouping), not
 on the storefront :class:`Category`. Every admin category write therefore
 raised ``TypeError`` at runtime, and ``reorder_categories`` was wired back to

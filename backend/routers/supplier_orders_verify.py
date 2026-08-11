@@ -1,26 +1,37 @@
-"""Supplier orders sub-router."""
+"""Supplier orders sub-router.
+
+DB reads/writes live in ``services.supplier.supplier_order_service``; this
+router keeps request parsing, file handling, storage and parcel-AI logic.
+"""
 from __future__ import annotations
 
 import json
 import logging
 import os
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from db.database import get_db
 from models import Order, OrderItem, SupplierProfile, User
 from utils.dependencies import require_supplier
-from services.storage import storage as _storage
+from services.common.storage import storage as _storage
+from services.supplier.supplier_order_service import (
+    get_supplier_order,
+    get_supplier_order_for_verify,
+    get_supplier_order_items,
+    get_supplier_order_items_for_verify,
+    get_supplier_profile_by_user_id,
+    list_supplier_order_ids,
+    list_supplier_orders,
+    mark_order_prepared_if_processing,
+    resolve_shipment_info,
+)
 
-# AI analysis for parcel-photo matching (uses the vision provider)
-import logging
 ai_logger = logging.getLogger(__name__)
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/supplier")
@@ -50,17 +61,8 @@ def list_supplier_orders(
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
-    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == _get_user_id(current_user)).first()
-    if not supplier:
-        raise HTTPException(404)
-    orders = (
-        db.query(Order)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .distinct()
-        .all()
-    )
-    return orders
+    supplier = get_supplier_profile_by_user_id(db, _get_user_id(current_user))
+    return list_supplier_orders(db, supplier.id)
 
 
 @router.get("/{order_id}/label")
@@ -71,32 +73,9 @@ def get_supplier_label(
 ):
     """Return packing sheet / label data for a supplier order."""
     user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
-
-    items = (
-        db.query(OrderItem)
-        .filter(
-            OrderItem.order_id == order_id,
-            OrderItem.supplier_id == supplier.id,
-        )
-        .all()
-    )
+    supplier = get_supplier_profile_by_user_id(db, user_id)
+    order = get_supplier_order(db, order_id, supplier.id)
+    items = get_supplier_order_items(db, order_id, supplier.id)
 
     subtotal = float(sum((item.price or 0) * item.quantity for item in items))
     vat = float(order.tax_amount or 0)
@@ -104,8 +83,7 @@ def get_supplier_label(
     discount = float(order.discount_amount or 0)
     total = subtotal + vat + shipping - discount
 
-    # Resolve shipment info if available
-    shipment_info = _resolve_shipment_info(db, order_id, supplier.id)
+    shipment_info = resolve_shipment_info(db, order_id)
 
     return {
         "order_id": order.id,
@@ -161,42 +139,6 @@ def get_supplier_label(
     }
 
 
-def _resolve_shipment_info(
-    db: Session, order_id: int, supplier_id: int
-) -> dict[str, Any]:
-    """Resolve shipment info from the logistics models if available."""
-    try:
-        from models import Shipment
-
-        shipment = (
-            db.query(Shipment)
-            .filter(
-                Shipment.order_id == order_id,
-            )
-            .first()
-        )
-        if not shipment:
-            return {"has_shipment": False}
-
-        return {
-            "has_shipment": True,
-            "shipment_id": shipment.id,
-            "shipment_status": getattr(shipment, "status", "pending"),
-            "shipment_status_label": getattr(shipment, "status", "pending").replace("_", " ").title(),
-            "tracking_number": getattr(shipment, "tracking_number", None),
-            "carrier_name": getattr(shipment, "carrier", None),
-            "current_hub": getattr(shipment, "current_hub", None),
-            "package_count": getattr(shipment, "package_count", None),
-            "package_weight_kg": getattr(shipment, "package_weight_kg", None),
-            "package_dimensions": getattr(shipment, "package_dimensions", None),
-            "packaging_notes": getattr(shipment, "packaging_notes", None),
-            "packaged_at": getattr(shipment, "packaged_at", None),
-        }
-    except Exception:
-        logger.warning("Could not resolve shipment info for order %s", order_id)
-        return {"has_shipment": False}
-
-
 @router.post("/{order_id}/parcel-proof")
 async def upload_parcel_proof(
     order_id: int,
@@ -207,23 +149,8 @@ async def upload_parcel_proof(
 ):
     """Upload a packed parcel photo as proof of packaging."""
     user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    supplier = get_supplier_profile_by_user_id(db, user_id)
+    order = get_supplier_order(db, order_id, supplier.id)
 
     # Validate file type
     allowed_types = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
@@ -267,9 +194,7 @@ async def upload_parcel_proof(
     }
 
     # Update order status to prepared if currently processing
-    if order.status == "processing":
-        order.status = "prepared"
-        db.commit()
+    mark_order_prepared_if_processing(order, db)
 
     return {
         "status": "success",
@@ -285,34 +210,10 @@ async def verify_parcel_proof(
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
-    """AI-powered verification: match the uploaded parcel photo against the packing sheet.
-
-    Uses the vision provider to analyze the uploaded parcel proof image and
-    verify that it matches the expected items from the order's packing sheet.
-    Returns a match score and any discrepancies found.
-    """
+    """AI-powered verification: match the uploaded parcel photo against the packing sheet."""
     user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .join(OrderItem.product)
-        .filter(OrderItem.product.has(supplier_id=user_id))
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
-
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    supplier = get_supplier_profile_by_user_id(db, user_id)
+    order = get_supplier_order_for_verify(db, order_id, user_id)
 
     prefix = f"parcel_proofs/{order_id}/"
     proof_keys = sorted(
@@ -331,15 +232,7 @@ async def verify_parcel_proof(
     image_bytes = _storage.read(latest_key)
 
     # Get packing sheet items for comparison context
-    items = (
-        db.query(OrderItem)
-        .join(OrderItem.product)
-        .filter(
-            OrderItem.order_id == order_id,
-            OrderItem.product.has(supplier_id=user_id),
-        )
-        .all()
-    )
+    items = get_supplier_order_items_for_verify(db, order_id, user_id)
     item_descriptions = [
         f"{item.product_name} x{item.quantity}" for item in items
     ]
@@ -437,7 +330,6 @@ def _persist_verification_result(
     image_filename: str,
 ) -> None:
     """Save the verification result as JSON in storage."""
-    import json
     key = prefix.rstrip("/") + "/_verification_result.json"
     existing: list = []
     try:
@@ -473,30 +365,10 @@ async def replace_reference_image(
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
-    """Replace the reference image for this order's parcel-proof homography engine.
-
-    The old reference_* file(s) are removed and the uploaded image becomes the new
-    reference.  Future calls to the verify endpoint will compare parcel photos
-    against this new reference.
-    """
+    """Replace the reference image for this order's parcel-proof homography engine."""
     user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    supplier = get_supplier_profile_by_user_id(db, user_id)
+    order = get_supplier_order(db, order_id, supplier.id)
 
     # Validate file type
     allowed_types = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
@@ -537,29 +409,10 @@ def get_reference_image(
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
-    """Return the latest reference image for this order.
-
-    Returns the image file directly (JPEG/PNG/WebP) or 404 if no reference
-    has been set yet.
-    """
+    """Return the latest reference image for this order (redirect to storage URL)."""
     user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
-
-    order = (
-        db.query(Order)
-        .filter(Order.id == order_id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .first()
-    )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found for this supplier")
+    supplier = get_supplier_profile_by_user_id(db, user_id)
+    order = get_supplier_order(db, order_id, supplier.id)
 
     prefix = f"parcel_proofs/{order_id}/"
     refs = sorted(
@@ -571,11 +424,6 @@ def get_reference_image(
 
     latest_key = refs[0]
     latest_url = _storage.url(latest_key)
-    ext = os.path.splitext(latest_key)[1].lower()
-    media_type_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
-    media_type = media_type_map.get(ext, "image/jpeg")
-
-    from fastapi.responses import RedirectResponse
     return RedirectResponse(url=latest_url, status_code=302)
 
 
@@ -585,37 +433,13 @@ def get_parcel_verification_history(
     current_user: User = Depends(require_supplier),
     db: Session = Depends(get_db),
 ):
-    """Return the last N parcel verification results for this supplier.
-
-    Scans the uploads/parcel_proofs/ directory for the supplier's order
-    proof images, reads the verification result JSON files, and returns
-    them sorted by analysis timestamp (newest first).
-
-    Each entry includes:
-    - match_percentage (0-100)
-    - status (verified / partial / unverified)
-    - enginge_details breakdown (ssim, feature_match, vision_ai scores)
-    - image_url for the thumbnail of the uploaded proof
-    - order_number, order_id, items summary, analyzed_at
-    """
+    """Return the last N parcel verification results for this supplier."""
     user_id = _get_user_id(current_user)
-    supplier = (
-        db.query(SupplierProfile)
-        .filter(SupplierProfile.user_id == user_id)
-        .first()
-    )
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier profile not found")
+    supplier = get_supplier_profile_by_user_id(db, user_id)
 
     # Collect all verification results across this supplier's orders
     all_entries: list[dict] = []
-    supplier_order_ids = [
-        row[0] for row in db.query(Order.id)
-        .join(OrderItem)
-        .filter(OrderItem.supplier_id == supplier.id)
-        .distinct()
-        .all()
-    ]
+    supplier_order_ids = list_supplier_order_ids(db, supplier.id)
 
     for order_id in supplier_order_ids:
         prefix = f"parcel_proofs/{order_id}/"
@@ -651,4 +475,3 @@ def get_parcel_verification_history(
     items = all_entries[:limit]
 
     return {"items": items, "total": len(all_entries)}
-

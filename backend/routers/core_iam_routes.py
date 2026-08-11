@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.iam_controller as _ctrl
+    import controllers.identity.iam_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:
@@ -27,5 +27,5 @@ except Exception:
 @router.get("/core_iam_routes/status")
 def status():
     """Report whether a backing controller is importable."""
-    return {"router": "core_iam_routes", "controller": "controllers.iam_controller" if _HAS_CTRL else None,
+    return {"router": "core_iam_routes", "controller": "controllers.identity.iam_controller" if _HAS_CTRL else None,
             "public_functions": _CTRL_PUBLIC}

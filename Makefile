@@ -1,4 +1,4 @@
-.PHONY: backend-setup frontend-setup dev docker-up docker-down test lint
+.PHONY: backend-setup frontend-setup dev docker-up docker-down test lint routers routers-check
 
 BACKEND_DIR = backend
 FRONTEND_DIR = frontend/web_app
@@ -34,3 +34,12 @@ lint-frontend:
 
 typecheck:
 	cd $(FRONTEND_DIR) && npx tsc --noEmit --skipLibCheck
+
+# ── Auto-generated routers (Design 3) ──────────────────────────────
+# Regenerates routers/* from the @route decorators in controllers/.
+routers:
+	cd $(BACKEND_DIR) && python routers/generated/auto_router.py
+
+# CI-equivalent gate: fails if committed generated files drift from controllers.
+routers-check:
+	cd $(BACKEND_DIR) && python routers/generated/auto_router.py --verify

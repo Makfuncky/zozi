@@ -170,7 +170,7 @@ def magic_erase(data: bytes, max_dim: int = MAX_DIMENSION) -> bytes:
     unavailable. Never raises — returns ``data`` unchanged on failure.
     """
     try:
-        from services.bg_removal_service import magic_erase as _svc_magic_erase
+        from services.ai.bg_removal_service import magic_erase as _svc_magic_erase
         return _svc_magic_erase(data)
     except Exception as exc:
         logger.warning("magic_erase: service unavailable (%s), using local path", exc)

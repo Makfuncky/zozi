@@ -37,7 +37,7 @@ from typing import Dict, Optional
 from sqlalchemy.orm import Session
 
 from db.database import get_db_context
-from services.storage import get_storage, S3Storage
+from services.common.storage import get_storage, S3Storage
 from utils.config import settings
 
 logger = logging.getLogger("zozi.migrate_media")

@@ -1,4 +1,12 @@
-"""Add schema declarations to all model files based on schema_mapping.json."""
+"""Add schema declarations to all model files based on schema_mapping.json.
+
+This is the *canonical* schema normalizer. It is intentionally idempotent:
+every pass strips any existing ``{"schema": ...}`` dicts from a class's
+``__table_args__`` and then writes exactly one correct schema dict, so running
+it repeatedly (e.g. from a harness) never produces duplicate or misplaced
+schema entries -- which previously raised
+``'dict' object has no attribute '_set_parent_with_dispatch'`` in SQLAlchemy.
+"""
 import json
 import re
 from pathlib import Path
@@ -10,98 +18,113 @@ docs_dir = backend_dir / "var" / "artifacts"
 with open(docs_dir / "schema_mapping.json") as f:
     table_to_schema = json.load(f)
 
-# Tables that don't have a schema mapping yet - default to public
 DEFAULT_SCHEMA = "public"
+
 
 def get_schema_for_table(table_name: str) -> str:
     return table_to_schema.get(table_name, DEFAULT_SCHEMA)
 
-def update_model_file(file_path: Path):
+
+def _strip_schema_dicts(inner: str) -> str:
+    """Remove every {"schema": ...} dict (and an adjacent comma) and tidy."""
+    # Consume a schema dict plus an optional following comma.
+    inner = re.sub(
+        r'\{\s*["\']schema["\']\s*:\s*["\'][^"\']*["\']\s*\}\s*,?', "", inner
+    )
+    # Also catch a schema dict that was preceded by a comma (e.g. "(, {...}").
+    inner = re.sub(
+        r',\s*\{\s*["\']schema["\']\s*:\s*["\'][^"\']*["\']\s*\}', "", inner
+    )
+    inner = re.sub(r"\(\s*,", "(", inner)
+    inner = re.sub(r",\s*\)", ")", inner)
+    inner = re.sub(r"\[\s*,", "[", inner)
+    inner = re.sub(r",\s*\]", "]", inner)
+    inner = re.sub(r",\s*,", ",", inner)
+    inner = inner.strip()
+    inner = re.sub(r"^,", "", inner)
+    inner = re.sub(r",$", "", inner)
+    return inner.strip()
+
+
+def _balanced_span(text: str, open_ch: str, close_ch: str, start: int) -> tuple[int, int]:
+    """Return (content_start, content_end) of the balanced group at `start`."""
+    assert text[start] == open_ch
+    depth = 0
+    i = start
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == open_ch:
+            depth += 1
+        elif ch == close_ch:
+            depth -= 1
+            if depth == 0:
+                return start + 1, i
+        i += 1
+    raise ValueError("unbalanced group")
+
+
+def _normalize_class(part: str) -> str:
+    tm = re.search(r'__tablename__\s*=\s*["\']([^"\']+)["\']', part)
+    if not tm:
+        return part
+    table_name = tm.group(1)
+    schema = get_schema_for_table(table_name)
+
+    tam = re.search(r"__table_args__\s*=\s*", part)
+    if not tam:
+        # No __table_args__ yet: insert one right after the __tablename__ line.
+        tn_end = tm.end()
+        insert_at = part.find("\n", tn_end) + 1
+        new_line = f'    __table_args__ = {{"schema": "{schema}"}}\n'
+        return part[:insert_at] + new_line + part[insert_at:]
+
+    after = tam.end()
+    first = part[after]
+    if first == "{":
+        # Dict form: replace entirely with a single schema dict.
+        c_start, c_end = _balanced_span(part, "{", "}", after)
+        new_value = f'{{"schema": "{schema}"}}'
+        return part[:c_start - 1] + new_value + part[c_end + 1:]
+    if first in "([":
+        close_ch = ")" if first == "(" else "]"
+        c_start, c_end = _balanced_span(part, first, close_ch, after)
+        inner = part[c_start:c_end]
+        inner = _strip_schema_dicts(inner)
+        if inner == "":
+            new_inner = f'{{"schema": "{schema}"}}'
+        else:
+            # SQLAlchemy 2.x requires the schema dict to be the LAST element
+            # of a tuple/list __table_args__.
+            new_inner = f"{inner}, {{'schema': '{schema}'}}"
+        return part[:c_start] + new_inner + part[c_end:]
+    # Unknown shape: leave untouched.
+    return part
+
+
+def update_model_file(file_path: Path) -> int:
     content = file_path.read_text()
     original = content
 
-    # Find all class definitions that have __tablename__
-    # Pattern: class X(Base):\n    __tablename__ = "table_name"
-    class_pattern = re.compile(
-        r'(class\s+\w+\(Base\):\s*\n\s*__tablename__\s*=\s*"([^"]+)")',
-        re.MULTILINE
-    )
-
-    replacements = 0
-    for match in class_pattern.finditer(content):
-        full_match = match.group(1)
-        table_name = match.group(2)
-        schema = get_schema_for_table(table_name)
-
-        # Find the __table_args__ that follows this class definition
-        # Look for __table_args__ within the next 500 chars after the class start
-        class_start = match.start()
-        class_end = match.end()
-        following = content[class_end:class_end + 800]
-
-        # Check if __table_args__ exists
-        table_args_match = re.search(r'(\n\s*__table_args__\s*=\s*)', following)
-        if table_args_match:
-            # Existing __table_args__ - need to add/replace schema
-            # Find the actual __table_args__ value
-            args_start = class_end + table_args_match.start(1)
-            args_value_start = class_end + table_args_match.end(1)
-            
-            # Find the end of the __table_args__ value
-            # It could be a dict, tuple, or list
-            if following.strip().startswith('{'):
-                # Dict-style: {"schema": "..."}
-                # Check if it already has schema
-                if '"schema"' in following[:200] or "'schema'" in following[:200]:
-                    continue  # Already has schema
-                # Replace with new dict including schema
-                old_args = re.search(r'__table_args__\s*=\s*\{[^}]+\}', following)
-                if old_args:
-                    new_args = f'__table_args__ = {{"schema": "{schema}"}}'
-                    content = content[:args_start] + new_args + content[args_start + len(old_args.group(0)):]
-                    replacements += 1
-            else:
-                # Tuple/list style
-                # Check if schema dict is already present
-                if re.search(r'\{["\']schema["\']:', following[:300]):
-                    continue  # Already has schema
-                
-                # Find the closing parenthesis/bracket
-                # We need to be careful here - find the balanced end
-                args_str = following[table_args_match.end(1) - args_value_start + args_start - class_end:]
-                # Actually, let's just insert schema dict after the opening ( or [
-                open_paren = following.find('(', table_args_match.end(1) - args_value_start + args_start - class_end)
-                open_bracket = following.find('[', table_args_match.end(1) - args_value_start + args_start - class_end)
-                
-                # Use regex to find and replace
-                old_args_pattern = re.compile(r'__table_args__\s*=\s*(\([^)]+\)|\[[^\]]+\]|\{[^}]+\})')
-                old_args_match = old_args_pattern.search(content[args_start:])
-                if old_args_match:
-                    old_args_str = old_args_match.group(1)
-                    if old_args_str.startswith('('):
-                        new_args_str = f'({{\"schema\": \"{schema}\"}},{old_args_str[1:]}'
-                    elif old_args_str.startswith('['):
-                        new_args_str = f'[{{\"schema\": \"{schema}\"}},{old_args_str[1:]}'
-                    else:
-                        continue
-                    content = content[:args_start] + '__table_args__ = ' + new_args_str + content[args_start + len(old_args_str) + 16:]
-                    replacements += 1
+    parts = re.split(r"(?m)^(?=class\s)", content)
+    new_parts = []
+    for part in parts:
+        if part.lstrip().startswith("class "):
+            new_parts.append(_normalize_class(part))
         else:
-            # No __table_args__ exists - add one after __tablename__
-            # Insert after the __tablename__ line
-            tablename_end = class_end
-            insert_point = content.find('\n', tablename_end) + 1
-            new_table_args = f'    __table_args__ = {{"schema": "{schema}"}}\n'
-            content = content[:insert_point] + new_table_args + content[insert_point:]
-            replacements += 1
+            new_parts.append(part)
+    content = "".join(new_parts)
 
     if content != original:
         file_path.write_text(content)
-        print(f"Updated {file_path.name}: {replacements} classes")
-    else:
-        print(f"No changes: {file_path.name}")
+        return 1
+    return 0
 
-for model_file in sorted(models_dir.glob('*.py')):
-    if model_file.name in ('__init__.py', 'mixins.py'):
-        continue
-    update_model_file(model_file)
+
+if __name__ == "__main__":
+    changed = 0
+    for model_file in sorted(models_dir.glob("*.py")):
+        if model_file.name in ("__init__.py", "mixins.py"):
+            continue
+        changed += update_model_file(model_file)
+    print(f"Normalized schema across model files (changed={changed}).")

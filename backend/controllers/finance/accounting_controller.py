@@ -9,13 +9,13 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.audit_controller import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 from models import User
 from db.schemas import (
     JournalEntryCreate,
     JournalLineInput,
 )
-from services import general_ledger_service as gl
+from services.finance import general_ledger_service as gl
 
 
 # ── Pydantic request bodies ───────────────────────────────────────────────────

@@ -13,9 +13,9 @@ from data.models import (
     SupplierSettlement,
     TransactionLedger,
 )
-from services.db_read import all_rows, first
-from services.finance_transfer_service import build_transfer_reference
-from services.suppliers_write_service import add_notification as create_notification
+from services.common.db_read import all_rows, first
+from services.finance.finance_transfer_service import build_transfer_reference
+from services.supplier.suppliers_write_service import add_notification as create_notification
 from utils.audit import AuditAction, audit_log
 import structlog
 logger = structlog.get_logger(__name__)

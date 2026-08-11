@@ -1,7 +1,7 @@
 """Admin analytics snapshot service.
 
 Holds the write/compute helpers that ``controllers.admin.analytics`` and
-``services.cash_management_service`` delegate to. These perform read-only
+``services.treasury.cash_management_service`` delegate to. These perform read-only
 aggregations plus a single upsert into ``AdminAnalyticsSnapshot`` â€” the only
 write here, and it lives in the services layer (W1 compliant). The pure
 read/cache helpers (``_get_admin_analytics_payload`` / ``_load_admin_analytics_snapshot``)

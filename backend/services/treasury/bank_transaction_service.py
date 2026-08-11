@@ -1,6 +1,6 @@
 """Bank transaction service.
 
-Imported by ``services._registry`` so its handlers/parsers register at app
+Imported by ``services..._registry`` so its handlers/parsers register at app
 startup. Kept dependency-light to avoid import-time side effects.
 """
 from __future__ import annotations

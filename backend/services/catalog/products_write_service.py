@@ -3,7 +3,7 @@
 Re-exports symbols from their canonical locations via PEP 562
 __getattr__ so importing this module never triggers the load-time
 controller/router imports that caused circular imports. Legacy
-`from services.products_write_service import ...` keeps working;
+`from services.catalog.products_write_service import ...` keeps working;
 the target module is imported only when the symbol is first accessed
 (which happens at call time, after all modules are loaded)."""
 from __future__ import annotations
@@ -17,11 +17,11 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 _REEXPORTS: dict[str, tuple[str, str]] = {
-    "create_flash_sale": ("controllers.flash_sale_controller", "create_flash_sale"),
-    "delete_flash_sale": ("controllers.flash_sale_controller", "delete_flash_sale"),
-    "update_flash_sale": ("controllers.flash_sale_controller", "update_flash_sale"),
-    "create_product": ("controllers.products_controller", "create_product"),
-    "update_product": ("controllers.products_controller", "update_product"),
+    "create_flash_sale": ("controllers.commerce.flash_sale_controller", "create_flash_sale"),
+    "delete_flash_sale": ("controllers.commerce.flash_sale_controller", "delete_flash_sale"),
+    "update_flash_sale": ("controllers.commerce.flash_sale_controller", "update_flash_sale"),
+    "create_product": ("controllers.products.products_controller", "create_product"),
+    "update_product": ("controllers.products.products_controller", "update_product"),
     # Category CRUD is owned by services.catalog.category_service.
     "reorder_categories": ("services.catalog.category_service", "reorder_categories"),
     "create_category": ("services.catalog.category_service", "create_category"),

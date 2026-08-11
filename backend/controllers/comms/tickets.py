@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from data.models import SupportTicket, TicketAttachment, TicketMessage, User
 from utils.constants import _ADMIN_MAX_PAGE_SIZE
-from services.db_read import all_rows, count, first
+from services.common.db_read import all_rows, count, first
 from services.comms.tickets_write_service import (
     admin_reply_to_ticket,
     update_ticket_status as update_status_in_service,

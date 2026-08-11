@@ -27,7 +27,7 @@ from typing import Any, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from data.models import LogisticsPartnerPayout, Payout, PayoutBatch
+from data.models import LogisticsPartnerPayout, Payout, PayoutBatch, SupplierProfile
 from utils.audit import audit_log
 from utils.datetime_utils import utcnow
 import structlog
@@ -307,3 +307,31 @@ def update_payout_status_by_ids(db: Session, payout_ids: list[int], status: str)
             Payout.id.in_(payout_ids),
             Payout.status.in_(["pending", "draft", "approved"]),
         ).update({"status": status, "processed_at": now}, synchronize_session=False)
+
+
+def request_supplier_payout(db: Session, current_user, payload: dict) -> dict:
+    """Create a supplier-initiated payout request and commit."""
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier:
+        raise HTTPException(404, 'Supplier profile not found')
+    amount = payload.get('amount')
+    if not amount or float(amount) <= 0:
+        raise HTTPException(400, 'A positive payout amount is required')
+    payout = Payout(
+        supplier_id=supplier.id,
+        amount=float(amount),
+        method=payload.get('method', 'bank'),
+        notes=payload.get('notes', 'Supplier-initiated payout request'),
+        status='pending',
+    )
+    db.add(payout)
+    db.commit()
+    db.refresh(payout)
+    return {
+        'status': 'success',
+        'payout': {
+            'id': payout.id,
+            'amount': float(payout.amount),
+            'status': payout.status,
+        },
+    }

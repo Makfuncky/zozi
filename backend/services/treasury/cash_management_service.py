@@ -44,7 +44,7 @@ from models import (
     TransactionLedger,
     VATRemittance,
 )
-from services.logistics_partner_pricing import (
+from services.logistics.logistics_partner_pricing import (
     _build_service_area_pricing_breakdown,
     lookup_city_distance_km,
     normalize_pricing_breakdown_payload,
@@ -55,7 +55,7 @@ from services.logistics_partner_pricing import (
     resolve_vehicle_rule_for_area,
     vehicle_baseline_multiplier,
 )
-from services.finance_transfer_service import (
+from services.finance.finance_transfer_service import (
     build_logistics_cod_remittance_instruction,
     build_supplier_payout_instruction,
     build_transfer_reference,
@@ -66,7 +66,7 @@ from services.finance_transfer_service import (
 from utils.config import settings
 from utils.datetime_utils import utcnow as _utcnow
 from utils.money import round_money, to_decimal
-from services import commission_engine as _commission_engine
+from services.finance import commission_engine as _commission_engine
 
 logger = logging.getLogger(__name__)
 
@@ -1089,7 +1089,7 @@ def create_refund_ledger_entry(
 
     # Post general-ledger reversal leg for the refund
     try:
-        from services.general_ledger_service import post_refund_journal
+        from services.finance.general_ledger_service import post_refund_journal
 
         post_refund_journal(db, refund)
     except Exception:
@@ -1494,7 +1494,7 @@ def process_supplier_payout_batch(db: Session, settlement_ids: Optional[list[int
 
         # Post general-ledger leg for supplier payout (Supplier Payables -> Cash)
         try:
-            from services.general_ledger_service import post_payout_journal
+            from services.finance.general_ledger_service import post_payout_journal
 
             post_payout_journal(db, payout, total)
         except Exception:
@@ -2094,9 +2094,9 @@ def run_scheduled_finance_cycle(db: Session) -> dict:
     analytics_refresh: dict[str, Any] = {"refreshed": 0, "keys": []}
     retention: dict[str, Any] = {"targets": []}
 
-    from controllers.supplier_controller import run_badge_recalculation_cycle
-    from controllers.admin_controller import refresh_admin_analytics_snapshots
-    from services.retention_service import run_operational_retention_cycle
+    from services.supplier.supplier_badge_service import run_badge_recalculation_cycle
+    from services.admin.analytics_service import refresh_admin_analytics_snapshots
+    from services.customer.retention_service import run_operational_retention_cycle
 
     badge_recalculation = run_badge_recalculation_cycle(db)
     analytics_refresh = refresh_admin_analytics_snapshots(db)
@@ -2201,7 +2201,7 @@ def record_cod_remittance(
 
     # Post general-ledger leg for COD remittance (COD Receivable -> Cash)
     try:
-        from services.general_ledger_service import post_logistics_cod_remittance_journal
+        from services.finance.general_ledger_service import post_logistics_cod_remittance_journal
 
         post_logistics_cod_remittance_journal(db, settlement.id, to_decimal(amount))
     except Exception:

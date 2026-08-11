@@ -16,8 +16,8 @@ from services.finance.payments_gateway_service import (  # noqa: TID252
     confirm_cash_on_delivery_order,
     is_checkout_payment_method_allowed,
     normalize_checkout_payment_method,
-    event_publisher,
-    order_holds_inventory,
+    event_publisher as _event_publisher,
+    order_holds_inventory as _order_holds_inventory,
 )
 import structlog
 logger = structlog.get_logger(__name__)

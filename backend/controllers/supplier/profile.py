@@ -1,5 +1,5 @@
 """Supplier profile operations."""
-from controllers.supplier_controller import (  # noqa: F401
+from controllers.supplier.supplier_controller import (  # noqa: F401
     get_supplier_profile,
     update_supplier_profile,
     request_verification,

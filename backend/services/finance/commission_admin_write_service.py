@@ -2,7 +2,7 @@
 
 Owns DB writes for the admin commission management router
 (`backend/routers/admin_commission.py`). Kept independent of the legacy
-`services.commission_write_service` re-export shim to avoid the
+`services.finance.commission_write_service` re-export shim to avoid the
 controller<->service circular import in that module.
 
 Functions are db-param (the session is passed in by the calling controller),
@@ -16,7 +16,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from data.models import CommissionBadgeTier, CommissionCategoryRate
-from services.commission_write_service import apply_changes
+from services.finance.commission_write_service import apply_changes
 import structlog
 logger = structlog.get_logger(__name__)
 

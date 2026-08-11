@@ -9,8 +9,8 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from controllers.admin_controller import require_admin
-from services import import_service as svc
+from controllers.admin.admin_controller import require_admin
+from services.mcp import import_service as svc
 
 router = APIRouter(prefix="/api/v1/admin")
 

@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.chatbot_controller as _ctrl
+    import controllers.comms.chatbot_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:
@@ -27,5 +27,5 @@ except Exception:
 @router.get("/core_chatbot_routes/status")
 def status():
     """Report whether a backing controller is importable."""
-    return {"router": "core_chatbot_routes", "controller": "controllers.chatbot_controller" if _HAS_CTRL else None,
+    return {"router": "core_chatbot_routes", "controller": "controllers.comms.chatbot_controller" if _HAS_CTRL else None,
             "public_functions": _CTRL_PUBLIC}

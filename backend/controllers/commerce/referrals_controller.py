@@ -1,7 +1,7 @@
 """Referrals controller (orchestration only).
 
 Routers call these functions; all data access is delegated to
-``services.referrals_service``. This module performs no DB sessions and imports
+``services.commerce.referrals_service``. This module performs no DB sessions and imports
 no models, keeping the controller layer a thin pass-through (fixes W1/Q1 at the
 router boundary and avoids router->controller imports).
 """
@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from sqlalchemy.orm import Session
 
-from services.referrals_service import (
+from services.commerce.referrals_service import (
     get_or_create_referral_code as svc_get_or_create_referral_code,
     get_referral_config as svc_get_referral_config,
 )

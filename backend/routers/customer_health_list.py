@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from controllers.auth_controller import get_current_user
-from services.customer_health_engine import get_customer_health_engine
+from controllers.security.auth_controller import get_current_user
+from services.customer.customer_health_engine import get_customer_health_engine
 
 router = APIRouter(prefix="/api/v1")
 

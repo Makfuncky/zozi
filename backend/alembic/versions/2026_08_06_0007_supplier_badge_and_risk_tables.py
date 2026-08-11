@@ -6,7 +6,7 @@ Create Date: 2026-08-06
 
 Creates the ``employee_risk_scores`` (hr) table plus the supplier-badge tables
 (``supplier_badge_catalog``, ``supplier_badges``, ``supplier_badge_billing_history``)
-backing ``services.supplier_badge_service`` and ``hr_write_service``.
+backing ``services.supplier.supplier_badge_service`` and ``hr_write_service``.
 
 Skipped on SQLite: the dev/test schema is rebuilt from the ORM metadata via the
 build step in ``alembic/env.py``, so the models alone drive the SQLite schema.

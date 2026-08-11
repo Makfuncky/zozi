@@ -25,7 +25,7 @@ from utils.auth import (
     get_password_hash,
     verify_password,
 )
-from controllers.audit_controller import audit_log, AuditAction
+from utils.audit import audit_log, AuditAction
 from utils.config import settings
 from utils.dependencies import get_current_user
 from utils.ip_utils import get_request_ip

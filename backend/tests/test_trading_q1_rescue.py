@@ -2,7 +2,7 @@
 
 Guards the Q1 architecture rule: routers must never touch the ORM session
 directly through ``db.query()`` / ``db.execute()``. All read access is
-delegated to the shared data-access layer ``services.db_read``.
+delegated to the shared data-access layer ``services.common.db_read``.
 """
 from __future__ import annotations
 
@@ -55,18 +55,18 @@ def test_router_has_no_direct_db_reads(router_src: str) -> None:
     findings = _find_direct_db_reads(router_src)
     assert findings == [], (
         f"{_ROUTER_NAME} router must not call db.query()/db.execute() directly; "
-        f"delegate to services.db_read. Found: {findings}"
+        f"delegate to services.common.db_read. Found: {findings}"
     )
 
 
 def test_router_delegates_to_db_read(router_src: str) -> None:
     tree = ast.parse(router_src)
     imports_db_read = any(
-        isinstance(node, ast.ImportFrom) and node.module == "services.db_read"
+        isinstance(node, ast.ImportFrom) and node.module == "services.common.db_read"
         for node in ast.walk(tree)
     )
     assert imports_db_read, (
-        f"{_ROUTER_NAME} router should import its read helpers from services.db_read"
+        f"{_ROUTER_NAME} router should import its read helpers from services.common.db_read"
     )
 
 

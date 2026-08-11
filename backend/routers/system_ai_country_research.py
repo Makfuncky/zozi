@@ -7,7 +7,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.ai_research_jobs import (
+from services.ai.ai_research_jobs import (
     decrement_running_jobs,
     enqueue_job,
     get_completed_result,
@@ -16,7 +16,7 @@ from services.ai_research_jobs import (
     mark_job_failed,
     mark_job_running,
 )
-from services.country_ai_research import CountryAIResearchService
+from services.ai.country_ai_research import CountryAIResearchService
 from utils.config import settings
 
 logger = logging.getLogger(__name__)

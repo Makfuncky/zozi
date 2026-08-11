@@ -18,8 +18,8 @@ from db.schemas import (
     ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck,
     FraudEventOut,
 )
-from services.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
-from services.fraud_admin_service import (
+from services.security.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
+from services.security.fraud_admin_service import (
     add_to_blacklist as _svc_add_to_blacklist,
     create_rule as _svc_create_rule,
     get_threat_feed_status as _svc_get_threat_feed_status,
@@ -288,7 +288,7 @@ def check_impossible_travel(
 @router.post("/check/device-stacking", response_model=DeviceStackingCheck)
 def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check device account stacking."""
-    from services.fraud_detection_service import GraphAnalysisService
+    from services.security.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_device_account_stacking(device_hash)
 
@@ -296,7 +296,7 @@ def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends
 @router.post("/check/return-abuse", response_model=ReturnAbuseCheck)
 def check_return_abuse(user_id: int, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check return abuse patterns."""
-    from services.fraud_detection_service import GraphAnalysisService
+    from services.security.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_return_abuse_pattern(user_id)
 

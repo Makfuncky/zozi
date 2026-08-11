@@ -2,7 +2,7 @@
 Smoke tests for the rescued Security module.
 
 Verifies that the authentic Security-domain import violations have been resolved:
-  * `controllers/auth_controller.py` resolves (`services.auth_write_service` was
+  * `controllers/auth_controller.py` resolves (`services.security.auth_write_service` was
     broken/missing, and all audit imports now resolve to the canonical `utils.audit`).
   * `utils/security_audit.py` no longer imports `models` at module top (CIR1).
   * `routers/auth.py` no longer imports the `generate_csrf_token` upward edge.
@@ -21,7 +21,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-security-module-tests")
 
 
 def test_auth_controller_imports():
-    mod = importlib.import_module("controllers.auth_controller")
+    mod = importlib.import_module("controllers.security.auth_controller")
     assert hasattr(mod, "get_current_user")
 
 
@@ -49,7 +49,7 @@ def test_routers_auth_no_middleware_csrf_import():
 
 
 def test_auth_write_service_helpers_callable():
-    mod = importlib.import_module("services.auth_write_service")
+    mod = importlib.import_module("services.security.auth_write_service")
     required = [
         "create_user",
         "create_social_user",

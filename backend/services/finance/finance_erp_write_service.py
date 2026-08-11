@@ -7,8 +7,8 @@ controller layers stay write-free (W1 layer contract).
 Each function takes ``db: Session`` first, mutates, commits, and raises
 ``HTTPException`` exactly as the original router code did.
 
-Endpoints that already delegate to ``data.services.erp_finance_service`` /
-``data.services.finance_automation`` are intentionally not duplicated here.
+Endpoints that already delegate to ``data.services.finance.erp_finance_service`` /
+``data.services.finance.finance_automation`` are intentionally not duplicated here.
 """
 from __future__ import annotations
 

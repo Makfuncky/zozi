@@ -130,7 +130,7 @@ def test_router_delegates_to_controller(router_src: str) -> None:
 
 def test_modules_import() -> None:
     importlib.import_module("routers.public_cash_management_access")
-    importlib.import_module("controllers.cash_management_write_controller")
+    importlib.import_module("controllers.treasury.cash_management_write_controller")
     svc_mod = importlib.import_module("services.finance.cash_management_write_service")
     for fn in _SERVICE_METHODS:
         assert callable(getattr(svc_mod, fn, None)), f"missing service method {fn}"
@@ -139,7 +139,7 @@ def test_modules_import() -> None:
 def test_write_controller_delegates_to_service(monkeypatch) -> None:
     from unittest.mock import MagicMock
 
-    import controllers.cash_management_write_controller as write_ctrl
+    import controllers.treasury.cash_management_write_controller as write_ctrl
     svc = importlib.import_module("services.finance.cash_management_write_service")
 
     _isolate_serializers(write_ctrl, monkeypatch)

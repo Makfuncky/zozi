@@ -172,7 +172,7 @@ class EmailGateway:
         self.db.refresh(email)
 
         try:
-            from services.employee_communication_service import log_comm_event
+            from services.hr.employee_communication_service import log_comm_event
             log_comm_event(self.db, sender_id, to_user_ids[0] if to_user_ids else None, "email_sent", "internal_email", email.id)
         except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
             logger.debug("Activity log skipped: %s", exc)

@@ -5,7 +5,7 @@ used to live inside ``routers/hierarchy.py`` (org unit create/update,
 materialized path rebuilds, manager reassignment, authority backfill and matrix
 relation assign/remove) is implemented here.
 
-The read/compute primitives still live in ``services.hierarchy_service``; this
+The read/compute primitives still live in ``services.hierarchy.hierarchy_service``; this
 module wraps them with the transaction boundary (``db.commit()``) plus the org
 unit CRUD that previously sat in the router.
 """
@@ -17,7 +17,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from data.models import OrgUnit
-from services.hierarchy_service import (
+from services.hierarchy.hierarchy_service import (
     assign_matrix_manager,
     backfill_authority_levels,
     reassign_manager,

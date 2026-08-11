@@ -12,7 +12,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from services.country_read_service import get_active_country_by_code
+from services.geography.country_read_service import get_active_country_by_code
 import structlog
 logger = structlog.get_logger(__name__)
 

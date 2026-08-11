@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import Response
 
-from controllers.country_controller import (
+from controllers.geography.country_controller import (
     _get_country_or_404,
     _require_admin,
     _require_country_access,

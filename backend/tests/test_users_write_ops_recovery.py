@@ -3,7 +3,7 @@
 These guard the remediation that restored 9 functions (lost when commit
 3d1f49a replaced their real implementations with ``_missing_symbol`` stubs)
 into ``services.users.user_write_ops`` and re-exported them from the
-``services.users_write_service`` shim. The tests assert that the symbols are
+``services.users.users_write_service`` shim. The tests assert that the symbols are
 real implementations (not stubs), that the shim resolves them, and that the
 core deletion/protection logic behaves correctly.
 """
@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 import services.users.user_write_ops as ops
-import services.users_write_service as shim
+import services.users.users_write_service as shim
 import controllers.customer.users as users_ctrl
 from models import User
 

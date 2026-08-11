@@ -13,6 +13,24 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 
+def list_supplier_documents(db: Session, supplier_id: int) -> list[SupplierDocument]:
+    """Return non-deleted KYC documents for a supplier, newest first."""
+    return (
+        db.query(SupplierDocument)
+        .filter(SupplierDocument.supplier_id == supplier_id, SupplierDocument.is_deleted == False)  # noqa: E712
+        .order_by(SupplierDocument.id.desc())
+        .all()
+    )
+
+
+def list_all_supplier_documents(db: Session, status_filter: str | None = None) -> list[SupplierDocument]:
+    """Return all non-deleted supplier documents, optionally filtered by status."""
+    q = db.query(SupplierDocument).filter(SupplierDocument.is_deleted == False)  # noqa: E712
+    if status_filter:
+        q = q.filter(SupplierDocument.status == status_filter)
+    return q.order_by(SupplierDocument.id.desc()).all()
+
+
 def review_supplier_document(
     db: Session,
     document_id: int,

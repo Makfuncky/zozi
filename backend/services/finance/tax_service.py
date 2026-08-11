@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from models import CountryConfig
-from services.logistics_partner_pricing import normalize_country_code
+from services.logistics.logistics_partner_pricing import normalize_country_code
 from utils.config import settings
 from utils.money import round_money, to_decimal
 

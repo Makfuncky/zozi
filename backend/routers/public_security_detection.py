@@ -17,7 +17,7 @@ from db.schemas import (
     FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck,
     ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
 )
-from services.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
+from services.security.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
 from utils.dependencies import require_admin
 from utils.redis_client import get_redis
 import json
@@ -282,7 +282,7 @@ def check_impossible_travel(
 @router.post("/check/device-stacking", response_model=DeviceStackingCheck)
 def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check device account stacking."""
-    from services.fraud_detection_service import GraphAnalysisService
+    from services.security.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_device_account_stacking(device_hash)
 
@@ -290,7 +290,7 @@ def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends
 @router.post("/check/return-abuse", response_model=ReturnAbuseCheck)
 def check_return_abuse(user_id: int, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check return abuse patterns."""
-    from services.fraud_detection_service import GraphAnalysisService
+    from services.security.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_return_abuse_pattern(user_id)
 

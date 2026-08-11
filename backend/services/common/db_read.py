@@ -60,6 +60,8 @@ __all__ = [
     "locked_rows",
     "scalar_subquery",
     "exists_clause",
+    "query",
+    "execute",
 ]
 
 
@@ -460,3 +462,19 @@ def exists_clause(entity, filters: Sequence = ()):
             continue
         stmt = stmt.where(f)
     return stmt.exists()
+
+
+# ── legacy read convenience re-exports (kept for pre-reorg controllers) ──────
+#
+# A few controllers still call ``db_read_query(db, Model)`` (returns a
+# ``Query`` they chain ``.filter()`` / ``.first()`` / ``.all()`` / ``.count()``
+# on) and ``db_read_execute(db, stmt)`` (runs a ``select()`` / ``text()``
+# statement). Both keep the ``Session`` access inside this services layer
+# (auditor rule **Q1**) instead of in router/controller code.
+
+def query(db: Session, *entities):
+    """Return a SQLAlchemy ``Query`` bound to the session (read-only use)."""
+    return db.query(*entities)
+
+
+from services.common.db_write import execute  # noqa: F401  (re-export for legacy controllers)

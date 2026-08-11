@@ -31,7 +31,7 @@ from models.employee_models import (
     Office,
     EmployeeRole,
 )
-from services.logistics_partner_pricing import quote_shipping_for_destination
+from services.logistics.logistics_partner_pricing import quote_shipping_for_destination
 from utils.auth import get_password_hash, verify_password
 from utils.datetime_utils import utcnow as _utcnow
 

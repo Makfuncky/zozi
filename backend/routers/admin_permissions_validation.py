@@ -10,10 +10,10 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
-from controllers.admin_controller import require_admin
+from controllers.security.auth_controller import get_current_user
+from controllers.admin.admin_controller import require_admin
 from db.database import get_db
-from services import permission_service as svc
+from services.security import permission_service as svc
 from utils.country_rls import get_country_or_404
 
 router = APIRouter(tags=["permissions"], prefix="/api/v1/admin")
@@ -208,7 +208,7 @@ def check_permission(
 # ══════════════════════════════════════════════════════════════════
 
 
-from services.effective_permissions import (
+from services.security.effective_permissions import (
     get_effective_permissions as resolve_effective_perms,
     check_permission as resolve_check_perm,
     request_permission_change,

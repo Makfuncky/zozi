@@ -36,7 +36,7 @@ from models import (
 )
 from utils.dependencies import require_admin
 from utils.datetime_utils import utcnow
-from controllers.audit_controller import audit_log, AuditAction
+from utils.audit import audit_log, AuditAction
 
 logger = logging.getLogger(__name__)
 

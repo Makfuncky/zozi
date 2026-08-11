@@ -15,14 +15,14 @@ import os
 
 BACKEND = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
 UTILS_AUDIT = os.path.join(BACKEND, "utils", "audit.py")
+AUDIT_QUERY = os.path.join(BACKEND, "services", "audit", "audit_query_service.py")
 FACADE = os.path.join(BACKEND, "controllers", "audit_controller.py")
 
-REQUIRED_AUDIT_API = {
-    "audit_log",
-    "AuditAction",
-    "get_audit_logs",
-    "get_unique_actions",
-}
+# `utils/audit.py` is the canonical WRITE primitive (importable from every layer).
+UTILS_AUDIT_API = {"audit_log", "AuditAction"}
+# Audit READ queries live in `services/audit/audit_query_service.py` per the
+# circuit contract (DB reads belong in services, not in the utils leaf layer).
+AUDIT_QUERY_API = {"get_audit_logs", "get_unique_actions"}
 
 
 def _iter_py_files(root):
@@ -86,12 +86,26 @@ def test_utils_audit_exposes_canonical_api():
     for node in tree.body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             defined.add(node.name)
-    missing = REQUIRED_AUDIT_API - defined
+    missing = UTILS_AUDIT_API - defined
     assert not missing, f"utils/audit.py missing public API: {sorted(missing)}"
+
+
+def test_audit_query_service_exposes_read_api():
+    assert os.path.exists(AUDIT_QUERY), (
+        "services/audit/audit_query_service.py must exist for audit reads"
+    )
+    tree = ast.parse(open(AUDIT_QUERY, encoding="utf-8").read(), filename=AUDIT_QUERY)
+    defined = set()
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            defined.add(node.name)
+    missing = AUDIT_QUERY_API - defined
+    assert not missing, f"audit_query_service.py missing read API: {sorted(missing)}"
 
 
 if __name__ == "__main__":
     test_facade_deleted()
     test_no_controller_audit_controller_imports()
     test_utils_audit_exposes_canonical_api()
+    test_audit_query_service_exposes_read_api()
     print("ALL AUDIT CONTRACT TESTS PASSED")

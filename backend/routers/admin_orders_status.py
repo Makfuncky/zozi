@@ -5,8 +5,8 @@ from db.database import get_db
 from models import Order, User
 from db.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
 from utils.dependencies import require_admin, require_super_admin
-from controllers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_order_status
-from controllers.audit_controller import audit_log
+from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_order_status
+from utils.audit import audit_log
 from utils.country_rls import enforce_country_access, get_country_or_404
 from utils.rls_interceptor import set_rls_context
 import math

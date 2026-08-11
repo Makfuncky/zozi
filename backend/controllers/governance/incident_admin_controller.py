@@ -10,8 +10,8 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from models import IncidentWarRoom
-from services.incident_service import get_incident_service
+from services.security.incident_service import get_incident_service
+from services.governance.incident_admin_read_service import get_war_room as _get_war_room
 
 
 def create_incident(db: Session, title: str, severity: str = "medium", context: Optional[Dict[str, Any]] = None, current_user: dict = None) -> dict:
@@ -31,15 +31,4 @@ def add_action_item(db: Session, war_room_id: int, title: str, assignee_id: Opti
 
 
 def get_war_room(db: Session, war_room_id: int) -> dict:
-    war_room = db.query(IncidentWarRoom).filter_by(id=war_room_id).first()
-    if not war_room:
-        return {"exists": False}
-    return {
-        "id": war_room.id,
-        "incident_id": war_room.incident_id,
-        "title": war_room.title,
-        "severity": war_room.severity,
-        "status": war_room.status,
-        "started_at": war_room.started_at.isoformat(),
-        "action_items": [{"id": a.id, "title": a.title, "status": a.status} for a in war_room.action_items],
-    }
+    return _get_war_room(db, war_room_id)

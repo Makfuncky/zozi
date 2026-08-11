@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from services.db_read import all_rows, first
+from services.common.db_read import all_rows, first
 
 from controllers.customer.users import (
     User,

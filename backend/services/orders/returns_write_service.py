@@ -1,7 +1,7 @@
 """Backward-compatible re-export shim for return-request write operations.
 
 This module intentionally performs NO imports at module-load time. The
-canonical handlers live in `controllers.returns_controller`, which imports this
+canonical handlers live in `controllers.orders.returns_controller`, which imports this
 shim back; resolving names lazily via module-level `__getattr__` breaks that
 import-time cycle.
 """
@@ -11,8 +11,8 @@ import importlib
 from typing import Any
 
 _REEXPORTS: dict[str, tuple[str, str]] = {
-    "create_return_request": ("controllers.returns_controller", "create_return_request"),
-    "update_return_request": ("controllers.returns_controller", "update_return_request"),
+    "create_return_request": ("controllers.orders.returns_controller", "create_return_request"),
+    "update_return_request": ("controllers.orders.returns_controller", "update_return_request"),
 }
 
 

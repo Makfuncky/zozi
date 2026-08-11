@@ -2,20 +2,29 @@
 Country Admin Router
 Endpoints for legal contracts, audit trails, and country management.
 """
-import json
-from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from typing import Optional, Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
+from fastapi import APIRouter, Depends, Path, Query, Body
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
 
 from db.database import get_db
-from models import CountryConfig, CountryCommunication, User, CountryStaffAssignment
-from models.country_enhancements import CountryCity, CountryCategoryTaxRate
-from controllers.auth_controller import get_current_user
-from services.legal_contract_service import LegalContractService
-from services.audit_trail_service import AuditTrailService
+from controllers.security.auth_controller import get_current_user
+from services.supplier.legal_contract_service import LegalContractService
+from services.audit.audit_trail_service import AuditTrailService
+from services.geography.country_audit_admin_service import (
+    add_city as svc_add_city,
+    assign_staff as svc_assign_staff,
+    delete_city as svc_delete_city,
+    list_cities as svc_list_cities,
+    list_communications as svc_list_communications,
+    list_staff as svc_list_staff,
+    list_tax_rates as svc_list_tax_rates,
+    mark_communication_read as svc_mark_communication_read,
+    remove_staff as svc_remove_staff,
+    send_country_communication as svc_send_country_communication,
+    set_tax_rate as svc_set_tax_rate,
+    update_city as svc_update_city,
+)
 
 router = APIRouter(tags=["country-admin"], prefix="/api/v1/admin")
 
@@ -32,7 +41,7 @@ def generate_legal_contract(
     return result
 
 
-@router.get("/{country_code}/audit-trail", response_model=List[dict])
+@router.get("/{country_code}/audit-trail", response_model=list[dict])
 def get_audit_trail(
     country_code: str = Path(..., description="Country code"),
     table_name: Optional[str] = Query(None, description="Filter by table name"),
@@ -97,9 +106,9 @@ def send_country_communication(
     current_user = Depends(get_current_user),
 ):
     """Send an internal communication within a country."""
-    comm = CountryCommunication(
-        country_code=country_code,
-        from_user_id=current_user.get("id"),
+    return svc_send_country_communication(
+        country_code,
+        current_user,
         to_user_id=to_user_id,
         subject=subject,
         body=body,
@@ -107,18 +116,8 @@ def send_country_communication(
         category=category,
         related_entity_type=related_entity_type,
         related_entity_id=related_entity_id,
-        status="sent",
+        db=db,
     )
-    db.add(comm)
-    db.commit()
-    db.refresh(comm)
-    return {
-        "id": comm.id,
-        "subject": comm.subject,
-        "priority": comm.priority,
-        "status": comm.status,
-        "created_at": comm.created_at.isoformat(),
-    }
 
 
 @router.get("/communications")
@@ -130,33 +129,13 @@ def list_communications(
     current_user = Depends(get_current_user),
 ):
     """Inbox: list communications for the current user, filtered by role+country."""
-    user_id = current_user.get("id")
-    query = db.query(CountryCommunication).filter(
-        (CountryCommunication.to_user_id == user_id) |
-        (CountryCommunication.to_user_id.is_(None))
+    return svc_list_communications(
+        current_user,
+        status=status,
+        priority=priority,
+        limit=limit,
+        db=db,
     )
-    if status:
-        query = query.filter(CountryCommunication.status == status)
-    if priority:
-        query = query.filter(CountryCommunication.priority == priority)
-    comms = query.order_by(desc(CountryCommunication.created_at)).limit(limit).all()
-    return [
-        {
-            "id": c.id,
-            "country_code": c.country_code,
-            "from_user_id": c.from_user_id,
-            "subject": c.subject,
-            "body": c.body,
-            "priority": c.priority,
-            "category": c.category,
-            "related_entity_type": c.related_entity_type,
-            "related_entity_id": c.related_entity_id,
-            "status": c.status,
-            "read_at": c.read_at.isoformat() if c.read_at else None,
-            "created_at": c.created_at.isoformat(),
-        }
-        for c in comms
-    ]
 
 
 @router.put("/communications/{comm_id}/read")
@@ -165,13 +144,7 @@ def mark_communication_read(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    comm = db.query(CountryCommunication).filter(CountryCommunication.id == comm_id).first()
-    if not comm:
-        raise HTTPException(status_code=404, detail="Communication not found")
-    comm.status = "read"
-    comm.read_at = datetime.now(timezone.utc)
-    db.commit()
-    return {"status": "read", "read_at": comm.read_at.isoformat()}
+    return svc_mark_communication_read(comm_id, db=db)
 
 
 @router.get("/{country_code}/data-residency")
@@ -181,7 +154,7 @@ def get_data_residency(
     current_user = Depends(get_current_user)
 ):
     """Get data residency tier for a country."""
-    from services.audit_trail_service import DataResidencyService
+    from services.audit.audit_trail_service import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {
@@ -202,24 +175,7 @@ def list_cities(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    query = db.query(CountryCity).filter(CountryCity.country_code == country_code.upper())
-    if active:
-        query = query.filter(CountryCity.status == "active")
-    cities = query.order_by(CountryCity.population.desc()).limit(limit).all()
-    return [
-        {
-            "id": c.id,
-            "name": c.name,
-            "name_local": c.name_local,
-            "population": c.population,
-            "is_capital": c.is_capital,
-            "latitude": float(c.latitude) if c.latitude else None,
-            "longitude": float(c.longitude) if c.longitude else None,
-            "postal_code_prefix": c.postal_code_prefix,
-            "status": c.status,
-        }
-        for c in cities
-    ]
+    return svc_list_cities(country_code, active=active, limit=limit, db=db)
 
 
 @router.post("/{country_code}/cities")
@@ -234,20 +190,16 @@ def add_city(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    city = CountryCity(
-        country_code=country_code.upper(),
+    return svc_add_city(
+        country_code,
         name=name,
         name_local=name_local,
         population=population,
         is_capital=is_capital,
         latitude=latitude,
         longitude=longitude,
-        status="active",
+        db=db,
     )
-    db.add(city)
-    db.commit()
-    db.refresh(city)
-    return {"id": city.id, "name": city.name, "status": "created"}
 
 
 @router.put("/{country_code}/cities/{city_id}")
@@ -264,25 +216,18 @@ def update_city(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == country_code.upper()).first()
-    if not city:
-        raise HTTPException(status_code=404, detail="City not found")
-    if name is not None:
-        city.name = name
-    if name_local is not None:
-        city.name_local = name_local
-    if population is not None:
-        city.population = population
-    if is_capital is not None:
-        city.is_capital = is_capital
-    if latitude is not None:
-        city.latitude = latitude
-    if longitude is not None:
-        city.longitude = longitude
-    if status is not None:
-        city.status = status
-    db.commit()
-    return {"id": city.id, "name": city.name, "status": "updated"}
+    return svc_update_city(
+        country_code,
+        city_id,
+        name=name,
+        name_local=name_local,
+        population=population,
+        is_capital=is_capital,
+        latitude=latitude,
+        longitude=longitude,
+        status=status,
+        db=db,
+    )
 
 
 @router.delete("/{country_code}/cities/{city_id}")
@@ -292,12 +237,7 @@ def delete_city(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == country_code.upper()).first()
-    if not city:
-        raise HTTPException(status_code=404, detail="City not found")
-    city.status = "inactive"
-    db.commit()
-    return {"status": "deleted"}
+    return svc_delete_city(country_code, city_id, db=db)
 
 
 # ── Staff Assignment Management ───────────────────────────────────
@@ -309,21 +249,7 @@ def list_staff(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    assignments = (
-        db.query(CountryStaffAssignment)
-        .filter(CountryStaffAssignment.country_code == country_code.upper(), CountryStaffAssignment.is_active == True)
-        .all()
-    )
-    return [
-        {
-            "id": a.id,
-            "user_id": a.user_id,
-            "role_in_country": a.role_in_country,
-            "assigned_by": a.assigned_by,
-            "created_at": a.created_at.isoformat() if a.created_at else None,
-        }
-        for a in assignments
-    ]
+    return svc_list_staff(country_code, db=db)
 
 
 @router.post("/{country_code}/staff")
@@ -334,30 +260,13 @@ def assign_staff(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    if role_in_country not in ("country_head", "country_manager", "country_moderator", "country_finance"):
-        raise HTTPException(status_code=400, detail="Invalid role")
-    existing = (
-        db.query(CountryStaffAssignment)
-        .filter(
-            CountryStaffAssignment.country_code == country_code.upper(),
-            CountryStaffAssignment.user_id == user_id,
-            CountryStaffAssignment.role_in_country == role_in_country,
-            CountryStaffAssignment.is_active == True,
-        )
-        .first()
-    )
-    if existing:
-        raise HTTPException(status_code=409, detail="Staff already assigned with this role")
-    assignment = CountryStaffAssignment(
-        country_code=country_code.upper(),
+    return svc_assign_staff(
+        country_code,
         user_id=user_id,
         role_in_country=role_in_country,
-        assigned_by=current_user.get("id"),
-        is_active=True,
+        current_user=current_user,
+        db=db,
     )
-    db.add(assignment)
-    db.commit()
-    return {"id": assignment.id, "status": "assigned"}
 
 
 @router.delete("/{country_code}/staff/{staff_id}")
@@ -367,16 +276,7 @@ def remove_staff(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    assignment = (
-        db.query(CountryStaffAssignment)
-        .filter(CountryStaffAssignment.id == staff_id, CountryStaffAssignment.country_code == country_code.upper())
-        .first()
-    )
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Staff assignment not found")
-    assignment.is_active = False
-    db.commit()
-    return {"status": "removed"}
+    return svc_remove_staff(country_code, staff_id, db=db)
 
 
 # ── Category Tax Rates ────────────────────────────────────────────
@@ -388,20 +288,7 @@ def list_tax_rates(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    rates = (
-        db.query(CountryCategoryTaxRate)
-        .filter(CountryCategoryTaxRate.country_code == country_code.upper(), CountryCategoryTaxRate.is_active == True)
-        .all()
-    )
-    return [
-        {
-            "id": r.id,
-            "category_id": r.category_id,
-            "tax_rate": float(r.tax_rate),
-            "tax_name": r.tax_name,
-        }
-        for r in rates
-    ]
+    return svc_list_tax_rates(country_code, db=db)
 
 
 @router.post("/{country_code}/tax-rates")
@@ -413,26 +300,10 @@ def set_tax_rate(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-    existing = (
-        db.query(CountryCategoryTaxRate)
-        .filter(
-            CountryCategoryTaxRate.country_code == country_code.upper(),
-            CountryCategoryTaxRate.category_id == category_id,
-        )
-        .first()
+    return svc_set_tax_rate(
+        country_code,
+        category_id=category_id,
+        tax_rate=tax_rate,
+        tax_name=tax_name,
+        db=db,
     )
-    if existing:
-        existing.tax_rate = tax_rate
-        existing.tax_name = tax_name
-        existing.is_active = True
-    else:
-        rate = CountryCategoryTaxRate(
-            country_code=country_code.upper(),
-            category_id=category_id,
-            tax_rate=tax_rate,
-            tax_name=tax_name,
-            is_active=True,
-        )
-        db.add(rate)
-    db.commit()
-    return {"status": "saved", "category_id": category_id, "tax_rate": tax_rate}

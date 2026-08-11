@@ -1,201 +1,87 @@
+"""controllers.geography.country_versioning_controller controller (CONTROLLERS layer).
+
+Coordinates the country-config-version HTTP contract and delegates ALL
+persistence to services.geography.country_versioning_service. It must not
+issue db.query directly. The HTTP contract is declared with
+routers.generated.auto_router decorators so the auto-router emits the surface
+router that main._load_routers auto-discovers.
+
+Both the /api/v1/admin and /api/v1 mount points are preserved (the legacy
+hand-written routers included the versioning router under each prefix).
+"""
 from __future__ import annotations
 
-import json
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from models import CountryConfigVersion
-from db.database import get_db
-from controllers.auth_controller import get_current_user
-from services.logistics_partner_pricing import normalize_country_code
+from routers.generated.auto_router import get, post
 
-router = APIRouter(prefix='/config-versions', tags=['country-versioning'])
-
-
-def _require_staff(current_user: dict) -> None:
-    role = str(current_user.get('role') or '').lower()
-    if role not in {'admin', 'country_head', 'country_manager', 'sub_admin'}:
-        raise HTTPException(status_code=403, detail='Staff access required')
+from services.geography.country_versioning_service import (
+    VersionDraftBody, approve_version, create_version, get_version, list_versions,
+    publish_version, rollback_version,
+)
+import structlog
+logger = structlog.get_logger(__name__)
 
 
-def _next_version(db: Session, country_code: str, config_type: str) -> int:
-    latest = (
-        db.query(CountryConfigVersion)
-        .filter(
-            CountryConfigVersion.country_code == country_code,
-            CountryConfigVersion.config_type == config_type,
-        )
-        .order_by(CountryConfigVersion.version.desc())
-        .first()
-    )
-    return int(getattr(latest, 'version', 0) or 0) + 1
+@get("/api/v1/admin/config-versions/{country_code}", deps=["db", "user"], query=["config_type"], tags=["country-versioning"])
+def list_config_versions(country_code: str, config_type: Optional[str] = None, current_user: dict = None, db: Session = None) -> list:
+    return list_versions(country_code, config_type, current_user, db)
 
 
-def _safe_json(value):
-    if value is None:
-        return None
-    if isinstance(value, str):
-        try:
-            return json.loads(value)
-        except Exception:
-            return value
-    return value
+@get("/api/v1/config-versions/{country_code}", deps=["db", "user"], query=["config_type"], tags=["country-versioning"])
+def list_config_versions_public(country_code: str, config_type: Optional[str] = None, current_user: dict = None, db: Session = None) -> list:
+    return list_versions(country_code, config_type, current_user, db)
 
 
-def _serialize(row: CountryConfigVersion) -> dict:
-    return {
-        'id': row.id,
-        'uuid': str(getattr(row, 'uuid', '')) or None,
-        'country_code': row.country_code,
-        'config_type': row.config_type,
-        'version': row.version,
-        'status': row.status,
-        'payload': _safe_json(row.payload_json),
-        'created_at': str(getattr(row, 'created_at', '') or ''),
-    }
+@get("/api/v1/admin/config-versions/{country_code}/{version_id}", deps=["db", "user"], tags=["country-versioning"])
+def get_config_version(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return get_version(country_code, version_id, current_user, db)
 
 
-class VersionDraftBody(BaseModel):
-    config_type: str
-    payload: dict[str, Any] = {}
+@get("/api/v1/config-versions/{country_code}/{version_id}", deps=["db", "user"], tags=["country-versioning"])
+def get_config_version_public(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return get_version(country_code, version_id, current_user, db)
 
 
-@router.get('/{country_code}')
-def list_versions(
-    country_code: str,
-    config_type: Optional[str] = Query(default=None),
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    _require_staff(current_user)
-    code = normalize_country_code(country_code)
-    query = db.query(CountryConfigVersion).filter(CountryConfigVersion.country_code == code)
-    if config_type:
-        query = query.filter(CountryConfigVersion.config_type == config_type)
-    rows = query.order_by(
-        CountryConfigVersion.created_at.desc(), CountryConfigVersion.version.desc()
-    ).all()
-    return [_serialize(r) for r in rows]
+@post("/api/v1/admin/config-versions/{country_code}", deps=["db", "user"], body=VersionDraftBody, tags=["country-versioning"])
+def create_config_version(country_code: str, body: VersionDraftBody, current_user: dict = None, db: Session = None) -> dict:
+    return create_version(country_code, body, current_user, db)
 
 
-@router.get('/{country_code}/{version_id}')
-def get_version(
-    country_code: str,
-    version_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    _require_staff(current_user)
-    code = normalize_country_code(country_code)
-    row = (
-        db.query(CountryConfigVersion)
-        .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == code)
-        .first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail='Config version not found')
-    return _serialize(row)
+@post("/api/v1/config-versions/{country_code}", deps=["db", "user"], body=VersionDraftBody, tags=["country-versioning"])
+def create_config_version_public(country_code: str, body: VersionDraftBody, current_user: dict = None, db: Session = None) -> dict:
+    return create_version(country_code, body, current_user, db)
 
 
-@router.post('/{country_code}')
-def create_version(
-    country_code: str,
-    body: VersionDraftBody,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    _require_staff(current_user)
-    code = normalize_country_code(country_code)
-    row = CountryConfigVersion(
-        country_code=code,
-        config_type=body.config_type,
-        version=_next_version(db, code, body.config_type),
-        payload_json=json.dumps(body.payload),
-        status='draft',
-        created_by=current_user.get('id'),
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return _serialize(row)
+@post("/api/v1/admin/config-versions/{country_code}/{version_id}/approve", deps=["db", "user"], tags=["country-versioning"])
+def approve_config_version(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return approve_version(country_code, version_id, current_user, db)
 
 
-@router.post('/{country_code}/{version_id}/approve')
-def approve_version(
-    country_code: str,
-    version_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    _require_staff(current_user)
-    code = normalize_country_code(country_code)
-    row = (
-        db.query(CountryConfigVersion)
-        .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == code)
-        .first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail='Config version not found')
-    if row.status != 'draft':
-        raise HTTPException(status_code=400, detail='Only draft versions can be approved')
-    row.status = 'approved'
-    db.commit()
-    return _serialize(row)
+@post("/api/v1/config-versions/{country_code}/{version_id}/approve", deps=["db", "user"], tags=["country-versioning"])
+def approve_config_version_public(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return approve_version(country_code, version_id, current_user, db)
 
 
-@router.post('/{country_code}/{version_id}/publish')
-def publish_version(
-    country_code: str,
-    version_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    _require_staff(current_user)
-    code = normalize_country_code(country_code)
-    row = (
-        db.query(CountryConfigVersion)
-        .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == code)
-        .first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail='Config version not found')
-    if row.status not in {'approved', 'draft'}:
-        raise HTTPException(status_code=400, detail='Version must be approved before publishing')
-    row.status = 'published'
-    db.commit()
-    return _serialize(row)
+@post("/api/v1/admin/config-versions/{country_code}/{version_id}/publish", deps=["db", "user"], tags=["country-versioning"])
+def publish_config_version(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return publish_version(country_code, version_id, current_user, db)
 
 
-@router.post('/{country_code}/{version_id}/rollback')
-def rollback_version(
-    country_code: str,
-    version_id: int,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    _require_staff(current_user)
-    code = normalize_country_code(country_code)
-    row = (
-        db.query(CountryConfigVersion)
-        .filter(CountryConfigVersion.id == version_id, CountryConfigVersion.country_code == code)
-        .first()
-    )
-    if not row:
-        raise HTTPException(status_code=404, detail='Config version not found')
-    if row.status != 'published':
-        raise HTTPException(status_code=400, detail='Only published versions can be rolled back')
-    new_row = CountryConfigVersion(
-        country_code=code,
-        config_type=row.config_type,
-        version=_next_version(db, code, row.config_type),
-        payload_json=row.payload_json,
-        status='draft',
-        created_by=current_user.get('id'),
-    )
-    db.add(new_row)
-    db.commit()
-    db.refresh(new_row)
-    return _serialize(new_row)
+@post("/api/v1/config-versions/{country_code}/{version_id}/publish", deps=["db", "user"], tags=["country-versioning"])
+def publish_config_version_public(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return publish_version(country_code, version_id, current_user, db)
+
+
+@post("/api/v1/admin/config-versions/{country_code}/{version_id}/rollback", deps=["db", "user"], tags=["country-versioning"])
+def rollback_config_version(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return rollback_version(country_code, version_id, current_user, db)
+
+
+@post("/api/v1/config-versions/{country_code}/{version_id}/rollback", deps=["db", "user"], tags=["country-versioning"])
+def rollback_config_version_public(country_code: str, version_id: int, current_user: dict = None, db: Session = None) -> dict:
+    return rollback_version(country_code, version_id, current_user, db)

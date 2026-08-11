@@ -84,7 +84,7 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
 def _startup_load_role_permissions() -> None:
     try:
-        from controllers.admin_controller import load_role_permission_settings
+        from controllers.admin.admin_controller import load_role_permission_settings
         from db.database import SessionLocal
 
         db = SessionLocal()
@@ -98,9 +98,9 @@ def _startup_load_role_permissions() -> None:
 
 def _startup_register_event_listeners() -> None:
     try:
-        from controllers.payments_controller import _event_publisher
+        from services.gateways.payments import _event_publisher
         from events import PaymentConfirmedEvent
-        from services.fulfillment_service import FulfillmentService
+        from services.orders.fulfillment_service import FulfillmentService
 
         fulfillment = FulfillmentService()
         from db.database import SessionLocal
@@ -202,14 +202,14 @@ def _startup_background_jobs() -> list:
         return stoppers
 
     try:
-        from services.command_center_background import start_background_jobs, stop_background_jobs
+        from services.common.command_center_background import start_background_jobs, stop_background_jobs
         start_background_jobs()
         stoppers.append(("command_center_background", stop_background_jobs))
     except Exception:
         logger.exception("Failed to start background jobs")
 
     try:
-        from services.auto_payout_scheduler import (
+        from services.treasury.auto_payout_scheduler import (
             start_auto_payout_background_job,
             stop_auto_payout_background_job,
         )

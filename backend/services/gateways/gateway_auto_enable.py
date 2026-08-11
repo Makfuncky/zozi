@@ -12,8 +12,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 
 from models import CountryConfig, CountryGatewayCredentials
-from services.gateways.registry import PaymentGatewayRegistry
-from services.country_auto_populate import GATEWAY_REGISTRY
+from services.geography.country_auto_populate import GATEWAY_REGISTRY
 
 logger = logging.getLogger(__name__)
 

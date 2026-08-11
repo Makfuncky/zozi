@@ -70,7 +70,7 @@ def list_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0)
 
 
 def create_address(db: Session, user_id: int, payload: dict) -> dict:
-    from services.commerce_write_service import (
+    from services.commerce.commerce_write_service import (
         create_address as create_address_db,
         unset_other_default_addresses,
     )
@@ -107,7 +107,7 @@ def create_address(db: Session, user_id: int, payload: dict) -> dict:
 
 
 def update_address(db: Session, address_id: int, user_id: int, payload: dict) -> dict:
-    from services.commerce_write_service import (
+    from services.commerce.commerce_write_service import (
         update_address as update_address_db,
         unset_other_default_addresses,
     )
@@ -123,7 +123,7 @@ def update_address(db: Session, address_id: int, user_id: int, payload: dict) ->
 
 
 def delete_address(db: Session, address_id: int, user_id: int) -> dict:
-    from services.commerce_write_service import delete_address
+    from services.commerce.commerce_write_service import delete_address
     
     address = _get_user_address(address_id, user_id, db)
     delete_address(db, address)
@@ -131,7 +131,7 @@ def delete_address(db: Session, address_id: int, user_id: int) -> dict:
 
 
 def set_default_address(db: Session, address_id: int, user_id: int) -> dict:
-    from services.commerce_write_service import (
+    from services.commerce.commerce_write_service import (
         unset_other_default_addresses,
         set_default_address as set_default_address_db,
     )

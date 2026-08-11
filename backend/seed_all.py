@@ -35,7 +35,7 @@ from models.core import (
 )
 from models.employee_models import InternalEmail, EmailFolder, Employee
 from models import CommissionCategoryRate, CommissionBadgeTier
-from services.commission_engine import seed_defaults, get_global_config
+from services.finance.commission_engine import seed_defaults, get_global_config
 from utils.auth import get_password_hash
 from sqlalchemy import text
 

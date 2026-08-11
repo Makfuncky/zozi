@@ -17,7 +17,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     get_current_admin,
     get_all_suppliers,
     list_pending_payouts,

@@ -20,7 +20,7 @@ for _k in dir(_m):
 
 def __getattr__(name: str):
     # Forward submodule access, e.g. ``from services import finance_automation``
-    # resolves to the ``services.finance_automation`` submodule.
+    # resolves to the ``services.finance.finance_automation`` submodule.
     try:
         return importlib.import_module(f"services.{name}")
     except ModuleNotFoundError as e:

@@ -9,7 +9,7 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException
 
-from controllers.auth_controller import get_current_user as _dict_get_current_user
+from controllers.security.auth_controller import get_current_user as _dict_get_current_user
 
 get_current_user = _dict_get_current_user
 

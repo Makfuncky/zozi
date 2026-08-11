@@ -7,7 +7,7 @@ import signal
 import time
 from datetime import datetime
 
-from services.logistics_sla_service import run_treasury_sync
+from services.logistics.logistics_sla_service import run_treasury_sync
 import structlog
 logger = structlog.get_logger(__name__)
 

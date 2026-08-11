@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.commission_controller as _ctrl
+    import controllers.finance.commission_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:
@@ -27,5 +27,5 @@ except Exception:
 @router.get("/admin_commission_routes/status")
 def status():
     """Report whether a backing controller is importable."""
-    return {"router": "admin_commission_routes", "controller": "controllers.commission_controller" if _HAS_CTRL else None,
+    return {"router": "admin_commission_routes", "controller": "controllers.finance.commission_controller" if _HAS_CTRL else None,
             "public_functions": _CTRL_PUBLIC}

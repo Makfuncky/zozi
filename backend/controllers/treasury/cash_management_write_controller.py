@@ -4,7 +4,7 @@ The finance router previously owned the transaction boundary (``db.commit()``)
 for every admin mutation. Those commits now live in
 ``services.finance.cash_management_write_service``; this controller only
 orchestrates: it forwards arguments, reuses the existing read/serialization
-helpers of ``controllers.cash_management_controller``, and lets service-raised
+helpers of ``controllers.treasury.cash_management_controller``, and lets service-raised
 ``HTTPException``s propagate. It performs **no** DB writes.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from controllers.cash_management_controller import (
+from controllers.treasury.cash_management_controller import (
     _serialize_finance_bank_settings,
     admin_queue_dispatch_transfer_batch,
 )

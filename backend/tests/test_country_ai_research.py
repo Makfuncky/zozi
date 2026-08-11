@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from services.country_ai_research import (
+from services.ai.country_ai_research import (
     CountryAIResearchService,
     AI_SCHEMA,
     QUAL_MODULES,
@@ -341,7 +341,7 @@ class TestAI_SCHEMA:
 
 class TestEnrichDisabled:
     def test_enrich_returns_base_report_when_disabled(self, base_report, demographics, economy, empty_evidence):
-        with patch("services.country_ai_research.settings") as mock_settings:
+        with patch("services.ai.country_ai_research.settings") as mock_settings:
             mock_settings.country_ai_enabled = False
             service = CountryAIResearchService(
                 country_name="India",

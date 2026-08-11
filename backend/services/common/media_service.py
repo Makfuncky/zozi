@@ -3,7 +3,7 @@ Media Management Service - Hierarchical Storage System
 Implements organized storage for product images, videos, and supplier profiles
 with support for country, supplier, and product hierarchies.
 
-All media persists through the :class:`services.storage.StorageBackend` abstraction,
+All media persists through the :class:`services.common.storage.StorageBackend` abstraction,
 so the same code works with local disk (development) and S3-compatible object
 storage behind a CDN (production).
 """
@@ -19,7 +19,7 @@ from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
 from models.media_models import MediaAsset
-from services.storage import storage as _storage
+from services.common.storage import storage as _storage
 from utils.file_validation import validate_upload_image, validate_upload_video, VIDEO_EXTENSIONS
 
 

@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     get_all_suppliers,
     get_current_admin,
 )
@@ -32,7 +32,7 @@ from data.models import (
 )
 from data.models import Payout as PayoutModel
 from data.models import User as UserModel
-from services.db_read import (
+from services.common.db_read import (
     all_rows,
     count,
     first,

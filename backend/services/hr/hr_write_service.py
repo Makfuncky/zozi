@@ -1,7 +1,7 @@
 """Backward-compatible re-export shim for HR write operations.
 
 This module intentionally performs NO imports at module-load time. It used to
-re-export handler functions from `controllers.hr_controller`, which created an
+re-export handler functions from `controllers.hr.hr_controller`, which created an
 import-time circular-import cycle (`hr_controller` -> `hr_write_service` ->
 `hr_controller`). Resolving names lazily via module-level `__getattr__` breaks
 that cycle: the underlying controller module is only imported on first
@@ -18,9 +18,9 @@ from sqlalchemy.orm import Session
 
 
 _REEXPORTS: dict[str, tuple[str, str]] = {
-    "create_coi_report": ("controllers.hr_controller", "create_coi_report"),
-    "create_disciplinary_case": ("controllers.hr_controller", "create_disciplinary_case"),
-    "create_offboarding_case": ("controllers.hr_controller", "create_offboarding_case"),
+    "create_coi_report": ("controllers.hr.hr_controller", "create_coi_report"),
+    "create_disciplinary_case": ("controllers.hr.hr_controller", "create_disciplinary_case"),
+    "create_offboarding_case": ("controllers.hr.hr_controller", "create_offboarding_case"),
 }
 
 

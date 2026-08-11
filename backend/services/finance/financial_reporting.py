@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from models import JournalEntry, TreasuryAccount, AuditLog
 from utils.datetime_utils import utcnow as _utcnow
-from services.financial_reports_service import (
+from services.finance.financial_reports_service import (
     generate_income_statement as _generate_income_statement,
     generate_balance_sheet as _generate_balance_sheet,
     generate_cash_flow_statement as _generate_cash_flow_statement,
@@ -153,6 +153,6 @@ def _get_account_balances_for_period(
     period_end: Optional[datetime] = None,
 ) -> list[dict]:
     """Helper exposed for profitability reporting."""
-    from services.financial_reports_service import _get_account_balances_for_period as _inner
+    from services.finance.financial_reports_service import _get_account_balances_for_period as _inner
     return _inner(db, currency, period_start, period_end)
 

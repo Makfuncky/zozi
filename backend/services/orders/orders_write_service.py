@@ -2,7 +2,7 @@
 
 This module is the canonical home for order row-level writes. It is referenced
 by ``controllers.orders.orders`` (admin order operations) and the lazy
-re-export shim ``services.orders_write_service``.
+re-export shim ``services.orders.orders_write_service``.
 
 Layer contract: only ``services/`` owns DB transactions. Each function here
 takes a caller-provided ``Session`` and owns only the narrow write it performs

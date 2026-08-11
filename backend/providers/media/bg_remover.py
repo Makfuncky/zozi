@@ -6,8 +6,8 @@ import …``) resolve to the real code rather than a no-op stub.
 """
 from __future__ import annotations
 
-from providers.hr.bg_remover import *  # noqa: F401,F403
-from providers.hr.bg_remover import (  # noqa: F401
+from providers.bg_remover import *  # noqa: F401,F403
+from providers.bg_remover import (  # noqa: F401
     AVAILABLE_MODELS,
     VALID_STRATEGIES,
     ProcessingConfig,
@@ -49,7 +49,7 @@ from providers.hr.bg_remover import (  # noqa: F401
 )
 
 # `process_image_search` lives in the canonical media provider, not `providers.hr.bg_remover`.
-from providers.media.image import process_image_search  # noqa: F401
+from providers.image import process_image_search  # noqa: F401
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -75,7 +75,7 @@ from data.models import (
     VATRemittance,
     Wishlist,
 )
-from services.db_read import aggregate_rows, all_rows, count, first
+from services.common.db_read import aggregate_rows, all_rows, count, first
 from utils.audit import AuditAction, audit_log
 from utils.auth import get_password_hash, require_permission
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE, STAFF_ROLES
@@ -809,13 +809,13 @@ def delete_bank_account_record(
     )
     return {"ok": True, "id": account_id, "deleted": True}
 # ── Deferred re-export bridge ─────────────────────────────────────────────────
-# Imported at the BOTTOM (not the top) of this module: `services.users_write_service`
+# Imported at the BOTTOM (not the top) of this module: `services.users.users_write_service`
 # re-exports handlers defined *in this very module*, so a top-level import would
 # be self-referential and trigger an import-time circular-import failure.
-from services.users_write_service import (  # noqa: E402
-    _build_user_delete_blocker,
-    _delete_order_records,
-    _hard_delete_user_record,
+from services.users.users_write_service import (  # noqa: E402
+    build_user_delete_blocker as _build_user_delete_blocker,
+    delete_order_records as _delete_order_records,
+    hard_delete_user_record as _hard_delete_user_record,
     delete_bank_account_record as delete_bank_account_record_service,
     force_reset_password as force_reset_password_service,
     toggle_user_active as toggle_user_active_service,

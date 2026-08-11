@@ -2,7 +2,7 @@
 
 Verifies that:
 - controllers.supplier subpackage re-exports all expected functions
-- controllers.admin_controller backward-compat wrapper works
+- controllers.admin.admin_controller backward-compat wrapper works
 - controllers.admin subpackage is importable
 """
 from __future__ import annotations
@@ -10,7 +10,7 @@ import pytest
 
 
 class TestAdminControllerBackwardCompat:
-    """Verifies controllers.admin_controller file exists as a re-export wrapper.
+    """Verifies controllers.admin.admin_controller file exists as a re-export wrapper.
 
     NOTE: The admin subpackage (controllers/admin/*.py) has pre-existing import
     bugs (missing symbols in utils.auth, utils.constants, etc.) that are outside

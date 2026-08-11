@@ -23,7 +23,7 @@ actually read/write, which were missing from the ORM models:
   - business_type   (String 50)
   - verified_documents (Text, JSON-encoded list)
 
-These back ``services.suppliers_write_service`` and the supplier-document /
+These back ``services.supplier.suppliers_write_service`` and the supplier-document /
 supplier-profile controllers. Without them the endpoints raise AttributeError /
 TypeError at runtime.
 

@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from fastapi import HTTPException, UploadFile
 
-from services import ai_service
+from services.ai import ai_service
 from utils.background_jobs import enqueue_job
 from utils.config import settings
 
