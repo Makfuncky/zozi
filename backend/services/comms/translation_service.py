@@ -2,11 +2,8 @@
 Real-time Translation Service
 Features: Multi-language chat translation, locale formatting
 """
-from __future__ import annotations
 import logging
 from typing import Optional, Dict, Any
-import structlog
-logger = structlog.get_logger(__name__)
 
 logger = logging.getLogger("zozi.translation")
 
@@ -60,9 +57,40 @@ class TranslationService:
             if locale.startswith("ar"):
                 return dt.strftime("%d/%m/%Y")
             return dt.strftime("%Y-%m-%d")
-        except (ValueError, TypeError) as e:
-            logger.exception("format_date_failed", error=str(e))
+        except:
             return date_str
+
+
+class ChatTranslationMiddleware:
+    """Middleware for real-time chat translation."""
+    
+    def __init__(self, db=None):
+        self.db = db
+        self.translator = TranslationService()
+    
+    def process_message(
+        self,
+        message: str,
+        sender_locale: str,
+        recipient_locale: str,
+        sender_currency: str = "USD"
+    ) -> Dict[str, Any]:
+        """Process message for translation and formatting."""
+        result = {
+            "original": message,
+            "sender_locale": sender_locale,
+            "recipient_locale": recipient_locale
+        }
+        
+        if sender_locale != recipient_locale:
+            translated = self.translator.translate(
+                message, sender_locale, recipient_locale
+            )
+            result["translated"] = translated["translated"]
+        else:
+            result["translated"] = message
+        
+        return result
 
 
 def get_translation_service():

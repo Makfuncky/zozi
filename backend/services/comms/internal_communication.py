@@ -1,5 +1,3 @@
-from __future__ import annotations
-from utils.pagination import SAFE_QUERY_LIMIT
 import logging
 import secrets
 from datetime import datetime, timezone
@@ -8,20 +6,23 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from models.comms import (
+from models.communication import (
     InternalChannel,
     InternalChannelMember,
     InternalMessage,
-    EmailFolder,
-    InternalEmail,
 )
-import structlog
-logger = structlog.get_logger(__name__)
+from models.comms.communication import EmailFolder, InternalEmail
 
 logger = logging.getLogger("zozi.internal_comm")
 
 
 @dataclass
+class ChannelMember:
+    user_id: int
+    role: str = "member"
+    joined_at: datetime = field(default_factory=datetime.utcnow)
+
+
 class InternalCommunicationService:
     def __init__(self, db: Session):
         self.db = db
@@ -104,30 +105,21 @@ class InternalCommunicationService:
             self.db.query(InternalChannel)
             .filter(InternalChannel.is_active == True)
             .order_by(InternalChannel.created_at.desc())
-            .limit(SAFE_QUERY_LIMIT).all()
+            .all()
         )
         result = []
-
-        # N+1 removal: resolve this user's memberships in a single query before the loop.
-        channel_ids = [c.id for c in channels]
-        members_by_channel: dict = {}
-        if channel_ids:
-            member_rows = (
-                self.db.query(InternalChannelMember)
-                .filter(
-                    InternalChannelMember.channel_id.in_(channel_ids),
-                    InternalChannelMember.user_id == user_id,
-                )
-                .limit(SAFE_QUERY_LIMIT)
-                .all()
-            )
-            for m in member_rows:
-                members_by_channel.setdefault(m.channel_id, m)
 
         for channel in channels:
             if country_code and channel.country_code and channel.country_code != country_code:
                 continue
-            member = members_by_channel.get(channel.id)
+            member = (
+                self.db.query(InternalChannelMember)
+                .filter(
+                    InternalChannelMember.channel_id == channel.id,
+                    InternalChannelMember.user_id == user_id,
+                )
+                .first()
+            )
             if member or channel.is_public:
                 result.append({
                     "id": channel.id,
