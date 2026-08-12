@@ -22,11 +22,11 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
@@ -34,10 +34,41 @@ from utils.currency import (
     money_to_minor_units_for_currency,
 )
 
+from providers.payments import payment_persistence as pp
+
 logger = logging.getLogger(__name__)
 
 
 __all__ = ['create_tap_charge', '_tap_error_detail', '_finalize_tap_charge_status', 'confirm_tap_payment', 'handle_tap_webhook', '_tap_country_dial_code', '_tap_phone_payload', '_build_tap_customer', '_order_charge_total_amount']
+
+async def refund_tap_charge(
+    charge_id: str,
+    amount: float,
+    api_key: str,
+    reason: str = "return_refund",
+    api_base_url: str = "https://api.tap.company",
+) -> dict:
+    """Issue a Tap refund via the refund endpoint.
+
+    Encapsulates the raw vendor HTTP call so the orders service orchestrates
+    refunds without performing direct third-party requests. Returns the parsed
+    JSON response from Tap.
+    """
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.post(
+            f"{api_base_url}/v2/refunds",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "charge_id": charge_id,
+                "amount": amount,
+                "reason": reason,
+            },
+        )
+        return resp.json()
+
 
 async def create_tap_charge(body: TapChargeRequest, current_user: dict, db: Session) -> dict:
     configured, tap_key = _tap_configured(db)
@@ -113,7 +144,7 @@ async def create_tap_charge(body: TapChargeRequest, current_user: dict, db: Sess
         redirect_url = data.get("transaction", {}).get("url") or data.get("redirect", {}).get("url")
         if charge_id:
             setattr(order, "payment_intent_id", charge_id)
-            db.commit()
+            pp.commit(db)
         return {
             "charge_id": charge_id,
             "redirect_url": redirect_url,
@@ -155,7 +186,7 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
                 f"Order #{order.id} payment via Tap was successful.",
                 db,
             )
-            db.commit()
+            pp.commit(db)
 
         return {
             "status": "confirmed",
@@ -169,7 +200,7 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
     if status == "FAILED":
         if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
             setattr(order, "status", "failed")
-            db.add(
+            pp.add(db, 
                 Notification(
                     user_id=order.user_id,
                     type="order_update",
@@ -178,7 +209,7 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
                     link=f"/orders/{order.id}",
                 )
             )
-            db.commit()
+            pp.commit(db)
             try:
                 event = PaymentFailedEvent.create(
                     order_id=order.id,
@@ -212,7 +243,7 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
                     "transaction_date": datetime.now(timezone.utc).replace(tzinfo=None),
                 },
             )
-            db.add(
+            pp.add(db, 
                 Notification(
                     user_id=order.user_id,
                     type="order_update",
@@ -221,7 +252,7 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
                     link=f"/orders/{order.id}",
                 )
             )
-            db.commit()
+            pp.commit(db)
 
         return {
             "status": "refunded",
@@ -337,8 +368,8 @@ async def handle_tap_webhook(request: Request, db: Session) -> dict:
     _finalize_tap_charge_status(order, data, db)
 
     # Record event as processed (idempotency guard)
-    db.add(ProcessedWebhookEvent(event_id=tap_event_id, processor="tap"))
-    db.commit()
+    pp.add(db, ProcessedWebhookEvent(event_id=tap_event_id, processor="tap"))
+    pp.commit(db)
     logger.info("tap_webhook: charge %s order %s status=%s", charge_id, order.id, status)
     return {"status": "ok"}
 

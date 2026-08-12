@@ -15,7 +15,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from data.models import CommissionBadgeTier, CommissionCategoryRate
+from models import CommissionBadgeTier, CommissionCategoryRate
 from services.finance.commission_write_service import apply_changes
 import structlog
 logger = structlog.get_logger(__name__)

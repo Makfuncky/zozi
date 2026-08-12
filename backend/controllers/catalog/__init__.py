@@ -13,6 +13,4 @@ logger = structlog.get_logger(__name__)
 
 __all__ = [
     "category_admin_controller",
-    "product_controller",
-    "product_moderation_controller",
 ]

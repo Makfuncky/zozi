@@ -83,6 +83,7 @@ real and taken from `backend/main.py`, `middleware/orchestrator.py`, `db/databas
         subgraph RT["ROUTERS/* — thin; response_model; NO db writes"]
             H["GET /health · /health/deps · /health/ready"]
             R["Domain routers: customer_coupons, customer_wishlist, admin_promotions ..."]
+            G["AUTO-GENERATED: public_commerce_coupons (emitted from controller decorators)"]
         end
 
         subgraph SEC["SECURITY / AUTH (controllers/auth_controller.py)"]
@@ -111,12 +112,50 @@ real and taken from `backend/main.py`, `middleware/orchestrator.py`, `db/databas
         AUTH --> GETDB
         ADMIN --> GETDB
         R --> C
+        G --> AUTH
+        G --> ADMIN
+        G --> C
         C --> S
         S --> GETDB
         GETDB --> POOL
         POOL --> MODELS
         S --> KEYS
 ```
+
+### 2.1 Routers: two-track strategy + auto-generation
+
+Routers are created two ways; **both** mount through `main._load_routers()`
+(which globs `backend/routers/*.py` — there is **no central registry**):
+
+- **Legacy (hand-written)** — the existing `backend/routers/*.py` (domain routers,
+  websockets, country control-plane, aliases). These stay as-is and remain
+  auto-discovered. They are **not** mechanically converted to the auto-router:
+  legacy routers share controller functions across multiple files, which is
+  incompatible with the one-function = one-route model.
+- **Generated (new controllers only)** — NEW HTTP controllers declare their routes
+  with `@get/@post/@put/@patch/@delete/@route` decorators imported **only** from
+  `routers.generated.auto_router` (a controller never imports FastAPI).
+  `routers/generated/auto_router.py` reads those declarations from `controllers/**`
+  via **AST only** (it never imports or executes a controller), then emits a thin
+   delegating router into `routers/` named `{surface}_{domain}_{operation}.py`
+  (e.g. `public_commerce_coupons.py`) carrying the `AUTO-GENERATED` marker.
+  Generated files are **never** written over a hand-written router (identified by
+  absence of the marker).
+
+**Surfaces** are a first-class routing concept: `SURFACES` maps a path prefix to
+an auth dependency and a backing controller module (e.g. `admin → /api/v1/admin` +
+`get_current_admin`). The generator uses the surface to set the router prefix and
+the emitted file name. See the AI File Placement Contract (SYSTEM_AUDIT_REPORT.md §3)
+for the flat-file `{surface}_{domain}_{operation}.py` naming rule.
+
+**Generated routers are thin by construction** — they may import controllers only.
+The generator's guardrail forbids `db.commit`/`db.flush`, `from models import`,
+and `from services import` inside the emitted file. This is stricter than, and
+consistent with, the router allow-list in §10.2.
+
+**Governance gate:** `python routers/generated/auto_router.py --verify` is the
+CI/pre-commit check — it fails if any generated file is missing, drifted, or
+orphaned. Regenerate after every controller edit; `--clean` removes orphans.
 
 **Target layer contract (the "circuit" the auditor enforces — see §10):**
 
@@ -435,6 +474,11 @@ This is the single source of truth `system_architecture_audit.py` validates agai
 `styles`/`types`/`utils`. External subsystems (Kafka, OpenSearch, Redis Cluster, CDN, WS gateway,
 PgBouncer, Postgres) are **infrastructure**, reached only through the `db` / `utils` / `providers` / `events` / `jobs` adapters.
 
+`routers/generated/auto_router.py` is **tooling, not a runtime layer**: it discovers
+controller route declarations and emits thin routers into `routers/` (see §2.1). It must
+not appear in the dependency circuit, and generated routers remain plain members of the
+`routers` layer.
+
 ### 10.2 Allowed dependency edges (the "circuit")
 ```
 main          → middleware, dependencies, routers, db, utils, lifespan, data
@@ -448,6 +492,14 @@ middleware    → utils, settings, db (read-only)
 events/jobs   → services, db, providers, kafka (publish/consume), opensearch (via CDC consumer)
 frontend lib  → backend /api/v1/* only
 ```
+
+**Auto-routed controllers obey the same circuit.** They are orchestration only and
+**must delegate DB work to `services`** — `deps=["db"]` only supplies `get_db`; it
+is **not** a license to `db.add/commit` inside the controller (still W1). A controller
+that writes to `db` directly, or a generated router that imports `models`/`services`,
+is a circuit violation caught by the auditor (CIR1 / CG1 / DG family), not by the
+auto-router generator — the generator only guards the *emitted router file*.
+
 Any edge **outside** this set is a circuit violation (CIR1 / DOM3 / MV1 / FT1 family). The
 `db` / `utils` / `providers` / `events` / `jobs` adapters isolate all external infra so the rest
 of the app never imports Kafka/OpenSearch/Redis drivers directly.

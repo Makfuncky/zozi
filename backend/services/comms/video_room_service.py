@@ -51,6 +51,21 @@ def video_room_metrics(db: Session) -> dict:
     }
 
 
+def serialize_video_room(r: VideoRoom) -> dict:
+    """Convert a ``VideoRoom`` ORM row into the API representation."""
+    return {
+        "id": r.id,
+        "room_uuid": r.room_uuid,
+        "name": r.name,
+        "purpose": "boardroom" if r.is_boardroom else "meeting",
+        "status": r.status,
+        "max_participants": r.max_participants,
+        "country_code": r.country_code,
+        "created_at": r.created_at.isoformat() if r.created_at else None,
+        "invite_link": f"/meet/{r.room_uuid}" if r.room_uuid else None,
+    }
+
+
 def ensure_video_room_country(db: Session, room_id, country_code: str) -> Optional[VideoRoom]:
     """Attach a country code to a created room if missing, returning the row."""
     db_room = db.query(VideoRoom).filter(VideoRoom.room_id == room_id).first()

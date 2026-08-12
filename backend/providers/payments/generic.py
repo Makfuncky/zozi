@@ -24,17 +24,19 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +70,7 @@ def create_generic_gateway_payment(body: GenericGatewayCreateRequest, current_us
     gateway = _serialize_gateway_connection(normalized_code, db, record)
     redirect = _build_generic_redirect(gateway, order, reference, currency_code, float(converted_total), db)
 
-    db.add(Payment(
+    pp.add(db, Payment(
         order_id=order.id,
         amount=charge_total,
         payment_method=normalized_code,
@@ -77,7 +79,7 @@ def create_generic_gateway_payment(body: GenericGatewayCreateRequest, current_us
         intent_id=reference,
         country_code=str(getattr(order, "shipping_country", "") or body.country or "") or None,
     ))
-    db.commit()
+    pp.commit(db)
 
     return {
         "gateway_code": normalized_code,
@@ -143,18 +145,18 @@ async def handle_generic_gateway_callback(request: Request, provider_code: str, 
         if tran_ref:
             setattr(order, "payment_intent_id", tran_ref)
         _apply_successful_payment(order, f"Order #{order.id} payment via {normalized_code} was successful.", db)
-        db.add(ProcessedWebhookEvent(event_id=event_id, processor=normalized_code, payload_hash=_payload_hash))
-        db.commit()
+        pp.add(db, ProcessedWebhookEvent(event_id=event_id, processor=normalized_code, payload_hash=_payload_hash))
+        pp.commit(db)
         return {"status": "ok", "order_id": order.id, "result": "confirmed"}
 
     if not success and order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
         setattr(order, "status", "failed")
-        db.add(ProcessedWebhookEvent(event_id=event_id, processor=normalized_code, payload_hash=_payload_hash))
-        db.commit()
+        pp.add(db, ProcessedWebhookEvent(event_id=event_id, processor=normalized_code, payload_hash=_payload_hash))
+        pp.commit(db)
         return {"status": "ok", "order_id": order.id, "result": "failed"}
 
-    db.add(ProcessedWebhookEvent(event_id=event_id, processor=normalized_code))
-    db.commit()
+    pp.add(db, ProcessedWebhookEvent(event_id=event_id, processor=normalized_code))
+    pp.commit(db)
     return {"status": "ok", "order_id": order.id}
 
 
@@ -178,11 +180,11 @@ def confirm_generic_gateway_payment(body: ConfirmGenericGatewayRequest, current_
     verify_result = _generic_verify_payment(extra, record, order, reference, db)
     if verify_result == "success":
         _apply_successful_payment(order, f"Order #{order.id} payment via {normalized_code} was successful.", db)
-        db.commit()
+        pp.commit(db)
         return {"status": "confirmed", "order_id": order.id, "order_status": order.status, "payment_status": "approved", "paid_at": order.paid_at}
     if verify_result == "failed":
         setattr(order, "status", "failed")
-        db.commit()
+        pp.commit(db)
         return {"status": "failed", "order_id": order.id, "order_status": order.status, "payment_status": "declined", "paid_at": order.paid_at}
 
     # If a prior callback already recorded the payment as completed, finalize.
@@ -192,7 +194,7 @@ def confirm_generic_gateway_payment(body: ConfirmGenericGatewayRequest, current_
     ).order_by(Payment.id.desc()).first()
     if payment and payment.status == "completed":
         _apply_successful_payment(order, f"Order #{order.id} payment via {normalized_code} was successful.", db)
-        db.commit()
+        pp.commit(db)
         return {"status": "confirmed", "order_id": order.id, "order_status": order.status, "payment_status": "approved", "paid_at": order.paid_at}
 
     return {"status": "pending", "order_id": order.id, "order_status": order.status, "payment_status": "pending", "paid_at": order.paid_at}

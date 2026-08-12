@@ -112,3 +112,27 @@ class CustomerHealthEngine:
 
 def get_customer_health_engine(db: Session) -> CustomerHealthEngine:
     return CustomerHealthEngine(db)
+
+
+def list_customer_health(db: Session, page: int = 1, size: int = 100) -> dict[str, Any]:
+    """List customers ranked by health/trust score (admin console).
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.customer_health_list.list_customer_health``.
+    """
+    from utils.pagination import paginated_query
+
+    users, total = paginated_query(
+        db.query(User).order_by(User.created_at.desc()),
+        page=page,
+        size=min(size, 100),
+        max_size=100,
+    )
+    results = []
+    for u in users:
+        engine = get_customer_health_engine(db)
+        health = engine.calculate_health_score(u.id)
+        health["profile"] = {"email": u.email, "role": u.role}
+        results.append(health)
+    results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
+    return {"customers": results, "total": total, "page": page, "size": size}

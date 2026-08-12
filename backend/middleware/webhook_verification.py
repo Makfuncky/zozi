@@ -253,13 +253,10 @@ def compute_webhook_signature(
 
 
 def redis_client():
-    """Get Redis client for replay protection."""
-    try:
-        import redis
-        from utils.config import settings
-        return redis.Redis.from_url(settings.redis_url, decode_responses=True, socket_connect_timeout=2, socket_timeout=5)
-    except Exception:
-        return None
+    """Get Redis client for replay protection (delegates to the shared factory)."""
+    from utils.redis_client import redis_client as _redis_client_factory
+
+    return _redis_client_factory()
 
 
 class ReplayAttackProtection:

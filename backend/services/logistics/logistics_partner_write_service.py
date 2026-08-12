@@ -13,17 +13,21 @@ import-time circular cycles that originally motivated the shim.
 """
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Type
 
 import importlib
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     CityDistanceMatrix,
+    CountryConfig,
     LogisticsCategoryPricingRule,
     LogisticsCODRemittanceReceipt,
     LogisticsPartner,
     LogisticsPartnerBankAccount,
+    LogisticsPartnerLocation,
     LogisticsPartnerDocument,
     LogisticsPartnerPayout,
     LogisticsPartnerServiceArea,
@@ -309,3 +313,116 @@ def update_order_logistics_allocation(db: Session, obj: Any, updates: dict[str, 
 # ── Notification ─────────────────────────────────────────────────────────────
 def update_notification(db: Session, notification: Any, updates: dict[str, Any]) -> Any:
     return _save(db, _apply(notification, Notification, updates))
+
+
+# ── LogisticsPartnerLocation ─────────────────────────────────────────────────
+def create_logistics_partner_location(db: Session, country_code: str, payload: dict[str, Any]) -> dict:
+    """Create a location for a logistics partner in ``country_code``.
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.logistics_locations_create.create_logistics_partner_location``:
+    validates the country and partner, stages the row and commits once.
+    """
+    config = db.query(CountryConfig).filter(CountryConfig.code == country_code.upper()).first()
+    if not config:
+        raise HTTPException(status_code=404, detail="Country not found")
+    partner_id = payload.get("partner_id")
+    if not partner_id:
+        raise HTTPException(status_code=422, detail="partner_id is required")
+    partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == partner_id).first()
+    if not partner:
+        raise HTTPException(status_code=404, detail="Logistics partner not found")
+    location = LogisticsPartnerLocation(
+        country_code=country_code.upper(),
+        partner_id=partner_id,
+        location_type=payload.get("location_type", "warehouse"),
+        latitude=payload.get("latitude"),
+        longitude=payload.get("longitude"),
+        address=payload.get("address"),
+        is_active=payload.get("is_active", True),
+    )
+    db.add(location)
+    db.commit()
+    db.refresh(location)
+    return {"id": location.id, "message": "Logistics partner location created"}
+
+
+def list_logistics_partner_locations(
+    db: Session,
+    country_code: str,
+    partner_id: int | None = None,
+    is_active: bool | None = None,
+) -> list[dict[str, Any]]:
+    """List logistics-partner locations for a country (optionally filtered).
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.logistics_locations_create.list_logistics_partner_locations``.
+    """
+    query = db.query(LogisticsPartnerLocation).filter(
+        LogisticsPartnerLocation.country_code == country_code.upper()
+    )
+    if partner_id is not None:
+        query = query.filter(LogisticsPartnerLocation.partner_id == partner_id)
+    if is_active is not None:
+        query = query.filter(LogisticsPartnerLocation.is_active == is_active)
+    locations = query.order_by(
+        LogisticsPartnerLocation.location_type, LogisticsPartnerLocation.created_at
+    ).all()
+    return [
+        {
+            "id": loc.id,
+            "partner_id": loc.partner_id,
+            "location_type": loc.location_type,
+            "latitude": loc.latitude,
+            "longitude": loc.longitude,
+            "address": loc.address,
+            "is_active": loc.is_active,
+            "created_at": loc.created_at,
+        }
+        for loc in locations
+    ]
+
+
+# ── Shipment (admin status update) ────────────────────────────────────────────
+def admin_update_shipment_status(db: Session, shipment_id: int, data: dict[str, Any], current_user: Any) -> dict:
+    """Admin-only direct shipment status update (bypasses supplier check).
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.logistics_logistics_status.admin_update_shipment_status``: enforces
+    the admin role gate, records a ``ShipmentEvent``, commits once and returns the
+    same response shape.
+    """
+    role = (current_user.get("role") if isinstance(current_user, dict) else getattr(current_user, "role", None)) or ""
+    if str(role).lower() not in ("admin", "sub_admin", "moderator", "support"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    new_status = data.get("status")
+    if new_status:
+        shipment.status = new_status
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if new_status == "delivered" and not shipment.actual_delivery:
+            shipment.actual_delivery = now
+        elif new_status == "shipped" and not shipment.shipped_at:
+            shipment.shipped_at = now
+        event = ShipmentEvent(
+            shipment_id=shipment_id,
+            event_type="status_change",
+            status_after=new_status,
+            location=shipment.current_hub,
+            notes=data.get("note", "Admin status update"),
+            created_at=now,
+        )
+        db.add(event)
+    db.commit()
+    db.refresh(shipment)
+    return {
+        "id": shipment.id,
+        "order_id": shipment.order_id,
+        "status": shipment.status,
+        "carrier_name": shipment.carrier_name,
+        "tracking_number": shipment.tracking_number,
+        "distribution_channel": shipment.distribution_channel,
+        "current_hub": shipment.current_hub,
+    }

@@ -15,7 +15,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import Payout
+from models import Payout
 from utils.audit import AuditAction, audit_log
 from utils.datetime_utils import utcnow
 import structlog

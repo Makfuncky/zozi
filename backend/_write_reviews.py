@@ -16,7 +16,7 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
-from data.db_schemas import ReviewCreate, ReviewOut
+from db.schemas import ReviewCreate, ReviewOut
 from sqlalchemy.orm import Session
 
 from routers.generated.auto_router import delete, get, post, put

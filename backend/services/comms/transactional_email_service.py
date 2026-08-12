@@ -5,7 +5,7 @@ from typing import Any, Iterable, cast
 from sqlalchemy.orm import selectinload
 
 from db.database import get_service_session
-from data.models import Order, OrderItem, ReturnRequest, Shipment, User
+from models import Order, OrderItem, ReturnRequest, Shipment, User
 from utils.background_jobs import enqueue_job
 from utils.config import settings
 from utils.email_service import send_email
@@ -183,7 +183,7 @@ def _send_shipment_status_email(shipment_id: int, *, event_type: str | None = No
 
 def _send_invoice_email(invoice_id: int) -> dict[str, Any]:
     with get_service_session() as db:
-        from data.models import Invoice
+        from models import Invoice
         invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
         if invoice is None:
             return {"invoice_id": invoice_id, "sent": False, "reason": "not-found"}
@@ -208,7 +208,7 @@ def _send_invoice_email(invoice_id: int) -> dict[str, Any]:
 
 def _send_low_stock_alert_email(product_id: int, stock_count: int) -> dict[str, Any]:
     with get_service_session() as db:
-        from data.models import Product
+        from models import Product
         product = db.query(Product).filter(Product.id == product_id).first()  # type: ignore[attr-defined]
         if product is None:
             return {"product_id": product_id, "sent": False, "reason": "not-found"}
@@ -351,7 +351,7 @@ def enqueue_return_status_email(return_id: int, *, event_kind: str = "status") -
 
 def _send_dunning_email(invoice_id: int, reminder_type: str, message: str) -> dict[str, Any]:
     with get_service_session() as db:
-        from data.models import ARInvoice, Customer
+        from models import ARInvoice, Customer
         inv = db.query(ARInvoice).filter(ARInvoice.id == invoice_id).first()
         if not inv:
             return {"invoice_id": invoice_id, "sent": False, "reason": "not_found"}
@@ -390,7 +390,7 @@ def enqueue_dunning_email(invoice_id: int, reminder_type: str, message: str) -> 
 
 def _send_distributor_statement_email(customer_id: int, period: str, statement_data: dict) -> dict[str, Any]:
     with get_service_session() as db:
-        from data.models import Customer
+        from models import Customer
         customer = db.query(Customer).filter(Customer.id == customer_id).first()
         if not customer or not customer.contact_email:
             return {"customer_id": customer_id, "sent": False, "reason": "no_email"}
@@ -437,7 +437,7 @@ def enqueue_distributor_statement_email(customer_id: int, period: str, statement
 
 def _send_supplier_approval_email(supplier_id: int, batch_id: int, batch_number: str, total_amount: float) -> dict[str, Any]:
     with get_service_session() as db:
-        from data.models import User
+        from models import User
         supplier = db.query(User).filter(User.id == supplier_id).first()
         if not supplier or not getattr(supplier, "email", None):
             return {"supplier_id": supplier_id, "sent": False, "reason": "no_email"}
@@ -483,7 +483,7 @@ def register_email_event_handlers() -> None:
     global _email_handlers_registered
     if _email_handlers_registered:
         return
-    from data.event_bus import (
+    from services.common.event_bus import (
         EVENT_ORDER_REFUNDED,
         EVENT_ORDER_STATUS_CHANGED,
         subscribe,

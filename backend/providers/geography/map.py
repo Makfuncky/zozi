@@ -9,7 +9,7 @@ Test file: backend/tests/_test_provider/test_map.py
 import logging
 from typing import Optional, Tuple
 
-from .config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 

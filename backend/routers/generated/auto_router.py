@@ -259,7 +259,11 @@ def parse_decorator(dec: ast.AST) -> "Optional[dict]":
     extra = {}
     for k in EXTRA_FORWARD_KEYS:
         if k in kwargs and kwargs[k] is not None:
-            extra[k] = kwargs[k]
+            node = kwargs[k]
+            if isinstance(node, ast.Constant):
+                extra[k] = node.value
+            else:
+                extra[k] = _unparse(node)
     return {
         "method": method.upper(),
         "path": path,
@@ -365,13 +369,6 @@ def scan_controllers() -> "list":
             for node in ast.walk(tree):
                 if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     continue
-                meta = None
-                for dec in node.decorator_list:
-                    meta = parse_decorator(dec)
-                    if meta:
-                        break
-                if not meta:
-                    continue
                 # Positional args carry defaults in ``node.args.defaults``,
                 # aligned to the TAIL of the arg list (not per-arg).
                 pos_args = node.args.args
@@ -389,17 +386,24 @@ def scan_controllers() -> "list":
                     param_list.append(
                         {"name": a.arg, "ann": annotation_of(a),
                          "default": _default_src(a)})
-                meta["func"] = node.name
-                meta["is_async"] = isinstance(node, ast.AsyncFunctionDef)
                 # ``**rest`` passthrough (e.g. **kwargs) so generation never
                 # crashes on catch-all signatures.
                 if node.args.kwarg is not None:
                     param_list.append(
                         {"name": node.args.kwarg.arg,
                          "ann": annotation_of(node.args.kwarg), "rest": True})
-                meta["params"] = param_list
-                meta["returns"] = _unparse(node.returns) if node.returns else None
-                routes.append(meta)
+                # Collect EVERY route decorator on the function. A single handler
+                # may serve multiple paths (e.g. admin + public prefixes), each
+                # declared with its own stacked decorator.
+                for dec in node.decorator_list:
+                    meta = parse_decorator(dec)
+                    if not meta:
+                        continue
+                    meta["func"] = node.name
+                    meta["is_async"] = isinstance(node, ast.AsyncFunctionDef)
+                    meta["params"] = param_list
+                    meta["returns"] = _unparse(node.returns) if node.returns else None
+                    routes.append(meta)
             if routes:
                 modules.append({"module": mod_path, "file": rel, "routes": routes})
     return modules
@@ -587,6 +591,12 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
         body_lines.append(ret_stmt)
         route_funcs.append("\n".join(body_lines))
 
+    # Nothing to emit: every discovered route collided with an existing
+    # (hand-written) router, so this controller is already fully served.
+    # Returning "" signals callers to skip writing / skip verification.
+    if not route_funcs:
+        return ""
+
     lines = [f'"""{MARKER}"""', "from __future__ import annotations", ""]
     fastapi_parts = ["APIRouter", "Depends"]
     if needs_body:
@@ -694,6 +704,8 @@ def _run_verify(modules: "list", out_dir: str, collisions: "Optional[set]" = Non
 
     os.makedirs(out_dir, exist_ok=True)
     for fname, content in generated.items():
+        if not content:
+            continue
         target = os.path.join(out_dir, fname)
         if not os.path.exists(target):
             errors.append(
@@ -830,6 +842,9 @@ def main() -> int:
     for mi in modules:
         skipped = []
         gen = generate_router_file(mi, collisions=collisions, skipped=skipped)
+        if not gen:
+            skipped_routes += len(skipped)
+            continue
         fname = _derive_filename(mi["module"], mi["routes"])
         forb = check_forbidden(gen, mi["module"])
         if forb:

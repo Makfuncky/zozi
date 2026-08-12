@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from providers.geography.ip import geocode_location
 from decimal import Decimal
 from typing import Any, Set, Optional
 
@@ -1438,34 +1439,25 @@ def list_country_cities(
         }
 
     # 2. Fallback: CITY_SUGGESTIONS + open-meteo (for seeding new countries)
-    from data.vat_rates import CITY_SUGGESTIONS
+    from services.geography.vat_rates import CITY_SUGGESTIONS
 
     cities = list(CITY_SUGGESTIONS.get(cc, []))
     if not cities:
-        import httpx
-        try:
-            resp = httpx.get(
-                "https://geocoding-api.open-meteo.com/v1/search",
-                params={"name": code, "count": min(limit, 50), "language": "en", "format": "json"},
-                timeout=8.0,
-            )
-            if resp.is_success:
-                results = resp.json().get("results", [])
-                seen: set[str] = set()
-                for r in results:
-                    name = (r.get("name") or "").strip()
-                    country = (r.get("country_code") or "").strip().upper()
-                    if name and country == cc and name not in seen:
-                        cities.append({
-                            "name": name,
-                            "region": r.get("admin1") or "",
-                            "latitude": r.get("latitude"),
-                            "longitude": r.get("longitude"),
-                            "population": r.get("population") or 0,
-                        })
-                        seen.add(name)
-        except Exception:
-            pass
+        results = geocode_location(code, count=limit, language="en", timeout=8.0)
+        if results:
+            seen: set[str] = set()
+            for r in results:
+                name = (r.get("name") or "").strip()
+                country = (r.get("country_code") or "").strip().upper()
+                if name and country == cc and name not in seen:
+                    cities.append({
+                        "name": name,
+                        "region": r.get("admin1") or "",
+                        "latitude": r.get("latitude"),
+                        "longitude": r.get("longitude"),
+                        "population": r.get("population") or 0,
+                    })
+                    seen.add(name)
 
     return {"code": cc, "cities": cities, "source": "fallback"}
 

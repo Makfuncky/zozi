@@ -13,7 +13,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session, selectinload
 
-from data.models import Product, WishlistItem
+from models import Product, WishlistItem
 from utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)

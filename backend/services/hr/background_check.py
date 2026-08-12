@@ -22,16 +22,14 @@ __all__ = [
     "BACKGROUND_CHECK_ERROR",
 ]
 
-import json
 import logging
 import os
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Optional
-from urllib.request import Request, urlopen
-from urllib.error import URLError
 
 from utils.datetime_utils import utcnow as _utcnow
+from providers.security.watchlist import screen_watchlist, WatchlistProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -173,36 +171,10 @@ def _api_check(
     full_name: str,
     country_code: str,
 ) -> BackgroundCheckResult:
-    """Query the real external watchlist API."""
-    api_url = os.environ["WATCHLIST_API_URL"].rstrip("/")
-    payload = json.dumps({
-        "employee_code": employee_code,
-        "full_name": full_name,
-        "country_code": country_code,
-        "timestamp": _utcnow().isoformat(),
-    }).encode()
-
+    """Query the external watchlist API via the screening provider."""
     try:
-        req = Request(
-            f"{api_url}/v1/screen",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urlopen(req, timeout=15) as resp:
-            body = json.loads(resp.read().decode())
-
-        return BackgroundCheckResult(
-            status=body.get("status", BACKGROUND_CHECK_ERROR),
-            employee_code=employee_code,
-            full_name=full_name,
-            country_code=country_code,
-            score=float(body.get("score", 0.0)),
-            details=body.get("details", "External check completed"),
-            flagged_categories=body.get("flagged_categories", []),
-            check_id=body.get("check_id"),
-        )
-    except (URLError, json.JSONDecodeError, KeyError) as exc:
+        body = screen_watchlist(employee_code, full_name, country_code)
+    except WatchlistProviderError as exc:
         logger.warning("Watchlist API call failed for %s: %s", employee_code, exc)
         return BackgroundCheckResult(
             status=BACKGROUND_CHECK_ERROR,
@@ -213,3 +185,14 @@ def _api_check(
             details=f"API error: {exc}",
             flagged_categories=[],
         )
+
+    return BackgroundCheckResult(
+        status=body.get("status", BACKGROUND_CHECK_ERROR),
+        employee_code=employee_code,
+        full_name=full_name,
+        country_code=country_code,
+        score=float(body.get("score", 0.0)),
+        details=body.get("details", "External check completed"),
+        flagged_categories=body.get("flagged_categories", []),
+        check_id=body.get("check_id"),
+    )

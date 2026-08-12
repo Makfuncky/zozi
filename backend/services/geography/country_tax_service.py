@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import List
 from sqlalchemy.orm import Session
-from data.models import CountryCategoryTaxRate
+from models import CountryCategoryTaxRate
 from utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)

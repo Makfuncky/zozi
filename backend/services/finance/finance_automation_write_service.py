@@ -13,7 +13,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import Account, AccountBalance, AccountGroup, FixedAsset
+from models import Account, AccountBalance, AccountGroup, FixedAsset
 from services.finance import general_ledger_service as gl
 import structlog
 logger = structlog.get_logger(__name__)

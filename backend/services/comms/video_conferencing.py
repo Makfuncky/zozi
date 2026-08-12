@@ -3,14 +3,15 @@ import logging
 import secrets
 import hashlib
 import json
-import httpx
 from datetime import datetime, timezone
+
+from providers.ai.openai_client import transcribe_audio, translate_text
 from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from data.models_core import VideoRoom, VideoRoomParticipant, VideoRoomRecording
+from models.core import VideoRoom, VideoRoomParticipant, VideoRoomRecording
 from utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)
@@ -219,51 +220,14 @@ class VideoConferenceRoom:
         api_key = settings.openai_api_key
         if not api_key:
             return "[transcription unavailable - no API key]"
-        try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
-                data = {"model": "whisper-1", "language": source_language}
-                resp = await client.post(
-                    "https://api.openai.com/v1/audio/transcriptions",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    files=files,
-                    data=data,
-                )
-                if resp.status_code == 200:
-                    return resp.json().get("text", "")
-                logger.warning("Whisper API returned %s: %s", resp.status_code, resp.text)
-                return "[transcription error]"
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-            logger.error("Transcription failed: %s", e)
-            return "[transcription failed]"
+        return await transcribe_audio(audio_bytes, api_key, source_language)
 
     async def _translate_text(self, text: str, target_language: str) -> str:
         """Translate text using OpenAI or fallback."""
-        if target_language == "en":
-            return text
         api_key = settings.openai_api_key
         if not api_key:
             return text
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                    json={
-                        "model": "gpt-4o-mini",
-                        "messages": [
-                            {"role": "system", "content": f"Translate the following text to {target_language}. Return only the translation."},
-                            {"role": "user", "content": text},
-                        ],
-                        "temperature": 0,
-                    },
-                )
-                if resp.status_code == 200:
-                    return resp.json()["choices"][0]["message"]["content"].strip()
-                return text
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-            logger.error("Translation failed: %s", e)
-            return text
+        return await translate_text(text, api_key, target_language)
 
     async def add_transcript_segment(
         self,
@@ -436,7 +400,7 @@ def get_video_conference(db: Session) -> VideoConferenceRoom:
 
 
 def list_all_video_rooms(db: Session, limit: int = 200) -> list:
-    from data.models_core import VideoRoom
+    from models.core import VideoRoom
     from sqlalchemy import desc
     q = db.query(VideoRoom).order_by(desc(VideoRoom.created_at))
     return q.limit(limit).all()

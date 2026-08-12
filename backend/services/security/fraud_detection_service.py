@@ -918,31 +918,18 @@ class ThreatFeedUpdater:
         return results
     
     def _update_tor_list(self) -> int:
-        """Update Tor exit node list."""
-        try:
-            import urllib.request
-            url = "https://check.torproject.org/torbulkexitlist"
-            with urllib.request.urlopen(url, timeout=30) as response:
-                content = response.read().decode("utf-8")
-            
-            count = 0
-            for line in content.strip().split("\n"):
-                if line.startswith(""):
-                    ip = line
-                    key = f"fraud:bloom:tor"
-                    try:
-                        self.redis.execute_command("BF.ADD", key, ip)
-                        count += 1
-                    except redis.exceptions.ResponseError:
-                        pass
-            
-            self.db.execute(text("UPDATE ip_reputation SET is_tor = true WHERE ip_address IN (:ips)"), 
-                          {"ips": []})
-            self.db.commit()
-            return count
-        except Exception as e:
-            logger.error(f"Failed to update Tor list: {e}")
-            return 0
+        """Update Tor exit node list from the provider-backed threat feed."""
+        from providers.security.threat_intel import fetch_tor_exit_list
+
+        count = 0
+        for ip in fetch_tor_exit_list():
+            key = f"fraud:bloom:tor"
+            try:
+                self.redis.execute_command("BF.ADD", key, ip)
+                count += 1
+            except redis.exceptions.ResponseError:
+                pass
+        return count
     
     def _update_proxy_list(self) -> int:
         """Update proxy IP list."""

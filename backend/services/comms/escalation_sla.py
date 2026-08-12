@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from data.models_core import EscalationSLARule, EscalationSLALog
+from models.core import EscalationSLARule, EscalationSLALog
 from utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)

@@ -70,27 +70,27 @@ async def _run_in_thread(func: Callable[..., T], *args: Any, **kwargs: Any) -> T
 # ---------------------------------------------------------------------------
 
 def _get_bg_remover():
-    from providers.bg_remover import remove_background
+    from providers.image.bg_remover import remove_background
     return remove_background
 
 
 def _get_vision():
-    from providers.vision import analyze_product_image
+    from providers.ai.vision import analyze_product_image
     return analyze_product_image
 
 
 def _get_text():
-    from providers.text import embed_text, _ollama_chat
+    from providers.ai.text import embed_text, _ollama_chat
     return embed_text, _ollama_chat
 
 
 def _get_ocr():
-    from providers.ocr import parse_bill_text
+    from providers.image.ocr import parse_bill_text
     return parse_bill_text
 
 
 def _get_search():
-    from providers.search import AdvancedSearchEngine
+    from providers.ai.search import AdvancedSearchEngine
     return AdvancedSearchEngine
 
 
@@ -364,7 +364,7 @@ async def full_supplier_pipeline_async(
 
     # Phase 2: Generate copy from AI results (using lazy-import wrappers)
     _, ollama_chat = _get_text()
-    from providers.vision import suggest_price as _suggest_price
+    from providers.ai.vision import suggest_price as _suggest_price
     price_result = _suggest_price(image_bytes, product_name=ai_result.get("name", ""), category=ai_result.get("category", ""))
 
     if ai_result.get("name"):

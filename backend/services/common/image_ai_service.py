@@ -27,8 +27,9 @@ from typing import Any
 from typing import cast
 from typing import Optional
 
-import requests
 from PIL import Image
+
+from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
 
 
 class _ImageIOMissing:
@@ -46,7 +47,6 @@ except ImportError:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 HF_API_TOKEN: str = os.getenv("HF_API_TOKEN", "")
-_HF_BASE = "https://api-inference.huggingface.co/models"
 
 RMBG_MODEL = "briaai/RMBG-2.0"
 BG_REMOVAL_MODEL = os.getenv("BG_REMOVAL_MODEL", "birefnet-general-lite")
@@ -153,33 +153,11 @@ def generate_angles(image_bytes: bytes) -> list[bytes]:
 # INTERNAL – HF API helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _hf_headers() -> dict:
-    return {"Authorization": f"Bearer {HF_API_TOKEN}"} if HF_API_TOKEN else {}
-
-
 def _call_hf_image_api(model: str, image_bytes: bytes, timeout: int = 60) -> Optional[bytes]:
-    """POST raw image bytes to an HF Inference API endpoint; return image bytes on success."""
-    try:
-        resp = requests.post(
-            f"{_HF_BASE}/{model}",
-            headers={**_hf_headers(), "Content-Type": "application/octet-stream"},
-            data=image_bytes,
-            timeout=timeout,
-        )
-        ct = resp.headers.get("content-type", "")
-        if resp.status_code == 200 and "image" in ct:
-            return resp.content
-        if resp.status_code == 410:
-            logger.debug("HF model %s: HTTP 410 (removed from free tier)", model)
-        elif resp.status_code == 503:
-            logger.warning("HF model %s: 503 (loading); try again shortly", model)
-        else:
-            logger.warning("HF model %s: HTTP %d — %.200s", model, resp.status_code, resp.text)
-    except requests.Timeout:
-        logger.warning("HF model %s: request timed out after %ds", model, timeout)
-    except Exception as exc:
-        logger.warning("HF model %s: %s", model, exc)
-    return None
+    """POST raw image bytes to an HF Inference API endpoint via the HF provider."""
+    from providers.ai.huggingface import call_hf_image_api
+
+    return call_hf_image_api(model, image_bytes, timeout=timeout)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -188,20 +166,16 @@ def _call_hf_image_api(model: str, image_bytes: bytes, timeout: int = 60) -> Opt
 
 @lru_cache(maxsize=4)
 def _get_rembg_session(session_name: Optional[str]):
-    from rembg import new_session  # type: ignore
-
     if not session_name:
         return None
-    return new_session(session_name)
+    return create_rembg_session(session_name)
 
 
 def _remove_with_rembg(image_bytes: bytes, session_name: Optional[str]) -> bytes:
-    from rembg import remove as rembg_remove  # type: ignore
-
     session = _get_rembg_session(session_name)
     if session is None:
-        return cast(bytes, rembg_remove(image_bytes))
-    return cast(bytes, rembg_remove(image_bytes, session=session))
+        return cast(bytes, rembg_remove_bytes(image_bytes))
+    return cast(bytes, rembg_remove_bytes(image_bytes, session=session))
 
 
 def _get_trellis_client():

@@ -22,17 +22,19 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +97,7 @@ def create_payment_intent(body: PaymentIntentRequest, current_user: dict, db: Se
                     f"Order #{order.id} payment was successful. We are preparing your order.",
                     db,
                 )
-                db.commit()
+                pp.commit(db)
                 raise HTTPException(status_code=409, detail="Order is already paid")
             if not valid_existing:
                 logger.warning(
@@ -130,7 +132,7 @@ def create_payment_intent(body: PaymentIntentRequest, current_user: dict, db: Se
             idempotency_key=idempotency_key,
         )
         setattr(order, "payment_intent_id", intent.id)
-        db.commit()
+        pp.commit(db)
         return {
             "client_secret": intent.client_secret,
             "payment_intent_id": intent.id,
@@ -198,7 +200,7 @@ def create_stripe_checkout_session(body: StripeCheckoutSessionRequest, current_u
         session_id = str(_stripe_object_get(session, "id", "") or "").strip()
         if session_id:
             setattr(order, "payment_intent_id", session_id)
-            db.commit()
+            pp.commit(db)
         return {
             "checkout_session_id": session_id,
             "checkout_url": _stripe_object_get(session, "url", None),
@@ -305,7 +307,7 @@ def confirm_card_payment(body: ConfirmCardPaymentRequest, current_user: dict, db
             f"Order #{order.id} payment was successful. We are preparing your order.",
             db,
         )
-        db.commit()
+        pp.commit(db)
         return {
             "status": "confirmed",
             "order_id": order.id,
@@ -317,7 +319,7 @@ def confirm_card_payment(body: ConfirmCardPaymentRequest, current_user: dict, db
 
     if intent_status in {"requires_payment_method", "canceled"}:
         setattr(order, "status", "failed")
-        db.commit()
+        pp.commit(db)
         try:
             event = PaymentFailedEvent.create(
                 order_id=order.id,
@@ -424,7 +426,7 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
                     f"Order #{order.id} payment was successful. We are preparing your order.",
                     db,
                 )
-                db.commit()
+                pp.commit(db)
                 logger.info("payment_intent.succeeded: order %s status=%s", order.id, order.status)
         else:
             logger.warning("payment_intent.succeeded: no order for pi=%s", pi_id)
@@ -467,7 +469,7 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
                 )
             else:
                 setattr(order, "status", "failed")
-                db.add(
+                pp.add(db, 
                     Notification(
                         user_id=order.user_id,
                         type="order_update",
@@ -476,7 +478,7 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
                         link=f"/orders/{order.id}",
                     )
                 )
-                db.commit()
+                pp.commit(db)
                 try:
                     event = PaymentFailedEvent.create(
                         order_id=order.id,
@@ -505,7 +507,7 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
                         "transaction_date": datetime.now(timezone.utc).replace(tzinfo=None),
                     },
                 )
-                db.add(
+                pp.add(db, 
                     Notification(
                         user_id=order.user_id,
                         type="order_update",
@@ -514,7 +516,7 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
                         link=f"/orders/{order.id}",
                     )
                 )
-                db.commit()
+                pp.commit(db)
                 logger.info(
                     "charge.refunded: order %s refunded restored_inventory=%s",
                     order.id,
@@ -526,8 +528,8 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
 
     # Record event as processed (idempotency guard)
     if stripe_event_id:
-        db.add(ProcessedWebhookEvent(event_id=stripe_event_id, processor="stripe"))
-        db.commit()
+        pp.add(db, ProcessedWebhookEvent(event_id=stripe_event_id, processor="stripe"))
+        pp.commit(db)
 
     return {"status": "ok"}
 
@@ -631,6 +633,18 @@ def _payment_intent_matches_order(
         )
 
     return True, ""
+
+
+def refund_payment_intent(payment_intent: str):
+    """Issue a Stripe refund for a payment intent.
+
+    Returns the Stripe refund object, or ``None`` when no API key is configured.
+    """
+    stripe.api_key = settings.stripe_secret_key or os.getenv("STRIPE_SECRET_KEY", "")
+    if not stripe.api_key:
+        return None
+    return stripe.Refund.create(payment_intent=payment_intent)
+
 
 import structlog
 logger = structlog.get_logger(__name__)

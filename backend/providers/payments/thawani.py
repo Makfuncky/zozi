@@ -22,17 +22,19 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,7 @@ async def create_thawani_session(body: ThawaniCheckoutRequest, current_user: dic
         checkout_url = f"{pay_base}/pay/{session_id}?key={publishable_key}"
 
         setattr(order, "payment_intent_id", session_id)
-        db.commit()
+        pp.commit(db)
 
         return {
             "session_id": session_id,
@@ -203,7 +205,7 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
                     f"Order #{order.id} payment via Thawani Pay was successful.",
                     db,
                 )
-                db.commit()
+                pp.commit(db)
 
     elif event_type in ("payment.succeeded",):
         if order and order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
@@ -212,12 +214,12 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
                 f"Order #{order.id} Thawani webhook: payment succeeded.",
                 db,
             )
-            db.commit()
+            pp.commit(db)
 
     elif event_type in ("payment.failed",):
         if order and order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
             setattr(order, "status", "failed")
-            db.add(
+            pp.add(db, 
                 Notification(
                     user_id=order.user_id,
                     type="order_update",
@@ -226,7 +228,7 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
                     link=f"/orders/{order.id}",
                 )
             )
-            db.commit()
+            pp.commit(db)
             try:
                 event = PaymentFailedEvent.create(
                     order_id=order.id,
@@ -242,8 +244,8 @@ async def handle_thawani_webhook(request: Request, db: Session) -> dict:
         logger.debug("Unhandled Thawani webhook event: %s", event_type)
 
     if invoice_id or session_id_field:
-        db.add(ProcessedWebhookEvent(event_id=idempotency_key, processor=THAWANI_PAYMENT_METHOD))
-        db.commit()
+        pp.add(db, ProcessedWebhookEvent(event_id=idempotency_key, processor=THAWANI_PAYMENT_METHOD))
+        pp.commit(db)
 
     return {"status": "ok"}
 
@@ -320,7 +322,7 @@ async def confirm_thawani_payment(body: ConfirmThawaniPaymentRequest, current_us
                 f"Order #{order.id} Thawani confirm: payment_status=paid.",
                 db,
             )
-            db.commit()
+            pp.commit(db)
         return {
             "status": "confirmed",
             "order_id": order.id,
@@ -332,7 +334,7 @@ async def confirm_thawani_payment(body: ConfirmThawaniPaymentRequest, current_us
     if payment_status in ("cancelled", "failed", "refunded"):
         if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
             setattr(order, "status", "failed")
-            db.commit()
+            pp.commit(db)
         return {
             "status": "failed",
             "order_id": order.id,

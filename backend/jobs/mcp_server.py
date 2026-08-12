@@ -66,7 +66,7 @@ def remove_background_tool(
     Returns:
         Processed PNG bytes with transparent background.
     """
-    from providers.bg_remover import remove_background
+    from providers.image.bg_remover import remove_background
     image_bytes = base64.b64decode(image_b64)
     result = remove_background(image_bytes, model=model, strategy=strategy)
     return base64.b64encode(result).decode("utf-8")
@@ -88,7 +88,7 @@ def magic_erase_tool(image_b64: str, mask_json: str) -> str:
     """
     import numpy as np
 
-    from providers.bg_remover import magic_erase
+    from providers.image.bg_remover import magic_erase
     image_bytes = base64.b64decode(image_b64)
     mask_data = json.loads(mask_json)
     mask = np.array(mask_data, dtype=np.uint8)
@@ -123,7 +123,7 @@ def analyze_product_image_tool(
     Returns:
         JSON string with analysis results.
     """
-    from providers.vision import analyze_product_image
+    from providers.ai.vision import analyze_product_image
     image_bytes = base64.b64decode(image_b64)
     result = analyze_product_image(
         image_bytes,
@@ -155,7 +155,7 @@ def classify_product_type_tool(
     Returns:
         Product type string (clothing, electronic, furniture, jewelry, etc.).
     """
-    from providers.vision import classify_product_type
+    from providers.ai.vision import classify_product_type
     return classify_product_type(product_name, category, subcategory)
 
 
@@ -177,7 +177,7 @@ def normalize_category_tool(
     Returns:
         Normalized category string.
     """
-    from providers.vision import normalize_category
+    from providers.ai.vision import normalize_category
     return normalize_category(product_name, description)
 
 
@@ -201,7 +201,7 @@ def suggest_price_tool(
     Returns:
         JSON string with suggested_price, confidence, and reasoning.
     """
-    from providers.vision import suggest_price
+    from providers.ai.vision import suggest_price
     image_bytes = base64.b64decode(image_b64)
     result = suggest_price(image_bytes, product_name=product_name, category=category)
     return json.dumps(result)
@@ -225,7 +225,7 @@ def embed_text_tool(text: str) -> str:
     Returns:
         JSON string of embedding vector (list of floats).
     """
-    from providers.text import embed_text
+    from providers.ai.text import embed_text
     result = embed_text(text)
     return json.dumps(result)
 
@@ -245,7 +245,7 @@ def cosine_similarity_tool(vector_a_json: str, vector_b_json: str) -> float:
     Returns:
         Cosine similarity score (0-1).
     """
-    from providers.text import cosine_similarity
+    from providers.ai.text import cosine_similarity
     a = json.loads(vector_a_json)
     b = json.loads(vector_b_json)
     return cosine_similarity(a, b)
@@ -265,7 +265,7 @@ def transcribe_audio_tool(audio_b64: str) -> str:
     Returns:
         Transcribed text string.
     """
-    from providers.text import transcribe_audio
+    from providers.ai.text import transcribe_audio
     audio_bytes = base64.b64decode(audio_b64)
     return transcribe_audio(audio_bytes)
 
@@ -293,7 +293,7 @@ def search_products_tool(
     Returns:
         JSON string with parsed query and search results.
     """
-    from providers.search import AdvancedSearchEngine
+    from providers.ai.search import AdvancedSearchEngine
     engine = AdvancedSearchEngine()
     result = engine.search(query, limit=limit)
     return json.dumps(result, default=str)
@@ -314,7 +314,7 @@ def parse_search_query_tool(query: str) -> str:
     Returns:
         JSON string with parsed query parameters.
     """
-    from providers.search import AdvancedSearchEngine
+    from providers.ai.search import AdvancedSearchEngine
     engine = AdvancedSearchEngine()
     result = engine.parse_query(query)
     return json.dumps(result)
@@ -343,7 +343,7 @@ def chatbot_query_tool(
     Returns:
         JSON string with response, intent, and session_id.
     """
-    from providers.chatbot import ChatbotProvider
+    from providers.ai.chatbot import ChatbotProvider
     bot = ChatbotProvider()
     result = bot.process_query(query, session_id=session_id)
     return json.dumps(result)
@@ -367,7 +367,7 @@ def parse_bill_tool(image_b64: str) -> str:
     Returns:
         JSON string with extracted bill fields.
     """
-    from providers.ocr import parse_bill_text
+    from providers.image.ocr import parse_bill_text
     image_bytes = base64.b64decode(image_b64)
     result = parse_bill_text(image_bytes)
     return json.dumps(result, default=str)
@@ -387,7 +387,7 @@ def parse_statement_csv_tool(csv_b64: str) -> str:
     Returns:
         JSON string with parsed statement data.
     """
-    from providers.ocr import parse_statement_csv
+    from providers.image.ocr import parse_statement_csv
     csv_bytes = base64.b64decode(csv_b64)
     result = parse_statement_csv(csv_bytes)
     return json.dumps(result, default=str)
@@ -415,7 +415,7 @@ def detect_country_from_ip_tool(
     Returns:
         JSON string with country_code and source.
     """
-    from providers.geo import CountryDetectionProvider
+    from providers.geography.geo import CountryDetectionProvider
     provider = CountryDetectionProvider()
     headers = json.loads(headers_json)
     code, source = provider.detect_country_from_ip(headers, client_host)
@@ -436,7 +436,7 @@ def search_country_tool(query: str) -> str:
     Returns:
         JSON string of matching country details.
     """
-    from providers.country import CountrySearchProvider
+    from providers.geography.country import CountrySearchProvider
     provider = CountrySearchProvider()
     results = provider.search_country(query)
     return json.dumps(results)
@@ -456,7 +456,7 @@ def get_country_details_tool(country_code: str) -> str:
     Returns:
         JSON string with country details.
     """
-    from providers.country import CountrySearchProvider
+    from providers.geography.country import CountrySearchProvider
     provider = CountrySearchProvider()
     result = provider.get_country_details(country_code.upper())
     return json.dumps(result)
@@ -476,7 +476,7 @@ def resolve_ip_location_tool(ip: str) -> str:
     Returns:
         JSON string with location details.
     """
-    from providers.map import LocationProvider
+    from providers.geography.map import LocationProvider
     provider = LocationProvider()
     result = provider.resolve_ip(ip)
     return json.dumps(result)
@@ -502,7 +502,7 @@ def calculate_distance_tool(
     Returns:
         Distance in kilometers.
     """
-    from providers.map import LocationProvider
+    from providers.geography.map import LocationProvider
     provider = LocationProvider()
     return provider.calculate_distance(lat1, lon1, lat2, lon2)
 
@@ -525,7 +525,7 @@ def parse_email_to_ledger_tool(email_text: str) -> str:
     Returns:
         JSON string with ledger entries and metadata.
     """
-    from providers.finance_ai import parse_email_to_ledger
+    from providers.ai.finance_ai import parse_email_to_ledger
     result = parse_email_to_ledger(email_text)
     return json.dumps({
         "success": result.success,
@@ -554,7 +554,7 @@ def suggest_reconciliation_match_tool(
     Returns:
         JSON string with best match and confidence.
     """
-    from providers.finance_ai import suggest_reconciliation_match
+    from providers.ai.finance_ai import suggest_reconciliation_match
     transaction = json.loads(transaction_json)
     candidates = json.loads(candidates_json)
     result = suggest_reconciliation_match(transaction, candidates)
@@ -587,7 +587,7 @@ def get_dashboard_summary_tool(
     Returns:
         JSON string with dashboard metrics.
     """
-    from providers.analytics import AnalyticsProvider
+    from providers.analytics.analytics import AnalyticsProvider
     provider = AnalyticsProvider()
     result = provider.get_dashboard_summary(country_code=country_code, period=period)
     return json.dumps(result)
@@ -615,7 +615,7 @@ def generate_photo_angles_tool(
     Returns:
         JSON string of angle descriptions with shooting tips.
     """
-    from providers.image import generate_angles
+    from providers.image.image import generate_angles
     results = generate_angles(b"", product_name=product_name, category=category)
     return json.dumps(results)
 

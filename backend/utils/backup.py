@@ -297,32 +297,15 @@ class BackupManager:
         return backups[0]
 
     def _s3_client(self):
-        try:
-            import importlib
-        except ImportError as exc:
-            raise RuntimeError("importlib is required to load boto3 for S3 backup replication") from exc
+        from providers.storage import create_s3_client
 
-        try:
-            boto3 = importlib.import_module("boto3")
-        except ModuleNotFoundError as exc:
-            raise RuntimeError("boto3 is required for S3 backup replication") from exc
-
-        session_kwargs: dict[str, Any] = {}
-        if self._s3_access_key_id and self._s3_secret_access_key:
-            session_kwargs.update(
-                {
-                    "aws_access_key_id": self._s3_access_key_id,
-                    "aws_secret_access_key": self._s3_secret_access_key,
-                }
-            )
-        if self._s3_region:
-            session_kwargs["region_name"] = self._s3_region
-
-        session = boto3.session.Session(**session_kwargs)
-        client_kwargs: dict[str, Any] = {}
-        if self._s3_endpoint_url:
-            client_kwargs["endpoint_url"] = self._s3_endpoint_url
-        return session.client("s3", **client_kwargs)
+        return create_s3_client(
+            bucket=self._s3_bucket,
+            region=self._s3_region,
+            endpoint_url=self._s3_endpoint_url,
+            access_key=self._s3_access_key_id,
+            secret_key=self._s3_secret_access_key,
+        )
 
     def _upload_to_cloud(self, path: Path) -> dict[str, Any]:
         if self._cloud_provider != "s3":

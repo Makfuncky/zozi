@@ -203,10 +203,12 @@ def _load_routers():
     # ``__router_prefix__`` so the prefix stays next to the route definition.
     failed_routers = []
     _routers_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "routers")
-    for _path in sorted(glob.glob(os.path.join(_routers_dir, "*.py"))):
-        _modname = os.path.splitext(os.path.basename(_path))[0]
-        if _modname == "__init__":
+    # Recurse so routers can live in domain subfolders (e.g. routers/logistics/...).
+    for _path in sorted(glob.glob(os.path.join(_routers_dir, "**", "*.py"), recursive=True)):
+        if os.path.basename(_path) == "__init__.py":
             continue
+        _rel = os.path.relpath(_path, _routers_dir)
+        _modname = os.path.splitext(_rel)[0].replace(os.sep, ".")
         try:
             _module = importlib.import_module(f"routers.{_modname}")
         except Exception as e:  # noqa: BLE001

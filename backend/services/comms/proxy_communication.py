@@ -13,17 +13,13 @@ from sqlalchemy.orm import Session
 import structlog
 logger = structlog.get_logger(__name__)
 
-try:
-    from twilio.rest import Client as TwilioClient
-    from twilio.base.exceptions import TwilioRestException
-    TWILIO_AVAILABLE = True
-except ImportError as e:
-    logger.warning("optional_dependency_unavailable", error=str(e))
-    TwilioClient = None
-    TwilioRestException = Exception
-    TWILIO_AVAILABLE = False
+from providers.comms.twilio import (
+    TWILIO_AVAILABLE,
+    TwilioRestException,
+    create_twilio_client,
+)
 
-from data.models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User, Order
+from models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User, Order
 from db.database import get_service_session
 from utils.config import settings
 
@@ -38,13 +34,13 @@ class ProxyNumberManager:
         self._twilio_client = None
     
     @property
-    def twilio_client(self) -> Optional[TwilioClient]:
+    def twilio_client(self) -> Optional[Any]:
         if not TWILIO_AVAILABLE:
             return None
         if self._twilio_client is None:
             account_sid = settings.twilio_account_sid or secrets.token_urlsafe(32)
             auth_token = settings.twilio_auth_token or secrets.token_urlsafe(32)
-            self._twilio_client = TwilioClient(account_sid, auth_token)
+            self._twilio_client = create_twilio_client(account_sid, auth_token)
         return self._twilio_client
     
     def allocate_proxy_number(self, country_code: str = "US") -> str:

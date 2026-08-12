@@ -1,5 +1,5 @@
 from __future__ import annotations
-from data.models import Order, Invoice
+from models import Order, Invoice
 from typing import Any, List
 """Tickets write service — DB write operations for ticket entities."""
 

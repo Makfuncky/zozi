@@ -657,6 +657,40 @@ def list_goods_receipts(db: Session, po_id: int = None, status: str = None,
     return {"total": total, "items": rows}
 
 
+# ── Single-entity reads (extracted from admin_supplier_trading router) ──
+
+
+def get_purchase_order(db: Session, po_id: int) -> PurchaseOrder:
+    po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
+    if not po:
+        raise ValueError("Purchase order not found")
+    return po
+
+
+def get_goods_receipt(db: Session, grn_id: int) -> GoodsReceiptNote:
+    grn = db.query(GoodsReceiptNote).filter(GoodsReceiptNote.id == grn_id).first()
+    if not grn:
+        raise ValueError("Goods receipt note not found")
+    return grn
+
+
+def get_sales_order(db: Session, so_id: int) -> SalesOrder:
+    so = db.query(SalesOrder).filter(SalesOrder.id == so_id).first()
+    if not so:
+        raise ValueError("Sales order not found")
+    return so
+
+
+def list_stock_movements(db: Session, product_id: int = None, limit: int = 100,
+                         offset: int = 0) -> dict:
+    q = db.query(StockMovement)
+    if product_id:
+        q = q.filter(StockMovement.product_id == product_id)
+    total = q.count()
+    rows = q.order_by(StockMovement.id.desc()).offset(offset).limit(limit).all()
+    return {"total": total, "items": rows}
+
+
 # ── 3-Way Match Scanner ──
 
 

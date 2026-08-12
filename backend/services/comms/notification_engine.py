@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy.orm import Session
 
-from data.models import Notification, SystemSetting
+from models import Notification, SystemSetting
 import logging
 import structlog
 logger = structlog.get_logger(__name__)
@@ -159,7 +159,7 @@ def _enqueue_notification_delivery(
 
         def _deliver() -> dict:
             from db.database import SessionLocal
-            from data.models import User
+            from models import User
 
             db = SessionLocal()
             try:

@@ -8,7 +8,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Notification,
     Payment,
     PaymentGatewayConnection,

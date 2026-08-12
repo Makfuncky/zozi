@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from pydantic import BaseModel, Field
@@ -15,7 +15,7 @@ from models import (
     JournalEntry, JournalEntryLine
 )
 
-router = APIRouter()
+
 
 
 class JournalEntryCreate(BaseModel):

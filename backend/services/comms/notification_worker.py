@@ -40,7 +40,7 @@ IDLE_SHUTDOWN = int(os.getenv("NOTIFICATION_WORKER_IDLE_SHUTDOWN", "0"))
 def _deliver_notification(notification_id: int) -> dict:
     from db.database import SessionLocal
     from models.comms import Notification as NotificationModel
-    from data.models import User
+    from models import User
 
     db = SessionLocal()
     try:

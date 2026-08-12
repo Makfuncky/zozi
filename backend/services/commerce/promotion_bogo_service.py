@@ -22,6 +22,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from models import BOGOPromotion
+from utils.datetime_utils import utcnow
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,17 +73,39 @@ def find_eligible_bogo_promotions(
 ) -> list[BOGOConfig]:
     """Find all active BOGO promotions that apply to the given cart items.
 
-    In a full implementation, this would query a ``bogo_promotions`` table.
-    For now, returns an empty list as a placeholder since the BOGO table
-    has not been created yet.
+    Queries the ``bogo_promotions`` table for currently-active promotions whose
+    date window (``starts_at``/``ends_at``) includes "now", and returns them as
+    ``BOGOConfig`` dicts ready for ``calculate_bogo_discount``.
     """
-    # TODO: Query from bogo_promotions table once created
-    # active_promos = (
-    #     db.query(BOGOPromotion)
-    #     .filter(BOGOPromotion.is_active == True)
-    #     .all()
-    # )
-    return []
+    now = utcnow()
+    active_promos = (
+        db.query(BOGOPromotion)
+        .filter(BOGOPromotion.is_active == True)  # noqa: E712
+        .all()
+    )
+
+    eligible: list[BOGOConfig] = []
+    for promo in active_promos:
+        if promo.starts_at and promo.starts_at > now:
+            continue
+        if promo.ends_at and promo.ends_at < now:
+            continue
+        eligible.append({
+            "id": promo.id,
+            "title": promo.title,
+            "description": promo.description,
+            "buy_quantity": promo.buy_quantity,
+            "free_quantity": promo.free_quantity,
+            "free_discount_pct": promo.free_discount_pct,
+            "apply_to": promo.apply_to,
+            "target_id": promo.target_id,
+            "max_uses_per_customer": promo.max_uses_per_customer,
+            "stacking_allowed": promo.stacking_allowed,
+            "is_active": promo.is_active,
+            "starts_at": promo.starts_at.isoformat() if promo.starts_at else None,
+            "ends_at": promo.ends_at.isoformat() if promo.ends_at else None,
+        })
+    return eligible
 
 
 def calculate_bogo_discount(

@@ -42,21 +42,21 @@ from typing import Dict, List, Optional
 import numpy as np
 from PIL import Image
 
+from providers.image.bg_remover import (
+    _bytes_to_image,
+    create_frugal_rembg_session,
+    rembg_remove_bytes,
+)
+
 logger = logging.getLogger(__name__)
 
-# ── OpenCV (imported safely; ximgproc resolved at module level) ────────────
-try:
-    import cv2
-    _HAS_CV2 = True
-    try:
-        from cv2 import ximgproc as _ximgproc  # noqa: F401  (guided filter)
-        _HAS_GUIDED_FILTER = True
-    except ImportError:
-        _HAS_GUIDED_FILTER = False
-except ImportError:
-    cv2 = None  # type: ignore
-    _HAS_CV2 = False
-    _HAS_GUIDED_FILTER = False
+# ── OpenCV (reached through the provider layer) ───────────────────────────
+from providers.media import (
+    HAS_CV2 as _HAS_CV2,
+    HAS_GUIDED_FILTER as _HAS_GUIDED_FILTER,
+    cv2,
+    ximgproc as _ximgproc,  # noqa: F401  (guided filter)
+)
 
 
 # ── Tunable knobs (environment variables) ─────────────────────────────────
@@ -326,45 +326,19 @@ def _model_file_present(model_name: str) -> bool:
 
 
 def _build_session(model_name: str):
-    """Build a rembg session with MEMORY-FRUGAL ONNX Runtime options.
+    """Build a memory-frugal rembg session (delegates to the bg-remover provider).
 
-    The default ``rembg.new_session`` uses ORT's BFC memory *arena*, which
-    pre-reserves and doubles allocations — that is exactly what produced the
-    ``bad allocation`` for an 822 MB buffer on the 900 MB BiRefNet models. We
-    instead:
-
-      * ``enable_cpu_mem_arena = False``  → allocate the exact tensor size once
-        (no arena over-reservation) so a heavy model fits in far less peak RAM.
-      * ``enable_mem_pattern = False``    → no speculative pre-allocation.
-      * ``ORT_SEQUENTIAL`` execution      → no parallel activation buffers.
-      * capped ``intra_op_num_threads``   → bounded CPU on a shared VPS.
-
-    Combined with the per-model resolution caps this lets the heavy BiRefNet /
-    BRIA models run without OOMing, at a small speed cost. Falls back to the
-    stock ``new_session`` if anything about the frugal path is unavailable.
+    The frugal ONNX Runtime options live in
+    :func:`providers.bg_remover.create_frugal_rembg_session` so this service no
+    longer imports ``rembg`` / ``onnxruntime`` directly.
     """
-    real = _MODEL_NAME_ALIASES.get(model_name, model_name)
-    try:
-        import onnxruntime as ort
-        from rembg.session_factory import sessions_class
-
-        session_cls = next((c for c in sessions_class if c.name() == real), None)
-        if session_cls is None:
-            from rembg import new_session
-            return new_session(real)
-
-        opts = ort.SessionOptions()
-        opts.enable_cpu_mem_arena = False
-        opts.enable_mem_pattern = False
-        opts.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-        opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        opts.intra_op_num_threads = HEAVY_THREADS if real in HEAVY_MODELS else LIGHT_THREADS
-        opts.inter_op_num_threads = 1
-        return session_cls(real, opts, providers=["CPUExecutionProvider"])
-    except Exception as exc:  # pragma: no cover - defensive
-        logger.warning("bg_svc: frugal session for '%s' failed (%s); using default", real, exc)
-        from rembg import new_session
-        return new_session(real)
+    return create_frugal_rembg_session(
+        model_name,
+        aliases=_MODEL_NAME_ALIASES,
+        heavy_models=HEAVY_MODELS,
+        heavy_threads=HEAVY_THREADS,
+        light_threads=LIGHT_THREADS,
+    )
 
 
 class _SessionManager:
@@ -523,8 +497,6 @@ def _maybe_downscale(data: bytes, max_dim: int):
 
 def _generate_alpha(model_priority: List[str], data: bytes, orig_size) -> Optional[np.ndarray]:
     """Run through model priority list; return alpha (H,W) float32 in [0,1]."""
-    from rembg import remove
-
     if not _ConcurrencyGate.acquire(timeout=30.0):
         logger.warning("bg_svc: concurrency timeout; returning None")
         return None
@@ -539,7 +511,7 @@ def _generate_alpha(model_priority: List[str], data: bytes, orig_size) -> Option
                 logger.info("bg_svc: running model '%s'", model_name)
                 cap = _resolution_cap(model_name, 9999)
                 scaled, _ = _maybe_downscale(data, cap)
-                out = remove(scaled, session=session, alpha_matting=False, post_process_mask=True)
+                out = rembg_remove_bytes(scaled, session, alpha_matting=False, post_process_mask=True)
                 out_img = Image.open(io.BytesIO(out)).convert("RGBA")
                 out_img = out_img.resize(orig_size, Image.Resampling.LANCZOS)
                 alpha = np.array(out_img.split()[-1]).astype(np.float32) / 255.0
@@ -913,6 +885,69 @@ def _compose_rgba(input_np: np.ndarray, alpha: np.ndarray) -> bytes:
     buf = io.BytesIO()
     Image.fromarray(rgba, mode="RGBA").save(buf, format="PNG", compress_level=4)
     return buf.getvalue()
+
+
+def _compute_quality_score(img_rgb: np.ndarray, alpha: np.ndarray) -> Dict[str, float]:
+    """Score a background-removed result.
+
+    ``img_rgb`` is the original RGB array (H, W, 3) and ``alpha`` is the
+    foreground mask as a float array (H, W) in ``[0, 1]``.
+
+    Returns a dict with the metrics consumed by the A/B-test router:
+        edge_clarity     - sharpness of the cutout boundary (0..1)
+        alpha_confidence - how bimodal the mask is, i.e. how decisive the cut (0..1)
+        coverage         - fraction of pixels kept as foreground (0..1)
+        edge_pixels_pct  - share of pixels in the soft-transition band (0..100)
+        overall         - weighted quality score (0..1)
+    """
+    try:
+        a = alpha.astype(np.float32)
+        h, w = a.shape[:2]
+        total = float(h * w) if h * w else 1.0
+
+        coverage = float(np.mean(a))
+        edge_band = (a > 0.05) & (a < 0.95)
+        edge_pixels_pct = float(np.count_nonzero(edge_band)) / total * 100.0
+
+        fg = float(np.count_nonzero(a > 0.9)) / total
+        bg = float(np.count_nonzero(a < 0.1)) / total
+        alpha_confidence = float(np.clip(fg + bg, 0.0, 1.0))
+
+        if h > 2 and w > 2:
+            gy, gx = np.gradient(a)
+            grad = np.sqrt(gx ** 2 + gy ** 2)
+            edge_clarity = float(np.mean(grad[edge_band])) if np.any(edge_band) else 0.0
+            edge_clarity = float(np.clip(edge_clarity / 2.0, 0.0, 1.0))
+        else:
+            edge_clarity = 0.0
+
+        coverage_conf = 1.0 - abs(coverage - 0.5) * 1.3
+        coverage_conf = float(np.clip(coverage_conf, 0.0, 1.0))
+
+        overall = float(
+            np.clip(
+                0.35 * edge_clarity + 0.40 * alpha_confidence + 0.25 * coverage_conf,
+                0.0,
+                1.0,
+            )
+        )
+
+        return {
+            "edge_clarity": round(edge_clarity, 4),
+            "alpha_confidence": round(alpha_confidence, 4),
+            "coverage": round(coverage, 4),
+            "overall": round(overall, 4),
+            "edge_pixels_pct": round(edge_pixels_pct, 4),
+        }
+    except Exception as exc:  # never crash the A/B test on a scoring hiccup
+        logger.warning("bg_svc: quality score failed: %s", exc)
+        return {
+            "edge_clarity": 0.0,
+            "alpha_confidence": 0.0,
+            "coverage": 0.0,
+            "overall": 0.0,
+            "edge_pixels_pct": 0.0,
+        }
 
 
 # ═════════════════════════════════════════════════════════════════════════

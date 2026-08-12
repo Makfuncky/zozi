@@ -29,7 +29,8 @@ def _reset_sqlite_database() -> bool:
 
 
 def _create_tables() -> None:
-    Base.metadata.create_all(bind=engine)
+    from models import Base as ModelsBase
+    ModelsBase.metadata.create_all(bind=engine)
     print("Database tables created successfully.")
 
 

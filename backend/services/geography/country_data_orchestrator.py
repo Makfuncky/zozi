@@ -9,13 +9,9 @@ from typing import Optional, Dict, Any
 from decimal import Decimal
 import logging
 
-logger = logging.getLogger(__name__)
+from providers.geography import external_data
 
-# External API endpoints
-REST_COUNTRIES_URL = "https://restcountries.com/v3.1/alpha/{country_code}"
-WORLD_BANK_URL = "https://api.worldbank.org/v2/country/{country_code}?format=json"
-GEODB_CITIES_URL = "https://api.geodb-cities.com/v1/cities?country={country_code}&limit=1000"
-NAGER_DATE_URL = "https://date.nager.at/v3/PublicHolidays/{year}/{country_code}"
+logger = logging.getLogger(__name__)
 
 # Redis TTL for cached data (48 hours)
 CACHE_TTL_SECONDS = 48 * 60 * 60
@@ -53,49 +49,31 @@ class ExternalAPIFetcher:
     
     async def fetch_country_identity(self, country_code: str) -> Dict[str, Any]:
         """Fetch country identity data from RestCountries."""
-        async def _fetch():
-            url = REST_COUNTRIES_URL.format(country_code=country_code)
-            async with self.session.get(url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return data[0] if data else {}
-                return {}
-        return await self._fetch_with_cache(f"country:identity:{country_code}", lambda: _fetch())
-    
+        return await self._fetch_with_cache(
+            f"country:identity:{country_code}",
+            lambda: external_data.fetch_restcountries(self.session, country_code),
+        )
+
     async def fetch_economic_data(self, country_code: str) -> Dict[str, Any]:
         """Fetch economic data from World Bank."""
-        async def _fetch():
-            url = WORLD_BANK_URL.format(country_code=country_code)
-            async with self.session.get(url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    # World Bank returns array with metadata and data
-                    if isinstance(data, list) and len(data) > 1:
-                        return data[1] if data[1] else []
-                    return {}
-                return {}
-        return await self._fetch_with_cache(f"country:economics:{country_code}", lambda: _fetch())
-    
+        return await self._fetch_with_cache(
+            f"country:economics:{country_code}",
+            lambda: external_data.fetch_worldbank(self.session, country_code),
+        )
+
     async def fetch_cities(self, country_code: str) -> list:
         """Fetch cities from GeoDB."""
-        async def _fetch():
-            url = GEODB_CITIES_URL.format(country_code=country_code)
-            async with self.session.get(url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return data.get('data', [])
-                return []
-        return await self._fetch_with_cache(f"country:cities:{country_code}", lambda: _fetch())
-    
+        return await self._fetch_with_cache(
+            f"country:cities:{country_code}",
+            lambda: external_data.fetch_geodb_cities(self.session, country_code),
+        )
+
     async def fetch_public_holidays(self, country_code: str, year: int = 2024) -> list:
         """Fetch public holidays from Nager.Date."""
-        async def _fetch():
-            url = NAGER_DATE_URL.format(year=year, country_code=country_code)
-            async with self.session.get(url) as resp:
-                if resp.status == 200:
-                    return await resp.json()
-                return []
-        return await self._fetch_with_cache(f"country:holidays:{country_code}:{year}", lambda: _fetch())
+        return await self._fetch_with_cache(
+            f"country:holidays:{country_code}:{year}",
+            lambda: external_data.fetch_nager_holidays(self.session, country_code, year),
+        )
 
 
 class HeuristicEngine:

@@ -12,7 +12,7 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from data.models_core import (
+from models.core import (
     DirectChatMessage,
     DirectChatRoom,
     EntityChatMessage,

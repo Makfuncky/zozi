@@ -26,23 +26,23 @@ from typing import Optional, Callable
 import numpy as np
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
+from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
+
 logger = logging.getLogger(__name__)
 
-# ── Dependency check ─────────────────────────────────────────────
+# ── Dependency check (OpenCV is reached through the provider layer) ──
 
-_HAS_CV2 = False
-_HAS_GUIDED_FILTER = False
-try:
-    import cv2
-    _HAS_CV2 = True
+from providers.media import (
+    HAS_CV2 as _HAS_CV2,
+    HAS_GUIDED_FILTER as _HAS_GUIDED_FILTER,
+    cv2,
+)
+
+if _HAS_CV2:
     logger.info("OpenCV available for image processing")
-    try:
-        from cv2 import ximgproc
-        _HAS_GUIDED_FILTER = True
+    if _HAS_GUIDED_FILTER:
         logger.info("Guided Filter available for edge refinement")
-    except ImportError:
-        pass
-except ImportError:
+else:
     logger.warning("OpenCV not available, some tools will use Pillow fallbacks")
 
 # ── Constants ────────────────────────────────────────────────────
@@ -113,12 +113,10 @@ def _load_rembg_session():
     """Lazy-load rembg session (cached after first call)."""
     if not hasattr(_load_rembg_session, "_session"):
         try:
-            from rembg import new_session
-            _load_rembg_session._session = new_session("isnet-general-use")
+            _load_rembg_session._session = create_rembg_session("isnet-general-use")
         except Exception:
             try:
-                from rembg import new_session
-                _load_rembg_session._session = new_session("u2net")
+                _load_rembg_session._session = create_rembg_session("u2net")
             except Exception as exc:
                 logger.warning("rembg model load failed: %s", exc)
                 _load_rembg_session._session = None
@@ -130,8 +128,7 @@ def _remove_background_rembg(raw: bytes) -> Optional[bytes]:
     if session is None:
         return None
     try:
-        from rembg import remove as rembg_remove
-        result = rembg_remove(raw, session=session)
+        result = rembg_remove_bytes(raw, session=session)
         if result and len(result) > 100:
             return result
         return None

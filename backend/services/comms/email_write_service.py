@@ -13,7 +13,7 @@ from sqlalchemy import func, desc
 from utils.pagination import SAFE_QUERY_LIMIT
 from utils.datetime_utils import utcnow as _utcnow
 
-from data.models_marketing import EmailTemplate, EmailRuntimeConfig, EmailSuppression
+from models.marketing import EmailTemplate, EmailRuntimeConfig, EmailSuppression
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -21,18 +21,27 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
-import requests
 from PIL import Image
-
+from providers.ai.huggingface import (
+    CAPTION_MODEL,
+    HF_API_BASE,
+    HF_API_TOKEN,
+    ZERO_SHOT_MODEL,
+    _HF_HEADERS,
+    _TRANSIENT_STATUS_CODES,
+    _blip_caption,
+    _is_transient_hf_error,
+    _post_hf_request,
+    _zero_shot_classify,
+)
 from utils.config import settings
 
 logger = logging.getLogger(__name__)
 
-HF_API_TOKEN: str = settings.hf_api_token  # resolved once at import; empty string â†’ unauthenticated
-HF_API_BASE = "https://api-inference.huggingface.co/models"
+# HF_API_TOKEN imported from providers.ai.huggingface  # resolved once at import; empty string â†’ unauthenticated
+# HF_API_BASE moved to providers.ai.huggingface
 
-ZERO_SHOT_MODEL = "facebook/bart-large-mnli"
-CAPTION_MODEL = "Salesforce/blip-image-captioning-base"
+# ZERO_SHOT_MODEL / CAPTION_MODEL moved to providers.ai.huggingface
 TEXT_GEN_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"   # fallback text description
 
 PRODUCT_CATEGORIES = [
@@ -250,45 +259,10 @@ _SPECIFIC_TAG_PATTERNS = (
     (re.compile(r"\b(?:serum|elixir|cream|moisturizer|skincare|retinol|hyaluronic)\b", re.IGNORECASE), ["skincare", "daily-care", "hydrating", "beauty-routine"]),
 )
 
-_HF_HEADERS = lambda: {"Authorization": f"Bearer {settings.hf_api_token}"} if settings.hf_api_token else {}
-_TRANSIENT_STATUS_CODES = {408, 425, 429, 500, 502, 503, 504}
+# HuggingFace request helpers (vendor code) moved to providers.ai.huggingface
 
 
-def _post_hf_request(
-    model: str,
-    *,
-    json: Optional[dict] = None,
-    data: Optional[bytes] = None,
-    timeout: int = 15,
-    extra_headers: Optional[dict] = None,
-    attempts: int = 3,
-):
-    last_error: Optional[Exception] = None
-    last_response = None
-
-    for attempt in range(attempts):
-        try:
-            response = requests.post(
-                f"{HF_API_BASE}/{model}",
-                headers={**_HF_HEADERS(), **(extra_headers or {})},
-                json=json,
-                data=data,
-                timeout=timeout,
-            )
-            if response.status_code == 200:
-                return response
-            last_response = response
-            if response.status_code not in _TRANSIENT_STATUS_CODES:
-                return response
-        except Exception as exc:
-            last_error = exc
-
-        if attempt < attempts - 1:
-            time.sleep(0.4 * (attempt + 1))
-
-    if last_error:
-        raise last_error
-    return last_response
+# (vendor request logic moved to providers.ai.huggingface)
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -756,28 +730,7 @@ def suggest_material_candidates(
 # INTERNAL HELPERS
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-def _blip_caption(image_bytes: bytes) -> str:
-    """Call BLIP image captioning via HF Inference API."""
-    try:
-        # HF Inference API for image-to-text accepts raw bytes
-        resp = _post_hf_request(
-            CAPTION_MODEL,
-            data=image_bytes,
-            timeout=30,
-            extra_headers={"Content-Type": "application/octet-stream"},
-        )
-        if resp is not None and resp.status_code == 200:
-            data = resp.json()
-            if isinstance(data, list) and data:
-                return data[0].get("generated_text", "")
-            if isinstance(data, dict):
-                return data.get("generated_text", "")
-    except Exception as exc:
-        if _is_transient_hf_error(exc):
-            logger.debug("BLIP caption unavailable after retries; using fallback inference: %s", exc)
-        else:
-            logger.warning("BLIP caption failed: %s", exc)
-    return ""
+# (BLIP caption vendor logic moved to providers.ai.huggingface)
 
 
 def _unique_suggestions(values: list[str], limit: int = 8) -> list[str]:
@@ -900,43 +853,8 @@ def _looks_like_identifier_artifact(word: str) -> bool:
     return bool(_IDENTIFIER_ARTIFACT_PATTERN.match(normalized))
 
 
-def _zero_shot_classify(text: str, labels: list[str]) -> str:
-    """Run zero-shot classification and return the top label."""
-    if not text.strip():
-        return ""
-    try:
-        payload = {
-            "inputs": text,
-            "parameters": {"candidate_labels": labels},
-        }
-        resp = _post_hf_request(ZERO_SHOT_MODEL, json=payload, timeout=15)
-        if resp is not None and resp.status_code == 200:
-            data = resp.json()
-            labels_out = data.get("labels", [])
-            if labels_out:
-                return labels_out[0]
-    except Exception as exc:
-        logger.warning("Zero-shot classification failed: %s", exc)
-    return ""
+# (zero-shot / transient-error vendor logic moved to providers.ai.huggingface)
 
-
-def _is_transient_hf_error(exc: Exception) -> bool:
-    message = str(exc).lower()
-    transient_fragments = (
-        "incompleteread",
-        "connection broken",
-        "connection aborted",
-        "connection reset",
-        "read timed out",
-        "timed out",
-        "temporary failure",
-        "remote end closed connection",
-        "503",
-        "504",
-        "502",
-        "429",
-    )
-    return any(fragment in message for fragment in transient_fragments)
 
 def _keyword_category(text: str) -> str:
     """Simple keyword-based category detection fallback."""

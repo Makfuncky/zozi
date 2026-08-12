@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+from ..config import settings
 from .text import _ollama_chat, _ollama_vision_chat, _extract_json, _extract_variant_from_text, _extract_product_name, _extract_tags
 
 logger = logging.getLogger(__name__)

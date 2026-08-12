@@ -1,14 +1,14 @@
 """Returns Controller — customer return requests business logic."""
-import importlib
 import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional, cast
 
-import httpx
-import stripe
 from fastapi import HTTPException
+
+from providers.payments.stripe import refund_payment_intent
+from providers.payments.tap import refund_tap_charge
 from sqlalchemy.orm import Session, selectinload
 
 from models import Notification, Order, OrderItem, Product, ReturnRequest, Shipment, User
@@ -268,11 +268,9 @@ def _serialize_supplier_return_request(req: ReturnRequest, supplier_id: int) -> 
 
 def _capture_exc(exc: Exception) -> None:
     """Non-blocking Sentry capture — ignores missing sentry_sdk."""
-    try:
-        sentry_sdk = importlib.import_module("sentry_sdk")
-        sentry_sdk.capture_exception(exc)
-    except Exception:
-        pass
+    from providers.observability import capture_exception
+
+    capture_exception(exc)
 
 
 def create_return_request(current_user: dict, payload: ReturnRequestCreate, db: Session) -> ReturnRequest:
@@ -407,10 +405,9 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
 
             if payment_id.startswith("pi_") or payment_id.startswith("py_"):
                 # ── Stripe refund ────────────────────────────────────────────
-                stripe.api_key = settings.stripe_secret_key or os.getenv("STRIPE_SECRET_KEY", "")
-                if stripe.api_key:
+                refund = refund_payment_intent(payment_id)
+                if refund is not None:
                     try:
-                        refund = stripe.Refund.create(payment_intent=payment_id)
                         apply_order_status_change(order, "refunded", db)
                         try:
                             from services.treasury.cash_management_service import log_refund_bank_transaction
@@ -445,20 +442,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                         import asyncio
                         _tap_refund_amount = float(cast(Any, getattr(order, "total_amount")) or 0)
                         async def _do_tap_refund() -> dict:
-                            async with httpx.AsyncClient(timeout=15) as client:
-                                resp = await client.post(
-                                    "https://api.tap.company/v2/refunds",
-                                    headers={
-                                        "Authorization": f"Bearer {tap_key}",
-                                        "Content-Type": "application/json",
-                                    },
-                                    json={
-                                        "charge_id": payment_id,
-                                        "amount": _tap_refund_amount,
-                                        "reason": "return_refund",
-                                    },
-                                )
-                                return resp.json()
+                            return await refund_tap_charge(payment_id, _tap_refund_amount, tap_key)
 
                         try:
                             loop = asyncio.get_event_loop()

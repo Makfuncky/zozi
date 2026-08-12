@@ -379,12 +379,9 @@ class Settings:
             return ""
 
         try:
-            import boto3
+            from providers.storage import create_ssm_client
 
-            kwargs: dict[str, Any] = {}
-            if region:
-                kwargs["region_name"] = region
-            client = boto3.client("ssm", **kwargs)
+            client = create_ssm_client(region)
             response = client.get_parameter(Name=parameter_name, WithDecryption=True)
             value = response.get("Parameter", {}).get("Value")
             if isinstance(value, str):

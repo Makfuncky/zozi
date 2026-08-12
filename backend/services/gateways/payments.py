@@ -16,7 +16,7 @@ import hmac
 import json
 import os
 import re
-import stripe
+from providers.payments.stripe_sdk import stripe
 import httpx
 import logging
 import uuid
@@ -558,9 +558,23 @@ def _apply_stripe_runtime_key(db: Session | None = None) -> str:
     return resolved
 
 
-def _stripe_configured(db: Session | None = None) -> bool:
-    key = _apply_stripe_runtime_key(db)
-    return _is_non_placeholder_secret(key, ("sk_test_", "sk_live_"))
+def _stripe_configured(db: Session | None = None) -> bool:
+    key = _apply_stripe_runtime_key(db)
+    return _is_non_placeholder_secret(key, ("sk_test_", "sk_live_"))
+
+
+
+def issue_stripe_refund(*, db: Session | None, payment_intent_id: str) -> Any:
+    """Create a Stripe refund for a payment intent.
+
+    The controller layer must not touch the Stripe SDK directly (auditor rule
+    **V6**); this services-layer helper owns the SDK call and the runtime key
+    resolution, returning the refund object to the caller.
+    """
+    api_key = _apply_stripe_runtime_key(db) or os.getenv("STRIPE_SECRET_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=503, detail="Payment service not configured")
+    return stripe.Refund.create(payment_intent=payment_intent_id)
 
 
 def _resolve_tap_secret_key(db: Session | None = None) -> str:

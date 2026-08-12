@@ -12,12 +12,12 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from data.models_core import (
+from models.core import (
     EntityChatThread, EntityChatMessage, DirectChatRoom, DirectChatMessage,
     GroupChatRoom, GroupChatMember,
 )
 from db.database import get_service_session
-from data.services_write_helpers import add_and_flush, commit_and_refresh, commit_only
+from services.common.write_helpers import add_and_flush, commit_and_refresh, commit_only
 import structlog
 logger = structlog.get_logger(__name__)
 

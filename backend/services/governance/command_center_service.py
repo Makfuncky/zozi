@@ -1,24 +1,20 @@
 from __future__ import annotations
 
-import asyncio
 import json
 from datetime import datetime, timezone, timedelta
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body, WebSocket, WebSocketDisconnect
+from fastapi import HTTPException, WebSocket
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 
-from db.database import get_db, SessionLocal
 from models import (
     FraudAlert, SystemAlert, ExecutiveNews, CommandCenterView,
     User, Order, OrderItem, Product, Shipment, LogisticsPartner,
     CountryConfig, SystemHealthEvent, UserSession, ReturnRequest,
     SupportTicket,
 )
-from utils.dependencies import get_current_user
-from utils.dependencies import require_admin
 from services.common.command_center_service import CommandCenterService
 
 _ALLOWED_TABLES = {
@@ -57,7 +53,29 @@ def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None 
     return safe_fetch(db, f"SELECT COUNT(*) FROM {validated_table} WHERE {where}", params, scalar=True)
 
 
-router = APIRouter()
+def get_command_center_heartbeat(db: Session) -> dict:
+    """Real-time operational heartbeat metrics for the command-center WebSocket.
+
+    Centralizes all DB access here so the router stays a thin transport layer
+    (it must not open its own sessions or run raw SQL).
+    """
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    one_hour_ago = now - timedelta(hours=1)
+    active_window = now - timedelta(minutes=10)
+    return {
+        "today_orders": safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE created_at >= :today", {"today": today_start}),
+        "today_revenue": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
+        "today_gmv": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
+        "delayed_orders": int(safe_scalar(db, "SELECT COUNT(*) FROM shipments WHERE status = 'delayed' AND estimated_delivery < :now", {"now": now})),
+        "failed_deliveries": int(safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE status = 'failed' AND created_at >= :today", {"today": today_start})),
+        "active_customers_buying": int(safe_scalar(db, "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
+        "active_customers_window_shopping": int(safe_scalar(db, "SELECT COUNT(*) FROM user_sessions WHERE last_activity >= :active AND is_active = true", {"active": active_window})),
+        "employees_working": int(safe_scalar(db, "SELECT COUNT(*) FROM employees WHERE employment_status = 'active'")),
+        "system_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM system_health_events WHERE severity IN ('error', 'critical') AND created_at >= :since", {"since": one_hour_ago})),
+        "active_logistics_partners": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active'")),
+        "logistics_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active' AND verification_status = 'rejected'")),
+    }
 
 
 class SystemMetricsResponse(BaseModel):
@@ -125,11 +143,33 @@ class RealtimeMetrics(BaseModel):
     memory_usage: float
 
 
-active_connections: List[WebSocket] = []
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        message_str = json.dumps(message)
+        for connection in self.active_connections[:]:
+            try:
+                await connection.send_text(message_str)
+            except Exception:
+                self.active_connections.remove(connection)
 
 
-@router.get("/admin/command-center/metrics/system", response_model=SystemMetricsResponse)
-def get_system_metrics(db: Session = Depends(get_db)) -> SystemMetricsResponse:
+manager = ConnectionManager()
+active_connections = manager.active_connections
+
+
+
+def get_system_metrics(db: Session) -> SystemMetricsResponse:
     try:
         health_events = (
             db.query(SystemHealthEvent)
@@ -159,8 +199,7 @@ def get_system_metrics(db: Session = Depends(get_db)) -> SystemMetricsResponse:
         )
 
 
-@router.get("/admin/command-center/metrics/treasury", response_model=TreasuryMetricsResponse)
-def get_treasury_metrics(db: Session = Depends(get_db)) -> TreasuryMetricsResponse:
+def get_treasury_metrics(db: Session) -> TreasuryMetricsResponse:
     return TreasuryMetricsResponse(
         available_cash=125000.00,
         locked_cash=75000.00,
@@ -171,14 +210,13 @@ def get_treasury_metrics(db: Session = Depends(get_db)) -> TreasuryMetricsRespon
     )
 
 
-@router.get("/admin/command-center/dashboard", response_model=CommandCenterDashboardResponse)
 def get_dashboard(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    current_user: dict,
+    db: Session,
 ) -> CommandCenterDashboardResponse:
     system_metrics = get_system_metrics(db)
     treasury_metrics = get_treasury_metrics(db)
-    
+
     alerts = (
         db.query(SystemAlert)
         .filter(SystemAlert.is_acknowledged == False)
@@ -186,7 +224,7 @@ def get_dashboard(
         .limit(10)
         .all()
     )
-    
+
     active_alerts = [
         {
             "id": a.id,
@@ -199,7 +237,7 @@ def get_dashboard(
         }
         for a in alerts
     ]
-    
+
     user_country = (current_user or {}).get("staff_country_codes") or ["OM"]
     user_country = user_country[0] if user_country else "OM"
     headlines = []
@@ -207,7 +245,7 @@ def get_dashboard(
         articles = db.query(ExecutiveNews).filter(
             ExecutiveNews.is_published == True
         ).order_by(ExecutiveNews.published_at.desc()).limit(5).all()
-        
+
         for article in articles:
             headlines.append({
                 "title": article.title,
@@ -219,7 +257,7 @@ def get_dashboard(
             })
     except Exception:
         headlines = []
-    
+
     return CommandCenterDashboardResponse(
         timestamp=datetime.now(timezone.utc).isoformat(),
         system_metrics=system_metrics,
@@ -229,10 +267,9 @@ def get_dashboard(
     )
 
 
-@router.get("/admin/command-center/fraud-alerts", response_model=List[FraudAlertResponse])
 def get_fraud_alerts(
-    limit: int = Query(10, le=50),
-    db: Session = Depends(get_db)
+    limit: int,
+    db: Session,
 ) -> List[FraudAlertResponse]:
     alerts = (
         db.query(FraudAlert)
@@ -241,7 +278,7 @@ def get_fraud_alerts(
         .limit(limit)
         .all()
     )
-    
+
     return [
         FraudAlertResponse(
             id=a.id,
@@ -255,18 +292,17 @@ def get_fraud_alerts(
     ]
 
 
-@router.get("/admin/executive-news", response_model=List[NewsArticleResponse])
 def get_executive_news(
-    limit: int = Query(5, le=20),
-    category: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    limit: int,
+    category: Optional[str],
+    db: Session,
 ) -> List[NewsArticleResponse]:
     query = db.query(ExecutiveNews).filter(ExecutiveNews.is_published == True)
     if category:
         query = query.filter(ExecutiveNews.category == category)
-    
+
     articles = query.order_by(ExecutiveNews.published_at.desc()).limit(limit).all()
-    
+
     return [
         NewsArticleResponse(
             id=a.id,
@@ -282,18 +318,17 @@ def get_executive_news(
     ]
 
 
-@router.get("/admin/command-center/headlines", response_model=List[NewsArticleResponse])
 def get_command_center_headlines(
-    limit: int = Query(5, le=20),
-    category: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    limit: int,
+    category: Optional[str],
+    db: Session,
 ) -> List[NewsArticleResponse]:
     query = db.query(ExecutiveNews).filter(ExecutiveNews.is_published == True)
     if category:
         query = query.filter(ExecutiveNews.category == category)
-    
+
     articles = query.order_by(ExecutiveNews.published_at.desc()).limit(limit).all()
-    
+
     return [
         NewsArticleResponse(
             id=a.id,
@@ -309,11 +344,9 @@ def get_command_center_headlines(
     ]
 
 
-@router.post("/admin/executive-news", response_model=NewsArticleResponse, status_code=201)
 def create_executive_news(
-    payload: dict = Body(...),
-    _: dict = Depends(require_admin),
-    db: Session = Depends(get_db),
+    payload: dict,
+    db: Session,
 ) -> NewsArticleResponse:
     title = payload.get("title")
     if not title:
@@ -345,11 +378,9 @@ def create_executive_news(
     )
 
 
-@router.delete("/admin/executive-news/{news_id}")
 def delete_executive_news(
-    news_id: int = Path(...),
-    _: dict = Depends(require_admin),
-    db: Session = Depends(get_db),
+    news_id: int,
+    db: Session,
 ):
     article = db.query(ExecutiveNews).filter(ExecutiveNews.id == news_id).first()
     if not article:
@@ -359,17 +390,16 @@ def delete_executive_news(
     return {"message": "Deleted", "id": news_id}
 
 
-@router.get("/admin/command-center/alerts", response_model=List[AlertResponse])
 def get_alerts(
-    severity: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
+    severity: Optional[str],
+    db: Session,
 ) -> List[AlertResponse]:
     query = db.query(SystemAlert).filter(SystemAlert.is_acknowledged == False)
     if severity:
         query = query.filter(SystemAlert.severity == severity)
-    
+
     alerts = query.order_by(SystemAlert.created_at.desc()).limit(20).all()
-    
+
     return [
         AlertResponse(
             id=a.id,
@@ -384,11 +414,9 @@ def get_alerts(
     ]
 
 
-@router.post("/admin/command-center/alerts/{alert_id}/resolve")
 def resolve_alert(
-    alert_id: int = Path(...),
-    _: dict = Depends(require_admin),
-    db: Session = Depends(get_db),
+    alert_id: int,
+    db: Session,
 ):
     alert = db.query(SystemAlert).filter(SystemAlert.id == alert_id).first()
     if not alert:
@@ -398,14 +426,13 @@ def resolve_alert(
     return {"message": "Alert resolved", "id": alert_id}
 
 
-@router.get("/admin/command-center/stats")
 def get_dashboard_stats(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: dict,
+    db: Session,
 ) -> dict:
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    
+
     users_count = db.query(User).count()
     orders_today = db.query(Order).filter(Order.created_at >= today_start).count()
     orders_pending = db.query(Order).filter(Order.status == "pending").count()
@@ -413,7 +440,7 @@ def get_dashboard_stats(
     fraud_events = db.query(FraudAlert).filter(
         FraudAlert.created_at >= datetime.now(timezone.utc).replace(hour=0)
     ).count()
-    
+
     return {
         "users": {
             "customers": db.query(User).filter(User.role == "customer").count(),
@@ -457,74 +484,7 @@ def get_dashboard_stats(
     }
 
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: dict):
-        message_str = json.dumps(message)
-        for connection in self.active_connections[:]:
-            try:
-                await connection.send_text(message_str)
-            except Exception:
-                self.active_connections.remove(connection)
-
-
-manager = ConnectionManager()
-
-
-@router.websocket("/admin/command-center/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            try:
-                db = SessionLocal()
-                try:
-                    now = datetime.now(timezone.utc)
-                    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                    one_hour_ago = now - timedelta(hours=1)
-
-                    def safe_scalar(sql: str, params: dict | None = None):
-                        try:
-                            return db.execute(text(sql), params or {}).scalar() or 0
-                        except Exception:
-                            return 0
-
-                    heartbeat = {
-                        "today_orders": safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE created_at >= :today", {"today": today_start}),
-                        "today_revenue": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "today_gmv": float(safe_scalar(db, "SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "delayed_orders": int(safe_scalar(db, "SELECT COUNT(*) FROM shipments WHERE status = 'delayed' AND estimated_delivery < :now", {"now": now})),
-                        "failed_deliveries": int(safe_scalar(db, "SELECT COUNT(*) FROM orders WHERE status = 'failed' AND created_at >= :today", {"today": today_start})),
-                        "active_customers_buying": int(safe_scalar(db, "SELECT COUNT(DISTINCT customer_id) FROM orders WHERE created_at >= :today AND status NOT IN ('cancelled', 'returned')", {"today": today_start})),
-                        "active_customers_window_shopping": int(safe_scalar(db, "SELECT COUNT(*) FROM user_sessions WHERE last_activity >= :active AND is_active = true", {"active": now - timedelta(minutes=10)})),
-                        "employees_working": int(safe_scalar(db, "SELECT COUNT(*) FROM employees WHERE employment_status = 'active'")),
-                        "system_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM system_health_events WHERE severity IN ('error', 'critical') AND created_at >= :since", {"since": one_hour_ago})),
-                        "active_logistics_partners": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active'")),
-                        "logistics_issues": int(safe_scalar(db, "SELECT COUNT(*) FROM logistics_partners WHERE status = 'active' AND verification_status = 'rejected'")),
-                    }
-
-                    await websocket.send_json({"type": "heartbeat", "data": heartbeat, "timestamp": now.isoformat()})
-                finally:
-                    db.close()
-            except Exception:
-                pass
-            await asyncio.sleep(15)
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
-
-@router.get("/admin/command-center/metrics/realtime", response_model=RealtimeMetrics)
-def get_realtime_metrics(db: Session = Depends(get_db)) -> RealtimeMetrics:
+def get_realtime_metrics(db: Session) -> RealtimeMetrics:
     return RealtimeMetrics(
         latency_ms=150.5,
         error_rate=0.02,
@@ -538,14 +498,13 @@ def get_command_center(db: Session) -> CommandCenterService:
     return CommandCenterService(db)
 
 
-@router.get("/admin/command-center/comprehensive")
 def get_comprehensive_dashboard(
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-    country_code: str | None = Query(None, alias="country_code"),
-):
+    current_user: dict,
+    db: Session,
+    country_code: str | None = None,
+) -> dict:
     """Single endpoint returning ALL Command Center metrics for the 6-Zone layout.
-    
+
     Args:
         country_code: Optional ISO 2-letter country code to scope results.
             If omitted, falls back to user's staff_country_codes or "OM".

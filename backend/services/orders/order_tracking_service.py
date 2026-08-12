@@ -26,6 +26,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
+from fastapi import HTTPException
 from models import Order, OrderItem, Shipment, ShipmentEvent, User, LogisticsPartner, Notification
 from utils.config import settings
 from utils.datetime_utils import utcnow as _utcnow
@@ -532,6 +533,38 @@ def admin_override_status(
         "old_status": old_status,
         "new_status": new_status,
     }
+
+
+def list_my_pickups(db: Session, user_id: int) -> list[dict[str, Any]]:
+    """List shipments assigned to the logistics partner for ``user_id``.
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.logistics_orders_v2.list_my_pickups``.
+    """
+    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+    if not partner:
+        raise HTTPException(404, "Logistics partner profile not found")
+    shipments = (
+        db.query(Shipment)
+        .filter(Shipment.assigned_partner_id == partner.id)
+        .order_by(Shipment.updated_at.desc())
+        .all()
+    )
+    return [
+        {
+            "id": s.id, "order_id": s.order_id, "status": s.status,
+            "tracking_number": s.tracking_number, "scan_code": s.scan_code,
+            "current_hub": s.current_hub,
+            "package_weight_kg": float(s.package_weight_kg) if s.package_weight_kg else None,
+            "packaged_at": s.packaged_at.isoformat() if s.packaged_at else None,
+            "shipped_at": s.shipped_at.isoformat() if s.shipped_at else None,
+            "estimated_delivery": s.estimated_delivery.isoformat() if s.estimated_delivery else None,
+            "actual_delivery": s.actual_delivery.isoformat() if s.actual_delivery else None,
+            "delivery_signature_name": s.delivery_signature_name,
+            "updated_at": s.updated_at.isoformat() if s.updated_at else None,
+        }
+        for s in shipments
+    ]
 
 
 def admin_cancel_order(

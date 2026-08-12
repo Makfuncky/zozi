@@ -1,175 +1,245 @@
-"""Admin/public category controller (LAYER 3).
+"""Category admin controller (CONTROLLERS layer).
 
-Thin orchestration over :mod:`services.catalog.category_service`. Translates
-service-level ``ValueError`` / missing-row conditions into HTTP semantics so
-routers stay declarative.
+Canonical coordinator for admin category management. Enforces the country
+RLS context and delegates persistence to
+services.catalog.category_admin_{read,write}_service and the shared
+controllers.admin.admin_controller archive helpers.
+
+The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+so the auto-router emits ``routers/admin_catalog_category_admin.py``.
 """
 from __future__ import annotations
 
-from typing import Any, Optional, Sequence
+from typing import Optional
 
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Query, Session
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
-from data.models import Category
-from services.catalog import category_service
-import structlog
-logger = structlog.get_logger(__name__)
+from db.schemas import ArchiveRequest, BulkActionRequest
+from routers.generated.auto_router import delete, get, post, put
 
-__all__ = [
-    "get_category_query",
-    "list_categories_page",
-    "list_category_summaries",
-    "get_category_or_404",
-    "get_category_by_ref_or_404",
-    "create_category",
-    "update_category",
-    "deactivate_category",
-    "reorder_categories",
-]
+from utils.country_rls import get_country_or_404
+from utils.rls_interceptor import set_rls_context, clear_rls_context
 
-
-def get_category_query(
-    db: Session,
-    *,
-    active_only: bool = True,
-    parent_id: Optional[int] = None,
-    country_code: Optional[str] = None,
-) -> Query:
-    """Expose the canonical category query for paginated router responses."""
-    return category_service.get_category_query(
-        db,
-        active_only=active_only,
-        parent_id=parent_id,
-        country_code=country_code,
-    )
+from controllers.admin.admin_controller import (
+    archive_entity,
+    bulk_archive_entities,
+    bulk_restore_entities,
+    restore_entity,
+)
+from services.catalog.category_admin_read_service import list_categories_paginated
+from services.catalog.category_admin_write_service import (
+    create_category as svc_create_category,
+    delete_category as svc_delete_category,
+    reorder_categories as svc_reorder_categories,
+    update_category as svc_update_category,
+)
 
 
-def list_categories_query(
-    db: Session,
-    country_code: str,
-    *,
-    include_deleted: bool = False,
-) -> Query:
-    """Country-scoped query for the admin categories list endpoint."""
-    return category_service.list_categories_query(db, country_code, include_deleted=include_deleted)
-
-
-def list_categories_page(
-    db: Session,
-    *,
-    active_only: bool = True,
-    parent_id: Optional[int] = None,
-    country_code: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 20,
-) -> dict[str, Any]:
-    """Return one page of categories in the standard envelope."""
-    items, total = category_service.list_categories(
-        db,
-        active_only=active_only,
-        parent_id=parent_id,
-        country_code=country_code,
-        page=page,
-        page_size=page_size,
-    )
-    return {"data": items, "total": total, "page": page, "page_size": page_size}
-
-
-def list_category_summaries(
-    db: Session,
-    *,
-    page: int = 1,
-    page_size: int = 20,
-) -> dict[str, Any]:
-    """Flat id/slug/commission projection used by admin commission screens."""
-    items, total = category_service.list_categories(
-        db, active_only=True, page=page, page_size=page_size
-    )
+def _actor(current_user) -> dict:
+    if isinstance(current_user, dict):
+        return {
+            "id": current_user.get("id"),
+            "username": current_user.get("username"),
+            "role": current_user.get("role"),
+        }
     return {
-        "data": [category_service.serialize_category_summary(c) for c in items],
-        "total": total,
-        "page": page,
-        "page_size": page_size,
+        "id": getattr(current_user, "id", None),
+        "username": getattr(current_user, "username", None),
+        "role": getattr(current_user, "role", None),
     }
 
 
-def get_category_or_404(
-    db: Session,
-    category_id: int,
-    *,
-    country_code: Optional[str] = None,
-) -> Category:
-    """Fetch a category or raise HTTP 404."""
-    category = category_service.get_category_by_id(
-        db, category_id, country_code=country_code
+def _with_rls(country_code: str, db: Session):
+    """Enter country-restricted RLS context (caller must clear in finally)."""
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+
+
+@get(
+    "/api/v1/admin/categories/{country_code}",
+    deps=["db", "admin"],
+    query=["include_deleted", "page", "page_size"],
+    tags=["admin-categories"],
+)
+def list_categories(
+    country_code: str,
+    include_deleted: bool = False,
+    page: int = 1,
+    page_size: int = 20,
+    current_user=None,
+    db: Session = None,
+):
+    _with_rls(country_code, db)
+    try:
+        return list_categories_paginated(
+            db,
+            country_code=country_code.upper(),
+            include_deleted=include_deleted,
+            page=page,
+            page_size=page_size,
+        )
+    finally:
+        clear_rls_context()
+
+
+@post("/api/v1/admin/categories/{country_code}", deps=["db", "admin"], tags=["admin-categories"])
+def create_category(
+    country_code: str,
+    name: Optional[str] = None,
+    slug: Optional[str] = None,
+    parent_id: Optional[int] = None,
+    sort_order: int = 0,
+    description: Optional[str] = None,
+    current_user=None,
+    db: Session = None,
+):
+    return svc_create_category(
+        db,
+        country_code,
+        name=name,
+        slug=slug,
+        parent_id=parent_id,
+        sort_order=sort_order,
+        description=description,
     )
-    if category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return category
 
 
-def get_category_by_ref_or_404(db: Session, category_ref: str) -> Category:
-    """Resolve a category by slug or id, or raise HTTP 404."""
-    category = category_service.get_category_by_ref(db, category_ref)
-    if category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return category
-
-
-def get_country_category_or_404(
-    db: Session, category_id: int, country_code: str
-) -> Category:
-    """Fetch a category scoped to a country or raise HTTP 404."""
-    return get_category_or_404(db, category_id, country_code=country_code)
-
-
-def create_category(db: Session, payload: dict[str, Any], *, rebuild_paths: bool = False) -> Category:
-    """Create a category, mapping duplicate slugs to HTTP 409."""
-    try:
-        return category_service.create_category(db, payload, rebuild_paths=rebuild_paths)
-    except ValueError as exc:
-        logger.exception("create_category_failed", error=str(exc))
-        detail = str(exc)
-        code = (
-            status.HTTP_409_CONFLICT
-            if "already exists" in detail
-            else status.HTTP_422_UNPROCESSABLE_ENTITY
-        )
-        raise HTTPException(status_code=code, detail=detail) from exc
-
-
+@put(
+    "/api/v1/admin/categories/{country_code}/{category_id}",
+    deps=["db", "admin"],
+    tags=["admin-categories"],
+)
 def update_category(
-    db: Session,
-    category: Category,
-    updates: dict[str, Any],
-    *,
-    rebuild_paths: bool = False,
-) -> Category:
-    """Update a category, mapping duplicate slugs to HTTP 409."""
+    country_code: str,
+    category_id: int,
+    name: Optional[str] = None,
+    slug: Optional[str] = None,
+    parent_id: Optional[int] = None,
+    sort_order: Optional[int] = None,
+    description: Optional[str] = None,
+    current_user=None,
+    db: Session = None,
+):
+    return svc_update_category(
+        db,
+        country_code,
+        category_id,
+        name=name,
+        slug=slug,
+        parent_id=parent_id,
+        sort_order=sort_order,
+        description=description,
+    )
+
+
+@post(
+    "/api/v1/admin/categories/{country_code}/{category_id}/archive",
+    deps=["db", "admin"],
+    body=ArchiveRequest,
+    tags=["admin-categories"],
+)
+def archive_category(
+    country_code: str,
+    category_id: int,
+    payload: ArchiveRequest,
+    current_user=None,
+    db: Session = None,
+):
+    _with_rls(country_code, db)
     try:
-        return category_service.update_category(
-            db, category, updates, rebuild_paths=rebuild_paths
+        return archive_entity(
+            "category",
+            category_id,
+            _actor(current_user),
+            db,
+            payload.reason if payload else None,
         )
-    except ValueError as exc:
-        logger.exception("update_category_failed", error=str(exc))
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    finally:
+        clear_rls_context()
 
 
-def deactivate_category(db: Session, category: Category) -> Category:
-    """Soft-delete a category."""
-    return category_service.deactivate_category(db, category)
-
-
-def reorder_categories(db: Session, order: dict[Any, Any]) -> int:
-    """Bulk-assign sort order; returns the number of rows updated."""
-    if not order:
-        raise HTTPException(status_code=422, detail="order payload is required")
+@post(
+    "/api/v1/admin/categories/{country_code}/{category_id}/restore",
+    deps=["db", "admin"],
+    tags=["admin-categories"],
+)
+def restore_category(
+    country_code: str,
+    category_id: int,
+    current_user=None,
+    db: Session = None,
+):
+    _with_rls(country_code, db)
     try:
-        normalized = {int(k): int(v) for k, v in order.items()}
-    except (TypeError, ValueError) as exc:
-        logger.exception("reorder_categories_failed", error=str(exc))
-        raise HTTPException(
-            status_code=422, detail="order must map category id -> sort order"
-        ) from exc
-    return category_service.reorder_categories(db, normalized)
+        return restore_entity("category", category_id, _actor(current_user), db)
+    finally:
+        clear_rls_context()
+
+
+@post(
+    "/api/v1/admin/categories/{country_code}/reorder",
+    deps=["db", "admin"],
+    tags=["admin-categories"],
+)
+def reorder_categories(
+    country_code: str,
+    order: Optional[dict] = None,
+    current_user=None,
+    db: Session = None,
+):
+    return svc_reorder_categories(db, country_code, order)
+
+
+@post(
+    "/api/v1/admin/categories/{country_code}/bulk/archive",
+    deps=["db", "admin"],
+    body=BulkActionRequest,
+    tags=["admin-categories"],
+)
+def bulk_archive_categories(
+    country_code: str,
+    payload: BulkActionRequest,
+    current_user=None,
+    db: Session = None,
+):
+    _with_rls(country_code, db)
+    try:
+        return bulk_archive_entities(
+            "category", payload.ids, _actor(current_user), db, payload.reason
+        )
+    finally:
+        clear_rls_context()
+
+
+@post(
+    "/api/v1/admin/categories/{country_code}/bulk/restore",
+    deps=["db", "admin"],
+    body=BulkActionRequest,
+    tags=["admin-categories"],
+)
+def bulk_restore_categories(
+    country_code: str,
+    payload: BulkActionRequest,
+    current_user=None,
+    db: Session = None,
+):
+    _with_rls(country_code, db)
+    try:
+        return bulk_restore_entities("category", payload.ids, _actor(current_user), db)
+    finally:
+        clear_rls_context()
+
+
+@delete(
+    "/api/v1/admin/categories/{country_code}/{category_id}",
+    deps=["db", "admin"],
+    tags=["admin-categories"],
+)
+def delete_category(
+    country_code: str,
+    category_id: int,
+    current_user=None,
+    db: Session = None,
+):
+    return svc_delete_category(db, country_code, category_id)

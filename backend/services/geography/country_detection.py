@@ -1,34 +1,18 @@
 from __future__ import annotations
 
-import json
 import logging
-import ipaddress
 import os
-import urllib.request
+import ipaddress
 from pathlib import Path
 from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
 from models import CountryConfig
+from providers.geography.ip import lookup_ipapi_co
+from providers.geography.geoip import lookup_country_code
 
 logger = logging.getLogger(__name__)
-
-GEOIP_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "GeoLite2-Country.mmdb"
-_geoip_reader = None
-
-
-def _get_geoip_reader():
-    """Lazy-load the GeoLite2 reader (cached)."""
-    global _geoip_reader
-    if _geoip_reader is None and GEOIP_DB_PATH.exists():
-        try:
-            import geoip2.database
-            _geoip_reader = geoip2.database.Reader(str(GEOIP_DB_PATH))
-            logger.info("GeoIP2 reader loaded from %s", GEOIP_DB_PATH)
-        except Exception as exc:
-            logger.warning("Failed to load GeoIP2 database: %s", exc)
-    return _geoip_reader
 
 
 class CountryDetectionService:
@@ -89,27 +73,10 @@ class CountryDetectionService:
         return self._default_country(), "default"
 
     def _lookup_geoip2(self, ip: str) -> Optional[str]:
-        reader = _get_geoip_reader()
-        if reader is None:
-            return None
-        try:
-            response = reader.country(ip)
-            if response and response.country and response.country.iso_code:
-                return response.country.iso_code
-        except Exception:
-            pass
-        return None
+        return lookup_country_code(ip)
 
     def _lookup_ipapi(self, ip: str) -> Optional[str]:
-        try:
-            url = f"https://ipapi.co/{ip}/json/"
-            req = urllib.request.Request(url, headers={"User-Agent": "Zozi-CountryDetection"})
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                data = json.loads(resp.read().decode())
-                return data.get("country_code") or data.get("country")
-        except Exception as exc:
-            logger.debug("ipapi.co lookup failed for %s: %s", ip, exc)
-        return None
+        return lookup_ipapi_co(ip)
 
     def _default_country(self) -> str:
         if self.db:

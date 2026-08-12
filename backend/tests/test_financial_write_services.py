@@ -14,7 +14,7 @@ import pytest
 import services.finance.commission_write_service as commission
 import services.gateways.payments_write_service as payments
 import services.finance.invoice_write_service as invoice
-from data.models import (
+from models import (
     CommissionAgreement,
     CommissionBadgeTier,
     CommissionCategoryRate,

@@ -647,3 +647,9 @@ def list_templates(db: Session, country_code: str = None) -> list[ImportCostTemp
     if country_code:
         q = q.filter(ImportCostTemplate.country_code == country_code)
     return q.order_by(ImportCostTemplate.name).all()
+
+
+def get_import_shipment(db: Session, shipment_id: int) -> ImportShipment | None:
+    """Fetch a single import shipment by id (extracted from the admin logistics
+    imports router so it stays a thin HTTP layer)."""
+    return db.query(ImportShipment).filter(ImportShipment.id == shipment_id).first()

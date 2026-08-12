@@ -8,10 +8,9 @@ import re
 import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote
 
-import httpx
-
+from providers.ai.text import ollama_chat_json
+from providers.ai.web_search import duckduckgo_search
 from utils.config import settings
 
 logger = logging.getLogger(__name__)
@@ -367,60 +366,27 @@ class CountryAIResearchService:
             return evidence
 
         year = datetime.now().year
-        timeout = httpx.Timeout(30.0, connect=10.0)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-            for module, template in DDG_QUERIES:
-                query_text = template.replace("{country}", self.country_name).replace("{year}", str(year))
-                evidence.setdefault(module, [])
-                try:
-                    response = await client.get(
-                        "https://duckduckgo.com/html/",
-                        params={"q": query_text},
-                        headers={"User-Agent": "Mozilla/5.0 (compatible; ZoziCountryAI/1.0)"},
-                    )
-                    if response.status_code == 200:
-                        evidence[module].append(
-                            {
-                                "query": query_text,
-                                "title": f"Web search: {query_text}",
-                                "href": f"https://duckduckgo.com/?q={quote(query_text)}",
-                                "snippet": (response.text or "")[:500],
-                                "source": "DuckDuckGo",
-                            }
-                        )
-                except Exception as exc:
-                    logger.warning("Web evidence fetch failed for %s: %s", module, exc)
-                await asyncio_sleep(1.2)
+        for module, template in DDG_QUERIES:
+            query_text = template.replace("{country}", self.country_name).replace("{year}", str(year))
+            evidence.setdefault(module, [])
+            results = duckduckgo_search(query_text)
+            if results:
+                evidence[module].extend(results)
+            await asyncio_sleep(1.2)
         return evidence
 
     async def _generate_ai_modules(self, evidence: Dict[str, List[Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
         model = getattr(settings, "country_ai_ollama_model", "llama3.1")
         base_url = getattr(settings, "ollama_base_url", "http://localhost:11434")
-        ai_url = f"{base_url}/api/chat"
-        payload = self._build_ai_payload(evidence)
+        prompt = self._build_ai_payload(evidence)["prompt"]
 
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(900.0)) as client:
-                response = await client.post(
-                    ai_url,
-                    json={
-                        "model": model,
-                        "messages": [{"role": "user", "content": payload["prompt"]}],
-                        "stream": False,
-                        "format": "json",
-                        "options": {"temperature": 0.2, "num_ctx": 8192},
-                    },
-                )
-                response.raise_for_status()
-                data = response.json()
-                if data.get("error"):
-                    raise RuntimeError(data["error"])
-                content = data.get("message", {}).get("content", "")
-                parsed = self._parse_json_text(content)
-                if parsed is None:
-                    raise RuntimeError("Ollama returned invalid JSON.")
-                self.ai_backend = f"ollama:{model}"
-                return parsed
+            parsed = ollama_chat_json(
+                prompt, model, base_url,
+                timeout=900.0, temperature=0.2, num_ctx=8192,
+            )
+            self.ai_backend = f"ollama:{model}"
+            return parsed
         except Exception as exc:
             logger.warning("AI module generation failed: %s", exc)
             self.ai_backend = "none"

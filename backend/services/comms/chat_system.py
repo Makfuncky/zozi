@@ -558,3 +558,13 @@ class ChatSystem:
 
 def get_chat_system(db: Session) -> ChatSystem:
     return ChatSystem(db)
+
+
+def get_chat_metrics(db: Session) -> dict:
+    """Aggregate chat counts across all countries (admin metrics)."""
+    from models.core import EntityChatThread, EntityChatMessage
+    from sqlalchemy import func
+
+    total_threads = db.query(func.count(EntityChatThread.id)).scalar() or 0
+    total_messages = db.query(func.count(EntityChatMessage.id)).scalar() or 0
+    return {"total_threads": total_threads, "total_messages": total_messages}

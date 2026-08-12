@@ -22,11 +22,11 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,

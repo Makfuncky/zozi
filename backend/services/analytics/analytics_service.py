@@ -9,7 +9,7 @@ from typing import Any, cast
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     AdminAnalyticsSnapshot,
     ChatbotQueryEvent,
     Order,

@@ -11,8 +11,8 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from data.models import Coupon, Order, OrderItem, Payment, Product, Notification
-from data.events import (
+from models import Coupon, Order, OrderItem, Payment, Product, Notification
+from events import (
     PaymentConfirmedEvent,
     PaymentFailedEvent,
     PaymentRefundedEvent,
@@ -23,6 +23,8 @@ from utils.config import settings
 from utils.cache import bump_product_cache_version as _bump_product_cache_version
 
 from providers.payments._common import *
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +185,7 @@ def _finalize_inventory_for_paid_order(order: Order, db: Session) -> list[str]:
         if supplier_id is not None:
             supplier_notifs.setdefault(supplier_id, []).append(product_name)
             if new_stock <= LOW_STOCK_THRESHOLD:
-                db.add(
+                pp.add(db, 
                     Notification(
                         user_id=supplier_id,
                         type="low_stock",
@@ -197,7 +199,7 @@ def _finalize_inventory_for_paid_order(order: Order, db: Session) -> list[str]:
         names_str = ", ".join(product_names[:3])
         if len(product_names) > 3:
             names_str += f" +{len(product_names) - 3} more"
-        db.add(
+        pp.add(db, 
             Notification(
                 user_id=supplier_id,
                 type="order_update",
@@ -289,7 +291,7 @@ def _confirm_order(
 
     if inventory_issues:
         setattr(order, "status", "failed")
-        db.add(
+        pp.add(db, 
             Notification(
                 user_id=order.user_id,
                 type="order_update",
@@ -312,7 +314,7 @@ def _confirm_order(
     _mark_coupon_as_used(order, db)
     _increment_sales_counts(order, db)
 
-    db.add(
+    pp.add(db, 
         Notification(
             user_id=order.user_id,
             type="order_update",

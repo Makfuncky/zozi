@@ -16,7 +16,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session, selectinload
 
-from data.models import (
+from models import (
     Address,
     AuditLog,
     BadgeBillingRecord,

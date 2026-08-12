@@ -11,7 +11,7 @@ logger = structlog.get_logger(__name__)
 
 def resolve_country_from_ip(ip_address: str) -> Optional[str]:
     from db.database import get_db_context
-    from data.services_country_detection import CountryDetectionService
+    from services.geography.country_detection import CountryDetectionService
 
     with get_db_context() as db:
         service = CountryDetectionService(db)
@@ -21,7 +21,7 @@ def resolve_country_from_ip(ip_address: str) -> Optional[str]:
 
 def get_country_details(country_code: Optional[str]) -> dict:
     from db.database import get_db_context
-    from data.models import CountryConfig
+    from models import CountryConfig
 
     with get_db_context() as db:
         country = (
@@ -41,7 +41,7 @@ def get_country_details(country_code: Optional[str]) -> dict:
 
 def list_geo_countries(skip: int, limit: int) -> list:
     from db.database import get_db_context
-    from data.models import CountryConfig
+    from models import CountryConfig
 
     with get_db_context() as db:
         countries = (

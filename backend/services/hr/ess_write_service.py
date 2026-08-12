@@ -11,8 +11,8 @@ from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from data.models_employee_models import Employee
-from data.services_employee_activity_logger import log_activity
+from models.employee_models import Employee
+from services.hr.employee_activity_logger import log_activity
 import structlog
 logger = structlog.get_logger(__name__)
 

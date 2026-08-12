@@ -16,7 +16,7 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.schemas import (
+from db.schemas import (
     CartItemCreate,
     CartItemIn,
     CartItemViewOut,

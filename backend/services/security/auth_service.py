@@ -39,7 +39,7 @@ from utils.auth import (
 )
 from db.database import SessionLocal
 from models import User, UserDevice
-from db.employee_models import (
+from models import (
     Employee,
     EmployeeBiometric,
     DynamicQRSession,
@@ -139,7 +139,7 @@ def _log_activity(
 ) -> None:
     """Append-only activity log entry."""
     try:
-        from db.employee_models import EmployeeActivityLog
+        from models import EmployeeActivityLog
 
         log_entry = EmployeeActivityLog(
             actor_employee_id=actor_employee_id,

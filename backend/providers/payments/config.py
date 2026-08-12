@@ -22,11 +22,11 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
@@ -42,6 +42,8 @@ from providers.payments.base import (
     OPERATION_CONFIRM,
     OPERATION_WEBHOOK,
 )
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -536,12 +538,12 @@ def update_payment_provider_runtime_config(
     record = _get_payment_provider_config_record(db)
     if record is None:
         record = PaymentProviderConfig(updated_by=current_user.get("id"))
-        db.add(record)
+        pp.add(db, record)
 
     setattr(record, "online_provider", payload.online_provider)
     setattr(record, "updated_by", current_user.get("id"))
-    db.commit()
-    db.refresh(record)
+    pp.commit(db)
+    pp.refresh(db, record)
     return _payment_provider_runtime_status(db)
 
 
@@ -920,7 +922,7 @@ def upsert_payment_gateway_connection(
             mode=payload.mode or "test",
             test_status="untested",
         )
-        db.add(record)
+        pp.add(db, record)
 
     setattr(record, "gateway_name", payload.display_name or normalized_code)
     setattr(record, "country_code", country_code)
@@ -949,8 +951,8 @@ def upsert_payment_gateway_connection(
     setattr(record, "pass_fee_to_customer", payload.pass_fee_to_customer)
     setattr(record, "settlement_cycle", payload.settlement_cycle)
     setattr(record, "updated_by", current_user.get("id"))
-    db.commit()
-    db.refresh(record)
+    pp.commit(db)
+    pp.refresh(db, record)
     return _serialize_gateway_connection(normalized_code, db, record)
 
 
@@ -968,8 +970,8 @@ def test_payment_gateway_connection(provider_code: str, db: Session) -> PaymentG
             mode="test",
             test_status="untested",
         )
-        db.add(record)
-        db.flush()
+        pp.add(db, record)
+        pp.flush(db)
     if record is None:
         raise HTTPException(status_code=404, detail="Gateway not found")
 
@@ -1042,7 +1044,7 @@ def test_payment_gateway_connection(provider_code: str, db: Session) -> PaymentG
     setattr(record, "test_status", status)
     setattr(record, "test_message", message)
     setattr(record, "last_tested_at", tested_at.replace(tzinfo=None))
-    db.commit()
+    pp.commit(db)
 
     if status != "passed":
         raise HTTPException(status_code=400, detail=message)

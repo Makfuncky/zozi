@@ -4,11 +4,16 @@ import json
 import re
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Any, Literal, Protocol, cast
+from typing import Any, Literal, Protocol
 from uuid import uuid4
 
-import stripe
-import requests
+from providers.finance import bank_api
+from providers.payments.connect import (
+    configure_stripe_connect,
+    create_connect_account,
+    create_connect_transfer,
+    modify_connect_account,
+)
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -607,41 +612,16 @@ def test_configured_bank_api_connection(db: Session) -> dict[str, Any]:
             "missing_requirements": missing_requirements,
         }
 
-    headers = {"Authorization": f"Bearer {settings.bank_api_auth_token}"}
-
-    try:
-        response = requests.request(
-            "OPTIONS",
-            cast(str, endpoint),
-            headers=headers,
-            timeout=settings.bank_api_timeout_seconds,
-        )
-    except requests.RequestException as exc:
-        return {
-            "provider": ConfiguredBankApiTransferProvider.key,
-            "endpoint": endpoint,
-            "ok": False,
-            "reachable": False,
-            "status_code": None,
-            "detail": f"Bank API endpoint could not be reached: {exc}",
-            "missing_requirements": [],
-        }
-
-    reachable = True
-    ok = response.status_code in {200, 201, 202, 204, 401, 403, 404, 405}
-    detail = (
-        f"Bank API endpoint responded with HTTP {response.status_code}."
-        if ok
-        else f"Bank API endpoint responded with HTTP {response.status_code}; investigate before live dispatch."
+    conn = bank_api.test_connection(
+        settings.bank_api_base_url,
+        settings.bank_api_batch_path,
+        settings.bank_api_auth_token,
+        settings.bank_api_timeout_seconds,
     )
-
     return {
         "provider": ConfiguredBankApiTransferProvider.key,
         "endpoint": endpoint,
-        "ok": ok,
-        "reachable": reachable,
-        "status_code": response.status_code,
-        "detail": detail,
+        **conn,
         "missing_requirements": [],
     }
 
@@ -804,7 +784,6 @@ class ConfiguredBankApiTransferProvider:
                 "preview": [],
             }
 
-        endpoint = f"{settings.bank_api_base_url.rstrip('/')}/{settings.bank_api_batch_path.lstrip('/')}"
         payload = {
             "batch_reference": manifest["batch_reference"],
             "source_account": manifest["source_account"],
@@ -815,28 +794,21 @@ class ConfiguredBankApiTransferProvider:
                 "currency": manifest["source_account"]["currency"],
             },
         }
-        headers = {
-            "Authorization": f"Bearer {settings.bank_api_auth_token}",
-            "Content-Type": "application/json",
-            "Idempotency-Key": manifest["batch_reference"],
-        }
 
         try:
-            response = requests.post(
-                endpoint,
-                json=payload,
-                headers=headers,
-                timeout=settings.bank_api_timeout_seconds,
+            conn = bank_api.dispatch_batch(
+                settings.bank_api_base_url,
+                settings.bank_api_batch_path,
+                settings.bank_api_auth_token,
+                manifest["batch_reference"],
+                payload,
+                settings.bank_api_timeout_seconds,
             )
-            response.raise_for_status()
-        except requests.RequestException as exc:
+        except bank_api.BankApiError as exc:
             raise HTTPException(status_code=502, detail=f"Bank API dispatch failed: {exc}") from exc
 
-        response_body: dict[str, Any]
-        try:
-            response_body = response.json() if response.content else {}
-        except ValueError:
-            response_body = {}
+        response_body: dict[str, Any] = conn["body"]
+        response_status_code = conn["status_code"]
 
         provider_batch_id = response_body.get("batch_id") or response_body.get("id") or manifest["batch_reference"]
         provider_status = response_body.get("status") or "submitted"
@@ -855,7 +827,7 @@ class ConfiguredBankApiTransferProvider:
             "submitted": True,
             "provider_batch_id": provider_batch_id,
             "provider_status": provider_status,
-            "provider_http_status": response.status_code,
+            "provider_http_status": response_status_code,
             "preview": [],
         }
 
@@ -906,9 +878,7 @@ class StripeConnectTransferProvider:
         if not settings.stripe_secret_key or not settings.stripe_secret_key.strip():
             raise HTTPException(status_code=503, detail="STRIPE_SECRET_KEY must be configured for Stripe Connect payout dispatch.")
 
-        stripe.api_key = settings.stripe_secret_key.strip()
-        if hasattr(settings, "stripe_api_version") and settings.stripe_api_version:
-            stripe.api_version = settings.stripe_api_version
+        configure_stripe_connect(settings.stripe_secret_key, getattr(settings, "stripe_api_version", None))
 
         # Fetch processing payouts that haven't been dispatched yet
         payouts = (
@@ -993,11 +963,11 @@ class StripeConnectTransferProvider:
                     }
                     if business_url:
                         create_kwargs["business_profile"] = {"url": business_url}
-                    acct = stripe.Account.create(**create_kwargs)
+                    acct = create_connect_account(**create_kwargs)
                     connect_account_id = acct.id
 
                     # Activate transfers capability
-                    stripe.Account.modify(
+                    modify_connect_account(
                         connect_account_id,
                         capabilities={"transfers": {"requested": True}},
                     )
@@ -1013,7 +983,7 @@ class StripeConnectTransferProvider:
 
                 currency = (bank.currency or "usd").lower()
                 amount_cents = int(round(float(payout.amount) * 100))
-                transfer = stripe.Transfer.create(
+                transfer = create_connect_transfer(
                     amount=amount_cents,
                     currency=currency,
                     destination=connect_account_id,

@@ -24,17 +24,19 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +94,7 @@ async def create_paytabs_charge(body: PayTabsChargeRequest, current_user: dict, 
         tran_ref = _paytabs_transaction_reference(data)
         if tran_ref:
             setattr(order, "payment_intent_id", tran_ref)
-            db.commit()
+            pp.commit(db)
 
         return {
             "transaction_reference": tran_ref or None,
@@ -181,8 +183,8 @@ async def handle_paytabs_callback(request: Request, db: Session) -> dict:
         return {"status": "ok"}
 
     _finalize_paytabs_transaction(order, queried, db)
-    db.add(ProcessedWebhookEvent(event_id=paytabs_event_id, processor=PAYTABS_PAYMENT_METHOD))
-    db.commit()
+    pp.add(db, ProcessedWebhookEvent(event_id=paytabs_event_id, processor=PAYTABS_PAYMENT_METHOD))
+    pp.commit(db)
     logger.info("paytabs_callback: tran_ref=%s order=%s status=%s", _paytabs_transaction_reference(queried) or tran_ref, order.id, response_status)
     return {"status": "ok"}
 
@@ -221,7 +223,7 @@ def _finalize_paytabs_transaction(order: Order, payload: dict[str, Any], db: Ses
     if response_status in PAYTABS_SUCCESS_RESPONSE_STATUSES:
         if order.status not in INVENTORY_RELEASE_STATUSES and order.paid_at is None:
             _apply_successful_payment(order, f"Order #{order.id} payment via PayTabs was successful.", db)
-            db.commit()
+            pp.commit(db)
 
         return {
             "status": "confirmed",
@@ -235,7 +237,7 @@ def _finalize_paytabs_transaction(order: Order, payload: dict[str, Any], db: Ses
     if response_status in PAYTABS_FAILURE_RESPONSE_STATUSES:
         if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
             setattr(order, "status", "failed")
-            db.add(
+            pp.add(db, 
                 Notification(
                     user_id=order.user_id,
                     type="order_update",
@@ -244,7 +246,7 @@ def _finalize_paytabs_transaction(order: Order, payload: dict[str, Any], db: Ses
                     link=f"/orders/{order.id}",
                 )
             )
-            db.commit()
+            pp.commit(db)
             try:
                 event = PaymentFailedEvent.create(
                     order_id=order.id,

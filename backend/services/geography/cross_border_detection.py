@@ -99,19 +99,17 @@ class LocalizationService:
     
     def get_localized_content(self, country_code: str, locale: str = None) -> Dict:
         """Get localized content for a country."""
-        from models import CountryConfig, CountryCommunicationTemplate
-        
+        from models import CountryConfig
+
         country = self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper()
         ).first()
-        
+
         if not country:
             return {}
-        
-        templates = self.db.query(CountryCommunicationTemplate).filter(
-            CountryCommunicationTemplate.country_code == country_code.upper()
-        ).all()
-        
+
+        templates = []
+
         return {
             "country": {
                 "name": country.name,

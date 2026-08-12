@@ -7,10 +7,10 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List
 
 from sqlalchemy import text
-
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-
+from providers.automation.scheduler import IntervalTrigger
+
+
+from providers.automation.scheduler import create_scheduler
 from db.database import get_service_session
 from models import (
     CountryConfig,
@@ -30,7 +30,7 @@ from utils.redis_client import redis_client
 
 logger = logging.getLogger(__name__)
 
-scheduler = AsyncIOScheduler(timezone="UTC")
+scheduler = create_scheduler()
 
 
 class CommandCenterCacheJob:

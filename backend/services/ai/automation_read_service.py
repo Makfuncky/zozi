@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Accrual,
     AutomationLog,
     AutomationRule,

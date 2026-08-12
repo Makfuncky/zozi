@@ -12,6 +12,7 @@ from .payments import *
 from .suppliers import *
 from .logistics import *
 from .marketing import *
+from .promotions import *
 from .communication import *
 from .countries import *
 from .finance import *
@@ -22,6 +23,7 @@ from .core import *
 from .country_enhancements import *
 from .country_control import *
 from .employee_models import *
+from .employee_models import EmployeeRiskScore, PayrollRecord
 from .media_models import *
 from .mixins import *
 from .onboarding import *
@@ -61,7 +63,7 @@ __all__ = [
     "CommissionBadgeTier", "CommissionCategoryRate", "CommissionGlobalConfig",
     "TicketReply", "CouponUsage", "PaymentProviderConfig",
     "EmailProviderConfig", "ShippingCarrier", "ShippingZone", "FinanceBankAccount",
-    "PromotionEngineConfig", "PromotionLedgerEntry", "PromotionOrderTier",
+    "PromotionEngineConfig", "PromotionLedgerEntry", "PromotionOrderTier", "BOGOPromotion",
     "LogisticsCODRemittanceReceipt", "LogisticsPartnerBankAccount",
     "LogisticsPartnerDocument", "LogisticsSettlement", "ShipmentConfirmation",
     "ChatbotQueryEvent", "PushNotificationToken",
@@ -93,6 +95,7 @@ __all__ = [
     "FraudScoringLog", "FraudCase", "FraudCaseAssignment",
     "DLPViolation",
     "EmployeeCommunicationThread", "ExternalContactMasking", "InternalChannel", "InternalChannelMember", "InternalMessage", "CommunicationAuditTrail",
+    "EmployeeRiskScore", "PayrollRecord",
     "OnboardingPipeline", "OnboardingStep", "DocumentVerification", "OCRResult", "KYCVerification",
     "IncidentWarRoom", "IncidentThread", "IncidentActionItem", "WarRoomTemplate",
     "RetentionJobRun",

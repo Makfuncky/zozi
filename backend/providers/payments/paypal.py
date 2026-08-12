@@ -22,17 +22,19 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
+from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
+
+from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +109,7 @@ async def create_paypal_order(body: PayPalOrderRequest, current_user: dict, db: 
         )
         if paypal_order_id:
             setattr(order, "payment_intent_id", paypal_order_id)
-            db.commit()
+            pp.commit(db)
 
         return {
             "paypal_order_id": paypal_order_id,
@@ -164,7 +166,7 @@ async def capture_paypal_order(body: PayPalCaptureRequest, current_user: dict, d
             )
             if capture_id:
                 setattr(order, "payment_intent_id", capture_id)
-            db.commit()
+            pp.commit(db)
 
             return {
                 "status": "confirmed",
@@ -178,7 +180,7 @@ async def capture_paypal_order(body: PayPalCaptureRequest, current_user: dict, d
         if capture_status in ("VOIDED", "DECLINED"):
             if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
                 setattr(order, "status", "failed")
-                db.add(
+                pp.add(db, 
                     Notification(
                         user_id=order.user_id,
                         type="order_update",
@@ -187,7 +189,7 @@ async def capture_paypal_order(body: PayPalCaptureRequest, current_user: dict, d
                         link=f"/orders/{order.id}",
                     )
                 )
-                db.commit()
+                pp.commit(db)
                 try:
                     event = PaymentFailedEvent.create(
                         order_id=order.id,
@@ -296,7 +298,7 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
                     f"Order #{order.id} PayPal webhook: payment captured.",
                     db,
                 )
-                db.commit()
+                pp.commit(db)
 
     elif event_type in ("PAYMENT.CAPTURE.DENIED", "PAYMENT.CAPTURE.DECLINED"):
         custom_id = str(resource.get("custom_id") or "").strip()
@@ -304,7 +306,7 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
             order = db.query(Order).filter(Order.id == int(custom_id)).first()
             if order and order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
                 setattr(order, "status", "failed")
-                db.add(
+                pp.add(db, 
                     Notification(
                         user_id=order.user_id,
                         type="order_update",
@@ -313,7 +315,7 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
                         link=f"/orders/{order.id}",
                     )
                 )
-                db.commit()
+                pp.commit(db)
                 try:
                     event = PaymentFailedEvent.create(
                         order_id=order.id,
@@ -347,7 +349,7 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
                     "transaction_date": datetime.now(timezone.utc).replace(tzinfo=None),
                 },
             )
-            db.add(
+            pp.add(db, 
                 Notification(
                     user_id=order.user_id,
                     type="order_update",
@@ -356,14 +358,14 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
                     link=f"/orders/{order.id}",
                 )
             )
-            db.commit()
+            pp.commit(db)
 
     else:
         logger.debug("Unhandled PayPal webhook event: %s", event_type)
 
     if event_id:
-        db.add(ProcessedWebhookEvent(event_id=event_id, processor="paypal"))
-        db.commit()
+        pp.add(db, ProcessedWebhookEvent(event_id=event_id, processor="paypal"))
+        pp.commit(db)
 
     return {"status": "ok"}
 

@@ -23,18 +23,18 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
-from data.events import PaymentConfirmedEvent
+from events import PaymentConfirmedEvent
 from utils.config import settings
 from utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
-from data.events import EventPublisher, _event_publisher
+from events import EventPublisher, _event_publisher
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -8,14 +8,26 @@ Test file: backend/tests/_test_provider/test_ocr.py
 """
 import io
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 
 import numpy as np
 from PIL import Image
 
-from .config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+try:
+    import pytesseract  # noqa: F401
+    _OCR_AVAILABLE = True
+except ImportError:
+    pytesseract = None  # type: ignore
+    _OCR_AVAILABLE = False
+
+
+def ocr_available() -> bool:
+    """Return True when the pytesseract SDK is importable."""
+    return _OCR_AVAILABLE
 
 
 def _image_to_bytes(img: Image.Image, format: str = "PNG") -> bytes:
@@ -66,6 +78,23 @@ def _ocr_read(image_array: np.ndarray) -> str:
     except Exception as exc:
         logger.error("OCR failed: %s", exc)
         return ""
+
+
+def ocr_image_array(image_array: np.ndarray) -> Optional[Tuple[str, str]]:
+    """Run pytesseract on a preprocessed cv2/numpy image array.
+
+    Args:
+        image_array: A grayscale/preprocessed ``numpy.ndarray`` (cv2 image).
+
+    Returns:
+        A ``(text, data)`` tuple from ``image_to_string`` and ``image_to_data``,
+        or ``None`` when pytesseract is unavailable.
+    """
+    if not _OCR_AVAILABLE:
+        return None
+    text = pytesseract.image_to_string(image_array)
+    data = pytesseract.image_to_data(image_array, output_boxes=True)
+    return text, data
 
 
 def parse_bill_text(image_bytes: bytes) -> Dict[str, Any]:

@@ -4,20 +4,14 @@ Cross-Border Customer Detection & Localization Service.
 Handles IP detection, geo-detection, currency/tax swapping, and localization.
 """
 from typing import Optional, Dict, Any
-import ipaddress
 import logging
 import json
 
-import httpx
-
 from db.database import get_db_context
 from models import CountryConfig
+from providers.geography.ip import detect_country_from_ip
 
 logger = logging.getLogger(__name__)
-
-IPAPI_BASE_URL = "http://ip-api.com/json/"
-IPICO_BASE_URL = "https://ipapi.co/{}/json/"
-REQUEST_TIMEOUT = 5.0
 
 
 class GeoDetectionService:
@@ -25,44 +19,8 @@ class GeoDetectionService:
     
     @staticmethod
     def detect_country_from_ip(ip_address: str) -> Optional[str]:
-        """Detect country code from IP address using IP-API service."""
-        if not ip_address:
-            return None
-        try:
-            ip_obj = ipaddress.ip_address(ip_address)
-            if ip_obj.is_private:
-                return None
-        except ValueError:
-            return None
-        if ip_address.startswith("127."):
-            return None
-        
-        try:
-            response = httpx.get(
-                f"{IPAPI_BASE_URL}{ip_address}",
-                params={"fields": "countryCode,country,city,region,query"},
-                timeout=REQUEST_TIMEOUT
-            )
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("status") == "success" and data.get("countryCode"):
-                    return data["countryCode"].upper()
-        except Exception as e:
-            logger.warning(f"IP-API lookup failed for {ip_address}: {e}")
-        
-        try:
-            response = httpx.get(
-                IPICO_BASE_URL.format(ip_address),
-                timeout=REQUEST_TIMEOUT
-            )
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("country_code"):
-                    return data["country_code"].upper()
-        except Exception as e:
-            logger.warning(f"ipapi.co lookup failed for {ip_address}: {e}")
-        
-        return None
+        """Detect country code from IP address using IP geolocation providers."""
+        return detect_country_from_ip(ip_address)
 
 
 class LocalizationService:

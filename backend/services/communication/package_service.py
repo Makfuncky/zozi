@@ -7,11 +7,10 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
 from models import Employee, Notification, PushNotificationToken
 from services.hr.attendance_service import AttendanceService
 from services.finance.expense_processing import ExpenseProcessingService
@@ -21,7 +20,7 @@ from utils.constants import NOTIFICATIONS_PAGE_LIMIT
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+
 
 
 # ── Pydantic Models ──────────────────────────────────────────────────────────
@@ -160,12 +159,11 @@ def unregister_push_token(token: str, current_user: dict, db: Session) -> dict:
 # ── Mobile Endpoints ─────────────────────────────────────────────────────────
 
 
-@router.post("/mobile/biometric-login")
 def biometric_login(
     request: BiometricLoginRequest,
     current_user: dict,
-    db: Session = Depends(get_db),
-):
+    db: Session,
+) -> dict:
     service = MobileAuthService(db)
     return service.validate_biometric(
         current_user.get("id"),
@@ -174,12 +172,11 @@ def biometric_login(
     )
 
 
-@router.post("/mobile/check-in")
 def mobile_check_in(
     request: CheckInRequest,
     current_user: dict,
-    db: Session = Depends(get_db),
-):
+    db: Session,
+) -> dict:
     service = MobileAuthService(db)
     return service.geo_fenced_check_in(
         current_user.get("id"),
@@ -189,11 +186,10 @@ def mobile_check_in(
     )
 
 
-@router.get("/mobile/leave-balance")
 def get_leave_balance(
     current_user: dict,
-    db: Session = Depends(get_db),
-):
+    db: Session,
+) -> dict:
     engine = LeaveAccrualEngine(db)
     employee = db.query(Employee).filter(Employee.user_id == current_user.get("id")).first()
     if not employee:
@@ -201,12 +197,11 @@ def get_leave_balance(
     return engine.get_balance(employee.id)
 
 
-@router.post("/mobile/expenses")
 def submit_expense(
     request: ExpenseSubmitRequest,
     current_user: dict,
-    db: Session = Depends(get_db),
-):
+    db: Session,
+) -> dict:
     service = ExpenseProcessingService(db)
     employee = db.query(Employee).filter(Employee.user_id == current_user.get("id")).first()
     if not employee:

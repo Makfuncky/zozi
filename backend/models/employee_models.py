@@ -18,7 +18,7 @@ __all__ = [
     "EmployeeAddress", "EmployeeDependent", "EmployeeAsset",
     "EmployeeCertification", "EmployeeDocument", "EmployeeRelation",
     "COIReport", "TravelRequest", "AlumniNetwork", "DisciplinaryCase", "OffboardingCase",
-    "OrgUnit"
+    "OrgUnit", "EmployeeActivityLog"
 ]
 
 
@@ -514,3 +514,25 @@ class EmployeeTraining(Base):
     score = Column(Float, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
+
+
+class EmployeeActivityLog(Base):
+    """Append-only audit trail of privileged/administrative employee actions.
+
+    Written by ``services.security.auth_service._log_activity`` so security-relevant
+    actions (logins, approvals, RLS context changes) are recorded even when the
+    surrounding transaction rolls back.
+    """
+    __tablename__ = "employee_activity_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    actor_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
+    action = Column(String(100), nullable=False, index=True)
+    entity_type = Column(String(100), nullable=True)
+    entity_id = Column(Integer, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    device_fingerprint = Column(String(255), nullable=True)
+    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+    employee = relationship("Employee", foreign_keys=[actor_employee_id])

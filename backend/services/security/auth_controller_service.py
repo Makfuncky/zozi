@@ -14,7 +14,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, cast
 from urllib.parse import urlencode
 
-import requests
+from providers.auth import oauth
+
 from fastapi import Depends, HTTPException, Request, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -734,13 +735,7 @@ def _frontend_social_callback(token: str | None = None, error: str | None = None
 
 
 def _resolve_google_identity_token(id_token: str) -> dict[str, Any]:
-    response = requests.get(
-        "https://oauth2.googleapis.com/tokeninfo",
-        params={"id_token": id_token},
-        timeout=15,
-    )
-    response.raise_for_status()
-    payload = response.json()
+    payload = oauth.verify_google_id_token(id_token)
 
     audience = payload.get("aud")
     issuer = payload.get("iss")
@@ -759,19 +754,12 @@ def get_google_oauth_start() -> RedirectResponse:
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=503, detail="Google login is not configured")
     state = secrets.token_urlsafe(24)
-    params = urlencode({
-        "client_id": settings.google_client_id,
-        "redirect_uri": f"{settings.backend_url}/auth/oauth/google/callback",
-        "response_type": "code",
-        "scope": "openid email profile",
-        "state": state,
-        "prompt": "select_account",
-    })
-    return _build_social_redirect_response(
-        "google",
-        f"https://accounts.google.com/o/oauth2/v2/auth?{params}",
-        state,
+    auth_url = oauth.build_google_authorization_url(
+        client_id=settings.google_client_id,
+        redirect_uri=f"{settings.backend_url}/auth/oauth/google/callback",
+        state=state,
     )
+    return _build_social_redirect_response("google", auth_url, state)
 
 
 def handle_google_id_token_login(
@@ -787,7 +775,7 @@ def handle_google_id_token_login(
 
     try:
         profile = _resolve_google_identity_token(payload.token.strip())
-    except requests.RequestException as exc:
+    except oauth.OAuthProviderError as exc:
         logger.error("Google ID token verification failed: %s", exc)
         raise HTTPException(status_code=502, detail="Google login verification failed") from exc
 
@@ -806,27 +794,13 @@ def handle_google_oauth_callback(code: str, state: str | None, request: Request,
 
     try:
         _validate_social_state(request, "google", state)
-        token_resp = requests.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": code,
-                "client_id": settings.google_client_id,
-                "client_secret": settings.google_client_secret,
-                "redirect_uri": f"{settings.backend_url}/auth/oauth/google/callback",
-                "grant_type": "authorization_code",
-            },
-            timeout=15,
+        token_data = oauth.exchange_google_code(
+            code,
+            f"{settings.backend_url}/auth/oauth/google/callback",
+            settings.google_client_id,
+            settings.google_client_secret,
         )
-        token_resp.raise_for_status()
-        token_data = token_resp.json()
-
-        userinfo_resp = requests.get(
-            "https://openidconnect.googleapis.com/v1/userinfo",
-            headers={"Authorization": f"Bearer {token_data['access_token']}"},
-            timeout=15,
-        )
-        userinfo_resp.raise_for_status()
-        profile = userinfo_resp.json()
+        profile = oauth.get_google_userinfo(token_data["access_token"])
         email = profile.get("email")
         if not email:
             return _frontend_social_callback(error="google_email_required")
@@ -857,18 +831,12 @@ def get_facebook_oauth_start() -> RedirectResponse:
     if not settings.facebook_client_id or not settings.facebook_client_secret:
         raise HTTPException(status_code=503, detail="Facebook login is not configured")
     state = secrets.token_urlsafe(24)
-    params = urlencode({
-        "client_id": settings.facebook_client_id,
-        "redirect_uri": f"{settings.backend_url}/auth/oauth/facebook/callback",
-        "state": state,
-        "scope": "email,public_profile",
-        "response_type": "code",
-    })
-    return _build_social_redirect_response(
-        "facebook",
-        f"https://www.facebook.com/v20.0/dialog/oauth?{params}",
-        state,
+    auth_url = oauth.build_facebook_authorization_url(
+        client_id=settings.facebook_client_id,
+        redirect_uri=f"{settings.backend_url}/auth/oauth/facebook/callback",
+        state=state,
     )
+    return _build_social_redirect_response("facebook", auth_url, state)
 
 
 def handle_facebook_oauth_callback(code: str, state: str | None, request: Request, db: Session) -> RedirectResponse:
@@ -877,29 +845,13 @@ def handle_facebook_oauth_callback(code: str, state: str | None, request: Reques
 
     try:
         _validate_social_state(request, "facebook", state)
-        token_resp = requests.get(
-            "https://graph.facebook.com/v20.0/oauth/access_token",
-            params={
-                "client_id": settings.facebook_client_id,
-                "client_secret": settings.facebook_client_secret,
-                "redirect_uri": f"{settings.backend_url}/auth/oauth/facebook/callback",
-                "code": code,
-            },
-            timeout=15,
+        token_data = oauth.exchange_facebook_code(
+            code,
+            f"{settings.backend_url}/auth/oauth/facebook/callback",
+            settings.facebook_client_id,
+            settings.facebook_client_secret,
         )
-        token_resp.raise_for_status()
-        token_data = token_resp.json()
-
-        profile_resp = requests.get(
-            "https://graph.facebook.com/me",
-            params={
-                "fields": "id,name,email,picture.width(400).height(400)",
-                "access_token": token_data["access_token"],
-            },
-            timeout=15,
-        )
-        profile_resp.raise_for_status()
-        profile = profile_resp.json()
+        profile = oauth.get_facebook_profile(token_data["access_token"])
         email = profile.get("email")
         if not email:
             return _frontend_social_callback(error="facebook_email_required")

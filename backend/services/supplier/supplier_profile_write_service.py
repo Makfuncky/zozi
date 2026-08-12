@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import SupplierProfile, User
+from models import SupplierProfile, User
 from utils.slug import generate_slug
 import structlog
 logger = structlog.get_logger(__name__)
@@ -28,6 +28,13 @@ def get_supplier_profile(current_user: User, db: Session) -> SupplierProfile:
 
 
 def create_supplier_profile(current_user: User, payload, db: Session) -> SupplierProfile:
+    existing = (
+        db.query(SupplierProfile)
+        .filter(SupplierProfile.user_id == current_user.id)
+        .first()
+    )
+    if existing is not None:
+        raise HTTPException(status_code=400, detail="Profile already exists")
     profile = SupplierProfile(
         user_id=current_user.id,
         slug=generate_slug(payload.business_name),

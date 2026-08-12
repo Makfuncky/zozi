@@ -18,7 +18,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import Account, AccountGroup, RecurringTemplate
+from models import Account, AccountGroup, RecurringTemplate
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -20,12 +20,12 @@ from models import (
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
 from services.finance import general_ledger_service as gl
-from providers.finance_ai import (
+from providers.ai.finance_ai import (
     suggest_reconciliation_match,
     parse_email_to_ledger,
     extract_bill_fields,
 )
-from providers.ocr import parse_bill_text
+from providers.image.ocr import parse_bill_text
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

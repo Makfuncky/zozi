@@ -16,7 +16,7 @@ from typing import Any
 
 from sqlalchemy import func
 
-from data.models import AdminAnalyticsSnapshot, Order, OrderItem, Product, User
+from models import AdminAnalyticsSnapshot, Order, OrderItem, Product, User
 import structlog
 logger = structlog.get_logger(__name__)
 

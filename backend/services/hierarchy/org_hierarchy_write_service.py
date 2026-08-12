@@ -16,7 +16,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import OrgUnit
+from models import OrgUnit
 from services.hierarchy.hierarchy_service import (
     assign_matrix_manager,
     backfill_authority_levels,

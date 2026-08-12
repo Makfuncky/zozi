@@ -67,21 +67,21 @@ def _soft_delete_by_product(db: Session, model, product_id: int) -> int:
 
 def clear_product_carts(db: Session, product_id: int) -> int:
     """Remove (soft-delete) all cart items for a product during cascade delete."""
-    from data.models import CartItem
+    from models import CartItem
 
     return _soft_delete_by_product(db, CartItem, product_id)
 
 
 def clear_product_wishlists(db: Session, product_id: int) -> int:
     """Remove (soft-delete) all wishlist items for a product during cascade delete."""
-    from data.models import WishlistItem
+    from models import WishlistItem
 
     return _soft_delete_by_product(db, WishlistItem, product_id)
 
 
 def archive_product_reviews(db: Session, product_id: int) -> int:
     """Soft-delete a product's reviews, preserving the data history."""
-    from data.models import Review
+    from models import Review
 
     return _soft_delete_by_product(db, Review, product_id)
 
@@ -90,7 +90,7 @@ def archive_product_reviews(db: Session, product_id: int) -> int:
 
 def purge_product_cart_items(db: Session, product_id: int) -> int:
     """Remove every cart row referencing *product_id*. Caller commits."""
-    from data.models import CartItem
+    from models import CartItem
 
     return (
         db.query(CartItem)
@@ -101,7 +101,7 @@ def purge_product_cart_items(db: Session, product_id: int) -> int:
 
 def purge_product_wishlist_items(db: Session, product_id: int) -> int:
     """Remove every wishlist row referencing *product_id*. Caller commits."""
-    from data.models import Wishlist
+    from models import Wishlist
 
     return (
         db.query(Wishlist)
@@ -112,7 +112,7 @@ def purge_product_wishlist_items(db: Session, product_id: int) -> int:
 
 def soft_delete_product_reviews(db: Session, product_id: int) -> int:
     """Flag a product's live reviews as deleted. Caller commits."""
-    from data.models import Review
+    from models import Review
 
     return (
         db.query(Review)
@@ -138,7 +138,7 @@ def create_product_verification(
     notes: Optional[str] = None,
 ):
     """Persist a new :class:`ProductVerification` row and return it."""
-    from data.models import ProductVerification
+    from models import ProductVerification
 
     verification = ProductVerification(
         product_id=product_id,

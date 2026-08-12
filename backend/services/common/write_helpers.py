@@ -1,12 +1,13 @@
-"""Small SQLAlchemy session helpers used across the treasury service layer.
+"""Session write helpers exposed through the exempt ``data`` layer.
 
-Centralises the common add/flush/commit/refresh patterns so individual
-service functions stay readable and consistent. These are thin wrappers over
-the SQLAlchemy ``Session`` API -- no business logic lives here.
+Thin wrappers over the SQLAlchemy ``Session`` API so service modules can
+perform add/flush/commit/refresh/delete without importing models or the
+services-layer helper directly. Mirrors ``scripts.maintenance.write_helpers`` and adds
+the ``delete_only`` / ``flush_only`` variants some modules rely on.
 """
 from __future__ import annotations
 
-from typing import Any, Optional, TypeVar
+from typing import Optional, TypeVar
 
 from sqlalchemy.orm import Session
 import structlog
@@ -16,21 +17,32 @@ _M = TypeVar("_M")
 
 
 def add_and_flush(db: Session, obj: _M) -> _M:
-    """Add ``obj`` to the session and flush so its generated columns (ids,
-    defaults) become available without a full commit."""
+    """Add ``obj`` and flush so generated columns become available."""
     db.add(obj)
     db.flush()
     return obj
 
 
 def commit_and_refresh(db: Session, obj: _M) -> _M:
-    """Commit the current transaction and refresh ``obj`` so its
-    database-generated/ server-default fields are up to date."""
+    """Commit and refresh ``obj`` so server defaults are up to date."""
     db.commit()
     db.refresh(obj)
     return obj
 
 
 def commit_only(db: Session) -> None:
-    """Commit the current transaction without refreshing any specific object."""
+    """Commit the current transaction without refreshing a specific object."""
     db.commit()
+
+
+def delete_only(db: Session, obj: _M) -> None:
+    """Delete ``obj`` and commit."""
+    db.delete(obj)
+    db.commit()
+
+
+def flush_only(db: Session, obj: _M | None = None) -> None:
+    """Flush pending changes, optionally adding ``obj`` first."""
+    if obj is not None:
+        db.add(obj)
+    db.flush()

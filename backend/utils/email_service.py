@@ -25,6 +25,7 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
+from providers.comms.email import deliver_email as _provider_deliver_email
 from utils.config import settings
 
 logger = logging.getLogger(__name__)
@@ -338,96 +339,19 @@ def _send_via_resend(
     api_key: str,
     max_retries: int = 3,
 ) -> None:
-    """Send an email through the Resend API with exponential-backoff retry."""
-    import time
-
-    payload = json.dumps({
-        "from": from_address,
-        "to": [to],
-        "subject": subject,
-        "html": html,
-    }).encode()
-
-    last_exc: Exception | None = None
-    for attempt in range(1, max_retries + 1):
-        req = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=payload,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                logger.info("Resend email sent to %s [status %s]", to, resp.status)
-                return
-        except urllib.error.HTTPError as exc:
-            body = exc.read().decode(errors="replace")
-            if exc.code < 500:
-                logger.error("Resend API client error %s: %s", exc.code, body)
-                raise
-            logger.warning(
-                "Resend API server error %s on attempt %d/%d: %s",
-                exc.code,
-                attempt,
-                max_retries,
-                body,
-            )
-            last_exc = exc
-        except (urllib.error.URLError, OSError) as exc:
-            logger.warning(
-                "Resend network error on attempt %d/%d: %s",
-                attempt,
-                max_retries,
-                exc,
-            )
-            last_exc = exc
-
-        if attempt < max_retries:
-            time.sleep(2 ** (attempt - 1))
-
-    logger.error("Resend email to %s failed after %d attempts", to, max_retries)
-    if last_exc:
-        raise last_exc
+    """Back-compat alias; transport now lives in ``providers.comms.email``."""
+    _provider_deliver_email(
+        to, subject, html, from_address=from_address,
+        provider="resend", config={"resend_api_key": api_key},
+    )
 
 
 def _send_via_smtp(to: str, subject: str, html: str, *, from_address: str, transport: dict[str, object]) -> None:
-    message = EmailMessage()
-    message["Subject"] = subject
-    message["From"] = from_address
-    message["To"] = to
-    message.set_content("This message requires an HTML-capable email client.")
-    message.add_alternative(html, subtype="html")
-
-    timeout = max(int(transport.get("smtp_timeout_seconds") or settings.smtp_timeout_seconds), 1)
-    smtp_host = _normalize_runtime_text(transport.get("smtp_host") or settings.smtp_host)
-    smtp_port = int(transport.get("smtp_port") or settings.smtp_port)
-    smtp_username = _normalize_runtime_text(transport.get("smtp_username") or settings.smtp_username or "")
-    smtp_password = _normalize_runtime_secret(transport.get("smtp_password") or settings.smtp_password or "")
-    smtp_use_tls = bool(
-        transport.get("smtp_use_tls") if transport.get("smtp_use_tls") is not None else settings.smtp_use_tls
+    """Back-compat alias; transport now lives in ``providers.comms.email``."""
+    _provider_deliver_email(
+        to, subject, html, from_address=from_address,
+        provider="smtp", config=dict(transport or {}),
     )
-    smtp_use_ssl = bool(
-        transport.get("smtp_use_ssl") if transport.get("smtp_use_ssl") is not None else settings.smtp_use_ssl
-    )
-
-    if smtp_use_ssl:
-        server: smtplib.SMTP | smtplib.SMTP_SSL
-        server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=timeout)
-    else:
-        server = smtplib.SMTP(smtp_host, smtp_port, timeout=timeout)
-
-    with server:
-        server.ehlo()
-        if smtp_use_tls and not smtp_use_ssl:
-            server.starttls()
-            server.ehlo()
-        if smtp_username:
-            server.login(smtp_username, smtp_password)
-        server.send_message(message)
-    logger.info("SMTP email sent to %s", to)
 
 
 def send_email(
@@ -463,28 +387,17 @@ def send_email(
         )
         return
 
-    if transport.get("provider") == "resend":
-        _send_via_resend(
+    try:
+        _provider_deliver_email(
             to,
             subject,
             html,
             from_address=resolved_from,
-            api_key=str(transport.get("resend_api_key") or settings.resend_api_key),
+            provider=transport.get("provider") or "disabled",
+            config=transport,
         )
-    elif transport.get("provider") == "smtp":
-        _send_via_smtp(to, subject, html, from_address=resolved_from, transport=transport)
-    elif transport.get("provider") == "console":
-        logger.warning("Email transport is not configured; using console preview mode for %s", to)
-        logger.info(
-            "[DEV EMAIL] From: %s | To: %s | Purpose: %s | Subject: %s\n%s",
-            resolved_from,
-            to,
-            purpose,
-            subject,
-            html,
-        )
-    else:
-        raise EmailDeliveryDisabledError("Email delivery is not configured.")
+    except RuntimeError as exc:
+        raise EmailDeliveryDisabledError(str(exc))
 
     record_email_delivery_event(
         recipient_email=to,

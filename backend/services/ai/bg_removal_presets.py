@@ -23,14 +23,11 @@ from typing import Optional
 import numpy as np
 from PIL import Image
 
+from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
+
 logger = logging.getLogger(__name__)
 
-try:
-    import cv2
-    _HAS_CV2 = True
-except ImportError:
-    cv2 = None  # type: ignore
-    _HAS_CV2 = False
+from providers.media import HAS_CV2 as _HAS_CV2, cv2
 
 # ── Config (tune via environment variables) ────────────────────────────
 
@@ -155,8 +152,7 @@ class _SessionManager:
                 cls._evict_one()
 
             try:
-                from rembg import new_session
-                cls._sessions[model_name] = new_session(model_name)
+                cls._sessions[model_name] = create_rembg_session(model_name)
                 logger.info("bg_cache: loaded model '%s' (cache size %d/%d)",
                             model_name, len(cls._sessions), MAX_SESSION_CACHE)
             except Exception as exc:
@@ -228,8 +224,6 @@ def _maybe_downscale(data: bytes, max_dim: int) -> tuple[bytes, tuple[int, int]]
 
 def _generate_alpha(data: bytes, model_priority: list[str], orig_size) -> Optional[np.ndarray]:
     """Run through model priority list, return alpha (H, W) float32 in [0,1]."""
-    from rembg import remove
-
     acquired = _ConcurrencyGate.acquire(timeout=30.0)
     if not acquired:
         logger.warning("bg_preset: concurrency timeout (all %d slots busy), returning None", MAX_CONCURRENT)
@@ -245,7 +239,7 @@ def _generate_alpha(data: bytes, model_priority: list[str], orig_size) -> Option
             try:
                 logger.info("bg_preset: running rembg model '%s'", model_name)
                 scaled_data, _ = _maybe_downscale(data, _resolution_cap(model_name, 9999))
-                output_bytes = remove(scaled_data, session=session, alpha_matting=False, post_process_mask=True)
+                output_bytes = rembg_remove_bytes(scaled_data, session=session, alpha_matting=False, post_process_mask=True)
                 out_img = Image.open(io.BytesIO(output_bytes)).convert("RGBA")
                 out_img = out_img.resize(orig_size, Image.Resampling.LANCZOS)
                 alpha = np.array(out_img.split()[-1]).astype(np.float32) / 255.0
@@ -522,7 +516,6 @@ class CleanEdgeRefiner:
 
         if not _low_on_ram():
             try:
-                import cv2.ximgproc
                 guide = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR).astype(np.float32) / 255.0
                 alpha_f = alpha.astype(np.float32)
                 refined = cv2.ximgproc.guidedFilter(guide, alpha_f, radius=4, eps=0.0001)

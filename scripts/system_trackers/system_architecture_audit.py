@@ -332,6 +332,7 @@ RULE_MEANING: dict[str, str] = {
     "FE7":   "frontend component in wrong feature folder",
     "FE8":   "shared package boundary violation",
     "FE9":   "state management boundary violation",
+    "FE10":  "raw fetch()/XMLHttpRequest bypasses typed API client",
     # Architecture Metrics
     "MET2":  "module instability exceeds threshold",
     "MET3":  "abstractness below threshold (no interfaces)",
@@ -663,10 +664,12 @@ DEFAULT_FORBIDDEN_EDGES = {
     # Controllers orchestrate.
     # They must not import routers or security middleware,
     # and must not touch DB engine/session creation directly.
+    # NOTE: `dependencies` (auth deps such as get_current_user/get_current_admin)
+    # is ALLOWED here — ARCHITECTURE_DIAGRAM §10.2 explicitly permits
+    # `controllers → auth deps`, matching CIRCUIT_ALLOWED_IMPORTS.
     "controllers": [
         "routers",
         "middleware",
-        "dependencies",
         "db.database",
         "db.create_tables",
         "db.init_db",
@@ -712,9 +715,7 @@ DB_SESSION_NAMES = frozenset({
     "_db_session", "_sess", "session_scope", "db_session_scope",
 })
 
-# FastAPI router/application variable names — .delete(), .post(), etc. on
-# these objects are route decorators, NOT database writes.
-FASTAPI_ROUTER_NAMES = frozenset({"router", "app", "api_router", "api", "sub_router", "v1", "v2", "country_router", "public_router"})
+
 
 DEFAULT_WRITE_VERBS: set[str] = {
     "add", "add_all", "commit", "flush", "delete", "merge",
@@ -1055,16 +1056,7 @@ PLACEMENT_DOMAIN_KEYWORDS: dict[str, set[str]] = {
     },
 }
 
-DOMAIN_TO_SCHEMA: dict[str, str] = {
-    "identity":   "identity",
-    "comms":      "communication",
-    "geography":  "country",
-    "gateway":    "finance",       # gateway adapter records live in finance
-}
 
-def domain_to_schema(domain: str) -> str:
-    """Return the PostgreSQL schema name for a canonical domain."""
-    return DOMAIN_TO_SCHEMA.get(domain, domain)
 
 
 # Build alias lookup (built ONCE at module load)
@@ -1176,6 +1168,12 @@ CIRCUIT_BYPASS_IMPORTS: dict[tuple[str, str], str] = {
     # NOTE: ("controllers", "models") is ALLOWED per ARCHITECTURE_DIAGRAM §2 (reads only; writes = W1)
 }
 
+# ARCHITECTURE_DIAGRAM §10.1: routers/generated/auto_router.py is TOOLING, not a
+# runtime layer. It reads controllers via AST only and emits thin routers, so it
+# must never originate a dependency-graph edge. Generated routers remain plain
+# members of the `routers` layer.
+_AUDIT_TOOLING_MODULES: set[str] = {"routers.generated.auto_router"}
+
 # ============================================================================
 # SECTION 4: DATA MODELS
 # ============================================================================
@@ -1281,7 +1279,7 @@ def _get_rule_priority(code: str) -> str:
         "RN1": "P2", "RN2": "P2", "RN3": "P2",
         "DB1": "P2", "DB2": "P2", "DB3": "P2",
         "FE1": "P2", "FE3": "P2", "FE4": "P2", "FE5": "P2",
-        "FE7": "P2", "FE9": "P2",
+        "FE7": "P2", "FE9": "P2", "FE10": "P2",
         "QUAL1": "P2", "QUAL3": "P2",
         "A1": "P2", "MET2": "P2",
         "CFG1": "P2", "CFG2": "P2", "CFG3": "P2", "CFG4": "P2",
@@ -1633,13 +1631,7 @@ def is_scratch_name(stem: str, eff: dict, broad: bool) -> bool:
     return bool(tokens & token_set)
 
 
-def layer_of(path_rel: str) -> str:
-    parts = [p.lower() for p in Path(path_rel).parts]
-    if not parts or parts[0] != "backend":
-        return ""
-    if len(parts) < 2:
-        return ""
-    return parts[1]
+
 
 
 def layer_of_module(module: str) -> str:
@@ -2282,6 +2274,12 @@ def build_module_graph(repo: Path, eff: dict) -> ModuleGraph:
 
     known_top = {str(x).lower() for x in eff["expected_backend_packages"]}
 
+    # ARCHITECTURE_DIAGRAM §10.1: routers/generated/auto_router.py is TOOLING,
+    # not a runtime layer. It discovers controller route declarations via AST only
+    # and emits thin routers into routers/ — it must never originate a
+    # dependency-graph edge, and generated routers stay plain `routers` members.
+    audit_tooling_modules = eff.get("audit_tooling_modules", _AUDIT_TOOLING_MODULES)
+
     # Phase 1: Register all Python modules
     for f in iter_text_files(backend, eff):
         if f.suffix.lower() != ".py":
@@ -2294,6 +2292,9 @@ def build_module_graph(repo: Path, eff: dict) -> ModuleGraph:
 
     # Phase 2: Parse imports and build edges
     for module, f in graph.modules.items():
+        if module in audit_tooling_modules:
+            # Tooling module: skip edge extraction so it never enters the circuit.
+            continue
         tree = parse_safe(f)
         if tree is None:
             continue
@@ -3158,8 +3159,9 @@ def check_rls_cluster(repo: Path, rep: Report, eff: dict) -> None:
         rep.add(
             YEL, "L1", "security", "middleware/ + dependencies/",
             f"{len(hits)} RLS-named modules -> two enforcers = fail-open risk",
-            intended="pick ONE canonical enforcer (ADR); alias/delete rest: "
-                     + ", ".join(hits),
+            intended="consolidate to ONE canonical RLS enforcer (e.g. backend/db/security.py) "
+                     "applied uniformly via a session hook or shared auth dependency; "
+                     "alias/delete the rest: " + ", ".join(hits),
         )
 
     # ── SEC11: content-based detection of independent RLS implementations ──
@@ -3194,8 +3196,10 @@ def check_rls_cluster(repo: Path, rep: Report, eff: dict) -> None:
             f"{len(rls_definers)} independent RLS policy definitions detected. "
             f"A path that omits RLS silently bypasses tenant/country isolation.",
             intended="consolidate to ONE canonical RLS enforcer "
-                     "(e.g. backend/data/pg_rls_policies.sql) applied uniformly "
-                     "via session hook or shared auth dependency",
+                     "(e.g. backend/db/security.py) applied uniformly via a "
+                     "session/connection hook or a shared auth dependency; a single "
+                     "RLS SQL policy file (data/*rls*.sql) is acceptable only if it is "
+                     "THE one canonical source, never a second scattered module",
         )
 
     # Too many context setters → YEL (inconsistency risk)
@@ -3365,23 +3369,7 @@ Rules enforced:
   - Domain A may NOT import from Domain B (unless explicitly allowed)
 """
 
-# Layer ordering for circuit direction enforcement
-CIRCUIT_LAYER_ORDER: dict[str, int] = {
-    "main": 0,
-    "lifespan": 0,
-    "middleware": 1,
-    "dependencies": 1,
-    "routers": 2,
-    "controllers": 3,
-    "services": 4,
-    "providers": 5,
-    "models": 6,
-    "db": 7,
-    "utils": 8,
-    "data": 8,
-    "events": 4,
-    "jobs": 4,
-}
+
 
 
 # ============================================================================
@@ -3533,7 +3521,7 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
         "dependencies": "backend/dependencies/",
     }
 
-    SESSION_NAMES = {"db", "session", "sess", "s"}
+    SESSION_NAMES = set(DB_SESSION_NAMES)
 
     for layer_name, layer_prefix in forbidden_write_layers.items():
         layer_dir = backend / layer_name.replace("backend/", "").replace("backend\\", "")
@@ -3570,7 +3558,7 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
                     for arg in node.args.args + node.args.posonlyargs + node.args.kwonlyargs:
                         arg_name = arg.arg
                         # Common session parameter names
-                        if arg_name in {"db", "session", "sess", "s", "db_session"}:
+                        if arg_name in DB_SESSION_NAMES:
                             session_vars.add(arg_name)
                         # Type annotation check: param: Session
                         elif arg.annotation:
@@ -4890,8 +4878,11 @@ def check_enhanced_secrets_in_code(repo: Path, rep: Report, eff: dict) -> None:
                     line=hits[0],
                 )
                 reported += 1
-                if reported >= 150:
-                    return
+            if reported >= 150:
+                return
+
+    if reported >= 150:
+        return
 
 
 # --- SEC3: Dangerous calls ---
@@ -7982,30 +7973,6 @@ Validates that operations in a file are appropriate for its surface.
 Example: customer router should NOT contain approve_supplier().
 """
 
-# Operations that belong ONLY to specific surfaces
-SURFACE_EXCLUSIVE_OPERATIONS: dict[str, set[str]] = {
-    "admin": {
-        "moderate", "override", "suspend", "ban", "configure_platform",
-        "approve_supplier", "reject_supplier", "configure_commission",
-        "configure_rates", "view_ledger", "approve_payout", "manage_roles",
-        "manage_permissions", "view_audit", "manage_settings",
-    },
-    "supplier": {
-        "pack", "ship", "handover", "upload_product", "edit_product",
-        "delete_product", "manage_inventory", "view_earnings",
-        "request_payout", "process_return",
-    },
-    "customer": {
-        "browse", "add_to_cart", "checkout", "place_order", "track_order",
-        "cancel_order", "request_return", "write_review", "add_wishlist",
-        "update_profile", "manage_addresses",
-    },
-    "logistics": {
-        "pickup", "deliver", "pod", "update_delivery_status",
-        "optimize_route", "scan_parcel", "confirm_delivery",
-    },
-}
-
 # Operations that should NEVER appear in certain surfaces
 SURFACE_FORBIDDEN_OPERATIONS: dict[str, set[str]] = {
     "customer": {
@@ -8624,16 +8591,24 @@ def check_api_shape(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> N
                     reported += 1
                     break
 
-        # AS2: Check tags alignment
+        # AS2: OpenAPI tag alignment with router surface/domain.
+        # A tag that maps to a known domain must match the router's surface;
+        # a mismatch means the route is mis-tagged (or in the wrong surface).
         tag_matches = AUTO_ROUTE_TAGS_RE.findall(text)
         for tag_str in tag_matches:
             tags = re.findall(r"['\"]([^'\"]+)['\"]", tag_str)
             for tag in tags:
                 tag_domain = aliases.get(tag.lower())
-                if tag_domain and surface:
-                    # Check if tag domain makes sense for this surface
-                    # (This is a soft check - just informational)
-                    pass
+                if tag_domain and surface and tag_domain != surface:
+                    rep.add(
+                        YEL, "AS2", "routers",
+                        rel(f, repo),
+                        f"OpenAPI tag '{tag}' maps to domain '{tag_domain}' "
+                        f"but router belongs to surface '{surface}'",
+                        intended=f"align OpenAPI tags with the '{surface}' domain "
+                                 f"(or move the route to the correct surface)",
+                    )
+                    reported += 1
 
         # AS3: Endpoint naming (function names should be descriptive)
         tree = parse_safe(f)
@@ -8720,6 +8695,29 @@ def check_advanced_security(repo: Path, rep: Report, eff: dict, graph: ModuleGra
     backend = repo / "backend"
     if not backend.exists():
         return
+
+    # SEC9: CSRF protection must be wired for state-changing endpoints.
+    # The app relies on a global CSRFMiddleware (double-submit cookie); if it
+    # is not registered in the middleware pipeline, every POST/PUT/PATCH/DELETE
+    # endpoint is unprotected (webhook paths are the only intentional opt-out).
+    mw_dir = backend / "middleware"
+    csrf_wired = False
+    if mw_dir.exists():
+        for _p in mw_dir.rglob("*.py"):
+            if "venv" in _p.parts:
+                continue
+            if "CSRFMiddleware" in read_text(_p):
+                csrf_wired = True
+                break
+    if not csrf_wired:
+        rep.add(
+            RED, "SEC9", "security", "backend/middleware",
+            "CSRF protection is not wired into the middleware pipeline; "
+            "state-changing endpoints (POST/PUT/PATCH/DELETE) are unprotected",
+            intended="register CSRFMiddleware (double-submit cookie) in the "
+                     "middleware orchestrator for all non-webhook state-changing routes",
+        )
+
     reported = 0
     for module, f in graph.modules.items():
         text = read_text(f)
@@ -8804,6 +8802,20 @@ def check_advanced_security(repo: Path, rep: Report, eff: dict, graph: ModuleGra
                             line=i)
                     reported += 1
                     break
+
+        # SEC10: Insecure CORS — wildcard origin (exploitable with credentials)
+        for i, line in enumerate(text.splitlines(), 1):
+            if "allow_origins" in line.lower() and '"*"' in line:
+                rep.add(
+                    RED, "SEC10", layer, rel_path,
+                    "insecure CORS: allow_origins contains wildcard '*' "
+                    "(combined with allow_credentials=True this is exploitable)",
+                    intended="use an explicit allowlist from CORS_ORIGINS env; "
+                             "never use '*' when allow_credentials is enabled",
+                    line=i,
+                )
+                reported += 1
+                break
 
         if reported >= 200:
             return
@@ -9054,6 +9066,57 @@ def check_advanced_frontend(repo: Path, rep: Report, eff: dict) -> None:
             if reported >= 150:
                 return
 
+    # FE10: Raw fetch()/XMLHttpRequest bypasses the typed API client.
+    # Architecture (§10.4) mandates a single typed client in src/lib/api/* as the
+    # only network entrypoint for *client* code; components/hooks/pages must not
+    # call the global fetch() directly (auth, errors and caching would be
+    # decentralized). The client itself (src/lib/api/**) and Next.js server
+    # route handlers (src/app/api/**/route.ts, which act as a BFF/proxy) may use
+    # fetch legitimately and are excluded. router.prefetch()/apiFetch() are not
+    # the global fetch and must not be flagged, so a word-boundary regex is used.
+    web_app = frontend / "web_app"
+    if web_app.exists():
+        fetch_re = re.compile(r"(?<![\w.])fetch\(")
+        for f in iter_text_files(web_app, eff):
+            if f.suffix.lower() not in source_ext:
+                continue
+            low = str(f).replace("\\", "/").lower()
+            # The typed client itself legitimately uses fetch — never flag it.
+            if "/src/lib/api/" in low:
+                continue
+            # Next.js server route handlers legitimately call fetch (BFF/proxy).
+            if "/src/app/api/" in low:
+                continue
+            # Only inspect client-side code: components/hooks always, and app
+            # pages/layouts only when they opt in with the "use client" directive.
+            is_client = ("/src/components/" in low or "/src/hooks/" in low)
+            if not is_client:
+                head = "\n".join(read_text(f).splitlines()[:5]).replace('"', "'")
+                if "'use client'" not in head:
+                    continue
+            text = read_text(f)
+            if not text:
+                continue
+            for i, line in enumerate(text.splitlines(), 1):
+                s = line.strip()
+                if s.startswith("//") or s.startswith("*") or s.startswith("import"):
+                    continue
+                if fetch_re.search(line) or "XMLHttpRequest" in line:
+                    rep.add(
+                        YEL, "FE10", "frontend",
+                        rel(f, repo),
+                        "raw fetch()/XMLHttpRequest bypasses the typed API "
+                        "client (src/lib/api/*)",
+                        intended="route all backend calls through the typed API "
+                                 "client so auth, errors and caching are centralized",
+                        line=i,
+                    )
+                    reported += 1
+                    break
+
+            if reported >= 200:
+                return
+
 
 # ============================================================================
 # SECTION 33: ARCHITECTURE METRICS ENHANCED
@@ -9127,12 +9190,44 @@ def check_enhanced_metrics(repo: Path, rep: Report, eff: dict,
                     or name.startswith("Abstract")):
                 package_classes[layer]["abstract"] += 1
 
+    # Accumulate layer-level afferent/efferent coupling (proxy for package
+    # instability used by MET4).
+    _layer_ca_accum: dict[str, int] = defaultdict(int)
+    _layer_ce_accum: dict[str, int] = defaultdict(int)
+    for module in graph.modules.keys():
+        layer = layer_of_module(module)
+        if not layer:
+            continue
+        _layer_ca_accum[layer] += graph.fan_in.get(module, 0)
+        _layer_ce_accum[layer] += graph.fan_out.get(module, 0)
+
     for layer, counts in package_classes.items():
         total = counts["total"]
         if total == 0:
             continue
 
         abstractness = counts["abstract"] / total
+        # MET4: Distance from main sequence D = |A + I - 1|.
+        # Instability I is approximated at the layer ("package") level from the
+        # aggregated afferent/efferent coupling of its modules. A high D means
+        # the layer is simultaneously concrete and stable (or abstract and
+        # unstable) — i.e. it violates the main sequence.
+        layer_ca = _layer_ca_accum.get(layer, 0)
+        layer_ce_val = _layer_ce_accum.get(layer, 0)
+        denom = layer_ca + layer_ce_val
+        if denom:
+            instability = layer_ce_val / denom
+            distance = abs(abstractness + instability - 1.0)
+            if distance > 0.6:
+                rep.add(
+                    GRN, "MET4", layer, f"backend/{layer}/",
+                    f"distance from main sequence high: D={distance:.2f} "
+                    f"(A={abstractness:.2f}, I={instability:.2f})",
+                    intended="balance abstractness and instability: stable, "
+                             "concrete packages vs unstable, abstract ones",
+                )
+                reported += 1
+
         # We don't have instability at package level easily,
         # so just report abstractness
         if total > 10 and abstractness == 0:
@@ -9234,6 +9329,84 @@ def check_bounded_contexts(repo: Path, rep: Report, eff: dict,
         if reported >= 200:
             return
 
+    # BC2: Domain event definitions must be well-formed.
+    # Every class whose name ends with "Event" in an events/ package must be a
+    # typed @dataclass or model with a unique id and a serialization method,
+    # otherwise cross-domain consumers cannot reliably publish/consume it.
+    backend = repo / "backend"
+    if backend.exists():
+        event_dirs = [
+            p for p in backend.rglob("events")
+            if p.is_dir() and "venv" not in p.parts
+        ]
+        for ev_root in event_dirs:
+            for f in iter_text_files(ev_root, eff):
+                if f.suffix.lower() != ".py":
+                    continue
+                tree = parse_safe(f)
+                if tree is None:
+                    continue
+                relp = rel(f, repo)
+                for node in ast.walk(tree):
+                    if not (isinstance(node, ast.ClassDef)
+                            and node.name.endswith("Event")):
+                        continue
+                    is_dataclass = any(
+                        (isinstance(d, ast.Name) and d.id == "dataclass")
+                        or (isinstance(d, ast.Call)
+                            and getattr(d.func, "id", "") == "dataclass")
+                        for d in node.decorator_list
+                    )
+                    base_ids = {
+                        getattr(b, "id", getattr(b, "attr", ""))
+                        for b in node.bases
+                    }
+                    is_model = bool(
+                        base_ids & {"BaseModel", "Base", "OrmBase",
+                                    "_PermissiveBase", "SQLModel"}
+                    )
+                    if not (is_dataclass or is_model):
+                        rep.add(
+                            YEL, "BC2", "events", relp,
+                            f"domain event '{node.name}' is not a @dataclass or "
+                            f"model — define it with typed payload fields",
+                            intended="define domain events as @dataclass or "
+                                     "pydantic/ORM model with typed fields",
+                            line=node.lineno,
+                        )
+                        reported += 1
+                        continue
+                    field_names = {
+                        getattr(t.target, "id", "")
+                        for t in node.body
+                        if isinstance(t, ast.AnnAssign)
+                        and isinstance(getattr(t, "target", None), ast.Name)
+                    }
+                    method_names = {
+                        n.name for n in node.body
+                        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    }
+                    has_id = bool(
+                        field_names & {"event_id", "id", "uuid", "event_uuid"}
+                    )
+                    has_serialize = bool(
+                        method_names
+                        & {"to_dict", "serialize", "model_dump", "dict", "schema"}
+                    )
+                    if not (has_id or has_serialize):
+                        rep.add(
+                            YEL, "BC2", "events", relp,
+                            f"domain event '{node.name}' lacks a unique event id "
+                            f"and a serialization method",
+                            intended="add a unique event id (event_id/uuid) and a "
+                                     "to_dict()/serialize() method for traceability",
+                            line=node.lineno,
+                        )
+                        reported += 1
+
+        if reported >= 300:
+            return
+
 
 # ============================================================================
 # SECTION 35: ARCHITECTURE REGISTRY
@@ -9326,6 +9499,7 @@ def target_architecture_diagrams() -> str:
         '    subgraph RT["ROUTERS/* — thin; response_model; NO db writes"]\n'
         '        H["GET /health · /health/deps · /health/ready"]\n'
         '        R["Domain routers: customer_coupons, customer_wishlist, admin_promotions ..."]\n'
+        '        G["AUTO-GENERATED: public_commerce_coupons (emitted from controller decorators)"]\n'
         '    end\n'
         '    subgraph SEC["SECURITY / AUTH (controllers/auth_controller.py)"]\n'
         '        AUTH["get_current_user<br/>verify_token(JWT jti) → Redis cache → db lookup"]\n'
@@ -9350,6 +9524,9 @@ def target_architecture_diagrams() -> str:
         '    AUTH --> GETDB\n'
         '    ADMIN --> GETDB\n'
         '    R --> C\n'
+        '    G --> AUTH\n'
+        '    G --> ADMIN\n'
+        '    G --> C\n'
         '    C --> S\n'
         '    S --> GETDB\n'
         '    GETDB --> POOL\n'
@@ -9567,11 +9744,9 @@ TARGET_ARCHITECTURE_DIAGRAMS = target_architecture_diagrams()
     # The FORBIDDEN schemas are core/platform/identity — any model or FK using one is a
     # deviation (flagged by DBA01 / DBA06). Domain schemas and schema=None are allowed.
 DBA_FORBIDDEN_SCHEMAS: set[str] = {"core", "platform", "identity"}
-DBA_EXPECTED_SCHEMAS: set[str] = set()
 
-DBA_EXPECTED_EXTENSIONS = {
-    "vector", "pgcrypto", "citext", "btree_gin", "pg_trgm", "uuid-ossp",
-}
+
+
 
 DBA_EXPECTED_EVENT_TABLES = {
     "outbox_events", "inbox_events", "event_retry_queue", "event_dead_letter",
@@ -9592,7 +9767,7 @@ DBA_FINANCE_PROTECTED_TABLES = {
     "ar_ledger_entries", "ledger_entries", "accounts", "payouts",
 }
 
-DBA_INTEGER_TYPES = {"INTEGER", "INT", "BIGINTEGER", "SMALLINTEGER"}
+
 DBA_BINARY_TYPES = {"LARGEBINARY", "BLOB", "BYTEA", "IMAGE"}
 DBA_JSON_TYPES = {"JSON", "JSONB"}
 DBA_DATETIME_TYPES = {"DATETIME", "TIMESTAMP", "DATE", "TIME"}
@@ -10447,9 +10622,10 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
         {m.table.lower() for m in models if m.has_country_code and m.table}
     )
     if country_tables and not rls.sql_files:
-        rep.add(RED, "DBA05", "security", "backend/data/pg_rls_policies.sql",
-                "country-scoped models exist but no RLS SQL file found",
-                intended="add pg_rls_policies.sql and enable RLS")
+        rep.add(RED, "DBA05", "security", "backend/db/security.py",
+                "country-scoped models exist but no RLS enforcer found",
+                intended="add ONE canonical RLS enforcer (e.g. backend/db/security.py) "
+                         "and enable RLS uniformly via a session hook / shared auth dependency")
     if rls.sql_files:
         missing_rls = [t for t in country_tables if t not in rls.rls_tables]
         if missing_rls:
@@ -10963,7 +11139,7 @@ DS_SPACING_PROPS = {
     "columnGap", "borderWidth", "borderRadius", "fontSize", "lineHeight",
     "minWidth", "maxWidth", "minHeight", "maxHeight", "flexBasis",
 }
-DS_STYLE_ARR_RE = re.compile(r"style\s*=\s*\{\[[^\]]{0,200}?\{")
+
 DS_STYLE_PROP_RE = re.compile(r"([A-Za-z]\w*)\s*:\s*(?:'([^']*)'|\"([^\"]*)\"|([\d.]+))")
 DS_SHADOW_CSS_RE = re.compile(r"(?:box-shadow|text-shadow)\s*:\s*([^;}{]+)", re.I)
 DS_RADIUS_CSS_RE = re.compile(r"border-radius\s*:\s*([^;}{]+)", re.I)
@@ -11172,50 +11348,7 @@ def ds_extract_style_objects(text: str) -> list[tuple[int, str]]:
         out.append((m.start(), text[start + 1:i]))
     return out
 
-def ds_is_comment_line(line: str) -> bool:
-    s = line.strip()
-    return s.startswith("//") or s.startswith("*") or s.startswith("/*")
 
-def ds_scan_css_file(f: Path, text: str, ws: str, repo: Path, classify) -> DSFileProfile:
-    p = DSFileProfile(path=rel(f, repo), workspace=ws, kind="css")
-    lines = text.splitlines()
-    for rx in (DS_HEX_RE, DS_RGB_RE, DS_HSL_RE):
-        for m in rx.finditer(text):
-            line_no = text.count("\n", 0, m.start()) + 1
-            try:
-                if ds_is_comment_line(lines[line_no - 1]): continue
-            except IndexError: pass
-            rgb = ds_parse_color(m.group(0))
-            if rgb is None: continue
-            hx = ds_to_hex(rgb)
-            p.colors[hx] += 1
-            if classify(hx) == "off": p.off_palette[hx] += 1
-    p.important = len(DS_IMPORTANT_RE.findall(text))
-    p.px_values = len(DS_PX_RE.findall(text))
-    for m in DS_ZINDEX_RE.finditer(text):
-        z = int(m.group(1))
-        if z >= 1000: p.zmagic.append(z)
-    for m in DS_ARB_RE.finditer(text):
-        prefix, val = m.group(1), m.group(2)
-        is_color_val = val.startswith("#") or "rgb" in val.lower() or "hsl" in val.lower()
-        if prefix in DS_ARB_COLOR_PREFIXES and is_color_val:
-            p.arb_color[val.lower()] += 1
-        elif prefix == "z":
-            try:
-                if int(val) >= 1000: p.zmagic.append(int(val))
-            except ValueError: pass
-        else:
-            if re.search(r"\d", val): p.arb_size += 1
-    s = 0
-    s += p.inline_style_blocks * 3
-    s += p.style_tag * 25
-    s += p.important * 8
-    s += sum(p.arb_color.values()) * 5
-    s += p.arb_size * 1
-    s += len(p.zmagic) * 20
-    s += sum(p.off_palette.values()) * 4
-    p.score = s
-    return p
 
 
 # ============================================================================
@@ -11609,20 +11742,10 @@ HL_EXTERNAL_PREFIXES = (
     "boto3.", "botocore.", "stripe.", "smtplib.",
 )
 HL_SLEEP_ALLOWED = {"utils", "jobs", "scripts", "tasks", "monitoring", "tools"}
-HL_WEB_LAYERS = {"routers", "controllers", "services", "main", "dependencies", "middleware", "providers"}
-HL_REQUEST_PATH = {"routers", "controllers", "services", "middleware", "dependencies", "providers"}
 
-HL_PRIORITY: dict[str, str] = {
-    "HL402": "P0", "SEC101": "P0", "SEC105": "P0",
-    "HL403": "P1", "HL601": "P1", "HL602": "P1", "SC102": "P1",
-    "PG102": "P1", "PG103": "P1", "SC501": "P1", "SC101": "P1",
-    "HL501": "P1", "OB101": "P1", "OB102": "P1",
-    "HL101": "P2", "HL102": "P2", "FEH101": "P2", "FEH501": "P2",
-    "HL502": "P2", "API101": "P2", "DP101": "P2", "DP103": "P2",
-    "HL201": "P3", "HL203": "P3", "HL204": "P3",
-    "HL301": "P3", "HL302": "P3", "HL303": "P3",
-    "HL401": "P3", "HL901": "P3", "FEH201": "P3",
-}
+
+
+
 
 HL_CONSOLE_RE = re.compile(r"\bconsole\.(log|debug|info|warn|error)\b")
 HL_DEBUGGER_RE = re.compile(r"\bdebugger\b")
@@ -11645,11 +11768,11 @@ HL_MAP_RE = re.compile(r"\.map\(")
 HL_ERROR_BOUNDARY_RE = re.compile(r"ErrorBoundary|componentDidCatch|getDerivedStateFromError")
 HL_MEMO_RE = re.compile(r"\buseMemo\b|\buseCallback\b|\bReact\.memo\b")
 HL_SUSPENSE_RE = re.compile(r"\bSuspense\b|\bReact\.lazy\b|\bnext/dynamic\b|\blazy\(")
-HL_IMG_TAG_RE = re.compile(r"<img\s")
-HL_NEXT_IMAGE_RE = re.compile(r"next/image|<Image\s")
+
+
 HL_WEB_WORKER_RE = re.compile(r"\bnew\s+Worker\b|\buseWorker\b|worker_threads")
 # ── Missing Health Constants ──
-HL_GROUPABLE_RULES = {"FEH402", "FEH501", "FEH503", "FEH201", "FEH802"}
+
 
 HL_FIX_PATTERNS: dict[str, dict[str, str]] = {
     "FEH501": {
@@ -13708,3 +13831,4 @@ def main() -> int:
 # ============================================================================
 if __name__ == "__main__":
     sys.exit(main())
+    

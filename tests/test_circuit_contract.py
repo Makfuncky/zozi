@@ -43,7 +43,7 @@ ALLOWED: dict[str, set[str]] = {
     "utils": set(),
 }
 
-# Mirrors CIRCUIT_LAYER_ORDER (imports must flow downward: low -> high).
+# Local mirror of the circuit layer ordering (imports must flow downward: low -> high).
 LAYER_ORDER: dict[str, int] = {
     "main": 0, "lifespan": 0,
     "middleware": 1, "dependencies": 1,

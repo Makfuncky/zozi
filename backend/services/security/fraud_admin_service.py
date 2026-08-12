@@ -22,7 +22,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     DeviceFingerprint,
     FraudBlacklist,
     FraudEvent,
@@ -30,7 +30,7 @@ from data.models import (
     IPReputation,
     ManualReviewQueue,
 )
-from data.schemas import FraudEventOut, ThreatFeedStatus
+from db.schemas import FraudEventOut, ThreatFeedStatus
 import structlog
 logger = structlog.get_logger(__name__)
 

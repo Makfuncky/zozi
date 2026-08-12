@@ -11,7 +11,7 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from data.models import Shipment, ShipmentEvent
+from models import Shipment, ShipmentEvent
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -87,4 +87,30 @@ def admin_set_shipment_status(
         "tracking_number": shipment.tracking_number,
         "distribution_channel": shipment.distribution_channel,
         "current_hub": shipment.current_hub,
+    }
+
+
+def lookup_shipment_by_code(db: Session, code: str) -> dict[str, Any]:
+    """Look up a shipment by tracking number or scan code (admin scan lookup).
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.logistics_logistics_status.scan_lookup_shipment``.
+    """
+    shipment = db.query(Shipment).filter(
+        (Shipment.tracking_number == code)
+        | (Shipment.id == (int(code) if code.isdigit() else -1))
+    ).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    return {
+        "id": shipment.id,
+        "order_id": shipment.order_id,
+        "status": shipment.status,
+        "carrier_name": shipment.carrier_name,
+        "tracking_number": shipment.tracking_number,
+        "distribution_channel": shipment.distribution_channel,
+        "current_hub": shipment.current_hub,
+        "shipping_address": (shipment.order.shipping_address if shipment.order else None),
+        "created_at": shipment.created_at.isoformat() if shipment.created_at else None,
+        "updated_at": shipment.updated_at.isoformat() if shipment.updated_at else None,
     }

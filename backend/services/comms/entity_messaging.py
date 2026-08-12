@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from db.database import get_db
-from data.models import Message, ShiftHandoverLog
+from models import Message, ShiftHandoverLog
 import structlog
 logger = structlog.get_logger(__name__)
 

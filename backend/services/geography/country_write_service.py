@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     AdminChangeAuditLog,
     CountryCity,
     CountryConfig,
@@ -23,12 +23,6 @@ from data.models import (
 import structlog
 logger = structlog.get_logger(__name__)
 
-try:
-    from data.models import Country, CountryTranslation
-except ImportError as e:
-    logger.warning("optional_dependency_unavailable", error=str(e))
-    Country = None
-    CountryTranslation = None
 from utils.datetime_utils import utcnow as utcnow
 
 
@@ -62,27 +56,6 @@ def record_admin_change(
     return audit
 
 
-def create_country(db: Session, code: str, name: str, **kwargs) -> Country:
-    country = Country(code=code, name=name, **kwargs)
-    db.add(country)
-    db.commit()
-    db.refresh(country)
-    return country
-
-
-def update_country(db: Session, country: Country, updates: dict) -> Country:
-    for key, value in updates.items():
-        setattr(country, key, value)
-    db.commit()
-    db.refresh(country)
-    return country
-
-
-def delete_country(db: Session, country: Country) -> None:
-    db.delete(country)
-    db.commit()
-
-
 def commit_and_refresh(db: Session) -> None:
     db.commit()
 
@@ -106,23 +79,6 @@ def update_country_config(db: Session, config: CountryConfig, updates: dict) -> 
     db.commit()
     db.refresh(config)
     return config
-
-
-def create_country_translation(
-    db: Session, country_code: str, language_code: str, **translation_data
-) -> CountryTranslation:
-    translation = CountryTranslation(
-        country_code=country_code, language_code=language_code, **translation_data
-    )
-    db.add(translation)
-    db.commit()
-    db.refresh(translation)
-    return translation
-
-
-def delete_country_translation(db: Session, translation: CountryTranslation) -> None:
-    db.delete(translation)
-    db.commit()
 
 
 def create_email_verification_token(
@@ -319,7 +275,7 @@ def create_country_feature_flag(
     rollout_audience: str | None = None,
     notes: str | None = None,
 ) -> "CountryFeatureFlag":
-    from data.models import CountryFeatureFlag
+    from models import CountryFeatureFlag
     flag = CountryFeatureFlag(
         country_code=country_code,
         feature_key=feature_key,
@@ -336,7 +292,7 @@ def create_country_feature_flag(
 def update_country_feature_flag(
     db: Session, flag: "CountryFeatureFlag", updates: dict
 ) -> "CountryFeatureFlag":
-    from data.models import CountryFeatureFlag
+    from models import CountryFeatureFlag
     for key, value in updates.items():
         setattr(flag, key, value)
     db.commit()
@@ -354,7 +310,7 @@ def create_country_communication(
     priority: str = "normal",
     category: str | None = None,
 ) -> "CountryCommunication":
-    from data.models import CountryCommunication
+    from models import CountryCommunication
     comm = CountryCommunication(
         country_code=country_code.upper(),
         from_user_id=from_user_id,
@@ -384,7 +340,7 @@ def create_country_staff_assignment(
     role_in_country: str,
     assigned_by: int,
 ) -> "CountryStaffAssignment":
-    from data.models import CountryStaffAssignment
+    from models import CountryStaffAssignment
     assignment = CountryStaffAssignment(
         user_id=user_id,
         country_code=country_code.upper(),
@@ -398,7 +354,7 @@ def create_country_staff_assignment(
 
 
 def deactivate_country_staff_assignment(db: Session, assignment: "CountryStaffAssignment") -> None:
-    from data.models import CountryStaffAssignment
+    from models import CountryStaffAssignment
     assignment.is_active = False
     db.commit()
 
@@ -546,7 +502,7 @@ def create_rollback_version(
     draft_by: int | None = None,
     approved_by: int | None = None,
 ) -> CountryConfigVersion:
-    from data.models import CountryConfigVersion
+    from models import CountryConfigVersion
     from utils.datetime_utils import utcnow
     rollback_row = CountryConfigVersion(
         country_code=country_code,

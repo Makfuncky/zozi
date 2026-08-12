@@ -11,7 +11,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from data.models import PayoutRuleCategory, PayoutRuleProduct
+from models import PayoutRuleCategory, PayoutRuleProduct
 import structlog
 logger = structlog.get_logger(__name__)
 

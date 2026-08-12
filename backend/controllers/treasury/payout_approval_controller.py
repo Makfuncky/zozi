@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from routers.generated.auto_router import post
 from services.treasury import payout_approval_write_service as svc
 import structlog
 logger = structlog.get_logger(__name__)
@@ -24,6 +25,7 @@ def _actor(current_admin: Any) -> tuple[int | None, str | None]:
     return getattr(current_admin, "id", None), getattr(current_admin, "username", None)
 
 
+@post("/api/v1/admin/payouts/{payout_id}/approve", deps=["admin", "db"], tags=["treasury-payouts"])
 def approve_payout(payout_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
     actor_id, actor_username = _actor(current_admin)
     return svc.approve_payout(
@@ -31,6 +33,7 @@ def approve_payout(payout_id: int, payload: Any, current_admin: Any, db) -> dict
     )
 
 
+@post("/api/v1/admin/payouts/{payout_id}/reject", deps=["admin", "db"], tags=["treasury-payouts"])
 def reject_payout(payout_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
     actor_id, actor_username = _actor(current_admin)
     return svc.reject_payout(
@@ -38,6 +41,7 @@ def reject_payout(payout_id: int, payload: Any, current_admin: Any, db) -> dict[
     )
 
 
+@post("/api/v1/admin/batches/{batch_id}/approve", deps=["admin", "db"], tags=["treasury-payouts"])
 def approve_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
     actor_id, actor_username = _actor(current_admin)
     return svc.approve_batch(
@@ -45,6 +49,7 @@ def approve_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[s
     )
 
 
+@post("/api/v1/admin/batches/{batch_id}/reject", deps=["admin", "db"], tags=["treasury-payouts"])
 def reject_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
     actor_id, actor_username = _actor(current_admin)
     return svc.reject_batch(
@@ -52,6 +57,7 @@ def reject_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[st
     )
 
 
+@post("/api/v1/admin/batches/{batch_id}/dispatch", deps=["admin", "db"], tags=["treasury-payouts"])
 def dispatch_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
     actor_id, actor_username = _actor(current_admin)
     return svc.dispatch_batch(

@@ -17,8 +17,9 @@ import logging
 import math
 import re
 import time
-import urllib.request
 from typing import Any, Optional, Set
+
+from providers.geography.ip import detect_country_from_ip
 
 from fastapi import Request, Response, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -329,13 +330,10 @@ class EnhancedGeoBlockingMiddleware(BaseHTTPMiddleware):
         return country_code
 
     def _lookup_country_from_ip(self, client_ip: str) -> str:
-        """Lookup country from IP address using ipapi.co API."""
+        """Lookup country from IP address via the geography provider."""
         try:
-            url = f"https://ipapi.co/{client_ip}/country/"
-            req = urllib.request.Request(url, headers={"User-Agent": "Zozi-GeoIP"})
-            with urllib.request.urlopen(req, timeout=5) as response:
-                country_code = response.read().decode("utf-8").strip()
-                return country_code if country_code and country_code != "XX" else "US"
+            country_code = detect_country_from_ip(client_ip)
+            return country_code if country_code and country_code != "XX" else "US"
         except Exception as e:
             logger.warning(f"GeoIP lookup failed for {client_ip}: {e}")
             return "US"

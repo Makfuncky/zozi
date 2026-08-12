@@ -44,7 +44,11 @@ from fastapi.middleware.gzip import GZipMiddleware
 from middleware.ip_extraction_middleware import IPExtractionMiddleware
 from middleware.country_context import CountryContextMiddleware
 from middleware.security_headers import EnhancedSecurityHeadersMiddleware
-from middleware.impossible_travel_middleware import ImpossibleTravelMiddleware
+from middleware.impossible_travel_middleware import (
+    ImpossibleTravelMiddleware,
+    FraudDetectionMiddleware,
+    FraudScoringMiddleware,
+)
 from middleware.rate_limit_middleware import RateLimitMiddleware
 from middleware.pci_dss_compliance import PCIDSSMiddleware
 from middleware.request_id_middleware import RequestIDMiddleware
@@ -75,6 +79,8 @@ _FOUNDATION: list[type] = [
 _SECURITY: list[type] = [
     EnhancedSecurityHeadersMiddleware,  # Original pos 4 — CSP, HSTS, etc.
     ImpossibleTravelMiddleware,         # Original pos 5 — geo-impossible travel
+    FraudDetectionMiddleware,           # fraud_prevention — impossible-travel / ghost-employee
+    FraudScoringMiddleware,             # fraud_scoring — velocity & rule scoring
 
     CSRFMiddleware,
 ]

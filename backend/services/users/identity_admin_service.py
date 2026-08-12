@@ -79,6 +79,42 @@ def update_user_in_country(
     return user
 
 
+def get_user_by_id(db: Session, user_id: int) -> User:
+    """Fetch a user by primary key (no 404; returns None if absent)."""
+    return db.query(User).filter(User.id == user_id).first()
+
+
+def list_all_users(db: Session, skip: int = 0, limit: int = 50) -> List[User]:
+    """List users across all countries (admin console, no RLS scoping)."""
+    return db.query(User).offset(skip).limit(limit).all()
+
+
+def get_user_by_id_or_404(db: Session, user_id: int) -> User:
+    """Fetch a user by primary key, raising 404 when absent."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+def update_user_by_id(db: Session, user_id: int, payload) -> User:
+    """Apply an update payload to a user loaded by id (no country scoping).
+
+    Behaviour-preserving extraction of the inline ``.put("/me")`` and
+    ``.put("/{user_id}")`` handlers in ``routers.admin_identity_operations_api``
+    and ``routers.public_identity_operations``: load, apply the unset-excluded
+    fields, commit once, refresh and return the row.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(user, k, v)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def archive_user(db: Session, country_code: str, user_id: int, reason: Optional[str] = None) -> Dict[str, Any]:
     user = get_user_in_country(db, country_code, user_id)
     user.is_deleted = True
@@ -105,6 +141,21 @@ def bulk_archive_users(db: Session, country_code: str, payload, reason: Optional
                 count += 1
         db.commit()
         return {"message": f"{count} users archived", "count": count, "reason": reason}
+    finally:
+        clear_rls_context()
+
+
+def bulk_toggle_active(db: Session, country_code: str, user_ids: List[int], is_active: bool = True) -> Dict[str, Any]:
+    _scope(db, country_code)
+    try:
+        count = 0
+        for uid in user_ids:
+            user = db.query(User).filter(User.id == uid, User.country_code == country_code.upper()).first()
+            if user:
+                user.is_active = is_active
+                count += 1
+        db.commit()
+        return {"message": f"Updated {count} users", "updated": count}
     finally:
         clear_rls_context()
 

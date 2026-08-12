@@ -38,7 +38,7 @@ from typing import Any
 
 import numpy as np
 
-from .text import _ollama_vision_chat, _extract_json
+from ..ai.text import _ollama_vision_chat, _extract_json
 
 logger = logging.getLogger(__name__)
 

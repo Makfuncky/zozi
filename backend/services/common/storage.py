@@ -24,6 +24,8 @@ from typing import Optional
 
 from utils.config import settings
 
+from providers.storage import create_s3_client
+
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "uploads")
 
 
@@ -152,14 +154,12 @@ class S3Storage(StorageBackend):
     @property
     def client(self):
         if self._client is None:
-            import boto3  # local import so the dependency stays optional
-
-            self._client = boto3.client(
-                "s3",
-                region_name=self.region if self.region not in ("", "auto") else None,
-                endpoint_url=self.endpoint_url or None,
-                aws_access_key_id=self.access_key or None,
-                aws_secret_access_key=self.secret_key or None,
+            self._client = create_s3_client(
+                self.bucket,
+                self.region,
+                self.endpoint_url,
+                self.access_key,
+                self.secret_key,
             )
         return self._client
 

@@ -15,7 +15,7 @@ from typing import Any
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from data.models import AuditLog, Coupon, Order, Product, User
+from models import AuditLog, Coupon, Order, Product, User
 
 MAX_EXPORT_ROWS: int = 5000
 

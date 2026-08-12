@@ -20,18 +20,20 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     CashPositionSnapshot,
     PayoutBatch,
     PayoutBatchItem,
     SupplierSettlement,
     TreasuryAccount,
 )
-from data.models_admin import LogisticsCODRemittanceReceipt
-from data.models_payments import Payout
-from data.services_treasury_engine import TreasuryEngine
+from models.admin import LogisticsCODRemittanceReceipt
+from models.payments import Payout
+from services.treasury.treasury_engine import TreasuryEngine
 from utils.constants import CASH_ACCOUNT, PAYABLES_ACCOUNT
 import structlog
+from utils.audit import audit_log, AuditAction
+from utils.datetime_utils import utcnow
 logger = structlog.get_logger(__name__)
 
 logger = logging.getLogger(__name__)
@@ -197,8 +199,8 @@ def record_cod_remittance(
     bank_reference: str,
 ) -> dict:
     """Record a logistics COD remittance receipt and sync the ledger."""
-    from data.models import Shipment as ShipmentModel
-    from data.models_orders import Order as OrderModel
+    from models import Shipment as ShipmentModel
+    from models.orders import Order as OrderModel
 
     cc = country_code.upper()
     shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
@@ -220,7 +222,7 @@ def record_cod_remittance(
 
     # Keep the double-entry ledger in sync with the reconciliation engine.
     try:
-        from data.services_general_ledger_service import (
+        from services.finance.general_ledger_service import (
             post_logistics_cod_remittance_journal,
         )
 
@@ -244,8 +246,8 @@ def settle_supplier(
     payout_id: Optional[int] = None,
 ) -> dict:
     """Create a supplier settlement row for a delivered order."""
-    from data.models_countries import CountryConfig
-    from data.models_orders import Order as OrderModel
+    from models.countries import CountryConfig
+    from models.orders import Order as OrderModel
 
     cc = country_code.upper()
     gross = gross_amount if gross_amount is not None else net_amount
@@ -287,7 +289,7 @@ def approve_settlement(db: Session, *, country_code: str, settlement_id: int) ->
     db.commit()
 
     try:
-        from data.services_general_ledger_service import post_supplier_settlement_journal
+        from services.finance.general_ledger_service import post_supplier_settlement_journal
 
         post_supplier_settlement_journal(
             db,
@@ -300,3 +302,89 @@ def approve_settlement(db: Session, *, country_code: str, settlement_id: int) ->
         logger.warning(f"Supplier settlement GL post skipped: {gl_err}")
 
     return {"status": "ok", "settlement_id": settlement.id}
+
+
+# ── Payout lifecycle (admin) ──────────────────────────────────────────────
+
+def create_payout(db: Session, *, country_code: str, payload, current_admin) -> Any:
+    """Create a payout for ``country_code`` and audit it.
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.admin_treasury_status.create_payout``: filter the payload to real
+    columns, stage + commit + refresh, then write the PAYOUT_PROCESSED audit row.
+    """
+    cc = country_code.upper()
+    model_cols = {c.name for c in Payout.__table__.columns}
+    data = {k: v for k, v in payload.model_dump().items() if k in model_cols}
+    p = Payout(**data, country_code=cc)
+    db.add(p)
+    db.commit()
+    db.refresh(p)
+    audit_log(
+        db=db,
+        action=AuditAction.PAYOUT_PROCESSED,
+        user_id=current_admin.id,
+        username=current_admin.username,
+        user_role="admin",
+        resource_type="payout",
+        resource_id=p.id,
+        details={"amount": str(p.amount) if p.amount else None, "method": p.method},
+    )
+    return p
+
+
+def verify_payout(db: Session, *, country_code: str, payout_id: int, payload, current_admin) -> dict:
+    """Verify a payout and audit it.
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.admin_treasury_status.verify_payout``.
+    """
+    cc = country_code.upper()
+    p = db.query(Payout).filter(Payout.id == payout_id, Payout.country_code == cc).first()
+    if not p:
+        raise HTTPException(404, "Payout not found")
+    p.status = payload.status if payload and payload.status else "verified"
+    p.processed_at = utcnow()
+    if payload:
+        if payload.note:
+            p.notes = payload.note
+        if payload.bank_reference:
+            p.reference = payload.bank_reference
+    db.commit()
+    audit_log(
+        db=db,
+        action=AuditAction.PAYOUT_PROCESSED,
+        user_id=current_admin.id,
+        username=current_admin.username,
+        user_role="admin",
+        resource_type="payout",
+        resource_id=payout_id,
+        details={"status": p.status, "reference": p.reference, "notes": p.notes},
+    )
+    return {"verified": True, "payout_id": payout_id}
+
+
+def process_payout(db: Session, *, country_code: str, payout_id: int, current_admin) -> dict:
+    """Mark a payout paid and audit it.
+
+    Behaviour-preserving extraction of the inline handler in
+    ``routers.admin_treasury_status.process_payout``.
+    """
+    cc = country_code.upper()
+    p = db.query(Payout).filter(Payout.id == payout_id, Payout.country_code == cc).first()
+    if not p:
+        raise HTTPException(404)
+    p.status = "paid"
+    p.processed_at = utcnow()
+    db.commit()
+    audit_log(
+        db=db,
+        action=AuditAction.PAYOUT_PROCESSED,
+        user_id=current_admin.id,
+        username=current_admin.username,
+        user_role="admin",
+        resource_type="payout",
+        resource_id=payout_id,
+        details={"status": "paid"},
+    )
+    return {"message": "Payout processed"}

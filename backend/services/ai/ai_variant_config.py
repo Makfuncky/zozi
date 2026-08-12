@@ -26,6 +26,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from providers.ai.text import _ollama_chat_completion
+
 logger = logging.getLogger(__name__)
 
 _CONFIG_PATHS = [
@@ -33,7 +35,15 @@ _CONFIG_PATHS = [
     Path("Working_API") / "zozi_ai_upload_session" / "zozi_variant_config.json",
 ]
 
-_OLLAMA_BASE_URL = "http://localhost:11434"
+try:
+    from utils.config import settings as _ollama_settings
+
+    _OLLAMA_BASE_URL = (
+        str(getattr(_ollama_settings, "ollama_base_url", "") or "").strip()
+        or "http://localhost:11434"
+    )
+except Exception:
+    _OLLAMA_BASE_URL = "http://localhost:11434"
 _OLLAMA_TEXT_MODEL = "phi3:mini"
 # qwen2.5 is natively multilingual (strong Arabic) â€” used for the AR translation
 # pass while phi3 handles the fast English structuring.
@@ -620,39 +630,16 @@ async def _ollama_chat(model: str, content: str, images: Optional[List[str]] = N
                        timeout: float = 90.0) -> Optional[str]:
     """Call Ollama via its OpenAI-compatible /v1/chat/completions endpoint.
 
-    This endpoint is what actually supports vision on this box (moondream
-    returns empty/garbage through the native /api/chat images field, but works
-    perfectly through image_url here). keep_alive pins the model so repeated
-    calls don't pay the 10s reload cost.
+    The live HTTP transport lives in :func:`providers.text._ollama_chat_completion`;
+    this wrapper preserves the service's public signature and logging.
     """
-    try:
-        import httpx
-    except ImportError:
-        return None
-    if images:
-        content_msg: Any = [
-            {"type": "text", "text": content},
-            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{images[0]}"}},
-        ]
-    else:
-        content_msg = content
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": content_msg}],
-        "temperature": temperature,
-        "max_tokens": num_predict,
-        "keep_alive": "5m",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(f"{_OLLAMA_BASE_URL}/v1/chat/completions", json=payload)
-            if resp.status_code != 200:
-                logger.info("ai_variant_config: Ollama %s responded %s", model, resp.status_code)
-                return None
-            return resp.json()["choices"][0]["message"]["content"]
-    except Exception as exc:  # noqa: BLE001
-        logger.info("ai_variant_config: Ollama %s unavailable (%s)", model, exc)
-        return None
+    result = await _ollama_chat_completion(
+        _OLLAMA_BASE_URL, model, content,
+        images=images, num_predict=num_predict, temperature=temperature, timeout=timeout,
+    )
+    if result is None:
+        logger.info("ai_variant_config: Ollama %s unavailable", model)
+    return result
 
 
 def _extract_json(content: str) -> Optional[Dict[str, Any]]:

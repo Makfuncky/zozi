@@ -76,18 +76,9 @@ _cleanup_thread.start()
 
 
 def _get_redis() -> object | None:
-    try:
-        import redis as redis_module
-        client = redis_module.from_url(
-            str(settings.redis_url),
-            socket_connect_timeout=1,
-            socket_timeout=1,
-            decode_responses=True,
-        )
-        client.ping()
-        return client
-    except Exception:
-        return None
+    from utils.redis_client import redis_client as _redis_client_factory
+
+    return _redis_client_factory()
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):

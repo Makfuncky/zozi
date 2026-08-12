@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 
 from .bg_remover import remove_background as _bg_remover_remove_background, ProcessingConfig, _resize_image, _bytes_to_image, _image_to_bytes
-from .config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ def generate_angles(
 
 async def process_image_search(
     image_bytes: bytes,
-    db: Any = None,
+    similar_products: Optional[list] = None,
     limit: int = 10,
 ) -> dict:
     """
@@ -97,45 +97,48 @@ async def process_image_search(
           Replace with real AI-powered visual similarity using an
           embedding model (CLIP / ResNet / ViT) for production.
           See: backend/providers/README.md for integration guide.
-          Test file: backend/tests/_test_provider/test_image.py
 
     Uses image analysis (color histogram + ML-based feature extraction)
     to find products that match the visual characteristics of the
     uploaded image. Falls back to category/color metadata matching
     when full vector embeddings are unavailable.
 
+    The DB lookup for candidate products is performed by the caller (a
+    service, e.g. ``services.catalog.visual_search_service``) and passed
+    in via ``similar_products``. This keeps the provider free of any
+    direct database access — providers only talk to external models/SDKs.
+
     Args:
         image_bytes: Raw bytes of the uploaded image.
-        db: SQLAlchemy database session.
+        similar_products: Pre-fetched candidate products from the caller's
+            database query. Each item is a dict with id/name/image/price.
         limit: Maximum number of results.
 
     Returns:
         Dict with similarProducts, similarProductIds, and imageUrl.
     """
-    import io
     import hashlib
 
     try:
         # Open image and extract basic features
         pil_image = Image.open(io.BytesIO(image_bytes))
-        
+
         # Convert to RGB if needed
         if pil_image.mode != "RGB":
             pil_image = pil_image.convert("RGB")
 
         # Resize for consistent processing
         pil_image.thumbnail((512, 512), Image.LANCZOS)
-        
+
         # Extract dominant colors (simple color histogram)
         pixels = list(pil_image.getdata())
-        
+
         # Compute a simple color signature (quantized histogram)
         color_buckets = {}
         for r, g, b in pixels:
             bucket_key = ((r // 32) * 8 + (g // 32)) * 8 + (b // 32)
             color_buckets[bucket_key] = color_buckets.get(bucket_key, 0) + 1
 
-        total_pixels = len(pixels)
         dominant_colors = sorted(
             color_buckets.items(),
             key=lambda x: x[1],
@@ -145,44 +148,8 @@ async def process_image_search(
         # Generate a basic image hash for caching
         image_hash = hashlib.md5(image_bytes[:1024]).hexdigest()
 
-        similar_products = []
-        similar_product_ids = []
-
-        # If we have a DB session, try to find visually similar products
-        if db is not None:
-            from sqlalchemy import text
-
-            # Try to find products with similar color descriptors
-            # This is a simplified approach — a production system would use
-            # embedding vectors from models like CLIP or ResNet
-            try:
-                rows = db.execute(
-                    text("""
-                        SELECT id, name, primary_image,
-                               COALESCE(price, 0) as price
-                        FROM products
-                        WHERE is_active = true
-                          AND is_approved = true
-                        ORDER BY RANDOM()
-                        LIMIT :limit
-                    """),
-                    {"limit": min(limit * 2, 20)},
-                ).mappings().all()
-
-                # Score by rough color proximity (placeholder for real embedding)
-                scored = []
-                for row in rows:
-                    scored.append({
-                        "id": row["id"],
-                        "name": row["name"],
-                        "image": row["primary_image"],
-                        "price": float(row["price"]),
-                    })
-
-                similar_products = scored[:limit]
-                similar_product_ids = [p["id"] for p in similar_products]
-            except Exception as e:
-                logger.warning(f"Visual search DB query failed: {e}")
+        similar_products = list(similar_products or [])[:limit]
+        similar_product_ids = [p["id"] for p in similar_products]
 
         return {
             "similarProducts": similar_products,

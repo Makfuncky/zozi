@@ -62,6 +62,7 @@ __all__ = [
     "exists_clause",
     "query",
     "execute",
+    "get_alembic_version",
 ]
 
 
@@ -462,6 +463,19 @@ def exists_clause(entity, filters: Sequence = ()):
             continue
         stmt = stmt.where(f)
     return stmt.exists()
+
+
+def get_alembic_version(db: Session) -> Optional[str]:
+    """Return the current ``alembic_version`` row value, or ``None``.
+
+    Owned here in the services layer so callers (controllers/routers) never
+    embed raw SQL; they only call this plain helper (auditor rule **Q1**).
+    """
+    try:
+        value = scalar(db, sql="SELECT version_num FROM alembic_version LIMIT 1")
+    except Exception:  # pragma: no cover - table may be absent on fresh DBs
+        return None
+    return str(value) if value else None
 
 
 # ── legacy read convenience re-exports (kept for pre-reorg controllers) ──────

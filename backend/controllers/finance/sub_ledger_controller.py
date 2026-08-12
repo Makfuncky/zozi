@@ -16,11 +16,14 @@ from services.finance.sub_ledger_service import (
     post_ap_payable,
     post_ap_payment,
 )
+from routers.generated.auto_router import get, post
 from utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 
 
+@get("/api/v1/admin/ar", deps=["admin", "db"], query=["customer_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/ar", deps=["admin", "db"], query=["customer_id", "status", "country_code", "limit"], tags=["finance"])
 def controller_get_ar_summary(
     db: Session,
     customer_id: Optional[int] = None,
@@ -31,6 +34,10 @@ def controller_get_ar_summary(
     return get_ar_summary(db, customer_id=customer_id, status=status, country_code=country_code, limit=limit)
 
 
+@get("/api/v1/admin/ap", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/ap", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/admin/ap-ledger", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/ap-ledger", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
 def controller_get_ap_summary(
     db: Session,
     supplier_id: Optional[int] = None,
@@ -41,6 +48,8 @@ def controller_get_ap_summary(
     return get_ap_summary(db, supplier_id=supplier_id, status=status, country_code=country_code, limit=limit)
 
 
+@post("/api/v1/admin/ar-ledger/invoice", deps=["admin", "db"], tags=["finance"])
+@post("/api/v1/ar-ledger/invoice", deps=["admin", "db"], tags=["finance"])
 def controller_post_ar_invoice(
     db: Session,
     customer_id: int,
@@ -72,6 +81,8 @@ def controller_post_ar_invoice(
     return {"id": entry.id, "status": entry.status, "balance_after": float(entry.balance_after or 0)}
 
 
+@post("/api/v1/admin/ar-ledger/payment", deps=["admin", "db"], tags=["finance"])
+@post("/api/v1/ar-ledger/payment", deps=["admin", "db"], tags=["finance"])
 def controller_post_ar_payment(
     db: Session,
     customer_id: int,
@@ -100,6 +111,8 @@ def controller_post_ar_payment(
     return {"id": entry.id, "status": entry.status, "balance_after": float(entry.balance_after or 0)}
 
 
+@post("/api/v1/admin/ap-ledger/payable", deps=["admin", "db"], tags=["finance"])
+@post("/api/v1/ap-ledger/payable", deps=["admin", "db"], tags=["finance"])
 def controller_post_ap_payable(
     db: Session,
     supplier_id: int,
@@ -123,6 +136,8 @@ def controller_post_ap_payable(
     return {"id": entry.id, "status": entry.status, "balance_after": float(entry.balance_after or 0)}
 
 
+@post("/api/v1/admin/ap-ledger/payment", deps=["admin", "db"], tags=["finance"])
+@post("/api/v1/ap-ledger/payment", deps=["admin", "db"], tags=["finance"])
 def controller_post_ap_payment(
     db: Session,
     supplier_id: int,

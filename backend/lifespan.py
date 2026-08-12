@@ -84,7 +84,7 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
 def _startup_load_role_permissions() -> None:
     try:
-        from controllers.admin.admin_controller import load_role_permission_settings
+        from services.admin.permissions_service import load_role_permission_settings
         from db.database import SessionLocal
 
         db = SessionLocal()
@@ -94,6 +94,22 @@ def _startup_load_role_permissions() -> None:
             db.close()
     except Exception:
         logger.exception("Failed to load role permission settings at startup")
+
+
+def _startup_register_services() -> None:
+    """Import the service-side-effect registry once at startup.
+
+    ``services/_registry.py`` imports runtime-dispatched service modules
+    (schedulers, webhook handlers, event consumers, websocket managers) so
+    their decorators/handlers register. It was previously never imported, so
+    those registrations silently never ran. Importing it here (resiliently)
+    restores that wiring without ``main`` importing ``services`` directly.
+    """
+    try:
+        import services._registry  # noqa: F401 — import side-effects only
+        logger.info("Service side-effect registry imported")
+    except Exception:
+        logger.exception("Failed to import services._registry at startup")
 
 
 def _startup_register_event_listeners() -> None:
@@ -237,6 +253,7 @@ def build_lifespan():
         _bootstrap_runtime(tables_just_created=fresh)
         _startup_load_role_permissions()
         _startup_seed_treasury()
+        _startup_register_services()
         _startup_register_event_listeners()
         _seed_demo_data()
         _ensure_default_accounts()

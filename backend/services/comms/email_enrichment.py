@@ -9,8 +9,8 @@ from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from data.models import User
-from data.models_employee_models import Employee
+from models import User
+from models.employee_models import Employee
 from utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)

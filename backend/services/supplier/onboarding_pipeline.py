@@ -12,10 +12,10 @@ from sqlalchemy.orm import Session
 from PIL import Image
 
 try:
-    import pytesseract
-    import cv2
+    from providers.media import cv2
     import numpy as np
-    OCR_AVAILABLE = True
+    from providers.image.ocr import ocr_available, ocr_image_array
+    OCR_AVAILABLE = ocr_available()
 except ImportError:
     OCR_AVAILABLE = False
 
@@ -47,8 +47,10 @@ class OCRProcessor:
             return {"text": "", "confidence": 0, "fields": {}, "error": "OCR not available"}
         try:
             processed_img = cls.preprocess_image(image_data)
-            text = pytesseract.image_to_string(processed_img)
-            confidence = pytesseract.image_to_data(processed_img, output_boxes=True)
+            ocr_out = ocr_image_array(processed_img)
+            if ocr_out is None:
+                return {"text": "", "confidence": 0, "fields": {}, "error": "OCR not available"}
+            text, confidence = ocr_out
             return {
                 "text": text.strip(),
                 "confidence": len(confidence) / max(1, len(text.split())),

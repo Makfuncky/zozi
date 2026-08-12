@@ -13,7 +13,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -370,3 +370,166 @@ def _extract_tags(text: str, category: str = "") -> List[str]:
             tags.append(tag)
 
     return tags
+
+
+# ============================================================================
+# Translation (shifted from services.comms.content_service)
+# ============================================================================
+# External LLM/provider code belongs in ``providers/``. This keeps the Ollama
+# translation implementation out of the services layer. Behavior is preserved
+# exactly: Ollama (OpenAI-compatible chat completions) first, curated
+# EN→AR glossary fallback so the feature never hard-fails.
+
+_OLLAMA_TRANSLATE_BASE_URL = "http://localhost:11434"
+_OLLAMA_TRANSLATE_MODEL = "phi3:mini"
+
+# Curated EN→AR glossary for the fallback translator (common e-commerce terms).
+_TRANSLATE_GLOSSARY = {
+    "product": "منتج", "products": "منتجات", "price": "السعر", "new": "جديد",
+    "sale": "تخفيض", "free": "مجاني", "shipping": "شحن", "delivery": "توصيل",
+    "fast": "سريع", "premium": "ممتاز", "quality": "جودة", "red": "أحمر",
+    "blue": "أزرق", "black": "أسود", "white": "أبيض", "green": "أخضر",
+    "size": "المقاس", "color": "اللون", "colour": "اللون", "warranty": "ضمان",
+    "available": "متوفر", "order": "اطلب", "best": "الأفضل", "discount": "خصم",
+    "offer": "عرض", "buy": "اشترِ", "watch": "ساعة", "phone": "هاتف",
+    "dress": "فستان", "shirt": "قميص", "shoes": "أحذية", "bag": "حقيبة",
+    "gold": "ذهبي", "silver": "فضي", "cotton": "قطني", "leather": "جلدي",
+    "waterproof": "مقاوم للماء", "original": "أصلي", "style": "ستايل",
+}
+
+
+def _translate_glossary_fallback(text: str) -> str:
+    """Word-by-word substitution using the curated glossary (keeps structure)."""
+    import re
+
+    parts = re.split(r"(\s+)", text)
+    out: List[str] = []
+    for part in parts:
+        low = part.lower().strip(".,!?;:")
+        out.append(_TRANSLATE_GLOSSARY.get(low, part))
+    return "".join(out)
+
+
+async def translate_en_to_ar(text: str) -> str:
+    """Translate English text to Arabic. Ollama first, glossary fallback.
+
+    Shifted from ``services.comms.content_service`` so provider/SDK code lives
+    in ``providers/``. Behavior preserved exactly.
+    """
+    if not text or not text.strip():
+        return ""
+    try:
+        import httpx  # noqa: F401
+
+        prompt = (
+            "Translate the following e-commerce product text into Arabic (Modern "
+            "Standard Arabic). Reply with ONLY the Arabic translation, no quotes, "
+            "no explanation:\n\n" + text
+        )
+        payload = {
+            "model": _OLLAMA_TRANSLATE_MODEL,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.1,
+            "stream": False,
+            "options": {"num_predict": 500, "keep_alive": "5m"},
+        }
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                f"{_OLLAMA_TRANSLATE_BASE_URL}/v1/chat/completions", json=payload
+            )
+            if resp.status_code == 200:
+                out = resp.json()["choices"][0]["message"]["content"].strip().strip('"')
+                if out:
+                    return out
+    except Exception as exc:  # noqa: BLE001
+        logger.info("providers.text: Ollama translation unavailable (%s)", exc)
+    return _translate_glossary_fallback(text)
+
+
+async def _ollama_chat_completion(
+    base_url: str,
+    model: str,
+    content: str,
+    images: Optional[List[str]] = None,
+    num_predict: int = 600,
+    temperature: float = 0.2,
+    timeout: float = 90.0,
+) -> Optional[str]:
+    """Low-level Ollama chat completion over the OpenAI-compatible endpoint.
+
+    Builds the request, performs the HTTP call, and returns the assistant
+    message text. Returns ``None`` if the model is unreachable or the response
+    is unusable so the caller can fall back gracefully.
+    """
+    try:
+        import httpx
+    except ImportError:
+        return None
+    if images:
+        content_msg: Any = [
+            {"type": "text", "text": content},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{images[0]}"}},
+        ]
+    else:
+        content_msg = content
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": content_msg}],
+        "temperature": temperature,
+        "max_tokens": num_predict,
+        "keep_alive": "5m",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            resp = await client.post(f"{base_url}/v1/chat/completions", json=payload)
+            if resp.status_code != 200:
+                return None
+            return resp.json()["choices"][0]["message"]["content"]
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def ollama_chat_json(
+    prompt: str,
+    model: Optional[str] = None,
+    base_url: Optional[str] = None,
+    *,
+    timeout: float = 900.0,
+    temperature: float = 0.2,
+    num_ctx: int = 8192,
+) -> Dict[str, Any]:
+    """Generate a structured JSON object from an Ollama ``/api/chat`` call.
+
+    Shifted from ``services.ai.country_ai_research`` so the Ollama vendor HTTP
+    call lives in ``providers/``. On any failure (unreachable, invalid JSON,
+    provider error) a ``RuntimeError`` is raised so the caller can fall back.
+    """
+    try:
+        import httpx
+    except ImportError as exc:  # pragma: no cover - httpx is a hard dep of services
+        raise RuntimeError("httpx is required for Ollama chat") from exc
+
+    model_name = model or _OLLAMA_TEXT_MODEL
+    url = f"{(base_url or settings.ollama_base_url).rstrip('/')}/api/chat"
+    payload = {
+        "model": model_name,
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False,
+        "format": "json",
+        "options": {"temperature": temperature, "num_ctx": num_ctx},
+    }
+    try:
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+    except Exception as exc:
+        raise RuntimeError(f"Ollama request failed: {exc}") from exc
+
+    if data.get("error"):
+        raise RuntimeError(str(data["error"]))
+    content = data.get("message", {}).get("content", "")
+    parsed = _extract_json(content)
+    if parsed is None:
+        raise RuntimeError("Ollama returned invalid JSON.")
+    return parsed

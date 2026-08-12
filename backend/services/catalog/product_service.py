@@ -19,11 +19,14 @@ Design notes
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any, Mapping, Optional, Sequence
+from uuid import uuid4
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Query, Session
 
-from data.models import Product, SupplierProfile
+from models import Product, SupplierProfile
 from utils.slug import generate_slug, generate_slug_hash
 import structlog
 logger = structlog.get_logger(__name__)
@@ -520,3 +523,53 @@ def set_product_verified(db: Session, product: Product, value: bool) -> Product:
     db.refresh(product)
     logger.info("product.verified id=%s value=%s", product.id, value)
     return product
+
+
+# ── Helpers relocated from the deprecated controllers.catalog.product_controller ──
+
+def _parse_discount_datetime(raw: Any, field: str) -> Optional[datetime]:
+    """Parse an ISO-8601 discount-window timestamp, raising a 400 on bad input."""
+    if raw in (None, ""):
+        return None
+    try:
+        return datetime.fromisoformat(str(raw)).replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError) as exc:
+        logger.exception("_parse_discount_datetime_failed", error=str(exc))
+        raise HTTPException(
+            status_code=400, detail=f"Invalid {field} format: {raw}"
+        ) from exc
+
+
+def build_discount_summary(product: Product, now: datetime) -> dict[str, Any]:
+    """Compute the public discount projection for a product."""
+    price = float(product.price or 0)
+    compare_price = (
+        float(product.compare_price) if product.compare_price is not None else None
+    )
+
+    discount_pct = 0.0
+    if compare_price and compare_price > 0:
+        discount_pct = round((1 - price / compare_price) * 100, 1)
+
+    active = bool(compare_price and compare_price > price)
+    starts_at = product.discount_starts_at
+    ends_at = product.discount_ends_at
+    if starts_at and ends_at:
+        active = active and starts_at <= now <= ends_at
+    elif starts_at:
+        active = active and starts_at <= now
+
+    return {
+        "product_id": product.id,
+        "price": price,
+        "compare_price": compare_price,
+        "discount_percentage": discount_pct,
+        "discount_active": active,
+    }
+
+
+def build_image_filename(product_id: int, original_filename: Optional[str]) -> str:
+    """Derive a collision-free storage filename for a product image."""
+    name = original_filename or "product.jpg"
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else "jpg"
+    return f"product_{product_id}_{uuid4().hex[:8]}.{ext}"

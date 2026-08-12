@@ -13,8 +13,8 @@ from typing import Any, List, Optional
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from data.models import CountryCommunication, CountryStaffAssignment
-from data.models_country_enhancements import CountryCategoryTaxRate, CountryCity
+from models import CountryCommunication, CountryStaffAssignment
+from models.country_enhancements import CountryCategoryTaxRate, CountryCity
 import structlog
 logger = structlog.get_logger(__name__)
 

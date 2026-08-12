@@ -2,41 +2,28 @@
 """
 Content services for the Dynamic Supplier Upload flow (Step 6):
 
-* ``translate_en_to_ar`` — best-effort EN→AR translation. Uses Ollama
-  (``phi3:mini``) when reachable; otherwise falls back to a curated
-  e-commerce glossary so the feature never hard-fails.
+* ``translate_en_to_ar`` — best-effort EN→AR translation. The Ollama/LLM
+  implementation now lives in ``providers.text`` (provider layer); this module
+  re-exports it so first-party callers are unaffected. The provider falls back
+  to a curated e-commerce glossary when Ollama is unreachable so the feature
+  never hard-fails.
 * ``moderate_content`` — scans text for GCC-restricted items (alcohol,
   pork, gambling, tobacco) and returns a pass/fail verdict with reasons.
-
-Both are intentionally dependency-free and safe to call from the request path.
+  This is pure, dependency-free logic and stays in the services layer.
 """
 from __future__ import annotations
 
-
 import logging
 import re
-from typing import Dict, List, Optional
-import structlog
-logger = structlog.get_logger(__name__)
+from typing import Dict, List
 
+import structlog
+
+logger = structlog.get_logger(__name__)
 logger = logging.getLogger(__name__)
 
-_OLLAMA_BASE_URL = "http://localhost:11434"
-_OLLAMA_TEXT_MODEL = "phi3:mini"
-
-# Curated EN→AR glossary for the fallback translator (common e-commerce terms).
-_GLOSSARY = {
-    "product": "منتج", "products": "منتجات", "price": "السعر", "new": "جديد",
-    "sale": "تخفيض", "free": "مجاني", "shipping": "شحن", "delivery": "توصيل",
-    "fast": "سريع", "premium": "ممتاز", "quality": "جودة", "red": "أحمر",
-    "blue": "أزرق", "black": "أسود", "white": "أبيض", "green": "أخضر",
-    "size": "المقاس", "color": "اللون", "colour": "اللون", "warranty": "ضمان",
-    "available": "متوفر", "order": "اطلب", "best": "الأفضل", "discount": "خصم",
-    "offer": "عرض", "buy": "اشترِ", "watch": "ساعة", "phone": "هاتف",
-    "dress": "فستان", "shirt": "قميص", "shoes": "أحذية", "bag": "حقيبة",
-    "gold": "ذهبي", "silver": "فضي", "cotton": "قطني", "leather": "جلدي",
-    "waterproof": "مقاوم للماء", "original": "أصلي", "style": "ستايل",
-}
+# The Ollama translation implementation was shifted to the provider layer.
+from providers.ai.text import translate_en_to_ar  # noqa: F401  (re-exported API)
 
 # Restricted-term → category used for moderation flags.
 _RESTRICTED_KEYWORDS = {
@@ -46,46 +33,6 @@ _RESTRICTED_KEYWORDS = {
     "gambling": "gambling", "casino": "gambling", "bet": "gambling", "betting": "gambling",
     "lottery": "gambling", "cigar": "tobacco", "cigarette": "tobacco", "tobacco": "tobacco",
 }
-
-
-async def translate_en_to_ar(text: str) -> str:
-    """Translate English text to Arabic. Ollama first, glossary fallback."""
-    if not text or not text.strip():
-        return ""
-    try:
-        import httpx  # noqa: F401
-
-        prompt = (
-            "Translate the following e-commerce product text into Arabic (Modern "
-            "Standard Arabic). Reply with ONLY the Arabic translation, no quotes, "
-            "no explanation:\n\n" + text
-        )
-        payload = {
-            "model": _OLLAMA_TEXT_MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.1,
-            "stream": False,
-            "options": {"num_predict": 500, "keep_alive": "5m"},
-        }
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(f"{_OLLAMA_BASE_URL}/v1/chat/completions", json=payload)
-            if resp.status_code == 200:
-                out = resp.json()["choices"][0]["message"]["content"].strip().strip('"')
-                if out:
-                    return out
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:  # noqa: BLE001
-        logger.info("content_service: Ollama translation unavailable (%s)", exc)
-    return _glossary_fallback(text)
-
-
-def _glossary_fallback(text: str) -> str:
-    """Word-by-word substitution using the curated glossary (keeps structure)."""
-    parts = re.split(r"(\s+)", text)
-    out: List[str] = []
-    for part in parts:
-        low = part.lower().strip(".,!?;:")
-        out.append(_GLOSSARY.get(low, part))
-    return "".join(out)
 
 
 def moderate_content(text: str = "", category: str = "") -> Dict[str, object]:

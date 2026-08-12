@@ -27,7 +27,7 @@ from typing import Any, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from data.models import LogisticsPartnerPayout, Payout, PayoutBatch, SupplierProfile
+from models import LogisticsPartnerPayout, Payout, PayoutBatch, SupplierProfile
 from utils.audit import audit_log
 from utils.datetime_utils import utcnow
 import structlog

@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import desc, func as sqlfunc, case as sql_case
 from sqlalchemy.orm import Session
 
-from data.models import (
+from models import (
     EmailCampaign,
     EmailRuntimeConfig,
     EmailSuppression,
@@ -15,7 +15,7 @@ from data.models import (
     CampaignRecipient,
 )
 from db.database import get_service_session
-from data.services_write_helpers import (
+from services.common.write_helpers import (
     add_and_flush,
     commit_and_refresh,
     commit_only,

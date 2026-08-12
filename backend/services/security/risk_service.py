@@ -132,3 +132,35 @@ def get_audit_timeline(employee_id: int, db: Session, limit: int = 100) -> list[
         "user_agent": e[4],
         "created_at": (e[5].isoformat() if not isinstance(e[5], str) else e[5]) if e[5] else None,
     } for e in events]
+
+
+def get_employee_risk_scores(db: Session, employee_id: int) -> list[dict]:
+    """Return flight-risk / burnout score records for an employee (0 = all)."""
+    if employee_id and employee_id != 0:
+        rows = db.execute(
+            text("""
+                SELECT employee_id, metric_name, score, recorded_at
+                FROM employee_risk_scores
+                WHERE employee_id = :eid
+                ORDER BY recorded_at DESC
+            """),
+            {"eid": employee_id},
+        ).fetchall()
+    else:
+        rows = db.execute(
+            text("""
+                SELECT employee_id, metric_name, score, recorded_at
+                FROM employee_risk_scores
+                ORDER BY recorded_at DESC
+                LIMIT 200
+            """)
+        ).fetchall()
+    return [
+        {
+            "employee_id": r[0],
+            "metric_name": r[1],
+            "score": float(r[2]) if r[2] is not None else None,
+            "recorded_at": (r[3].isoformat() if not isinstance(r[3], str) else r[3]) if r[3] else None,
+        }
+        for r in rows
+    ]

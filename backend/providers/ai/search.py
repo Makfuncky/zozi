@@ -10,7 +10,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from .config import settings
+from ..config import settings
 from .text import embed_text, cosine_similarity, _ollama_chat
 
 logger = logging.getLogger(__name__)
