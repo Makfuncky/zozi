@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Country Provider
 ================
@@ -7,21 +8,8 @@ Test file: backend/tests/_test_provider/test_country.py
 """
 import logging
 from typing import Any, Dict, List, Optional
-import structlog
-logger = structlog.get_logger(__name__)
 
-
-class CountryProviderSettings:
-    """Static configuration for country-resolution providers.
-
-    Holds shared tuning knobs (cache TTL, default country, supported country
-    list) used by the country detection/search providers. No instance state;
-    treat as a configuration constants holder.
-    """
-
-    country_cache_ttl = 3600
-    default_country = "US"
-    supported_countries = ["US", "UK", "CA", "AU", "EU"]
+from .config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +18,7 @@ class CountrySearchProvider:
     """AI-powered country details search system."""
 
     def __init__(self):
-        self.default_country = CountryProviderSettings.geo_default_country
+        self._default_country = settings.geo_default_country
         self._country_cache: Dict[str, Dict] = {}
 
     def search_country(self, query: str) -> List[Dict[str, Any]]:
@@ -57,7 +45,7 @@ class CountrySearchProvider:
 
         return results[:20]
 
-    def _get_country_details(self, country_code: str) -> Dict[str, Any]:
+    def get_country_details(self, country_code: str) -> Dict[str, Any]:
         """Get detailed information about a country by code.
 
         Args:
@@ -75,14 +63,14 @@ class CountrySearchProvider:
         self._country_cache[code] = details
         return details
 
-    def _get_country_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_country_by_name(self, name: str) -> Optional[Dict[str, Any]]:
         """Get country details by full name."""
         results = self.search_country(name)
         if results:
             return results[0]
         return None
 
-    def _get_countries_by_region(self, region: str) -> List[Dict[str, Any]]:
+    def get_countries_by_region(self, region: str) -> List[Dict[str, Any]]:
         """Get all countries in a region."""
         region_lower = region.lower().strip()
         all_countries = self._get_known_countries()
@@ -91,7 +79,7 @@ class CountrySearchProvider:
             if c.get("region", "").lower() == region_lower
         ]
 
-    def _get_currencies(self) -> Dict[str, List[str]]:
+    def get_currencies(self) -> Dict[str, List[str]]:
         """Get a mapping of currencies to countries."""
         currencies: Dict[str, List[str]] = {}
         for country in self._get_known_countries():

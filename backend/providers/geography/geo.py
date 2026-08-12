@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 Geo Provider
 ============
@@ -7,21 +8,17 @@ Test file: backend/tests/_test_provider/test_geo.py
 """
 import ipaddress
 import json
+import json
 import logging
 import urllib.request
 from typing import Optional, Tuple
-import structlog
-logger = structlog.get_logger(__name__)
 
-
-class GeoProviderSettings:
-    geo_timeout = 10
-    ip_geolocation_api = "http://ip-api.com"
+from .config import settings
 
 logger = logging.getLogger(__name__)
 
 
-class _CountryDetectionProvider:
+class CountryDetectionProvider:
     """IP address detection for customer location and country detection."""
 
     IP_HEADER_MAPPING = {
@@ -34,9 +31,9 @@ class _CountryDetectionProvider:
 
     def __init__(self):
         self._geoip_reader = None
-        self.default_country = GeoProviderSettings.geo_default_country
+        self._default_country = settings.geo_default_country
 
-    def _detect_country_from_ip(
+    def detect_country_from_ip(
         self,
         request_headers: dict,
         client_host: Optional[str] = None,
@@ -53,10 +50,10 @@ class _CountryDetectionProvider:
         """
         ip = self._extract_ip(request_headers, client_host)
         if not ip:
-            return self.default_country, "unknown"
+            return self._default_country, "unknown"
 
         if self._is_private_ip(ip):
-            return self.default_country, "private"
+            return self._default_country, "private"
 
         country_code, source = self._lookup_country_by_ip(ip)
         return country_code, source
@@ -74,8 +71,7 @@ class _CountryDetectionProvider:
         try:
             ip_obj = ipaddress.ip_address(ip)
             return ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local
-        except ValueError as e:
-            logger.exception("_is_private_ip_failed", error=str(e))
+        except ValueError:
             return False
 
     def _lookup_country_by_ip(self, ip: str) -> Tuple[str, str]:
@@ -87,7 +83,7 @@ class _CountryDetectionProvider:
         if country:
             return country, "ipapi"
 
-        return self.default_country, "default"
+        return self._default_country, "default"
 
     def _lookup_geoip2(self, ip: str) -> Optional[str]:
         try:
@@ -96,39 +92,37 @@ class _CountryDetectionProvider:
                 geoip_db_path = "/usr/share/GeoIP/GeoLite2-Country.mmdb"
                 try:
                     self._geoip_reader = geoip2.database.Reader(geoip_db_path)
-                except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                    logger.exception("Handled Exception in geo.py:96")
+                except Exception:
                     return None
             if self._geoip_reader:
                 response = self._geoip_reader.country(ip)
                 if response and response.country and response.country.iso_code:
                     return response.country.iso_code
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
+        except Exception:
             pass
-            logger.exception("Handled Exception")
         return None
 
     def _lookup_ipapi(self, ip: str) -> Optional[str]:
         try:
             url = f"https://ipapi.co/{ip}/json/"
             req = urllib.request.Request(url, headers={"User-Agent": "Zozi-CountryDetection"})
-            with urllib.request.urlopen(req, timeout=GeoProviderSettings.geo_ipapi_timeout) as resp:
+            with urllib.request.urlopen(req, timeout=settings.geo_ipapi_timeout) as resp:
                 data = json.loads(resp.read().decode())
                 return data.get("country_code") or data.get("country")
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
+        except Exception as exc:
             logger.debug("ipapi.co lookup failed for %s: %s", ip, exc)
         return None
 
-    def _get_country_by_coordinates(
+    def get_country_by_coordinates(
         self,
         latitude: float,
         longitude: float,
         tolerance_km: float = 100.0,
     ) -> Optional[str]:
         """Get country code from coordinates."""
-        return self.default_country
+        return self._default_country
 
-    def _get_country_details(self, country_code: str) -> dict:
+    def get_country_details(self, country_code: str) -> dict:
         """Get detailed information about a country."""
         return {
             "code": country_code,
