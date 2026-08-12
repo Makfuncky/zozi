@@ -115,8 +115,7 @@ async def health_ready():
     from utils.auth import _get_redis
     from db.database import check_connection_health
     from services.gateways.payments import _payment_provider_runtime_status
-    from types import SimpleNamespace
-    
+
     db_ok = check_connection_health()
     
     deps = {"redis": "ok", "email": "ok", "payments": "ok"}
@@ -136,7 +135,9 @@ async def health_ready():
     
     if settings.readiness_require_payments:
         try:
-            payments = _payment_provider_runtime_status(db)
+            from db.database import get_db
+            with get_db() as db:
+                payments = _payment_provider_runtime_status(db)
             if not payments.get("online_provider"):
                 deps["payments"] = "unavailable"
                 blocking.append("payments")
@@ -218,23 +219,29 @@ def _load_routers():
         if _router is None:
             continue
         _prefix = getattr(_module, "__router_prefix__", None)
-        if _prefix:
-            app.include_router(_router, prefix=_prefix)
-        else:
-            app.include_router(_router)
-        if getattr(_module, "public_router", None) is not None:
-            app.include_router(_module.public_router, prefix=_prefix or "")
+        try:
+            if _prefix:
+                app.include_router(_router, prefix=_prefix)
+            else:
+                app.include_router(_router)
+            if getattr(_module, "public_router", None) is not None:
+                app.include_router(_module.public_router, prefix=_prefix or "")
+        except Exception as e:  # noqa: BLE001
+            # A malformed router (e.g. an empty path operation, or a
+            # route that collides at include time) must not abort the whole
+            # boot the way import errors are tolerated above. Skip + log so
+            # the deploy still comes up and the broken surface is visible.
+            logger.error("Skipping router %s (include failed): %s", _modname, e)
 
     if failed_routers:
         _names = ", ".join(n for n, _ in failed_routers)
         logger.error("Failed to load %d router(s): %s", len(failed_routers), _names)
-
-    # Register country-scoped routers that expose /admin/{code}/... paths
-    try:
-        from routers.admin_promotions_routes import country_router as promotions_country_router
-        app.include_router(promotions_country_router, prefix="/admin")
-    except Exception as e:
-        logger.warning(f"Could not register promotions country router: {e}")
+        # In production, broken routers must not silently vanish (endpoints would
+        # disappear with only a log line). Fail fast so the deploy is rolled back.
+        if str(getattr(settings, "app_env", "development")).lower() == "production":
+            raise RuntimeError(
+                f"Refusing to start in production: {len(failed_routers)} router(s) failed to load: {_names}"
+            )
 
     # Alias the logistics-partner router under the plural form used by the mobile
     # app so both web ('/logistics-partner') and mobile ('/logistics-partners')

@@ -21,11 +21,11 @@ before it in the request path (outermost runs first).
 │ 5. COMPLIANCE     PCI-DSS audit (production only) │
 ╰───────────────────────────────────────────────────────────────╯
 
-Registration order matches the original ``main.py`` exactly (verified
-by code review on 2026-07-25).  Only middleware that was previously
-registered is active.  Additional middleware exists in the codebase
-but is listed as COMMENTED-OUT entries — review and uncomment
- deliberately; each has behavioral consequences.
+Registration order is reversed at registration time to compensate for
+Starlette's ``add_middleware`` prepend behaviour (see ``setup_middleware``).
+Only middleware that was previously registered is active.  Additional
+middleware exists in the codebase but is listed as COMMENTED-OUT entries —
+review and uncomment deliberately; each has behavioral consequences.
 
 Usage:
     from middleware.orchestrator import setup_middleware
@@ -126,35 +126,32 @@ _COMPLIANCE: list[type] = [
 def setup_middleware(app: FastAPI) -> None:
     """Register the middleware pipeline on *app*.
 
-    Registration order follows the original ``main.py`` exactly.
-    Each layer calls ``app.add_middleware`` with the class and
-    (where applicable) keyword arguments.
+    Starlette's :meth:`~fastapi.FastAPI.add_middleware` **prepends** each new
+    middleware (it inserts at index 0 of its internal list), so the *last*
+    middleware registered becomes the **outermost** and runs first on the way
+    in.  To honour the documented outer→inner order below, the ordered
+    pipeline is therefore registered in **reverse**.
+
+    Documented execution order (outermost first, i.e. closest to the client):
+        FOUNDATION → SECURITY → RATE LIMITING → GEO & COUNTRY
+        → OBSERVABILITY → COMPLIANCE (production only)
     """
-    # ── Layer 1: Foundation ─────────────────────────────────────────
-    for mw in _FOUNDATION:
-        _add(app, mw)
+    pipeline: list[type] = [
+        *_FOUNDATION,
+        *_SECURITY,
+        *_RATE_LIMITING,
+        *_GEO_COUNTRY,
+        *_OBSERVABILITY,
+    ]
 
-    # ── Layer 2: Security ───────────────────────────────────────────
-    for mw in _SECURITY:
-        _add(app, mw)
-
-    # ── Layer 3: Rate Limiting ──────────────────────────────────────
-    for mw in _RATE_LIMITING:
-        _add(app, mw)
-
-    # ── Layer 4: Geo & Country ──────────────────────────────────────
-    for mw in _GEO_COUNTRY:
-        _add(app, mw)
-
-    # ── Layer 5: Observability ─────────────────────────────────────
-    for mw in _OBSERVABILITY:
-        _add(app, mw)
-
-    # ── Layer 6: Compliance (production only) ───────────────────────
     app_env = str(getattr(settings, "app_env", "") or "").lower()
     if app_env not in ("test", "development"):
-        for mw in _COMPLIANCE:
-            _add(app, mw)
+        pipeline = [*pipeline, *_COMPLIANCE]
+
+    # Register in reverse: because Starlette prepends, the first entry in
+    # ``pipeline`` (FOUNDATION) ends up outermost after all insertions.
+    for mw in reversed(pipeline):
+        _add(app, mw)
 
     logger.info(
         "Middleware pipeline registered: %d layers, %d middleware",
@@ -237,10 +234,12 @@ def _total_middleware() -> int:
 # ║  zero_trust_network.py     │  ZeroTrustMiddleware │  MERGED   ║
 # ║  security_middleware.py    │  ZoiSecurityMw       │  REPLACED ║
 # ║────────────────────────────┼──────────────────────┼────────── ║
-# ║  behavioral_analytics.py   │  BehavioralAnalyzer   │  UTILITY  ║
+# ║  services/security/        │  BehavioralAnalyzer   │  UTILITY  ║
+# ║    behavioral_analytics.py │  (relocated)          │          ║
 # ║  coi_middleware.py         │  COIMiddleware        │  UTILITY  ║
 # ║  database_security.py      │  DatabaseSecurityMgr  │  UTILITY  ║
-# ║  siem_engine.py            │  SIEMEngine           │  UTILITY  ║
+# ║  services/security/        │  SIEMEngine          │  UTILITY  ║
+# ║    siem_engine.py          │  (relocated)          │          ║
 # ║  webhook_verification.py   │  WebhookVerification  │  PER-ROUTE║
 # ║  webhook_ip_whitelist.py  │  WebhookIPWhitelist   │  PER-ROUTE║
 # ║  device_binding_middleware │  DeviceBindingMw     │  ALIAS    ║

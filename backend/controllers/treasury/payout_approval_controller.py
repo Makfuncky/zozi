@@ -20,46 +20,46 @@ def _notes(payload: Any) -> str | None:
     return payload.notes if payload and payload.notes else None
 
 
-def _actor(current_admin: Any) -> tuple[int | None, str | None]:
+def _actor(current_user: Any) -> tuple[int | None, str | None]:
     """Return (id, username) for the acting admin."""
-    return getattr(current_admin, "id", None), getattr(current_admin, "username", None)
+    return getattr(current_user, "id", None), getattr(current_user, "username", None)
 
 
 @post("/api/v1/admin/payouts/{payout_id}/approve", deps=["admin", "db"], tags=["treasury-payouts"])
-def approve_payout(payout_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
-    actor_id, actor_username = _actor(current_admin)
+def approve_payout(payout_id: int, payload: Any, current_user: Any, db) -> dict[str, Any]:
+    actor_id, actor_username = _actor(current_user)
     return svc.approve_payout(
         db, payout_id, _notes(payload), actor_id=actor_id, actor_username=actor_username
     )
 
 
 @post("/api/v1/admin/payouts/{payout_id}/reject", deps=["admin", "db"], tags=["treasury-payouts"])
-def reject_payout(payout_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
-    actor_id, actor_username = _actor(current_admin)
+def reject_payout(payout_id: int, payload: Any, current_user: Any, db) -> dict[str, Any]:
+    actor_id, actor_username = _actor(current_user)
     return svc.reject_payout(
         db, payout_id, _notes(payload), actor_id=actor_id, actor_username=actor_username
     )
 
 
 @post("/api/v1/admin/batches/{batch_id}/approve", deps=["admin", "db"], tags=["treasury-payouts"])
-def approve_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
-    actor_id, actor_username = _actor(current_admin)
+def approve_batch(batch_id: int, payload: Any, current_user: Any, db) -> dict[str, Any]:
+    actor_id, actor_username = _actor(current_user)
     return svc.approve_batch(
         db, batch_id, _notes(payload), actor_id=actor_id, actor_username=actor_username
     )
 
 
 @post("/api/v1/admin/batches/{batch_id}/reject", deps=["admin", "db"], tags=["treasury-payouts"])
-def reject_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
-    actor_id, actor_username = _actor(current_admin)
+def reject_batch(batch_id: int, payload: Any, current_user: Any, db) -> dict[str, Any]:
+    actor_id, actor_username = _actor(current_user)
     return svc.reject_batch(
         db, batch_id, _notes(payload), actor_id=actor_id, actor_username=actor_username
     )
 
 
 @post("/api/v1/admin/batches/{batch_id}/dispatch", deps=["admin", "db"], tags=["treasury-payouts"])
-def dispatch_batch(batch_id: int, payload: Any, current_admin: Any, db) -> dict[str, Any]:
-    actor_id, actor_username = _actor(current_admin)
+def dispatch_batch(batch_id: int, payload: Any, current_user: Any, db) -> dict[str, Any]:
+    actor_id, actor_username = _actor(current_user)
     return svc.dispatch_batch(
         db, batch_id, _notes(payload), actor_id=actor_id, actor_username=actor_username
     )

@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as utcnow
 from ..mixins import TenantMixin
-from db.mixins import VersionMixin
+from models.mixins import VersionMixin
 __all__ = ['Notification', 'Announcement', 'FAQ', 'HelpCategory', 'TicketMessage', 'ProxyChannel', 'ProxySession', 'ProxyMessage', 'ProxyCallLog', 'EmployeeCommunicationThread', 'ExternalContactMasking', 'CommunicationAuditTrail', 'InternalChannel', 'InternalChannelMember', 'InternalMessage', 'ChatAttachment', 'InternalEmail', 'EmailFolder', 'MaskedMessage']
 
 class Notification(Base, TenantMixin):

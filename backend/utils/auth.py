@@ -27,7 +27,6 @@ LOGIN_LOCKOUT_TTL = 900
 
 _memory_blacklist: dict[str, float] = {}
 _memory_failed_logins: dict[str, tuple[int, float]] = {}
-_redis_client = None
 
 
 def _coerce_failed_login_entry(entry: object, *, now: float) -> tuple[int, float]:
@@ -47,23 +46,15 @@ def _coerce_failed_login_entry(entry: object, *, now: float) -> tuple[int, float
 
 
 def _get_redis():
-    global _redis_client
-    if _redis_client is not None:
-        return _redis_client
+    from utils.redis_client import redis_client
 
+    client = redis_client()
     try:
-        import redis as redis_module
-
-        client = redis_module.from_url(
-            settings.redis_url,
-            socket_connect_timeout=1,
-            socket_timeout=1,
-            decode_responses=True,
-        )
-        _redis_client = client
-        return client
+        if not client.ping():
+            return None
     except Exception:
         return None
+    return client
 
 
 def get_redis_health_status() -> dict[str, object]:
@@ -192,7 +183,7 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None, device_fp: str | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc).replace(tzinfo=None) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire, "type": "access", "jti": uuid.uuid4().hex})
     if device_fp:
         to_encode["dfp"] = device_fp
@@ -201,7 +192,7 @@ def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta]
 
 def create_refresh_token(data: dict[str, Any], family_id: str | None = None) -> str:
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     to_encode.update({
         "exp": expire,
         "type": "refresh",
@@ -279,7 +270,7 @@ TEMP_TOKEN_EXPIRE_MINUTES = 5
 def create_temp_token(data: dict[str, Any]) -> str:
     """Short-lived JWT used as a temporary challenge token for 2FA."""
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=TEMP_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=TEMP_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire, "type": "temp", "jti": uuid.uuid4().hex})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 

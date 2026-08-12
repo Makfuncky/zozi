@@ -24,6 +24,7 @@ import pytest
 BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SERVICES_DIR = os.path.join(BACKEND, "services")
 CONTROLLERS_DIR = os.path.join(BACKEND, "controllers")
+ROUTERS_DIR = os.path.join(BACKEND, "routers")
 
 # Standalone microservice — its `app = FastAPI(...)` is intentional.
 SERVICE_EXCLUDES = {"services/location_service"}
@@ -111,6 +112,27 @@ class TestControllersUseNoFastAPIRouters:
                 "Controllers must be routing-metadata only "
                 "(import from routers.generated.auto_router). Violations:\n" + msg
             )
+
+
+class TestNoServiceCodeInRouters:
+    """Regression guard: handler/service code must not live in the routers layer.
+
+    The 54 ``*_service.py`` modules were previously stranded under
+    ``routers/extracted/`` (no ``router=``, importing upward into controllers).
+    They have been relocated to ``services/<domain>/``. This test ensures none
+    reappear under ``routers/``.
+    """
+
+    def test_no_service_modules_under_routers(self):
+        offenders = []
+        for path in _iter_py(ROUTERS_DIR):
+            rel = os.path.relpath(path, BACKEND).replace(os.sep, "/")
+            if rel.endswith("_service.py"):
+                offenders.append(rel)
+        assert not offenders, (
+            "Handler/service code found in the routers layer (must live in "
+            "services/). Offenders:\n  " + "\n  ".join(offenders)
+        )
 
 
 class TestAppBoot:

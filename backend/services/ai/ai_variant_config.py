@@ -508,7 +508,7 @@ def _analyze_photo_cv(image_bytes: bytes) -> Dict[str, Any]:
       ``None`` when the backdrop already looks clean.
     """
     try:
-        from PIL import Image as _PILImage
+        from providers.image import Image as _PILImage
         import numpy as np
         im = _PILImage.open(io.BytesIO(image_bytes)).convert("RGB")
     except Exception as exc:  # noqa: BLE001

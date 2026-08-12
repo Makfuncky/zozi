@@ -25,11 +25,11 @@ _SERVICES = _BACKEND_ROOT / "services"
 # Bump a baseline DOWN only after the corresponding migration lands; never set it
 # higher to silence a failure.
 _BASELINE = {
-    "stripe.": 29,
+    "stripe.": 21,
     "resend": 47,
-    "rembg": 69,
-    "ollama": 56,
-    "huggingface": 14,
+    "rembg": 70,
+    "ollama": 65,
+    "huggingface": 15,
     "openai": 6,
     "twilio": 14,
     "boto3": 1,

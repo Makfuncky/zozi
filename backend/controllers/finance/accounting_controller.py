@@ -1,4 +1,9 @@
-"""Accounting Controller — wraps general_ledger_service for API consumption."""
+"""Accounting Controller — wraps general_ledger_service for API consumption.
+
+HTTP contract declared with ``routers.generated.auto_router`` decorators. Paths
+match ``routers/admin_finance_creation.py`` so auto-generation skips them (no
+duplicate live routes).
+"""
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -8,6 +13,8 @@ from typing import List, Optional
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+
+from routers.generated.auto_router import get, post
 
 from utils.audit import AuditAction, audit_log
 from models import User
@@ -33,6 +40,8 @@ class JournalEntryBody(BaseModel):
 
 # ── Controller functions ──────────────────────────────────────────────────────
 
+@post("/api/v1/admin/seed", deps=["db"], query=["audit_user_id", "audit_username", "audit_user_role"],
+      tags=["accounting"], summary="Seed chart of accounts (idempotent)")
 def seed_chart_of_accounts(db: Session, audit_user_id: Optional[int] = None, audit_username: Optional[str] = None, audit_user_role: Optional[str] = None) -> dict:
     gl.seed_chart_of_accounts(db)
     count = len(gl.list_accounts(db))
@@ -49,10 +58,12 @@ def seed_chart_of_accounts(db: Session, audit_user_id: Optional[int] = None, aud
     return {"status": "ok", "accounts_created": count}
 
 
+@get("/api/v1/admin/accounts", deps=["db"], tags=["accounting"], summary="List all accounts")
 def list_accounts(db: Session) -> list:
     return gl.list_accounts(db)
 
 
+@get("/api/v1/admin/accounts/{code}", deps=["db"], tags=["accounting"], summary="Get account by code")
 def get_account(db: Session, code: str):
     acct = gl.get_account_by_code(db, code)
     if not acct:
@@ -60,6 +71,8 @@ def get_account(db: Session, code: str):
     return acct
 
 
+@post("/api/v1/admin/journal-entries", deps=["db", "admin"], body=JournalEntryBody,
+      tags=["accounting"], summary="Create a journal entry")
 def create_journal_entry(
     db: Session,
     body: JournalEntryBody,
@@ -98,6 +111,7 @@ def create_journal_entry(
     return entry
 
 
+@get("/api/v1/admin/journal-entries/{entry_id}", deps=["db"], tags=["accounting"], summary="Get journal entry by ID")
 def get_journal_entry(db: Session, entry_id: int):
     entry = gl.get_journal_entry(db, entry_id)
     if not entry:
@@ -105,6 +119,8 @@ def get_journal_entry(db: Session, entry_id: int):
     return entry
 
 
+@get("/api/v1/admin/journal-entries", deps=["db"], query=["reference_type", "reference_id", "country_code", "limit"],
+    tags=["accounting"], summary="List journal entries")
 def list_journal_entries(
     db: Session,
     reference_type: Optional[str] = None,
@@ -117,6 +133,8 @@ def list_journal_entries(
     )
 
 
+@get("/api/v1/admin/balances/{account_code}", deps=["db"], query=["currency"],
+    tags=["accounting"], summary="Get account balance")
 def get_account_balance(db: Session, account_code: str, currency: str = "OMR") -> dict:
     acct = gl.get_account_by_code(db, account_code)
     if not acct:
@@ -127,6 +145,8 @@ def get_account_balance(db: Session, account_code: str, currency: str = "OMR") -
     return bal
 
 
+@get("/api/v1/admin/trial-balance", deps=["db"], query=["as_of_date", "currency", "country_code"],
+    tags=["accounting"], summary="Get trial balance")
 def get_trial_balance(
     db: Session,
     as_of_date: Optional[date] = None,
@@ -134,4 +154,3 @@ def get_trial_balance(
     country_code: Optional[str] = None,
 ) -> list:
     return gl.get_trial_balance(db, as_of_date=as_of_date, currency=currency, country_code=country_code)
-

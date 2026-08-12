@@ -15,7 +15,7 @@ from utils.audit import audit_log, AuditAction
 from utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 from utils.order_tracking import reconcile_order_status, order_status_label
 from services.gateways.payments import apply_order_status_change
-from providers.payments.stripe_sdk import stripe
+from providers.payments.stripe import refund_payment_intent
 
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:
@@ -419,12 +419,12 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
 
     from services.gateways.payments import _apply_stripe_runtime_key
 
-    stripe.api_key = _apply_stripe_runtime_key(db) or os.getenv("STRIPE_SECRET_KEY", "")
-    if not stripe.api_key:
+    resolved_key = _apply_stripe_runtime_key(db) or os.getenv("STRIPE_SECRET_KEY", "")
+    if not resolved_key:
         raise HTTPException(status_code=503, detail="Payment service not configured")
 
     try:
-        refund = stripe.Refund.create(payment_intent=payment_intent_id)
+        refund = refund_payment_intent(payment_intent_id, api_key=resolved_key)
         apply_order_status_change(order, "refunded", db)
         try:
             from services.treasury.cash_management_service import log_refund_bank_transaction

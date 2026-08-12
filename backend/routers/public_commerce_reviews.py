@@ -7,7 +7,7 @@ from db.database import get_db
 from utils.dependencies import get_current_user
 from typing import List, Optional
 
-from controllers.commerce.reviews_controller import ReviewCreate, ReviewOut, create_review, delete_review, get_product_reviews, get_review, list_reviews
+from controllers.commerce.reviews_controller import ReviewCreate, ReviewOut, create_review, delete_review, get_product_reviews, get_review, list_reviews, update_review
 
 router = APIRouter(prefix="/api/v1")
 
@@ -44,6 +44,15 @@ def create_review_route(
     review: ReviewCreate = Body(...)
 ) -> dict:
     return create_review(product_id=product_id, current_user=current_user, db=db, review=review)
+
+@router.put("/reviews/{review_id}", response_model=ReviewOut, status_code=200, tags=['reviews'])
+def update_review_route(
+    review_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    review: ReviewCreate = Body(...)
+) -> dict:
+    return update_review(review_id=review_id, current_user=current_user, db=db, review=review)
 
 @router.delete("/reviews/{review_id}", response_model=ReviewOut, status_code=200, tags=['reviews'])
 def delete_review_route(

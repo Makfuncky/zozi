@@ -137,14 +137,15 @@ MAKER_CHECKER_PERMISSIONS: Set[str] = {
 
 
 def _get_redis():
+    from utils.redis_client import redis_client
+
+    client = redis_client()
     try:
-        import redis as _redis
-        from utils.config import settings
-        client = _redis.from_url(settings.redis_url, socket_connect_timeout=1)
-        client.ping()
-        return client
+        if not client.ping():
+            return None
     except Exception:
         return None
+    return client
 
 
 def _cache_key(user_id: int, country_code: str) -> str:
@@ -526,6 +527,39 @@ def require_permission(permission_slug: str):
             raise HTTPException(
                 status_code=403,
                 detail=f"Missing required permission: '{permission_slug}'",
+            )
+        return current_user
+
+    return _checker
+
+
+def require_permissions(permission_slugs: list):
+    """FastAPI dependency that checks a list of permissions (all required).
+
+    Mirrors :func:`require_permission` but accepts multiple slugs so generated
+    routers can express finer-grained access control via
+    ``Depends(require_permissions([...]))``.
+    """
+    from fastapi import Depends, HTTPException
+    from utils.dependencies import get_current_user
+
+    missing = []
+
+    def _checker(
+        current_user: dict = Depends(get_current_user),
+        db: Session = Depends(get_db),
+    ):
+        user_id = int(current_user.get("id", current_user.get("sub", 0)))
+        country_code = current_user.get("cc", current_user.get("country_code", "OM"))
+
+        for slug in permission_slugs:
+            if not check_permission(user_id, slug, country_code, db):
+                missing.append(slug)
+
+        if missing:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Missing required permissions: {missing}",
             )
         return current_user
 

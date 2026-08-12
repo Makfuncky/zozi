@@ -474,7 +474,7 @@ class OffboardingCase(Base):
 class EmployeeRiskScore(Base):
     __tablename__ = 'employee_risk_scores'
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey('employees.id'), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey('logistics.employees.id'), nullable=False, index=True)
     assessment_date = Column(Date, nullable=False)
     score = Column(Float, default=0.0)
     risk_level = Column(String(20), nullable=True)
@@ -488,7 +488,7 @@ class PayrollRecord(Base):
     __tablename__ = 'payroll_records'
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), nullable=False, index=True)
-    employee_id = Column(Integer, ForeignKey('employees.id'), nullable=True)
+    employee_id = Column(Integer, ForeignKey('logistics.employees.id'), nullable=True)
     net_pay = Column(Numeric(14, 2), default=0)
     status = Column(String(20), default='pending')
     created_at = Column(DateTime, default=_utcnow)
@@ -508,7 +508,7 @@ class TrainingModule(Base):
 class EmployeeTraining(Base):
     __tablename__ = 'employee_trainings'
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey('employees.id'), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey('logistics.employees.id'), nullable=False, index=True)
     module_id = Column(String(36), ForeignKey('training_modules.module_id'), nullable=False)
     status = Column(String(20), default='assigned')
     score = Column(Float, nullable=True)

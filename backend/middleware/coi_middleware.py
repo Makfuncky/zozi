@@ -33,7 +33,8 @@ def _coi_check_internal(request: Request, db: Session):
     entity_type = "supplier" if "supplier" in request.url.path else "logistics_partner"
     
     if entity_id:
-        coi_result = coi_service.detect_coi(user.get("id"), int(entity_id), entity_type)
+        uid = user["id"] if isinstance(user, dict) else getattr(user, "id", None)
+        coi_result = coi_service.detect_coi(uid, int(entity_id), entity_type)
         if coi_result and coi_result.get("requires_approval"):
             raise HTTPException(
                 status_code=409,

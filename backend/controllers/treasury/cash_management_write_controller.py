@@ -19,15 +19,18 @@ from controllers.treasury.cash_management_controller import (
 )
 from services.finance import cash_management_write_service as write_service
 import structlog
+from routers.generated.auto_router import post, put, delete
+
 logger = structlog.get_logger(__name__)
 
 
 # ── Badge billing ─────────────────────────────────────────────────────────────
 
+@post("/api/v1/admin/treasury/badge-billing/{billing_id}/payments", deps=["admin", "db"], tags=["treasury"])
 def record_badge_billing_payment(
     billing_id: int,
     payment_method: str,
-    current_admin: dict,
+    current_user: dict,
     db: Session,
     transaction_ref: Optional[str] = None,
     notes: Optional[str] = None,
@@ -36,7 +39,7 @@ def record_badge_billing_payment(
         db,
         billing_id=billing_id,
         payment_method=payment_method,
-        current_admin=current_admin,
+        current_admin=current_user,
         transaction_ref=transaction_ref,
         notes=notes,
     )
@@ -44,26 +47,30 @@ def record_badge_billing_payment(
 
 # ── Bank settings ─────────────────────────────────────────────────────────────
 
-def upsert_bank_settings(data: dict, current_admin: dict, db: Session) -> dict[str, Any]:
-    record = write_service.upsert_bank_settings(db, data=data, admin_id=current_admin.get("id"))
+@put("/api/v1/admin/treasury/bank-settings", deps=["admin", "db"], tags=["treasury"])
+def upsert_bank_settings(data: dict, current_user: dict, db: Session) -> dict[str, Any]:
+    record = write_service.upsert_bank_settings(db, data=data, admin_id=current_user.get("id"))
     return _serialize_finance_bank_settings(record)
 
 
 # ── VAT ───────────────────────────────────────────────────────────────────────
 
-def record_vat_remittance(data: dict, current_admin: dict, db: Session) -> Any:
-    return write_service.record_vat_remittance(db, data=data, admin_id=current_admin.get("id"))
+@post("/api/v1/admin/treasury/vat-remittances", deps=["admin", "db"], tags=["treasury"])
+def record_vat_remittance(data: dict, current_user: dict, db: Session) -> Any:
+    return write_service.record_vat_remittance(db, data=data, admin_id=current_user.get("id"))
 
 
 # ── Bank transactions ─────────────────────────────────────────────────────────
 
-def create_bank_transaction(data: dict, db: Session) -> Any:
+@post("/api/v1/admin/treasury/bank-transactions", deps=["admin", "db"], tags=["treasury"])
+def create_bank_transaction(data: dict, current_user: dict, db: Session) -> Any:
     return write_service.create_bank_transaction(db, data=data)
 
 
+@post("/api/v1/admin/treasury/bank-transactions/import", deps=["admin", "db"], tags=["treasury"])
 def import_bank_transactions(
     items: list[dict],
-    current_admin: dict,
+    current_user: dict,
     db: Session,
     *,
     auto_reconcile: bool = False,
@@ -71,35 +78,39 @@ def import_bank_transactions(
     return write_service.import_bank_transactions(
         db,
         items=items,
-        admin_id=current_admin.get("id"),
+        admin_id=current_user.get("id"),
         auto_reconcile=auto_reconcile,
     )
 
 
-def reconcile_transaction(txn_id: int, current_admin: dict, db: Session) -> Any:
-    return write_service.reconcile_transaction(db, txn_id=txn_id, admin_id=current_admin["id"])
+@post("/api/v1/admin/treasury/bank-transactions/{txn_id}/reconcile", deps=["admin", "db"], tags=["treasury"])
+def reconcile_transaction(txn_id: int, current_user: dict, db: Session) -> Any:
+    return write_service.reconcile_transaction(db, txn_id=txn_id, admin_id=current_user["id"])
 
 
-def flag_transaction(txn_id: int, reason: str, db: Session) -> Any:
+@post("/api/v1/admin/treasury/bank-transactions/{txn_id}/flag", deps=["admin", "db"], tags=["treasury"])
+def flag_transaction(txn_id: int, reason: str, current_user: dict, db: Session) -> Any:
     return write_service.flag_transaction(db, txn_id=txn_id, reason=reason)
 
 
+@post("/api/v1/admin/treasury/bank-transactions/{txn_id}/resolve", deps=["admin", "db"], tags=["treasury"])
 def resolve_transaction_exception(
     txn_id: int,
     data: dict,
-    current_admin: dict,
+    current_user: dict,
     db: Session,
 ) -> Any:
     return write_service.resolve_transaction_exception(
         db,
         txn_id=txn_id,
         data=data,
-        admin_id=current_admin.get("id"),
+        admin_id=current_user.get("id"),
     )
 
 
+@post("/api/v1/admin/treasury/bank-transactions/auto-reconcile", deps=["admin", "db"], tags=["treasury"])
 def auto_reconcile_transactions(
-    current_admin: dict,
+    current_user: dict,
     db: Session,
     *,
     limit: int = 100,
@@ -108,7 +119,7 @@ def auto_reconcile_transactions(
 ) -> dict:
     return write_service.auto_reconcile_transactions(
         db,
-        admin_id=current_admin["id"],
+        admin_id=current_user["id"],
         limit=limit,
         source=source,
         category=category,
@@ -117,17 +128,20 @@ def auto_reconcile_transactions(
 
 # ── Payouts ───────────────────────────────────────────────────────────────────
 
-def trigger_supplier_payouts(db: Session, settlement_ids: Optional[list[int]] = None) -> list[dict]:
+@post("/api/v1/admin/treasury/payouts/supplier", deps=["admin", "db"], tags=["treasury"])
+def trigger_supplier_payouts(current_user: dict, db: Session, settlement_ids: Optional[list[int]] = None) -> list[dict]:
     return write_service.trigger_supplier_payouts(db, settlement_ids=settlement_ids)
 
 
-def trigger_logistics_payouts(db: Session, settlement_ids: Optional[list[int]] = None) -> list[dict]:
+@post("/api/v1/admin/treasury/payouts/logistics", deps=["admin", "db"], tags=["treasury"])
+def trigger_logistics_payouts(current_user: dict, db: Session, settlement_ids: Optional[list[int]] = None) -> list[dict]:
     return write_service.trigger_logistics_payouts(db, settlement_ids=settlement_ids)
 
 
+@post("/api/v1/admin/treasury/transfers/dispatch", deps=["admin", "db"], tags=["treasury"])
 def dispatch_transfer_batch(
     kind: str,
-    current_admin: dict,
+    current_user: dict,
     db: Session,
     *,
     provider: Optional[str] = None,
@@ -136,15 +150,16 @@ def dispatch_transfer_batch(
     return write_service.dispatch_transfer_batch(
         db,
         kind=kind,
-        admin_user=current_admin,
+        admin_user=current_user,
         provider=provider,
         dry_run=dry_run,
     )
 
 
+@post("/api/v1/admin/treasury/transfers/dispatch/queue", deps=["admin"], tags=["treasury"])
 def queue_dispatch_transfer_batch(
     kind: str,
-    current_admin: dict,
+    current_user: dict,
     *,
     provider: Optional[str] = None,
     dry_run: bool = False,
@@ -152,7 +167,7 @@ def queue_dispatch_transfer_batch(
     """Background dispatch — enqueued job, no request-scoped DB work."""
     return admin_queue_dispatch_transfer_batch(
         kind,
-        current_admin,
+        current_user,
         provider=provider,
         dry_run=dry_run,
     )
@@ -160,38 +175,41 @@ def queue_dispatch_transfer_batch(
 
 # ── COD remittance ────────────────────────────────────────────────────────────
 
-def record_cod_remittance(settlement_id: int, amount: float, current_admin: dict, db: Session) -> Any:
+@post("/api/v1/admin/treasury/cod/{settlement_id}/remittance", deps=["admin", "db"], tags=["treasury"])
+def record_cod_remittance(settlement_id: int, amount: float, current_user: dict, db: Session) -> Any:
     return write_service.record_cod_remittance(
         db,
         settlement_id=settlement_id,
         amount=amount,
-        admin_id=current_admin["id"],
+        admin_id=current_user["id"],
     )
 
 
+@post("/api/v1/admin/treasury/cod/receipts/{receipt_id}/verify", deps=["admin", "db"], tags=["treasury"])
 def verify_cod_remittance_receipt(
     receipt_id: int,
-    current_admin: dict,
+    current_user: dict,
     db: Session,
     note: Optional[str] = None,
 ) -> dict[str, Any]:
     return write_service.verify_cod_remittance_receipt(
         db,
         receipt_id=receipt_id,
-        admin_id=current_admin["id"],
+        admin_id=current_user["id"],
         note=note,
     )
 
 
+@post("/api/v1/admin/treasury/cod/receipts/{receipt_id}/reject", deps=["admin", "db"], tags=["treasury"])
 def reject_cod_remittance_receipt(
     receipt_id: int,
-    current_admin: dict,
+    current_user: dict,
     db: Session,
     note: str,
 ) -> dict[str, Any]:
     return write_service.reject_cod_remittance_receipt(
         db,
         receipt_id=receipt_id,
-        admin_id=current_admin["id"],
+        admin_id=current_user["id"],
         note=note,
     )

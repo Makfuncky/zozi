@@ -12,6 +12,7 @@ from typing import Any, Optional
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from routers.generated.auto_router import post, put, delete
 from services.ai.ai_upload_write_service import (
     cancel_ai_upload_job as _cancel_ai_upload_job,
 )
@@ -36,6 +37,7 @@ def _resolve_user_id(current_user: dict) -> Any:
     return user_id
 
 
+@post("/api/v1/ai/uploads/jobs", deps=["admin", "db"], tags=["ai"])
 def create_job(
     images: list[UploadFile],
     country_code: str,
@@ -54,6 +56,7 @@ def create_job(
     )
 
 
+@post("/api/v1/ai/uploads/jobs/{job_id}/publish", deps=["admin", "db"], tags=["ai"])
 def publish_job(
     job_id: int,
     overrides: Optional[dict],
@@ -63,10 +66,12 @@ def publish_job(
     return _publish_ai_upload_job(db, job_id, overrides)
 
 
+@post("/api/v1/ai/uploads/jobs/{job_id}/cancel", deps=["admin", "db"], tags=["ai"])
 def cancel_job(job_id: int, current_user: dict, db: Session) -> dict[str, Any]:
     return _cancel_ai_upload_job(db, job_id)
 
 
+@post("/api/v1/ai/uploads/jobs/{job_id}/process", tags=["ai"])
 def process_job(job_id: int) -> None:
     """Background-task entrypoint; the service opens/owns its own session."""
     return _process_ai_upload_job(job_id)

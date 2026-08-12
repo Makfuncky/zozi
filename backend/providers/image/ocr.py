@@ -30,6 +30,25 @@ def ocr_available() -> bool:
     return _OCR_AVAILABLE
 
 
+def preprocess_document_bytes(image_data: bytes):
+    """Decode + grayscale + denoise + binarize raw image bytes for OCR.
+
+    Mirrors the legacy preprocessing previously done inside
+    ``services.supplier.onboarding_pipeline.OCRProcessor.preprocess_image`` so the
+    service no longer imports ``cv2``/``numpy`` directly. Providers own the
+    third-party imaging SDKs; services stay SDK-free.
+    """
+    import cv2
+    import numpy as np
+
+    nparr = np.frombuffer(image_data, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    denoised = cv2.fastNlMeansDenoising(gray)
+    _, binary = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return binary
+
+
 def _image_to_bytes(img: Image.Image, format: str = "PNG") -> bytes:
     buf = io.BytesIO()
     img.save(buf, format=format)

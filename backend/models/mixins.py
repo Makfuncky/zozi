@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Boolean, String
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, declared_attr, relationship
 
 from . import Base
 from utils.datetime_utils import utcnow as _utcnow
@@ -51,4 +51,19 @@ class TenantMixin:
 
     __abstract__ = True
     country_code = Column(String(10), nullable=False, index=True)
+
+
+class VersionMixin:
+    """Optimistic-lock revision counter (Constitution §2.9).
+
+    Relocated from ``db/mixins.py`` so that ``models.mixins`` is the single
+    canonical mixins location. Uses the modern ``Mapped``/``declared_attr``
+    idiom so it composes with other mixins on the same model class.
+    """
+
+    @declared_attr
+    def version(cls) -> Mapped[int]:
+        return mapped_column(
+            Integer, nullable=False, default=1, server_default="1"
+        )
 

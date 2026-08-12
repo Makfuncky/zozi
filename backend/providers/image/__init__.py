@@ -1,3 +1,8 @@
+"""Image provider package: background removal, OCR, parcel verification,
+and a re-export of the Pillow (PIL) SDK so external SDKs stay isolated here."""
+
+from PIL import Image, ImageOps, ImageFilter, ImageEnhance
+
 from .bg_remover import (
     remove_background,
     remove_background_preset,
@@ -51,4 +56,8 @@ __all__ = [
     "parse_statement_csv",
     "verify_parcel_photo",
     "verify_parcel_fast",
+    "Image",
+    "ImageOps",
+    "ImageFilter",
+    "ImageEnhance",
 ]

@@ -1,5 +1,10 @@
 """
 AI Controller — product AI suggestion business logic.
+
+HTTP contract declared with ``routers.generated.auto_router`` decorators. Paths
+match ``routers/system_ai_sync.py`` so auto-generation skips them (no duplicate
+live routes). Note: the live routes use multipart ``Form``/``File`` binding that
+the generator cannot express, so these decorators are documentation + skip.
 """
 import logging
 from pathlib import Path
@@ -7,6 +12,8 @@ from typing import List, Optional
 from urllib.parse import urlparse
 
 from fastapi import HTTPException, UploadFile
+
+from routers.generated.auto_router import post
 
 from services.ai import ai_service
 from utils.background_jobs import enqueue_job
@@ -269,6 +276,7 @@ def _generate_product_angles(
     }
 
 
+@post("/api/v1/ai/suggest", tags=["ai"], summary="AI product suggestions")
 def get_ai_suggestions(
     name: str,
     description: str = "",
@@ -289,6 +297,7 @@ def get_ai_suggestions(
     return _generate_ai_suggestions(name, description, upload_filenames, image_bytes_list)
 
 
+@post("/api/v1/ai/suggest/async", deps=["user"], tags=["ai"], summary="Queue async AI suggestions")
 def queue_ai_suggestions_job(
     name: str,
     description: str,
@@ -313,6 +322,7 @@ def queue_ai_suggestions_job(
     )
 
 
+@post("/api/v1/ai/suggest/text/async", deps=["user"], tags=["ai"], summary="Queue async text-only AI suggestions")
 def queue_ai_text_suggestions_job(name: str, description: str, current_user: dict) -> dict:
     return enqueue_job(
         kind="ai-suggestions",
@@ -323,6 +333,7 @@ def queue_ai_text_suggestions_job(name: str, description: str, current_user: dic
     )
 
 
+@post("/api/v1/ai/generate-angles", tags=["ai"], summary="Generate product photo angle descriptions")
 def get_product_angles(
     name: str,
     category: str = "",
@@ -342,6 +353,7 @@ def get_product_angles(
     return _generate_product_angles(name, category, image_bytes)
 
 
+@post("/api/v1/ai/generate-angles/async", deps=["user"], tags=["ai"], summary="Queue async product angle generation")
 def queue_product_angles_job(
     name: str,
     category: str,
@@ -364,4 +376,3 @@ def queue_product_angles_job(
         metadata={"name": name[:120], "category": category[:120]},
         func=lambda: _generate_product_angles(name, category, image_bytes),
     )
-

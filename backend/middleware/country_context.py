@@ -30,12 +30,17 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from db.database import get_db
-from models import User, CountryStaffAssignment, CountryConfig
+from models import CountryConfig
 from utils.auth import decode_token, verify_token, SECRET_KEY, ALGORITHM
 from utils.config import settings
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.redis_client import redis_client
 from utils.ip_utils import get_request_ip
+from services.hr.coi_service import check_approval_blocked
+from services.security.country_context_service import (
+    get_user_by_id,
+    resolve_user_country_scope,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -184,24 +189,6 @@ def clear_rls_context() -> None:
     rls_context.role = None
 
 
-def resolve_user_country_scope(user: User, db: Session) -> Set[str]:
-    """Resolve allowed country codes for a user"""
-    if user.role in {"admin", "super_admin"}:
-        return set()
-    
-    assignments = (
-        db.query(CountryStaffAssignment.country_code)
-        .filter(
-            CountryStaffAssignment.user_id == user.id,
-            CountryStaffAssignment.is_active == True,
-        )
-        .all()
-    )
-    
-    codes = {str(row[0]).upper().strip() for row in assignments if row[0]}
-    return codes
-
-
 class RowLevelSecurityMiddleware(BaseHTTPMiddleware):
     """Middleware to enforce RLS at request level"""
     
@@ -226,7 +213,7 @@ class RowLevelSecurityMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
             
             with get_db() as db:
-                user = db.query(User).filter(User.id == user_id).first()
+                user = get_user_by_id(db, user_id)
                 if user:
                     scope = resolve_user_country_scope(user, db)
                     rls_context.country_scope = scope

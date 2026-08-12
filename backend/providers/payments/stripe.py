@@ -635,14 +635,17 @@ def _payment_intent_matches_order(
     return True, ""
 
 
-def refund_payment_intent(payment_intent: str):
+def refund_payment_intent(payment_intent: str, api_key: str | None = None):
     """Issue a Stripe refund for a payment intent.
 
-    Returns the Stripe refund object, or ``None`` when no API key is configured.
+    ``api_key`` overrides the configured secret when supplied (e.g. a
+    runtime/DB-resolved key). Returns the Stripe refund object, or ``None``
+    when no API key is configured.
     """
-    stripe.api_key = settings.stripe_secret_key or os.getenv("STRIPE_SECRET_KEY", "")
-    if not stripe.api_key:
+    resolved_key = api_key or settings.stripe_secret_key or os.getenv("STRIPE_SECRET_KEY", "")
+    if not resolved_key:
         return None
+    stripe.api_key = resolved_key
     return stripe.Refund.create(payment_intent=payment_intent)
 
 

@@ -7,7 +7,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, Nu
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as utcnow
-from db.mixins import VersionMixin
+from models.mixins import VersionMixin
 __all__ = ['SupplierKYCRequirement', 'LogisticsPartnerKYCRequirement', 'CountryCommissionRate', 'CountryConfigVersion', 'CountryFeatureFlag', 'CountryStaffAssignment', 'CrossCountryCustomerSession', 'OmanDeliveryZone', 'CountryCity', 'CountryCategoryTaxRate', 'CountryGatewayConfig', 'CountryCommunicationThread', 'CountryCommissionRateHistory', 'CountryLogisticsZone', 'CountryPayoutRule', 'CountryHolidayCalendar', 'CountryLegalContract', 'CountryLocalization', 'CountryPaymentAlias']
 
 class CountryFeatureFlag(Base):

@@ -40,7 +40,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import numpy as np
-from PIL import Image
+from providers.image import Image
 
 from providers.image.bg_remover import (
     _bytes_to_image,

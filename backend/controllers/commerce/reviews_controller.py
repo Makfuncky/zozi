@@ -124,7 +124,7 @@ def create_review(product_id: int, review: ReviewCreate, current_user, db: Sessi
     return _serialize(new_review, username=user.get("username"))
 
 
-@put("/api/v1/reviews/{review_id}", deps=["db", "user"], body=ReviewCreate, response_model=ReviewOut, tags=["reviews"], skip=True)
+@put("/api/v1/reviews/{review_id}", deps=["db", "user"], body=ReviewCreate, response_model=ReviewOut, tags=["reviews"])
 def update_review(review_id: int, review: ReviewCreate, current_user, db: Session) -> dict:
     user = _to_user_map(current_user)
     existing = get_review_by_id(db, review_id)

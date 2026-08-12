@@ -12,9 +12,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 logger = logging.getLogger(__name__)
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
 try:
     from dotenv import load_dotenv
     load_dotenv(BASE_DIR / ".env")
@@ -199,12 +196,13 @@ class Settings:
             object.__getattribute__(self, "_overrides")[self._normalize(key)] = value
 
         app_env = str(self._resolve("app_env")).strip().lower()
-        secret_key = str(self._resolve("secret_key") or "").strip()
-        if not secret_key:
-            raise ValueError(
-                "SECRET_KEY must be set to a strong random value. "
-                "Every restart with an ephemeral key invalidates all existing JWT tokens."
-            )
+        if app_env == "production":
+            secret_key = str(self._resolve("secret_key") or "").strip()
+            if not secret_key:
+                raise ValueError(
+                    "SECRET_KEY must be set to a strong random value in production. "
+                    "Every restart with an ephemeral key invalidates all existing JWT tokens."
+                )
 
         cookie_secure = self._resolve("cookie_secure")
         refresh_cookie_samesite = str(self._resolve("refresh_cookie_samesite") or "lax").lower()
@@ -475,12 +473,12 @@ class Settings:
             )
         return self._resolve(name)
 
-def __setattr__(self, name: str, value: Any) -> None:
-    key = self._normalize(name)
-    overrides = object.__getattribute__(self, "_overrides")
-    overrides[key] = value
-    if key.startswith("field_encryption_key") or key == "encryption_key":
-        object.__setattr__(self, "_field_encryption_key_cache", None)
+    def __setattr__(self, name: str, value: Any) -> None:
+        key = self._normalize(name)
+        overrides = object.__getattribute__(self, "_overrides")
+        overrides[key] = value
+        if key.startswith("field_encryption_key") or key == "encryption_key":
+            object.__setattr__(self, "_field_encryption_key_cache", None)
 
 
 settings = Settings()

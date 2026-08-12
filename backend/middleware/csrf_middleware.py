@@ -29,13 +29,13 @@ WEBHOOK_PATHS = {
 class CSRFMiddleware(BaseHTTPMiddleware):
     """
     CSRF protection using double-submit cookie pattern.
-    
+
     The client must send the CSRF token in a header (X-CSRF-Token) and also
     receive it in a cookie. The server compares both values.
-    
-    For same-site applications, this is secure because JavaScript cannot
-    access cookies with SameSite=Strict/Lax.
-    """
+
+    For the JS client to echo the cookie back as a header, the cookie must be
+    readable by JavaScript, so it is set with httponly=False. SameSite=Lax still
+    prevents the cookie from being sent on cross-site requests."""
 
     async def dispatch(self, request: Request, call_next):
         if request.method == "OPTIONS":
@@ -57,10 +57,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         if app_env in ("test", "development"):
-            logger.warning(
-                f"CSRF validation in {app_env} mode for {request.method} {request.url.path}. "
-                "Consider setting CSRF_DISABLED=true in test environment if needed."
-            )
+            # Per AGENTS.md, CSRF is bypassed (not merely warned) in dev/test so the
+            # frontend can be exercised without token plumbing. Production always enforces.
+            logger.info("CSRF validation bypassed in %s environment.", app_env)
+            return await call_next(request)
 
         client_token = request.headers.get(CSRF_HEADER_NAME)
 
@@ -91,9 +91,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             response.set_cookie(
                 key=CSRF_COOKIE_NAME,
                 value=client_token,
-                httponly=True,
+                httponly=False,
                 secure=is_production,
-                samesite="strict",
+                samesite="lax",
                 max_age=3600,
                 path="/",
             )

@@ -33,18 +33,15 @@ logger = logging.getLogger(__name__)
 def _create_realtime_redis_client():
     if not settings.redis_url.strip():
         return None
-    try:
-        import redis as _redis
+    from utils.redis_client import redis_client
 
-        return _redis.from_url(
-            settings.redis_url,
-            socket_connect_timeout=1,
-            socket_timeout=1,
-            health_check_interval=15,
-            decode_responses=True,
-        )
+    client = redis_client()
+    try:
+        if not client.ping():
+            return None
     except Exception:
         return None
+    return client
 
 
 class _RedisRealtimeBridge:

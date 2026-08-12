@@ -9,7 +9,7 @@ import os
 import secrets
 import logging
 import re
-import pyotp
+from providers.auth import totp as totp_provider
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, cast
 from urllib.parse import urlencode
@@ -1511,7 +1511,7 @@ def claim_share_points(body: ReferralShareRequest, current_user: dict, db: Sessi
 # ── Logout ────────────────────────────────────────────────────────────────────
 
 def logout_user(request: Request, response: Response, body_refresh_token: str | None = None) -> dict:
-    from jose import jwt as _jwt  # local import to avoid top-level circular deps
+    from providers.auth import jwt as _jwt  # local import to avoid top-level circular deps
 
     # Blacklist the access token
     token = None
@@ -1522,7 +1522,7 @@ def logout_user(request: Request, response: Response, body_refresh_token: str | 
     try:
         if not token:
             raise ValueError("missing bearer token")
-        payload = _jwt.decode(
+        payload = _jwt.decode_token(
             token, settings.secret_key, algorithms=[settings.algorithm]
         )
         jti = payload.get("jti") or token[-16:]
@@ -1536,7 +1536,7 @@ def logout_user(request: Request, response: Response, body_refresh_token: str | 
     refresh_token = request.cookies.get(settings.refresh_token_cookie_name) or body_refresh_token
     if refresh_token:
         try:
-            rt_payload = _jwt.decode(
+            rt_payload = _jwt.decode_token(
                 refresh_token, settings.secret_key, algorithms=[settings.algorithm]
             )
             rt_jti = rt_payload.get("jti") or refresh_token[-16:]
@@ -1763,11 +1763,10 @@ def get_totp_status(current_user: dict, db: Session) -> dict:
 
 def _generate_totp_provisioning_uri(user: User) -> tuple[str, str]:
     """Generate a TOTP secret and provisioning URI for QR scanning."""
-    secret = pyotp.random_base32()
+    secret = totp_provider.generate_secret()
     issuer = getattr(settings, "app_name", "ZOZI Marketplace")
-    uri = pyotp.totp.TOTP(secret).provisioning_uri(
-        name=_user_email(user),
-        issuer_name=issuer,
+    uri = totp_provider.provisioning_uri(
+        secret, name=_user_email(user), issuer_name=issuer,
     )
     return secret, uri
 
@@ -1776,8 +1775,7 @@ def _validate_totp_code(secret: str, code: str) -> bool:
     """Validate a TOTP code against a secret using a window of 1 step."""
     if not code or not secret:
         return False
-    totp = pyotp.TOTP(secret)
-    return totp.verify(code, valid_window=1)
+    return totp_provider.verify(secret, code, valid_window=1)
 
 
 def setup_totp(current_user: dict, db: Session) -> dict:

@@ -27,7 +27,7 @@ from typing import Any
 from typing import cast
 from typing import Optional
 
-from PIL import Image
+from providers.image import Image
 
 from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
 
@@ -371,7 +371,7 @@ def _generate_pil_angle_views(image_bytes: bytes) -> list[bytes]:
       3. Three-quarter angle (slight shear / perspective)
       4. Detail zoom (10% crop, resampled to full size)
     """
-    from PIL import Image, ImageOps, ImageFilter  # type: ignore
+    from providers.image import Image, ImageOps, ImageFilter  # type: ignore
 
     try:
         img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")

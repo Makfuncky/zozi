@@ -16,13 +16,17 @@ from services.promotions.promotion_admin_write_service import (
     update_promotion_config,
 )
 import structlog
+from routers.generated.auto_router import post, put, delete
+
 logger = structlog.get_logger(__name__)
 
 
-def update_config(config_id: int, engine_enabled: Optional[bool], stacking_mode: Optional[str], db) -> dict:
+@put("/api/v1/admin/promotions/config/{config_id}", deps=["admin", "db"], tags=["promotions"])
+def update_config(config_id: int, engine_enabled: Optional[bool], stacking_mode: Optional[str], db, current_user: dict = None) -> dict:
     return update_promotion_config(db, config_id=config_id, engine_enabled=engine_enabled, stacking_mode=stacking_mode)
 
 
+@post("/api/v1/admin/promotions/coupons", deps=["admin", "db"], tags=["promotions"])
 def create_coupon(
     code: str,
     discount_type: str = "percentage",
@@ -35,12 +39,14 @@ def create_coupon(
     is_active: bool = True,
     country_code: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ):
     return create_coupon(db, code=code, discount_type=discount_type, discount_value=discount_value,
                          minimum_order=minimum_order, maximum_discount=maximum_discount, usage_limit=usage_limit,
                          starts_at=starts_at, expires_at=expires_at, is_active=is_active, country_code=country_code)
 
 
+@post("/api/v1/admin/{code}/coupons", deps=["admin", "db"], tags=["promotions"])
 def create_coupon_by_country(
     code: str,
     coupon_code: str,
@@ -53,6 +59,7 @@ def create_coupon_by_country(
     expires_at: Optional[str] = None,
     is_active: bool = True,
     db=None,
+    current_user: dict = None,
 ):
     return create_coupon_by_country(db, code=code, coupon_code=coupon_code, discount_type=discount_type,
                                     discount_value=discount_value, minimum_order=minimum_order,
@@ -60,6 +67,7 @@ def create_coupon_by_country(
                                     starts_at=starts_at, expires_at=expires_at, is_active=is_active)
 
 
+@post("/api/v1/admin/promotions/flash-sales", deps=["admin", "db"], tags=["promotions"])
 def create_flash_sale(
     title: str,
     discount_pct: float,
@@ -69,11 +77,13 @@ def create_flash_sale(
     is_active: bool = True,
     country_code: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ):
     return create_flash_sale(db, title=title, discount_pct=discount_pct, starts_at=starts_at, ends_at=ends_at,
                              description=description, is_active=is_active, country_code=country_code)
 
 
+@put("/api/v1/admin/promotions/flash-sales/{sale_id}", deps=["admin", "db"], tags=["promotions"])
 def update_flash_sale(
     sale_id: int,
     title: Optional[str] = None,
@@ -84,11 +94,13 @@ def update_flash_sale(
     is_active: Optional[bool] = None,
     country_code: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ):
     return update_flash_sale(db, sale_id=sale_id, title=title, description=description, discount_pct=discount_pct,
                              starts_at=starts_at, ends_at=ends_at, is_active=is_active, country_code=country_code)
 
 
+@post("/api/v1/admin/promotions/banners", deps=["admin", "db"], tags=["promotions"])
 def create_banner(
     title: str,
     subtitle: Optional[str] = None,
@@ -111,6 +123,7 @@ def create_banner(
     video_url: Optional[str] = None,
     country_code: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ) -> dict:
     return create_banner(db, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label,
                          cta_url=cta_url, banner_type=banner_type, is_active=is_active, sort_order=sort_order,
@@ -120,6 +133,7 @@ def create_banner(
                          country_code=country_code)
 
 
+@put("/api/v1/admin/promotions/banners/{banner_id}", deps=["admin", "db"], tags=["promotions"])
 def update_banner(
     banner_id: int,
     title: Optional[str] = None,
@@ -143,6 +157,7 @@ def update_banner(
     video_url: Optional[str] = None,
     country_code: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ) -> dict:
     return update_banner(db, banner_id=banner_id, title=title, subtitle=subtitle, image_url=image_url, link=link,
                          cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active,
@@ -152,10 +167,12 @@ def update_banner(
                          country_code=country_code)
 
 
-def delete_banner(banner_id: int, admin_id: Any = None, db=None) -> dict:
+@delete("/api/v1/admin/promotions/banners/{banner_id}", deps=["admin", "db"], tags=["promotions"])
+def delete_banner(banner_id: int, admin_id: Any = None, db=None, current_user: dict = None) -> dict:
     return delete_banner(db, banner_id=banner_id, admin_id=admin_id)
 
 
+@post("/api/v1/admin/{code}/banners", deps=["admin", "db"], tags=["promotions"])
 def create_banner_by_country(
     code: str,
     title: str,
@@ -178,6 +195,7 @@ def create_banner_by_country(
     layout_json: Optional[str] = None,
     video_url: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ) -> dict:
     return create_banner_by_country(db, code=code, title=title, subtitle=subtitle, image_url=image_url, link=link,
                                     cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active,
@@ -187,6 +205,7 @@ def create_banner_by_country(
                                     video_url=video_url)
 
 
+@put("/api/v1/admin/{code}/banners/{banner_id}", deps=["admin", "db"], tags=["promotions"])
 def update_banner_by_country(
     code: str,
     banner_id: int,
@@ -210,6 +229,7 @@ def update_banner_by_country(
     layout_json: Optional[str] = None,
     video_url: Optional[str] = None,
     db=None,
+    current_user: dict = None,
 ) -> dict:
     return update_banner_by_country(db, code=code, banner_id=banner_id, title=title, subtitle=subtitle,
                                     image_url=image_url, link=link, cta_label=cta_label, cta_url=cta_url,
@@ -219,5 +239,6 @@ def update_banner_by_country(
                                     effect=effect, layout_json=layout_json, video_url=video_url)
 
 
-def delete_banner_by_country(code: str, banner_id: int, admin_id: Any = None, db=None) -> dict:
+@delete("/api/v1/admin/{code}/banners/{banner_id}", deps=["admin", "db"], tags=["promotions"])
+def delete_banner_by_country(code: str, banner_id: int, admin_id: Any = None, db=None, current_user: dict = None) -> dict:
     return delete_banner_by_country(db, code=code, banner_id=banner_id, admin_id=admin_id)

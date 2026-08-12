@@ -27,6 +27,7 @@ def _with_rls(country_code: str, db: Session):
 @get(
     "/api/v1/admin/audit/{country_code}",
     deps=["db", "admin"],
+    permissions=["audit.view"],
     query=["page", "page_size", "action_filter", "user_id_filter", "resource_type_filter", "status_filter", "search"],
     tags=["admin-audit"],
 )

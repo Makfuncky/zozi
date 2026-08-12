@@ -39,6 +39,12 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run 3-layer coherence gate (models -> services -> controllers)
+        # Hard-fails on any upward import (services->controllers, models->services,
+        # providers->services, ...) and on a stale MODELS_SERVICES_CONTROLLERS_MAP.md.
+        run: |
+          python scripts/coherence_gate.py --check
+
       - name: Run architecture gate tests
         env:
           SECRET_KEY: ${{ env.SECRET_KEY }}

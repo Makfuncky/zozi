@@ -132,8 +132,20 @@ def close_db_session(db: Session) -> None:
     db.close()
 
 
-async def get_db() -> Generator[Session, None, None]:
-    """FastAPI dependency that yields a database session with proper cleanup."""
+def get_db() -> Generator[Session, None, None]:
+    """FastAPI dependency that yields a database session with proper cleanup.
+
+    Implemented as a *synchronous* generator so it can be used both ways:
+      * ``Depends(get_db)`` in route handlers (2412 call sites) — FastAPI drives
+        the generator and runs teardown on request completion.
+      * ``with get_db() as db:`` in non-request code (background tasks,
+        middleware, websockets, health probes) — a plain context manager.
+
+    It was previously an ``async def`` generator, which made ``with get_db()``
+    raise ``AttributeError: __enter__``. That error was silently swallowed in
+    ``middleware/country_context.py``, so the row-level-security country scope
+    was never set, and surfaced as 500s in ``utils/entity_messaging.py``.
+    """
     db = SessionLocal()
     try:
         yield db

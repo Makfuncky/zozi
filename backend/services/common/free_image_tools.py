@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Optional, Callable
 
 import numpy as np
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from providers.image import Image, ImageEnhance, ImageFilter, ImageOps
 
 from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
 

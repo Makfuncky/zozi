@@ -5,8 +5,6 @@ import json
 from datetime import datetime, timezone, timedelta, date
 from typing import Optional, List, Dict, Any
 
-import feedparser
-import httpx
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -72,7 +70,6 @@ class NewsAggregatorService:
     
     def __init__(self, db: Session):
         self.db = db
-        self.http_client = httpx.AsyncClient(timeout=30.0)
     
     async def fetch_all_sources(self):
         """Fetch news from all active sources."""
@@ -92,14 +89,15 @@ class NewsAggregatorService:
     
     async def _fetch_rss(self, source: NewsSource):
         """Fetch RSS feed."""
-        response = await self.http_client.get(source.url)
-        feed = feedparser.parse(response.text)
+        from providers.news import fetch_rss_entries
+
+        entries = await fetch_rss_entries(source.url)
         
         # Collect candidates, then batch-check existence to avoid N+1
         candidates: list[tuple] = []
         pending_ids: set = set()
         pending_hashes: set = set()
-        for entry in feed.entries:
+        for entry in entries:
             external_id = entry.get("id", entry.get("link", ""))
             content_hash = hashlib.sha256(f"{entry.title}{entry.link}".encode()).hexdigest()
             candidates.append((entry, external_id, content_hash))
@@ -147,12 +145,13 @@ class NewsAggregatorService:
     
     async def _fetch_api(self, source: NewsSource):
         """Fetch from API endpoint."""
+        from providers.news import fetch_api_payload
+
         headers = {}
         if source.api_key_required:
             headers["Authorization"] = f"Bearer {settings.NEWS_API_KEY}"
-        
-        response = await self.http_client.get(source.url, headers=headers)
-        data = response.json()
+
+        data = await fetch_api_payload(source.url, headers)
         await self._process_api_response(source, data)
     
     async def _process_api_response(self, source: NewsSource, data: dict):

@@ -9,9 +9,7 @@ import hashlib
 import base64
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from providers.security.encryption import Fernet, hashes, PBKDF2HMAC
 
 from sqlalchemy.orm import Session
 

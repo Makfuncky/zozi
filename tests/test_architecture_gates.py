@@ -1044,5 +1044,87 @@ class TestProviderImports:
         assert len(violations) == 0, "Missing provider submodule files:\n" + "\n".join(violations)
 
 
+# ═══════════════════════════════════════════════════════
+# THREE-LAYER COHERENCE: models -> services -> controllers
+# ═══════════════════════════════════════════════════════
+
+SCRIPTS_DIR = os.path.join(os.path.dirname(BACKEND), "scripts")
+if SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, SCRIPTS_DIR)
+
+
+class TestThreeLayerCoherence:
+    """Enforce the unidirectional contract and the generated 3-layer map.
+
+    Contract:
+        routers -> controllers -> services -> models   (models is a LEAF)
+        services -> providers -> EXTERNAL
+
+    HARD: any module importing a layer ABOVE it (services->controllers,
+    models->services, providers->services, ...) breaks the contract.
+    SOFT: controllers re-exporting router packages (facade pattern) — reported
+    but does not fail the build.
+
+    The committed MODELS_SERVICES_CONTROLLERS_MAP.md must stay in sync with the
+    live code (regenerated via `python scripts/coherence_gate.py`).
+    """
+
+    def _gate(self):
+        import coherence_gate as cg
+        layers, allmods, graph, model_classes = cg.build()
+        hard, soft = cg.directional_violations(layers, allmods, graph)
+        return layers, hard, soft
+
+    def test_no_hard_directional_violations(self):
+        """No module may import a layer above it (the core contract)."""
+        _, hard, _ = self._gate()
+        assert not hard, (
+            "Hard directional (layering) violations found:\n"
+            + "\n".join("  %s imports %s (%s -> %s)" % (m, r, li, lj) for (m, r, li, lj) in hard)
+        )
+
+    def test_models_is_leaf_layer(self):
+        """Models must not import services/controllers/routers/providers.
+
+        This is the explicit leaf-layer guarantee: persistence models depend
+        on nothing above them.
+        """
+        import coherence_gate as cg
+        layers, allmods, graph, model_classes = cg.build()
+        violations = []
+        upward = {"routers", "controllers", "services", "providers"}
+        for m, imps in graph.items():
+            if cg.classify_layer(m) != "models":
+                continue
+            for imp in imps:
+                r = cg.resolve_import(imp, allmods)
+                if r and cg.classify_layer(r) in upward:
+                    violations.append((m, r))
+        assert not violations, (
+            "Models import an upper layer (violates leaf contract):\n"
+            + "\n".join("  %s -> %s" % (m, r) for (m, r) in violations)
+        )
+
+    def test_coherence_map_is_current(self):
+        """The committed 3-layer map must match the live import graph."""
+        import coherence_gate as cg
+        import tempfile
+        layers, allmods, graph, model_classes = cg.build()
+        ctrl_to_svc, svc_to_model, model_to_svc, svc_to_model_classes, model_class_to_svcs = cg.derive_linkage(layers, allmods, graph, model_classes)
+        generated = cg.generate_map(layers, ctrl_to_svc, svc_to_model, model_to_svc, svc_to_model_classes, model_class_to_svcs, model_classes, graph, allmods)
+
+        map_path = os.path.join(os.path.dirname(BACKEND), "MODELS_SERVICES_CONTROLLERS_MAP.md")
+        assert os.path.exists(map_path), "MODELS_SERVICES_CONTROLLERS_MAP.md missing"
+        with open(map_path, "r", encoding="utf-8") as f:
+            committed = f.read()
+        # Normalize trailing whitespace before comparing.
+        if committed.strip() != generated.strip():
+            # Show a hint rather than the full diff to keep CI output readable.
+            pytest.fail(
+                "MODELS_SERVICES_CONTROLLERS_MAP.md is stale. "
+                "Regenerate it with: python scripts/coherence_gate.py"
+            )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

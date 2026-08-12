@@ -13,7 +13,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 import asyncio
 
-import redis
+from redis.exceptions import ConnectionError, ResponseError
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class IPIntelligenceService:
     """IP reputation and intelligence using threat feeds and GeoIP data."""
     
-    def __init__(self, db: Session, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, db: Session, redis_client: Optional[Any] = None):
         self.db = db
         self.redis = redis_client or get_redis()
         self._asn_cache: dict[str, dict[str, Any]] = {}
@@ -121,7 +121,7 @@ class IPIntelligenceService:
         try:
             key = f"fraud:bloom:{filter_name}"
             return self.redis.execute_command("BF.EXISTS", key, ip) == 1
-        except redis.exceptions.ResponseError:
+        except ResponseError:
             return False
     
     def _get_asn_info(self, ip_address: str) -> dict[str, Any]:
@@ -250,7 +250,7 @@ class DeviceFingerprintService:
 class IPAccountLinkageService:
     """Tracks IP-to-account relationships for fraud detection."""
     
-    def __init__(self, db: Session, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, db: Session, redis_client: Optional[Any] = None):
         self.db = db
         self.redis = redis_client or get_redis()
     
@@ -419,7 +419,7 @@ class GraphAnalysisService:
 class FraudScoringEngine:
     """Real-time fraud scoring engine with velocity checks and rule evaluation."""
     
-    def __init__(self, db: Session, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, db: Session, redis_client: Optional[Any] = None):
         self.db = db
         self.redis = redis_client or get_redis()
         self.ip_service = IPIntelligenceService(db, self.redis)
@@ -640,7 +640,7 @@ class FraudScoringEngine:
             if current == 1:
                 self.redis.expire(window_key, 3600)
             return current > limit
-        except redis.exceptions.ConnectionError:
+        except ConnectionError:
             return False
     
     def check_comprehensive_velocity(self, user_id: Optional[int], ip_address: str,
@@ -676,7 +676,7 @@ class FraudScoringEngine:
                         self.redis.expire(key, config["window"])
                     if current > config["limit"]:
                         results[velocity_key] = {"exceeded": True, "count": current, "score": config["score"]}
-                except redis.exceptions.ConnectionError:
+                except ConnectionError:
                     pass
         
         return results
@@ -903,7 +903,7 @@ class FraudScoringEngine:
 class ThreatFeedUpdater:
     """Background job to update threat feeds from open sources."""
     
-    def __init__(self, db: Session, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, db: Session, redis_client: Optional[Any] = None):
         self.db = db
         self.redis = redis_client or get_redis()
     
@@ -927,7 +927,7 @@ class ThreatFeedUpdater:
             try:
                 self.redis.execute_command("BF.ADD", key, ip)
                 count += 1
-            except redis.exceptions.ResponseError:
+            except ResponseError:
                 pass
         return count
     
@@ -943,7 +943,7 @@ class ThreatFeedUpdater:
                 try:
                     self.redis.execute_command("BF.ADD", key, ip)
                     count += 1
-                except redis.exceptions.ResponseError:
+                except ResponseError:
                     pass
         except Exception as e:
             logger.error(f"Failed to update proxy list: {e}")
@@ -959,7 +959,7 @@ class ThreatFeedUpdater:
                 try:
                     self.redis.execute_command("BF.ADD", key, asn)
                     count += 1
-                except redis.exceptions.ResponseError:
+                except ResponseError:
                     pass
         except Exception as e:
             logger.error(f"Failed to update hosting ASNs: {e}")
@@ -1024,7 +1024,7 @@ class WebSocketAlertService:
 class TransactionPatternAnalyzer:
     """Analyzes transaction patterns for fraud detection."""
     
-    def __init__(self, db: Session, redis_client: Optional[redis.Redis] = None):
+    def __init__(self, db: Session, redis_client: Optional[Any] = None):
         self.db = db
         self.redis = redis_client or get_redis()
     

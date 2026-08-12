@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional, Tuple
 
-import pyotp
+from providers.auth import totp as totp_provider
 from fastapi import HTTPException, Request, status
 
 from utils.auth import (
@@ -67,14 +67,15 @@ RISK_HIGH_THRESHOLD = 75  # out of 100
 
 def _get_redis():
     """Return Redis client or None."""
-    try:
-        import redis as _redis
+    from utils.redis_client import redis_client
 
-        client = _redis.from_url(settings.redis_url, socket_connect_timeout=1)
-        client.ping()
-        return client
+    client = redis_client()
+    try:
+        if not client.ping():
+            return None
     except Exception:
         return None
+    return client
 
 
 def _generate_jti() -> str:
@@ -293,8 +294,7 @@ def authenticate_password(
                     status_code=status.HTTP_428_PRECONDITION_REQUIRED,
                     detail="TOTP code required",
                 )
-            totp = pyotp.TOTP(user.totp_secret)
-            if not totp.verify(totp_code):
+            if not totp_provider.verify(user.totp_secret, totp_code):
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid TOTP code",
@@ -804,10 +804,10 @@ def _verify_sso_token(provider: str, id_token: str) -> dict:
     # For now, return a mock userinfo for development
     # In production, replace with proper JWT verification against provider JWKS
     try:
-        from jose import jwt as jose_jwt
+        from providers.auth import jwt as jwt_provider
 
         # Get provider's JWKS — placeholder
-        payload = jose_jwt.get_unverified_claims(id_token)
+        payload = jwt_provider.decode_unverified_claims(id_token)
         provider_claims = {
             "google": {"email", "sub", "name"},
             "apple": {"email", "sub"},
@@ -1084,9 +1084,9 @@ def logout(access_token: str, db: Session | None = None) -> dict:
         db = SessionLocal()
         close_db = True
     try:
-        from jose import jwt as jose_jwt
+        from providers.auth import jwt as jwt_provider
 
-        payload = jose_jwt.get_unverified_claims(access_token)
+        payload = jwt_provider.decode_unverified_claims(access_token)
         jti = payload.get("jti", "")
         exp = payload.get("exp", 3600)
         ttl = max(exp - int(time.time()), 60)

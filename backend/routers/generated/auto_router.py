@@ -381,11 +381,15 @@ def scan_controllers() -> "list":
                      "default": default_src[i]}
                     for i, a in enumerate(pos_args)
                 ]
-                # Keyword-only args (e.g. cursor: Optional[int] = None).
-                for a in node.args.kwonlyargs:
+                # Keyword-only args (e.g. cursor: Optional[int] = None). Their
+                # defaults live in ``node.args.kw_defaults`` (aligned to the tail
+                # of ``kwonlyargs``), NOT on the arg node itself.
+                kw_defaults = node.args.kw_defaults
+                for k, a in enumerate(node.args.kwonlyargs):
+                    dflt = kw_defaults[k] if k < len(kw_defaults) else None
                     param_list.append(
                         {"name": a.arg, "ann": annotation_of(a),
-                         "default": _default_src(a)})
+                         "default": _default_src(dflt)})
                 # ``**rest`` passthrough (e.g. **kwargs) so generation never
                 # crashes on catch-all signatures.
                 if node.args.kwarg is not None:
@@ -692,6 +696,9 @@ def _run_verify(modules: "list", out_dir: str, collisions: "Optional[set]" = Non
     after controller changes.
     """
     errors = validate(modules)
+    # Protect the bootability contract: the crash-proof loader in main.py must
+    # survive any router regeneration, so CI fails if it has been clobbered.
+    errors.extend(_loader_is_crashproof())
     if collisions is None:
         collisions = _existing_routes(out_dir)
 
@@ -749,6 +756,45 @@ def _read_head(target: str, n: int = 400) -> str:
         return open(target, encoding="utf-8").read(n)
     except Exception:
         return ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §3 — LOADER CONTRACT GUARD
+# ─────────────────────────────────────────────────────────────────────────────
+# This generator ONLY writes thin router files into the ``routers/`` SURFACE
+# folder. It must NEVER touch ``main.py`` — the crash-proof discovery loader in
+# ``main._load_routers()`` is hand-maintained and is what keeps the app bootable
+# when a router file is broken. If that loader is ever rewritten to hard-crash on
+# a missing prefix or a bad import, startup breaks again. ``_loader_is_crashproof``
+# asserts the guard is present so ``--verify`` (CI) refuses to bless a regen that
+# shipped alongside a clobbered loader.
+_LOADER_GUARDS = {
+    "_load_routers defined": "def _load_routers",
+    "per-router import is tolerated": "failed_routers.append",
+    "None-safe prefix read": 'getattr(_module, "__router_prefix__", None)',
+    "include errors are tolerated": 'logger.error("Skipping router',
+}
+
+
+def _loader_is_crashproof() -> "list":
+    """Return problems if ``main.py`` does NOT contain the crash-proof loader."""
+    problems = []
+    main_py = os.path.join(ROOT, "main.py")
+    if not os.path.isfile(main_py):
+        return problems  # nothing to guard against
+    text = open(main_py, encoding="utf-8").read()
+    for label, needle in _LOADER_GUARDS.items():
+        if needle not in text:
+            problems.append(f"main.py loader missing crash-proof guard: {label}")
+    return problems
+
+
+def _guard_target(target: str) -> "Optional[str]":
+    """Return a refusal reason if ``target`` is a path this generator must never
+    write (notably ``main.py``), else None."""
+    if os.path.basename(target) == "main.py":
+        return "REFUSE to write main.py (crash-proof loader is hand-maintained)"
+    return None
 
 
 def _backup_if_exists(target: str) -> None:
@@ -862,6 +908,11 @@ def main() -> int:
         else:
             os.makedirs(args.out, exist_ok=True)
             target = os.path.join(args.out, fname)
+            # Never write a file this generator must not own (e.g. main.py).
+            refuse = _guard_target(target)
+            if refuse:
+                print(f"  {refuse}: {target}", file=sys.stderr)
+                continue
             # Never overwrite a hand-written (non-marker) router.
             if os.path.exists(target) and MARKER not in _read_head(target):
                 print(f"  SKIP (hand-written, not overwritten): {target}", file=sys.stderr)

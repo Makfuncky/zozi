@@ -21,7 +21,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Optional
 
-from PIL import Image
+from providers.image import Image
 from providers.ai.huggingface import (
     CAPTION_MODEL,
     HF_API_BASE,

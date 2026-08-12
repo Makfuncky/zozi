@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as utcnow
 from ..mixins import TenantMixin
-from db.mixins import VersionMixin
+from models.mixins import VersionMixin
 __all__ = ['SupplierProfile', 'SupplierDocument', 'SupplierNotificationPreference',
            'SupplierBadgeCatalog', 'SupplierBadge', 'SupplierBadgeBillingHistory']
 

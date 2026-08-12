@@ -71,18 +71,16 @@ api_breaker = CircuitBreakerWithRetry(
 
 
 def _get_redis():
+    from utils.redis_client import redis_client
 
+    client = redis_client()
     try:
-
-        import redis
-
-        return redis.Redis.from_url(settings.redis_url, decode_responses=True, socket_connect_timeout=2, socket_timeout=5)
-
+        if not client.ping():
+            return None
     except Exception as e:
-
         logger.debug("Redis unavailable: %s", e)
-
         return None
+    return client
 
 
 

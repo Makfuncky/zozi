@@ -90,3 +90,33 @@ def require_logistics(current_user: User = Depends(get_current_user)) -> User:
 
 def require_staff(current_user: User = Depends(get_current_user)) -> User:
     return _require_role(current_user, "admin", "super_admin", "employee", "staff")
+
+
+def require_permissions(slugs: list):
+    """FastAPI dependency factory that enforces ALL of the given permission slugs.
+
+    Used by the auto-router generator when a controller route declares
+    ``permissions=[...]``. Replaces the coarse role check (``deps=["admin"]``)
+    with fine-grained RBAC. Works whether ``current_user`` is a ``User`` ORM
+    instance or a JWT ``dict``.
+    """
+    from fastapi import Depends, HTTPException
+    from services.security.effective_permissions import check_permission
+
+    def _extract(user, key, default):
+        if isinstance(user, dict):
+            return user.get(key, default)
+        return getattr(user, key, default)
+
+    def _checker(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+        uid = int(_extract(current_user, "id", _extract(current_user, "sub", 0)))
+        cc = _extract(current_user, "country_code", _extract(current_user, "cc", "OM"))
+        missing = [s for s in slugs if not check_permission(uid, s, cc, db)]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Missing required permissions: {missing}",
+            )
+        return current_user
+
+    return _checker

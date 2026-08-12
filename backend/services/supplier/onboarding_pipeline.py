@@ -9,12 +9,14 @@ from typing import Optional, List, Dict, Any
 import io
 
 from sqlalchemy.orm import Session
-from PIL import Image
+from providers.image import Image
 
 try:
-    from providers.media import cv2
-    import numpy as np
-    from providers.image.ocr import ocr_available, ocr_image_array
+    from providers.image.ocr import (
+        ocr_available,
+        ocr_image_array,
+        preprocess_document_bytes,
+    )
     OCR_AVAILABLE = ocr_available()
 except ImportError:
     OCR_AVAILABLE = False
@@ -30,15 +32,10 @@ class OCRProcessor:
     
     @staticmethod
     def preprocess_image(image_data: bytes) -> Any:
-        """Preprocess image for better OCR results."""
+        """Preprocess image for better OCR results (delegates to the OCR provider)."""
         if not OCR_AVAILABLE:
             raise ImportError("OCR dependencies (pytesseract, cv2, numpy) not installed")
-        nparr = np.frombuffer(image_data, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        denoised = cv2.fastNlMeansDenoising(gray)
-        _, binary = cv2.threshold(denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        return binary
+        return preprocess_document_bytes(image_data)
     
     @classmethod
     def extract_text(cls, image_data: bytes, document_type: str = None) -> Dict[str, Any]:

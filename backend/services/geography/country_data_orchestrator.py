@@ -4,7 +4,7 @@ Autonomous Data Orchestrator & Heuristic Engine.
 Fetches external data and generates e-commerce rules without manual admin input.
 """
 import asyncio
-import aiohttp
+from providers.http import aiohttp
 from typing import Optional, Dict, Any
 from decimal import Decimal
 import logging

@@ -22,8 +22,8 @@ from utils.audit import AuditAction, audit_log
 logger = logging.getLogger(__name__)
 
 
-@get("/api/v1/admin/ar", deps=["admin", "db"], query=["customer_id", "status", "country_code", "limit"], tags=["finance"])
-@get("/api/v1/ar", deps=["admin", "db"], query=["customer_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/admin/ar", deps=["db"], query=["customer_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/ar", deps=["db"], query=["customer_id", "status", "country_code", "limit"], tags=["finance"])
 def controller_get_ar_summary(
     db: Session,
     customer_id: Optional[int] = None,
@@ -34,10 +34,10 @@ def controller_get_ar_summary(
     return get_ar_summary(db, customer_id=customer_id, status=status, country_code=country_code, limit=limit)
 
 
-@get("/api/v1/admin/ap", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
-@get("/api/v1/ap", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
-@get("/api/v1/admin/ap-ledger", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
-@get("/api/v1/ap-ledger", deps=["admin", "db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/admin/ap", deps=["db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/ap", deps=["db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/admin/ap-ledger", deps=["db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
+@get("/api/v1/ap-ledger", deps=["db"], query=["supplier_id", "status", "country_code", "limit"], tags=["finance"])
 def controller_get_ap_summary(
     db: Session,
     supplier_id: Optional[int] = None,
@@ -60,7 +60,7 @@ def controller_post_ar_invoice(
     description: Optional[str] = None,
     currency: str = "OMR",
     country_code: Optional[str] = None,
-    admin_user: Optional[dict] = None,
+    current_user: Optional[dict] = None,
 ) -> dict:
     import datetime as dt
     due = dt.datetime.fromisoformat(due_date) if due_date else None
@@ -68,13 +68,13 @@ def controller_post_ar_invoice(
         db, customer_id=customer_id, amount=Decimal(str(amount)),
         order_id=order_id, invoice_id=invoice_id, due_date=due,
         description=description, currency=currency, country_code=country_code,
-        created_by=admin_user.get("id") if admin_user else None,
+        created_by=current_user.get("id") if current_user else None,
     )
     audit_log(
         db=db, action=AuditAction.JOURNAL_ENTRY_CREATED,
-        user_id=admin_user.get("id") if admin_user else None,
-        username=admin_user.get("username") if admin_user else None,
-        user_role=admin_user.get("role") if admin_user else None,
+        user_id=current_user.get("id") if current_user else None,
+        username=current_user.get("username") if current_user else None,
+        user_role=current_user.get("role") if current_user else None,
         resource_type="ar_invoice", resource_id=entry.id,
         details={"customer_id": customer_id, "amount": amount, "currency": currency},
     )
@@ -92,19 +92,19 @@ def controller_post_ar_payment(
     description: Optional[str] = None,
     currency: str = "OMR",
     country_code: Optional[str] = None,
-    admin_user: Optional[dict] = None,
+    current_user: Optional[dict] = None,
 ) -> dict:
     entry = post_ar_payment(
         db, customer_id=customer_id, amount=Decimal(str(amount)),
         invoice_id=invoice_id, order_id=order_id,
         description=description, currency=currency, country_code=country_code,
-        created_by=admin_user.get("id") if admin_user else None,
+        created_by=current_user.get("id") if current_user else None,
     )
     audit_log(
         db=db, action=AuditAction.BANK_TRANSACTION_RECONCILED,
-        user_id=admin_user.get("id") if admin_user else None,
-        username=admin_user.get("username") if admin_user else None,
-        user_role=admin_user.get("role") if admin_user else None,
+        user_id=current_user.get("id") if current_user else None,
+        username=current_user.get("username") if current_user else None,
+        user_role=current_user.get("role") if current_user else None,
         resource_type="ar_payment", resource_id=entry.id,
         details={"customer_id": customer_id, "amount": amount, "currency": currency},
     )
@@ -123,7 +123,7 @@ def controller_post_ap_payable(
     description: Optional[str] = None,
     currency: str = "OMR",
     country_code: Optional[str] = None,
-    admin_user: Optional[dict] = None,
+    current_user: Optional[dict] = None,
 ) -> dict:
     import datetime as dt
     due = dt.datetime.fromisoformat(due_date) if due_date else None
@@ -131,7 +131,7 @@ def controller_post_ap_payable(
         db, supplier_id=supplier_id, amount=Decimal(str(amount)),
         order_id=order_id, settlement_id=settlement_id, due_date=due,
         description=description, currency=currency, country_code=country_code,
-        created_by=admin_user.get("id") if admin_user else None,
+        created_by=current_user.get("id") if current_user else None,
     )
     return {"id": entry.id, "status": entry.status, "balance_after": float(entry.balance_after or 0)}
 
@@ -146,12 +146,12 @@ def controller_post_ap_payment(
     description: Optional[str] = None,
     currency: str = "OMR",
     country_code: Optional[str] = None,
-    admin_user: Optional[dict] = None,
+    current_user: Optional[dict] = None,
 ) -> dict:
     entry = post_ap_payment(
         db, supplier_id=supplier_id, amount=Decimal(str(amount)),
         settlement_id=settlement_id,
         description=description, currency=currency, country_code=country_code,
-        created_by=admin_user.get("id") if admin_user else None,
+        created_by=current_user.get("id") if current_user else None,
     )
     return {"id": entry.id, "status": entry.status, "balance_after": float(entry.balance_after or 0)}

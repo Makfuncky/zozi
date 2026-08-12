@@ -289,7 +289,9 @@ def _wipe_data():
         ]
         for table in tables:
             try:
-                db.execute(text(f"DELETE FROM {table}"))
+                if table not in Base.metadata.tables:
+                    continue
+                db.execute(Base.metadata.tables[table].delete())
             except Exception:
                 pass
         db.commit()

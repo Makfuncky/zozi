@@ -56,7 +56,11 @@ _legacy_engine = None
 def _get_legacy_engine():
     global _legacy_engine
     if _legacy_engine is None:
-        _legacy_engine = create_engine("sqlite://", echo=False)
+        _legacy_engine = create_engine(
+            "sqlite://",
+            echo=False,
+            execution_options={"schema_translate_map": SCHEMA_TRANSLATE_MAP},
+        )
         _legacy_engine.execution_options(isolation_level="AUTOCOMMIT")
         Base.metadata.create_all(bind=_legacy_engine)
     return _legacy_engine
@@ -67,6 +71,7 @@ def engine(db_file: str):
         f"sqlite:///{db_file}",
         connect_args={"check_same_thread": False},
         poolclass=__import__("sqlalchemy.pool", fromlist=["StaticPool"]).StaticPool,
+        execution_options={"schema_translate_map": SCHEMA_TRANSLATE_MAP},
     )
     global _legacy_engine
     _legacy_engine = eng
@@ -98,6 +103,13 @@ import models.commission  # noqa: E402
 import models.permissions  # noqa: E402
 import models.mixins  # noqa: E402
 import models.media_models  # noqa: E402
+
+# The models declare Postgres schemas (e.g. {"schema": "commerce"}). SQLite
+# cannot create ``CREATE TABLE commerce.categories`` ("unknown database"), so
+# translate every schema to None for the in-memory/file test engines. This is
+# test-only and has no effect on the production Postgres dialect.
+_SCHEMAS = {t.schema for t in Base.metadata.tables.values() if t.schema}
+SCHEMA_TRANSLATE_MAP = {s: None for s in _SCHEMAS}
 
 
 # ══════════════════════════════════════════════════════════════════

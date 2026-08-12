@@ -3,6 +3,11 @@
 These are privileged, admin-only operations (hard-delete, bulk-delete,
 force password reset). They live in the security bounded context rather than
 the customer surface so the customer domain stays free of admin-only tokens.
+
+Implementation helper: these functions are reached through the decorated routes
+in ``controllers.admin.users_admin_controller`` (``delete_user_route``,
+``force_reset_password_route``) and the hand-written ``admin_identity_operations``
+router, so they are intentionally NOT decorated with their own HTTP contract.
 """
 from __future__ import annotations
 
@@ -14,10 +19,9 @@ from sqlalchemy.orm import Session, selectinload
 
 from services.common.db_read import all_rows, first
 
+from models import Order, OrderItem, User
+
 from controllers.customer.users import (
-    User,
-    Order,
-    OrderItem,
     _build_user_delete_blocker,
     _delete_order_records,
     _hard_delete_user_record,
@@ -29,9 +33,9 @@ from controllers.customer.users import (
 )
 
 
-def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_orders: bool = False) -> dict:
+def delete_user_admin(user_id: int, current_user: dict, db: Session, delete_orders: bool = False) -> dict:
     """Hard-delete a user and their non-order data. Blocked if user has orders."""
-    if acting_user.get("role") != "admin":
+    if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete users")
 
     user = first(db, User, [User.id == user_id])
@@ -51,7 +55,7 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
 
     blocker = _build_user_delete_blocker(
         user,
-        acting_user,
+        current_user,
         db,
         delete_orders=delete_orders,
         order_count=len(user_orders),
@@ -82,9 +86,9 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
     audit_log(
         db=db,
         action=AuditAction.USER_DELETE,
-        user_id=acting_user["id"],
-        username=acting_user.get("username"),
-        user_role=acting_user.get("role"),
+        user_id=current_user["id"],
+        username=current_user.get("username"),
+        user_role=current_user.get("role"),
         resource_type="user",
         resource_id=user_id,
         details={
@@ -98,9 +102,9 @@ def delete_user_admin(user_id: int, acting_user: dict, db: Session, delete_order
     return {"message": f"User '{username}' deleted successfully"}
 
 
-def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session) -> dict:
+def bulk_delete_users_admin(user_ids: List[int], current_user: dict, db: Session) -> dict:
     """Bulk hard-delete multiple users. Admin-only. Skips protected/order-holding accounts."""
-    if acting_user.get("role") != "admin":
+    if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete users")
 
     if not user_ids:
@@ -112,7 +116,7 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
     skipped: List[dict] = []
 
     for uid in user_ids:
-        if uid == acting_user["id"]:
+        if uid == current_user["id"]:
             skipped.append({"id": uid, "reason": "Cannot delete own account"})
             continue
 
@@ -121,7 +125,7 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
             skipped.append({"id": uid, "reason": "Not found"})
             continue
 
-        blocker = _build_user_delete_blocker(user, acting_user, db, delete_orders=False)
+        blocker = _build_user_delete_blocker(user, current_user, db, delete_orders=False)
         if blocker is not None:
             skipped.append({"id": uid, "reason": blocker[1]})
             continue
@@ -143,9 +147,9 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
         audit_log(
             db=db,
             action=AuditAction.USER_DELETE,
-            user_id=acting_user["id"],
-            username=acting_user.get("username"),
-            user_role=acting_user.get("role"),
+            user_id=current_user["id"],
+            username=current_user.get("username"),
+            user_role=current_user.get("role"),
             resource_type="user",
             resource_id=0,
             details={"bulk": True, "deleted_count": len(deleted), "deleted_users": deleted},
@@ -162,9 +166,9 @@ def bulk_delete_users_admin(user_ids: List[int], acting_user: dict, db: Session)
     }
 
 
-def force_reset_password_admin(user_id: int, new_password: str, acting_user: dict, db: Session) -> dict:
+def force_reset_password_admin(user_id: int, new_password: str, current_user: dict, db: Session) -> dict:
     """Force-set any user's password without requiring the old one (admin only)."""
-    if acting_user.get("role") != "admin":
+    if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can force-reset passwords")
 
     if len(new_password) < 6:
@@ -174,7 +178,7 @@ def force_reset_password_admin(user_id: int, new_password: str, acting_user: dic
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if cast(str, getattr(user, "role")) == "admin" and user_id != acting_user["id"]:
+    if cast(str, getattr(user, "role")) == "admin" and user_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="Cannot reset another admin's password")
 
     force_reset_password_service(db, user, get_password_hash(new_password))
@@ -182,9 +186,9 @@ def force_reset_password_admin(user_id: int, new_password: str, acting_user: dic
     audit_log(
         db=db,
         action=AuditAction.PASSWORD_FORCE_RESET,
-        user_id=acting_user["id"],
-        username=acting_user.get("username"),
-        user_role=acting_user.get("role"),
+        user_id=current_user["id"],
+        username=current_user.get("username"),
+        user_role=current_user.get("role"),
         resource_type="user",
         resource_id=user_id,
         details={"target_username": cast(str, getattr(user, "username"))},

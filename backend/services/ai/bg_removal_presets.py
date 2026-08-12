@@ -21,7 +21,7 @@ from collections import OrderedDict
 from typing import Optional
 
 import numpy as np
-from PIL import Image
+from providers.image import Image
 
 from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes
 

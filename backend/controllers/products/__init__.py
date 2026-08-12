@@ -1,1 +1,1 @@
-
+"""Product controller package."""
