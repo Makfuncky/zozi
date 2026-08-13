@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from controllers.iam_controller import (
+from controllers.identity.iam_controller import (
     enroll_biometric,
     generate_physical_card,
     generate_qr_token,

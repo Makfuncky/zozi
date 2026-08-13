@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     archive_entity,
     bulk_archive_entities,
     bulk_category_change,
@@ -11,7 +11,7 @@ from controllers.admin_controller import (
     hard_delete_entity,
     restore_entity,
 )
-from controllers.products_controller import _bump_product_cache_version
+from controllers.products.products_controller import _bump_product_cache_version
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
 from models import Product

@@ -13,7 +13,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import (
     Account,
@@ -25,7 +25,7 @@ from models import (
     TreasuryAccount,
     User,
 )
-from services.treasury_engine import TreasuryEngine, seed_chart_of_accounts
+from services.treasury.treasury_engine import TreasuryEngine, seed_chart_of_accounts
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import clear_rls_context, set_rls_context
 

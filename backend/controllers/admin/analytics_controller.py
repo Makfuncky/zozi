@@ -3,7 +3,7 @@
 Canonical coordinator for admin analytics dashboards. Delegates to
 ``services.admin.analytics_service`` (and ``services.analytics.analytics_service``).
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators.
+HTTP contract declared with ``core.route_contract`` decorators.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get
+from core.route_contract import get
 
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context

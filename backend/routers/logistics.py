@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-import controllers.logistics_controller as ctrl
+import controllers.orders.logistics_controller as ctrl
 from db.database import get_db
 from routers.auth import get_current_user
 

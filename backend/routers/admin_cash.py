@@ -11,7 +11,7 @@ from db.schemas import (
     CashTransactionOut,
 )
 from models import CashAccount, CashTransaction, User
-from services.misc_write_service import (
+from services.common.misc_write_service import (
     create_cash_account as create_cash_account_model,
     create_cash_transaction as create_cash_transaction_model,
 )

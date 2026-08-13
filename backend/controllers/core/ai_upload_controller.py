@@ -12,7 +12,7 @@ from typing import Any, Optional
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import post, put, delete
+from core.route_contract import post, put, delete
 from services.ai.ai_upload_write_service import (
     cancel_ai_upload_job as _cancel_ai_upload_job,
 )

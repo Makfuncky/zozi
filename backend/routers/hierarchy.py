@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import (
     CountryConfig,
@@ -17,7 +17,7 @@ from models import (
     OrgUnit,
 )
 from models.country_enhancements import CountryLocalization
-from services.hierarchy_service import (
+from services.hierarchy.hierarchy_service import (
     assign_matrix_manager,
     backfill_authority_levels,
     can_manage,

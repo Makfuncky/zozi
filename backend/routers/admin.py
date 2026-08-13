@@ -10,8 +10,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
-from controllers import disputes_controller
-from controllers.admin_controller import (
+from controllers.orders import disputes_controller
+from controllers.admin.admin_controller import (
     approve_product,
     bulk_delete_orders_admin,
     bulk_delete_products_admin,
@@ -79,7 +79,7 @@ from controllers.admin_controller import (
     verify_payout,
     verify_supplier,
 )
-from controllers.banner_controller import (
+from controllers.catalog.banner_controller import (
     BannerCreate,
     BannerUpdate,
     create_banner,
@@ -87,7 +87,7 @@ from controllers.banner_controller import (
     get_banner_by_id,
     update_banner,
 )
-from controllers.export_controller import (
+from controllers.core.export_controller import (
     download_export_job_result,
     export_audit_logs_csv,
     export_coupons_csv,
@@ -97,7 +97,7 @@ from controllers.export_controller import (
     export_users_csv,
     queue_export_job,
 )
-from controllers.promotion_controller import (
+from controllers.commerce.promotion_controller import (
     create_promotion_tier,
     delete_promotion_tier,
     get_promotion_config,
@@ -121,14 +121,14 @@ from db.schemas import (
 from db.schemas import (
     Product as ProductSchema,
 )
-from services.approval_matrix_service import (
+from services.security.approval_matrix_service import (
     APPROVAL_RULES,
     can_approve,
     get_approval_chain,
     require_approval,
     resolve_approvers,
 )
-from services.hierarchy_service import (
+from services.hierarchy.hierarchy_service import (
     backfill_authority_levels,
     get_all_subordinates,
     get_authority_level,
@@ -138,10 +138,10 @@ from services.hierarchy_service import (
     is_in_chain,
     reassign_manager,
 )
-from services.hierarchy_service import (
+from services.hierarchy.hierarchy_service import (
     can_manage as hierarchy_can_manage_service,
 )
-from services.misc_write_service import reset_demo_data
+from services.common.misc_write_service import reset_demo_data
 from utils.backup import get_backup_manager
 from utils.constants import MAX_BULK_ITEMS
 
@@ -673,7 +673,7 @@ def set_supplier_badge(
 ):
     """Admin: manually set a supplier's credibility badge level."""
     require_permission("moderation.suppliers", current_admin)
-    import controllers.supplier_controller as _sc
+    import controllers.supplier.supplier_controller as _sc
     return _sc.admin_set_supplier_badge(user_id, badge_level, current_admin, db)
 
 @router.post("/suppliers/{user_id}/refresh-badge")
@@ -684,7 +684,7 @@ def refresh_supplier_badge(
 ):
     """Admin: recompute a supplier's credibility score and auto-assign badge."""
     require_permission("moderation.suppliers", current_admin)
-    import controllers.supplier_controller as _sc
+    import controllers.supplier.supplier_controller as _sc
     return _sc.refresh_supplier_badge(user_id, db)
 
 
@@ -1056,7 +1056,7 @@ def bulk_admin_dispute_action(
 
 # ── Flash Sales ────────────────────────────────────────────────────────────────
 
-from controllers.flash_sale_controller import (
+from controllers.commerce.flash_sale_controller import (
     create_flash_sale,
     delete_flash_sale,
     get_all_flash_sales,
@@ -1502,7 +1502,7 @@ def admin_invoices_overview(
 ):
     """Admin overview of supply chain invoices."""
     require_permission("orders.manage", current_admin)
-    import controllers.invoice_controller as _ic
+    import controllers.finance.invoice_controller as _ic
     return _ic.get_invoice_overview(db)
 
 
@@ -1515,7 +1515,7 @@ def admin_logistics_partners(
 ):
     """Admin: list all logistics partners."""
     require_permission("orders.manage", current_admin)
-    import controllers.logistics_partner_controller as _lpc
+    import controllers.orders.logistics_partner_controller as _lpc
     return _lpc.list_partners(current_admin, db)
 
 @router.post("/logistics/partners", status_code=201)
@@ -1525,7 +1525,7 @@ def admin_create_logistics_partner(
     current_admin: dict = Depends(require_admin),
 ):
     """Admin: onboard a new logistics partner."""
-    import controllers.logistics_partner_controller as _lpc
+    import controllers.orders.logistics_partner_controller as _lpc
     return _lpc.create_partner(data, current_admin, db)
 
 @router.put("/logistics/partners/{partner_id}")
@@ -1537,7 +1537,7 @@ def admin_update_logistics_partner(
 ):
     """Admin: update logistics partner details."""
     require_permission("orders.manage", current_admin)
-    import controllers.logistics_partner_controller as _lpc
+    import controllers.orders.logistics_partner_controller as _lpc
     return _lpc.update_partner(partner_id, data, current_admin, db)
 
 
@@ -1626,7 +1626,7 @@ def admin_list_banners(
     current_admin: dict = Depends(require_admin),
 ):
     """Admin: list all banners (active and inactive)."""
-    from controllers.banner_controller import get_banners_page
+    from controllers.catalog.banner_controller import get_banners_page
     return get_banners_page(db, active_only=False, limit=page_size, offset=(page - 1) * page_size)
 
 
@@ -1973,7 +1973,7 @@ def generate_legal_contract(
 ):
     """Generate a legal contract for a country."""
     require_permission("legal.contracts", current_admin)
-    from services.legal_contract_service import LegalContractService
+    from services.supplier.legal_contract_service import LegalContractService
     
     if payload is None:
         payload = {}
@@ -1998,7 +1998,7 @@ def get_country_audit_trail(
 ):
     """Get audit trail for a country's financial changes."""
     require_permission("audit.read", current_admin)
-    from services.audit_trail_service import AuditTrailService
+    from services.audit.audit_trail_service import AuditTrailService
     
     return AuditTrailService.get_audit_trail(
         country_code,

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from models import User
-from services.video_conferencing import get_video_conference
+from services.comms.video_conferencing import get_video_conference
 from utils.dependencies import require_admin
 
 logger = logging.getLogger("zozi.api.video")

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models import User
 from models.core import EntityChatMessage, EntityChatThread
-from services.chat_system import get_chat_system
-from services.entity_chat_service import EntityChatService
+from services.comms.chat_system import get_chat_system
+from services.comms.entity_chat_service import EntityChatService
 from utils.country_rls import get_country_or_404
 from utils.dependencies import require_admin
 from utils.rls_interceptor import clear_rls_context, set_rls_context
@@ -138,7 +138,7 @@ def admin_create_thread(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from services.chat_system import ChatSystem
+        from services.comms.chat_system import ChatSystem
         resolved_type = entity_type or "admin"
         resolved_id = entity_id or 0
         try:
@@ -166,7 +166,7 @@ def admin_create_thread_global(
     get_country_or_404(cc, db)
     set_rls_context({cc}, is_restricted=True)
     try:
-        from services.chat_system import ChatSystem
+        from services.comms.chat_system import ChatSystem
 
         resolved_type = entity_type or "admin"
         resolved_id = entity_id or 0

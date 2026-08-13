@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_admin
-from controllers.auth_controller import get_current_user
+from controllers.admin.admin_controller import require_admin
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import User
 from models.countries import CountryConfig

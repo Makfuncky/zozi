@@ -3,7 +3,7 @@
 Wraps ``services.governance.command_center_service`` and exposes the
 administrative command-center endpoints under ``/api/v1/admin/command-center``.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators so the
+HTTP contract declared with ``core.route_contract`` decorators so the
 router can be auto-generated; the thin hand-written ``routers/command_center_controller.py``
 is retained as the authoritative router (the generator collision-skips these paths).
 """
@@ -13,7 +13,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post
+from core.route_contract import delete, get, post
 
 from services.governance.command_center_service import (
     create_executive_news,

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     archive_entity,
     bulk_archive_entities,
     bulk_restore_entities,
@@ -11,7 +11,7 @@ from controllers.admin_controller import (
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest
 from models import Category, User
-from services.products_write_service import (
+from services.catalog.products_write_service import (
     create_category as create_category_model,
     update_category as update_category_model,
     delete_category as delete_category_model,

@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers import accounting_controller
-from controllers.admin_controller import require_admin
-from controllers.sub_ledger_controller import (
+from controllers.finance import accounting_controller
+from controllers.admin.admin_controller import require_admin
+from controllers.finance.sub_ledger_controller import (
     controller_get_ap_summary,
     controller_get_ar_summary,
     controller_post_ap_payable,
@@ -19,13 +19,13 @@ from controllers.sub_ledger_controller import (
     controller_post_ar_payment,
 )
 from db.database import get_db
-from services.audit.audit_service import AuditAction, audit_log
-from services.cash_flow_forecast_service import (
+from utils.audit import AuditAction, audit_log
+from services.finance.cash_flow_forecast_service import (
     generate_forecast as generate_cash_forecast,
 )
-from services.financial_reporting import FinancialReportingService
-from services.je_reversal_service import reverse_journal_entry
-from services.period_close_service import (
+from services.finance.financial_reporting import FinancialReportingService
+from services.finance.je_reversal_service import reverse_journal_entry
+from services.finance.period_close_service import (
     close_period,
     get_current_fiscal_period,
     get_or_create_fiscal_period,

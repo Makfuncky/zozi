@@ -33,8 +33,8 @@ def bulk_toggle_users_active_route_route(
     country_code: str,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    ids: list[int] = Body(None),
-    is_active: bool = Body(False)
+    ids: list[int] = Body(None, embed=True),
+    is_active: bool = Body(False, embed=True)
 ):
     return bulk_toggle_users_active_route(country_code=country_code, current_user=current_user, db=db, ids=ids, is_active=is_active)
 
@@ -43,8 +43,8 @@ def bulk_update_users_role_route_route(
     country_code: str,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    ids: list[int] = Body(None),
-    role: str = Body('customer')
+    ids: list[int] = Body(None, embed=True),
+    role: str = Body('customer', embed=True)
 ):
     return bulk_update_users_role_route(country_code=country_code, current_user=current_user, db=db, ids=ids, role=role)
 

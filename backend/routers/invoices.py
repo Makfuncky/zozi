@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
-import controllers.invoice_controller as ctrl
+import controllers.finance.invoice_controller as ctrl
 from db.database import get_db
 from routers.auth import get_current_user
 from utils.invoice_html import generate_invoice_html, generate_invoice_pdf_bytes

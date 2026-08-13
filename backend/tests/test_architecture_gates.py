@@ -7,7 +7,13 @@ that was never committed; this file is the source of truth.
 W1 rules enforced here:
   * A ``service`` must NOT own a FastAPI router or route decorator (DB logic only).
   * A ``controller`` must be routing-metadata only (import ``get``/``post``/... from
-    ``routers.generated.auto_router``); it must not instantiate ``APIRouter``.
+    ``routers.generated.auto_router``); it must not instantiate ``APIRouter`` and
+    must not own the DB transaction boundary (``db.add``/``db.commit``/etc. — those
+    belong in ``services``).
+  * A ``router`` must be thin: it must not import ``models`` or own the DB
+    transaction boundary (those belong in ``services``); routing is declared by
+    controllers and the auto-generator. Legacy offenders are frozen in
+    ``tests/_router_logic_baseline.txt`` and must only decrease.
   * ``main:app`` must import/boot and mount the remediated routes.
 
 ``services/location_service`` is exempt: it is a *standalone* FastAPI microservice
@@ -30,6 +36,21 @@ ROUTERS_DIR = os.path.join(BACKEND, "routers")
 SERVICE_EXCLUDES = {"services/location_service"}
 
 ROUTE_ATTRS = {"get", "post", "put", "patch", "delete", "websocket"}
+
+# Unambiguous SQLAlchemy session write operations. A controller must never issue
+# these — the transaction boundary belongs in services. ``add`` is deliberately
+# narrow: ``set.add`` (used for dedup bookkeeping) is not a DB write, so it is
+# excluded when the receiver is a locally-declared ``set(...)`` variable.
+DB_WRITE_METHODS = {
+    "commit",
+    "add_all",
+    "merge",
+    "flush",
+    "bulk_save_objects",
+    "bulk_insert_mappings",
+    "bulk_update_mappings",
+    "bulk_save",
+}
 
 # Router-load failures that exist independently of this remediation (legacy,
 # out-of-scope). New failures (e.g. from a broken generated router) must still fail.
@@ -75,6 +96,55 @@ def _router_violations(tree: ast.Module):
     return problems
 
 
+def _db_write_violations(tree: ast.Module):
+    """Return a list of SQLAlchemy write operations performed in a module.
+
+    Controllers declare the HTTP contract and delegate persistence to services;
+    they must not own the transaction boundary. ``set.add`` (dedup bookkeeping)
+    is excluded by tracking locally-declared ``set(...)`` variables.
+    """
+    problems = []
+
+    def _safe_set_names(func_tree: ast.AST):
+        names = set()
+        for node in ast.walk(func_tree):
+            value = None
+            tgt = None
+            if isinstance(node, ast.Assign):
+                value = node.value
+                tgt = node.targets[0] if node.targets else None
+            elif isinstance(node, ast.AnnAssign):
+                value = node.value
+                tgt = node.target
+            if (
+                isinstance(tgt, ast.Name)
+                and isinstance(value, ast.Call)
+                and getattr(value.func, "id", None) == "set"
+            ):
+                names.add(tgt.id)
+        return names
+
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        safe_sets = _safe_set_names(node)
+        for call in ast.walk(node):
+            if not isinstance(call, ast.Call):
+                continue
+            func = call.func
+            if not isinstance(func, ast.Attribute):
+                continue
+            attr = func.attr
+            if attr in DB_WRITE_METHODS:
+                problems.append(f"{node.name}: db.{attr}(...) write in controller")
+            elif attr == "add":
+                recv = func.value
+                recv_name = recv.id if isinstance(recv, ast.Name) else None
+                if recv_name is None or recv_name not in safe_sets:
+                    problems.append(f"{node.name}: db.add(...) write in controller")
+    return problems
+
+
 class TestNoFastAPIRoutersInServices:
     def test_no_router_definitions_in_services(self):
         violations = {}
@@ -114,6 +184,62 @@ class TestControllersUseNoFastAPIRouters:
             )
 
 
+class TestControllersWriteNoDB:
+    """Controllers are routing-metadata only (W1): the transaction boundary
+    belongs in ``services``. Regression guard so a stray ``db.add/commit`` in a
+    controller fails the build instead of silently re-introducing layering debt.
+    """
+
+    def test_controllers_do_not_write_to_db(self):
+        violations = {}
+        for path in _iter_py(CONTROLLERS_DIR):
+            try:
+                tree = ast.parse(open(path, encoding="utf-8").read())
+            except SyntaxError as e:
+                violations[os.path.relpath(path, BACKEND)] = [f"syntax error: {e}"]
+                continue
+            probs = _db_write_violations(tree)
+            if probs:
+                violations[os.path.relpath(path, BACKEND)] = probs
+        if violations:
+            msg = "\n".join(f"  {k}: {v}" for k, v in violations.items())
+            raise AssertionError(
+                "Controllers must not write to the DB (delegate to services). Violations:\n" + msg
+            )
+
+
+class TestNoNewBusinessLogicInRouters:
+    """Routers must be thin (routers -> controllers -> services). A router that
+    imports ``models`` or performs a DB write embeds business logic that belongs
+    in ``services``. The baseline (``tests/_router_logic_baseline.txt``) freezes
+    the current 124 legacy routers; the count must only DECREASE. This gate fails
+    only on *new* offenders so the remediation can be chipped away safely.
+
+    Regenerate the baseline after an intentional migration with
+    ``python tests/_gen_router_baseline.py``.
+    """
+
+    def test_no_new_router_embeds_business_logic(self):
+        from _gen_router_baseline import load_baseline, scan_router_files
+
+        baseline = load_baseline()
+        new_offenders = []
+        for rel, imports_models, db_write in scan_router_files():
+            if (imports_models or db_write) and rel not in baseline:
+                reasons = []
+                if imports_models:
+                    reasons.append("imports models")
+                if db_write:
+                    reasons.append("db write")
+                new_offenders.append(f"{rel} [{', '.join(reasons)}]")
+        assert not new_offenders, (
+            "New router(s) embed business logic (violates routers -> controllers "
+            "-> services). Migrate to a controller + auto-generated router, then "
+            "regenerate the baseline. New offenders:\n  "
+            + "\n  ".join(sorted(new_offenders))
+        )
+
+
 class TestNoServiceCodeInRouters:
     """Regression guard: handler/service code must not live in the routers layer.
 
@@ -132,6 +258,33 @@ class TestNoServiceCodeInRouters:
         assert not offenders, (
             "Handler/service code found in the routers layer (must live in "
             "services/). Offenders:\n  " + "\n  ".join(offenders)
+        )
+
+
+class TestNoNewSdkInServices:
+    """Services must not import external third-party SDKs directly — that is a
+    provider concern (``providers/**``) wired by the service. Freeze the current
+    offenders (P3 baseline); only *new* leakage fails the build, so debt can be
+    chipped away safely per-feature. Regenerate the baseline after an intentional
+    move: ``python tests/_gen_service_provider_baseline.py``.
+    """
+
+    def test_no_new_external_sdk_in_services(self):
+        from _gen_service_provider_baseline import (
+            load_baseline,
+            scan_service_sdk_files,
+        )
+
+        baseline = load_baseline()
+        new = []
+        for rel, sdk in scan_service_sdk_files():
+            if rel not in baseline:
+                new.append(f"{rel} [{sdk}]")
+        assert not new, (
+            "New service imports an external SDK directly (violates "
+            "services -> providers). Relocate to providers/**, or if this is an "
+            "intentional legacy freeze, regenerate the baseline. New:\n  "
+            + "\n  ".join(sorted(new))
         )
 
 

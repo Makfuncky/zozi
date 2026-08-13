@@ -7,10 +7,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from services.email_gateway import get_email_gateway
-from services.entity_chat_service import get_chat_service
+from services.comms.email_gateway import get_email_gateway
+from services.comms.entity_chat_service import get_chat_service
 
 router = APIRouter()
 

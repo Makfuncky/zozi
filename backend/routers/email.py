@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_roles
+from controllers.admin.admin_controller import require_roles
 from db.database import get_db
 from models.marketing import (
     EmailCampaign,
@@ -21,8 +21,8 @@ from models.marketing import (
     EmailSuppression,
     EmailTemplate,
 )
-from services.email_gateway import EmailGateway
-from services.transactional_email_service import (
+from services.comms.email_gateway import EmailGateway
+from services.comms.transactional_email_service import (
     enqueue_invoice_email,
     enqueue_low_stock_alert_email,
     enqueue_order_created_email,

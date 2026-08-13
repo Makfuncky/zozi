@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     get_all_suppliers,
     get_current_admin,
 )

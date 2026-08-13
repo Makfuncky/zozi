@@ -50,7 +50,7 @@ from controllers.payments_controller import (
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models.payments import Payment
 

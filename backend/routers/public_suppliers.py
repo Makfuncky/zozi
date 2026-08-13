@@ -9,7 +9,7 @@ GET /suppliers/{id}/products — paginated products by this supplier
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
-import controllers.supplier_controller as ctrl
+import controllers.supplier.supplier_controller as ctrl
 from db.database import get_db
 
 router = APIRouter()

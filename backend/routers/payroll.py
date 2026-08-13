@@ -9,11 +9,11 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import EmployeeDocument
-from routers.effective_permissions import check_permission
-from services.payroll_engine import PayrollEngine
+from services.security.effective_permissions import check_permission
+from services.hr.payroll_engine import PayrollEngine
 
 logger = logging.getLogger(__name__)
 

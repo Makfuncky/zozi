@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from models import User
-from services.audit.audit_service import AuditAction, audit_log
+from utils.audit import AuditAction, audit_log
 from utils.dependencies import get_current_user, require_admin
 from utils.ip_utils import get_ip_for_logging
 

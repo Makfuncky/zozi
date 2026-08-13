@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from models import User
-from services.storage import storage as _storage
+from services.common.storage import storage as _storage
 from utils.config import settings
 from utils.dependencies import get_current_user
 from utils.file_validation import validate_upload_document, validate_upload_image

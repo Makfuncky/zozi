@@ -3,7 +3,7 @@
 Coordinates the country-config-version HTTP contract and delegates ALL
 persistence to services.geography.country_versioning_service. It must not
 issue db.query directly. The HTTP contract is declared with
-routers.generated.auto_router decorators so the auto-router emits the surface
+core.route_contract decorators so the auto-router emits the surface
 router that main._load_routers auto-discovers.
 
 Both the /api/v1/admin and /api/v1 mount points are preserved (the legacy
@@ -17,7 +17,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get, post
+from core.route_contract import get, post
 
 from services.geography.country_versioning_service import (
     VersionDraftBody, approve_version, create_version, get_version, list_versions,

@@ -57,9 +57,9 @@ def bulk_verify_suppliers_route_route(
     country_code: str,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    ids: list[int] = Body(None),
-    action: str = Body('approve'),
-    note: Optional[str] = Body(None)
+    ids: list[int] = Body(None, embed=True),
+    action: str = Body('approve', embed=True),
+    note: Optional[str] = Body(None, embed=True)
 ):
     return bulk_verify_suppliers_route(country_code=country_code, current_user=current_user, db=db, ids=ids, action=action, note=note)
 
@@ -68,10 +68,10 @@ def bulk_manage_suppliers_route_route(
     country_code: str,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    ids: list[int] = Body(None),
-    action: str = Body('approve'),
-    note: Optional[str] = Body(None),
-    badge_level: Optional[str] = Body(None)
+    ids: list[int] = Body(None, embed=True),
+    action: str = Body('approve', embed=True),
+    note: Optional[str] = Body(None, embed=True),
+    badge_level: Optional[str] = Body(None, embed=True)
 ):
     return bulk_manage_suppliers_route(country_code=country_code, current_user=current_user, db=db, ids=ids, action=action, note=note, badge_level=badge_level)
 

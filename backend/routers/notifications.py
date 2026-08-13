@@ -4,9 +4,9 @@ Notification Engine API Endpoints
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from services.notification_engine import (
+from services.comms.notification_engine import (
     NotificationChannel,
     NotificationPriority,
     get_notification_engine,

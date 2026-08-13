@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from controllers.risk_controller import (
+from controllers.security.risk_controller import (
     detect_ghost_employees,
     detect_impossible_travel,
     get_audit_timeline,

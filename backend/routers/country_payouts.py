@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_country_access
+from controllers.admin.admin_controller import require_country_access
 from db.database import get_db
 from models import PayoutRuleCategory, PayoutRuleProduct
 from routers.auth import get_current_user

@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import (
+from controllers.admin.admin_controller import (
     archive_entity,
     bulk_archive_entities,
     bulk_restore_entities,

@@ -1,7 +1,7 @@
 """
 AI Controller — product AI suggestion business logic.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators. Paths
+HTTP contract declared with ``core.route_contract`` decorators. Paths
 match ``routers/system_ai_sync.py`` so auto-generation skips them (no duplicate
 live routes). Note: the live routes use multipart ``Form``/``File`` binding that
 the generator cannot express, so these decorators are documentation + skip.
@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 from fastapi import HTTPException, UploadFile
 
-from routers.generated.auto_router import post
+from core.route_contract import post
 
 from services.ai import ai_service
 from utils.background_jobs import enqueue_job

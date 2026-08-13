@@ -20,8 +20,8 @@ from controllers.admin.admin_controller import (
     get_current_admin,
 )
 from db.database import get_db
-from data.models import Category as CategoryModel
-from data.models import (
+from models import Category as CategoryModel
+from models import (
     CommissionGlobalConfig,
     Employee,
     Payment,
@@ -30,8 +30,8 @@ from data.models import (
     ShippingCarrier,
     ShippingZone,
 )
-from data.models import Payout as PayoutModel
-from data.models import User as UserModel
+from models import Payout as PayoutModel
+from models import User as UserModel
 from services.common.db_read import (
     all_rows,
     count,
@@ -266,8 +266,8 @@ def admin_treasury_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury summary — redirect to /admin/treasury/metrics if you need full metrics."""
-    from data.models import Account as AccountModel
-    from data.models import AccountBalance as AccountBalanceModel
+    from models import Account as AccountModel
+    from models import AccountBalance as AccountBalanceModel
 
     total_cash = (
         scalar(
@@ -295,8 +295,8 @@ def admin_treasury_metrics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury metrics summary (no country code required)."""
-    from data.models import Account as AccountModel
-    from data.models import AccountBalance as AccountBalanceModel
+    from models import Account as AccountModel
+    from models import AccountBalance as AccountBalanceModel
 
     accounts = all_rows(db, AccountModel)
     total_cash = (

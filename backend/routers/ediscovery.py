@@ -6,9 +6,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_admin
+from controllers.admin.admin_controller import require_admin
 from db.database import get_db
-from services.ediscovery import get_ediscovery_service
+from services.audit.ediscovery import get_ediscovery_service
 
 router = APIRouter()
 

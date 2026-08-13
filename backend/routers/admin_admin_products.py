@@ -46,8 +46,8 @@ def toggle_product_badge_route_route(
     product_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    field: str = Body('is_featured'),
-    value: bool = Body(True)
+    field: str = Body('is_featured', embed=True),
+    value: bool = Body(True, embed=True)
 ):
     return toggle_product_badge_route(country_code=country_code, product_id=product_id, current_user=current_user, db=db, field=field, value=value)
 

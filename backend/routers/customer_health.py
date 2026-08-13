@@ -4,9 +4,9 @@ Customer Health API Endpoints
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from services.customer_health_engine import get_customer_health_engine
+from services.customer.customer_health_engine import get_customer_health_engine
 
 router = APIRouter()
 

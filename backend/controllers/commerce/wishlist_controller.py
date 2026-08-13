@@ -5,7 +5,7 @@ lookup, duplicate prevention) and delegates ALL persistence to
 ``services.commerce.wishlist_read_service`` / ``wishlist_write_service``. It
 must not issue ``db.query`` directly and must not perform commits.
 
-The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+The HTTP contract is declared with ``core.route_contract`` decorators
 so the auto-router emits ``routers/public_commerce_wishlist.py``.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post
+from core.route_contract import delete, get, post
 
 from services.commerce.wishlist_read_service import (
     get_user_wishlist as service_get_user_wishlist,

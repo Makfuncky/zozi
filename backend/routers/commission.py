@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers import commission_controller
-from controllers.admin_controller import require_admin
+from controllers.finance import commission_controller
+from controllers.admin.admin_controller import require_admin
 from db.database import get_db
 from db.schemas import ListPage
 

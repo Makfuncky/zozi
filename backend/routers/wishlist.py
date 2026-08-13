@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from controllers.products_controller import get_products as get_products_controller
+from controllers.products.products_controller import get_products as get_products_controller
 from db.database import get_db
 from models import Product, WishlistItem
 from utils.dependencies import get_current_user

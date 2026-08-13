@@ -16,9 +16,9 @@ def record_badge_billing_payment_route(
     billing_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    payment_method: str = Body(...),
-    transaction_ref: Optional[str] = Body(None),
-    notes: Optional[str] = Body(None)
+    payment_method: str = Body(..., embed=True),
+    transaction_ref: Optional[str] = Body(None, embed=True),
+    notes: Optional[str] = Body(None, embed=True)
 ) -> Any:
     return record_badge_billing_payment(billing_id=billing_id, current_user=current_user, db=db, payment_method=payment_method, transaction_ref=transaction_ref, notes=notes)
 
@@ -50,8 +50,8 @@ def create_bank_transaction_route(
 def import_bank_transactions_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    items: list[dict] = Body(...),
-    auto_reconcile: bool = Body(False)
+    items: list[dict] = Body(..., embed=True),
+    auto_reconcile: bool = Body(False, embed=True)
 ) -> dict:
     return import_bank_transactions(current_user=current_user, db=db, items=items, auto_reconcile=auto_reconcile)
 
@@ -85,9 +85,9 @@ def resolve_transaction_exception_route(
 def auto_reconcile_transactions_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    limit: int = Body(100),
-    source: Optional[str] = Body(None),
-    category: Optional[str] = Body(None)
+    limit: int = Body(100, embed=True),
+    source: Optional[str] = Body(None, embed=True),
+    category: Optional[str] = Body(None, embed=True)
 ) -> dict:
     return auto_reconcile_transactions(current_user=current_user, db=db, limit=limit, source=source, category=category)
 
@@ -111,18 +111,18 @@ def trigger_logistics_payouts_route(
 def dispatch_transfer_batch_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    kind: str = Body(...),
-    provider: Optional[str] = Body(None),
-    dry_run: bool = Body(True)
+    kind: str = Body(..., embed=True),
+    provider: Optional[str] = Body(None, embed=True),
+    dry_run: bool = Body(True, embed=True)
 ) -> dict[str, Any]:
     return dispatch_transfer_batch(current_user=current_user, db=db, kind=kind, provider=provider, dry_run=dry_run)
 
 @router.post("/treasury/transfers/dispatch/queue", status_code=201, tags=['treasury'])
 def queue_dispatch_transfer_batch_route(
     current_user: dict = Depends(require_admin),
-    kind: str = Body(...),
-    provider: Optional[str] = Body(None),
-    dry_run: bool = Body(False)
+    kind: str = Body(..., embed=True),
+    provider: Optional[str] = Body(None, embed=True),
+    dry_run: bool = Body(False, embed=True)
 ) -> dict[str, Any]:
     return queue_dispatch_transfer_batch(current_user=current_user, kind=kind, provider=provider, dry_run=dry_run)
 

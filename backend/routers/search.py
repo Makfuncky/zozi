@@ -16,14 +16,14 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user, get_optional_user
+from controllers.security.auth_controller import get_current_user, get_optional_user
 from controllers.search_controller import get_recommendations, smart_search
 from db.database import get_db
 from providers.image import process_image_search
-from providers.voice_to_text import transcribe_audio
-from services.advanced_filter_service import AdvancedFilterService
-from services.advanced_search_engine import AdvancedSearchEngine
-from services.ai_search_service import AISearchService
+from providers.voice import transcribe_audio
+from services.catalog.advanced_filter_service import AdvancedFilterService
+from services.catalog.advanced_search_engine import AdvancedSearchEngine
+from services.ai.ai_search_service import AISearchService
 
 logger = logging.getLogger(__name__)
 

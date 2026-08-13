@@ -3,7 +3,7 @@
 Canonical coordinator for admin user / staff management. Enforces country RLS
 and delegates to ``services.admin.users_service``.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators.
+HTTP contract declared with ``core.route_contract`` decorators.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from db.schemas import CreateStaffAccount, UpdateStaffAccount
-from routers.generated.auto_router import delete, get, post, put
+from core.route_contract import delete, get, post, put
 
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context

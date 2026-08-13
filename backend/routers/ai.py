@@ -6,7 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
-import controllers.ai_controller as ctrl
+import controllers.core.ai_controller as ctrl
 from routers.auth import get_current_user
 
 router = APIRouter()

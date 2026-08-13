@@ -6,10 +6,10 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import IncidentWarRoom
-from services.incident_service import get_incident_service
+from services.security.incident_service import get_incident_service
 
 router = APIRouter()
 

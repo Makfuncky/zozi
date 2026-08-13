@@ -4,7 +4,7 @@ Canonical coordinator for admin product management. Enforces country RLS and
 delegates persistence to ``services.admin.products_service`` and the shared
 archive helpers in ``services.admin.misc_service`` / ``services.admin.bulk_ops_service``.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators so the
+HTTP contract declared with ``core.route_contract`` decorators so the
 auto-router emits the admin product routers.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post, put
+from core.route_contract import delete, get, post, put
 
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context

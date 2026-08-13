@@ -140,63 +140,30 @@ KNOWN_DEPS = {
 
 HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 
+def _norm_path(path: str) -> str:
+    """Normalize a route path for comparison so trailing-slash variants
+    (``/api/v1`` vs ``/api/v1/``) are treated as the same endpoint by the
+    collision / duplicate detectors."""
+    if not path:
+        return "/"
+    norm = path.rstrip("/")
+    return norm or "/"
+
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Route-contract decorators (CONTROLLERS layer, metadata only — no FastAPI here)
-# ─────────────────────────────────────────────────────────────────────────────
-def route(
-    method: str,
-    path: str,
-    *,
-    deps: "Optional[list]" = None,
-    query: "Optional[list]" = None,
-    body=None,
-    response_model=None,
-    status_code: int = 200,
-    tags: "Optional[list]" = None,
-    rls: "Optional[str]" = None,
-    skip: bool = False,
-    **kwargs,
-) -> "Any":
-    """Declare the HTTP contract for a controller function. No FastAPI here."""
-    def decorator(func):
-        func._route_meta = {
-            "method": method.upper(),
-            "path": path,
-            "deps": list(deps or []),
-            "query": list(query or []),
-            "body": body,
-            "response_model": response_model,
-            "status_code": status_code,
-            "tags": list(tags or []),
-            "rls": rls,
-            "skip": bool(skip),
-            **kwargs,
-        }
-        return func
-    return decorator
+# Ensure the backend root (where ``core`` lives) is importable even when this
+# file is executed as a standalone script (python routers/generated/auto_router.py).
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
-
-def get(path: str, **kw):
-    return route("GET", path, **kw)
-
-
-def post(path: str, **kw):
-    kw.setdefault("status_code", 201)
-    return route("POST", path, **kw)
-
-
-def put(path: str, **kw):
-    return route("PUT", path, **kw)
-
-
-def patch(path: str, **kw):
-    return route("PATCH", path, **kw)
-
-
-def delete(path: str, **kw):
-    return route("DELETE", path, **kw)
-
+# Route-contract decorators now live in ``core.route_contract`` (the single
+# source of truth) and are re-exported here so ``from routers.generated.
+# auto_router import get`` keeps working during migration. The generator only
+# needs the NAMES (it parses controllers via AST), so the import is enough.
+from core.route_contract import (  # noqa: F401
+    route, get, post, put, patch, delete,
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AST helpers
@@ -477,9 +444,10 @@ def emit_param(p: dict, method: str) -> str:
             return f"{name}: {ann} = Body({default})"
         return f"{name}: {ann} = Body(...)"
     if role == "bodyfield":
+        embed = ", embed=True" if p.get("embed") else ""
         if default is not None:
-            return f"{name}: {ann} = Body({default})"
-        return f"{name}: {ann} = Body(...)"
+            return f"{name}: {ann} = Body({default}{embed})"
+        return f"{name}: {ann} = Body(...{embed})"
     if role == "rest":
         return f"**{name}"
     return f"{name}: {ann}"
@@ -507,8 +475,11 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
     # yields e.g. ``/api/v1/admin`` for admin controllers (instead of a bare
     # ``/api/v1``), so the surface is reflected in the mounted routes. Falls
     # back to a shared ``/api/v1`` prefix, then to no prefix.
-    surf = {_surface_for_path(m["path"]) for m in active
-            if _surface_for_path(m["path"])[0]}
+    surf = set()
+    for m in active:
+        s = _surface_for_path(m["path"])
+        if s is not None:
+            surf.add(s)
     if len(surf) == 1:
         router_prefix = next(iter(surf))[1]
     elif all(m["path"].startswith(API_VERSION_PREFIX) for m in active):
@@ -516,6 +487,7 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
     else:
         router_prefix = ""
 
+    used_route_names = set()
     for meta in active:
         roles = assign_roles(meta, module_info["module"])
         route_path = meta["path"]
@@ -554,6 +526,17 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
         if meta.get("body") is not None:
             _collect_type_names(meta["body"], type_names)
 
+        # When a route has more than one body/bodyfield param, FastAPI requires
+        # each to be marked ``embed=True`` (otherwise it rejects multiple body
+        # fields). Tag them so ``emit_param`` emits the correct wiring. This is
+        # per-route, so it lives inside the meta loop (the previous placement
+        # outside the loop only ever emitted the LAST route and could reference
+        # the loop-scoped ``deco`` after a colliding route hit ``continue``).
+        _body_fields = [p for p in roles if p["role"] in ("body", "bodyfield")]
+        if len(_body_fields) > 1:
+            for p in _body_fields:
+                p["embed"] = True
+
         for p in roles:
             if p["role"] in ("bodyfield", "body"):
                 needs_body = True
@@ -577,8 +560,8 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
                     fastapi_extras.add("Request")
             if p.get("ann"):
                 _collect_type_names(p["ann"], ann_imports)
-        if meta.get("returns"):
-            _collect_type_names(meta["returns"], ann_imports)
+            if meta.get("returns"):
+                _collect_type_names(meta["returns"], ann_imports)
         params_str = ",\n    ".join(emit_param(p, meta["method"]) for p in _order_params(roles))
         ret = f" -> {meta['returns']}" if meta.get("returns") else ""
         func_imports.add(meta["func"])
@@ -591,7 +574,16 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
                 call_parts.append(f"{p['name']}={p['name']}")
         call = f"{meta['func']}({', '.join(call_parts)})"
         ret_stmt = f"    return await {call}" if meta.get("is_async") else f"    return {call}"
-        body_lines = [f"{deco}", f"{prefix} {meta['func']}_route(", f"    {params_str}", f"){ret}:"]
+        # Keep wrapper names unique. A function with stacked decorators (e.g.
+        # admin + public surfaces) is emitted once per decorator, so suffix a
+        # counter to avoid redefining the same ``{func}_route`` symbol.
+        route_name = f"{meta['func']}_route"
+        suffix = 1
+        while route_name in used_route_names:
+            route_name = f"{meta['func']}_route_{suffix}"
+            suffix += 1
+        used_route_names.add(route_name)
+        body_lines = [f"{deco}", f"{prefix} {route_name}(", f"    {params_str}", f"){ret}:"]
         body_lines.append(ret_stmt)
         route_funcs.append("\n".join(body_lines))
 
@@ -620,7 +612,9 @@ def generate_router_file(module_info: dict, collisions: "Optional[set]" = None,
     lines.append("")
     # Re-export every referenced symbol (controller funcs + type hints) from the
     # controller module in a single import so the generated router is self-contained.
-    controller_symbols = sorted(set(func_imports) | (type_names - _BUILTIN_NAMES))
+    controller_symbols = sorted(
+        (set(func_imports) | (type_names - _BUILTIN_NAMES) | (ann_imports - _BUILTIN_NAMES))
+    )
     lines.append(f"from {mod} import {', '.join(controller_symbols)}")
     lines.append("")
     if router_prefix:
@@ -640,7 +634,7 @@ def validate(modules: "list") -> "list":
         for meta in mi["routes"]:
             if meta["skip"]:
                 continue
-            key = (meta["method"], meta["path"])
+            key = (meta["method"], _norm_path(meta["path"]))
             if key in seen:
                 errors.append(
                     f"DUPLICATE route {meta['method']} {meta['path']} "

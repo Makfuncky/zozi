@@ -3,20 +3,20 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from services.promotions.promotion_admin_write_service import (
-    create_banner,
-    create_banner_by_country,
-    create_coupon,
-    create_coupon_by_country,
-    create_flash_sale,
-    delete_banner,
-    delete_banner_by_country,
-    update_banner,
-    update_banner_by_country,
-    update_flash_sale,
+    create_banner as service_create_banner,
+    create_banner_by_country as service_create_banner_by_country,
+    create_coupon as service_create_coupon,
+    create_coupon_by_country as service_create_coupon_by_country,
+    create_flash_sale as service_create_flash_sale,
+    delete_banner as service_delete_banner,
+    delete_banner_by_country as service_delete_banner_by_country,
+    update_banner as service_update_banner,
+    update_banner_by_country as service_update_banner_by_country,
+    update_flash_sale as service_update_flash_sale,
     update_promotion_config,
 )
 import structlog
-from routers.generated.auto_router import post, put, delete
+from core.route_contract import post, put, delete
 
 logger = structlog.get_logger(__name__)
 
@@ -41,7 +41,7 @@ def create_coupon(
     db=None,
     current_user: dict = None,
 ):
-    return create_coupon(db, code=code, discount_type=discount_type, discount_value=discount_value,
+    return service_create_coupon(db, code=code, discount_type=discount_type, discount_value=discount_value,
                          minimum_order=minimum_order, maximum_discount=maximum_discount, usage_limit=usage_limit,
                          starts_at=starts_at, expires_at=expires_at, is_active=is_active, country_code=country_code)
 
@@ -61,7 +61,7 @@ def create_coupon_by_country(
     db=None,
     current_user: dict = None,
 ):
-    return create_coupon_by_country(db, code=code, coupon_code=coupon_code, discount_type=discount_type,
+    return service_create_coupon_by_country(db, code=code, coupon_code=coupon_code, discount_type=discount_type,
                                     discount_value=discount_value, minimum_order=minimum_order,
                                     maximum_discount=maximum_discount, usage_limit=usage_limit,
                                     starts_at=starts_at, expires_at=expires_at, is_active=is_active)
@@ -79,7 +79,7 @@ def create_flash_sale(
     db=None,
     current_user: dict = None,
 ):
-    return create_flash_sale(db, title=title, discount_pct=discount_pct, starts_at=starts_at, ends_at=ends_at,
+    return service_create_flash_sale(db, title=title, discount_pct=discount_pct, starts_at=starts_at, ends_at=ends_at,
                              description=description, is_active=is_active, country_code=country_code)
 
 
@@ -96,7 +96,7 @@ def update_flash_sale(
     db=None,
     current_user: dict = None,
 ):
-    return update_flash_sale(db, sale_id=sale_id, title=title, description=description, discount_pct=discount_pct,
+    return service_update_flash_sale(db, sale_id=sale_id, title=title, description=description, discount_pct=discount_pct,
                              starts_at=starts_at, ends_at=ends_at, is_active=is_active, country_code=country_code)
 
 
@@ -125,7 +125,7 @@ def create_banner(
     db=None,
     current_user: dict = None,
 ) -> dict:
-    return create_banner(db, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label,
+    return service_create_banner(db, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label,
                          cta_url=cta_url, banner_type=banner_type, is_active=is_active, sort_order=sort_order,
                          bg_color=bg_color, text_color=text_color, subtitle_color=subtitle_color,
                          btn_bg_color=btn_bg_color, btn_text_color=btn_text_color, badge_text=badge_text,
@@ -159,7 +159,7 @@ def update_banner(
     db=None,
     current_user: dict = None,
 ) -> dict:
-    return update_banner(db, banner_id=banner_id, title=title, subtitle=subtitle, image_url=image_url, link=link,
+    return service_update_banner(db, banner_id=banner_id, title=title, subtitle=subtitle, image_url=image_url, link=link,
                          cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active,
                          sort_order=sort_order, bg_color=bg_color, text_color=text_color, subtitle_color=subtitle_color,
                          btn_bg_color=btn_bg_color, btn_text_color=btn_text_color, badge_text=badge_text,
@@ -169,7 +169,7 @@ def update_banner(
 
 @delete("/api/v1/admin/promotions/banners/{banner_id}", deps=["admin", "db"], tags=["promotions"])
 def delete_banner(banner_id: int, admin_id: Any = None, db=None, current_user: dict = None) -> dict:
-    return delete_banner(db, banner_id=banner_id, admin_id=admin_id)
+    return service_delete_banner(db, banner_id=banner_id, admin_id=admin_id)
 
 
 @post("/api/v1/admin/{code}/banners", deps=["admin", "db"], tags=["promotions"])
@@ -197,7 +197,7 @@ def create_banner_by_country(
     db=None,
     current_user: dict = None,
 ) -> dict:
-    return create_banner_by_country(db, code=code, title=title, subtitle=subtitle, image_url=image_url, link=link,
+    return service_create_banner_by_country(db, code=code, title=title, subtitle=subtitle, image_url=image_url, link=link,
                                     cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active,
                                     sort_order=sort_order, bg_color=bg_color, text_color=text_color,
                                     subtitle_color=subtitle_color, btn_bg_color=btn_bg_color, btn_text_color=btn_text_color,
@@ -231,7 +231,7 @@ def update_banner_by_country(
     db=None,
     current_user: dict = None,
 ) -> dict:
-    return update_banner_by_country(db, code=code, banner_id=banner_id, title=title, subtitle=subtitle,
+    return service_update_banner_by_country(db, code=code, banner_id=banner_id, title=title, subtitle=subtitle,
                                     image_url=image_url, link=link, cta_label=cta_label, cta_url=cta_url,
                                     banner_type=banner_type, is_active=is_active, sort_order=sort_order, bg_color=bg_color,
                                     text_color=text_color, subtitle_color=subtitle_color, btn_bg_color=btn_bg_color,
@@ -241,4 +241,4 @@ def update_banner_by_country(
 
 @delete("/api/v1/admin/{code}/banners/{banner_id}", deps=["admin", "db"], tags=["promotions"])
 def delete_banner_by_country(code: str, banner_id: int, admin_id: Any = None, db=None, current_user: dict = None) -> dict:
-    return delete_banner_by_country(db, code=code, banner_id=banner_id, admin_id=admin_id)
+    return service_delete_banner_by_country(db, code=code, banner_id=banner_id, admin_id=admin_id)

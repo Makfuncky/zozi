@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models import User
 from models.core import VideoRoom
-from services.video_conferencing import get_video_conference
+from services.comms.video_conferencing import get_video_conference
 from utils.country_rls import get_country_or_404
 from utils.dependencies import require_admin
 from utils.rls_interceptor import clear_rls_context, set_rls_context

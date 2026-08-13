@@ -5,7 +5,7 @@ W1 contract: controllers orchestrate only — they must never call
 ``services.hierarchy.org_hierarchy_write_service``. ``HTTPException`` raised by
 the service is allowed to propagate untouched.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators so the
+HTTP contract declared with ``core.route_contract`` decorators so the
 routes can be auto-generated into ``routers/``.
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, post, put
+from core.route_contract import delete, post, put
 
 from services.hierarchy import org_hierarchy_write_service as write_service
 import structlog

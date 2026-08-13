@@ -4,7 +4,7 @@ Contact API Endpoints - Contact form submission and info.
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from utils.email_service import send_email
 

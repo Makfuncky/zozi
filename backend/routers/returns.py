@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.returns_controller import (
+from controllers.orders.returns_controller import (
     bulk_update_return_requests,
     create_return_request,
     get_return_request,

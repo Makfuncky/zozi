@@ -26,7 +26,7 @@ from services.ai.bg_removal_service import (
     remove_background,
     _HAS_CV2,
 )
-from providers.bg_remover import _bytes_to_image
+from providers.image.bg_remover import _bytes_to_image
 
 
 
@@ -145,7 +145,7 @@ async def ab_test_bg_strategies(
 
     def _run_ab_test() -> dict:
         from services.ai.bg_removal_service import remove_background, VALID_STRATEGIES
-        from providers.bg_remover import _bytes_to_image, _compute_quality_score
+        from providers.image.bg_remover import _bytes_to_image, _compute_quality_score
         from PIL import Image
         import base64, time, gc
 

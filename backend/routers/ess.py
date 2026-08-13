@@ -8,11 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import User
 from models.employee_models import Employee
-from services.employee_activity_logger import log_activity
+from services.hr.employee_activity_logger import log_activity
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

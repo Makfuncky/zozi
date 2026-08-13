@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get
+from core.route_contract import get
 
 from services.admin.analytics_fallback_service import (
     get_admin_stats,

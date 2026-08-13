@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from models import Product, SupplierProfile
-from services.storage import storage as _storage
+from services.common.storage import storage as _storage
 from utils.config import settings
 from utils.datetime_utils import utcnow
 from utils.dependencies import require_supplier

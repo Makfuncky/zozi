@@ -4,33 +4,33 @@ from __future__ import annotations
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_admin
+from controllers.admin.admin_controller import require_admin
 from db.database import get_db
-from services import automation_scheduler as scheduler
-from services.ai_automation_service import (
+from services.ai import automation_scheduler as scheduler
+from services.ai.ai_automation_service import (
     batch_categorize_all,
     categorize_expense_ai,
     process_email_inbox,
     process_email_invoice,
     run_ai_bank_reconciliation,
 )
-from services.credit_control_service import (
+from services.finance.credit_control_service import (
     check_customer_credit,
     enforce_auto_credit_holds,
     get_customer_credit_summary,
 )
-from services.gateway_reconciliation_service import (
+from services.gateways.gateway_reconciliation_service import (
     match_gateway_settlement,
     reconcile_cod_deposit,
     run_gateway_3way_reconciliation,
 )
-from services.payout_batch_service import (
+from services.treasury.payout_batch_service import (
     generate_logistics_payout_batches,
     generate_supplier_payout_batches,
     get_pending_batches_for_supplier,
     supplier_approve_batch,
 )
-from services.refund_posting_service import post_refund_automatically
+from services.finance.refund_posting_service import post_refund_automatically
 
 router = APIRouter()
 

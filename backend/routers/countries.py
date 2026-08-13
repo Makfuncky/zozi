@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers import country_controller
-from controllers import employees_controller as ctrl
-from controllers.auth_controller import get_current_user
+from controllers.geography import country_controller
+from controllers.hr import employees_controller as ctrl
+from controllers.security.auth_controller import get_current_user
 from routers.country_versioning import router as versioning_router
 from db.database import get_db
 from routers.country_auto_populate import router as auto_populate_router

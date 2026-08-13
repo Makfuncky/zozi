@@ -12,7 +12,7 @@ from controllers.geography import country_controller
 from controllers.geography.country_controller import _require_admin
 from controllers.hr import employees_controller as ctrl
 from db.database import get_db
-from services.geography.country_auto_populate import router as auto_populate_router
+from routers.country_auto_populate import router as auto_populate_router
 from services.geography.country_config_admin_service import (
     add_country_city as svc_add_country_city,
     archive_country as svc_archive_country,

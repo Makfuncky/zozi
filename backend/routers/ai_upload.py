@@ -41,7 +41,7 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from controllers.admin_controller import require_roles
+from controllers.admin.admin_controller import require_roles
 from db.database import get_db
 from models import (
     AIGenerationLog,
@@ -74,7 +74,7 @@ def _save_upload(file: UploadFile, job_dir: str) -> tuple[str, str, bytes]:
 
     Returns ``(storage_key, public_url, content_bytes)``.
     """
-    from services.storage import storage as _storage
+    from services.common.storage import storage as _storage
 
     ext = os.path.splitext(file.filename or "")[1] or ".bin"
     fname = f"{uuid.uuid4().hex}{ext}"
@@ -196,7 +196,7 @@ def process_ai_upload_job(job_id: int) -> None:
                 if image_bytes_str:
                     img_bytes = bytes(image_bytes_str) if isinstance(image_bytes_str, str) else image_bytes_str
                 elif media.get("key"):
-                    from services.storage import storage as _storage
+                    from services.common.storage import storage as _storage
                     img_bytes = _storage.read(media["key"])
                 else:
                     continue

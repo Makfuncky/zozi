@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query, WebSocket
 from sqlalchemy.orm import Session
 
-from controllers.comm_controller import (
+from controllers.comms.comm_controller import (
     create_chat_thread,
     create_incident_room,
     create_video_room,

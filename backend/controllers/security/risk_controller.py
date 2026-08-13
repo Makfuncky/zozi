@@ -3,7 +3,7 @@
 Wraps ``services.security.risk_service`` and exposes the risk-management
 endpoints under both ``/api/v1/admin`` (admin) and ``/api/v1`` (public).
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators
+HTTP contract declared with ``core.route_contract`` decorators
 (stacked for the admin + public surfaces). The thin hand-written routers
 (``admin_security_health.py`` / ``public_security_health.py``) are retained as
 the authoritative routers and the auto-generator collision-skips these paths.
@@ -14,7 +14,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get, post
+from core.route_contract import get, post
 
 from services.security.risk_service import (
     detect_ghost_employees as _detect_ghost_employees,

@@ -2,20 +2,20 @@
 from fastapi import APIRouter, Depends, File, Path, UploadFile
 from sqlalchemy.orm import Session
 
-from controllers.banner_controller import (
+from controllers.catalog.banner_controller import (
     BannerCreate,
     BannerUpdate,
     get_banners,
     get_banners_page,
     upload_banner_image,
 )
-from controllers.banner_controller import (
+from controllers.catalog.banner_controller import (
     create_banner as create_banner_controller,
 )
-from controllers.banner_controller import (
+from controllers.catalog.banner_controller import (
     delete_banner as delete_banner_controller,
 )
-from controllers.banner_controller import (
+from controllers.catalog.banner_controller import (
     update_banner as update_banner_controller,
 )
 from db.database import get_db

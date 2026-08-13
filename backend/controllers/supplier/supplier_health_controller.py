@@ -4,7 +4,7 @@ Coordinates supplier health/trust-score reads and delegates the persistence and
 permission checks to ``services.supplier.supplier_health_service``. It must not
 issue ``db.query`` directly.
 
-The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+The HTTP contract is declared with ``core.route_contract`` decorators
 so the auto-router emits ``routers/supplier_supplier_supplier_health.py`` as a
 faithful, lossless replacement for the legacy ``routers/supplier_health_list.py``.
 """
@@ -14,7 +14,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get
+from core.route_contract import get
 
 from services.supplier.supplier_health_service import (
     get_supplier_health_for_user,

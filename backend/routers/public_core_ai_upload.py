@@ -7,7 +7,7 @@ from db.database import get_db
 from utils.dependencies import require_admin
 from typing import Any, Optional
 
-from controllers.core.ai_upload_controller import cancel_job, create_job, process_job, publish_job
+from controllers.core.ai_upload_controller import UploadFile, cancel_job, create_job, process_job, publish_job
 
 router = APIRouter(prefix="/api/v1")
 
@@ -15,10 +15,10 @@ router = APIRouter(prefix="/api/v1")
 def create_job_route(
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    images: list[UploadFile] = Body(...),
-    country_code: str = Body(...),
-    model_used: Optional[str] = Body(...),
-    prompt_hash: Optional[str] = Body(...)
+    images: list[UploadFile] = Body(..., embed=True),
+    country_code: str = Body(..., embed=True),
+    model_used: Optional[str] = Body(..., embed=True),
+    prompt_hash: Optional[str] = Body(..., embed=True)
 ) -> dict[str, Any]:
     return create_job(current_user=current_user, db=db, images=images, country_code=country_code, model_used=model_used, prompt_hash=prompt_hash)
 

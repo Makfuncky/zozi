@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from controllers.lms_controller import (
+from controllers.hr.lms_controller import (
     assign_training,
     check_permission_lock,
     create_training_module,

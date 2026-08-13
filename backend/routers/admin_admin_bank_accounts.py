@@ -29,8 +29,8 @@ def verify_bank_account_route_route(
     account_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    action: str = Body('approve'),
-    note: Optional[str] = Body(None)
+    action: str = Body('approve', embed=True),
+    note: Optional[str] = Body(None, embed=True)
 ):
     return verify_bank_account_route(country_code=country_code, kind=kind, account_id=account_id, current_user=current_user, db=db, action=action, note=note)
 

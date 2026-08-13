@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers import employees_controller as ctrl
-from controllers.auth_controller import get_current_user
+from controllers.hr import employees_controller as ctrl
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models.employee_models import Employee
 from utils.country_rls import enforce_country_access

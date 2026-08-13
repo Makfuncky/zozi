@@ -7,10 +7,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
 from models import User
-from services.chat_enrichment import (
+from services.comms.chat_enrichment import (
     add_reaction,
     apply_legal_hold,
     create_voice_note_attachment,

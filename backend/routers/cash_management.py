@@ -12,8 +12,8 @@ from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import controllers.cash_management_controller as ctrl
-from controllers.admin_controller import require_admin, require_permission
+import controllers.treasury.cash_management_controller as ctrl
+from controllers.admin.admin_controller import require_admin, require_permission
 from db.database import get_db
 from db.schemas import (
     BadgeBillingOut,

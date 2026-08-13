@@ -6,9 +6,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from services.country_detection import CountryDetectionService
+from services.geography.country_detection import CountryDetectionService
 
 router = APIRouter()
 

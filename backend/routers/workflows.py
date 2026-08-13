@@ -4,9 +4,9 @@ Workflow Automation API Endpoints
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.auth_controller import get_current_user
+from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from services.workflow_engine import get_workflow_engine
+from services.users.workflow_engine import get_workflow_engine
 
 router = APIRouter()
 

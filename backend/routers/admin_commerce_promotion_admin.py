@@ -16,8 +16,8 @@ def update_config_route(
     config_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    engine_enabled: Optional[bool] = Body(...),
-    stacking_mode: Optional[str] = Body(...)
+    engine_enabled: Optional[bool] = Body(..., embed=True),
+    stacking_mode: Optional[str] = Body(..., embed=True)
 ) -> dict:
     return update_config(config_id=config_id, db=db, current_user=current_user, engine_enabled=engine_enabled, stacking_mode=stacking_mode)
 
@@ -25,16 +25,16 @@ def update_config_route(
 def create_coupon_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    code: str = Body(...),
-    discount_type: str = Body('percentage'),
-    discount_value: float = Body(0),
-    minimum_order: Optional[float] = Body(None),
-    maximum_discount: Optional[float] = Body(None),
-    usage_limit: Optional[int] = Body(None),
-    starts_at: Optional[str] = Body(None),
-    expires_at: Optional[str] = Body(None),
-    is_active: bool = Body(True),
-    country_code: Optional[str] = Body(None)
+    code: str = Body(..., embed=True),
+    discount_type: str = Body('percentage', embed=True),
+    discount_value: float = Body(0, embed=True),
+    minimum_order: Optional[float] = Body(None, embed=True),
+    maximum_discount: Optional[float] = Body(None, embed=True),
+    usage_limit: Optional[int] = Body(None, embed=True),
+    starts_at: Optional[str] = Body(None, embed=True),
+    expires_at: Optional[str] = Body(None, embed=True),
+    is_active: bool = Body(True, embed=True),
+    country_code: Optional[str] = Body(None, embed=True)
 ):
     return create_coupon(db=db, current_user=current_user, code=code, discount_type=discount_type, discount_value=discount_value, minimum_order=minimum_order, maximum_discount=maximum_discount, usage_limit=usage_limit, starts_at=starts_at, expires_at=expires_at, is_active=is_active, country_code=country_code)
 
@@ -43,15 +43,15 @@ def create_coupon_by_country_route(
     code: str,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    coupon_code: str = Body(...),
-    discount_type: str = Body('percentage'),
-    discount_value: float = Body(0),
-    minimum_order: Optional[float] = Body(None),
-    maximum_discount: Optional[float] = Body(None),
-    usage_limit: Optional[int] = Body(None),
-    starts_at: Optional[str] = Body(None),
-    expires_at: Optional[str] = Body(None),
-    is_active: bool = Body(True)
+    coupon_code: str = Body(..., embed=True),
+    discount_type: str = Body('percentage', embed=True),
+    discount_value: float = Body(0, embed=True),
+    minimum_order: Optional[float] = Body(None, embed=True),
+    maximum_discount: Optional[float] = Body(None, embed=True),
+    usage_limit: Optional[int] = Body(None, embed=True),
+    starts_at: Optional[str] = Body(None, embed=True),
+    expires_at: Optional[str] = Body(None, embed=True),
+    is_active: bool = Body(True, embed=True)
 ):
     return create_coupon_by_country(code=code, db=db, current_user=current_user, coupon_code=coupon_code, discount_type=discount_type, discount_value=discount_value, minimum_order=minimum_order, maximum_discount=maximum_discount, usage_limit=usage_limit, starts_at=starts_at, expires_at=expires_at, is_active=is_active)
 
@@ -59,13 +59,13 @@ def create_coupon_by_country_route(
 def create_flash_sale_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    title: str = Body(...),
-    discount_pct: float = Body(...),
-    starts_at: str = Body(...),
-    ends_at: str = Body(...),
-    description: Optional[str] = Body(None),
-    is_active: bool = Body(True),
-    country_code: Optional[str] = Body(None)
+    title: str = Body(..., embed=True),
+    discount_pct: float = Body(..., embed=True),
+    starts_at: str = Body(..., embed=True),
+    ends_at: str = Body(..., embed=True),
+    description: Optional[str] = Body(None, embed=True),
+    is_active: bool = Body(True, embed=True),
+    country_code: Optional[str] = Body(None, embed=True)
 ):
     return create_flash_sale(db=db, current_user=current_user, title=title, discount_pct=discount_pct, starts_at=starts_at, ends_at=ends_at, description=description, is_active=is_active, country_code=country_code)
 
@@ -74,13 +74,13 @@ def update_flash_sale_route(
     sale_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    title: Optional[str] = Body(None),
-    description: Optional[str] = Body(None),
-    discount_pct: Optional[float] = Body(None),
-    starts_at: Optional[str] = Body(None),
-    ends_at: Optional[str] = Body(None),
-    is_active: Optional[bool] = Body(None),
-    country_code: Optional[str] = Body(None)
+    title: Optional[str] = Body(None, embed=True),
+    description: Optional[str] = Body(None, embed=True),
+    discount_pct: Optional[float] = Body(None, embed=True),
+    starts_at: Optional[str] = Body(None, embed=True),
+    ends_at: Optional[str] = Body(None, embed=True),
+    is_active: Optional[bool] = Body(None, embed=True),
+    country_code: Optional[str] = Body(None, embed=True)
 ):
     return update_flash_sale(sale_id=sale_id, db=db, current_user=current_user, title=title, description=description, discount_pct=discount_pct, starts_at=starts_at, ends_at=ends_at, is_active=is_active, country_code=country_code)
 
@@ -88,26 +88,26 @@ def update_flash_sale_route(
 def create_banner_route(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    title: str = Body(...),
-    subtitle: Optional[str] = Body(None),
-    image_url: Optional[str] = Body(None),
-    link: Optional[str] = Body(None),
-    cta_label: Optional[str] = Body(None),
-    cta_url: Optional[str] = Body(None),
-    banner_type: str = Body('hero'),
-    is_active: bool = Body(True),
-    sort_order: int = Body(0),
-    bg_color: Optional[str] = Body(None),
-    text_color: Optional[str] = Body(None),
-    subtitle_color: Optional[str] = Body(None),
-    btn_bg_color: Optional[str] = Body(None),
-    btn_text_color: Optional[str] = Body(None),
-    badge_text: Optional[str] = Body(None),
-    badge_color: Optional[str] = Body(None),
-    effect: Optional[str] = Body(None),
-    layout_json: Optional[str] = Body(None),
-    video_url: Optional[str] = Body(None),
-    country_code: Optional[str] = Body(None)
+    title: str = Body(..., embed=True),
+    subtitle: Optional[str] = Body(None, embed=True),
+    image_url: Optional[str] = Body(None, embed=True),
+    link: Optional[str] = Body(None, embed=True),
+    cta_label: Optional[str] = Body(None, embed=True),
+    cta_url: Optional[str] = Body(None, embed=True),
+    banner_type: str = Body('hero', embed=True),
+    is_active: bool = Body(True, embed=True),
+    sort_order: int = Body(0, embed=True),
+    bg_color: Optional[str] = Body(None, embed=True),
+    text_color: Optional[str] = Body(None, embed=True),
+    subtitle_color: Optional[str] = Body(None, embed=True),
+    btn_bg_color: Optional[str] = Body(None, embed=True),
+    btn_text_color: Optional[str] = Body(None, embed=True),
+    badge_text: Optional[str] = Body(None, embed=True),
+    badge_color: Optional[str] = Body(None, embed=True),
+    effect: Optional[str] = Body(None, embed=True),
+    layout_json: Optional[str] = Body(None, embed=True),
+    video_url: Optional[str] = Body(None, embed=True),
+    country_code: Optional[str] = Body(None, embed=True)
 ) -> dict:
     return create_banner(db=db, current_user=current_user, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active, sort_order=sort_order, bg_color=bg_color, text_color=text_color, subtitle_color=subtitle_color, btn_bg_color=btn_bg_color, btn_text_color=btn_text_color, badge_text=badge_text, badge_color=badge_color, effect=effect, layout_json=layout_json, video_url=video_url, country_code=country_code)
 
@@ -116,26 +116,26 @@ def update_banner_route(
     banner_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    title: Optional[str] = Body(None),
-    subtitle: Optional[str] = Body(None),
-    image_url: Optional[str] = Body(None),
-    link: Optional[str] = Body(None),
-    cta_label: Optional[str] = Body(None),
-    cta_url: Optional[str] = Body(None),
-    banner_type: Optional[str] = Body(None),
-    is_active: Optional[bool] = Body(None),
-    sort_order: Optional[int] = Body(None),
-    bg_color: Optional[str] = Body(None),
-    text_color: Optional[str] = Body(None),
-    subtitle_color: Optional[str] = Body(None),
-    btn_bg_color: Optional[str] = Body(None),
-    btn_text_color: Optional[str] = Body(None),
-    badge_text: Optional[str] = Body(None),
-    badge_color: Optional[str] = Body(None),
-    effect: Optional[str] = Body(None),
-    layout_json: Optional[str] = Body(None),
-    video_url: Optional[str] = Body(None),
-    country_code: Optional[str] = Body(None)
+    title: Optional[str] = Body(None, embed=True),
+    subtitle: Optional[str] = Body(None, embed=True),
+    image_url: Optional[str] = Body(None, embed=True),
+    link: Optional[str] = Body(None, embed=True),
+    cta_label: Optional[str] = Body(None, embed=True),
+    cta_url: Optional[str] = Body(None, embed=True),
+    banner_type: Optional[str] = Body(None, embed=True),
+    is_active: Optional[bool] = Body(None, embed=True),
+    sort_order: Optional[int] = Body(None, embed=True),
+    bg_color: Optional[str] = Body(None, embed=True),
+    text_color: Optional[str] = Body(None, embed=True),
+    subtitle_color: Optional[str] = Body(None, embed=True),
+    btn_bg_color: Optional[str] = Body(None, embed=True),
+    btn_text_color: Optional[str] = Body(None, embed=True),
+    badge_text: Optional[str] = Body(None, embed=True),
+    badge_color: Optional[str] = Body(None, embed=True),
+    effect: Optional[str] = Body(None, embed=True),
+    layout_json: Optional[str] = Body(None, embed=True),
+    video_url: Optional[str] = Body(None, embed=True),
+    country_code: Optional[str] = Body(None, embed=True)
 ) -> dict:
     return update_banner(banner_id=banner_id, db=db, current_user=current_user, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active, sort_order=sort_order, bg_color=bg_color, text_color=text_color, subtitle_color=subtitle_color, btn_bg_color=btn_bg_color, btn_text_color=btn_text_color, badge_text=badge_text, badge_color=badge_color, effect=effect, layout_json=layout_json, video_url=video_url, country_code=country_code)
 
@@ -153,25 +153,25 @@ def create_banner_by_country_route(
     code: str,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    title: str = Body(...),
-    subtitle: Optional[str] = Body(None),
-    image_url: Optional[str] = Body(None),
-    link: Optional[str] = Body(None),
-    cta_label: Optional[str] = Body(None),
-    cta_url: Optional[str] = Body(None),
-    banner_type: str = Body('hero'),
-    is_active: bool = Body(True),
-    sort_order: int = Body(0),
-    bg_color: Optional[str] = Body(None),
-    text_color: Optional[str] = Body(None),
-    subtitle_color: Optional[str] = Body(None),
-    btn_bg_color: Optional[str] = Body(None),
-    btn_text_color: Optional[str] = Body(None),
-    badge_text: Optional[str] = Body(None),
-    badge_color: Optional[str] = Body(None),
-    effect: Optional[str] = Body(None),
-    layout_json: Optional[str] = Body(None),
-    video_url: Optional[str] = Body(None)
+    title: str = Body(..., embed=True),
+    subtitle: Optional[str] = Body(None, embed=True),
+    image_url: Optional[str] = Body(None, embed=True),
+    link: Optional[str] = Body(None, embed=True),
+    cta_label: Optional[str] = Body(None, embed=True),
+    cta_url: Optional[str] = Body(None, embed=True),
+    banner_type: str = Body('hero', embed=True),
+    is_active: bool = Body(True, embed=True),
+    sort_order: int = Body(0, embed=True),
+    bg_color: Optional[str] = Body(None, embed=True),
+    text_color: Optional[str] = Body(None, embed=True),
+    subtitle_color: Optional[str] = Body(None, embed=True),
+    btn_bg_color: Optional[str] = Body(None, embed=True),
+    btn_text_color: Optional[str] = Body(None, embed=True),
+    badge_text: Optional[str] = Body(None, embed=True),
+    badge_color: Optional[str] = Body(None, embed=True),
+    effect: Optional[str] = Body(None, embed=True),
+    layout_json: Optional[str] = Body(None, embed=True),
+    video_url: Optional[str] = Body(None, embed=True)
 ) -> dict:
     return create_banner_by_country(code=code, db=db, current_user=current_user, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active, sort_order=sort_order, bg_color=bg_color, text_color=text_color, subtitle_color=subtitle_color, btn_bg_color=btn_bg_color, btn_text_color=btn_text_color, badge_text=badge_text, badge_color=badge_color, effect=effect, layout_json=layout_json, video_url=video_url)
 
@@ -181,25 +181,25 @@ def update_banner_by_country_route(
     banner_id: int,
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
-    title: Optional[str] = Body(None),
-    subtitle: Optional[str] = Body(None),
-    image_url: Optional[str] = Body(None),
-    link: Optional[str] = Body(None),
-    cta_label: Optional[str] = Body(None),
-    cta_url: Optional[str] = Body(None),
-    banner_type: Optional[str] = Body(None),
-    is_active: Optional[bool] = Body(None),
-    sort_order: Optional[int] = Body(None),
-    bg_color: Optional[str] = Body(None),
-    text_color: Optional[str] = Body(None),
-    subtitle_color: Optional[str] = Body(None),
-    btn_bg_color: Optional[str] = Body(None),
-    btn_text_color: Optional[str] = Body(None),
-    badge_text: Optional[str] = Body(None),
-    badge_color: Optional[str] = Body(None),
-    effect: Optional[str] = Body(None),
-    layout_json: Optional[str] = Body(None),
-    video_url: Optional[str] = Body(None)
+    title: Optional[str] = Body(None, embed=True),
+    subtitle: Optional[str] = Body(None, embed=True),
+    image_url: Optional[str] = Body(None, embed=True),
+    link: Optional[str] = Body(None, embed=True),
+    cta_label: Optional[str] = Body(None, embed=True),
+    cta_url: Optional[str] = Body(None, embed=True),
+    banner_type: Optional[str] = Body(None, embed=True),
+    is_active: Optional[bool] = Body(None, embed=True),
+    sort_order: Optional[int] = Body(None, embed=True),
+    bg_color: Optional[str] = Body(None, embed=True),
+    text_color: Optional[str] = Body(None, embed=True),
+    subtitle_color: Optional[str] = Body(None, embed=True),
+    btn_bg_color: Optional[str] = Body(None, embed=True),
+    btn_text_color: Optional[str] = Body(None, embed=True),
+    badge_text: Optional[str] = Body(None, embed=True),
+    badge_color: Optional[str] = Body(None, embed=True),
+    effect: Optional[str] = Body(None, embed=True),
+    layout_json: Optional[str] = Body(None, embed=True),
+    video_url: Optional[str] = Body(None, embed=True)
 ) -> dict:
     return update_banner_by_country(code=code, banner_id=banner_id, db=db, current_user=current_user, title=title, subtitle=subtitle, image_url=image_url, link=link, cta_label=cta_label, cta_url=cta_url, banner_type=banner_type, is_active=is_active, sort_order=sort_order, bg_color=bg_color, text_color=text_color, subtitle_color=subtitle_color, btn_bg_color=btn_bg_color, btn_text_color=btn_text_color, badge_text=badge_text, badge_color=badge_color, effect=effect, layout_json=layout_json, video_url=video_url)
 

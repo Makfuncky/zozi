@@ -27,18 +27,18 @@ def create_coupon_route_route(
     country_code: str,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    code: str = Body(''),
-    title: Optional[str] = Body(None),
-    description: Optional[str] = Body(None),
-    discount_type: str = Body('percentage'),
-    discount_value: float = Body(0),
-    maximum_discount: Optional[float] = Body(None),
-    minimum_order: float = Body(0),
-    usage_limit: Optional[int] = Body(None),
-    per_user_limit: Optional[int] = Body(None),
-    is_active: bool = Body(True),
-    starts_at: Optional[str] = Body(None),
-    expires_at: Optional[str] = Body(None)
+    code: str = Body('', embed=True),
+    title: Optional[str] = Body(None, embed=True),
+    description: Optional[str] = Body(None, embed=True),
+    discount_type: str = Body('percentage', embed=True),
+    discount_value: float = Body(0, embed=True),
+    maximum_discount: Optional[float] = Body(None, embed=True),
+    minimum_order: float = Body(0, embed=True),
+    usage_limit: Optional[int] = Body(None, embed=True),
+    per_user_limit: Optional[int] = Body(None, embed=True),
+    is_active: bool = Body(True, embed=True),
+    starts_at: Optional[str] = Body(None, embed=True),
+    expires_at: Optional[str] = Body(None, embed=True)
 ):
     return create_coupon_route(country_code=country_code, current_user=current_user, db=db, code=code, title=title, description=description, discount_type=discount_type, discount_value=discount_value, maximum_discount=maximum_discount, minimum_order=minimum_order, usage_limit=usage_limit, per_user_limit=per_user_limit, is_active=is_active, starts_at=starts_at, expires_at=expires_at)
 
@@ -48,18 +48,18 @@ def update_coupon_route_route(
     coupon_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    code: Optional[str] = Body(None),
-    title: Optional[str] = Body(None),
-    description: Optional[str] = Body(None),
-    discount_type: Optional[str] = Body(None),
-    discount_value: Optional[float] = Body(None),
-    maximum_discount: Optional[float] = Body(None),
-    minimum_order: Optional[float] = Body(None),
-    usage_limit: Optional[int] = Body(None),
-    per_user_limit: Optional[int] = Body(None),
-    is_active: Optional[bool] = Body(None),
-    starts_at: Optional[str] = Body(None),
-    expires_at: Optional[str] = Body(None)
+    code: Optional[str] = Body(None, embed=True),
+    title: Optional[str] = Body(None, embed=True),
+    description: Optional[str] = Body(None, embed=True),
+    discount_type: Optional[str] = Body(None, embed=True),
+    discount_value: Optional[float] = Body(None, embed=True),
+    maximum_discount: Optional[float] = Body(None, embed=True),
+    minimum_order: Optional[float] = Body(None, embed=True),
+    usage_limit: Optional[int] = Body(None, embed=True),
+    per_user_limit: Optional[int] = Body(None, embed=True),
+    is_active: Optional[bool] = Body(None, embed=True),
+    starts_at: Optional[str] = Body(None, embed=True),
+    expires_at: Optional[str] = Body(None, embed=True)
 ):
     return update_coupon_route(country_code=country_code, coupon_id=coupon_id, current_user=current_user, db=db, code=code, title=title, description=description, discount_type=discount_type, discount_value=discount_value, maximum_discount=maximum_discount, minimum_order=minimum_order, usage_limit=usage_limit, per_user_limit=per_user_limit, is_active=is_active, starts_at=starts_at, expires_at=expires_at)
 
