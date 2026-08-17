@@ -1,4 +1,4 @@
-"""Tests for background job execution with idempotency and locking."""
+﻿"""Tests for background job execution with idempotency and locking."""
 from __future__ import annotations
 import os
 import uuid
@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 os.environ["APP_ENV"] = "test"
 os.environ["PYTEST_CURRENT_TEST"] = "1"
 
-from utils.background_jobs import (
+from infrastructure.utils.background_jobs import (
     enqueue_job,
     cancel_job,
     get_job,
@@ -178,3 +178,4 @@ class TestJobPersistence:
     def test_job_without_dedup(self):
         job = enqueue_job(kind=JobKind.DEFAULT, func=_dummy_func)
         assert job.get("dedup_key") is None
+

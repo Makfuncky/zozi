@@ -5,10 +5,16 @@ system **as it should be designed**, not merely as it exists today. `system_arch
 validates the codebase against the contract defined here (especially §10). Where the current
 implementation diverges, the audit must report it as a deviation with the matching rule id.
 
-Verified structural facts (file paths, layer names, pool defaults, provider base classes) are
-real and taken from `backend/main.py`, `middleware/orchestrator.py`, `db/database.py`,
-`controllers/auth_controller.py`, `routers/health.py`, `providers/_base.py`,
-`utils/config.py`, and `frontend/web_app/src`.
+Verified structural facts (layer names, pool defaults, provider base classes, route contract)
+are taken from `backend/main.py`, `middleware/orchestrator.py`, `db/database.py`,
+`utils/dependencies.py` (auth deps), `routers/generated/*_health.py` (health),
+`providers/_base.py`, `utils/config.py`, `services/**`, and `frontend/web_app/src`.
+
+> **Reality caveat:** This is a *target* ("should-be") document. Some referenced layers are
+> **not yet implemented**: `backend/controllers/` is currently an **empty stub** (auth dependencies
+> live in `utils/dependencies.py`; auth service logic in `services/security/`), and there is
+> **no `routers/health.py`** — health endpoints are split across `routers/generated/*_health.py`.
+> Where this doc says a file "exists", verify against the current tree before trusting it.
 
 ---
 
@@ -86,7 +92,7 @@ real and taken from `backend/main.py`, `middleware/orchestrator.py`, `db/databas
             G["AUTO-GENERATED: public_commerce_coupons (emitted from controller decorators)"]
         end
 
-        subgraph SEC["SECURITY / AUTH (controllers/auth_controller.py)"]
+        subgraph SEC["SECURITY / AUTH (utils/dependencies.py)"]
             AUTH["get_current_user<br/>verify_token(JWT jti) → Redis cache → db lookup"]
             ADMIN["get_current_admin → _dict_get_current_user"]
         end
@@ -233,7 +239,7 @@ not parse `ForeignKey("table.column")` as a schema (this is the DBA06 parser bug
             PCI["PCIDSSMiddleware (prod only)"]
         end
 
-        subgraph AUTH["Auth deps (controllers/auth_controller.py)"]
+        subgraph AUTH["Auth deps (utils/dependencies.py)"]
             SCHEME["OAuth2PasswordBearer tokenUrl=auth/login"]
             GU["get_current_user — verify_token(JWT jti) → Redis → db"]
             GOU["get_optional_user"]
@@ -377,9 +383,9 @@ liveness/readiness contract for orchestrators.
 
 | Endpoint | Purpose | Source |
 |---|---|---|
-| `GET /health` | Liveness — version + active API versions | `routers/health.py:36` |
-| `GET /health/deps` | Redis / email / payments / error-tracking | `routers/health.py:46` |
-| `GET /health/ready` | `check_connection_health()` + readiness gates → 503 if blocking | `routers/health.py:66` |
+| `GET /health` | Liveness — version + active API versions | `routers/generated/*_health.py` (there is **no** single `routers/health.py`; health is split per surface: `admin_security_health`, `customer_health`, `logistics_health`, `supplier_health`, `public_security_health`, plus `*_list` variants) |
+| `GET /health/deps` | Redis / email / payments / error-tracking | `routers/generated/*_health.py` (see above) |
+| `GET /health/ready` | `check_connection_health()` + readiness gates → 503 if blocking | `routers/generated/*_health.py` (see above) |
 
 ---
 
@@ -519,10 +525,13 @@ of the app never imports Kafka/OpenSearch/Redis drivers directly.
 - CSRF + PCI-DSS in prod; no hardcoded secrets.
 - All external-infra credentials (Kafka/OpenSearch/Redis/PG) from `settings` only; never in code.
 - Kafka command payloads validated + idempotency-keyed (no dropped/duplicated orders at scale).
-- **Exactly one canonical RLS enforcer** (single module, e.g. `db/security.py`, applied uniformly via a
-session/connection hook or a shared auth dependency). Multiple independent RLS implementations across
-modules are a **fail-open risk** (one path that forgets to call RLS bypasses the policy) and are
-disallowed; the auditor flags a second/divergent RLS implementation as a security violation (SEC family).
+- **Target: exactly one canonical RLS enforcer** (a single module to be created, e.g. `db/security.py`,
+applied uniformly via a session/connection hook or a shared auth dependency). **Current reality:** RLS is
+scattered across `rls_dependency`, `rls_middleware`, `rls_interceptor`, `rls_context`, and `country_context`
+— this is precisely the fail-open risk described below and must be consolidated. Multiple independent RLS
+implementations across modules are a **fail-open risk** (one path that forgets to call RLS bypasses the
+policy) and are disallowed; the auditor flags a second/divergent RLS implementation as a security violation
+(SEC family).
 
 ### 10.5 Performance policy
 - Keyset pagination on hot lists (no `OFFSET`).

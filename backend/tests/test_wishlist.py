@@ -1,4 +1,4 @@
-"""Tests for wishlist functionality."""
+﻿"""Tests for wishlist functionality."""
 from __future__ import annotations
 
 import pytest
@@ -24,7 +24,7 @@ def customer_headers(client):
 @pytest.fixture
 def product_in_db(client, db_session):
     from models import User, Product
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     email = f"wishowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
         email=email,
@@ -89,3 +89,4 @@ def test_wishlist_unauthorized(client):
 def test_wishlist_add_invalid_product(client, customer_headers):
     resp = client.post("/wishlist/999999", headers=customer_headers)
     assert resp.status_code in (404, 400)
+

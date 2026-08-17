@@ -1,4 +1,4 @@
-"""Tests for security utilities and RBAC."""
+﻿"""Tests for security utilities and RBAC."""
 from __future__ import annotations
 
 import time
@@ -6,7 +6,7 @@ import pytest
 from jose import jwt, JWTError
 from fastapi import HTTPException
 
-from utils.auth import (
+from infrastructure.utils.auth import (
     get_password_hash,
     verify_password,
     create_access_token,
@@ -16,7 +16,7 @@ from utils.auth import (
     is_token_blacklisted,
     validate_password_complexity,
 )
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 
 @pytest.mark.integration
@@ -108,3 +108,4 @@ def test_decode_token_wrong_algorithm():
     token = jwt.encode({"sub": "1"}, "secret", algorithm="HS512")
     with pytest.raises(HTTPException):
         decode_token(token)
+

@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 """
 CI Gate — Schema Audit Deployment Check
 ========================================
 
-Runs ``python -m utils.schema_audit --json`` and exits with a non-zero
+Runs ``python -m infrastructure.utils.schema_audit --json`` and exits with a non-zero
 code when ORM/database drift or Alembic migration-tree issues are found.
 
 Use as a **deployment gate** — if this script fails, the release pipeline
@@ -54,9 +54,9 @@ sys.path.insert(0, str(_BACKEND_ROOT))
 
 
 def _run_audit() -> dict[str, Any]:
-    """Run ``python -m utils.schema_audit --json`` and return the parsed dict."""
+    """Run ``python -m infrastructure.utils.schema_audit --json`` and return the parsed dict."""
     result = subprocess.run(
-        [sys.executable, "-m", "utils.schema_audit", "--json"],
+        [sys.executable, "-m", "infrastructure.utils.schema_audit", "--json"],
         capture_output=True,
         text=True,
         timeout=120,
@@ -299,3 +299,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

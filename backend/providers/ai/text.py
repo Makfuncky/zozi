@@ -373,7 +373,7 @@ def _extract_tags(text: str, category: str = "") -> List[str]:
 
 
 # ============================================================================
-# Translation (shifted from services.comms.content_service)
+# Translation (shifted from domains.comms.services.content_service)
 # ============================================================================
 # External LLM/provider code belongs in ``providers/``. This keeps the Ollama
 # translation implementation out of the services layer. Behavior is preserved

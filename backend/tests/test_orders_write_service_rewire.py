@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-import services.orders.orders_write_service as canon
-import services.orders.orders_write_service as shim
+import domains.orders.services.orders_write_service as canon
+import domains.orders.services.orders_write_service as shim
 
 _REWIRED = ["create_order", "create_order_item", "update_order"]
 

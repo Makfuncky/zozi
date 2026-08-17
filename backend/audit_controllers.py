@@ -4,7 +4,7 @@ from typing import Optional
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
-import routers.generated.auto_router as ar
+import modules.routers.generated.auto_router as ar
 
 KNOWN_DEPS = ar.KNOWN_DEPS
 PATH_RE = re.compile(r"{([^}]+)}")

@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import pytest
 
-import services.users.user_write_ops as ops
-import services.users.users_write_service as shim
-import controllers.customer.users as users_ctrl
+import domains.accounts.services.user_write_ops as ops
+import domains.accounts.services.users_write_service as shim
+import modules.customer.routers.users as users_ctrl
 from models import User
 
 _RECOVERED_NAMES = [

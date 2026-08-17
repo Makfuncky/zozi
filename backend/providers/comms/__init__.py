@@ -1,4 +1,4 @@
-﻿"""Communication providers (SMS / voice / proxy / WhatsApp channels)."""
+"""Communication providers (SMS / voice / proxy / WhatsApp channels)."""
 
 from providers.comms.twilio import (
     TWILIO_AVAILABLE,

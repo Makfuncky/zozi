@@ -1,4 +1,4 @@
-"""
+﻿"""
 Request ID Middleware for Zozi Platform
 Generates and manages request IDs for tracing and correlation.
 """
@@ -8,7 +8,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 import structlog
-from utils.logging_config import request_id_ctx, set_request_id, get_request_id
+from infrastructure.utils.logging_config import request_id_ctx, set_request_id, get_request_id
 
 logger = structlog.get_logger(__name__)
 
@@ -23,4 +23,5 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers['X-Request-ID'] = request_id
         return response
+
 

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import time
 from typing import Any
@@ -8,8 +8,8 @@ from sqlalchemy import event
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session
 
-from utils.logging_config import db_query_time_ctx
-from utils.metrics import db_query_duration_seconds
+from infrastructure.utils.logging_config import db_query_time_ctx
+from infrastructure.utils.metrics import db_query_duration_seconds
 
 
 def _before_cursor_execute(
@@ -69,4 +69,5 @@ def get_db_pool_metrics(db: Session) -> dict[str, Any]:
         "overflow": pool.overflow(),
         "checkedout": pool.checkedout(),
     }
+
 

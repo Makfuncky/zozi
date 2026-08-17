@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 import time
@@ -14,9 +14,9 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from utils.config import settings
-from utils.ip_utils import get_request_ip
-from utils.redis_client import redis_client
+from infrastructure.utils.config import settings
+from infrastructure.utils.ip_utils import get_request_ip
+from infrastructure.utils.redis_client import redis_client
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ _cleanup_thread.start()
 
 
 def _get_redis() -> object | None:
-    from utils.redis_client import redis_client as _redis_client_factory
+    from infrastructure.utils.redis_client import redis_client as _redis_client_factory
 
     return _redis_client_factory()
 
@@ -223,3 +223,4 @@ class TokenBucket:
 
         except Exception:
             return True, self.capacity - tokens, 0
+

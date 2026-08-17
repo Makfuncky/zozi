@@ -1,8 +1,8 @@
-"""Tests for paginated response integration in routers and utilities."""
+﻿"""Tests for paginated response integration in routers and utilities."""
 from __future__ import annotations
 import pytest
 
-from utils.pagination import (
+from infrastructure.utils.pagination import (
     safe_page,
     MAX_PAGE_SIZE,
     MAX_EXPORT_SIZE,
@@ -130,3 +130,4 @@ def _make_query(data: list):
             return self._data[start:end]
 
     return MockQuery(data)
+

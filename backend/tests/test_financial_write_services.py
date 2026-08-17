@@ -11,9 +11,9 @@ from decimal import Decimal
 
 import pytest
 
-import services.finance.commission_write_service as commission
-import services.gateways.payments_write_service as payments
-import services.finance.invoice_write_service as invoice
+import domains.finance.services.commission_write_service as commission
+import domains.payments.services.payments_write_service as payments
+import domains.finance.services.invoice_write_service as invoice
 from models import (
     CommissionAgreement,
     CommissionBadgeTier,

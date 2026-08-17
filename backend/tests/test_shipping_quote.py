@@ -1,4 +1,4 @@
-"""
+﻿"""
 Integration tests for the logistics-partner-powered shipping-quote flow.
 
 Verifies that ``POST /cart/shipping-quote`` returns a shipping amount that
@@ -36,7 +36,7 @@ from models import (
     SupplierProfile,
     User,
 )
-from utils.auth import get_password_hash
+from infrastructure.utils.auth import get_password_hash
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -292,3 +292,4 @@ def test_shipping_quote_no_auth_required(
     if resp.status_code == 200:
         body = resp.json()
         assert "shipping_amount" in body
+

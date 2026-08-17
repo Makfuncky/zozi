@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from typing import Optional
@@ -6,8 +6,8 @@ from typing import Optional
 from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from services.hr.coi_service import COIService
+from infrastructure.database.database import get_db
+from domains.hr.services.coi_service import COIService
 
 
 def coi_check_dependency(
@@ -41,3 +41,4 @@ def _coi_check_internal(request: Request, db: Session):
                 detail="Conflict of interest detected - requires senior approval"
             )
     return None
+

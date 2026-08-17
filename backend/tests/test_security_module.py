@@ -1,9 +1,9 @@
-"""
+﻿"""
 Smoke tests for the rescued Security module.
 
 Verifies that the authentic Security-domain import violations have been resolved:
   * `controllers/auth_controller.py` resolves (`services.security.auth_write_service` was
-    broken/missing, and all audit imports now resolve to the canonical `utils.audit`).
+    broken/missing, and all audit imports now resolve to the canonical `infrastructure.utils.audit`).
   * `utils/security_audit.py` no longer imports `models` at module top (CIR1).
   * `routers/auth.py` no longer imports the `generate_csrf_token` upward edge.
   * `services/auth_write_service.py` exposes the write-helper callables.
@@ -28,7 +28,7 @@ def test_auth_controller_imports():
 def test_security_audit_no_top_level_models_import():
     import ast
 
-    src = importlib.import_module("utils.security_audit").__file__
+    src = importlib.import_module("infrastructure.utils.security_audit").__file__
     tree = ast.parse(open(src, encoding="utf-8").read())
     for node in tree.body:
         if isinstance(node, ast.ImportFrom):
@@ -85,11 +85,11 @@ def test_auth_write_service_helpers_callable():
 
 
 def test_audit_single_canonical_source():
-    """`utils.audit` is the single source of truth; the `services/audit` package is a
+    """`infrastructure.utils.audit` is the single source of truth; the `services/audit` package is a
     real (non-shim) package and no longer re-exports the audit primitives."""
     import pathlib
 
-    mod = importlib.import_module("utils.audit")
+    mod = importlib.import_module("infrastructure.utils.audit")
     assert hasattr(mod, "AuditAction")
     assert callable(mod.audit_log)
 
@@ -108,5 +108,6 @@ def test_admin_auth_lives_in_security_domain():
     assert not (ctrl_dir / "admin" / "auth.py").exists(), "old admin/auth.py must be gone"
 
     users_src = (ctrl_dir / "customer" / "users.py").read_text(encoding="utf-8")
-    assert "from controllers.admin.auth import" not in users_src
+    assert "from modules.admin.routers.auth import" not in users_src
     assert "controllers.admin.admin_auth" not in users_src
+

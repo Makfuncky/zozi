@@ -1,4 +1,4 @@
-"""Tests for payment processing and webhooks."""
+﻿"""Tests for payment processing and webhooks."""
 from __future__ import annotations
 
 import hmac
@@ -29,7 +29,7 @@ def customer_headers(client):
 @pytest.fixture
 def product_in_db(client, db_session):
     from models import User, Product
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     email = f"payowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
         email=email,
@@ -178,3 +178,4 @@ def test_payment_intent_for_nonexistent_order(client, customer_headers):
             json={"order_id": 999999, "amount": 10.0},
         )
         assert resp.status_code in (404, 400)
+

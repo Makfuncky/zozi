@@ -1,4 +1,4 @@
-"""Tests for shopping cart."""
+﻿"""Tests for shopping cart."""
 from __future__ import annotations
 
 import pytest
@@ -8,7 +8,7 @@ import uuid
 @pytest.fixture
 def user_with_product(client, db_session):
     from models import User, Product
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     supplier_email = f"cartsupplier_{uuid.uuid4().hex[:8]}@zozi.test"
     supplier = User(
         email=supplier_email,
@@ -166,3 +166,4 @@ def test_cart_item_count(client, user_with_product):
     client.post("/api/v1/cart/items", headers=headers, json={"product_id": product.id, "quantity": 2})
     resp = client.get("/api/v1/cart", headers=headers)
     assert resp.json()["item_count"] == 1
+

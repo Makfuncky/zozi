@@ -38,19 +38,19 @@ def test_comms_router_has_no_direct_db_writes():
 def test_comms_router_does_not_reference_models_directly():
     src = _read(ROUTER_PATH)
     assert "from models" not in src, "Router still imports `models` directly (CG1)"
-    assert "from models.core import" not in src
+    assert "from domains.accounts.models.core import" not in src
 
 
 def test_comms_router_delegates_to_canonical_controller():
     src = _read(ROUTER_PATH)
-    assert "from controllers.comms.chat_write_controller import" in src
+    assert "from modules.comms.routers.chat_write_controller import" in src
     for fn in ("persist_message", "mark_messages_read", "get_user_display_name", "get_user_role"):
         assert fn in src, f"Router does not delegate {fn} to the controller"
 
 
 def test_comms_controller_wires_canonical_service():
-    import controllers.comms.chat_write_controller as ctrl
-    import services.comms.chat_write_service as svc
+    import modules.comms.routers.chat_write_controller as ctrl
+    import domains.comms.services.chat_write_service as svc
 
     # Controller re-exports the same call contract the router uses.
     assert hasattr(ctrl, "persist_message")

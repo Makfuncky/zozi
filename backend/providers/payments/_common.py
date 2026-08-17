@@ -1,4 +1,4 @@
-"""Shared constants, helpers, and request models for payment gateways.
+﻿"""Shared constants, helpers, and request models for payment gateways.
 
 Relocated from controllers/payments_controller.py during the refactor that moves
 the complete payment-gateway connection logic into providers/payments.
@@ -28,8 +28,8 @@ from models import (
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
 from events import PaymentConfirmedEvent
-from utils.config import settings
-from utils.currency import (
+from infrastructure.utils.config import settings
+from infrastructure.utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
@@ -513,3 +513,4 @@ def gateway_code_for_payment_method(payment_method: str | None) -> Optional[str]
 
 def _normalized_payment_method(order: Order) -> str:
     return str(getattr(order, "payment_method", "card") or "card").strip().lower()
+

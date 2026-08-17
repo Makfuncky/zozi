@@ -1,4 +1,4 @@
-"""Order-lifecycle helpers used by payment-gateway providers.
+﻿"""Order-lifecycle helpers used by payment-gateway providers.
 
 Relocated from controllers/payments_controller.py.
 """
@@ -19,8 +19,8 @@ from events import (
     EventPublisher,
     _event_publisher,
 )
-from utils.config import settings
-from utils.cache import bump_product_cache_version as _bump_product_cache_version
+from infrastructure.utils.config import settings
+from infrastructure.utils.cache import bump_product_cache_version as _bump_product_cache_version
 
 from providers.payments._common import *
 
@@ -388,3 +388,4 @@ from providers.payments.thawani import *   # noqa: E402,F401,F403
 from providers.payments.generic import *   # noqa: E402,F401,F403
 import structlog
 logger = structlog.get_logger(__name__)
+

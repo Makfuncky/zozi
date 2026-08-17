@@ -1,4 +1,4 @@
-"""Payment gateway provider: stripe.
+﻿"""Payment gateway provider: stripe.
 
 Relocated from controllers/payments_controller.py.
 """
@@ -27,8 +27,8 @@ from models import (
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
 from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
-from utils.config import settings
-from utils.currency import (
+from infrastructure.utils.config import settings
+from infrastructure.utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
@@ -661,3 +661,4 @@ from providers.payments.paytabs import *   # noqa: E402,F401,F403
 from providers.payments.paypal import *    # noqa: E402,F401,F403
 from providers.payments.thawani import *   # noqa: E402,F401,F403
 from providers.payments.generic import *   # noqa: E402,F401,F403
+

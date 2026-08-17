@@ -1,4 +1,4 @@
-"""SEC105 rescue test — verifies the hardcoded demo credential was removed.
+﻿"""SEC105 rescue test — verifies the hardcoded demo credential was removed.
 
 The audit flagged ``services/misc_write_service.py::reset_demo_data`` for embedding
 a literal password (``Demo@12345``) in source. The fix:
@@ -12,8 +12,8 @@ import re
 
 import pytest
 
-from services.common.misc_write_service import reset_demo_data
-from utils.config import settings
+from domains.media.services.misc_write_service import reset_demo_data
+from infrastructure.utils.config import settings
 
 _MISC_WRITE_SERVICE = (
     pathlib.Path(__file__).resolve().parents[1] / "services" / "misc_write_service.py"
@@ -49,3 +49,4 @@ def test_reset_demo_data_seeds_via_env_password(db_session, monkeypatch):
     monkeypatch.setenv("SEED_CUSTOMER_PASSWORD", "EnvSourcedP@ssw0rd!")
     result = reset_demo_data(db_session)
     assert result["reseeded"] == 3
+

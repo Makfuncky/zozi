@@ -1,4 +1,4 @@
-"""baseline sync: materialise every ORM table explicitly.
+﻿"""baseline sync: materialise every ORM table explicitly.
 
 Contract artifact for DBA13 (ORM tables must appear as literal
 ``op.create_table`` operations in the migration chain) and for production
@@ -18,7 +18,7 @@ from alembic import op
 from sqlalchemy import inspect
 from sqlalchemy.dialects import postgresql
 
-import utils.encryption  # noqa: F401
+import infrastructure.utils.encryption  # noqa: F401
 revision = "20260806_0003"
 down_revision = "20260806_0002"
 branch_labels = None
@@ -6199,7 +6199,7 @@ def upgrade() -> None:
             sa.Column('totp_secret', sa.String(), nullable=True),
             sa.Column('last_seen_at', sa.DateTime(), nullable=True),
             sa.Column('is_current', sa.Boolean(), nullable=True),
-            sa.Column('address_book', utils.encryption.EncryptedString(), nullable=True),
+            sa.Column('address_book', infrastructure.utils.encryption.EncryptedString(), nullable=True),
             sa.Column('uuid', sa.String(length=36), nullable=False),
             sa.Column('country_code', sa.String(length=3), nullable=False),
             sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -6724,3 +6724,4 @@ def downgrade() -> None:
     op.execute('DROP TABLE IF EXISTS "finance"."accounts"')
     op.execute('DROP TABLE IF EXISTS "finance"."account_groups"')
     op.execute('DROP TABLE IF EXISTS "finance"."account_balances"')
+

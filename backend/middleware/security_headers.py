@@ -1,4 +1,4 @@
-#!python
+﻿#!python
 """
 Enhanced Security Headers Middleware for Zozi Platform
 Implements comprehensive HTTP security headers with defense-in-depth
@@ -13,8 +13,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 import time
 import hashlib
 
-from utils.config import settings
-from utils.ip_utils import get_request_ip
+from infrastructure.utils.config import settings
+from infrastructure.utils.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)
 
@@ -174,3 +174,4 @@ class EnhancedSecurityHeadersMiddleware(BaseHTTPMiddleware):
             return "PUBLIC_API"
         else:
             return "GENERAL_API"
+

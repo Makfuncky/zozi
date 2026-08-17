@@ -1,8 +1,8 @@
-"""Tests for API versioning utilities."""
+﻿"""Tests for API versioning utilities."""
 from __future__ import annotations
 import pytest
 
-from utils.versioning import (
+from infrastructure.utils.versioning import (
     VERSION_PREFIX,
     VERSIONED_ROUTES,
     VERSION_SETTINGS,
@@ -158,3 +158,4 @@ class TestEdgeCases:
     def test_empty_path_versioned_prefix(self):
         result = versioned_prefix("", version="v1")
         assert result == "/api/v1/"
+

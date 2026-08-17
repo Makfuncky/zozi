@@ -1,0 +1,33 @@
+## 6. Missing Files and Folders
+
+> ✅ All paths verified against live tree within scan window.
+
+| # | Type | Path | Reason | Priority |
+|---|------|------|--------|----------|
+| 1 | 📁 folder | `controllers/ai/` | Controllers reference domain 'ai' but folder doesn't exist | 🔴 HIGH |
+| 2 | 📁 folder | `services/configuration/` | Services reference domain 'configuration' but folder doesn't exist | 🔴 HIGH |
+| 3 | 📁 folder | `services/documents/` | Services reference domain 'documents' but folder doesn't exist | 🔴 HIGH |
+| 4 | 📁 folder | `controllers/documents/` | Controllers reference domain 'documents' but folder doesn't exist | 🔴 HIGH |
+| 5 | 📁 folder | `services/gateway/` | Services reference domain 'gateway' but folder doesn't exist | 🔴 HIGH |
+| 6 | 📁 folder | `controllers/gateway/` | Controllers reference domain 'gateway' but folder doesn't exist | 🔴 HIGH |
+| 7 | 📁 folder | `services/media/` | Services reference domain 'media' but folder doesn't exist | 🔴 HIGH |
+| 8 | 📁 folder | `controllers/media/` | Controllers reference domain 'media' but folder doesn't exist | 🔴 HIGH |
+| 9 | 📁 folder | `services/permissions/` | Services reference domain 'permissions' but folder doesn't exist | 🔴 HIGH |
+| 10 | 📁 folder | `services/reporting/` | Services reference domain 'reporting' but folder doesn't exist | 🔴 HIGH |
+| 11 | 📁 folder | `controllers/reporting/` | Controllers reference domain 'reporting' but folder doesn't exist | 🔴 HIGH |
+| 12 | 📁 folder | `services/reviews/` | Services reference domain 'reviews' but folder doesn't exist | 🔴 HIGH |
+| 13 | 📁 folder | `controllers/reviews/` | Controllers reference domain 'reviews' but folder doesn't exist | 🔴 HIGH |
+| 14 | 📁 folder | `services/search/` | Services reference domain 'search' but folder doesn't exist | 🔴 HIGH |
+| 15 | 📁 folder | `controllers/search/` | Controllers reference domain 'search' but folder doesn't exist | 🔴 HIGH |
+| 16 | 📄 file | `controllers\hr_controller.py` | Controller 'hr_controller.py' is at root level, should be in controllers/hr/ | 🟡 MEDIUM |
+| 17 | 📄 file | `controllers\orders_controller.py` | Controller 'orders_controller.py' is at root level, should be in controllers/orders/ | 🟡 MEDIUM |
+| 18 | 📄 file | `controllers\payments_controller.py` | Controller 'payments_controller.py' is at root level, should be in controllers/unknown/ | 🟡 MEDIUM |
+| 19 | 📄 file | `controllers\search_controller.py` | Controller 'search_controller.py' is at root level, should be in controllers/search/ | 🟡 MEDIUM |
+| 20 | 📄 file | `services\_registry.py` | Service '_registry.py' is at root level, should be in services/unknown/ | 🟡 MEDIUM |
+| 21 | 📄 file | `controllers/identity/__init__.py` | Missing __init__.py in domain package | 🟡 LOW |
+| 22 | 📄 file | `controllers/logistics/__init__.py` | Missing __init__.py in domain package | 🟡 LOW |
+| 23 | 📄 file | `models/supplier/__init__.py` | Missing __init__.py in domain package | 🟡 LOW |
+
+## 7. Recommended Actions (Priority Order)
+
+### Phase 0: Resolve True Dupl

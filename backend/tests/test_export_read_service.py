@@ -12,7 +12,7 @@ import pathlib
 
 import pytest
 
-import services.core.export_read_service as ers
+import domains.customers.services.export_read_service as ers
 
 _SOURCE = pathlib.Path(ers.__file__).read_text(encoding="utf-8")
 

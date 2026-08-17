@@ -1,4 +1,4 @@
-"""Tests for middleware helpers (error handling, pagination decorators)."""
+﻿"""Tests for middleware helpers (error handling, pagination decorators)."""
 from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock, patch
@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
-from utils.middleware_helpers import (
+from infrastructure.utils.middleware_helpers import (
     as_paginated_response,
     handle_service_error,
     raise_not_found,
@@ -14,7 +14,7 @@ from utils.middleware_helpers import (
     raise_unauthorized,
     raise_forbidden,
 )
-from utils.error_handler import ErrorCategory
+from infrastructure.utils.error_handler import ErrorCategory
 
 
 class TestRaiseHelpers:
@@ -141,3 +141,4 @@ class TestDecoratorComposition:
         result = composed_handler(page=1, size=20)
         assert result["items"] == [{"id": 1}]
         assert result["total"] == 10
+

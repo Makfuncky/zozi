@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from services.geography.country_research import build_country_research, DEFAULT_MODULES
+from domains.country.services.country_research import build_country_research, DEFAULT_MODULES
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

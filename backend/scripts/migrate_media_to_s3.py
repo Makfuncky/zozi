@@ -1,4 +1,4 @@
-"""One-off migration: local ``uploads/`` files → object storage + CDN.
+﻿"""One-off migration: local ``uploads/`` files → object storage + CDN.
 
 Usage:
     python scripts/migrate_media_to_s3.py
@@ -36,9 +36,9 @@ from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from db.database import get_db_context
-from services.common.storage import get_storage, S3Storage
-from utils.config import settings
+from infrastructure.database.database import get_db_context
+from domains.media.services.storage import get_storage, S3Storage
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger("zozi.migrate_media")
 
@@ -50,16 +50,16 @@ DEFAULT_BATCH_SIZE = 200
 # Columns that may contain legacy local ``uploads/...`` paths.
 # Each entry is ``(model_path, column_name)``.
 LEGACY_PATH_COLUMNS = [
-    ("models.products.Product", "image_url"),
-    ("models.products.ProductVariant", "image_url"),
+    ("domains.catalog.models.products.Product", "image_url"),
+    ("domains.catalog.models.products.ProductVariant", "image_url"),
     ("models.user.User", "profile_image"),
     ("models.suppliers.SupplierProfile", "logo_url"),
     ("models.suppliers.SupplierProfile", "banner_url"),
     ("models.suppliers.SupplierProfile", "video_url"),
     ("models.suppliers.SupplierDocument", "file_url"),
     ("models.logistics.LogisticsPartnerDocument", "file_url"),
-    ("models.products.ProductVideo", "video_url"),
-    ("models.products.ProductVideo", "thumbnail_url"),
+    ("domains.catalog.models.products.ProductVideo", "video_url"),
+    ("domains.catalog.models.products.ProductVideo", "thumbnail_url"),
     ("models.payments.Banner", "image_url"),
     ("models.media_models.MediaAsset", "file_url"),
     ("models.employee_models.ChatAttachment", "url"),
@@ -212,3 +212,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+

@@ -1,4 +1,4 @@
-"""Modular startup / shutdown hooks for the FastAPI application.
+﻿"""Modular startup / shutdown hooks for the FastAPI application.
 
 Each ``_on_startup_*`` / ``_on_shutdown_*`` function is a self-contained
 hook that can be independently tested, disabled, or extended without
@@ -41,12 +41,12 @@ def _ensure_tables_exist() -> bool:
     try:
         from sqlalchemy import inspect
 
-        from db.database import engine
+        from infrastructure.database.database import engine
         existing = set(inspect(engine).get_table_names()) - {"alembic_version"}
         if existing:
             logger.info("DB tables already exist (%d found), skipping schema creation", len(existing))
             return False
-        from db.database import create_tables
+        from infrastructure.database.database import create_tables
         create_tables()
         logger.info("DB tables freshly created")
         return True
@@ -57,7 +57,7 @@ def _ensure_tables_exist() -> bool:
 
 def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
     """Attempt an Alembic migration upgrade on startup."""
-    from utils.config import settings
+    from infrastructure.utils.config import settings
 
     auto_migration_applied = False
     migration_reason = "none"
@@ -66,7 +66,7 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
         migration_reason = "skipped_fresh_schema"
     elif str(getattr(settings, "app_env", "")).lower() in ("development", "test"):
         try:
-            from utils.migrations import upgrade_database_to_head
+            from infrastructure.utils.migrations import upgrade_database_to_head
             upgrade_database_to_head()
             auto_migration_applied = True
             migration_reason = "alembic_upgrade_head"
@@ -84,8 +84,8 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
 def _startup_load_role_permissions() -> None:
     try:
-        from services.admin.permissions_service import load_role_permission_settings
-        from db.database import SessionLocal
+        from domains.governance.services.permissions_service import load_role_permission_settings
+        from infrastructure.database.database import SessionLocal
 
         db = SessionLocal()
         try:
@@ -106,20 +106,20 @@ def _startup_register_services() -> None:
     restores that wiring without ``main`` importing ``services`` directly.
     """
     try:
-        import services._registry  # noqa: F401 — import side-effects only
+        import services.unknown._registry  # noqa: F401 — import side-effects only
         logger.info("Service side-effect registry imported")
     except Exception:
-        logger.exception("Failed to import services._registry at startup")
+        logger.exception("Failed to import services.unknown._registry at startup")
 
 
 def _startup_register_event_listeners() -> None:
     try:
-        from services.gateways.payments import _event_publisher
+        from domains.payments.services.payments import _event_publisher
         from events import PaymentConfirmedEvent
-        from services.orders.fulfillment_service import FulfillmentService
+        from domains.orders.services.fulfillment_service import FulfillmentService
 
         fulfillment = FulfillmentService()
-        from db.database import SessionLocal
+        from infrastructure.database.database import SessionLocal
 
         def _handle_fulfillment(event: PaymentConfirmedEvent) -> None:
             db = SessionLocal()
@@ -138,8 +138,8 @@ def _startup_register_event_listeners() -> None:
 
 def _startup_seed_treasury() -> None:
     try:
-        from db.database import SessionLocal
-        from db.treasury_seeder import seed_treasury_system
+        from infrastructure.database.database import SessionLocal
+        from infrastructure.database.treasury_seeder import seed_treasury_system
 
         db = SessionLocal()
         try:
@@ -153,7 +153,7 @@ def _startup_seed_treasury() -> None:
 
 def _seed_demo_data() -> None:
     """Seed demo catalog data from ``db.seed`` if enabled."""
-    from utils.config import settings
+    from infrastructure.utils.config import settings
 
     app_env = str(getattr(settings, "app_env", "development")).lower()
     default_seed = "true" if app_env in ("development", "test") else "false"
@@ -161,8 +161,8 @@ def _seed_demo_data() -> None:
         logger.debug("Skipping demo data seed — SEED_DATA_ON_STARTUP is disabled")
         return
     try:
-        from db.database import SessionLocal
-        from db.seed import seed_data
+        from infrastructure.database.database import SessionLocal
+        from infrastructure.database.seed import seed_data
 
         seed_data(SessionLocal)
         logger.info("Demo data seeded successfully")
@@ -184,8 +184,8 @@ def _ensure_default_accounts() -> None:
         return
 
     try:
-        from db.database import SessionLocal
-        from db.seed import _ensure_demo_user
+        from infrastructure.database.database import SessionLocal
+        from infrastructure.database.seed import _ensure_demo_user
 
         db = SessionLocal()
         try:
@@ -208,33 +208,20 @@ def _ensure_default_accounts() -> None:
 
 
 def _startup_background_jobs() -> list:
-    """Start background job services if enabled. Returns a list of stop callables."""
-    from utils.config import settings
-
-    stoppers: list = []
-
-    if os.environ.get("BACKGROUND_JOBS_ENABLED", "0") != "1":
-        logger.info("Background jobs disabled (set BACKGROUND_JOBS_ENABLED=1 to enable)")
-        return stoppers
-
-    try:
-        from services.common.command_center_background import start_background_jobs, stop_background_jobs
-        start_background_jobs()
-        stoppers.append(("command_center_background", stop_background_jobs))
-    except Exception:
-        logger.exception("Failed to start background jobs")
-
-    try:
-        from services.treasury.auto_payout_scheduler import (
-            start_auto_payout_background_job,
-            stop_auto_payout_background_job,
-        )
-        start_auto_payout_background_job()
-        stoppers.append(("auto_payout_scheduler", stop_auto_payout_background_job))
-    except Exception:
-        logger.exception("Failed to start auto-payout background job")
-
-    return stoppers
+    """Background jobs are now handled by Celery workers and beat scheduler.
+    
+    This function is kept for compatibility but returns empty list.
+    Celery workers should be started separately via:
+        celery -A celery_app worker -Q ml,periodic,payouts,emails -l info
+        celery -A celery_app beat -l info
+    """
+    from infrastructure.utils.config import settings
+    
+    logger.info("Background jobs delegated to Celery (workers + beat)")
+    logger.info("Start Celery worker: celery -A celery_app worker -Q ml,periodic,payouts,emails -l info")
+    logger.info("Start Celery beat: celery -A celery_app beat -l info")
+    
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +233,7 @@ def build_lifespan():
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        from utils.config import settings
+        from infrastructure.utils.config import settings
 
         # --- Startup ---
         fresh = _ensure_tables_exist()
@@ -276,3 +263,5 @@ def build_lifespan():
                 logger.exception("Failed to stop background service: %s", name)
 
     return lifespan
+
+

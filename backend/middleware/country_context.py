@@ -1,4 +1,4 @@
-"""
+﻿"""
 Country Context Middleware
 Sets the RLS country scope for every request based on:
 1. JWT token country_scope claim (for staff users)
@@ -29,15 +29,15 @@ from sqlalchemy.orm import Session, Query
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
-from db.database import get_db
+from infrastructure.database.database import get_db
 from models import CountryConfig
-from utils.auth import decode_token, verify_token, SECRET_KEY, ALGORITHM
-from utils.config import settings
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.redis_client import redis_client
-from utils.ip_utils import get_request_ip
-from services.hr.coi_service import check_approval_blocked
-from services.security.country_context_service import (
+from infrastructure.utils.auth import decode_token, verify_token, SECRET_KEY, ALGORITHM
+from infrastructure.utils.config import settings
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.redis_client import redis_client
+from infrastructure.utils.ip_utils import get_request_ip
+from domains.hr.services.coi_service import check_approval_blocked
+from domains.governance.services.country_context_service import (
     get_user_by_id,
     resolve_user_country_scope,
 )
@@ -62,7 +62,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
 
     def _get_country_detection_service(self):
         if self._country_detection_service is None:
-            from services.geography.country_detection import CountryDetectionService
+            from domains.country.services.country_detection import CountryDetectionService
             self._country_detection_service = CountryDetectionService()
         return self._country_detection_service
 
@@ -82,7 +82,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
             if auth_header.startswith("Bearer "):
                 token = auth_header.split(" ", 1)[1]
                 try:
-                    from utils.auth import decode_token
+                    from infrastructure.utils.auth import decode_token
                     payload = decode_token(token)
                     role = str(payload.get("role", "") or "").lower()
                     user_id = payload.get("sub")
@@ -153,7 +153,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
         if not client_ip:
             return None
         try:
-            from services.geography.country_detection import CountryDetectionService
+            from domains.country.services.country_detection import CountryDetectionService
             svc = self._get_country_detection_service()
             ip = svc._extract_ip(dict(request.headers), client_ip)
             if ip and not svc._is_private_ip(ip):
@@ -390,3 +390,5 @@ def check_coi_before_approval(
             status_code=403,
             detail=f"Approval blocked due to Conflict of Interest: {reason}"
         )
+
+

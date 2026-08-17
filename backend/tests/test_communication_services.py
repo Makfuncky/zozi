@@ -7,8 +7,8 @@ from datetime import date
 import pytest
 
 from models import User
-from models.employee_models import Employee, EmailFolder, InternalEmail, ChatAttachment
-from services.hr.employee_communication_service import (
+from domains.hr.models.employee_models import Employee, EmailFolder, InternalEmail, ChatAttachment
+from domains.hr.services.employee_communication_service import (
     get_or_create_direct_room,
     send_chat_message,
     get_chat_history,
@@ -19,8 +19,8 @@ from services.hr.employee_communication_service import (
     get_employee_directory,
     _resolve_attachments,
 )
-from services.comms.email_gateway import EmailGateway
-from services.comms.communication_audit import get_communication_audit_service
+from domains.comms.services.email_gateway import EmailGateway
+from domains.comms.services.communication_audit import get_communication_audit_service
 
 
 @pytest.fixture

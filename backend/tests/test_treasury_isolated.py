@@ -23,7 +23,7 @@ import pytest
 
 
 def test_treasury_api_reexports_resolve():
-    from routers.public_treasury_api_access import (
+    from modules.routers.public_treasury_api_access import (
         get_cash_position,
         get_supplier_payables,
         get_treasury_metrics,
@@ -39,7 +39,7 @@ def test_treasury_api_reexports_resolve():
 def test_write_helpers_roundtrip():
     from sqlalchemy.orm import Session
 
-    from services.common.write_helpers import (
+    from domains.media.services.write_helpers import (
         add_and_flush,
         commit_and_refresh,
         commit_only,
@@ -64,7 +64,7 @@ def test_write_helpers_roundtrip():
 def test_treasury_metrics_runs_with_mocked_session():
     """Smoke-test that get_treasury_metrics executes against a mock session
     without raising (proves the function body + its imports are wired)."""
-    from routers.public_treasury_api_access import get_treasury_metrics
+    from modules.routers.public_treasury_api_access import get_treasury_metrics
 
     db = MagicMock()
     db.query.return_value.filter.return_value.first.return_value = None

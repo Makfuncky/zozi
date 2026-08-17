@@ -1,4 +1,4 @@
-#!python
+﻿#!python
 """
 Cryptographic Webhook Verification
 Implements HMAC signature verification for webhook authenticity
@@ -16,7 +16,7 @@ from fastapi import Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +254,7 @@ def compute_webhook_signature(
 
 def redis_client():
     """Get Redis client for replay protection (delegates to the shared factory)."""
-    from utils.redis_client import redis_client as _redis_client_factory
+    from infrastructure.utils.redis_client import redis_client as _redis_client_factory
 
     return _redis_client_factory()
 
@@ -280,4 +280,5 @@ class ReplayAttackProtection:
             return False
         except Exception:
             return False
+
 

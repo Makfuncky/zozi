@@ -1,4 +1,4 @@
-"""Tests for model integrity and database constraints."""
+﻿"""Tests for model integrity and database constraints."""
 from __future__ import annotations
 
 import uuid
@@ -12,7 +12,7 @@ from models import (
     Address, Notification, CountryConfig, LogisticsPartner,
     SupplierProfile, Invoice, Account, TreasuryTransaction,
 )
-from db.base import Base
+from infrastructure.database.base import Base
 
 
 @pytest.mark.integration
@@ -180,3 +180,4 @@ def test_order_items_relationship(db_session):
     db_session.refresh(order)
     assert len(order.items) == 1
     assert order.items[0].product_id == product.id
+

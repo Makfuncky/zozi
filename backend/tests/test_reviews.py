@@ -1,4 +1,4 @@
-"""Tests for product reviews."""
+﻿"""Tests for product reviews."""
 from __future__ import annotations
 
 import pytest
@@ -24,7 +24,7 @@ def customer_headers(client):
 @pytest.fixture
 def product_in_db(client, db_session):
     from models import User, Product
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     email = f"revowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
         email=email,
@@ -119,3 +119,4 @@ def test_review_not_found(client, customer_headers, product_in_db):
     resp = client.get(f"/api/v1/reviews/products/{product_in_db.id}", headers=customer_headers)
     assert resp.status_code == 200
     assert resp.json() == []
+

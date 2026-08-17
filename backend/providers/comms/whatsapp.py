@@ -1,4 +1,4 @@
-﻿"""WhatsApp messages provider.
+"""WhatsApp messages provider.
 
 Vendor/protocol code for WhatsApp delivery is encapsulated here so the comms
 *service* layer stays free of third-party client details. The service layer is

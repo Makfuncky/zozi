@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import secrets
@@ -9,7 +9,7 @@ from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -119,3 +119,4 @@ def generate_csrf_token() -> str:
 def get_csrf_token_from_request(request: Request) -> Optional[str]:
     """Extract CSRF token from request (cookie or header)."""
     return request.cookies.get(CSRF_COOKIE_NAME) or request.headers.get(CSRF_HEADER_NAME)
+

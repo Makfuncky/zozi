@@ -1,9 +1,9 @@
-"""Tests for transaction management utilities."""
+﻿"""Tests for transaction management utilities."""
 from __future__ import annotations
 import pytest
 from unittest.mock import MagicMock, patch
 
-from db.transaction import (
+from infrastructure.database.transaction import (
     db_transaction_context,
     get_transaction_context,
     atomic_transaction,
@@ -110,3 +110,4 @@ class TestTransactionalDecorator:
 
         result = my_func()
         assert result == "done"
+

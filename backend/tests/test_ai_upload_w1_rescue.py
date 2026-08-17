@@ -107,7 +107,7 @@ def test_modules_import() -> None:
 def test_controller_delegates_to_service(monkeypatch) -> None:
     from unittest.mock import MagicMock
 
-    import controllers.core.ai_upload_controller as ctrl
+    import modules.core.routers.ai_upload_controller as ctrl
 
     _isolate_serializers(ctrl, monkeypatch)
 

@@ -36,6 +36,9 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://frontend:3000}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
     depends_on:
       db:
         condition: service_healthy
@@ -45,6 +48,112 @@ services:
       - ./backend:/app
       - /app/__pycache__
     command: uvicorn main:app --host 0.0.0.0 --port 8000
+
+  # Celery Worker - ML/AI tasks (background removal, image analysis)
+  celery-worker-ml:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: celery -A celery_app worker -Q ml -c 2 -l info --max-tasks-per-child=50
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Celery Worker - Periodic tasks (schedulers, reconciliation)
+  celery-worker-periodic:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: celery -A celery_app worker -Q periodic -c 2 -l info --max-tasks-per-child=100
+
+  # Celery Worker - Payout tasks
+  celery-worker-payouts:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: celery -A celery_app worker -Q payouts -c 4 -l info --max-tasks-per-child=100
+
+  # Celery Worker - Email tasks
+  celery-worker-emails:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: celery -A celery_app worker -Q emails -c 4 -l info --max-tasks-per-child=100
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:?Set POSTGRES_USER in root .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}@db:5432/${POSTGRES_DB:?Set POSTGRES_DB in root .env}
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required — define it in root .env}
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - CELERY_TASK_ALWAYS_EAGER=false
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: celery -A celery_app beat -l info --scheduler celery.beat.PersistentScheduler
 
   # Frontend
   frontend:

@@ -1,4 +1,4 @@
-"""Fraud-event adapter for the middleware layer.
+﻿"""Fraud-event adapter for the middleware layer.
 
 Middleware may not import ``models``/``services``; this adapter owns the
 ``FraudEvent`` write (including the session lifecycle) so
@@ -17,9 +17,9 @@ def record_impossible_travel_event(
 ) -> None:
     """Persist an impossible-travel fraud event (best-effort, never raises)."""
     try:
-        from db.database import get_service_session
-        from db.models import FraudEvent
-        from services.common import db_write
+        from infrastructure.database.database import get_service_session
+        from infrastructure.database.models import FraudEvent
+        from domains.media.services import db_write
 
         db = get_service_session()
         try:
@@ -42,3 +42,4 @@ def record_impossible_travel_event(
     except Exception:
         # Middleware must never break the request for an audit write.
         pass
+

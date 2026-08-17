@@ -1,4 +1,4 @@
-"""Shared pytest fixtures for the Zozi backend test-suite.
+﻿"""Shared pytest fixtures for the Zozi backend test-suite.
 
 Every ``db_session`` is wrapped in a **transaction-level rollback** -- the
 fixture opens a connection, begins a transaction, and yields a session whose
@@ -49,7 +49,7 @@ os.environ.setdefault("CSRF_DISABLED", "true")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only")
 os.environ.setdefault("SEED_ADMIN_PASSWORD", "admin123")
 
-from db.base import Base  # noqa: E402
+from infrastructure.database.base import Base  # noqa: E402
 
 _legacy_engine = None
 
@@ -91,7 +91,7 @@ def _TestSession():
 # before create_all() runs. Import order matters for foreign-key tables.
 import models  # noqa: E402
 import models.user  # noqa: E402
-import models.products  # noqa: E402
+import domains.catalog.models.products  # noqa: E402
 import models.orders  # noqa: E402
 import models.payments  # noqa: E402
 import models.suppliers  # noqa: E402
@@ -323,7 +323,7 @@ def app(engine, _seed_default_accounts):
     Depends on ``_seed_default_accounts`` so demo users (admin, supplier, etc.)
     exist in the DB before any test that uses the TestClient runs.
     """
-    from db.database import get_db as _real_get_db  # noqa: F401
+    from infrastructure.database.database import get_db as _real_get_db  # noqa: F401
 
     import main as _main  # noqa: F401  (ensures routers are importable)
 
@@ -380,7 +380,7 @@ def _seed_default_accounts(engine):
     (which transitively seeds).  This saves ~6s per test file by running the
     seeding only once per pytest session.
     """
-    from db.seed import _ensure_demo_user
+    from infrastructure.database.seed import _ensure_demo_user
     from models import CountryConfig, User as _UserModel
 
     TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
@@ -443,7 +443,7 @@ def _auth_tokens(engine, _seed_default_accounts) -> dict[str, str]:
     """Build and cache a ``{role: jwt_token}`` dict for every demo user.
 
     Runs once per session, immediately after the demo accounts are seeded.
-    The tokens are created by calling ``utils.auth.create_access_token``
+    The tokens are created by calling ``infrastructure.utils.auth.create_access_token``
     with a sufficiently long expiry so they stay valid for the whole test
     run.
 
@@ -458,7 +458,7 @@ def _auth_tokens(engine, _seed_default_accounts) -> dict[str, str]:
     """
     from datetime import timedelta
     from models import User as _User
-    from utils.auth import create_access_token as _create_token
+    from infrastructure.utils.auth import create_access_token as _create_token
 
     _Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = _Session()
@@ -559,3 +559,5 @@ def customer_client(app, customer_auth_headers) -> Iterator["TestClient"]:
 
     with TestClient(app, headers=customer_auth_headers) as c:
         yield c
+
+

@@ -1,0 +1,710 @@
+### 2.1 Tier 0 — Safe Deletes (13 files)
+
+| # | File | Reason | Action | Risk |
+|---|------|--------|--------|------|
+| 1 | `services\common\write_help.py` | Empty/stub file (17 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 2 | `services\comms\comm_write_service.py` | Empty/stub file (25 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 3 | `services\core\chatbot_service.py` | Empty/stub file (0 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 4 | `services\hr\attendance_service.py` | No public API (16 lines) but imported by 2 file(s): services\_registry.py, services\comms\package_service.py | REVIEW | MEDIUM |
+| 5 | `services\logistics\logistics_locations_create_service.py` | No public API (29 lines) but imported by 1 file(s): controllers\logistics\logistics_locations_create_controller.py | REVIEW | MEDIUM |
+| 6 | `services\logistics\logistics_service.py` | Empty/stub file (0 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 7 | `services\orders\cart_controller_service.py` | Empty/stub file (0 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 8 | `services\public\public_security_health_service.py` | Empty/stub file (8 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 9 | `services\security\maker.py` | Empty/stub file (9 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 10 | `services\supplier\badge_billing_payment.py` | Empty/stub file (23 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 11 | `services\supplier\cash_management_controller_service.py` | Empty/stub file (0 lines, 0 public symbols, 0 importers) | DELETE | LOW |
+| 12 | `services\treasury\bank_transaction_service.py` | No public API (12 lines) but imported by 1 file(s): services\_registry.py | REVIEW | MEDIUM |
+| 13 | `services\users\approval_matrix_service.py` | No public API (16 lines) but imported by 2 file(s): services\_registry.py, services\users\rbac_service.py | REVIEW | MEDIUM |
+
+### 2.3 Tier 2 — Naming Variants / Domain Sprawl (18 files)
+
+| # | File | Reason | Action | Risk |
+|---|------|--------|--------|------|
+| 1 | `services\country\country_communications_read_service.py` | Folder 'country/' is a naming variant; canonical is 'geography/' (opinion, not factual error) | RENAME | MEDIUM |
+| 2 | `services\country\country_communications_service.py` | Folder 'country/' is a naming variant; canonical is 'geography/' (opinion, not factual error) | RENAME | MEDIUM |
+| 3 | `services\employee\attendance_service.py` | Folder 'employee/' is a naming variant; canonical is 'hr/' (opinion, not factual error) | RENAME | MEDIUM |
+| 4 | `services\employee\background_check.py` | Folder 'employee/' is a naming variant; canonical is 'hr/' (opinion, not factual error) | RENAME | MEDIUM |
+| 5 | `services\location_service\geo_resolver.py` | Folder 'location_service/' is a naming variant; canonical is 'geography/' (opinion, not factual error) | RENAME | MEDIUM |
+| 6 | `services\location_service\main.py` | Folder 'location_service/' is a naming variant; canonical is 'geography/' (opinion, not factual error) | RENAME | MEDIUM |
+| 7 | `services\products\product_verification_service.py` | Folder 'products/' is a naming variant; canonical is 'catalog/' (opinion, not factual error) | RENAME | MEDIUM |
+| 8 | `services\products\products_service.py` | Folder 'products/' is a naming variant; canonical is 'catalog/' (opinion, not factual error) | RENAME | MEDIUM |
+| 9 | `services\promotions\admin_promotions_write_service.py` | Folder 'promotions/' is a naming variant; canonical is 'commerce/' (opinion, not factual error) | RENAME | MEDIUM |
+| 10 | `services\promotions\promotion_admin_write_service.py` | Folder 'promotions/' is a naming variant; canonical is 'commerce/' (opinion, not factual error) | RENAME | MEDIUM |
+| 11 | `services\users\approval_matrix_service.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 12 | `services\users\identity_admin_service.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 13 | `services\users\identity_service.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 14 | `services\users\rbac_service.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 15 | `services\users\user_write_ops.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 16 | `services\users\users_write_service.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 17 | `services\users\workflow_engine.py` | Folder 'users/' is a naming variant; canonical is 'identity/' (opinion, not factual error) | RENAME | MEDIUM |
+| 18 | `services\_registry.py` | Service '_registry.py' dumped in services/ root, should be in domain folder (opinion) | RENAME | MEDIUM |
+
+### 2.4 Tier 3 — Read/Write Split Sprawl (90 files)
+
+| # | File | Type | Reason | Action | Risk |
+|---|------|------|--------|--------|------|
+| 1 | `services\admin\admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 2 | `services\ai\ai_upload_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 3 | `services\ai\automation_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 4 | `services\catalog\banner_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 5 | `services\catalog\bulk_ops_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 6 | `services\catalog\category_admin_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 7 | `services\catalog\category_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 8 | `services\catalog\product_admin_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 9 | `services\catalog\product_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 10 | `services\catalog\product_verification_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 11 | `services\catalog\products_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 12 | `services\commerce\banner_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 13 | `services\commerce\commerce_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 14 | `services\commerce\commerce_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 15 | `services\commerce\coupons_legacy_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 16 | `services\commerce\coupons_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 17 | `services\commerce\coupons_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 18 | `services\commerce\flash_sale_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 19 | `services\commerce\promotions_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 20 | `services\commerce\wishlist_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 21 | `services\commerce\wishlist_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 22 | `services\common\misc_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 23 | `services\comms\chat_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 24 | `services\comms\chat_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 25 | `services\comms\comm_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 26 | `services\comms\communication_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 27 | `services\comms\communication_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 28 | `services\comms\email_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 29 | `services\comms\tickets_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 30 | `services\comms\video_room_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 31 | `services\core\export_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 32 | `services\core\user_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 33 | `services\country\country_communications_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 34 | `services\finance\cash_management_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 35 | `services\finance\commission_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 36 | `services\finance\commission_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 37 | `services\finance\contractor_milestone_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 38 | `services\finance\erp_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 39 | `services\finance\finance_automation_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 40 | `services\finance\finance_erp_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 41 | `services\finance\finance_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 42 | `services\finance\invoice_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 43 | `services\finance\payout_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 44 | `services\finance\trading_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 45 | `services\gateways\payments_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 46 | `services\geography\country_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 47 | `services\geography\country_auto_populate_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 48 | `services\geography\country_config_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 49 | `services\geography\country_payout_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 50 | `services\geography\country_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 51 | `services\geography\country_staff_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 52 | `services\geography\country_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 53 | `services\governance\incident_admin_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 54 | `services\hierarchy\org_hierarchy_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 55 | `services\hr\employee_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 56 | `services\hr\ess_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 57 | `services\hr\hr_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 58 | `services\hr\learning_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 59 | `services\hr\lms_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 60 | `services\hr\payroll_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 61 | `services\logistics\logistics_partner_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 62 | `services\logistics\logistics_partner_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 63 | `services\logistics\logistics_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 64 | `services\orders\admin_orders_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 65 | `services\orders\admin_orders_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 66 | `services\orders\cart_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 67 | `services\orders\disputes_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 68 | `services\orders\orders_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 69 | `services\orders\returns_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 70 | `services\promotions\admin_promotions_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 71 | `services\promotions\promotion_admin_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 72 | `services\security\auth_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 73 | `services\security\iam_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 74 | `services\security\impossible_travel_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 75 | `services\security\permission_primitive_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 76 | `services\security\permissions_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 77 | `services\security\risk_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 78 | `services\supplier\admin_supplier_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 79 | `services\supplier\supplier_badge_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 80 | `services\supplier\supplier_batch_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 81 | `services\supplier\supplier_profile_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 82 | `services\supplier\suppliers_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 83 | `services\treasury\admin_treasury_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 84 | `services\treasury\admin_treasury_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 85 | `services\treasury\cash_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 86 | `services\treasury\cash_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 87 | `services\treasury\payout_approval_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 88 | `services\treasury\payout_approval_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 89 | `services\treasury\payout_read_service.py` | Read/Write Split (read) | Read service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+| 90 | `services\users\users_write_service.py` | Read/Write Split (write) | Write service split — should be consolidated with its counterpart | STANDARDIZE | MEDIUM |
+
+### 2.5 Tier 4 — Thin Forwarding Services (57 files)
+
+| # | File | Forwards To | Action | Risk |
+|---|------|-------------|--------|------|
+| 1 | `services\admin\admin_commerce_geography_service.py` | Classified as thin forwarder (forwards to: call:_admin_context, call:clear_rls_context, call:country_code.upper) but has 6 public symbols and is imported by 3 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 2 | `services\admin\admin_comms_geography_service.py` | Classified as thin forwarder (forwards to: call:clear_rls_context, call:country_code.upper, call:create_campaign) but has 5 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 3 | `services\admin\admin_comms_messaging_service.py` | Classified as thin forwarder (forwards to: call:??.isoformat, call:ChatSystem, call:EntityChatService) but has 12 public symbols and is imported by 4 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 4 | `services\admin\admin_dashboard_service.py` | Classified as thin forwarder (forwards to: call:??.asc, call:??.desc, call:??.nullslast) but has 11 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 5 | `services\admin\admin_finance_geography_service.py` | Classified as thin forwarder (forwards to: call:clear_rls_context, call:country_code.upper, call:create_badge_tier) but has 6 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 6 | `services\admin\admin_geography_audit_service.py` | Classified as thin forwarder (forwards to: call:AuditTrailService.get_audit_trail, call:AuditTrailService.log_financial_change, call:LegalContractService.generate_contract) but has 16 public symbols and is imported by 5 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 7 | `services\admin\admin_geography_configuration_service.py` | Classified as thin forwarder (forwards to: call:Response, call:_require_admin, call:body.model_dump) but has 95 public symbols and is imported by 3 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 8 | `services\admin\admin_logistics_geography_service.py` | Classified as thin forwarder (forwards to: call:approve_partner, call:archive_entity, call:bulk_archive_entities) but has 9 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 9 | `services\admin\admin_logistics_operations_service.py` | Classified as thin forwarder (forwards to: call:??.get, call:??.items, call:??.list_backups) but has 142 public symbols and is imported by 3 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 10 | `services\admin\admin_media_geography_service.py` | Classified as thin forwarder (forwards to: call:??.isoformat, call:_resolve_country, call:_serialize_room) but has 6 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 11 | `services\admin\admin_permissions_validation_service.py` | Classified as thin forwarder (forwards to: call:COUNTRY_ROLE_PERMISSION_MAP.items, call:HTTPException, call:approve_permission_change) but has 23 public symbols and is imported by 3 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 12 | `services\admin\admin_security_registration_service.py` | Classified as thin forwarder (forwards to: call:admin_security_registration_svc.csrf_token, call:admin_security_registration_svc.login, call:admin_security_registration_svc.logout) but has 6 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 13 | `services\admin\admin_treasury_reporting_service.py` | Classified as thin forwarder (forwards to: call:admin_treasury_reporting_svc.admin_approve_payout_batch, call:admin_treasury_reporting_svc.admin_approve_pending, call:admin_treasury_reporting_svc.admin_approve_settlement) but has 60 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 14 | `services\admin\analytics_fallback_service.py` | Classified as thin forwarder (forwards to: call:??.select_from, call:all_rows, call:count) but has 5 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 15 | `services\ai\parcel_verification_service.py` | Only forwards to: call:_provider_verify_parcel_fast, call:_provider_verify_parcel_photo | MERGE | MEDIUM |
+| 16 | `services\audit\audit_service.py` | Classified as thin forwarder (forwards to: call:AuditService, call:self.log_action, call:str) but has 6 public symbols and is imported by 0 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 17 | `services\common\event_bus.py` | Classified as thin forwarder (forwards to: call:??.append, call:_subscribers.get, call:_subscribers.setdefault) but has 4 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 18 | `services\common\storage.py` | Classified as thin forwarder (forwards to: call:??.delete_object, call:??.dirname, call:??.generate_presigned_url) but has 11 public symbols and is imported by 20 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 19 | `services\comms\notification_service.py` | Classified as thin forwarder (forwards to: call:??.join, call:alert.get, call:logger.warning) but has 6 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 20 | `services\comms\notification_worker.py` | Only forwards to: call:_poll_once, call:logger.error, call:logger.info | MERGE | MEDIUM |
+| 21 | `services\comms\transactional_email_service.py` | Classified as thin forwarder (forwards to: call:_send_distributor_statement_email, call:_send_doc_status_email, call:_send_dunning_email) but has 16 public symbols and is imported by 11 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 22 | `services\comms\translation_service.py` | Classified as thin forwarder (forwards to: call:??.get, call:??.translate, call:TranslationService) but has 7 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 23 | `services\core\admin_treasury_service.py` | Classified as thin forwarder (forwards to: call:admin_treasury_svc.admin_approve_payout_batch, call:admin_treasury_svc.admin_approve_pending, call:admin_treasury_svc.admin_approve_settlement) but has 60 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 24 | `services\core\auth_service.py` | Classified as thin forwarder (forwards to: call:auth_svc.csrf_token, call:auth_svc.login, call:auth_svc.logout) but has 6 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 25 | `services\core\banners_service.py` | Classified as thin forwarder (forwards to: call:_admin_context, call:create_banner_controller, call:delete_banner_controller) but has 7 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 26 | `services\core\chat_enrichment_service.py` | Classified as thin forwarder (forwards to: call:add_reaction, call:apply_legal_hold, call:create_voice_note_attachment) but has 10 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 27 | `services\core\commission_service.py` | Classified as thin forwarder (forwards to: call:??.items, call:_engine_rate, call:body.model_dump) but has 24 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 28 | `services\core\employees_service.py` | Classified as thin forwarder (forwards to: call:body.model_dump, call:ctrl.approve_work_log, call:ctrl.check_in_employee) but has 54 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 29 | `services\core\internal_channels_service.py` | Classified as thin forwarder (forwards to: call:HTTPException, call:get_internal_communication_service, call:service.add_member) but has 7 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 30 | `services\core\logistics_partner_service.py` | Classified as thin forwarder (forwards to: call:??.get, call:ctrl.accept_partner_terms, call:ctrl.admin_review_lp_document) but has 59 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 31 | `services\core\logistics_service.py` | Classified as thin forwarder (forwards to: call:HTTPException, call:ctrl.create_carrier, call:ctrl.create_shipment) but has 19 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 32 | `services\core\returns_service.py` | Classified as thin forwarder (forwards to: call:ReturnRequestUpdate, call:_serialize_return, call:_user_context) but has 7 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 33 | `services\core\translation_service.py` | Only forwards to: call:GoogleTranslator, call:TranslateResponse, call:logger.error | MERGE | MEDIUM |
+| 34 | `services\employee\background_check.py` | Only forwards to: call:_api_check, call:_simulated_check, call:_use_simulated | MERGE | MEDIUM |
+| 35 | `services\finance\finance_transfer_service.py` | Classified as thin forwarder (forwards to: call:??.build_export_payload, call:??.lower, call:??.strip) but has 15 public symbols and is imported by 7 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 36 | `services\finance\payments_gateway_service.py` | Classified as thin forwarder (forwards to: call:??.lower, call:??.strip, call:apply_order_status_change) but has 7 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 37 | `services\gateways\base.py` | Classified as thin forwarder (forwards to: call:ConnectionTestResult, call:NotImplementedError, call:PaymentResult) but has 7 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 38 | `services\gateways\registry.py` | Classified as thin forwarder (forwards to: call:??.clear, call:??.get, call:??.lower) but has 10 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 39 | `services\geography\category_tax_profiles.py` | Only forwards to: call:CATEGORY_TAX_PROFILES.get, call:country_code.upper | MERGE | MEDIUM |
+| 40 | `services\geography\country_auto_populate.py` | Classified as thin forwarder (forwards to: call:??.get, call:BASE_COMMISSIONS.items, call:GATEWAY_REGISTRY.items) but has 15 public symbols and is imported by 3 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 41 | `services\geography\country_curated.py` | Only forwards to: call:CURATED_COUNTRIES.get, call:code.upper, call:country.get | MERGE | MEDIUM |
+| 42 | `services\geography\country_data_orchestrator.py` | Classified as thin forwarder (forwards to: call:??.get, call:Decimal, call:ExternalAPIFetcher) but has 11 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 43 | `services\geography\cross_border_base.py` | Only forwards to: call:??.get, call:??.pop, call:session.get | MERGE | MEDIUM |
+| 44 | `services\geography\curated_cities.py` | Only forwards to: call:CURATED_CITIES.get, call:country_code.upper | MERGE | MEDIUM |
+| 45 | `services\geography\vat_rates.py` | Only forwards to: call:LEGAL_DEFAULTS.get, call:VAT_RATES.get, call:country_code.upper | MERGE | MEDIUM |
+| 46 | `services\location_service\main.py` | Classified as thin forwarder (forwards to: call:JSONResponse, call:_client_meta, call:location.to_dict) but has 7 public symbols and is imported by 0 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 47 | `services\logistics\logistics_partner_write_service.py` | Classified as thin forwarder (forwards to: call:_apply, call:_hard_delete, call:_new) but has 42 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 48 | `services\mcp\zozi_mcp.py` | Classified as thin forwarder (forwards to: call:??.join, call:RuntimeError, call:_format_orders) but has 27 public symbols and is imported by 0 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 49 | `services\public\admin_promotions_routes_service.py` | Classified as thin forwarder (forwards to: call:_country_ctx, call:clear_rls_context, call:code.upper) but has 6 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 50 | `services\public\customer_coupons_create_service.py` | Classified as thin forwarder (forwards to: call:Decimal, call:ctrl_create, call:ctrl_delete) but has 8 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 51 | `services\public\customer_coupons_mgmt_service.py` | Classified as thin forwarder (forwards to: call:??.strip, call:create_coupon_from_payload, call:delete_coupon_by_id) but has 4 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 52 | `services\security\data_residency.py` | Classified as thin forwarder (forwards to: call:DataResidencyService.get_residency_tier, call:country_code.lower, call:encrypted_data.get) but has 10 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 53 | `services\security\siem_engine.py` | Classified as thin forwarder (forwards to: call:??.get, call:??.isoformat, call:??.setex) but has 12 public symbols and is imported by 0 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 54 | `services\supplier\legal_contract_service.py` | Classified as thin forwarder (forwards to: call:??.isoformat, call:country_code.upper, call:datetime.utcnow) but has 8 public symbols and is imported by 6 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 55 | `services\supplier\supplier_products_upload_service.py` | Classified as thin forwarder (forwards to: call:delete_supplier_product, call:get_supplier_product, call:list_my_products) but has 6 public symbols and is imported by 2 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+| 56 | `services\supplier\supplier_profile_create_service.py` | Only forwards to: call:HTTPException, call:create_supplier_profile, call:get_supplier_profile | MERGE | MEDIUM |
+| 57 | `services\treasury\payment_engine.py` | Classified as thin forwarder (forwards to: call:??.validate_credentials, call:PaymentGatewayRegistry.get, call:PaymentGatewayRegistry.list_available) but has 6 public symbols and is imported by 1 file(s). Merging would have wide impact. Verify before merging. | REVIEW | HIGH |
+
+### 2.6 Tier 5 — Structural Near-Duplicates (81 pairs)
+
+| # | File A | File B | Similarity | Note | Action | Risk |
+|---|--------|--------|------------|------|--------|------|
+| 1 | `services\geography\country_admin_write_service.py` | `services\geography\country_audit_admin_service.py` | 100% | importers: controllers\delegators\geography_country_audit_admin_service.py, services\admin\admin_geography_audit_service.py | REVIEW | HIGH |
+| 2 | `services\geography\country_config_admin_service.py` | `services\geography\country_config_write_service.py` | 100% | importers: controllers\delegators\geography_country_config_admin_service.py, services\admin\admin_geography_configuration_service.py, services\public\public_geography_configuration_service.py | REVIEW | HIGH |
+| 3 | `services\geography\country_detection.py` | `services\geography\geo_service.py` | 67% | importers: services\_registry.py, services\core\geo_service.py, services\geography\geo_service.py | REVIEW | HIGH |
+| 4 | `services\geography\country_payout_write_service.py` | `services\geography\country_router_service.py` | 62% |  | REVIEW | HIGH |
+| 5 | `services\geography\country_read_service.py` | `services\geography\country_service.py` | 63% | importers: services\core\countries_service.py, services\geography\country_config_admin_service.py, services\geography\country_restriction_service.py | REVIEW | HIGH |
+| 6 | `services\geography\country_rls_service.py` | `services\geography\cross_border_service.py` | 100% | importers: services\_registry.py, services\geography\cross_border_tracker.py | REVIEW | HIGH |
+| 7 | `services\geography\country_staff_service.py` | `services\geography\country_staff_write_service.py` | 64% |  | REVIEW | HIGH |
+| 8 | `services\comms\chat_enrichment.py` | `services\comms\comm_service.py` | 100% | importers: controllers\comms\comm_controller.py, services\_registry.py, services\core\chat_enrichment_service.py | REVIEW | HIGH |
+| 9 | `services\comms\chat_enrichment.py` | `services\comms\email_enrichment.py` | 100% | importers: controllers\router_bridges\email_enrichment.py, services\_registry.py, services\core\chat_enrichment_service.py | REVIEW | HIGH |
+| 10 | `services\comms\chat_enrichment.py` | `services\comms\video_room_write_service.py` | 100% | importers: services\_registry.py, services\core\chat_enrichment_service.py | REVIEW | HIGH |
+| 11 | `services\comms\chat_read_service.py` | `services\comms\chat_write_service.py` | 71% | importers: controllers\comms\chat_write_controller.py, services\comms\entity_chat_service.py | REVIEW | HIGH |
+| 12 | `services\comms\chat_read_service.py` | `services\comms\realtime_chat_service.py` | 79% | importers: controllers\delegators\comms_realtime_chat_service.py, services\comms\entity_chat_service.py | REVIEW | HIGH |
+| 13 | `services\comms\chat_write_service.py` | `services\comms\realtime_chat_service.py` | 92% | importers: controllers\comms\chat_write_controller.py, controllers\delegators\comms_realtime_chat_service.py | REVIEW | HIGH |
+| 14 | `services\comms\chat_write_service.py` | `services\comms\websocket_chat.py` | 67% | importers: controllers\comms\chat_write_controller.py | REVIEW | HIGH |
+| 15 | `services\comms\comm_service.py` | `services\comms\email_enrichment.py` | 100% | importers: controllers\comms\comm_controller.py, controllers\router_bridges\email_enrichment.py, services\_registry.py | REVIEW | HIGH |
+| 16 | `services\comms\comm_service.py` | `services\comms\video_room_write_service.py` | 100% | importers: controllers\comms\comm_controller.py | REVIEW | HIGH |
+| 17 | `services\comms\email_enrichment.py` | `services\comms\video_room_write_service.py` | 100% | importers: controllers\router_bridges\email_enrichment.py, services\_registry.py | REVIEW | HIGH |
+| 18 | `services\comms\entity_chat_service.py` | `services\comms\websocket_chat.py` | 64% | importers: controllers\delegators\comms_entity_chat_service.py, controllers\router_bridges\entity_chat.py, controllers\router_bridges\entity_communication.py | REVIEW | HIGH |
+| 19 | `services\comms\realtime_chat_service.py` | `services\comms\websocket_chat.py` | 62% | importers: controllers\delegators\comms_realtime_chat_service.py | REVIEW | HIGH |
+| 20 | `services\finance\cash_management_write_service.py` | `services\finance\payments_gateway_service.py` | 100% | importers: services\finance\order_payment_functions.py, services\gateways\payments.py | REVIEW | HIGH |
+| 21 | `services\admin\admin_identity_operations_api_service.py` | `services\users\identity_service.py` | 80% | importers: controllers\admin\admin_identity_operations_api_controller.py, controllers\onboarding_controller.py, services\core\admin_service.py | REVIEW | HIGH |
+| 22 | `services\admin\admin_identity_operations_service.py` | `services\identity\identity_admin_service.py` | 86% | importers: controllers\admin\admin_identity_operations_controller.py, services\core\admin_users_service.py | REVIEW | HIGH |
+| 23 | `services\admin\admin_identity_operations_service.py` | `services\users\identity_admin_service.py` | 75% | importers: controllers\admin\admin_identity_operations_controller.py, controllers\delegators\users_identity_admin_service.py, services\core\admin_users_service.py | REVIEW | HIGH |
+| 24 | `services\identity\identity_admin_service.py` | `services\users\identity_admin_service.py` | 62% | importers: controllers\delegators\users_identity_admin_service.py, services\users\users_write_service.py | REVIEW | HIGH |
+| 25 | `services\admin\admin_logistics_operations_service.py` | `services\logistics\admin_operations_service.py` | 62% | importers: controllers\admin\admin_logistics_operations_controller.py, controllers\delegators\logistics_admin_operations_service.py, services\core\admin_service.py | REVIEW | HIGH |
+| 26 | `services\core\admin_logistics_service.py` | `services\logistics\partner_geography_service.py` | 80% | importers: controllers\core\admin_logistics_controller.py, controllers\delegators\logistics_partner_geography_service.py, services\admin\admin_logistics_geography_service.py | REVIEW | HIGH |
+| 27 | `services\core\logistics_health_service.py` | `services\logistics\logistics_health_list_service.py` | 100% | importers: controllers\core\logistics_health_controller.py, controllers\logistics\logistics_health_list_controller.py | REVIEW | HIGH |
+| 28 | `services\core\logistics_health_service.py` | `services\logistics\logistics_health_service.py` | 100% | importers: controllers\core\logistics_health_controller.py, controllers\delegators\logistics_logistics_health_service.py, controllers\logistics\logistics_health_list_controller.py | REVIEW | HIGH |
+| 29 | `services\core\logistics_locations_service.py` | `services\logistics\logistics_partner_write_service.py` | 83% | importers: controllers\core\logistics_locations_controller.py, controllers\delegators\logistics_logistics_partner_write_service.py, services\logistics\logistics_locations_create_service.py | REVIEW | HIGH |
+| 30 | `services\core\logistics_service.py` | `services\logistics\logistics_logistics_status_service.py` | 80% | importers: controllers\core\logistics_controller.py, controllers\logistics\logistics_logistics_status_controller.py, services\logistics\logistics_logistics_status_service.py | REVIEW | HIGH |
+| 31 | `services\core\logistics_service.py` | `services\logistics\shipment_service.py` | 83% | importers: controllers\core\logistics_controller.py, controllers\delegators\logistics_shipment_service.py, controllers\supplier\supplier_document_controller.py | REVIEW | HIGH |
+| 32 | `services\logistics\logistics_engine.py` | `services\logistics\logistics_partner_admin_write_service.py` | 100% | importers: services\_registry.py | REVIEW | HIGH |
+| 33 | `services\logistics\logistics_health_list_service.py` | `services\logistics\logistics_health_service.py` | 100% | importers: controllers\delegators\logistics_logistics_health_service.py | REVIEW | HIGH |
+| 34 | `services\logistics\logistics_logistics_status_service.py` | `services\logistics\shipment_service.py` | 67% | importers: controllers\delegators\logistics_shipment_service.py, controllers\logistics\logistics_logistics_status_controller.py, controllers\supplier\supplier_document_controller.py | REVIEW | HIGH |
+| 35 | `services\logistics\logistics_orders_list_service.py` | `services\logistics\logistics_orders_v2_service.py` | 100% | importers: controllers\logistics\logistics_orders_list_controller.py, controllers\logistics\logistics_orders_v2_controller.py | REVIEW | HIGH |
+| 36 | `services\logistics\logistics_orders_list_service.py` | `services\logistics\partner_shipments_service.py` | 100% | importers: controllers\delegators\logistics_partner_shipments_service.py, controllers\logistics\logistics_orders_list_controller.py | REVIEW | HIGH |
+| 37 | `services\logistics\logistics_orders_v2_service.py` | `services\logistics\partner_shipments_service.py` | 100% | importers: controllers\delegators\logistics_partner_shipments_service.py, controllers\logistics\logistics_orders_v2_controller.py | REVIEW | HIGH |
+| 38 | `services\admin\admin_orders_status_service.py` | `services\orders\admin_orders_read_service.py` | 60% | importers: controllers\admin\admin_orders_status_controller.py, controllers\delegators\orders_admin_orders_read_service.py | REVIEW | HIGH |
+| 39 | `services\admin\admin_orders_status_service.py` | `services\orders\admin_orders_write_service.py` | 60% | importers: controllers\admin\admin_orders_status_controller.py, controllers\delegators\orders_admin_orders_write_service.py | REVIEW | HIGH |
+| 40 | `services\admin\admin_orders_status_service.py` | `services\orders\bulk_order_service.py` | 60% | importers: controllers\admin\admin_orders_status_controller.py | REVIEW | HIGH |
+| 41 | `services\orders\admin_orders_write_service.py` | `services\orders\bulk_order_service.py` | 75% | importers: controllers\delegators\orders_admin_orders_write_service.py | REVIEW | HIGH |
+| 42 | `services\orders\bulk_order_service.py` | `services\orders\returns_service.py` | 67% |  | REVIEW | HIGH |
+| 43 | `services\admin\admin_security_detection_service.py` | `services\security\fraud_admin_controller_service.py` | 64% | importers: controllers\admin\admin_security_detection_controller.py, services\public\public_security_detection_service.py, services\security\fraud_engine.py | REVIEW | HIGH |
+| 44 | `services\admin\admin_security_detection_service.py` | `services\security\fraud_admin_service.py` | 95% | importers: controllers\admin\admin_security_detection_controller.py, controllers\delegators\security_fraud_admin_service.py, services\admin\admin_security_detection_service.py | REVIEW | HIGH |
+| 45 | `services\admin\admin_security_operations_service.py` | `services\security\admin_security_operations_service.py` | 100% | importers: controllers\admin\admin_security_operations_controller.py, services\core\incident_service.py, services\public\public_security_operations_service.py | REVIEW | HIGH |
+| 46 | `services\security\fraud_admin_controller_service.py` | `services\security\fraud_admin_service.py` | 62% | importers: controllers\delegators\security_fraud_admin_service.py, services\admin\admin_security_detection_service.py | REVIEW | HIGH |
+| 47 | `services\security\permission_primitive_write_service.py` | `services\security\permissions_write_service.py` | 60% | importers: services\_registry.py | REVIEW | HIGH |
+| 48 | `services\admin\admin_supplier_reviews_service.py` | `services\supplier\admin_supplier_review_service.py` | 67% | importers: controllers\admin\admin_supplier_reviews_controller.py, services\supplier\admin_supplier_review_service.py | REVIEW | HIGH |
+| 49 | `services\core\supplier_finance_service.py` | `services\supplier\supplier_finance_service.py` | 100% | importers: controllers\core\supplier_finance_controller.py, controllers\delegators\supplier_supplier_finance_service.py, controllers\router_bridges\supplier_finance_status.py | REVIEW | HIGH |
+| 50 | `services\core\supplier_health_service.py` | `services\supplier\supplier_health_engine.py` | 100% | importers: controllers\core\supplier_health_controller.py, services\_registry.py, services\core\supplier_health_service.py | REVIEW | HIGH |
+| ... | ... | ... | ... | ... | ... | +31 more |
+
+## 3. Duplicate Logic Findings (Cross-File)
+
+### 3.1 True Duplicates (IDENTICAL)
+
+✅ No true identical duplicates detected.
+
+### 3.2 Structural Similarity — 2538 found
+
+> ⚠️ **These are NOT exact duplicates.** They share the same operation
+> sequence but are different functions. Review before consolidating.
+
+| # | File A | Function A | File B | Function B | Action |
+|---|--------|-----------|--------|-----------|--------|
+| 1 | `services\admin\admin_catalog_operations_service.py` | `approve_product` | `services\admin\admin_catalog_operations_service.py` | `reject_product` | Review — NOT identical |
+| 2 | `services\admin\admin_catalog_operations_service.py` | `bulk_archive_products` | `services\admin\admin_identity_operations_service.py` | `bulk_archive_users` | Review — NOT identical |
+| 3 | `services\admin\admin_catalog_operations_service.py` | `bulk_archive_products` | `services\admin\admin_logistics_geography_service.py` | `bulk_archive_partners` | Review — NOT identical |
+| 4 | `services\admin\admin_catalog_operations_service.py` | `bulk_archive_products` | `services\admin\admin_orders_status_service.py` | `bulk_archive_orders` | Review — NOT identical |
+| 5 | `services\admin\admin_catalog_operations_service.py` | `bulk_archive_products` | `services\core\admin_categories_service.py` | `bulk_archive_categories` | Review — NOT identical |
+| 6 | `services\admin\admin_identity_operations_service.py` | `bulk_archive_users` | `services\admin\admin_logistics_geography_service.py` | `bulk_archive_partners` | Review — NOT identical |
+| 7 | `services\admin\admin_identity_operations_service.py` | `bulk_archive_users` | `services\admin\admin_orders_status_service.py` | `bulk_archive_orders` | Review — NOT identical |
+| 8 | `services\admin\admin_identity_operations_service.py` | `bulk_archive_users` | `services\core\admin_categories_service.py` | `bulk_archive_categories` | Review — NOT identical |
+| 9 | `services\admin\admin_logistics_geography_service.py` | `bulk_archive_partners` | `services\admin\admin_orders_status_service.py` | `bulk_archive_orders` | Review — NOT identical |
+| 10 | `services\admin\admin_logistics_geography_service.py` | `bulk_archive_partners` | `services\core\admin_categories_service.py` | `bulk_archive_categories` | Review — NOT identical |
+| 11 | `services\admin\admin_orders_status_service.py` | `bulk_archive_orders` | `services\core\admin_categories_service.py` | `bulk_archive_categories` | Review — NOT identical |
+| 12 | `services\admin\admin_catalog_operations_service.py` | `bulk_restore_products` | `services\admin\admin_identity_operations_service.py` | `bulk_restore_users` | Review — NOT identical |
+| 13 | `services\admin\admin_catalog_operations_service.py` | `bulk_restore_products` | `services\admin\admin_logistics_geography_service.py` | `bulk_restore_partners` | Review — NOT identical |
+| 14 | `services\admin\admin_catalog_operations_service.py` | `bulk_restore_products` | `services\admin\admin_orders_status_service.py` | `bulk_restore_orders` | Review — NOT identical |
+| 15 | `services\admin\admin_catalog_operations_service.py` | `bulk_restore_products` | `services\core\admin_categories_service.py` | `bulk_restore_categories` | Review — NOT identical |
+| 16 | `services\admin\admin_identity_operations_service.py` | `bulk_restore_users` | `services\admin\admin_logistics_geography_service.py` | `bulk_restore_partners` | Review — NOT identical |
+| 17 | `services\admin\admin_identity_operations_service.py` | `bulk_restore_users` | `services\admin\admin_orders_status_service.py` | `bulk_restore_orders` | Review — NOT identical |
+| 18 | `services\admin\admin_identity_operations_service.py` | `bulk_restore_users` | `services\core\admin_categories_service.py` | `bulk_restore_categories` | Review — NOT identical |
+| 19 | `services\admin\admin_logistics_geography_service.py` | `bulk_restore_partners` | `services\admin\admin_orders_status_service.py` | `bulk_restore_orders` | Review — NOT identical |
+| 20 | `services\admin\admin_logistics_geography_service.py` | `bulk_restore_partners` | `services\core\admin_categories_service.py` | `bulk_restore_categories` | Review — NOT identical |
+| 21 | `services\admin\admin_orders_status_service.py` | `bulk_restore_orders` | `services\core\admin_categories_service.py` | `bulk_restore_categories` | Review — NOT identical |
+| 22 | `services\admin\admin_catalog_operations_service.py` | `archive_product` | `services\admin\admin_identity_operations_service.py` | `archive_user` | Review — NOT identical |
+| 23 | `services\admin\admin_catalog_operations_service.py` | `archive_product` | `services\admin\admin_logistics_geography_service.py` | `archive_partner` | Review — NOT identical |
+| 24 | `services\admin\admin_catalog_operations_service.py` | `archive_product` | `services\admin\admin_orders_status_service.py` | `archive_order` | Review — NOT identical |
+| 25 | `services\admin\admin_catalog_operations_service.py` | `archive_product` | `services\core\admin_categories_service.py` | `archive_category` | Review — NOT identical |
+| 26 | `services\admin\admin_identity_operations_service.py` | `archive_user` | `services\admin\admin_logistics_geography_service.py` | `archive_partner` | Review — NOT identical |
+| 27 | `services\admin\admin_identity_operations_service.py` | `archive_user` | `services\admin\admin_orders_status_service.py` | `archive_order` | Review — NOT identical |
+| 28 | `services\admin\admin_identity_operations_service.py` | `archive_user` | `services\core\admin_categories_service.py` | `archive_category` | Review — NOT identical |
+| 29 | `services\admin\admin_logistics_geography_service.py` | `archive_partner` | `services\admin\admin_orders_status_service.py` | `archive_order` | Review — NOT identical |
+| 30 | `services\admin\admin_logistics_geography_service.py` | `archive_partner` | `services\core\admin_categories_service.py` | `archive_category` | Review — NOT identical |
+| 31 | `services\admin\admin_orders_status_service.py` | `archive_order` | `services\core\admin_categories_service.py` | `archive_category` | Review — NOT identical |
+| 32 | `services\admin\admin_catalog_operations_service.py` | `restore_product_route` | `services\admin\admin_identity_operations_service.py` | `restore_user` | Review — NOT identical |
+| 33 | `services\admin\admin_catalog_operations_service.py` | `restore_product_route` | `services\admin\admin_logistics_geography_service.py` | `restore_partner` | Review — NOT identical |
+| 34 | `services\admin\admin_catalog_operations_service.py` | `restore_product_route` | `services\admin\admin_orders_status_service.py` | `restore_order` | Review — NOT identical |
+| 35 | `services\admin\admin_catalog_operations_service.py` | `restore_product_route` | `services\core\admin_categories_service.py` | `restore_category` | Review — NOT identical |
+| 36 | `services\admin\admin_identity_operations_service.py` | `restore_user` | `services\admin\admin_logistics_geography_service.py` | `restore_partner` | Review — NOT identical |
+| 37 | `services\admin\admin_identity_operations_service.py` | `restore_user` | `services\admin\admin_orders_status_service.py` | `restore_order` | Review — NOT identical |
+| 38 | `services\admin\admin_identity_operations_service.py` | `restore_user` | `services\core\admin_categories_service.py` | `restore_category` | Review — NOT identical |
+| 39 | `services\admin\admin_logistics_geography_service.py` | `restore_partner` | `services\admin\admin_orders_status_service.py` | `restore_order` | Review — NOT identical |
+| 40 | `services\admin\admin_logistics_geography_service.py` | `restore_partner` | `services\core\admin_categories_service.py` | `restore_category` | Review — NOT identical |
+| 41 | `services\admin\admin_orders_status_service.py` | `restore_order` | `services\core\admin_categories_service.py` | `restore_category` | Review — NOT identical |
+| 42 | `services\admin\admin_catalog_operations_service.py` | `delete_product_permanent` | `services\admin\admin_logistics_geography_service.py` | `delete_partner_permanent` | Review — NOT identical |
+| 43 | `services\admin\admin_catalog_operations_service.py` | `delete_product_permanent` | `services\admin\admin_orders_status_service.py` | `delete_order_permanent` | Review — NOT identical |
+| 44 | `services\admin\admin_logistics_geography_service.py` | `delete_partner_permanent` | `services\admin\admin_orders_status_service.py` | `delete_order_permanent` | Review — NOT identical |
+| 45 | `services\admin\admin_commerce_configuration_service.py` | `get_promotion_config` | `services\admin\admin_fallback_service.py` | `get_commission_config_fallback` | Review — NOT identical |
+| 46 | `services\admin\admin_fallback_service.py` | `get_commission_config_fallback` | `services\commerce\admin_promotion_service.py` | `get_promotion_config` | Review — NOT identical |
+| 47 | `services\admin\admin_fallback_service.py` | `get_commission_config_fallback` | `services\promotions\admin_promotions_write_service.py` | `get_promotion_config` | Review — NOT identical |
+| 48 | `services\admin\admin_commerce_configuration_service.py` | `list_coupons` | `services\admin\admin_commerce_configuration_service.py` | `list_flash_sales` | Review — NOT identical |
+| 49 | `services\admin\admin_commerce_configuration_service.py` | `list_coupons` | `services\commerce\admin_promotion_service.py` | `list_flash_sales` | Review — NOT identical |
+| 50 | `services\admin\admin_commerce_configuration_service.py` | `list_coupons` | `services\promotions\admin_promotions_write_service.py` | `list_flash_sales` | Review — NOT identical |
+| 51 | `services\admin\admin_commerce_configuration_service.py` | `list_flash_sales` | `services\commerce\admin_promotion_service.py` | `list_coupons` | Review — NOT identical |
+| 52 | `services\admin\admin_commerce_configuration_service.py` | `list_flash_sales` | `services\promotions\admin_promotions_write_service.py` | `list_coupons` | Review — NOT identical |
+| 53 | `services\commerce\admin_promotion_service.py` | `list_coupons` | `services\commerce\admin_promotion_service.py` | `list_flash_sales` | Review — NOT identical |
+| 54 | `services\commerce\admin_promotion_service.py` | `list_coupons` | `services\promotions\admin_promotions_write_service.py` | `list_flash_sales` | Review — NOT identical |
+| 55 | `services\commerce\admin_promotion_service.py` | `list_flash_sales` | `services\promotions\admin_promotions_write_service.py` | `list_coupons` | Review — NOT identical |
+| 56 | `services\promotions\admin_promotions_write_service.py` | `list_coupons` | `services\promotions\admin_promotions_write_service.py` | `list_flash_sales` | Review — NOT identical |
+| 57 | `services\admin\admin_commerce_configuration_service.py` | `archive_coupon` | `services\admin\admin_commerce_configuration_service.py` | `archive_flash_sale` | Review — NOT identical |
+| 58 | `services\admin\admin_commerce_configuration_service.py` | `archive_coupon` | `services\admin\admin_commerce_configuration_service.py` | `archive_banner` | Review — NOT identical |
+| 59 | `services\admin\admin_commerce_configuration_service.py` | `archive_flash_sale` | `services\admin\admin_commerce_configuration_service.py` | `archive_banner` | Review — NOT identical |
+| 60 | `services\admin\admin_commerce_configuration_service.py` | `restore_coupon` | `services\admin\admin_commerce_configuration_service.py` | `restore_flash_sale` | Review — NOT identical |
+| 61 | `services\admin\admin_commerce_configuration_service.py` | `restore_coupon` | `services\admin\admin_commerce_configuration_service.py` | `restore_banner` | Review — NOT identical |
+| 62 | `services\admin\admin_commerce_configuration_service.py` | `restore_flash_sale` | `services\admin\admin_commerce_configuration_service.py` | `restore_banner` | Review — NOT identical |
+| 63 | `services\admin\admin_commerce_configuration_service.py` | `bulk_archive_coupons` | `services\admin\admin_commerce_configuration_service.py` | `bulk_archive_flash_sales` | Review — NOT identical |
+| 64 | `services\admin\admin_commerce_configuration_service.py` | `bulk_archive_coupons` | `services\admin\admin_commerce_configuration_service.py` | `bulk_archive_banners` | Review — NOT identical |
+| 65 | `services\admin\admin_commerce_configuration_service.py` | `bulk_archive_flash_sales` | `services\admin\admin_commerce_configuration_service.py` | `bulk_archive_banners` | Review — NOT identical |
+| 66 | `services\admin\admin_commerce_configuration_service.py` | `bulk_restore_coupons` | `services\admin\admin_commerce_configuration_service.py` | `bulk_restore_flash_sales` | Review — NOT identical |
+| 67 | `services\admin\admin_commerce_configuration_service.py` | `bulk_restore_coupons` | `services\admin\admin_commerce_configuration_service.py` | `bulk_restore_banners` | Review — NOT identical |
+| 68 | `services\admin\admin_commerce_configuration_service.py` | `bulk_restore_flash_sales` | `services\admin\admin_commerce_configuration_service.py` | `bulk_restore_banners` | Review — NOT identical |
+| 69 | `services\admin\admin_commerce_configuration_service.py` | `list_banners_promotions` | `services\commerce\admin_promotion_service.py` | `list_banners` | Review — NOT identical |
+| 70 | `services\admin\admin_commerce_configuration_service.py` | `delete_banner_promotion` | `services\commerce\admin_promotion_service.py` | `delete_banner` | Review — NOT identical |
+| 71 | `services\admin\admin_commerce_configuration_service.py` | `delete_banner_promotion` | `services\commerce\admin_promotion_service.py` | `delete_banner_by_country` | Review — NOT identical |
+| 72 | `services\admin\admin_commerce_configuration_service.py` | `delete_banner_promotion` | `services\promotions\admin_promotions_write_service.py` | `delete_banner` | Review — NOT identical |
+| 73 | `services\admin\admin_commerce_configuration_service.py` | `delete_banner_promotion` | `services\promotions\promotion_admin_write_service.py` | `delete_banner` | Review — NOT identical |
+| 74 | `services\commerce\admin_promotion_service.py` | `delete_banner` | `services\commerce\admin_promotion_service.py` | `delete_banner_by_country` | Review — NOT identical |
+| 75 | `services\commerce\admin_promotion_service.py` | `delete_banner_by_country` | `services\promotions\admin_promotions_write_service.py` | `delete_banner` | Review — NOT identical |
+| 76 | `services\commerce\admin_promotion_service.py` | `delete_banner_by_country` | `services\promotions\promotion_admin_write_service.py` | `delete_banner` | Review — NOT identical |
+| 77 | `services\admin\admin_commerce_configuration_service.py` | `list_coupons_by_country` | `services\admin\admin_commerce_configuration_service.py` | `list_flash_sales_by_country` | Review — NOT identical |
+| 78 | `services\admin\admin_comms_messaging_service.py` | `admin_list_all_threads` | `services\admin\admin_comms_messaging_service.py` | `admin_list_chat_threads` | Review — NOT identical |
+| 79 | `services\admin\admin_dashboard_service.py` | `admin_dashboard_fallback` | `services\admin\analytics_fallback_service.py` | `get_dashboard_stats` | Review — NOT identical |
+| 80 | `services\admin\admin_dashboard_service.py` | `admin_stats_fallback` | `services\admin\analytics_fallback_service.py` | `get_admin_stats` | Review — NOT identical |
+| 81 | `services\admin\admin_dashboard_service.py` | `admin_payouts_fallback` | `services\admin\admin_dashboard_service.py` | `admin_payments_fallback` | Review — NOT identical |
+| 82 | `services\admin\admin_dashboard_service.py` | `admin_commission_fallback` | `services\admin\analytics_fallback_service.py` | `get_commission_config` | Review — NOT identical |
+| 83 | `services\admin\admin_dashboard_service.py` | `admin_commission_fallback` | `services\common\db_read.py` | `exists` | Review — NOT identical |
+| 84 | `services\admin\admin_dashboard_service.py` | `admin_commission_fallback` | `services\finance\erp_read_service.py` | `get_account_by_code` | Review — NOT identical |
+| 85 | `services\admin\analytics_fallback_service.py` | `get_commission_config` | `services\common\db_read.py` | `exists` | Review — NOT identical |
+| 86 | `services\admin\analytics_fallback_service.py` | `get_commission_config` | `services\finance\erp_read_service.py` | `get_account_by_code` | Review — NOT identical |
+| 87 | `services\common\db_read.py` | `exists` | `services\finance\erp_read_service.py` | `get_account_by_code` | Review — NOT identical |
+| 88 | `services\admin\admin_dashboard_service.py` | `admin_treasury_fallback` | `services\admin\analytics_fallback_service.py` | `get_treasury_summary` | Review — NOT identical |
+| 89 | `services\admin\admin_dashboard_service.py` | `admin_treasury_metrics_fallback` | `services\admin\analytics_fallback_service.py` | `get_treasury_metrics` | Review — NOT identical |
+| 90 | `services\admin\admin_geography_configuration_service.py` | `list_country_delivery_zones` | `services\admin\admin_geography_configuration_service.py` | `list_oman_delivery_zones_compat` | Review — NOT identical |
+| 91 | `services\admin\admin_geography_configuration_service.py` | `delete_payout_rule_category` | `services\admin\admin_geography_configuration_service.py` | `delete_payout_rule_product` | Review — NOT identical |
+| 92 | `services\admin\admin_identity_operations_api_service.py` | `list_users` | `services\users\identity_admin_service.py` | `list_all_users` | Review — NOT identical |
+| 93 | `services\users\identity_admin_service.py` | `list_all_users` | `services\users\identity_service.py` | `list_users` | Review — NOT identical |
+| 94 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\commerce\commerce_read_service.py` | `get_user_address` | Review — NOT identical |
+| 95 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\core\shipments_service.py` | `get_shipment` | Review — NOT identical |
+| 96 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\core\shipments_service.py` | `track_shipment` | Review — NOT identical |
+| 97 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\core\supplier_profile_service.py` | `get_supplier_profile` | Review — NOT identical |
+| 98 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\finance\badge_billing_payment.py` | `get_badge_billing_record` | Review — NOT identical |
+| 99 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\supplier\supplier_order_service.py` | `get_supplier_profile_by_user_id` | Review — NOT identical |
+| 100 | `services\admin\admin_identity_operations_api_service.py` | `get_user` | `services\supplier\supplier_profile_write_service.py` | `get_supplier_profile` | Review — NOT identical |
+| ... | ... | ... | ... | ... | +2438 more |
+
+### 3.3 Advisory Overlaps (MODEL_OPS) — 100 found
+
+> ⚠️ **Heuristic overlaps, not precise defect counts.**
+
+| # | File A | File B | Shared Ops | Overlap % | Sample |
+|---|--------|--------|-----------|----------|--------|
+| 1 | `services\admin\admin_catalog_operations_service.py` | `services\catalog\product_service.py` | 5 | 100% | commit:session, filter:country_code.upper, filter:id |
+| 2 | `services\catalog\advanced_filter_service.py` | `services\catalog\advanced_search_engine.py` | 5 | 64% | filter:brand.in_, filter:is_deleted, filter:name.ilike |
+| 3 | `services\geography\country_admin_write_service.py` | `services\geography\country_audit_admin_service.py` | 5 | 100% | add:var:assignment, add:var:city, add:var:comm |
+| 4 | `services\geography\country_admin_write_service.py` | `services\geography\country_communication_service.py` | 5 | 58% | commit:session, filter:country_code.upper, filter:id |
+| 5 | `services\geography\country_admin_write_service.py` | `services\geography\country_service.py` | 5 | 64% | add:var:assignment, add:var:city, add:var:comm |
+| 6 | `services\geography\country_admin_write_service.py` | `services\geography\country_staff_service.py` | 5 | 50% | add:var:assignment, commit:session, filter:country_code.upper |
+| 7 | `services\geography\country_audit_admin_service.py` | `services\geography\country_communication_service.py` | 5 | 58% | commit:session, filter:country_code.upper, filter:id |
+| 8 | `services\geography\country_audit_admin_service.py` | `services\geography\country_service.py` | 5 | 64% | add:var:assignment, add:var:city, add:var:comm |
+| 9 | `services\geography\country_audit_admin_service.py` | `services\geography\country_staff_service.py` | 5 | 50% | add:var:assignment, commit:session, filter:country_code.upper |
+| 10 | `services\geography\country_communication_service.py` | `services\geography\country_service.py` | 5 | 50% | commit:session, filter:country_code.upper, filter:id |
+| 11 | `services\geography\country_config_admin_service.py` | `services\geography\country_config_write_service.py` | 5 | 100% | add:var:city, add:var:flag, add:var:rate |
+| 12 | `services\geography\country_config_admin_service.py` | `services\geography\country_service.py` | 5 | 50% | add:var:city, commit:session, filter:code.in_ |
+| 13 | `services\geography\country_config_write_service.py` | `services\geography\country_service.py` | 5 | 50% | add:var:city, commit:session, filter:code.in_ |
+| 14 | `services\geography\country_dropdown_service.py` | `services\geography\country_read_service.py` | 5 | 75% | filter:code, filter:country_code, filter:is_active |
+| 15 | `services\geography\country_dropdown_service.py` | `services\geography\country_service.py` | 5 | 75% | filter:code, filter:country_code, filter:is_active |
+| 16 | `services\geography\country_maps_service.py` | `services\geography\country_read_service.py` | 5 | 67% | filter:code, filter:country_code, filter:id |
+| 17 | `services\geography\country_maps_service.py` | `services\geography\country_service.py` | 5 | 78% | filter:code, filter:country_code, filter:country_code.upper |
+| 18 | `services\geography\country_payout_write_service.py` | `services\geography\country_router_service.py` | 5 | 71% | filter:country_code, filter:country_code.upper, filter:id |
+| 19 | `services\geography\country_read_service.py` | `services\geography\country_service.py` | 5 | 90% | filter:category, filter:code, filter:config_type |
+| 20 | `services\geography\country_read_service.py` | `services\geography\country_staff_service.py` | 5 | 60% | filter:country_code, filter:id, filter:is_active |
+| 21 | `services\geography\country_service.py` | `services\geography\country_staff_service.py` | 5 | 90% | add:var:assignment, commit:session, filter:country_code |
+| 22 | `services\geography\country_service.py` | `services\geography\country_staff_write_service.py` | 5 | 64% | add:var:assignment, commit:session, filter:country_code.upper |
+| 23 | `services\geography\country_service.py` | `services\geography\country_versioning_service.py` | 5 | 71% | commit:session, filter:config_type, filter:country_code |
+| 24 | `services\geography\country_service.py` | `services\geography\cross_border_detection.py` | 5 | 62% | commit:session, filter:target_country_code.upper, filter:user_id |
+| 25 | `services\geography\country_staff_service.py` | `services\geography\country_staff_write_service.py` | 5 | 90% | add:var:assignment, commit:session, filter:country_code.upper |
+| 26 | `services\comms\campaign_geography_service.py` | `services\comms\email_management_service.py` | 5 | 67% | filter:country_code.upper, filter:id, filter:is_active |
+| 27 | `services\comms\chat_read_service.py` | `services\comms\chat_system.py` | 5 | 79% | filter:chat_id, filter:id, filter:room_id.id |
+| 28 | `services\comms\chat_read_service.py` | `services\comms\chat_write_service.py` | 5 | 83% | filter:chat_id, filter:id, filter:room_id.id |
+| 29 | `services\comms\chat_read_service.py` | `services\comms\entity_chat_service.py` | 5 | 56% | filter:id, filter:thread_id, query:EntityChatMessage |
+| 30 | `services\comms\chat_read_service.py` | `services\comms\realtime_chat_service.py` | 5 | 85% | filter:chat_id, filter:id, filter:room_id.id |
+| 31 | `services\comms\chat_read_service.py` | `services\comms\websocket_chat.py` | 5 | 64% | filter:chat_id, filter:id, filter:thread_id.id |
+| 32 | `services\comms\chat_system.py` | `services\comms\chat_write_service.py` | 5 | 100% | add:var:msg, commit:session, filter:chat_id |
+| 33 | `services\comms\chat_system.py` | `services\comms\entity_chat_service.py` | 5 | 78% | add:var:msg, add:var:thread, commit:session |
+| 34 | `services\comms\chat_system.py` | `services\comms\realtime_chat_service.py` | 5 | 92% | add:var:msg, commit:session, filter:chat_id |
+| 35 | `services\comms\chat_system.py` | `services\comms\websocket_chat.py` | 5 | 91% | add:var:msg, add:var:thread, commit:session |
+| 36 | `services\comms\chat_write_service.py` | `services\comms\entity_chat_service.py` | 5 | 67% | add:var:msg, commit:session, filter:id |
+| 37 | `services\comms\chat_write_service.py` | `services\comms\realtime_chat_service.py` | 5 | 100% | add:var:msg, commit:session, filter:chat_id |
+| 38 | `services\comms\chat_write_service.py` | `services\comms\websocket_chat.py` | 5 | 73% | add:var:msg, commit:session, filter:chat_id |
+| 39 | `services\comms\chatbot_service.py` | `services\comms\email_gateway.py` | 5 | 71% | commit:session, filter:id, filter:id.in_ |
+| 40 | `services\comms\email_gateway.py` | `services\comms\email_write_service.py` | 5 | 57% | add:var:folder, commit:session, filter:id |
+| 41 | `services\comms\email_gateway.py` | `services\comms\package_service.py` | 5 | 56% | commit:session, filter:id, filter:user_id |
+| 42 | `services\comms\entity_chat_service.py` | `services\comms\realtime_chat_service.py` | 5 | 78% | add:var:msg, commit:session, filter:id |
+| 43 | `services\comms\entity_chat_service.py` | `services\comms\websocket_chat.py` | 5 | 78% | add:var:msg, add:var:thread, commit:session |
+| 44 | `services\comms\realtime_chat_service.py` | `services\comms\websocket_chat.py` | 5 | 73% | add:var:msg, commit:session, filter:chat_id |
+| 45 | `services\finance\badge_billing_payment.py` | `services\finance\cash_management_service.py` | 5 | 62% | add:var:record, filter:id, filter:status |
+| 46 | `services\finance\badge_billing_payment.py` | `services\finance\finance_automation.py` | 5 | 62% | commit:session, filter:country_code, filter:id |
+| 47 | `services\finance\badge_billing_payment.py` | `services\finance\invoice_service.py` | 5 | 62% | commit:session, filter:id, filter:status |
+| 48 | `services\finance\badge_billing_payment.py` | `services\finance\sub_ledger_service.py` | 5 | 62% | commit:session, filter:country_code, filter:id |
+| 49 | `services\finance\badge_billing_payment.py` | `services\finance\trading_service.py` | 5 | 75% | commit:session, filter:country_code, filter:id |
+| 50 | `services\finance\cash_management_service.py` | `services\finance\supplier_finance_service.py` | 5 | 64% | filter:id, filter:id.in_, filter:supplier_id |
+| ... | ... | ... | ... | ... | +50 more |
+
+## 4. Business Logic Migration Plan (Routers → Controllers & Services)
+
+### 4.1 Summary
+
+**0 routers** contain business logic.
+> ⚠️ Count derived from scoped AST + regex analysis (no false positives from ast.dump).
+
+- ✅ **Actual migrations needed:** 0
+  - 🔴 HIGH priority (DB writes): 0
+  - 🟡 MEDIUM priority (queries/logic): 0
+- ⏭️ **Skipped (similar logic exists):** 0
+- ⚠️ **Needs review (partial overlap):** 0
+
+### 4.2 File-to-File Migration Plan
+
+| # | Source (Router) | Target | Logic Type | Lines | Resolution | Priority | Status |
+|---|----------------|--------|------------|-------|------------|----------|--------|
+
+## 5. Controller Decorator Readiness for Auto-Generating Routers
+
+**Decorators used:** `@delete/@get/@patch/@post/@put`
+
+### 5.1 Ready Controllers (have route decorators)
+
+| # | Controller File | Decorators Used | Status |
+|---|----------------|----------------|--------|
+| 1 | `controllers\admin\admin_catalog_operations_controller.py` | @get, @put, @patch, @post, @delete | ✅ READY |
+| 2 | `controllers\admin\admin_commerce_configuration_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 3 | `controllers\admin\admin_commerce_geography_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 4 | `controllers\admin\admin_comms_geography_controller.py` | @get, @post, @delete | ✅ READY |
+| 5 | `controllers\admin\admin_comms_messaging_controller.py` | @get, @post | ✅ READY |
+| 6 | `controllers\admin\admin_comms_unified_controller.py` | @get | ✅ READY |
+| 7 | `controllers\admin\admin_finance_geography_controller.py` | @get, @post, @put | ✅ READY |
+| 8 | `controllers\admin\admin_geography_audit_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 9 | `controllers\admin\admin_geography_configuration_controller.py` | @get, @post, @patch, @put, @delete | ✅ READY |
+| 10 | `controllers\admin\admin_identity_operations_api_controller.py` | @get, @put | ✅ READY |
+| 11 | `controllers\admin\admin_identity_operations_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 12 | `controllers\admin\admin_logistics_geography_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 13 | `controllers\admin\admin_logistics_operations_controller.py` | @get, @put, @post, @delete, @patch | ✅ READY |
+| 14 | `controllers\admin\admin_media_geography_controller.py` | @get, @post | ✅ READY |
+| 15 | `controllers\admin\admin_orders_status_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 16 | `controllers\admin\admin_permissions_validation_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 17 | `controllers\admin\admin_security_detection_controller.py` | @post, @get, @delete | ✅ READY |
+| 18 | `controllers\admin\admin_security_operations_controller.py` | @post, @get | ✅ READY |
+| 19 | `controllers\admin\admin_security_registration_controller.py` | @post, @get | ✅ READY |
+| 20 | `controllers\admin\admin_supplier_reviews_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 21 | `controllers\admin\admin_treasury_identity_controller.py` | @get, @post | ✅ READY |
+| 22 | `controllers\admin\admin_treasury_reporting_controller.py` | @post, @get | ✅ READY |
+| 23 | `controllers\admin\admin_treasury_status_controller.py` | @get, @post, @put | ✅ READY |
+| 24 | `controllers\admin\analytics_controller.py` | @get | ✅ READY |
+| 25 | `controllers\admin\analytics_fallback_controller.py` | @get | ✅ READY |
+| 26 | `controllers\admin\audit_controller.py` | @get | ✅ READY |
+| 27 | `controllers\admin\bank_accounts_controller.py` | @get, @post, @delete | ✅ READY |
+| 28 | `controllers\admin\coupons_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 29 | `controllers\admin\misc_controller.py` | @get | ✅ READY |
+| 30 | `controllers\admin\orders_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 31 | `controllers\admin\payouts_controller.py` | @get, @post | ✅ READY |
+| 32 | `controllers\admin\permissions_controller.py` | @get, @put | ✅ READY |
+| 33 | `controllers\admin\products_controller.py` | @get, @post, @delete | ✅ READY |
+| 34 | `controllers\admin\suppliers_controller.py` | @get, @post | ✅ READY |
+| 35 | `controllers\admin\tickets_controller.py` | @get, @post, @put | ✅ READY |
+| 36 | `controllers\admin\users_admin_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 37 | `controllers\catalog\category_admin_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 38 | `controllers\commerce\promotion_admin_controller.py` | @put, @post, @delete | ✅ READY |
+| 39 | `controllers\commerce\referrals_controller.py` | @get | ✅ READY |
+| 40 | `controllers\commerce\reviews_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 41 | `controllers\commerce\wishlist_controller.py` | @get, @post, @delete | ✅ READY |
+| 42 | `controllers\comms\chat_write_controller.py` | @post, @get | ✅ READY |
+| 43 | `controllers\comms\communication_audit_controller.py` | @get | ✅ READY |
+| 44 | `controllers\comms\notification_controller.py` | @post, @get | ✅ READY |
+| 45 | `controllers\core\addresses_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 46 | `controllers\core\admin_banners_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 47 | `controllers\core\admin_cash_controller.py` | @get, @post | ✅ READY |
+| 48 | `controllers\core\admin_categories_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 49 | `controllers\core\admin_chat_controller.py` | @get, @post | ✅ READY |
+| 50 | `controllers\core\admin_commission_controller.py` | @get, @post, @put | ✅ READY |
+| 51 | `controllers\core\admin_controller.py` | @get, @put, @post, @delete, @patch | ✅ READY |
+| 52 | `controllers\core\admin_email_controller.py` | @get, @post, @delete | ✅ READY |
+| 53 | `controllers\core\admin_logistics_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 54 | `controllers\core\admin_payouts_controller.py` | @get, @post, @put | ✅ READY |
+| 55 | `controllers\core\admin_promotions_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 56 | `controllers\core\admin_treasury_controller.py` | @get, @post | ✅ READY |
+| 57 | `controllers\core\admin_users_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 58 | `controllers\core\admin_video_controller.py` | @get, @post | ✅ READY |
+| 59 | `controllers\core\ai_controller.py` | @post | ✅ READY |
+| 60 | `controllers\core\ai_upload_controller.py` | @post | ✅ READY |
+| 61 | `controllers\core\auth_controller.py` | @post, @get | ✅ READY |
+| 62 | `controllers\core\banners_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 63 | `controllers\core\cart_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 64 | `controllers\core\cash_management_controller.py` | @get, @post, @put | ✅ READY |
+| 65 | `controllers\core\categories_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 66 | `controllers\core\chat_enrichment_controller.py` | @post, @delete, @get, @put | ✅ READY |
+| 67 | `controllers\core\commission_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 68 | `controllers\core\comms_unified_controller.py` | @get | ✅ READY |
+| 69 | `controllers\core\countries_controller.py` | @get, @post, @patch, @put, @delete | ✅ READY |
+| 70 | `controllers\core\country_admin_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 71 | `controllers\core\country_dropdown_controller.py` | @get | ✅ READY |
+| 72 | `controllers\core\country_maps_controller.py` | @get | ✅ READY |
+| 73 | `controllers\core\country_payouts_controller.py` | @get, @post, @delete | ✅ READY |
+| 74 | `controllers\core\country_staff_controller.py` | @get, @post, @patch, @delete | ✅ READY |
+| 75 | `controllers\core\customer_health_controller.py` | @get | ✅ READY |
+| 76 | `controllers\core\email_controller.py` | @post, @get, @patch, @put, @delete | ✅ READY |
+| 77 | `controllers\core\employees_controller.py` | @get, @post, @put, @delete, @patch | ✅ READY |
+| 78 | `controllers\core\ess_controller.py` | @get, @put, @post | ✅ READY |
+| 79 | `controllers\core\export_controller.py` | @get, @post | ✅ READY |
+| 80 | `controllers\core\geo_controller.py` | @get | ✅ READY |
+| 81 | `controllers\core\hierarchy_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 82 | `controllers\core\hr_controller.py` | @post, @get | ✅ READY |
+| 83 | `controllers\core\incident_controller.py` | @post, @get | ✅ READY |
+| 84 | `controllers\core\internal_channels_controller.py` | @post, @get, @delete | ✅ READY |
+| 85 | `controllers\core\logistics_controller.py` | @get, @post, @delete, @put, @patch | ✅ READY |
+| 86 | `controllers\core\logistics_health_controller.py` | @get | ✅ READY |
+| 87 | `controllers\core\logistics_locations_controller.py` | @get, @post | ✅ READY |
+| 88 | `controllers\core\logistics_partner_controller.py` | @get, @put, @post, @delete, @patch | ✅ READY |
+| 89 | `controllers\core\payroll_controller.py` | @post, @get | ✅ READY |
+| 90 | `controllers\core\performance_controller.py` | @post, @get, @patch, @put | ✅ READY |
+| 91 | `controllers\core\permissions_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 92 | `controllers\core\referrals_controller.py` | @get | ✅ READY |
+| 93 | `controllers\core\returns_controller.py` | @get, @post, @put | ✅ READY |
+| 94 | `controllers\core\reviews_controller.py` | @get, @post, @delete | ✅ READY |
+| 95 | `controllers\core\shipments_controller.py` | @get, @post, @put | ✅ READY |
+| 96 | `controllers\core\supplier_documents_controller.py` | @get, @put | ✅ READY |
+| 97 | `controllers\core\supplier_finance_controller.py` | @get, @put | ✅ READY |
+| 98 | `controllers\core\supplier_health_controller.py` | @get | ✅ READY |
+| 99 | `controllers\core\supplier_orders_controller.py` | @get, @post | ✅ READY |
+| 100 | `controllers\core\supplier_payouts_controller.py` | @post | ✅ READY |
+| 101 | `controllers\core\supplier_products_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 102 | `controllers\core\supplier_profile_controller.py` | @post, @put | ✅ READY |
+| 103 | `controllers\core\tickets_controller.py` | @get, @post | ✅ READY |
+| 104 | `controllers\core\translate_controller.py` | @post | ✅ READY |
+| 105 | `controllers\core\users_controller.py` | @get, @put | ✅ READY |
+| 106 | `controllers\core\wishlist_controller.py` | @get, @post, @delete | ✅ READY |
+| 107 | `controllers\customer\users.py` | @get, @put, @post, @delete | ✅ READY |
+| 108 | `controllers\finance\accounting_controller.py` | @post, @get | ✅ READY |
+| 109 | `controllers\finance\sub_ledger_controller.py` | @get, @post | ✅ READY |
+| 110 | `controllers\geography\country_versioning_controller.py` | @get, @post | ✅ READY |
+| 111 | `controllers\geography\travel_controller.py` | @post | ✅ READY |
+| 112 | `controllers\governance\command_center_controller.py` | @get, @post, @delete | ✅ READY |
+| 113 | `controllers\hr\hierarchy_controller.py` | @post, @put, @delete | ✅ READY |
+| 114 | `controllers\hr\okr_controller.py` | @post, @get | ✅ READY |
+| 115 | `controllers\hr\succession_controller.py` | @get, @post | ✅ READY |
+| 116 | `controllers\hr_controller.py` | @post, @get | ✅ READY |
+| 117 | `controllers\logistics\logistics_health_list_controller.py` | @get | ✅ READY |
+| 118 | `controllers\logistics\logistics_locations_create_controller.py` | @get, @post | ✅ READY |
+| 119 | `controllers\logistics\logistics_logistics_status_controller.py` | @get, @post, @delete, @put, @patch | ✅ READY |
+| 120 | `controllers\logistics\logistics_partner_verify_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 121 | `controllers\orders_controller.py` | @post, @get | ✅ READY |
+| 122 | `controllers\public\admin_promotions_routes_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 123 | `controllers\public\customer_coupons_create_controller.py` | @post, @get, @delete | ✅ READY |
+| 124 | `controllers\public\customer_coupons_mgmt_controller.py` | @post, @get, @delete | ✅ READY |
+| 125 | `controllers\public\customer_health_list_controller.py` | @get | ✅ READY |
+| 126 | `controllers\public\internal_comms_channels_controller.py` | @post, @get, @delete | ✅ READY |
+| 127 | `controllers\public\public_commerce_validation_controller.py` | @post, @get, @delete | ✅ READY |
+| 128 | `controllers\public\public_comms_unified_controller.py` | @get | ✅ READY |
+| 129 | `controllers\public\public_geography_configuration_controller.py` | @get, @post, @patch, @put, @delete | ✅ READY |
+| 130 | `controllers\public\public_identity_operations_controller.py` | @get, @put | ✅ READY |
+| 131 | `controllers\public\public_permissions_validation_controller.py` | @get, @post, @put, @delete | ✅ READY |
+| 132 | `controllers\public\public_security_detection_controller.py` | @post, @get, @delete | ✅ READY |
+| 133 | `controllers\public\public_security_operations_controller.py` | @post, @get | ✅ READY |
+| 134 | `controllers\public\public_security_registration_controller.py` | @post, @get | ✅ READY |
+| 135 | `controllers\public\public_treasury_payments_controller.py` | @get, @post | ✅ READY |
+| 136 | `controllers\public\system_ai_upload_controller.py` | @post, @get | ✅ READY |
+| 137 | `controllers\public\system_comms_status_controller.py` | @get | ✅ READY |
+| 138 | `controllers\search_controller.py` | @get | ✅ READY |
+| 139 | `controllers\security\admin_users.py` | @delete, @post | ✅ READY |
+| 140 | `controllers\security\contact_controller.py` | @post | ✅ READY |
+| 141 | `controllers\security\risk_controller.py` | @get, @post | ✅ READY |
+| 142 | `controllers\supplier\supplier_health_controller.py` | @get | ✅ READY |
+| 143 | `controllers\supplier\supplier_orders_verify_controller.py` | @get, @post | ✅ READY |
+| 144 | `controllers\supplier\supplier_products_upload_controller.py` | @get, @put, @post, @delete | ✅ READY |
+| 145 | `controllers\supplier\supplier_profile_create_controller.py` | @get, @post, @put | ✅ READY |
+| 146 | `controllers\treasury\cash_management_write_controller.py` | @post, @put | ✅ READY |
+| 147 | `controllers\treasury\payout_approval_controller.py` | @post, @put | ✅ READY |
+| 148 | `controllers\users\workflow_controller.py` | @post | ✅ READY |
+
+### 5.2 Controllers Needing Route Decorators
+
+**1 controllers** need route decorators.
+
+> ℹ️ 186 adapter modules (re-export shims, auto-generated delegators, `__getattr__` lazy-reexport hooks, and FastAPI `Depends` provider modules) are **excluded** — they have no route-handler functions, so they cannot/should not receive route decorators, and their endpoints are already served by the existing hand-written routers.
+
+| # | Controller File | Functions to Decorate | Status |
+|---|----------------|----------------------|--------|
+| 1 | `controllers\payments_read_controller.py` | 1 functions | 🔴 NEEDS DECORATORS |
+
+## 6. Model ↔ Service ↔ Controller Wiring Plan
+
+> ⚠️ Wiring completeness is based on name-similarity matching (heuristic).
+
+- ✅ **Complete wiring:** 5
+- 🔴 **Incomplete wiring:** 16
+
+| # | Model | Service | Controller | Router | Status | Missing |
+|---|-------|---------|------------|--------|--------|---------|
+| 1 | `models\ai_upload.py` | `services\ai\ai_service.py` | `controllers\core\ai_controller.py` | `routers\ai_image.py` | 🔴 INCOMPLETE | Service ai_service.py doesn't import model |
+| 2 | `models\comms\communication.py` | `services\comms\communication_audit.py` | `controllers\comms\communication_audit_controller.py` | `MISSING` | 🔴 INCOMPLETE | Router for communication.py |
+| 3 | `models\comms\core.py` | `MISSING` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Service for core.py, Controller for core.py |
+| 4 | `models\comms\marketing.py` | `MISSING` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Service for marketing.py, Controller for marketing.py |
+| 5 | `models\comms\suppliers.py` | `MISSING` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Service for suppliers.py, Controller for suppliers.py |
+| 6 | `models\finance\general_ledger.py` | `services\finance\general_ledger_service.py` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Controller for general_ledger.py, Router for general_ledger.py |
+| 7 | `models\finance.py` | `services\finance\erp_finance_service.py` | `controllers\delegators\finance.py` | `routers\admin_finance_creation.py` | ✅ COMPLETE | - |
+| 8 | `models\geography\countries.py` | `MISSING` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Service for countries.py, Controller for countries.py |
+| 9 | `models\geography\country_basics.py` | `services\geography\country_curated.py` | `controllers\geography\country_controller.py` | `MISSING` | 🔴 INCOMPLETE | Router for country_basics.py, Service country_curated.py doesn't import model |
+| 10 | `models\geography\country_economics.py` | `services\geography\country_curated.py` | `controllers\geography\country_controller.py` | `MISSING` | 🔴 INCOMPLETE | Router for country_economics.py, Service country_curated.py doesn't import model |
+| 11 | `models\geography\country_enhancements.py` | `services\geography\country_curated.py` | `controllers\geography\country_controller.py` | `MISSING` | 🔴 INCOMPLETE | Router for country_enhancements.py, Service country_curated.py doesn't import model |
+| 12 | `models\geography\country_legal.py` | `services\geography\country_curated.py` | `controllers\geography\country_controller.py` | `MISSING` | 🔴 INCOMPLETE | Router for country_legal.py, Service country_curated.py doesn't import model |
+| 13 | `models\geography\country_tax.py` | `services\geography\country_curated.py` | `controllers\geography\country_controller.py` | `MISSING` | 🔴 INCOMPLETE | Router for country_tax.py, Service country_curated.py doesn't import model |
+| 14 | `models\logistics\logistics_entities.py` | `services\core\logistics_service.py` | `controllers\core\logistics_controller.py` | `routers\logistics_logistics_status.py` | ✅ COMPLETE | - |
+| 15 | `models\logistics.py` | `services\core\admin_logistics_service.py` | `controllers\core\admin_logistics_controller.py` | `routers\admin_logistics_fallback.py` | ✅ COMPLETE | - |
+| 16 | `models\media_models.py` | `services\common\media_service.py` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Controller for media_models.py, Router for media_models.py |
+| 17 | `models\orders\order_entities.py` | `MISSING` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Service for order_entities.py, Controller for order_entities.py |
+| 18 | `models\orders.py` | `services\admin\orders_service.py` | `controllers\admin\orders_controller.py` | `routers\admin_orders_routes.py` | ✅ COMPLETE | - |
+| 19 | `models\permissions\permission_entities.py` | `MISSING` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Service for permission_entities.py, Controller for permission_entities.py |
+| 20 | `models\permissions.py` | `services\admin\permissions_service.py` | `controllers\admin\permissions_controller.py` | `routers\admin_permissions_validation.py` | ✅ COMPLETE | - |
+| 21 | `models\supplier\suppliers.py` | `services\supplier\suppliers_service.py` | `MISSING` | `MISSING` | 🔴 INCOMPLETE | Controller for suppliers.py, Router for suppliers.py |
+
+## 7. Missing Files and Folders
+
+> ✅ All paths verified against live tree within scan window.
+
+| # | Type | Path | Reason | Priority |
+|---|------|------|--------|----------|
+| 1 | 📄 file | `controllers\hr_controller.py` | Controller 'hr_controller.py' is at root level, should be in controllers/hr/ (style recommendation) | 🟡 MEDIUM |
+| 2 | 📄 file | `controllers\onboarding_controller.py` | Controller 'onboarding_controller.py' is at root level, should be in controllers/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 3 | 📄 file | `controllers\orders_controller.py` | Controller 'orders_controller.py' is at root level, should be in controllers/orders/ (style recommendation) | 🟡 MEDIUM |
+| 4 | 📄 file | `controllers\payments_controller.py` | Controller 'payments_controller.py' is at root level, should be in controllers/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 5 | 📄 file | `controllers\payments_read_controller.py` | Controller 'payments_read_controller.py' is at root level, should be in controllers/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 6 | 📄 file | `controllers\search_controller.py` | Controller 'search_controller.py' is at root level, should be in controllers/search/ (style recommendation) | 🟡 MEDIUM |
+| 7 | 📄 file | `services\_registry.py` | Service '_registry.py' is at root level, should be in services/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 8 | 📄 file | `controllers/identity/__init__.py` | Missing __init__.py in domain package (Python 3 namespace packages work without this — cosmetic) | 🟡 LOW |
+| 9 | 📄 file | `controllers/logistics/__init__.py` | Missing __init__.py in domain package (Python 3 namespace packages work without this — cosmetic) | 🟡 LOW |
+| 10 | 📄 file | `models/supplier/__init__.py` | Missing __init__.py in domain package (Python 3 namespace packages work without this — cosmetic) | 🟡 LOW |
+| 11 | 📄 file | `controllers/ai/` | Domain 'ai' has services but no controllers folder | 🔴 HIGH |
+| 12 | 📄 file | `controllers/documents/` | Domain 'documents' has services but no controllers folder | 🔴 HIGH |
+| 13 | 📄 file | `controllers/gateway/` | Domain 'gateway' has services but no controllers folder | 🔴 HIGH |
+| 14 | 📄 file | `controllers/media/` | Domain 'media' has services but no controllers folder | 🔴 HIGH |
+| 15 | 📄 file | `controllers/reporting/` | Domain 'reporting' has services but no controllers folder | 🔴 HIGH |
+| 16 | 📄 file | `controllers/reviews/` | Domain 'reviews' has services but no controllers folder | 🔴 HIGH |
+| 17 | 📄 file | `controllers/search/` | Domain 'search' has services but no controllers folder | 🔴 HIGH |
+| 18 | 📄 file | `services/configuration/` | Domain 'configuration' has controllers but no services folder | 🔴 HIGH |
+| 19 | 📄 file | `services/documents/` | Domain 'documents' has controllers but no services folder | 🔴 HIGH |
+| 20 | 📄 file | `services/gateway/` | Domain 'gateway' has controllers but no services folder | 🔴 HIGH |
+| 21 | 📄 file | `services/media/` | Domain 'media' has controllers but no services folder | 🔴 HIGH |
+| 22 | 📄 file | `services/permissions/` | Domain 'permissions' has controllers but no services folder | 🔴 HIGH |
+| 23 | 📄 file | `services/reporting/` | Domain 'reporting' has controllers but no services folder | 🔴 HIGH |
+| 24 | 📄 file | `services/reviews/` | Domain 'reviews' has controllers but no services folder | 🔴 HIGH |
+| 25 | 📄 file | `services/search/` | Domain 'search' has controllers but no services folder | 🔴 HIGH |
+
+## 8. Recommended Actions (Priority Order)
+
+### Phase 0: Safe Service Cleanup (Do This First — Zero Risk)
+1. Delete Tier 0 junk files: 13 files
+2. Merge Tier 1 exact duplicates: 0 pairs
+3. **Immediate safe reduction: 70 files**
+
+### Phase 1: Service Consolidation (This Week)
+1. Rename Tier 2 naming variants: 18 files
+2. Merge Tier 4 thin forwarders: 57 files
+3. Review Tier 5 structural duplicates: 81 pairs
+4. **Realistic consolidation target: 358 files**
+
+### Phase 2: Read/Write Standardization (This Sprint)
+1. Standardize Tier 3 read/write split: 90 files
+2. Define one naming rule: `{domain}_{entity}_service.py` (no read/write suffix)
+3. Rewire callers to use consolidated services
+
+### Phase 3: Router Migration (This Sprint)
+1. Migrate all DB writes from routers to services (HIGH priority MIGRATE tasks only)
+2. For ALREADY_EXISTS tasks: wire router to the existing service function
+3. Migrate all DB queries from routers to services
+
+### Phase 4: Auto-Generation (This Month)
+1. Add route decorators to all controller functions
+2. Run auto-generation script to regenerate all routers
+3. Validate all generated routers against architecture contract
+4. Add CI test asserting route count baseline
+5. Remove hand-written routers that are now auto-generated
+
+---
+*Report generated by ZOZI Architecture Audit Script v9 (Service Consolidation)*
+*Scan window: 2026-08-13T22:35:24.998537+00:00 → 2026-08-13T22:35:39.026835+00:00 (14028 ms)*
+*Architecture contract: ARCHITECTURE_DIAGRAM.md §10*
+*Total findings: 0 migrations (0 skipped, 0 partial, 0 actual), 21 wiring tasks, 25 missing items, 0 true duplicates, 2538 structural matches, 100 advisory overlaps, 13 safe deletes, 0 exact dups, 18 naming variants, 90 read/write splits, 57 thin forwarders, 81 structural dups

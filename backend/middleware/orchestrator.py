@@ -1,4 +1,4 @@
-"""
+﻿"""
 Middleware Orchestrator
 =======================
 Single entry point for all middleware registration.
@@ -56,7 +56,7 @@ from middleware.csrf_middleware import CSRFMiddleware
 from middleware.logging_middleware import RequestLoggingMiddleware
 from middleware.api_version_middleware import ApiVersionMiddleware
 
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -244,3 +244,4 @@ def _total_middleware() -> int:
 # ║  webhook_ip_whitelist.py  │  WebhookIPWhitelist   │  PER-ROUTE║
 # ║  device_binding_middleware │  DeviceBindingMw     │  ALIAS    ║
 # ╚═══════════════════════════════════════════════════════════════╝
+

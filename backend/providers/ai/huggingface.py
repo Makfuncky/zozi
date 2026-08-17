@@ -1,4 +1,4 @@
-"""HuggingFace Inference API provider.
+﻿"""HuggingFace Inference API provider.
 
 Vendor integration for BLIP image captioning and BART zero-shot classification via
 the HF Inference API. Extracted from ``services.ai.ai_service`` so the service layer
@@ -10,7 +10,7 @@ import logging
 import time
 
 import requests
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -150,3 +150,4 @@ def _is_transient_hf_error(exc: Exception) -> bool:
         "429",
     )
     return any(fragment in message for fragment in transient_fragments)
+

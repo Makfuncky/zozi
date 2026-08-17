@@ -1,4 +1,4 @@
-"""Storage Provider
+﻿"""Storage Provider
 =================
 Centralises the S3/boto3 (and AWS SSM) client creation so services no longer
 import boto3 directly. Object backends (LocalStorage / S3Storage) and the public
@@ -34,7 +34,7 @@ def create_s3_client(
 def create_ssm_client(region: str) -> Any:
     """Lazily create and return a boto3 SSM client for secrets resolution.
 
-    Keeps the AWS SDK import out of ``utils.config``; raises ImportError when
+    Keeps the AWS SDK import out of ``infrastructure.utils.config``; raises ImportError when
     boto3 is absent.
     """
     import boto3
@@ -43,3 +43,4 @@ def create_ssm_client(region: str) -> Any:
 
 
 __all__ = ["create_s3_client", "create_ssm_client"]
+

@@ -1,23 +1,15 @@
-import path from "path";
+﻿import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  experimental: {
-    externalDir: true,
-    optimizePackageImports: [
-      "framer-motion",
-      "lucide-react",
-      "react-icons",
-      "date-fns",
-      "react-chartjs-2",
-    ],
-  },
+  experimental: {},
   devIndicators: false,
   webpack: (config, { dev }) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
+      '@': path.resolve(__dirname, './src'),
       '@shared': path.resolve(__dirname, '../shared/src'),
       'react-native$': 'react-native-web',
       'react-native-web': path.resolve(__dirname, "node_modules/react-native-web"),
@@ -54,11 +46,10 @@ const nextConfig: NextConfig = {
     formats: ['image/webp'],
   },
   allowedDevOrigins: [
-    'localhost',
-    '127.0.0.1',
-    '172.19.240.1',
+    "localhost",
+    "127.0.0.1",
+    "172.19.240.1",
   ],
-  outputFileTracingRoot: path.resolve(__dirname, '../..'),
   async rewrites() {
     const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
     return [

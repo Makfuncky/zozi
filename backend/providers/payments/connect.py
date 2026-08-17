@@ -1,4 +1,4 @@
-"""Stripe Connect provider.
+﻿"""Stripe Connect provider.
 
 Owns the Stripe SDK calls for connected-account payout dispatch
 (``Account.create`` / ``Account.modify`` / ``Transfer.create``) so the finance
@@ -11,7 +11,7 @@ import logging
 from typing import Any
 
 from providers.payments.stripe_sdk import stripe
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -45,3 +45,4 @@ __all__ = [
     "modify_connect_account",
     "create_connect_transfer",
 ]
+

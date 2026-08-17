@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import time
 from typing import Awaitable, Callable
@@ -7,8 +7,8 @@ import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from utils.logging_config import country_code_ctx, request_id_ctx, user_id_ctx, db_query_time_ctx
-from utils.metrics import db_query_duration_seconds, http_request_duration_seconds, http_requests_total
+from infrastructure.utils.logging_config import country_code_ctx, request_id_ctx, user_id_ctx, db_query_time_ctx
+from infrastructure.utils.metrics import db_query_duration_seconds, http_request_duration_seconds, http_requests_total
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -65,4 +65,5 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             if response is not None:
                 response.headers["X-Request-ID"] = request_id
             db_query_time_ctx.set(0.0)
+
 

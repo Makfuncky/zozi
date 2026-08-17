@@ -1,0 +1,41 @@
+- generic:
+  - generic [active]:
+    - button "Open issues overlay" [ref=f4e7] [cursor=pointer]:
+      - generic [ref=f4e11]:
+        - generic [ref=f4e12]: "0"
+        - generic [ref=f4e13]: "1"
+      - generic [ref=f4e14]: Issue
+    - generic [ref=f4e17]:
+      - generic [ref=f4e18]:
+        - navigation [ref=f4e20]:
+          - button [disabled] [ref=f4e21]:
+            - img "previous" [ref=f4e22]
+          - generic [ref=f4e24]:
+            - generic [ref=f4e25]: 1/
+            - text: "1"
+          - button [disabled] [ref=f4e26]:
+            - img "next" [ref=f4e27]
+        - link "Next.js 15.4.5 (outdated) Webpack" [ref=f4e30] [cursor=pointer]:
+          - /url: https://nextjs.org/docs/messages/version-staleness
+          - generic "An outdated version detected (latest is 16.3.1), upgrade is highly recommended!" [ref=f4e33]: Next.js 15.4.5 (outdated)
+          - generic [ref=f4e34]: Webpack
+      - dialog "Build Error" [ref=f4e36]:
+        - generic [ref=f4e39]:
+          - generic [ref=f4e40]:
+            - generic [ref=f4e41]:
+              - generic [ref=f4e42]: Build Error
+              - generic [ref=f4e44]:
+                - button "Copy Stack Trace" [ref=f4e45] [cursor=pointer]
+                - button "No related documentation found" [disabled] [ref=f4e48]
+                - link "Learn more about enabling Node.js inspector for server code with Chrome DevTools" [ref=f4e51] [cursor=pointer]:
+                  - /url: https://nextjs.org/docs/app/building-your-application/configuring/debugging#server-side-code
+            - paragraph [ref=f4e61]: "Module parse failed: Unexpected character '@' (4:0)"
+          - generic [ref=f4e63]:
+            - generic [ref=f4e65]:
+              - generic [ref=f4e69]: ./src/components/banner-effects.css
+              - button "Open in editor" [ref=f4e70] [cursor=pointer]
+            - generic [ref=f4e74]: "Module parse failed: Unexpected character '@' (4:0) | Relocated from an inline <style> block (DS02) so styles live in the design system. */ | > @keyframes bcu-fall { | 0% { transform: translateY(-12%) rotate(0deg); opacity: 0; } | 8% { opacity: 1; }"
+        - generic [ref=f4e77]:
+          - generic [ref=f4e78]: "1"
+          - generic [ref=f4e79]: "2"
+  - alert [ref=f4e80]

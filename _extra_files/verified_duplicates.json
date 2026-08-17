@@ -1,0 +1,758 @@
+{
+  "files_scanned": 575,
+  "total_named_functions": 5361,
+  "cross_file_dupe_groups": 75,
+  "collisions": [
+    {
+      "name": "__getattr__",
+      "hash": "a377d2366e998ce7",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\catalog\\banner_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\commerce\\banner_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\employee_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\hr_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_partner_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\orders\\disputes_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\orders\\returns_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\permissions_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\supplier_badge_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\users\\users_write_service.py"
+      ],
+      "occurrences": 11
+    },
+    {
+      "name": "__init__",
+      "hash": "df07f4cff7d1ad07",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\audit\\audit_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\audit\\compliance_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\common\\asset_tracking.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\common\\command_center_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\common\\media_storage.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\chat_system.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\communication_audit.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\email_gateway.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\escalation_sla.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\external_contact.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\internal_communication.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\notification_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\notification_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\video_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\customer\\customer_health_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\attendance_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\expense_processing.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\expense_routing.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\financial_reporting.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\gateways\\gateway_auto_enable.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\gateways\\webhook_processor.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_detection.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\attendance_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\coi_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\coi_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\dei_auditor.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\hse_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\leave_accrual.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\lms.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\payroll_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\shift_handover.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\shift_scheduling.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\live_tracking_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_health_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\map_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\orders\\ghost_watchdog.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\fraud_detection.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\fraud_detection_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\fraud_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\incident_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\mobile_auth_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\supplier_health_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payment_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\treasurer.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\treasury_adapter.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\treasury_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\users\\rbac_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\users\\workflow_engine.py"
+      ],
+      "occurrences": 54
+    },
+    {
+      "name": "__init__",
+      "hash": "2a4b80d11e30bec5",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\audit\\ediscovery.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\email_management_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\lms_permission_lock.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\okr_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\onboarding_pipeline.py"
+      ],
+      "occurrences": 5
+    },
+    {
+      "name": "__init__",
+      "hash": "cdaf0508d358f5da",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\common\\command_center_background.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\behavioral_analytics.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\siem_engine.py"
+      ],
+      "occurrences": 4
+    },
+    {
+      "name": "__init__",
+      "hash": "fffd52e22aa2c02c",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\websocket_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "__init__",
+      "hash": "5d1eed9d5c5565ae",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_tracker.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "__init__",
+      "hash": "a904166ec8c529ad",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_apply_changes",
+      "hash": "6c1428fc8a9d5c81",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\employee_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\hr_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_write_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_build_list_page_payload",
+      "hash": "df9cb4d5dd532d59",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\orders_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\products_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_enrich_batch_items",
+      "hash": "7bcfd0dd5625d9f5",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_approval_read_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_enrich_one",
+      "hash": "f4f1f9fa85a0b288",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_ai_upload_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\system\\ai_upload_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\system\\system_ai_upload_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_get_average_rating",
+      "hash": "a1110ae61ddfefbf",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_health_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\supplier_health_engine.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_get_redis",
+      "hash": "4cd707cd36650741",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\auth_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\effective_permissions.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_get_status",
+      "hash": "c7edbdf35e20c387",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_health_engine.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\supplier_health_engine.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_is_orm",
+      "hash": "9281239bc9fb7805",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\catalog\\banner_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\employee_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\logistics\\logistics_write_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_load_pending_batches_with_items",
+      "hash": "e45e1dd22ba35dc2",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_approval_read_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_load_unbatched_payouts",
+      "hash": "17cc0e6f5d5e2235",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_approval_read_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_log_automation",
+      "hash": "16ad004b9b300cda",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\ai\\ai_automation_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\credit_control_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_batch_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_low_on_ram",
+      "hash": "ea8c6932bc1938f6",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\ai\\bg_removal_presets.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\ai\\bg_removal_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_next_version",
+      "hash": "c3ef24b2bf438739",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\country_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\country_versioning_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_publish_staging",
+      "hash": "ac1cc80937a6ace9",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_ai_upload_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\system\\system_ai_upload_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_resolve_logistics_names",
+      "hash": "6586a0be72837008",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_approval_read_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_resolve_stage",
+      "hash": "55f231971f8c66c9",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\admin_treasury_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\reporting_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_resolve_supplier_names",
+      "hash": "ad3373e47bf2d063",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\payout_approval_read_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "_save_upload",
+      "hash": "bccc0ac0ac4a0be7",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_ai_upload_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\system\\system_ai_upload_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_serialize_batch",
+      "hash": "5ee3e00f91fc9c50",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_serialize_batch_item",
+      "hash": "91eef60a083afb12",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_serialize_payout",
+      "hash": "2af671e9cecffba3",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_treasury_payments_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_treasury_payments_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_serialize_product",
+      "hash": "5e9f3e46685bf9dd",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\catalog\\advanced_filter_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\catalog\\advanced_search_engine.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_simulated_check",
+      "hash": "3961cd3b6a22562a",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\background_check.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\background_check.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_slugify",
+      "hash": "be7e1198ad9926c2",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_ai_upload_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\system\\system_ai_upload_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "_update_after_sweep",
+      "hash": "3e10f86b769c017f",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\auto_payout_scheduler.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\auto_payout_scheduler.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "acquire",
+      "hash": "3fb5a1850aff8f8c",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\ai\\bg_removal_presets.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\ai\\bg_removal_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "add_and_flush",
+      "hash": "571e03cfa6c70c6f",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\common\\write_helpers.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\suppliers_write_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "add_to_session",
+      "hash": "3bbe3d8282e31990",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\country_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\suppliers_write_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "admin_logistics_overview",
+      "hash": "0a2e5cb722cdd89c",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_logistics_operations_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\core\\admin_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "assign_training",
+      "hash": "9d6a4dfc66e10a87",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\learning_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\lms_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "broadcast",
+      "hash": "fe21051a8fef5da5",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "broadcast_to_all_staff",
+      "hash": "35074a95a341d50f",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\websocket_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "broadcast_to_staff",
+      "hash": "2fcb09efaa2c883b",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "broadcast_to_user",
+      "hash": "125cdd07b97fd0f3",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "check_in",
+      "hash": "69d7f1cb195f620c",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\attendance_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\attendance_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "check_out",
+      "hash": "bd55e11409ff496a",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\attendance_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\attendance_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "clear_session",
+      "hash": "61ae6abaa50d572a",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_tracker.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "commit_only",
+      "hash": "67b379c184b2b690",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\common\\write_helpers.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\suppliers_write_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "connect",
+      "hash": "654235e5437edfe1",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "connect_staff",
+      "hash": "bb5c7620c229b611",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\websocket_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "connect_user",
+      "hash": "2ca701e2c63f9834",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\websocket_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "create_training_module",
+      "hash": "87f0a8bf2480e6e3",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\learning_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\lms_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "detect_late_arrival",
+      "hash": "5fa729e32deedc0a",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\attendance_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\attendance_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "disconnect",
+      "hash": "3af1d4b25ea38f0d",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "disconnect_staff",
+      "hash": "d1abfa06b7b75f73",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\websocket_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "disconnect_user",
+      "hash": "ed8d7bf41a533bd6",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\websocket_manager.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 3
+    },
+    {
+      "name": "generate_badge_billing_record",
+      "hash": "fe81e17e3fce5ca2",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\badge_billing_payment.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\badge_billing_payment.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_badge_billing_record",
+      "hash": "baeb48efbee88c3f",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\badge_billing_payment.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\badge_billing_payment.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_country_staff_by_country",
+      "hash": "c87992eb3d2397fb",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\country_maps_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\country_staff_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_coupon_usage_count",
+      "hash": "b02fa64d53e554a7",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\commerce\\coupons_read_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\commerce\\coupons_write_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_daily_attendance",
+      "hash": "ec373dbcf17767e4",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\attendance_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\attendance_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_room_size",
+      "hash": "4a8a141ff473c1e8",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_room_users",
+      "hash": "dab8d1a1643a9346",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_session_country",
+      "hash": "8d41708a554eb4c5",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\cross_border_tracker.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_treasury_metrics",
+      "hash": "496e72222d6301c0",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\treasury_query_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\treasury_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_typing_users",
+      "hash": "8ca60b626886f550",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_user_by_id",
+      "hash": "8f5ac89a04f6f877",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\geography\\country_read_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\security\\country_context_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "get_user_status",
+      "hash": "ae8f76c3e95443db",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "limit_bulk_size",
+      "hash": "5a4229c543f91de9",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\admin\\admin_logistics_operations_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\core\\admin_service.py"
+      ],
+      "occurrences": 20
+    },
+    {
+      "name": "list_badge_billing_records",
+      "hash": "e3da4a12ca2d28d6",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\badge_billing_payment.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\badge_billing_payment.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "mark_messages_read",
+      "hash": "3807690445c5d419",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\chat_write_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\comms\\realtime_chat_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "parse_dt",
+      "hash": "8013e13372c73c0a",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\badge_billing_payment.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\badge_billing_payment.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "pay_badge_billing_record",
+      "hash": "12c55ee6201e5219",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\finance\\badge_billing_payment.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\supplier\\badge_billing_payment.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "process_ai_upload_job",
+      "hash": "70baabe9e000ff8a",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_ai_upload_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\system\\system_ai_upload_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "set_typing",
+      "hash": "51e5554c6c77c94c",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "snapshot_cash_position",
+      "hash": "aba41bf1b8822255",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\admin_reporting_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\treasury\\admin_treasury_write_service.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "to_dict",
+      "hash": "90e16b99d7559da8",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\employee\\background_check.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\hr\\background_check.py"
+      ],
+      "occurrences": 2
+    },
+    {
+      "name": "websocket_chat",
+      "hash": "adee73016e539f94",
+      "files": [
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\public_comms_status_service.py",
+        "D:\\Projects\\10- E-COMMERCE WEBSITE\\zozi\\backend\\services\\public\\system_comms_status_service.py"
+      ],
+      "occurrences": 2
+    }
+  ]
+}

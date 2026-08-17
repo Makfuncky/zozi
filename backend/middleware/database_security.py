@@ -1,4 +1,4 @@
-#!python
+﻿#!python
 """
 Database Security - Encryption and Query Logging
 Implements data protection and query audit logging
@@ -15,8 +15,8 @@ from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
-from utils.redis_client import redis_client
-from utils.security_audit import log_security_event
+from infrastructure.utils.redis_client import redis_client
+from infrastructure.utils.security_audit import log_security_event
 
 logger = logging.getLogger(__name__)
 
@@ -214,4 +214,5 @@ def secure_execute(session: Session, query, user_id: Optional[int] = None):
     except Exception as e:
         logger.error(f"Query execution error: {e}")
         raise
+
 

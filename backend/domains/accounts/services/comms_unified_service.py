@@ -1,0 +1,190 @@
+"""Auto-migrated service logic from routers/comms_unified.py."""
+from __future__ import annotations
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import Depends, HTTPException, Query, Request
+
+from sqlalchemy import text
+
+from sqlalchemy.orm import Session
+
+from infrastructure.database.database import get_db
+
+from models import User
+
+from infrastructure.utils.audit import AuditAction, audit_log
+
+from infrastructure.utils.dependencies import get_current_user, require_admin
+
+from infrastructure.utils.ip_utils import get_ip_for_logging
+
+logger = logging.getLogger("zozi.api.comms")
+
+
+def unified_inbox(lens: str, cursor: str | None, limit: int, transport: str | None, db: Session, current_user: dict):
+    """Return a cursor-paginated, server-sorted merge of all conversation
+    types — DMs, group mentions, channel posts, internal emails — each as
+    a normalized row.
+
+    The unified inbox is powered by a UNION of all message sources ordered
+    by `updated_at DESC`. `cursor` is a base64-encoded `<updated_at>::<id>`
+    pair from the last visible row so the client requests the next page.
+    """
+    import base64
+
+    where = "1=1"
+    params: dict = {"limit": limit + 1}  # fetch +1 for has_more
+
+    if transport:
+        where += " AND transport = :transport"
+        params["transport"] = transport
+
+    if lens == "unread":
+        where += " AND unread > 0"
+    elif lens == "mentions":
+        where += " AND channel_type = 'mention'"
+
+    if cursor:
+        try:
+            decoded = base64.urlsafe_b64decode(cursor).decode()
+            ts, cid = decoded.split("::", 1)
+            where += " AND (updated_at, id) < (:cursor_ts, :cursor_id)"
+            params["cursor_ts"] = ts
+            params["cursor_id"] = int(cid) if cid.isdigit() else cid
+        except Exception:
+            pass
+
+    sql = f"""
+        SELECT * FROM (
+            -- Direct messages
+            SELECT
+                'dm_' || dcr.id AS id,
+                dcr.id AS local_id,
+                'chat' AS transport,
+                u.full_name AS title,
+                SUBSTR(dcm.message, 1, 120) AS preview,
+                CASE WHEN dcm.read_at IS NULL AND dcm.sender_id != :user_id THEN 1 ELSE 0 END AS unread,
+                dcm.created_at AS updated_at,
+                'direct' AS channel_type,
+                0 AS participants,
+                NULL AS peer_avatar,
+                NULL AS folder
+            FROM direct_chat_messages dcm
+            JOIN direct_chat_rooms dcr ON dcr.id = dcm.room_id
+            JOIN users u ON u.id = CASE WHEN dcr.participant_one = :user_id THEN dcr.participant_two ELSE dcr.participant_one END
+            WHERE :user_id IN (dcr.participant_one, dcr.participant_two)
+
+            UNION ALL
+
+            -- Group messages
+            SELECT
+                'grp_' || gcm.id,
+                gcm.id,
+                'group',
+                gcr.name,
+                SUBSTR(gcm.message, 1, 120),
+                CASE WHEN gcm.read_at IS NULL AND gcm.sender_id != :user_id THEN 1 ELSE 0 END,
+                gcm.created_at,
+                'group',
+                (SELECT COUNT(*) FROM group_chat_members WHERE room_id = gcr.id),
+                NULL,
+                NULL AS folder
+            FROM group_chat_messages gcm
+            JOIN group_chat_rooms gcr ON gcr.id = gcm.room_id
+            JOIN group_chat_members gcmem ON gcmem.room_id = gcr.id AND gcmem.user_id = :user_id
+
+            UNION ALL
+
+            -- Internal channels
+            SELECT
+                'ch_' || im.id,
+                im.id,
+                'group',
+                ic.name,
+                SUBSTR(im.message, 1, 120),
+                CASE WHEN im.read_at IS NULL AND im.user_id != :user_id THEN 1 ELSE 0 END,
+                im.created_at,
+                'channel',
+                (SELECT COUNT(*) FROM internal_channel_members WHERE channel_id = ic.id),
+                NULL,
+                NULL AS folder
+            FROM internal_messages im
+            JOIN internal_channels ic ON ic.id = im.channel_id
+            JOIN internal_channel_members icm ON icm.channel_id = ic.id AND icm.user_id = :user_id
+
+            UNION ALL
+
+            -- Internal emails
+            SELECT
+                'eml_' || ie.id,
+                ie.id,
+                'email',
+                ie.subject,
+                SUBSTR(ie.body_text, 1, 120),
+                CASE WHEN ef.name = 'inbox' THEN 1 ELSE 0 END,
+                ie.created_at,
+                'email',
+                0,
+                NULL,
+                ef.name
+            FROM internal_emails ie
+            JOIN email_folders ef ON ef.id = ie.folder_id
+            JOIN employees e ON e.id = ef.employee_id AND e.user_id = :user_id
+
+        ) AS inbox
+        WHERE {where}
+        ORDER BY updated_at DESC, id DESC
+        LIMIT :limit
+    """
+
+    user_id = int(current_user.id)
+    params["user_id"] = user_id
+
+    rows = db.execute(text(sql), params).mappings().all()
+
+    has_more = len(rows) > limit
+    if has_more:
+        rows = rows[:limit]
+
+    items = []
+    next_cursor = None
+    for r in rows:
+        ts = r["updated_at"]
+        if hasattr(ts, "isoformat"):
+            ts = ts.isoformat()
+        items.append({
+            "id": str(r["id"]),
+            "transport": r["transport"],
+            "title": r["title"],
+            "preview": r["preview"],
+            "unread": r["unread"],
+            "updatedAt": ts,
+            "channelType": r["channel_type"],
+            "participants": r["participants"] or 0,
+            "peerAvatar": r["peer_avatar"],
+            "folder": r["folder"],
+        })
+
+    if has_more and rows:
+        last = rows[-1]
+        ts = last["updated_at"]
+        if hasattr(ts, "isoformat"):
+            ts = ts.isoformat()
+        raw = f"{ts}::{last['local_id']}"
+        next_cursor = base64.urlsafe_b64encode(raw.encode()).decode()
+
+    return {"items": items, "nextCursor": next_cursor, "hasMore": has_more}
+
+from services.comms.unified_inbox_service import reset_unified_inbox  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
+
+
+
+
+
+
+from services.comms.unified_inbox_service import reset_unified_inbox  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
+
+

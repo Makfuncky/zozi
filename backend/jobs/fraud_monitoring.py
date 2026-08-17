@@ -1,11 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 
 
-from db.database import SessionLocal
-from services.security.fraud_detection import FraudDetectionService
-from services.comms.notification_service import NotificationService
+from infrastructure.database.database import SessionLocal
+from domains.governance.services.fraud_detection import FraudDetectionService
+from domains.comms.services.notification_service import NotificationService
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -53,3 +53,4 @@ def run_anomaly_detection():
         logger.info(f"Anomaly detection complete: {len(anomalies)} anomalies found")
     finally:
         db.close()
+

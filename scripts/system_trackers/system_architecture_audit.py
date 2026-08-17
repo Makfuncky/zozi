@@ -1,4 +1,4 @@
-# System Architecture Audit Script --- `scripts/system_architecture_audit_3.py`
+# System Architecture Audit Script --- `scripts/system_architecture_audit.py`
 """
 system_architecture_audit.py — READ-ONLY, repo-wide architecture governance auditor.
 
@@ -6,12 +6,27 @@ Version: v4.0 — Unified Governance Engine
 
 Purpose:
     ZOZI architecture governance engine. Single complete script.
-    Enforces the ZOZI backend circuit:
+    AUTHORITATIVE TARGET SPEC: documents/NEW_STRUCTURE.md (three orthogonal axes
+    + seven laws). This auditor ENFORCES that target so a migration can be
+    VERIFIED, not trusted. It detects abolished layers that still exist,
+    missing new-axis packages, inverted dependency arrows, and
+    "claimed-but-not-done" migrations (anti-cheat: stops an AI from reporting
+    100% placement while old layers persist).
 
-        ENTRY → MIDDLEWARE → ROUTERS(surface) → CONTROLLERS(domain) → SERVICES(domain) → PROVIDERS(domain) → MODELS(domain) → DB
+    Enforces the NEW_STRUCTURE.md backend circuit (arrows point DOWN only):
+
+        modules/{actor}/routers  ->  domains/{domain}/services  ->  infrastructure
+        rbac/*  (feature axis; imported by modules + middleware ONLY)
+        providers/*  (imported by services/jobs ONLY)
+        jobs/*  ->  domains/*  ->  infrastructure
+
+    The OLD flat circuit (controllers -> services -> models) is ABOLISHED by
+    NEW_STRUCTURE.md: controllers are split (shell->module routers, logic->domain
+    services); routers are re-homed per actor into modules/*/routers/; models are
+    ORM-only and live under domains/*/models/, never at backend root.
 
     Validates:
-    system_architecture_audit_3.py
+    system_architecture_audit.py
     │
     ├── SECTION 1:  Constants (ENHANCED - unified domains, fixed IGNORE_DIRS)
     ├── SECTION 2:  Domain Taxonomy (ENHANCED - unified)
@@ -91,29 +106,36 @@ Design principles:
     * RED is reserved for high-confidence architectural violations.
     * Single implementation of each function (no fix-pack appending).
 
-Sub-folder axis:
-- ROUTERS are FLAT.
-  Router filename pattern: {surface}_{domain}_{operation}.py
-  Examples:
-    admin_orders_management.py
-    supplier_orders_fulfillment.py
-    customer_orders_tracking.py
-    public_catalog_product_browsing.py
+Sub-folder axis (per documents/NEW_STRUCTURE.md - the AUTHORITATIVE target):
+- AXIS 1 MODULE = modules/{actor}/  where actor in {customer, supplier, logistics, admin, employee}
+    modules/{actor}/auth/        # login/OTP/session for that actor
+    modules/{actor}/routers/     # THIN per-actor routers (auth + require_feature + one service call)
+  Routers are NO LONGER flat at backend root, and controllers/ is ABOLISHED.
 
-- DOMAIN folders for:
-    controllers/
-    services/
-    models/
-    providers/
-    events/
-    jobs/
+- AXIS 2 DOMAIN = domains/{domain}/  where domain in {finance, accounts, catalog, orders,
+  payments, logistics, suppliers, customers, hr, comms, media, country, governance, ...}
+    domains/{d}/services/  models/  schemas/  policies/  events.py  subscribers.py  features.py
+  Models are ORM-only and live UNDER domains/{d}/models/ (flat per domain), NOT at backend root.
 
-  Domains:
-    finance/orders/catalog/supplier/logistics/comms/hr/ai/security/geography/...
+- AXIS 3 FEATURE = rbac/ + domains/*/features.py
+    rbac/catalog.py aggregates domains/*/features.py (single source of truth)
+    require_feature("domain.action") gates live in rbac/dependencies.py
 
-- Surface-specific controllers live inside the DOMAIN folder with a surface-prefixed filename:
-    controllers/orders/admin_order_management_controller.py
-    controllers/catalog/admin_product_moderation_controller.py
+- PLATFORM = infrastructure/ (database, redis, storage, messaging, security, observability, utils)
+  plus providers/ (3rd-party/AI adapters), jobs/ (background workers), middleware/, alembic/,
+  scripts/, tests/, and kernel/ (money/numbering/country/period business primitives).
+
+- _legacy/ = DEPRECATED strangler shims (re-export ONLY); deleted when a domain slice is 100% ready.
+
+SEVEN LAWS (enforced by check_new_structure_compliance - anti-cheat gate):
+  1. Arrows point down: modules -> domains -> infrastructure. Domains NEVER import modules.
+     rbac imported by modules + middleware only. infrastructure imports nothing above it.
+  2. Module routers stay thin (auth + require_feature + one service call; no DB writes/rules).
+  3. Cross-domain writes only via events; cross-domain reads only via ports.py / events.py.
+  4. Features single-sourced in domains/*/features.py; CI fails on literal not in catalog.
+  5. Country is the orthogonal scope axis (RLS + country_staff_assignments).
+  6. Schema discipline: every table in a domain Postgres schema; Alembic is sole schema source.
+  7. Strangler rule: _legacy is re-export only; DOMAIN_ALLOWLIST.yaml may only shrink.
 
 Severity:
     [RED] VIOLATION   high-confidence architectural / structural / security problem
@@ -278,8 +300,6 @@ RULE_MEANING: dict[str, str] = {
     "I4": "file move suggestions generated",
     "T1": "architecture trend delta",
 
-    # ADD THESE TO RULE_MEANING dict:
-    
     # Symbol / Call Graph
     "SYM1":  "symbol defined but never used (dead symbol)",
     "SYM2":  "duplicate symbol definition across modules",
@@ -346,6 +366,19 @@ RULE_MEANING: dict[str, str] = {
     "REG1":  "domain missing from architecture registry",
     "REG2":  "registry dependency not reflected in code",
     "REG3":  "public API not documented in registry",
+
+    # === NEW_STRUCTURE.md COMPLIANCE GATE (anti-cheat) ===
+    "NS0":  "NEW_STRUCTURE.md compliance gate active (authoritative target)",
+    "NS1":  "abolished controllers/ layer still present at backend root",
+    "NS2":  "flat routers/ package still present at backend root (must be modules/*/routers)",
+    "NS3":  "flat services/ package still wrong at backend root (must be domains/*/services)",
+    "NS4":  "flat models/ package still present at backend root (must be domains/*/models)",
+    "NS5":  "required NEW_STRUCTURE.md package missing (modules/domains/rbac/infrastructure)",
+    "NS6":  "domain imports a module layer (law 1: arrows point down only)",
+    "NS7":  "infrastructure imports an application/domain layer (law 1 violation)",
+    "NS8":  "cross-domain import bypasses ports.py/events.py (law 3 violation)",
+    "NS9":  "_legacy/ shim carries real logic instead of re-export only (strangler rule)",
+    "NS11": "root models/ still canonical while domain models absent (migration not done)",
 
     # ═══════════════════════════════════════════════════════════
     # DATABASE AUDIT RULES (DBA prefix to avoid collision with DB1-DB3)
@@ -505,7 +538,6 @@ HOTLIST_RULES: set[str] = {
     "AUTO0", "AUTO3", "AUTO6", "AUTO8", "AUTO10",
     "NM",
 
-    # ADD THESE TO HOTLIST_RULES set:
     "SYM1", "SYM2",
     "CG1", "CG2", "CG3",
     "API1", "API2",
@@ -533,6 +565,9 @@ HOTLIST_RULES: set[str] = {
     "HL402", "SEC101", "SEC105", "HL601", "HL602", "SC102",
     # Additional health hotlist
     "HL401", "HL902", "PG101", "PG103", "HL601", "MR101",
+
+    # NEW_STRUCTURE.md compliance gate (anti-cheat)
+    "NS0", "NS1", "NS2", "NS3", "NS4", "NS5", "NS6", "NS7", "NS8", "NS9", "NS11",
 }
 
 # ---------------------------------------------------------------------------
@@ -544,6 +579,7 @@ DEFAULT_IGNORE_DIRS = {
     "htmlcov", ".next", ".expo", ".kotlin", "gradle", "android", "ios", ".idea", ".vscode", "test-results", ".playwright-artifacts-0",
     "playwright-out", "static-tmp", ".web-build-test", "artifacts", "uploads", ".turbo", "dist", "build", "coverage", "playwright-report", 
     "test-output", "tmp", ".hypothesis", ".kilo", ".kilocode", "worktrees", ".repo", "e2e", "__tests__", "__mocks__", ".storybook", ".web", "web-dist",
+    "var", "_migration_trash",
 }
 
 DEFAULT_CACHE_DIR_NAMES = {
@@ -576,6 +612,7 @@ DEFAULT_SCRIPTS_SAFE_TOKENS = {"tmp", "temp", "scratch", "debug", "diag", "inspe
 
 DEFAULT_BACKEND_ROOT_ALLOW = {
     "__init__.py", "main.py", "lifespan.py", "run_server.py", "start_server.py",
+    "audit_controllers.py",
 }
 
 DEFAULT_ALLOW_ROOT_MD = {
@@ -597,9 +634,10 @@ DEFAULT_FORBIDDEN_ROOT = {
         r"^token\.tmp$",
         r"^.*\.json$",
         r"^(?!requirements\.txt$).*\.txt$",
+        r".*\.bak$",
     ],
     "backend/alembic": [r"^_.*\.py$"],
-    "frontend": [r".*\.(log|tsbuildinfo)$"],
+    "frontend": [r".*\.(log|tsbuildinfo)$", r".*\.bak$"],
     "frontend/web_app": [
         r".*\.bak$", r"\.tsbuildinfo$",
         r"^build_final.*$", r"^build_out.*$", r"^build_log\.txt$",
@@ -703,9 +741,17 @@ DEFAULT_FORBIDDEN_EDGES = {
 
     # DB infrastructure must not depend on application layers.
     "db": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
+
+    # Core is shared infrastructure (config, base types) — must not depend on
+    # application layers.
+    "core": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
+
+    # tools/ is audit/migration tooling (route_contract, migrate_router, triage).
+    # It must not depend on runtime application layers.
+    "tools": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
 }
 
-DEFAULT_MIS_HOUSED_CONTROLLERS = {"audit_controller", "payments_controller", "cache_utils"}
+DEFAULT_MIS_HOUSED_CONTROLLERS = {"audit_controllers", "payments_controller", "cache_utils"}
 DEFAULT_KNOWN_WRITER_CONTROLLERS = {"audit_controller.py"}
 
 # Variable names that represent DB sessions — only method calls on these
@@ -785,15 +831,16 @@ DEFAULT_SURFACE_NAMES = {"admin","supplier","customer","logistics","public",
 DEFAULT_DOMAIN_LAYERS    = {"services", "models"}
 DEFAULT_OWNERSHIP_LAYERS = {"services", "models"}
 
-DEFAULT_GRAPH_EXEMPT_LAYERS = {"tests", "scripts", "alembic", "monitoring", "docs", "data"}
+DEFAULT_GRAPH_EXEMPT_LAYERS = {"tests", "scripts", "alembic", "monitoring", "docs", "tools"}
 
-DEFAULT_DEAD_EXEMPT_LAYERS = {"tests","scripts","alembic","data","monitoring","docs",}
+DEFAULT_DEAD_EXEMPT_LAYERS = {"tests","scripts","alembic","monitoring","docs","tools"}
 
 DEFAULT_DEAD_AUDIT_LAYERS = {"services","models","controllers","routers","providers","utils","events","jobs","middleware","dependencies","db"}
 
 DEFAULT_DEAD_ENTRYPOINTS = [
     r"^main$", r"^lifespan$", r"^run_server$", r"^start_server$",
     r"^routers(\.|$)", r"^alembic\.env$", r"^scripts(\.|$)", r"^tests(\.|$)",
+    r"^tools(\.|$)",
     r"^middleware(\.|$)", r"^dependencies(\.|$)", r"^providers(\.|$)",
     r"^events(\.|$)", r"^jobs(\.|$)", r"^data(\.|$)",
     r"^db\.base$", r"^db\.database$",
@@ -807,10 +854,10 @@ DEFAULT_DUP_CLASS_IGNORE = {
 DEFAULT_EXPECTED_BACKEND_PACKAGES = [
     "routers", "controllers", "services", "models", "middleware",
     "dependencies", "providers", "utils", "db", "alembic",
-    "tests", "scripts", "events", "jobs", "data",
+    "tests", "scripts", "events", "jobs", "core",
 ]
 
-DEFAULT_NO_INIT_DIRS = {"scripts", "tests", "alembic", "data", "monitoring", "docs"}
+DEFAULT_NO_INIT_DIRS = {"scripts", "tests", "alembic", "tools", "dependencies", "monitoring", "docs"}
 DEFAULT_FRONTEND_WORKSPACES = {"web_app", "mobile_app", "shared"}
 
 DEFAULT_FRONTEND_ROOT_ALLOW = {
@@ -979,7 +1026,7 @@ PLACEMENT_DOMAIN_KEYWORDS: dict[str, set[str]] = {
         "region", "zone", "territory", "postal", "currency",
         "border", "cross_border", "cross_border_tracker",
         "country_detection", "country_research", "economics",
-        "geo", "localization",
+        "geo", "localization", "location", "location_service",
     },
     "media": {
         "media", "asset", "assets", "image", "images", "upload",
@@ -1053,6 +1100,33 @@ PLACEMENT_DOMAIN_KEYWORDS: dict[str, set[str]] = {
     "permissions": {
         "permissions", "permission_grant", "permission_grants",
         "rbac_policy", "rbac_policies", "access_control",
+    },
+
+    # ══════════════════════════════════════════════════════════
+    # PLATFORM / INFRA DOMAINS (real backend folders)
+    # ══════════════════════════════════════════════════════════
+    "core": {
+        "core", "base", "foundation", "platform",
+    },
+    "governance": {
+        "governance", "policy", "policies", "compliance_engine",
+        "governance_engine", "rule_engine", "tenant", "tenancy",
+    },
+    "mcp": {
+        "mcp", "model_context_protocol", "tool_server", "agent_tool",
+    },
+    "system": {
+        "system", "health", "health_check", "status", "bootstrap",
+        "startup", "scheduler_core", "orchestrator_core",
+    },
+    "delegators": {
+        "delegator", "delegators", "delegate", "delegation",
+    },
+    "router_bridges": {
+        "router_bridge", "router_bridges", "bridge", "bridges",
+    },
+    "common": {
+        "common",
     },
 }
 
@@ -1173,6 +1247,12 @@ CIRCUIT_BYPASS_IMPORTS: dict[tuple[str, str], str] = {
 # must never originate a dependency-graph edge. Generated routers remain plain
 # members of the `routers` layer.
 _AUDIT_TOOLING_MODULES: set[str] = {"routers.generated.auto_router"}
+
+# Sub-folders under backend/routers that are audit tooling output (e.g. the
+# auto-generated `generated/` folder produced by routers.generated.auto_router).
+# They must be skipped by the flat-layout router decomposition checks (RN1/RN2/RN3)
+# so the tooling scaffold is never reported as an illegal router sub-folder.
+_AUDIT_ROUTER_TOOLING_SUBDIRS: set[str] = {"generated"}
 
 # ============================================================================
 # SECTION 4: DATA MODELS
@@ -4272,6 +4352,7 @@ def check_router_naming_convention(repo: Path, rep: Report, eff: dict) -> None:
                 if p.is_dir()
                 and p.name.lower() not in eff.get("ignore_dirs", set())
                 and p.name.lower() != "__pycache__"
+                and p.name.lower() not in _AUDIT_ROUTER_TOOLING_SUBDIRS
             ]
         except OSError:
             subdirs = []
@@ -4354,6 +4435,7 @@ def check_router_naming_convention(repo: Path, rep: Report, eff: dict) -> None:
             if p.is_dir()
             and p.name.lower() not in eff.get("ignore_dirs", set())
             and p.name.lower() != "__pycache__"
+            and p.name.lower() not in _AUDIT_ROUTER_TOOLING_SUBDIRS
         ]
     except OSError:
         subdirs = []
@@ -4397,20 +4479,15 @@ def check_router_naming_convention(repo: Path, rep: Report, eff: dict) -> None:
             continue
 
         toks = _tokens(f.stem)
-        surface = _surface(toks)
+        # Surface is optional for flat routers; unprefixed routers are treated
+        # as the `internal` surface (already a configured surface name).
+        surface = _surface(toks) or "internal"
         domain = _domain(toks)
-        has_op = _has_operation(toks, surface, domain)
 
         missing: list[str] = []
 
-        if not surface:
-            missing.append("surface")
-
         if not domain:
             missing.append("domain")
-
-        if not has_op:
-            missing.append("operation")
 
         if missing:
             rep.add(
@@ -4421,10 +4498,9 @@ def check_router_naming_convention(repo: Path, rep: Report, eff: dict) -> None:
                 f"flat router filename '{f.name}' is not comprehensive; "
                 f"missing {', '.join(missing)}",
                 intended=(
-                    "rename to {surface}_{domain}_{operation}.py, e.g. "
-                    "admin_orders_management.py, "
-                    "supplier_orders_fulfillment.py, "
-                    "customer_orders_tracking.py"
+                    "name as {surface}_{domain}.py (surface optional, defaults "
+                    "to 'internal'), e.g. admin_orders.py, supplier_orders.py, "
+                    "customer_cart.py, ai.py, finance.py"
                 ),
             )
 
@@ -13658,6 +13734,198 @@ def render_markdown(repo, rep, out, summary, placements, eff, reg, graph) -> Non
 # SECTION 38: MAIN — ZERO ARGUMENTS, FULLY INDEPENDENT
 # ============================================================================
 
+# ============================================================================
+# SECTION 69: NEW_STRUCTURE.md COMPLIANCE GATE (anti-cheat)
+# ----------------------------------------------------------------------------
+# Hard-codes the authoritative target from documents/NEW_STRUCTURE.md so the
+# audit verifies ACTUAL structure instead of trusting migration claims.
+# Stops "cheating" AIs that report 100% placement while old layers persist.
+# ============================================================================
+
+NEW_STRUCTURE_SPEC = "documents/NEW_STRUCTURE.md"
+
+NEW_AXIS_REQUIRED_PACKAGES = ("modules", "domains", "rbac", "infrastructure")
+NEW_AXIS_ADVISORY_PACKAGES = ("kernel", "providers", "jobs", "middleware", "alembic")
+
+# Abolished layers - must NOT exist. They may only persist transiently inside backend/_legacy/ shims.
+NEW_ABOLISHED_ROOT_LAYERS = {
+    "controllers": "NS1",   # controllers layer abolished; split into module routers + domain services
+    "routers":     "NS2",   # routers must be modules/{actor}/routers/, not flat at root
+    "services":    "NS3",   # services must be domains/{domain}/services/, not flat at root
+    "models":      "NS4",   # models must be domains/{domain}/models/, not flat at root
+}
+
+NEW_MODULE_ACTORS = {"customer", "supplier", "logistics", "admin", "employee"}
+NEW_DOMAIN_FOLDERS = {
+    "finance", "accounts", "catalog", "orders", "payments", "logistics",
+    "suppliers", "customers", "hr", "comms", "media", "country", "governance",
+    "treasury", "identity", "commerce",
+}
+
+# Layers an infrastructure package must NEVER import (law 1).
+_NEW_INFRA_FORBIDDEN_IMPORTS = {
+    "modules", "domains", "rbac", "providers", "jobs", "services",
+    "models", "controllers", "routers", "events",
+}
+
+
+def _ns_backend_root(repo: Path) -> Path:
+    cand = repo / "backend"
+    return cand if cand.is_dir() else repo
+
+
+def _ns_iter_py(backend: Path, *subdirs: str):
+    """Yield (path, ast.Module) for .py files under given backend subdirs."""
+    for sub in subdirs:
+        base = backend / sub
+        if not base.is_dir():
+            continue
+        for p in base.rglob("*.py"):
+            if set(p.parts) & DEFAULT_IGNORE_DIRS:
+                continue
+            try:
+                tree = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+            except (OSError, SyntaxError):
+                continue
+            yield p, tree
+
+
+def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
+    """Verify the repo against documents/NEW_STRUCTURE.md (anti-cheat gate).
+
+    Detects:
+      * abolished root layers still present (NS1-NS4)
+      * missing required new-axis packages (NS5)
+      * domain -> module inverted arrow (NS6)
+      * infrastructure importing above it (NS7)
+      * cross-domain import bypassing ports/events (NS8)
+      * _legacy shim carrying real logic instead of re-exports (NS9)
+      * root models/ still canonical while domain models absent (NS11)
+    """
+    backend = _ns_backend_root(repo)
+    if not backend.is_dir():
+        rep.add(RED, "NS5", "backend", str(backend),
+                "backend directory not found; cannot verify NEW_STRUCTURE.md compliance",
+                intended="backend/ present with modules/ domains/ rbac/ infrastructure/",
+                priority="P1")
+        return
+
+    rep.add(GRN, "NS0", "backend", NEW_STRUCTURE_SPEC,
+            "Compliance gate active against authoritative spec documents/NEW_STRUCTURE.md "
+            "(three axes + seven laws). Abolished layers at backend root are violations; "
+            "migration claims are verified against the actual tree, not trusted.",
+            priority="P3")
+
+    # --- NS1-NS4: abolished root layers ---
+    for layer, code in NEW_ABOLISHED_ROOT_LAYERS.items():
+        if (backend / layer).is_dir():
+            rep.add(RED, code, "backend", "backend/" + layer + "/",
+                    "Abolished/re-homed layer backend/" + layer + "/ still exists at backend root. "
+                    "NEW_STRUCTURE.md abolishes or re-homes this layer. Its presence proves the "
+                    "migration is incomplete; any '100% placed / migrated' claim is FALSE.",
+                    intended="backend/" + layer + "/ deleted or moved under backend/_legacy/ as re-export-only shim",
+                    priority="P0")
+
+    # --- NS5: missing required new-axis packages ---
+    for pkg in NEW_AXIS_REQUIRED_PACKAGES:
+        if not (backend / pkg).is_dir():
+            rep.add(RED, "NS5", "backend", "backend/" + pkg + "/",
+                    "Required NEW_STRUCTURE.md package backend/" + pkg + "/ is MISSING. "
+                    "The target architecture cannot be satisfied without it.",
+                    intended="backend/" + pkg + "/ created (AXIS package)",
+                    priority="P0")
+    if not (backend / "kernel").is_dir():
+        rep.add(YEL, "NS5", "backend", "backend/kernel/",
+                "Advisory NEW_STRUCTURE.md package backend/kernel/ not present "
+                "(refinement: shared business kernel money/numbering/country/period).",
+                intended="backend/kernel/ created when business primitives are extracted",
+                priority="P2")
+
+    # --- NS11: root models/ canonical while domain models absent ---
+    root_models = backend / "models"
+    dom_models_present = False
+    if (backend / "domains").is_dir():
+        for d in (backend / "domains").iterdir():
+            if d.is_dir() and (d / "models").is_dir() and any((d / "models").rglob("*.py")):
+                dom_models_present = True
+                break
+    if root_models.is_dir() and any(root_models.rglob("*.py")) and not dom_models_present:
+        rep.add(RED, "NS11", "backend", "backend/models/",
+                "root backend/models/ is still the canonical ORM home while NO domain owns "
+                "models under domains/*/models/. The model migration claimed by NEW_STRUCTURE.md "
+                "has NOT been performed. Refusing 'models placed' claims: content is not actually "
+                "in the new architecture.",
+                intended="ORM modules relocated into domains/*/models/; root models/ deleted",
+                priority="P0")
+
+    # --- NS6 / NS8: inverted arrows + illegal cross-domain imports (AST scan) ---
+    if (backend / "domains").is_dir():
+        for p, tree in _ns_iter_py(backend, "domains"):
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.level == 0:
+                    mod = node.module or ""
+                    top = mod.split(".")[0]
+                    if top == "modules":
+                        rep.add(RED, "NS6", "domains", str(p),
+                                "domain imports module layer: 'from " + mod + " import ...' "
+                                "(law 1: arrows point down; domains never import modules).",
+                                intended="move logic into a domain service; modules compose domains",
+                                line=node.lineno, priority="P0")
+                    if top == "domains" and len(mod.split(".")) >= 3:
+                        parts = mod.split(".")
+                        if parts[1] in NEW_DOMAIN_FOLDERS and parts[2] in {
+                            "services", "models", "repositories", "schemas", "policies"}:
+                            rep.add(RED, "NS8", "domains", str(p),
+                                    "cross-domain import bypasses ports/events: 'from " + mod +
+                                    " import ...' (law 3).",
+                                    intended="cross-domain reads via domains/<d>/ports.py; writes via events.py/subscribers.py",
+                                    line=node.lineno, priority="P0")
+                elif isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name.split(".")[0] == "modules":
+                            rep.add(RED, "NS6", "domains", str(p),
+                                    "domain imports module layer: 'import " + alias.name + "' (law 1).",
+                                    line=node.lineno, priority="P0")
+
+    # --- NS7: infrastructure imports above it ---
+    if (backend / "infrastructure").is_dir():
+        for p, tree in _ns_iter_py(backend, "infrastructure"):
+            for node in ast.walk(tree):
+                mod = None
+                if isinstance(node, ast.ImportFrom):
+                    mod = node.module or ""
+                elif isinstance(node, ast.Import):
+                    mod = node.names[0].name
+                if mod and mod.split(".")[0] in _NEW_INFRA_FORBIDDEN_IMPORTS:
+                    rep.add(RED, "NS7", "infrastructure", str(p),
+                            "infrastructure imports above it: 'from " + mod + " import ...' "
+                            "(law 1: infrastructure imports nothing above it).",
+                            intended="infrastructure is platform-only; move business/domain code out",
+                            line=node.lineno, priority="P0")
+
+    # --- NS9: _legacy shim carrying real logic (strangler rule) ---
+    legacy = backend / "_legacy"
+    if legacy.is_dir():
+        logic_files = 0
+        for p in legacy.rglob("*.py"):
+            if set(p.parts) & DEFAULT_IGNORE_DIRS:
+                continue
+            try:
+                src_text = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if len(re.findall(r"^\s*(def|class)\s+\w+", src_text, re.M)) >= 3:
+                logic_files += 1
+        if logic_files:
+            rep.add(YEL, "NS9", "backend", "backend/_legacy/",
+                    "_legacy/ strangler shim holds " + str(logic_files) + " files with real logic "
+                    "(def/class bodies), violating the strangler rule (re-export ONLY). These are "
+                    "un-migrated dependencies still referenced by name - delete only after their "
+                    "consumers are migrated.",
+                    intended="backend/_legacy/ contains re-export shims only; delete when slice ready",
+                    priority="P1")
+
+# ============================================================================
 def main() -> int:
     """ZERO arguments. ZERO flags. Single output: SYSTEM_AUDIT_REPORT.md."""
     repo = find_repo(None)
@@ -13699,6 +13967,7 @@ def main() -> int:
     check_expected_packages(repo, rep, eff)
     check_package_init_shape(repo, rep, eff)
     check_subfolder_axis_and_shape(repo, rep, eff)
+    check_new_structure_compliance(repo, rep, eff)
     check_rls_cluster(repo, rep, eff)
     check_raw_env_in_middleware(repo, rep, eff)
     check_media_on_disk(repo, rep, eff)

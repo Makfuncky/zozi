@@ -1,8 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { Fraunces, Sora, Nunito, Noto_Naskh_Arabic } from "next/font/google";
 import { Suspense } from "react";
-import "@/styles/globals.css";
-import "@/styles/glow.css";
+import GlobalStyles from "@/components/GlobalStyles";
 import { AuthProvider } from "@/lib/useAuth";
 import Header from "@/components/Header";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
@@ -91,6 +90,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${displayFont.variable} ${bodyFont.variable} ${notoArabic.variable} ${nunitoFont.variable} antialiased font-body min-h-screen bg-surface-base text-text transition-colors duration-300`}
       >
+        <GlobalStyles />
         <ThemeProvider>
           <AuthProvider>
             {/* Skip to content link for keyboard users */}

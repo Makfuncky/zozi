@@ -1,4 +1,4 @@
-"""
+﻿"""
 Seed ALL dev database data — users, products, orders, communications, commissions.
 
 This is the single entry point to populate the entire dev database with
@@ -24,9 +24,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from sqlalchemy import text
 
-from db.database import SessionLocal
+from infrastructure.database.database import SessionLocal
 from models import CommissionBadgeTier, CommissionCategoryRate
-from models.core import (
+from domains.accounts.models.core import (
     DirectChatMessage,
     DirectChatRoom,
     EntityChatMessage,
@@ -35,13 +35,13 @@ from models.core import (
     GroupChatMessage,
     GroupChatRoom,
 )
-from models.employee_models import Employee
-from models.comms.communication import EmailFolder, InternalEmail
-from models.orders import Order, OrderItem
-from models.products import Category, Product, Review
-from models.user import User
-from services.finance.commission_engine import get_global_config, seed_defaults
-from utils.auth import get_password_hash
+from domains.hr.models.employee_models import Employee
+from domains.comms.models.communication import EmailFolder, InternalEmail
+from domains.orders.models import Order, OrderItem
+from domains.catalog.models.products import Category, Product, Review
+from domains.accounts.models.user import User
+from domains.finance.services.commission_engine import get_global_config, seed_defaults
+from infrastructure.utils.auth import get_password_hash
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -888,3 +888,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

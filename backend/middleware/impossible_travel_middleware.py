@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import hashlib
 import json
@@ -12,9 +12,9 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse
 
-from utils.redis_client import redis_client as get_redis
-from utils.ip_utils import get_request_ip
-from utils.auth import verify_token
+from infrastructure.utils.redis_client import redis_client as get_redis
+from infrastructure.utils.ip_utils import get_request_ip
+from infrastructure.utils.auth import verify_token
 
 from providers.geography.geoip import lookup_coordinates
 
@@ -151,7 +151,7 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
         except Exception:
             pass
         try:
-            from services.security.impossible_travel_write_service import log_impossible_travel_lock
+            from domains.governance.services.impossible_travel_write_service import log_impossible_travel_lock
             log_impossible_travel_lock(
                 user_id=user_id,
                 ip_address=ip,
@@ -246,7 +246,7 @@ class FraudDetectionMiddleware(BaseHTTPMiddleware):
         country_code = request.headers.get("X-Country-Code") or getattr(request.state, "country_code", None)
 
         try:
-            from db.database import get_service_session
+            from infrastructure.database.database import get_service_session
 
             with get_service_session() as db:
                 if country_code and self.check_impossible_travel(db, user_id, country_code, ip_address):
@@ -343,8 +343,8 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
             event_type = "other"
 
         try:
-            from db.database import get_service_session
-            from services.security.fraud_detection_service import FraudScoringEngine
+            from infrastructure.database.database import get_service_session
+            from domains.governance.services.fraud_detection_service import FraudScoringEngine
 
             with get_service_session() as db:
                 engine = FraudScoringEngine(db, self.redis)
@@ -377,5 +377,7 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
             logger.error(f"Fraud scoring error: {e}")
 
         return await call_next(request)
+
+
 
 

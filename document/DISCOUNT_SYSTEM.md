@@ -1,4 +1,4 @@
-﻿# Discount System
+﻿## Discount System
 
 Discounts are customer-facing savings applied at checkout. The system supports **coupon codes** (percentage or fixed-amount), which are country-scoped and admin-managed.
 

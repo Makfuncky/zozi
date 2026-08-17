@@ -1,4 +1,4 @@
-"""Payment gateway provider: thawani.
+﻿"""Payment gateway provider: thawani.
 
 Relocated from controllers/payments_controller.py.
 """
@@ -27,8 +27,8 @@ from models import (
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
 from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
-from utils.config import settings
-from utils.currency import (
+from infrastructure.utils.config import settings
+from infrastructure.utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
@@ -416,3 +416,4 @@ import structlog
 logger = structlog.get_logger(__name__)
 from providers.payments.thawani import *   # noqa: E402,F401,F403
 from providers.payments.generic import *   # noqa: E402,F401,F403
+

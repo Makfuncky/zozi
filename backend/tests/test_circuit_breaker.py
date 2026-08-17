@@ -1,10 +1,10 @@
-"""Tests for circuit breaker with async support."""
+﻿"""Tests for circuit breaker with async support."""
 from __future__ import annotations
 import asyncio
 import time
 import pytest
 
-from utils.circuit_breaker import (
+from infrastructure.utils.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerRegistry,
     CircuitBreakerError,
@@ -214,3 +214,4 @@ class TestCircuitBreakWithConfig:
         except CircuitBreakerError as e:
             assert "err-test" in str(e)
             assert "OPEN" in str(e)
+

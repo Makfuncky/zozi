@@ -1,4 +1,4 @@
-"""Comprehensive system tests covering all major features.
+﻿"""Comprehensive system tests covering all major features.
 
 This file consolidates and enhances testing for:
 - Order placement
@@ -122,7 +122,7 @@ def logistics_partner_client(client):
 def test_product(client, db_session, supplier_headers):
     """Create a test product for testing."""
     from models import User, Product
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
 
     email = f"prodowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
@@ -732,7 +732,7 @@ class TestDatabase:
     def test_database_transaction_rollback(self, db_session):
         """Test that transactions are properly rolled back."""
         from models import User
-        from utils.auth import get_password_hash
+        from infrastructure.utils.auth import get_password_hash
 
         initial_count = db_session.query(User).count()
         user = User(
@@ -833,3 +833,4 @@ class TestHierarchy:
         assert order is not None
         items = db_session.query(OrderItem).filter(OrderItem.order_id == order_id).all()
         assert len(items) >= 1
+

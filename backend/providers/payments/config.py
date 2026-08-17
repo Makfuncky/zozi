@@ -1,4 +1,4 @@
-"""Payment gateway provider: config.
+﻿"""Payment gateway provider: config.
 
 Relocated from controllers/payments_controller.py.
 """
@@ -27,8 +27,8 @@ from models import (
     Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
 )
 from events import PaymentConfirmedEvent, EventPublisher, _event_publisher
-from utils.config import settings
-from utils.currency import (
+from infrastructure.utils.config import settings
+from infrastructure.utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
@@ -1426,3 +1426,4 @@ register_provider(GatewayDefinition(
         OPERATION_WEBHOOK: lambda request, db: handle_generic_gateway_callback(request, "generic", db),
     },
 ))
+

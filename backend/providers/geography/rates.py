@@ -1,7 +1,7 @@
-"""Foreign-exchange + currency lookup provider.
+﻿"""Foreign-exchange + currency lookup provider.
 
 External HTTP calls (open.er-api.com live rates, Wikidata currency resolution)
-live here so ``utils.currency`` keeps only pure conversion arithmetic and string
+live here so ``infrastructure.utils.currency`` keeps only pure conversion arithmetic and string
 normalisation. The caches are module-local and TTL-bounded; ``httpx`` (the vendor
 transport) is imported only in this provider, not in the service/util layer.
 """
@@ -15,7 +15,7 @@ from typing import Any
 
 import httpx
 
-from utils.money import to_decimal
+from infrastructure.utils.money import to_decimal
 
 logger = logging.getLogger(__name__)
 
@@ -182,3 +182,4 @@ __all__ = [
     "reset_rate_cache",
     "rate_cache_expiry",
 ]
+

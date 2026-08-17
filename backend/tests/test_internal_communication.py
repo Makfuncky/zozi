@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from models.employee_models import InternalEmail, EmailFolder, Employee
+from domains.hr.models.employee_models import InternalEmail, EmailFolder, Employee
 from models import User
 
 

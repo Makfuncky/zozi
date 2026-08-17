@@ -1,13 +1,13 @@
-"""Tests for the standardized API response wrapper."""
+﻿"""Tests for the standardized API response wrapper."""
 from __future__ import annotations
 import pytest
 from fastapi.responses import JSONResponse
 
-from utils.response_wrapper import (
+from infrastructure.utils.response_wrapper import (
     PaginatedResponseWrapper,
     create_paginated_response,
 )
-from db.schemas import PaginatedResponse
+from infrastructure.database.schemas import PaginatedResponse
 
 
 class TestPaginatedResponseWrapper:
@@ -108,3 +108,5 @@ class TestCreatePaginatedResponse:
         body = json.loads(resp.body)
         assert body["page"] == 3
         assert body["pages"] == 10
+
+

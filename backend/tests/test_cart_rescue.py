@@ -42,12 +42,12 @@ def test_cart_router_has_no_layer1_writes():
 
 def test_cart_router_delegates_to_controller():
     src = _read(ROUTER_PATH)
-    assert "import controllers.commerce.cart_controller" in src
+    assert "import modules.commerce.routers.cart_controller" in src
     assert "cart_ctrl." in src, "router must delegate to cart_ctrl.*"
 
 
 def test_cart_controller_imports_and_has_key_fns():
-    import controllers.commerce.cart_controller as ctrl
+    import modules.commerce.routers.cart_controller as ctrl
 
     for fn in ("get_cart_view", "upsert_cart_item", "remove_cart_item", "set_cart_item_quantity", "clear_cart"):
         assert hasattr(ctrl, fn), f"cart_controller missing {fn}"

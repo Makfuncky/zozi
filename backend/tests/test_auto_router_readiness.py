@@ -1,4 +1,4 @@
-﻿"""Regression test: the orders and HR controllers are auto-router-ready.
+"""Regression test: the orders and HR controllers are auto-router-ready.
 
 These two controllers were decorated with ``core.route_contract`` decorators so
 ``routers/generated/auto_router.py`` can generate their FastAPI surface. This
@@ -6,7 +6,7 @@ test runs the REAL generator logic (scan -> validate -> generate -> forbid-check
 to prove the controllers are ready to auto-generate routers, without writing any
 files to disk.
 """
-import routers.generated.auto_router as ar
+import modules.routers.generated.auto_router as ar
 
 DOMAINS = ["orders_controller", "hr_controller"]
 
@@ -18,8 +18,8 @@ def _modules():
 def test_auto_router_discovers_decorated_controllers():
     modules = _modules()
     names = {m["module"] for m in modules}
-    assert "controllers.orders_controller" in names, "orders_controller not discovered"
-    assert "controllers.hr_controller" in names, "hr_controller not discovered"
+    assert "controllers.orders.orders_controller" in names, "orders_controller not discovered"
+    assert "controllers.hr.hr_controller" in names, "hr_controller not discovered"
     assert all(len(m["routes"]) > 0 for m in modules), "decorated controller has 0 routes"
 
 

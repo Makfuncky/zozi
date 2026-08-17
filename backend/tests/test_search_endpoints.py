@@ -1,4 +1,4 @@
-"""
+﻿"""
 Comprehensive tests for search/autocomplete/visual endpoints.
 Verifies the search/filter/sort integration with the database.
 """
@@ -42,7 +42,7 @@ def db_session():
 def client(db_session):
     """FastAPI TestClient with dependency overrides."""
     from main import app
-    from db.database import get_db
+    from infrastructure.database.database import get_db
 
     app.dependency_overrides[get_db] = lambda: db_session
     with TestClient(app) as c:
@@ -449,3 +449,4 @@ class TestSearchFilters:
         assert resp.status_code == 200
         data = resp.json()
         assert "total_products" in data
+

@@ -1,4 +1,4 @@
-#!python
+﻿#!python
 """
 PCI-DSS Compliance Module
 Implements Payment Card Industry Data Security Standard requirements
@@ -106,7 +106,7 @@ class PCIDSSMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
 
-        from utils.config import settings
+        from infrastructure.utils.config import settings
         app_env = str(getattr(settings, "app_env", "development")).lower()
         
         if app_env in ("test", "development"):
@@ -212,4 +212,5 @@ class PCIComplianceChecker:
 
     def _check_logging(self) -> Dict:
         return {"status": "PASS", "details": "All access logged"}
+
 

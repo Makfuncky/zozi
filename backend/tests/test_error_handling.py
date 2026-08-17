@@ -1,17 +1,17 @@
-"""Tests for error handling and logging systems."""
+﻿"""Tests for error handling and logging systems."""
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
-from utils.error_handler import (
+from infrastructure.utils.error_handler import (
     ErrorHandler,
     create_error_handler,
     global_exception_handler,
     ErrorCategory,
     AppError,
 )
-from utils.logging_config import setup_structlog, get_request_id
+from infrastructure.utils.logging_config import setup_structlog, get_request_id
 
 
 @pytest.fixture

@@ -139,7 +139,7 @@ def test_modules_import() -> None:
 def test_write_controller_delegates_to_service(monkeypatch) -> None:
     from unittest.mock import MagicMock
 
-    import controllers.treasury.cash_management_write_controller as write_ctrl
+    import modules.treasury.routers.cash_management_write_controller as write_ctrl
     svc = importlib.import_module("services.finance.cash_management_write_service")
 
     _isolate_serializers(write_ctrl, monkeypatch)

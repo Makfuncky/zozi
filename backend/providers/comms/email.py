@@ -1,7 +1,7 @@
-"""Email provider — transport implementations for ZOZI.
+﻿"""Email provider — transport implementations for ZOZI.
 
 Vendor/protocol code (SMTP ``smtplib``, Resend HTTP API, console preview) is
-encapsulated here so the email *service* layer (`utils.email_service`) and the
+encapsulated here so the email *service* layer (`infrastructure.utils.email_service`) and the
 comms services stay free of third-party transport details. The service layer is
 responsible for config resolution, suppression and event recording, then calls
 :func:`deliver_email` with the already-resolved transport descriptor.
@@ -170,3 +170,4 @@ def deliver_email(
 
 
 __all__ = ["deliver_email"]
+

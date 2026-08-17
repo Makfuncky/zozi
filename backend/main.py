@@ -9,21 +9,27 @@ import sys
 import uuid
 from typing import Optional
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _BACKEND_DIR)
+# Migration shim (NEW_STRUCTURE.md): controllers/services/routers packages were
+# moved under _legacy/. Appended at lowest sys.path priority so root packages
+# (models/utils/db) keep precedence while moved packages stay importable.
+sys.path.append(os.path.join(_BACKEND_DIR, "_legacy"))
+
 
 from fastapi import FastAPI, Request, WebSocket, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from middleware.orchestrator import setup_middleware
-from utils.ip_utils import set_request_ip
-from db.database import engine
-from db.base import Base
+from infrastructure.utils.ip_utils import set_request_ip
+from infrastructure.database.database import engine
+from infrastructure.database.base import Base
 # RLS is auto-registered via @event.listens_for(Engine, ...) in rls_interceptor.py
-from utils.config import settings
-from utils.logging_config import setup_structlog, get_request_id
-from utils.error_handler import ErrorHandler, create_error_handler, global_exception_handler
-from utils.versioning import VERSION_PREFIX, get_version_path, versioned_prefix, get_active_versions
+from infrastructure.utils.config import settings
+from infrastructure.utils.logging_config import setup_structlog, get_request_id
+from infrastructure.utils.error_handler import ErrorHandler, create_error_handler, global_exception_handler
+from infrastructure.utils.versioning import VERSION_PREFIX, get_version_path, versioned_prefix, get_active_versions
 
 # Initialize structured logging
 setup_structlog(log_level=logging.INFO if settings.debug else logging.WARNING)
@@ -65,13 +71,13 @@ app = FastAPI(
 setup_middleware(app)
 
 # Initialize Prometheus metrics exporter
-from utils.prometheus_setup import setup_prometheus
+from infrastructure.utils.prometheus_setup import setup_prometheus
 setup_prometheus(app)
 
 # Initialize OpenTelemetry tracing (requires OTEL_EXPORTER_OTLP_ENDPOINT env var)
 try:
-    from utils.tracing import setup_tracing
-    from db.database import engine
+    from infrastructure.utils.tracing import setup_tracing
+    from infrastructure.database.database import engine
     setup_tracing(app, db_engine=engine)
 except Exception:
     logger.info("OpenTelemetry tracing skipped (packages not installed or no endpoint configured)")
@@ -89,9 +95,9 @@ async def health_check():
 
 @app.get("/health/deps")
 async def health_deps():
-    from utils.config import settings
-    from utils.auth import _get_redis
-    from db.database import check_connection_health
+    from infrastructure.utils.config import settings
+    from infrastructure.utils.auth import _get_redis
+    from infrastructure.database.database import check_connection_health
     
     redis_status = "ok" if _get_redis() else "unavailable"
     email_status = get_email_delivery_status()
@@ -111,10 +117,10 @@ async def health_deps():
 
 @app.get("/health/ready")
 async def health_ready():
-    from utils.config import settings
-    from utils.auth import _get_redis
-    from db.database import check_connection_health
-    from services.gateways.payments import _payment_provider_runtime_status
+    from infrastructure.utils.config import settings
+    from infrastructure.utils.auth import _get_redis
+    from infrastructure.database.database import check_connection_health
+    from domains.payments.services.payments import _payment_provider_runtime_status
 
     db_ok = check_connection_health()
     
@@ -135,7 +141,7 @@ async def health_ready():
     
     if settings.readiness_require_payments:
         try:
-            from db.database import get_db
+            from infrastructure.database.database import get_db
             with get_db() as db:
                 payments = _payment_provider_runtime_status(db)
             if not payments.get("online_provider"):
@@ -158,7 +164,7 @@ async def health_ready():
 
 
 def get_email_delivery_status():
-    from utils.config import settings
+    from infrastructure.utils.config import settings
     if not settings.smtp_host:
         return {"provider": "disabled", "available": False, "live": False}
     return {"provider": "smtp", "available": True, "live": True}
@@ -167,14 +173,14 @@ def get_email_delivery_status():
 # Backwards-compatible alias for the user realtime socket. The ws_chat router is
 # mounted under the "/ws-chat" prefix (=> /ws-chat/ws/user), but mobile/web
 # clients connect to the bare "/ws/user" path. Keep both working.
-from routers.public_comms_status import websocket_user  # noqa: E402
+from modules.admin.routers.public_comms_status import websocket_user  # noqa: E402
 
 app.add_api_websocket_route("/ws/user", websocket_user)
 
 # Admin background-jobs WebSocket — pushes real-time status updates after each
 # background sweep completes, replacing the 15-second polling interval on the
 # /admin/payouts/background-jobs dashboard.
-from utils.websocket_manager import manager, BACKGROUND_JOBS_ROOM  # noqa: E402
+from infrastructure.utils.websocket_manager import manager, BACKGROUND_JOBS_ROOM  # noqa: E402
 
 
 @app.websocket_route("/ws/admin/background-jobs")
@@ -193,75 +199,55 @@ async def websocket_background_jobs(websocket: WebSocket):
 
 
 def _load_routers():
-    """Lazy load routers to avoid circular imports."""
-    import importlib
-    import glob
-    
-    # Routers are auto-discovered from the ``routers`` package -- no central
-    # registry. Each router carries its own prefix (co-located on
-    # ``APIRouter(prefix=...)``); thin delegator modules that re-export a
-    # router from a controller expose it through a module-level
-    # ``__router_prefix__`` so the prefix stays next to the route definition.
-    failed_routers = []
-    _routers_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "routers")
-    # Recurse so routers can live in domain subfolders (e.g. routers/logistics/...).
-    for _path in sorted(glob.glob(os.path.join(_routers_dir, "**", "*.py"), recursive=True)):
-        if os.path.basename(_path) == "__init__.py":
-            continue
-        _rel = os.path.relpath(_path, _routers_dir)
-        _modname = os.path.splitext(_rel)[0].replace(os.sep, ".")
-        try:
-            _module = importlib.import_module(f"routers.{_modname}")
-        except Exception as e:  # noqa: BLE001
-            failed_routers.append((_modname, str(e)))
-            continue
-        _router = getattr(_module, "router", None)
-        if _router is None:
-            continue
-        _prefix = getattr(_module, "__router_prefix__", None)
-        try:
-            if _prefix:
-                app.include_router(_router, prefix=_prefix)
-            else:
-                app.include_router(_router)
-            if getattr(_module, "public_router", None) is not None:
-                app.include_router(_module.public_router, prefix=_prefix or "")
-        except Exception as e:  # noqa: BLE001
-            # A malformed router (e.g. an empty path operation, or a
-            # route that collides at include time) must not abort the whole
-            # boot the way import errors are tolerated above. Skip + log so
-            # the deploy still comes up and the broken surface is visible.
-            logger.error("Skipping router %s (include failed): %s", _modname, e)
+    """Lazy-load routers from the per-actor module packages.
 
-    if failed_routers:
-        _names = ", ".join(n for n, _ in failed_routers)
-        logger.error("Failed to load %d router(s): %s", len(failed_routers), _names)
-        # In production, broken routers must not silently vanish (endpoints would
-        # disappear with only a log line). Fail fast so the deploy is rolled back.
-        if str(getattr(settings, "app_env", "development")).lower() == "production":
-            raise RuntimeError(
-                f"Refusing to start in production: {len(failed_routers)} router(s) failed to load: {_names}"
-            )
+    Routers were re-homed from the flat ``routers`` package into
+    ``modules/{customer,supplier,logistics,admin,employee}/routers/`` (see
+    NEW_STRUCTURE.md section 3). Each ``modules/<m>/routers/__init__.py`` exposes
+    ``routers`` and ``public_routers`` lists built from its router modules. A
+    router carries its own ``APIRouter(prefix=...)``, so it is mounted at that
+    prefix (no extra module prefix is added, to preserve existing URLs).
+    """
+    import importlib
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    for _module in ["customer", "supplier", "logistics", "admin", "employee"]:
+        try:
+            _pkg = importlib.import_module(f"modules.{_module}.routers")
+        except Exception as e:  # noqa: BLE001
+            logger.error("Failed to import modules.%s.routers: %s", _module, e)
+            continue
+        for _router in getattr(_pkg, "routers", []) or []:
+            try:
+                app.include_router(_router)
+            except Exception as e:  # noqa: BLE001
+                logger.error("Skipping router in %s: %s", _module, e)
+        for _prouter in getattr(_pkg, "public_routers", []) or []:
+            try:
+                app.include_router(_prouter)
+            except Exception as e:  # noqa: BLE001
+                logger.error("Skipping public router in %s: %s", _module, e)
 
     # Alias the logistics-partner router under the plural form used by the mobile
     # app so both web ('/logistics-partner') and mobile ('/logistics-partners')
     # clients can reach shipments/scan/status endpoints.
     try:
-        lp_module = importlib.import_module("routers.logistics_partner_verify")
-        if hasattr(lp_module, "router"):
-            app.include_router(lp_module.router, prefix="/logistics-partners")
-    except Exception as e:
-        logger.warning(f"Could not register plural logistics-partner router: {e}")
+        _lp = importlib.import_module("modules.logistics.routers.logistics_partner_verify")
+        if hasattr(_lp, "router"):
+            app.include_router(_lp.router, prefix="/logistics-partners")
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Could not register plural logistics-partner router: %s", e)
 
     # Expose the country control-plane under BOTH /countries/admin and
-    # /admin/countries. The admin UI calls /admin/countries/{code}/... while the
-    # public/legacy surface uses /countries/admin/{code}/..., so both must work.
+    # /admin/countries.
     try:
-        countries_module = importlib.import_module("routers.core_countries_routes")
-        if hasattr(countries_module, "router"):
-            app.include_router(countries_module.router, prefix="/admin/countries")
-    except Exception as e:
-        logger.warning(f"Could not register /admin/countries alias: {e}")
+        _cc = importlib.import_module("modules.admin.routers.core_countries_routes")
+        if hasattr(_cc, "router"):
+            app.include_router(_cc.router, prefix="/admin/countries")
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Could not register /admin/countries alias: %s", e)
 
 
 _load_routers()
@@ -287,3 +273,5 @@ async def general_exception_handler(request: Request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="info")
+
+

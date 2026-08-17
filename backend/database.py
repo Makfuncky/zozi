@@ -1,11 +1,11 @@
-"""Compatibility shim for ``database -> db.database`` imports.
+﻿"""Compatibility shim for ``database -> db.database`` imports.
 
 New code should import directly from ``db.database``.
 This module is kept for backward compatibility with existing imports.
 """
 from __future__ import annotations
 
-import db.database as _real
+import infrastructure.database.database as _real
 
 DATABASE_URL = _real.DATABASE_URL
 engine = _real.engine
@@ -22,3 +22,4 @@ dispose_engine = _real.dispose_engine
 create_tables = _real.create_tables
 reset_tables = _real.reset_tables
 close_db_session = _real.close_db_session
+

@@ -1,4 +1,4 @@
-"""Integration tests for EMS critical paths: onboarding pipeline,
+﻿"""Integration tests for EMS critical paths: onboarding pipeline,
 offboarding workflow, and payroll auto-disbursement.
 
 Each test receives a ``db_session`` fixture that wraps every operation in a
@@ -20,7 +20,7 @@ from sqlalchemy import text as sa_text
 
 def _create_test_user(db_session, role: str = "admin", email_suffix: str = None) -> int:
     """Create a test User and return its id."""
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     from models import User
 
     suffix = email_suffix or uuid.uuid4().hex[:8]
@@ -38,7 +38,7 @@ def _create_test_user(db_session, role: str = "admin", email_suffix: str = None)
 
 def _create_test_employee(db_session, user_id: int = None, country_code: str = "OM") -> int:
     """Create a test Employee record and return its id."""
-    from models.employee_models import Employee
+    from domains.hr.models.employee_models import Employee
     from datetime import date
 
     code = f"T{uuid.uuid4().hex[:6].upper()}"
@@ -82,7 +82,7 @@ class TestOnboardingPipeline:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # ── Step 1: Create pipeline ──
-        from services.hr.employee_lifecycle_service import create_onboarding_pipeline
+        from domains.hr.services.employee_lifecycle_service import create_onboarding_pipeline
 
         pipeline = create_onboarding_pipeline(db=db_session, employee_id=emp_id)
         assert pipeline["status"] == "in_progress"
@@ -90,7 +90,7 @@ class TestOnboardingPipeline:
         pipeline_id = pipeline["id"]
 
         # ── Step 2: Complete all 7 steps ──
-        from services.hr.employee_lifecycle_service import complete_onboarding_step
+        from domains.hr.services.employee_lifecycle_service import complete_onboarding_step
 
         step_names = [
             "document_collection", "background_check", "biometric_enrollment",
@@ -107,7 +107,7 @@ class TestOnboardingPipeline:
             assert result["progress"] == expected_progress
 
         # ── Step 3: Verify pipeline completed ──
-        from services.hr.employee_lifecycle_service import get_onboarding_progress
+        from domains.hr.services.employee_lifecycle_service import get_onboarding_progress
 
         progress = get_onboarding_progress(db=db_session, pipeline_id=pipeline_id)
         assert progress["pipeline"]["status"] == "completed"
@@ -118,7 +118,7 @@ class TestOnboardingPipeline:
             assert step["status"] == "completed"
 
         # ── Step 4: Verify employee is still active ──
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         emp = db_session.query(Employee).filter(Employee.id == emp_id).first()
         assert emp is not None
         assert emp.employment_status == "active"
@@ -138,7 +138,7 @@ class TestOffboarding:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # ── Step 1: Initiate offboarding ──
-        from services.hr.employee_lifecycle_service import initiate_offboarding
+        from domains.hr.services.employee_lifecycle_service import initiate_offboarding
 
         offboarding = initiate_offboarding(
             db=db_session,
@@ -151,12 +151,12 @@ class TestOffboarding:
         case_id = offboarding["id"]
 
         # Employee should now be "terminating"
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         emp = db_session.query(Employee).filter(Employee.id == emp_id).first()
         assert emp.employment_status == "terminating"
 
         # ── Step 2: Complete exit_interview step ──
-        from services.hr.employee_lifecycle_service import complete_offboarding_step, get_offboarding_status
+        from domains.hr.services.employee_lifecycle_service import complete_offboarding_step, get_offboarding_status
 
         result = complete_offboarding_step(db=db_session, case_id=case_id, step_name="exit_interview")
         assert result["completed"] is True
@@ -198,7 +198,7 @@ class TestOffboarding:
         user_id = _create_test_user(db_session)
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
-        from services.hr.employee_lifecycle_service import initiate_offboarding, cancel_offboarding
+        from domains.hr.services.employee_lifecycle_service import initiate_offboarding, cancel_offboarding
 
         offboarding = initiate_offboarding(
             db=db_session, employee_id=emp_id,
@@ -210,7 +210,7 @@ class TestOffboarding:
         cancel_offboarding(db=db_session, case_id=case_id, reason="Employee decided to stay")
 
         # Verify employee is active again
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         emp = db_session.query(Employee).filter(Employee.id == emp_id).first()
         assert emp.employment_status == "active"
 
@@ -227,7 +227,7 @@ class TestPayrollAutoDisburse:
         """Verify a single employee's payroll calculation returns expected values."""
         _create_test_company_config(db_session)
         user_id = _create_test_user(db_session)
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         from decimal import Decimal
 
         code = f"PAY{uuid.uuid4().hex[:6].upper()}"
@@ -241,7 +241,7 @@ class TestPayrollAutoDisburse:
         db_session.add(emp)
         db_session.flush()
 
-        from services.hr.payroll_engine import PayrollEngine
+        from domains.hr.services.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         calc = engine.calculate_monthly_payroll(emp.id)
@@ -266,7 +266,7 @@ class TestPayrollAutoDisburse:
         _create_test_company_config(db_session)
         user_ids = [_create_test_user(db_session, email_suffix=f"payroll_batch_{i}") for i in range(2)]
         emp_ids = []
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         from decimal import Decimal
 
         for i, uid in enumerate(user_ids):
@@ -282,7 +282,7 @@ class TestPayrollAutoDisburse:
             db_session.flush()
             emp_ids.append(emp.id)
 
-        from services.hr.payroll_engine import PayrollEngine
+        from domains.hr.services.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         result = engine.process_payroll_batch(country_code="OM")
@@ -300,7 +300,7 @@ class TestPayrollAutoDisburse:
         """Verify performance bonus is calculated when employee has a score."""
         _create_test_company_config(db_session)
         user_id = _create_test_user(db_session)
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         from decimal import Decimal
 
         code = f"BON{uuid.uuid4().hex[:6].upper()}"
@@ -315,7 +315,7 @@ class TestPayrollAutoDisburse:
         db_session.add(emp)
         db_session.flush()
 
-        from services.hr.payroll_engine import PayrollEngine
+        from domains.hr.services.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         bonus = engine.calculate_performance_bonus(emp.id)
@@ -336,7 +336,7 @@ class TestPayrollAutoDisburse:
         """Verify EOSB calculation for an employee with 3+ years of service."""
         _create_test_company_config(db_session)
         user_id = _create_test_user(db_session)
-        from models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         from decimal import Decimal
 
         code = f"EOSB{uuid.uuid4().hex[:6].upper()}"
@@ -350,7 +350,7 @@ class TestPayrollAutoDisburse:
         db_session.add(emp)
         db_session.flush()
 
-        from services.hr.payroll_engine import PayrollEngine
+        from domains.hr.services.payroll_engine import PayrollEngine
 
         engine = PayrollEngine(db_session)
         eosb = engine.calculate_eosb(emp.id)
@@ -378,7 +378,7 @@ class TestHrDashboard:
         emp_id = _create_test_employee(db_session, user_id=user_id)
 
         # Log an activity
-        from services.hr.employee_activity_logger import log_activity
+        from domains.hr.services.employee_activity_logger import log_activity
         log_activity(
             db=db_session,
             actor_employee_id=emp_id,
@@ -407,3 +407,4 @@ class TestHrDashboard:
             text("SELECT COUNT(*) as cnt FROM employee_activity_logs")
         ).scalar()
         assert activity_rows >= 1
+

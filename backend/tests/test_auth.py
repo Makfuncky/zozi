@@ -1,4 +1,4 @@
-"""Tests for authentication endpoints."""
+﻿"""Tests for authentication endpoints."""
 from __future__ import annotations
 
 import time
@@ -210,7 +210,7 @@ def test_login_nonexistent_user(client):
 @pytest.mark.integration
 def test_login_inactive_user(client, db_session):
     from models import User
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     user = User(
         email=f"inactive_{uuid.uuid4().hex[:8]}@zozi.test",
         username=f"inactive_{uuid.uuid4().hex[:8]}",
@@ -296,3 +296,4 @@ def test_admin_can_login_via_default_account(client):
     )
     assert resp.status_code == 200
     assert resp.json()["user"]["role"] == "admin"
+

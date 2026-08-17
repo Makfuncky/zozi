@@ -180,7 +180,7 @@ class TestControllersUseNoFastAPIRouters:
             msg = "\n".join(f"  {k}: {v}" for k, v in violations.items())
             raise AssertionError(
                 "Controllers must be routing-metadata only "
-                "(import from routers.generated.auto_router). Violations:\n" + msg
+                "(import from modules.routers.generated.auto_router). Violations:\n" + msg
             )
 
 

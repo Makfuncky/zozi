@@ -1,0 +1,32 @@
+## 7. Missing Files and Folders
+
+> ✅ All paths verified against live tree within scan window.
+
+| # | Type | Path | Reason | Priority |
+|---|------|------|--------|----------|
+| 1 | 📄 file | `controllers\hr_controller.py` | Controller 'hr_controller.py' is at root level, should be in controllers/hr/ (style recommendation) | 🟡 MEDIUM |
+| 2 | 📄 file | `controllers\onboarding_controller.py` | Controller 'onboarding_controller.py' is at root level, should be in controllers/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 3 | 📄 file | `controllers\orders_controller.py` | Controller 'orders_controller.py' is at root level, should be in controllers/orders/ (style recommendation) | 🟡 MEDIUM |
+| 4 | 📄 file | `controllers\payments_controller.py` | Controller 'payments_controller.py' is at root level, should be in controllers/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 5 | 📄 file | `controllers\payments_read_controller.py` | Controller 'payments_read_controller.py' is at root level, should be in controllers/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 6 | 📄 file | `controllers\search_controller.py` | Controller 'search_controller.py' is at root level, should be in controllers/search/ (style recommendation) | 🟡 MEDIUM |
+| 7 | 📄 file | `services\_registry.py` | Service '_registry.py' is at root level, should be in services/unknown/ (style recommendation) | 🟡 MEDIUM |
+| 8 | 📄 file | `controllers/identity/__init__.py` | Missing __init__.py in domain package (Python 3 namespace packages work without this — cosmetic) | 🟡 LOW |
+| 9 | 📄 file | `controllers/logistics/__init__.py` | Missing __init__.py in domain package (Python 3 namespace packages work without this — cosmetic) | 🟡 LOW |
+| 10 | 📄 file | `models/supplier/__init__.py` | Missing __init__.py in domain package (Python 3 namespace packages work without this — cosmetic) | 🟡 LOW |
+| 11 | 📄 file | `controllers/ai/` | Domain 'ai' has services but no controllers folder | 🔴 HIGH |
+| 12 | 📄 file | `controllers/documents/` | Domain 'documents' has services but no controllers folder | 🔴 HIGH |
+| 13 | 📄 file | `controllers/gateway/` | Domain 'gateway' has services but no controllers folder | 🔴 HIGH |
+| 14 | 📄 file | `controllers/media/` | Domain 'media' has services but no controllers folder | 🔴 HIGH |
+| 15 | 📄 file | `controllers/reporting/` | Domain 'reporting' has services but no controllers folder | 🔴 HIGH |
+| 16 | 📄 file | `controllers/reviews/` | Domain 'reviews' has services but no controllers folder | 🔴 HIGH |
+| 17 | 📄 file | `controllers/search/` | Domain 'search' has services but no controllers folder | 🔴 HIGH |
+| 18 | 📄 file | `services/configuration/` | Domain 'configuration' has controllers but no services folder | 🔴 HIGH |
+| 19 | 📄 file | `services/documents/` | Domain 'documents' has controllers but no services folder | 🔴 HIGH |
+| 20 | 📄 file | `services/gateway/` | Domain 'gateway' has controllers but no services folder | 🔴 HIGH |
+| 21 | 📄 file | `services/media/` | Domain 'media' has controllers but no services folder | 🔴 HIGH |
+| 22 | 📄 file | `services/permissions/` | Domain 'permissions' has controllers but no services folder | 🔴 HIGH |
+| 23 | 📄 file | `services/reporting/` | Domain 'reporting' has controllers but no services folder | 🔴 HIGH |
+| 24 | 📄 file | `services/reviews/` | Domain 'reviews' has controllers but no services folder | 🔴 HIGH |
+| 25 | 📄 file | `services/search/` | Domain 'search' has controllers but no services folder | 🔴 HIGH |
+

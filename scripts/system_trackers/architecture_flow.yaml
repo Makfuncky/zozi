@@ -1,0 +1,252 @@
+# =============================================================================
+# ZOZI FEATURE DEFINITIONS — SPEC-DRIVEN (schema)
+# =============================================================================
+# ! This file defines the architecture rules (P1 per documents/NEW_STRUCTURE.md),
+# ! the feature template (P2), and the status matrix structure (P3). The tracker
+# ! reads these sections to verify backend/frontend completeness AND law
+# ! conformance. Write WHAT a feature must do. NEVER write file names/paths in
+# ! `description` — the tracker finds the evidence in the codebase. Only the
+# ! optional `expected:` block may list target paths (use the P1 naming) so the
+# ! tracker can verify them.
+# =============================================================================
+#
+# =============================================================================
+# P1 - ARCHITECTURE PRINCIPLES & RULES (per documents/NEW_STRUCTURE.md):
+# =============================================================================
+# * ## THREE AXES:  Module (WHO) = backend/modules/ · Domain (WHAT) = backend/domains/ · Feature (MAY) = backend/rbac/ + domains/*/features.py.  Country = orthogonal 4th axis (RLS scope, country_staff_assignments) — independent of the feature check.
+# * ## BACKEND "circuit":  Client → Middleware (platform) → Module routers (thin, actor-scoped, require_feature) → Domain services (orchestrate + business logic + DB) → Domain models/repositories → Infrastructure providers/Redis → PostgreSQL (PgBouncer) + External APIs.
+# *     - backend/modules/      → Keeping files [ backend/modules/{module}/{auth|routers|serializers}/ ] — Modules: customer, supplier, logistics, admin, employee. auth/ = per-actor login/session/device-binding against the module's OWN actor tables; routers/ = thin actor routers [ {domain}_{feature}_router.py ] carrying the AUTO-GENERATED marker when emitted (generator emits into modules/{m}/routers/, NOT flat routers/); each file may expose `router` + optional `public_router` (webhooks); modules/{m}/routers/__init__.py lists `routers`/`public_routers` for main.py discovery with prefix /api/{module}. THIN RULE: auth context + require_feature(...) + ONE domain-service call + return response_model — NO DB writes, NO business rules, NO FastAPI-heavy orchestration.
+# *     - backend/domains/      → Keeping files [ backend/domains/{domain}/... ] — Canonical domains: identity (slim: shared users/auth_tokens/user_devices), customers, suppliers, catalog, orders, payments, finance (incl. receivables/payables/treasury/reporting/tax slices), logistics, hr, comms, media, country, governance. Internal anatomy per domain:
+# *         services/   → single source of business logic + transactions; own get_db() sessions; the ONLY layer writing the domain's tables. HEAVY domains (>~8 services / >~12 tables) use vertical slices: domains/{domain}/{slice}/service.py (finance → ledger/, payouts/, treasury/, reporting/, tax/).
+# *         models/     → SQLAlchemy ORM ONLY (tables/columns/relationships/indexes/__table_args__); flat within domain, one file per aggregate; all inherit infrastructure/database/base.Base; __table_args__ = {"schema": "<domain>"}; cross-domain FKs via STRING targets only (ForeignKey("schema.table.col")), relationship() intra-domain only; mixins from infrastructure/database/mixins.py; NO Pydantic, NO business logic, NO Base definition here.
+# *         schemas/    → Pydantic request/response DTOs (the domain slice of legacy db/schemas.py).
+# *         repositories/ (optional) → hot-path data access (keyset cursors, replica reads).
+# *         policies/   → pure domain rules/guards, no IO (approval thresholds, state machines, maker-checker rules).
+# *         features.py → AXIS-3 seed: this domain's permission atoms (finance.ledger, finance.reporting, hr.payroll...). SINGLE SOURCE; rbac/catalog.py aggregates via package scan (domains/*/features.py + domains/*/*/features.py).
+# *         events.py / subscribers.py → published domain events / handlers consuming OTHER domains' events (registered at boot by main.py); the default replacement for cross-domain function calls.
+# *         ports.py    → the ONLY sanctioned cross-domain READ interface (writes across domains = events only).
+# *         read_models/→ CQRS-lite projections for dashboards (get_read_db(), materialized views); cross-domain dashboards live in governance/read_models/.
+# *     - backend/rbac/         → catalog.py (aggregates features; single source of truth; served to frontend), roles.py ((module, role) → feature sets; replaces DEFAULT_ROLE_PERMISSION_MAP/ADMIN_PERMISSION_MAP), resolution.py (actor × role × country → effective set, Redis-cached), dependencies.py (require_feature(...), require_module(...)), service.py (grant/revoke, delegation, maker-checker), models.py (permission_categories, role_permission_assignments, user_permission_overrides).
+# *     - backend/kernel/       → shared BUSINESS primitives (imports nothing above): money.py (Decimal money + FX, NEVER float), numbering.py (unified reference numbering ORD-/INV-/PAY-/BATCH-), country.py (CountryCode + RLS context helper), period.py (fiscal period/date ranges).
+# *     - backend/infrastructure/ → platform, ZERO business logic, imports nothing from domains/modules/jobs: database/ (base.py Base+metadata, database.py engine + get_db()/get_read_db() + schema_translate_map, session.py, transaction.py, security.py = ONE canonical RLS enforcer replacing scattered rls_* middleware, mixins.py, seeds/ idempotent, setup/ check+health+reset, create_tables.py dev-only refuses prod, database_logging.py), redis/, storage/ (S3/R2; blobs NEVER in Postgres), messaging/ (event_bus.py in-proc → Redis/Celery later, ws_manager.py, webhook ingress), observability/, security/ (JWT, hashing, field encryption, zero-trust), utils/ (pure helpers only).
+# *     - backend/providers/    → 3rd-party/AI adapters; subclass base provider, implement health_check(); called ONLY by domains/*/services/ and jobs/; NEVER by module routers. Subpackages: ai, analytics, auth, automation, comms, finance, geography, image, media, news, payments, security, voice, legacy.
+# *     - backend/jobs/         → background workers/consumers (fraud_monitoring, ghost_order_detector, data_retention, payroll_run, payout_sweep, reconciliation_cron, bank_statement_importer, fx_revaluation, accrual_reversal, threat_feed_updater, mcp_server). MAY import domain services + subscribe to events; NEVER imported by domains.
+# *     - backend/middleware/   → Keeping files [ backend/middleware/{function}_middleware.py - flat ] orchestrator.py (ordered pipeline) + modules: api_version, country_context, csrf, database_security, device_binding, impossible_travel, ip_extraction, logging, pci_dss_compliance, rate_limit, request_id, rls_dependency (delegates to infrastructure/database/security.py), security_headers, webhook_ip_whitelist, webhook_verification, zero_trust_auth. Enforces security/RLS/geo BEFORE module routers; imports only infrastructure/utils/settings/db(read-only).
+# *     - backend/_legacy/      → DEPRECATED strangler shims (routers/, controllers/, services/, models/, db/, utils/) re-export ONLY; a shim is deleted when its domain slice is 100% auto-generation-ready and tests green; backend/DOMAIN_ALLOWLIST.yaml (temporary cross-domain imports) may ONLY shrink.
+# * ## DEPENDENCY LAW: arrows point DOWN only — modules → domains → infrastructure; jobs → domains → infrastructure; providers ← services/jobs; middleware → infrastructure. Domains NEVER import modules; infrastructure imports nothing above it; cross-domain writes ONLY via events; cross-domain reads ONLY via ports.py/read_models; CI import-lint enforces; any require_feature("…") literal not in the rbac catalog = CI failure.
+# *
+# * ## DATABASE "circuit":
+# *     - Engine (QueuePool sync today / AsyncPG at scale) behind PgBouncer (transaction mode) → get_db() one session (writes) / get_read_db() replica (catalog/search/analytics reads) → ORM models across DOMAIN Postgres schemas; Alembic is the single schema source of truth (create_all dev-only); schema_translate_map: PG transition maps domain→legacy physical schemas (config flip after ALTER ... SET SCHEMA), SQLite dev maps all→None (strips schema); RLS enforced on every session via ONE canonical enforcer (infrastructure/database/security.py); Redis fronts catalog/session/cache reads.
+# *     - Hot lists use keyset cursors (NEVER OFFSET); cross-domain FKs string-target only, resolved from ORM metadata; check_connection_health() → SELECT 1 backs /health/ready.
+# *     - Schema policy: each DOMAIN owns its own actor tables (domain-actor isolation). NO central "core"/"platform" user table:
+# *        customer login → customers.profiles / customers.accounts, supplier login → suppliers.supplier_accounts, admin login → governance.admin_accounts, employee login → hr.employees, logistics login → logistics.logistics_partners, shared users/auth_tokens/user_devices → identity schema (slim identity domain).
+# *        Shared reference data (countries, currencies, roles catalog) lives in country / configuration schemas.
+# *        JWT sessions + token blacklist live in Redis, NOT in a DB schema.
+# *
+# *    ### 100K capacity requirements (what MUST be in place)
+# *      1. Partitioning (MANDATORY for tables > 10M rows):
+# *          governance.audit_logs   → monthly partition (created_at)
+# *          governance.snapshots    → monthly partition
+# *          comms.messages          → monthly partition
+# *          orders.orders           → quarterly partition
+# *          messaging.outbox_events → weekly partition (processed → delete)
+# *          media.assets            → yearly partition
+# *        Cold partitions archived to object storage after retention period.
+# *      2. Read/write split:
+# *          get_db()      → primary (writes only)
+# *          get_read_db() → replica (catalog, search, analytics reads)
+# *        Replica lag SLO: < 1s. Monitored via pg_stat_replication.
+# *      3. Connection budget:
+# *          App: pool_size=5 per process (NEVER more)
+# *          PgBouncer: max_client_conn=1000, default_pool_size=50
+# *          PostgreSQL: max_connections=100 (behind PgBouncer)
+# *          Read replicas: same budget, 95% reads routed there
+# *        Long transactions (>500ms) moved to jobs/ background workers.
+# *      4. Redis topology:
+# *          Phase A: single Redis + RDB persistence
+# *          Phase B: Redis Sentinel (failover) + pub/sub for WS
+# *          Phase C: Redis Cluster (sharded) for 100K+ ops/sec
+# *      5. Retention & archive:
+# *          sessions/carts/notifications → hard delete 30/90 days
+# *          audit_logs/analytics         → archive to S3 after 2yr
+# *          events.outbox                → hard delete 7d after processed
+# *          media metadata               → keep forever (blobs in S3/R2)
+# *        Implemented via pg_cron or jobs/data_retention.py nightly.
+# *      6. Read model (Phase C only — when throughput justifies):
+# *          CDC (Debezium) → Kafka → OpenSearch for catalog/search reads
+# *          Redis hydrates price/stock after OpenSearch returns IDs
+# *          Removes ~80% read load from PostgreSQL at scale
+# *      7. Observability (required before claiming any phase):
+# *          pg_stat_activity → connection saturation (< 80% SLO)
+# *          pg_stat_replication → replica lag (< 1s SLO)
+# *          pg_stat_statements → top slow queries (weekly review)
+# *          Prometheus + Grafana dashboards + alerts
+# *
+# *     ### Design how database management must change to support:
+# *         videos, images, chats, and "a range of things" (attachments, thumbnails, transcripts, reactions, moderation flags): blobs NEVER in Postgres — media.assets metadata (domain schema) + S3/R2 objects; comms attachments reference media.assets ids; transcripts/reactions/moderation flags as JSONB columns or child tables in comms schema; monthly partitions + TTL archive per retention policy.
+# *
+# * ## FRONTEND "circuit":  Web (Next.js 15) + Mobile (Expo RN) + shared (TS) → both call one FastAPI backend via apiFetch; actor-prefixed routes (/customer/*, /admin/*, ...) resolve to module routers; client contract unchanged.
+# *   ### web_app (frontend/web_app, Next.js 15) "circuit":
+# *     - frontend/web_app/src/app:        → route tree (layout/loading/error/page per folder); groups: customer, auth, admin/*, supplier/*, logistics-partner/*, employee/*, wishlist, profile, chatbot, tracking; app/api/ = Next server routes (auth proxy, currency, geo, errors).
+# *     - frontend/web_app/src/components: → reusable UI: ui/ (design-system), admin/, auth/, chat/, comms/, country/, ems/, map/, supplier/.
+# *     - frontend/web_app/src/styles:     → Tailwind globals + CSS variables / base styles.
+# *     - frontend/web_app/src/lib:        → api/ (client.ts typed fetch wrapper, auth.ts, country.ts, errors.ts, index.ts), rbac.ts (fetches /rbac/catalog for UI gating); Zustand stores + useAuth/useApi via sibling hooks/.
+# *     - frontend/web_app/src/hooks:      → data-fetching + WebSocket hooks (useApi, useAuth).
+# *     - frontend/web_app/src/services:   → localizationService.ts, crossBorderService.ts, addressFormatService.ts.
+# *     - frontend/web_app/src/theme:      → design tokens (colors/spacing/typography) consumed by Tailwind + components (NO inline <style>).
+# *     - frontend/web_app/src/types:      → TS ambient/domain type decls (framer-motion.d.ts); shared types live in shared/src/types.ts.
+# *     - frontend/web_app/src/utils:      → small helpers (test.ts); prefer shared/src/utils.
+# *     - frontend/web_app/src/logo:       → brand logo assets.
+# *     - frontend/web_app/tests/mocks:    → __mocks__ / test doubles for components & api.
+# *     - frontend/web_app/root:           → next.config.ts (rewrites), middleware.ts, tailwind.config, playwright.config, e2e/.
+# *
+# *   ### mobile_app (frontend/mobile_app, Expo RN) "circuit":
+# *     - frontend/mobile_app/app/:         → Expo Router .tsx screens + (auth)/(tabs) groups + admin/products/orders/supplier/logistics/employee/tracking/returns folders.
+# *     - frontend/mobile_app/components/:  → ui/ (design-system components).
+# *     - frontend/mobile_app/lib/:         → api.ts (client), authStore/cartStore/currencyStore/localeStore/notificationStore (Zustand), authPrompt, countryContext, geo, paymentService, socialAuth, expoSecureStorage, errorReporter (api + stores + auth + platform helpers).
+# *     - frontend/mobile_app/theme/:       → mobile design tokens (mirrors web theme).
+# *     - frontend/mobile_app/assets/:      → images / fonts / icons bundles.
+# *     - frontend/mobile_app/android/:     → Expo-managed native Android project.
+# *     - frontend/mobile_app/mocks/:       → test mocks.
+# *     - frontend/mobile_app/e2e/:         → Playwright/Detox e2e tests.
+# *     - frontend/mobile_app/scripts/:     → build / codegen scripts.
+# *     - frontend/mobile_app/web-dist/:    → Expo web build output.
+# *     - frontend/mobile_app/root:         → app.config.js, metro.config, babel.config, expo-env.d.ts, sentry, pnpm-workspace.
+# *
+# *   ### shared (frontend/shared) "circuit":
+# *     - src: cross-platform TS — api-core.ts (apiFetch), money.ts, i18n.ts, localization.ts, cartHelpers/checkoutHelpers/orderHelpers/productHelpers/ticketHelpers/returnsApi/wishlistHelpers/notificationHelpers, permissions.ts (GENERATED from backend /rbac/catalog — replaces adminPermissions.ts; UI gating + backend gating share ONE source), statusColors.ts, requestCache.ts, realtime.ts, chatbot.ts, types.ts, theme.ts + theme.native.ts, components/, logo/, __tests__.
+# *
+# * ## Combine "circuit":
+# *     - shared/src imported by web_app (@shared alias) and mobile_app (workspace pkg); keeps api-core, money/i18n, cart/checkout/order, permissions, types identical.
+# *     - Transport: both call backend via apiFetch; web via next.config rewrites + middleware.ts → FastAPI; RN via lib/api.ts → same backend.
+# *     - Backend: single FastAPI serves both; middleware/orchestrator applies security; module routers thin (require_feature) → domain services own DB + transactions → infrastructure providers/Redis; cross-domain only via events (writes) or ports/read_models (reads); rbac catalog single-sources features.
+# *     - Monorepo: web_app (Next) + mobile_app (Expo) + shared (TS) + root docker-compose / Makefile / pnpm-workspace.
+# *
+# * ## Extra Files:
+# *     - use the `_extra_files/**` for keeping temporary files for making changes, audit, testing of architecture & etc.
+# =============================================================================
+#
+# =============================================================================
+# P2 - FEATURE INSTRUCTION TEMPLATE (PURE INSTRUCTION for the AI / writer):
+# =============================================================================
+# ^ TEMPLATE - id: SYS_XXX
+# ^ TEMPLATE     name: <Feature Title>
+# ^ TEMPLATE     update_version: "xxx_<DD-MM-YYYY>"
+# ^ TEMPLATE     description: | the FULL binding build spec (paste your complete prompt).
+# ^ TEMPLATE       ## Capabilities:
+# ^ TEMPLATE       - bullet list of WHAT the feature does
+# ^ TEMPLATE       - reference `media_assets` for videos/images (storage-ref, not blobs)
+# ^ TEMPLATE       ## Non-negotiables:
+# ^ TEMPLATE       - **bold phrases** become capability checkpoints
+# ^ TEMPLATE       ## Step-by-step:
+# ^ TEMPLATE       - **Step 1 — ...**       -> milestone checkpoint
+# ^ TEMPLATE       ## Discussion notes:
+# ^ TEMPLATE       - **Point 1 — ...**       -> awareness point for problem and their solution.
+# ^ TEMPLATE     state_checkpoint: `PENDING`, `AI-DONE`, `TESTED`, `HUMAN-APPROVED`
+# ^ TEMPLATE     scope: modules (Customer · Supplier · Logistics · Admin · Employee · Internal)
+# ^ TEMPLATE     sections: section-wise job per module (§I Platform/Infra, §II Customer, §III Supplier, §IV Logistics, §V Admin, §VI Employee). One sentence each.
+# ^ TEMPLATE     file_reference: | any document and file references (e.g., `documents/NEW_STRUCTURE.md`, `FEATURES.md`) that describe the feature in detail. Use storage-ref for media assets (not blobs).
+# ^ TEMPLATE     workflow (compulsory): define properly the workflow of the feature of `backend` and `frontend` (e.g., `backend/middleware` → `backend/modules/{module}/routers` → `backend/domains/{domain}/services` → `domains/{domain}/models` → `infrastructure/...`) and the flow of data between them; state which domain EVENTS are published/consumed and which `ports.py` reads are used.
+# ^ TEMPLATE     diagram: | mermaid diagram of the feature (if applicable)
+# ^ TEMPLATE     expected:
+# ^ TEMPLATE       backend_files:      # List of backend file paths (NEW_STRUCTURE naming)
+# ^ TEMPLATE         - backend/modules/{module}/routers/{domain}_{feature}_router.py        → thin actor router (AUTO-GENERATED marker); require_feature + ONE service call   | (feature description is needed for particular router file)
+# ^ TEMPLATE         - backend/modules/{module}/auth/{feature}_auth.py                      → per-actor login/session/device-binding vs the module's own actor tables          | (feature description is needed for particular auth file)
+# ^ TEMPLATE         - backend/domains/{domain}/services/{feature}_service.py               → business logic + DB writes (heavy domains: domains/{domain}/{slice}/service.py)  | (feature description is needed for particular service file)
+# ^ TEMPLATE         - backend/domains/{domain}/policies/{feature}_policy.py                → pure domain rules/guards, no IO                                                | (feature description is needed for particular policy file)
+# ^ TEMPLATE         - backend/domains/{domain}/ports.py                                    → sanctioned cross-domain READ interface                                          | (feature description is needed for the port functions added)
+# ^ TEMPLATE         - backend/domains/{domain}/read_models/{name}.py                       → dashboard projections (get_read_db, materialized views)                           | (feature description is needed for particular read model)
+# ^ TEMPLATE         - backend/domains/{domain}/events.py / subscribers.py                  → published domain events / cross-domain handlers                                 | (feature description is needed for particular event/handler)
+# ^ TEMPLATE         - backend/domains/{domain}/features.py                                 → feature atoms for the rbac catalog (finance.ledger, hr.payroll...)              | (feature description is needed for the atoms added)
+# ^ TEMPLATE         - backend/rbac/{catalog|roles|resolution|dependencies|service}.py      → catalog aggregation, (module,role)→features, resolution, require_feature, admin CRUD | (feature description is needed for the rbac touch-points)
+# ^ TEMPLATE         - backend/kernel/{money|numbering|country|period}.py                   → shared business primitives (Decimal money, reference numbering)                   | (feature description is needed for particular kernel usage)
+# ^ TEMPLATE         - backend/infrastructure/{database|redis|storage|messaging|observability|security}/... → platform concerns only                                          | (feature description is needed for particular infra touch-point)
+# ^ TEMPLATE         - backend/middleware/{function}_middleware.py                          → cross-cutting middleware (security, RLS, geo, logging, etc.)                      | (feature description is needed for particular middleware file)
+# ^ TEMPLATE         - backend/jobs/{function}.py                                           → background worker / consumer (may call domain services, subscribe events)         | (feature description is needed for particular jobs file)
+# ^ TEMPLATE         - backend/providers/{domain}/{name}_provider.py                        → 3rd-party/AI adapter (subclass BaseProvider/BaseAIProvider, health_check)         | (feature description is needed for particular provider file)
+# ^ TEMPLATE         - backend/_legacy/{layer}/...                                          → strangler re-export shims ONLY (must shrink; never new code here)                   | (feature description is needed for the shim being deleted)
+# ^ TEMPLATE       database files:    # List of setup of the database (NEW_STRUCTURE naming)
+# ^ TEMPLATE         - backend/infrastructure/database/base.py             # Single declarative Base
+# ^ TEMPLATE         - backend/infrastructure/database/database.py         # Engine, pool, SSL, schema_translate_map, instrumentation
+# ^ TEMPLATE         - backend/infrastructure/database/session.py          # get_db, get_read_db, get_service_session, context managers
+# ^ TEMPLATE         - backend/infrastructure/database/transaction.py      # Transaction helpers/context managers
+# ^ TEMPLATE         - backend/infrastructure/database/security.py         # ONE canonical RLS enforcer + per-schema policy SQL
+# ^ TEMPLATE         - backend/infrastructure/database/mixins.py           # AuditMixin, SoftDeleteMixin, VersionMixin, TenantMixin
+# ^ TEMPLATE         - backend/infrastructure/database/seeds/              # seed.py, treasury_seeder.py, demo.py (idempotent)
+# ^ TEMPLATE         - backend/infrastructure/database/setup/              # check.py, health.py, reset.py (dev-only, guarded)
+# ^ TEMPLATE         - backend/infrastructure/database/database_logging.py # Query instrumentation, pool metrics
+# ^ TEMPLATE         - backend/alembic/                                    # Alembic migrations (single source of truth for schema)
+# ^ TEMPLATE       model files:      # List of DB model files (NEW_STRUCTURE naming)
+# ^ TEMPLATE         - backend/domains/{domain}/models/{aggregate}.py → SQLAlchemy ORM ONLY, __table_args__ schema == owning domain, string FKs cross-domain | (feature description is needed for particular model file) | heavy domains slice: domains/{domain}/{slice}/models.py | permission tables live in backend/rbac/models.py | subfolders e.g. catalog/** (products, variants, search_vectors), media/** (assets, reactions, moderation_flags), comms/** (channels, chat rooms, messages), orders/** (orders, carts, returns), hr/** (employees, attendance, shifts)
+# ^ TEMPLATE       frontend_web:       # List of web app file paths
+# ^ TEMPLATE         - "frontend/web_app/src/app/{module}/{domain}_{feature}/page.tsx"
+# ^ TEMPLATE       frontend_mobile:    # List of mobile app file paths
+# ^ TEMPLATE         - "frontend/mobile_app/app/{module}/{domain}_{feature}.tsx"
+# ^ TEMPLATE       tests:              # List of test file paths (all accumulated under tests/)
+# ^ TEMPLATE         - "tests/architecture/test_import_laws.py"            # layer direction modules→domains→infrastructure; cross-domain ban (ports/events only)
+# ^ TEMPLATE         - "tests/architecture/test_feature_catalog.py"        # every require_feature("…") literal ∈ rbac catalog
+# ^ TEMPLATE         - "tests/architecture/test_schema_discipline.py"      # __table_args__ schema == domain; naming lint; country_code presence
+# ^ TEMPLATE         - "tests/architecture/test_model_relocation.py"       # class identity (legacy is new) + Base.metadata table-name uniqueness
+# ^ TEMPLATE         - "tests/domains/{domain}/_test_{feature}.py"
+# ^ TEMPLATE         - "tests/frontend/web_app/_test_{module}_{domain}_{feature}.test.tsx"
+# ^ TEMPLATE         - "tests/frontend/mobile_app/_test_{module}_{domain}_{feature}.test.tsx"
+# ^ TEMPLATE         - "tests/playwright/**"
+# ^ TEMPLATE       extra_files (optional): list any files under `_extra_files/` used for temporary changes, audits, or architecture testing (not tracked in completion %).
+# ^ TEMPLATE       api_routes:         # List of API routes (METHOD /path) — actor-prefixed (/customer/..., /admin/...)
+# ^ TEMPLATE         - "GET /admin/finance/ledger/trial-balance"
+# ^ TEMPLATE         - "POST /supplier/payouts/{batch_id}/approve"
+# ^ TEMPLATE       models:             # List of DB model class names
+# ^ TEMPLATE         - "JournalEntry"
+# ^ TEMPLATE         - "PayoutBatch"
+# =============================================================================
+#
+# =============================================================================
+# P3 - documents/CODEBASE_STATUS_MATRIX_AUTO.md structure:
+# =============================================================================
+# ~ feature_tracker.py does everything else: finds files, tables, routes, tests, and computes the completion percentage AGAINST THE NEW_STRUCTURE tree.
+# ~ The tracker auto-extracts checkpoints from `description`:
+# ~    `schema.table`         -> DB-table checkpoint (schema must equal owning domain)
+# ~    `/route/{param}/...`   -> API-route checkpoint (must resolve to a module router)
+# ~    UPPER_CASE statuses    -> state-machine checkpoint
+# ~    `snake_case` backticks -> field/identifier checkpoint
+# ~    **bold phrases**       -> capability checkpoint
+# ~    **Step N — ...**       -> milestone checkpoint
+# ~ AUDIT GATES the tracker + CI must run (to ensure NEW_STRUCTURE is implemented properly):
+# ~    1. Import-law scan: modules→domains→infrastructure only; domains never import modules; cross-domain `from domains.X.(services|models|repositories)` outside X = FAIL (ports/events/read_models allowed); providers imported only by services/jobs.
+# ~    2. Feature-catalog check: every require_feature("…") literal exists in rbac catalog (aggregated from domains/*/features.py + slices); shared/src/permissions.ts generated from /rbac/catalog.
+# ~    3. Schema discipline: every ORM model declares __table_args__ schema == owning domain; naming lint (snake_case, plural, <thing>_id, created_at/updated_at, country_code, is_deleted); Base defined ONLY in infrastructure/database/base.py.
+# ~    4. Thin-router check: module routers contain no DB writes / no business rules; auto_router --verify passes; generated routers carry AUTO-GENERATED marker and live in modules/{m}/routers/.
+# ~    5. Metadata integrity: exactly one class per __tablename__ across Base.metadata; class identity legacy-is-new (shims re-export same objects); alembic check / schema-audit shows 0 drift.
+# ~    6. Strangler shrink: no NEW code under _legacy/ (forbidden-folder-scan); DOMAIN_ALLOWLIST.yaml entries only decrease; shim deleted when its slice is green.
+# ~    7. Existing gates still run: scripts/coherence_gate.py --check, tests/architecture gates, router-generation, schema-audit.yml.
+# ~ Best worked example: feature SYS_007 (Order Tracker).
+# ~ | Sno | Module | Domain | Feature | Description/Operation of Feature | Visibility Functions & Details | backend:modules (auth+routers) | backend:domains (services/schemas/policies) | backend:domains (models) | backend:domains (features/ports/events) | backend:rbac | backend:kernel | backend:infrastructure (db/redis/storage/messaging) | backend:providers | backend:jobs | backend:middleware | backend:tests (incl. architecture gates) | backend:_legacy shim status | backend:connection report | frontend:web_app | frontend:mobile_app | frontend:shared (permissions.ts) | frontend:web tests | frontend:mobile tests | Completion Status % | Remaining todo | Comments for reference |
+# =============================================================================
+# 
+# =============================================================================
+version: 1
+schema: spec-driven
+features:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

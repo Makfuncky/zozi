@@ -25,7 +25,11 @@ from .bg_remover import (
     BottomTextEraser,
     WoodBackgroundRemover,
 )
-from .image import remove_background as image_remove_background, generate_angles
+from .image import (
+    remove_background as image_remove_background,
+    generate_angles,
+    process_image_search,
+)
 from .ocr import parse_bill_text, parse_statement_csv
 from .parcel_verification import verify_parcel_photo, verify_parcel_fast
 
@@ -52,6 +56,7 @@ __all__ = [
     "WoodBackgroundRemover",
     "image_remove_background",
     "generate_angles",
+    "process_image_search",
     "parse_bill_text",
     "parse_statement_csv",
     "verify_parcel_photo",

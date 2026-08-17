@@ -1,0 +1,5 @@
+﻿MODE: DRY-RUN
+[DRY_OK] services\public\system_comms_status_service.py  <- services.public.public_comms_status_service  removed=['ConnectionManager(36-113)', 'UserConnectionManager(129-178)']
+[DRY_OK] services\hr\attendance_service.py  <- services.employee.attendance_service  removed=['AttendanceService(15-114)']
+[DRY_OK] services\hr\background_check.py  <- services.employee.background_check  removed=['BackgroundCheckResult(70-84)']
+[DRY_OK] services\admin\admin_logistics_operations_service.py  <- services.core.admin_service  removed=['BulkDeleteUsersBody(20-28)', 'BulkToggleActiveBody(30-39)', 'BulkUserRoleBody(41-50)', 'ResetPasswordBody(52-53)', 'BulkOrderStatusBody(55-64)', 'BulkOrderDeleteBody(66-74)', 'BulkProductDeleteBody(76-84)', 'BulkProductModerationBody(86-96)', 'BulkSupplierVerifyBody(98-108)', 'BulkSupplierLifecycleBody(110-121)', 'PromotionConfigBody(123-143)', 'PromotionTierBody(145-153)', 'PromotionTierUpdateBody(155-163)', 'PromotionPreviewBody(165-167)', 'AdminDisputeBulkActionBody(169-179)', 'UpdateRolePermissionsIn(183-184)', 'ReassignManagerBody(186-188)', 'ResourceApprovalCheckIn(190-192)']

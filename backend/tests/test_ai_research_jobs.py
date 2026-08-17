@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from services.ai.ai_research_jobs import (
+from domains.finance.services.ai_research_jobs import (
     enqueue_job,
     get_job,
     mark_job_running,

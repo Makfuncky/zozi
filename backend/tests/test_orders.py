@@ -1,4 +1,4 @@
-"""Tests for order lifecycle."""
+﻿"""Tests for order lifecycle."""
 from __future__ import annotations
 
 import pytest
@@ -25,7 +25,7 @@ def customer_headers(client):
 @pytest.fixture
 def product_in_db(client, db_session):
     from models import User, Product
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     email = f"prodowner_{uuid.uuid4().hex[:8]}@zozi.test"
     user = User(
         email=email,
@@ -196,3 +196,4 @@ def test_order_payment_status_transitions(client, customer_headers, product_in_d
     db_session.commit()
     resp = client.get(f"/api/v1/orders/{order_id}", headers=customer_headers)
     assert resp.json()["payment_status"] == "completed"
+

@@ -104,7 +104,7 @@ async def process_image_search(
     when full vector embeddings are unavailable.
 
     The DB lookup for candidate products is performed by the caller (a
-    service, e.g. ``services.catalog.visual_search_service``) and passed
+    service, e.g. ``domains.catalog.services.visual_search_service``) and passed
     in via ``similar_products``. This keeps the provider free of any
     direct database access — providers only talk to external models/SDKs.
 

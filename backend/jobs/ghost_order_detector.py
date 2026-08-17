@@ -1,9 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
 
-from db.database import SessionLocal
+from infrastructure.database.database import SessionLocal
 from models import Order, ProcessedWebhookEvent
 
 logger = logging.getLogger(__name__)
@@ -74,4 +74,5 @@ def detect_ghost_orders(lookback_hours: int = 24) -> list[dict]:
         return []
     finally:
         db.close()
+
 

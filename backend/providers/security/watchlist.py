@@ -1,4 +1,4 @@
-"""Watchlist / sanctions screening provider.
+﻿"""Watchlist / sanctions screening provider.
 
 Owns the *raw* external HTTP call to the configured screening vendor
 (e.g. LexisNexis, Onfido, World-Check). Domain logic such as the
@@ -13,7 +13,7 @@ import os
 import urllib.error
 import urllib.request
 
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -65,3 +65,4 @@ def screen_watchlist(
         "flagged_categories": body.get("flagged_categories", []),
         "check_id": body.get("check_id"),
     }
+

@@ -134,7 +134,7 @@ const LocaleToggle = React.memo(function LocaleToggle() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="glass-dropdown absolute right-0 z-[999] mt-2 min-w-44 rounded-2xl p-1"
+            className="absolute right-0 z-[999] mt-2 min-w-44 rounded-lg border border-border bg-surface-1 p-1 shadow-md"
           >
             {LANGUAGE_OPTIONS.map((language: any) => {
               const selected = language.code === locale;
@@ -268,7 +268,7 @@ const CountryToggle = React.memo(function CountryToggle() {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="glass-dropdown absolute right-0 z-[999] mt-2 min-w-52 rounded-2xl p-1"
+            className="absolute right-0 z-[999] mt-2 min-w-52 rounded-lg border border-border bg-surface-1 p-1 shadow-md"
           >
             <button
               type="button"
@@ -313,7 +313,7 @@ const CountryToggle = React.memo(function CountryToggle() {
 });
 
 const surfacePanelClass =
-  "rounded-[22px] glass-dropdown shadow-card-xl";
+  "rounded-lg border border-border bg-surface-1 shadow-md";
 const interactiveMutedClass =
   "text-text-muted hover:bg-surface-1/90 hover:text-text";
 const menuItemClass =
@@ -514,12 +514,11 @@ export default function Header() {
   return (
     <>
       <header
-        className={`sticky top-0 z-100 transition-all duration-300 border-b border-glass-border backdrop-blur-xl ${
+        className={`sticky top-0 z-100 transition-all duration-300 border-b border-border ${
           scrolled
-            ? "bg-glass-hi shadow-lg shadow-black/10"
-            : "bg-glass-panel shadow-sm shadow-black/5"
+            ? "bg-surface-1 shadow-md"
+            : "bg-surface-1 shadow-sm"
         }`}
-        style={{ backgroundColor: "var(--color-glass-panel)", backdropFilter: "blur(14px) saturate(130%)" }}
       >
         <div className="max-w-11xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between gap-3 h-14">
@@ -650,11 +649,10 @@ export default function Header() {
                       initial={{ opacity: 0, y: 8, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      className={`absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden p-2.5 ${surfacePanelClass}`}
+                       className={`absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-surface-1 p-2.5 shadow-md`}
                     >
-                      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/8 via-transparent to-black/8 rounded-[22px]" />
-                      <div className="relative">
-                      {isLoggedIn ? (
+                       <div className="relative">
+                       {isLoggedIn ? (
                         <>
                           <div className="mb-1 rounded-2xl border border-border/40 bg-surface-2/60 px-3 py-2">
                             <p className="truncate text-sm font-semibold text-text">
@@ -807,7 +805,7 @@ export default function Header() {
 
           {!hideNav && nav.length > 0 && (
             <nav className="hidden sm:flex items-center -mb-px pb-2 overflow-x-auto scrollbar-none">
-              <div className="flex items-center gap-1 rounded-full border border-border bg-surface-1/70 px-2 py-1 backdrop-blur">
+              <div className="flex items-center gap-1 rounded-full border border-border bg-surface-1 px-2 py-1">
                 {nav.map((item) => {
                   const active = pathname === item.href;
                   return (

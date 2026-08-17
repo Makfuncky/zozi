@@ -22,8 +22,7 @@ export default function Footer() {
   if (shouldHideFooter(pathname)) return null;
 
   return (
-    <footer className="relative border-t border-border bg-linear-to-b from-surface-1/58 via-surface-1/30 to-transparent backdrop-blur-[2px]">
-      <div className="absolute inset-0 pointer-events-none bg-footer-glow" />
+    <footer className="relative border-t border-border bg-surface-1">
       <div className="relative max-w-11xl mx-auto px-6 pt-12 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           {/* Brand */}
@@ -67,7 +66,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-border bg-surface-2/28 backdrop-blur-[2px]">
+      <div className="border-t border-border bg-surface-2">
         <div className="max-w-[350px] mx-auto px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-text-faint">
             &copy; {new Date().getFullYear()} ZOZI. {tr("allRightsReserved")}
