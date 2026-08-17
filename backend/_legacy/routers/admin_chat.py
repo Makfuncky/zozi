@@ -7,8 +7,8 @@ from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import User
-from models.core import EntityChatMessage, EntityChatThread
+from _legacy.models import User
+from _legacy.models.core import EntityChatMessage, EntityChatThread
 from services.comms.chat_system import get_chat_system
 from services.comms.entity_chat_service import EntityChatService
 from utils.country_rls import get_country_or_404

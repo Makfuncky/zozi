@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     GatewaySettlementSchedule,
@@ -360,7 +360,7 @@ def supplier_earnings_report(
     current_user: dict = Depends(get_current_user),
 ):
     """Exportable supplier earnings summary."""
-    from models import SupplierSettlement
+    from _legacy.models import SupplierSettlement
     rows = db.execute(
         select(
             SupplierSettlement.supplier_id,

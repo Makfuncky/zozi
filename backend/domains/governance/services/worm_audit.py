@@ -11,7 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from db.database import get_service_session
-from models import AuditLog
+from _legacy.models import AuditLog
 import structlog
 logger = structlog.get_logger(__name__)
 

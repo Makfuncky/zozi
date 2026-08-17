@@ -27,7 +27,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     CashFlowForecast,

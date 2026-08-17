@@ -7,7 +7,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     Product, User, Order, Category, Coupon, Banner, FlashSale,
     SupplierProfile, LogisticsPartner, CountryConfig, Payout, Shipment,
     Invoice, SupportTicket, ReturnRequest, SupplierDocument, Review, AuditLog

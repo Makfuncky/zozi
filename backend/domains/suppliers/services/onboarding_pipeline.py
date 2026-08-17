@@ -21,7 +21,7 @@ try:
 except ImportError:
     OCR_AVAILABLE = False
 
-from models import OnboardingPipeline, OnboardingStep, DocumentVerification, OCRResult, KYCVerification, User
+from _legacy.models import OnboardingPipeline, OnboardingStep, DocumentVerification, OCRResult, KYCVerification, User
 from db.database import get_service_session
 
 logger = logging.getLogger("zozi.onboarding")

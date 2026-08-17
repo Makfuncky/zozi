@@ -9,8 +9,8 @@ from typing import List
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee
-from models import TreasuryAccount, TreasuryTransaction
+from _legacy.models.employee_models import Employee
+from _legacy.models import TreasuryAccount, TreasuryTransaction
 
 logger = logging.getLogger("zozi.treasury")
 

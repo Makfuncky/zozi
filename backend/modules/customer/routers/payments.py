@@ -52,7 +52,7 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models.payments import Payment
+from _legacy.models.payments import Payment
 
 router = APIRouter()
 public_router = APIRouter()

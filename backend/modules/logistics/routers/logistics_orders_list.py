@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import Shipment, LogisticsPartner, User
+from _legacy.models import Shipment, LogisticsPartner, User
 from utils.dependencies import require_logistics
 
 router = APIRouter(prefix="/api/v1/logistics")

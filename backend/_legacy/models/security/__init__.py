@@ -10,5 +10,5 @@ class objects (no duplicate tables).
 """
 from __future__ import annotations
 
-from models.fraud import *  # noqa: F401,F403
-from models.incident import *  # noqa: F401,F403
+from _legacy.models.fraud import *  # noqa: F401,F403
+from _legacy.models.incident import *  # noqa: F401,F403

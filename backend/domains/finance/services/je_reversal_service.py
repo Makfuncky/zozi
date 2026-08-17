@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import JournalEntry, JournalEntryLine
+from _legacy.models import JournalEntry, JournalEntryLine
 from services.finance.general_ledger_service import create_journal_entry, get_journal_entry
 from db.schemas import JournalEntryCreate, JournalLineInput
 

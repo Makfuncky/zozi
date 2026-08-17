@@ -14,7 +14,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from models import (
+from _legacy.models import (
     ARLedgerEntry,
     APLedger,
     Account,
@@ -24,7 +24,7 @@ from models import (
     Order,
     User,
 )
-from models.finance import APLedger as _APLedger
+from _legacy.models.finance import APLedger as _APLedger
 from utils.money import round_money
 
 logger = logging.getLogger(__name__)

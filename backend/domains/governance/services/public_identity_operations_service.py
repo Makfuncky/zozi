@@ -2,7 +2,7 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from db.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse
 from utils.dependencies import get_current_user, require_admin
 

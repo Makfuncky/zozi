@@ -19,7 +19,7 @@ from db.schemas import (
     BulkStatusUpdateRequest,
     OrderStatusUpdate,
 )
-from models import Order, User
+from _legacy.models import Order, User
 from utils.country_rls import get_country_or_404
 from utils.dependencies import require_admin, require_super_admin
 from utils.rls_interceptor import set_rls_context

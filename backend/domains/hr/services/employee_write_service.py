@@ -44,7 +44,7 @@ from sqlalchemy.orm import Session
 
 from utils.datetime_utils import utcnow as _utcnow
 from utils.soft_delete import soft_delete
-from models import (
+from _legacy.models import (
     EmployeeAttendance,
     EmployeeWorkLog,
     EmployeeDocument,

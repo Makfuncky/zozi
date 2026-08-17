@@ -13,7 +13,7 @@ from fastapi import Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import Order, OrderItem, SupplierProfile, User
+from _legacy.models import Order, OrderItem, SupplierProfile, User
 from utils.dependencies import require_supplier
 from services.common.storage import storage as _storage
 from services.supplier.supplier_order_service import get_supplier_order, get_supplier_order_for_verify, get_supplier_order_items, get_supplier_order_items_for_verify, get_supplier_profile_by_user_id, list_supplier_order_ids, list_supplier_orders, mark_order_prepared_if_processing, resolve_shipment_info

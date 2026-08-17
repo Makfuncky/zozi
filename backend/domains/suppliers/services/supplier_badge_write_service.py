@@ -12,8 +12,8 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import BadgeBillingRecord
-from models.finance import BankTransaction
+from _legacy.models import BadgeBillingRecord
+from _legacy.models.finance import BankTransaction
 from services.treasury.cash_management_service import log_bank_transaction
 import structlog
 logger = structlog.get_logger(__name__)

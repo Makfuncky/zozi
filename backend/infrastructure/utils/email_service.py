@@ -174,7 +174,7 @@ def _load_environment_email_config(
 
 def _load_runtime_email_config() -> dict[str, object]:
     from infrastructure.database.database import SessionLocal
-    from models import EmailProviderConfig
+    from _legacy.models import EmailProviderConfig
 
     configured_provider = "environment"
     sender_overrides: dict[str, str | None] = {}

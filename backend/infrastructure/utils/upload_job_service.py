@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from db.database import get_db_session
-from models.upload_job import UploadJob
+from _legacy.models.upload_job import UploadJob
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from services.comms.video_conferencing import get_video_conference
 from utils.dependencies import require_admin
 

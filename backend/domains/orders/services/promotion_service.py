@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from utils.audit import audit_log
 from db.base import Base
-from models import PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier
+from _legacy.models import PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier
 from utils.money import to_decimal
 
 _ALLOWED_STACKING_MODES = {"best_only", "stack_all", "custom"}

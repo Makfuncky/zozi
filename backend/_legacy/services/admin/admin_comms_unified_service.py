@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from utils.dependencies import get_current_user, require_admin
 from utils.audit import AuditAction, audit_log
 from utils.ip_utils import get_ip_for_logging

@@ -10,7 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from models import Base
+from _legacy.models import Base
 from utils.datetime_utils import utcnow as _utcnow
 
 

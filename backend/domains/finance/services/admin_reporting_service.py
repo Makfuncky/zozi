@@ -21,7 +21,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     CashFlowForecast,
@@ -37,11 +37,11 @@ from models import (
     TreasuryAccount,
     VATRemittance,
 )
-from models.admin import LogisticsCODRemittanceReceipt
-from models.employee_models import Employee
-from models.logistics import LogisticsPartner
-from models.orders import Order as OrderModel, OrderItem
-from models.payments import LogisticsPartnerPayout, Payment, Payout
+from _legacy.models.admin import LogisticsCODRemittanceReceipt
+from _legacy.models.employee_models import Employee
+from _legacy.models.logistics import LogisticsPartner
+from _legacy.models.orders import Order as OrderModel, OrderItem
+from _legacy.models.payments import LogisticsPartnerPayout, Payment, Payout
 from services.treasury.treasury_engine import TreasuryEngine
 from utils.constants import (
     CASH_ACCOUNT,
@@ -146,7 +146,7 @@ def get_cash_position(db: Session) -> list:
 # ── Payout Batches ────────────────────────────────────────────────────
 
 def get_payout_batches(db: Session) -> list:
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
 
     batches = db.execute(
         select(PayoutBatch)
@@ -173,7 +173,7 @@ def get_payout_batches(db: Session) -> list:
 
 
 def generate_payout_batch(db: Session, country_code: str, cutoff_date: date, current_user: dict) -> dict:
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
 
     pending_payouts = db.execute(
         select(Payout).where(
@@ -794,7 +794,7 @@ def get_country_gateway_summary(db: Session, cc: str) -> list:
 
 
 def get_country_reconciliation_pipeline(db: Session, cc: str, status: Optional[str], limit: int) -> dict:
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -874,7 +874,7 @@ def get_country_reconciliation_pipeline(db: Session, cc: str, status: Optional[s
 def record_cod_remittance(
     db: Session, cc: str, order_id: int, partner_id: int, amount: float, bank_reference: str
 ) -> dict:
-    from models.orders import Order as OrderModel
+    from _legacy.models.orders import Order as OrderModel
 
     shipment = db.query(Shipment).filter(Shipment.order_id == order_id).first()
     receipt = LogisticsCODRemittanceReceipt(
@@ -905,8 +905,8 @@ def settle_supplier(
     gross_amount: Optional[float], commission_amount: Optional[float],
     currency: Optional[str], payout_id: Optional[int],
 ) -> dict:
-    from models.countries import CountryConfig
-    from models.orders import Order as OrderModel
+    from _legacy.models.countries import CountryConfig
+    from _legacy.models.orders import Order as OrderModel
 
     gross = gross_amount if gross_amount is not None else net_amount
     resolved_currency = currency or "USD"
@@ -1028,7 +1028,7 @@ def _shape_supplier_payout(p, s) -> dict:
 
 
 def get_supplier_payouts(db: Session, status: Optional[str]) -> list:
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
 
     query = (
         select(Payout, SupplierProfile)
@@ -1042,7 +1042,7 @@ def get_supplier_payouts(db: Session, status: Optional[str]) -> list:
 
 
 def get_country_supplier_payouts(db: Session, cc: str, status: Optional[str]) -> list:
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
 
     query = (
         select(Payout, SupplierProfile)

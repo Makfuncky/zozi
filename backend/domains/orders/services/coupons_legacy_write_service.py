@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from utils.audit import audit_log, AuditAction
-from models import Coupon, CouponUsage
+from _legacy.models import Coupon, CouponUsage
 from utils.money import round_money
 
 

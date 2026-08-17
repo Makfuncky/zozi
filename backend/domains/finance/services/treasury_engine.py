@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
-from models import (
+from _legacy.models import (
     Account, AccountGroup, JournalEntry, JournalEntryLine,
     AccountBalance, PendingJournalEntry,
 )
@@ -373,7 +373,7 @@ class TreasuryEngine:
         Flags any delivered/paid order that lacks a corresponding
         JournalEntry with matching reference_type/reference_id.
         """
-        from models.orders import Order
+        from _legacy.models.orders import Order
 
         alerts = []
 

@@ -20,15 +20,15 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CashPositionSnapshot,
     PayoutBatch,
     PayoutBatchItem,
     SupplierSettlement,
     TreasuryAccount,
 )
-from models.admin import LogisticsCODRemittanceReceipt
-from models.payments import Payout
+from _legacy.models.admin import LogisticsCODRemittanceReceipt
+from _legacy.models.payments import Payout
 from services.treasury.treasury_engine import TreasuryEngine
 from utils.constants import CASH_ACCOUNT, PAYABLES_ACCOUNT
 import structlog
@@ -199,8 +199,8 @@ def record_cod_remittance(
     bank_reference: str,
 ) -> dict:
     """Record a logistics COD remittance receipt and sync the ledger."""
-    from models import Shipment as ShipmentModel
-    from models.orders import Order as OrderModel
+    from _legacy.models import Shipment as ShipmentModel
+    from _legacy.models.orders import Order as OrderModel
 
     cc = country_code.upper()
     shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
@@ -246,8 +246,8 @@ def settle_supplier(
     payout_id: Optional[int] = None,
 ) -> dict:
     """Create a supplier settlement row for a delivered order."""
-    from models.countries import CountryConfig
-    from models.orders import Order as OrderModel
+    from _legacy.models.countries import CountryConfig
+    from _legacy.models.orders import Order as OrderModel
 
     cc = country_code.upper()
     gross = gross_amount if gross_amount is not None else net_amount

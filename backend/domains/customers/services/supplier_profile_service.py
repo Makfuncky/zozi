@@ -9,7 +9,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
 
-from models import SupplierProfile, User
+from _legacy.models import SupplierProfile, User
 
 from infrastructure.utils.dependencies import get_current_user, require_supplier
 

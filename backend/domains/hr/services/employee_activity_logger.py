@@ -167,7 +167,7 @@ def get_team_activity(
 ) -> List[Dict[str, Any]]:
     """Get activity log for all employees under a manager's subtree."""
     from services.hierarchy.hierarchy_service import get_all_subordinates as get_subs
-    from models.employee_models import Employee
+    from _legacy.models.employee_models import Employee
     mgr_emp = db.query(Employee).filter(Employee.id == manager_employee_id).first()
     if not mgr_emp:
         return []
@@ -226,7 +226,7 @@ def get_collaboration_heatmap(
     target_ids = list(set(r["target_employee_id"] for r in rows if r["target_employee_id"]))
     target_names: Dict[int, str] = {}
     if target_ids:
-        from models.employee_models import Employee
+        from _legacy.models.employee_models import Employee
         emps = db.query(Employee).filter(Employee.id.in_(target_ids)).all()
         for emp in emps:
             target_names[emp.id] = emp.employee_code

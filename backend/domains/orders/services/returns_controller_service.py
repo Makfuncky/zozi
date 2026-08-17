@@ -11,7 +11,7 @@ from providers.payments.stripe import refund_payment_intent
 from providers.payments.tap import refund_tap_charge
 from sqlalchemy.orm import Session, selectinload
 
-from models import Notification, Order, OrderItem, Product, ReturnRequest, Shipment, User
+from _legacy.models import Notification, Order, OrderItem, Product, ReturnRequest, Shipment, User
 from db.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
 from utils.audit import audit_log, AuditAction
 from services.gateways.payments import _order_holds_inventory, apply_order_status_change

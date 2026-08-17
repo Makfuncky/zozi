@@ -8,14 +8,14 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
-from models import (
+from _legacy.models import (
     GoodsReceiptNote, GoodsReceiptLine,
     SalesOrder, SalesOrderLine,
     Warehouse, StockMovement,
     Vendor, Customer, Product, ProductVariant,
     APBill, ARInvoice, JournalEntry, Account, JournalEntryLine,
 )
-from models.erp import (
+from _legacy.models.erp import (
     PurchaseOrder, PurchaseOrderLine,
 )
 from db.schemas import JournalEntryCreate, JournalLineInput
@@ -762,7 +762,7 @@ def auto_invoice_ecommerce_orders(db: Session, country_code: str = None) -> dict
     Auto-generate AR invoices for delivered e-commerce orders.
     Called daily by the automation scheduler.
     """
-    from models import Order, ARInvoice, Account
+    from _legacy.models import Order, ARInvoice, Account
 
     results = {"scanned": 0, "invoiced": 0, "skipped": 0, "errors": 0}
 

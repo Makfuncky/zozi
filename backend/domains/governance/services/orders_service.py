@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import exists, or_, String
 from sqlalchemy.orm import Session, selectinload
 
-from models import Order, OrderItem, Product, AuditLog, Notification, User, Shipment, ShipmentEvent
+from _legacy.models import Order, OrderItem, Product, AuditLog, Notification, User, Shipment, ShipmentEvent
 from utils.auth import require_permission
 from utils.audit import audit_log, AuditAction
 from utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE

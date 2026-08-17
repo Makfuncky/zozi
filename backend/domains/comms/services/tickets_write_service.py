@@ -1,5 +1,5 @@
 from __future__ import annotations
-from models import Order, Invoice
+from _legacy.models import Order, Invoice
 from typing import Any, List
 """Tickets write service — DB write operations for ticket entities."""
 
@@ -7,8 +7,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, selectinload
 
-from models.comms.communication import Notification, TicketMessage
-from models.comms.core import SupportTicket, TicketAttachment
+from _legacy.models.comms.communication import Notification, TicketMessage
+from _legacy.models.comms.core import SupportTicket, TicketAttachment
 import structlog
 logger = structlog.get_logger(__name__)
 

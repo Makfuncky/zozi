@@ -4,5 +4,5 @@
 # ``models.geography.countries`` (reorg into domain folders). This thin shim
 # keeps ``from models.countries import *`` working without re-defining tables
 # on the shared ``MetaData`` (which caused "Table already defined" on import).
-from models.geography.countries import *  # noqa: F401,F403
-from models.geography.countries import __all__  # noqa: F401
+from _legacy.models.geography.countries import *  # noqa: F401,F403
+from _legacy.models.geography.countries import __all__  # noqa: F401

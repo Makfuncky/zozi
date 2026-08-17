@@ -10,7 +10,7 @@ from db.schemas import (
     CashTransactionCreate,
     CashTransactionOut,
 )
-from models import CashAccount, CashTransaction, User
+from _legacy.models import CashAccount, CashTransaction, User
 from services.common.misc_write_service import (
     create_cash_account as create_cash_account_model,
     create_cash_transaction as create_cash_transaction_model,

@@ -19,7 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import services.core.search_service as search_ctrl
-from models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
+from _legacy.models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
 
 logger = logging.getLogger(__name__)
 

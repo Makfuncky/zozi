@@ -11,7 +11,7 @@ from typing import Any, List, Optional, Type
 
 from sqlalchemy.orm import Session
 
-from models import Category, Product
+from _legacy.models import Category, Product
 from utils.soft_delete import bulk_restore, bulk_soft_delete
 import structlog
 logger = structlog.get_logger(__name__)

@@ -39,8 +39,8 @@ IDLE_SHUTDOWN = int(os.getenv("NOTIFICATION_WORKER_IDLE_SHUTDOWN", "0"))
 
 def _deliver_notification(notification_id: int) -> dict:
     from db.database import SessionLocal
-    from models.comms import Notification as NotificationModel
-    from models import User
+    from _legacy.models.comms import Notification as NotificationModel
+    from _legacy.models import User
 
     db = SessionLocal()
     try:
@@ -89,7 +89,7 @@ def _deliver_notification(notification_id: int) -> dict:
 
 def _poll_once() -> int:
     from db.database import SessionLocal
-    from models.comms import Notification as NotificationModel
+    from _legacy.models.comms import Notification as NotificationModel
 
     db = SessionLocal()
     try:

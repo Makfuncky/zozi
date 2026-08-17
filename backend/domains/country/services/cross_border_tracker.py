@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 from db.database import get_db_context
-from models import CountryConfig
+from _legacy.models import CountryConfig
 
 logger = logging.getLogger(__name__)
 

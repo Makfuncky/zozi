@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 
 from utils.audit import audit_log, AuditAction
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from models import Banner
+from _legacy.models import Banner
 
 logger = logging.getLogger(__name__)
 

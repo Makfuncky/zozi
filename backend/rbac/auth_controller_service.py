@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     User,
     UserDevice,
     UserBrowsingHistory,

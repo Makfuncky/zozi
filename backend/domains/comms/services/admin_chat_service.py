@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from models import User
+from _legacy.models import User
 
 from domains.accounts.models.core import EntityChatMessage, EntityChatThread
 

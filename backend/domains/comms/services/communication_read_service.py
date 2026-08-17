@@ -7,7 +7,7 @@ from typing import Any
 from utils.datetime_utils import utcnow as utcnow
 
 from db.base import Base
-import models  # noqa: F401  (registers all ORM tables on Base.metadata)
+import _legacy.models as models  # noqa: F401  (registers all ORM tables on Base.metadata)
 import logging
 import structlog
 logger = structlog.get_logger(__name__)

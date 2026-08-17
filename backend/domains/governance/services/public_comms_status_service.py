@@ -8,8 +8,8 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 from providers.auth.jwt import JWTError, jwt
 from db.database import get_db, get_db_session
-from models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
-from models import User, Notification, SupportTicket, TicketReply
+from _legacy.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
+from _legacy.models import User, Notification, SupportTicket, TicketReply
 from utils.config import settings
 logger = logging.getLogger(__name__)
 

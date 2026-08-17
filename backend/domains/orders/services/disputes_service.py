@@ -8,7 +8,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Notification, SupplierDispute, SupplierNotificationPreference
+from _legacy.models import Notification, SupplierDispute, SupplierNotificationPreference
 
 _ALLOWED_DISPUTE_TYPES = {"return", "verification", "invoice", "payout", "other"}
 _ALLOWED_PRIORITIES = {"low", "medium", "high", "urgent"}

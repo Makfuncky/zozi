@@ -16,7 +16,7 @@ def get_customer_health(user_id: int, current_user: dict, db: Session):
     return engine.calculate_health_score(user_id)
 
 def list_customer_health(current_user: dict, db: Session, page: int, size: int):
-    from models import User
+    from _legacy.models import User
     from infrastructure.utils.pagination import paginated_query
 
     users, total = paginated_query(

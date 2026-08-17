@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlalchemy import func
 
 from utils.pagination import SAFE_QUERY_LIMIT, windowed_iterate
-from models import Shipment, ShipmentEvent
+from _legacy.models import Shipment, ShipmentEvent
 import structlog
 logger = structlog.get_logger(__name__)
 

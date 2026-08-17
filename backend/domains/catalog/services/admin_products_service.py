@@ -21,7 +21,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
 
-from models import Product
+from _legacy.models import Product
 
 from infrastructure.utils.country_rls import get_country_or_404
 

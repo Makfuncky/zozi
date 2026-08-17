@@ -5,7 +5,7 @@ Connects Country Config to Payment, Supplier, and Logistics systems
 from typing import List, Dict, Any
 from functools import lru_cache
 from infrastructure.database.database import get_db_context
-from models import CountryConfig
+from _legacy.models import CountryConfig
 
 
 def invalidate_country_cache(country_code: str):

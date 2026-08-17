@@ -66,7 +66,7 @@ from sqlalchemy.orm import Session
 
 
 
-from models import ShippingCarrier, ShippingZone, ShipmentEvent
+from _legacy.models import ShippingCarrier, ShippingZone, ShipmentEvent
 
 import structlog
 

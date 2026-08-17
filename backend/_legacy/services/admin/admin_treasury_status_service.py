@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import FinanceAutomationLog, Payout, User
+from _legacy.models import FinanceAutomationLog, Payout, User
 from db.schemas import PayoutCreate, PayoutOut
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404

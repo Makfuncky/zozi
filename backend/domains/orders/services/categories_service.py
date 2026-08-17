@@ -13,7 +13,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import CategoryCreate, CategoryOut, CategoryUpdate, MessageResponse
 
-from models import Category, User
+from _legacy.models import Category, User
 
 from infrastructure.utils.dependencies import require_admin
 

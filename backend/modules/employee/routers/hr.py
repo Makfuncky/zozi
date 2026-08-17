@@ -19,7 +19,7 @@ from controllers.hr_controller import (
     validate_gcc_compliance,
 )
 from db.database import get_db
-from models.employee_models import AlumniNetwork, Employee
+from _legacy.models.employee_models import AlumniNetwork, Employee
 
 router = APIRouter()
 

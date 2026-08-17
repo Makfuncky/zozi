@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 from controllers.admin.admin_controller import require_admin
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import User
-from models.countries import CountryConfig
-from models.country_enhancements import CountryStaffAssignment
+from _legacy.models import User
+from _legacy.models.countries import CountryConfig
+from _legacy.models.country_enhancements import CountryStaffAssignment
 from utils.datetime_utils import utcnow as _utcnow
 
 router = APIRouter()

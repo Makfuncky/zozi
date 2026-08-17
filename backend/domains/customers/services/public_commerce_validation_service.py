@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from rbac.routers.auth_controller import get_current_user
 from infrastructure.database.database import get_db
-from models import Coupon, CouponUsage
+from _legacy.models import Coupon, CouponUsage
 from infrastructure.utils.datetime_utils import utcnow
 
 def _normalize_discount_type(value: object) -> str | None:

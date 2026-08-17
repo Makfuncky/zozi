@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import Coupon
+from _legacy.models import Coupon
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 

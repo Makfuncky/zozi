@@ -7,7 +7,7 @@ from decimal import Decimal
 from functools import lru_cache
 
 from db.database import get_db
-from models import CountryConfig
+from _legacy.models import CountryConfig
 
 
 class CountryRLSService:

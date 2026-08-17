@@ -9,10 +9,10 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from models import AuditLog
-from models.core import DirectChatMessage, GroupChatMessage, EntityChatMessage, VideoRoom
-from models.countries import CountryCommunication
-from models.finance import JournalEntry
+from _legacy.models import AuditLog
+from _legacy.models.core import DirectChatMessage, GroupChatMessage, EntityChatMessage, VideoRoom
+from _legacy.models.countries import CountryCommunication
+from _legacy.models.finance import JournalEntry
 from db.database import get_service_session
 
 logger = logging.getLogger("zozi.ediscovery")

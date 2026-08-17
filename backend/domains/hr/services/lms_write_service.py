@@ -7,7 +7,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from utils.datetime_utils import utcnow as _utcnow
-from models.employee_models import EmployeeTraining, TrainingModule
+from _legacy.models.employee_models import EmployeeTraining, TrainingModule
 import structlog
 logger = structlog.get_logger(__name__)
 

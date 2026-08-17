@@ -23,7 +23,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CommissionAgreement,
     CommissionBadgeTier,
     CommissionCategoryRate,
@@ -246,7 +246,7 @@ def get_effective_rate(
     # 2. Base commission component: product override, else category, else global.
     product_override_rate = None
     if product_id is not None:
-        from models import ProductCommissionOverride
+        from _legacy.models import ProductCommissionOverride
 
         product_override_row = (
             db.query(ProductCommissionOverride)
@@ -447,7 +447,7 @@ def create_commission_ledger_entry(
 
 import json as _json
 
-from models import CountryConfig
+from _legacy.models import CountryConfig
 from services.logistics.logistics_partner_pricing import normalize_country_code as _normalize_country
 
 

@@ -32,7 +32,7 @@ from fastapi import BackgroundTasks, Depends, File, Form, HTTPException, UploadF
 from sqlalchemy.orm import Session
 from db.database import get_db
 from controllers.admin.admin_controller import require_roles
-from models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
+from _legacy.models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
 from utils.variant_key import compute_variant_key
 from utils.config import BASE_DIR
 logger = logging.getLogger(__name__)

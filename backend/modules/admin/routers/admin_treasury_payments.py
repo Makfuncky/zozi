@@ -28,7 +28,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from db.database import get_db
-from models import (
+from _legacy.models import (
     LogisticsPartner,
     LogisticsPartnerPayout,
     Payout,

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from models import (
+from _legacy.models import (
     Order,
     OrderItem,
     Payout,

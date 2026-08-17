@@ -8,4 +8,4 @@ this package forwards to it so ``models.gateway.Payment`` and
 """
 from __future__ import annotations
 
-from models.payments import *  # noqa: F401,F403
+from _legacy.models.payments import *  # noqa: F401,F403

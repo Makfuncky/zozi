@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import Order, OrderItem, SupplierProfile, User
+from _legacy.models import Order, OrderItem, SupplierProfile, User
 from utils.dependencies import require_supplier
 from services.common.storage import storage as _storage
 from services.supplier.supplier_order_service import (

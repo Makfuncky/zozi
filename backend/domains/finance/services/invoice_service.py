@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from models import Invoice, InvoiceItem, Order, OrderItem, Product, Shipment, User
+from _legacy.models import Invoice, InvoiceItem, Order, OrderItem, Product, Shipment, User
 from utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)

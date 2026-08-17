@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from models import User
+from _legacy.models import User
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 

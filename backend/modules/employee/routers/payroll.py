@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import EmployeeDocument
+from _legacy.models import EmployeeDocument
 from services.security.effective_permissions import check_permission
 from services.hr.payroll_engine import PayrollEngine
 

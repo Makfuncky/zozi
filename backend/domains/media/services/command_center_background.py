@@ -22,7 +22,7 @@ from providers.automation.scheduler import IntervalTrigger
 from providers.automation.scheduler import create_scheduler
 from infrastructure.database.database import get_service_session
 
-from models import (
+from _legacy.models import (
 
     CountryConfig,
 

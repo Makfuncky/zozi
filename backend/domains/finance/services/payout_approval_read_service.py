@@ -11,7 +11,7 @@ from typing import Any, cast
 
 from sqlalchemy.orm import Session, joinedload
 
-from models import (
+from _legacy.models import (
     FinanceAutomationLog,
     LogisticsPartner,
     LogisticsPartnerPayout,

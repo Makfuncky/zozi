@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from models import LogisticsPartner, LogisticsPartnerProfile
+from _legacy.models import LogisticsPartner, LogisticsPartnerProfile
 from services.logistics.logistics_health_engine import get_logistics_health_engine
 
 # Number of partners returned by the list endpoint.

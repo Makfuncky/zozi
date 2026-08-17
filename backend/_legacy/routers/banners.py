@@ -22,7 +22,7 @@ from controllers.catalog.banner_controller import (
     update_banner as update_banner_controller,
 )
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from utils.dependencies import require_admin
 
 router = APIRouter()

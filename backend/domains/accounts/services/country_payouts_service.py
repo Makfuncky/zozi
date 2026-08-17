@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from infrastructure.security.country_access import require_country_access
 from infrastructure.database.database import get_db
 
-from models import PayoutRuleCategory, PayoutRuleProduct
+from _legacy.models import PayoutRuleCategory, PayoutRuleProduct
 
 from infrastructure.utils.dependencies import get_current_user
 

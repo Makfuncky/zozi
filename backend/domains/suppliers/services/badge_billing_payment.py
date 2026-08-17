@@ -20,7 +20,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from models import BadgeBillingRecord, BankTransaction
+from _legacy.models import BadgeBillingRecord, BankTransaction
 from services.treasury.cash_management_service import log_bank_transaction
 from utils.datetime_utils import utcnow
 from utils.money import round_money, to_decimal

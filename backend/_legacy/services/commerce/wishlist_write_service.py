@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import WishlistItem
+from _legacy.models import WishlistItem
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import RolePermissionSetting
+from _legacy.models import RolePermissionSetting
 from utils.audit import AuditAction, audit_log
 import structlog
 logger = structlog.get_logger(__name__)

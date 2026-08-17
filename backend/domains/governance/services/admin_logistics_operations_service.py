@@ -196,7 +196,7 @@ class ResourceApprovalCheckIn(BaseModel):
 
 def verify_payout_route(payout_id: int, data: dict, db: Session=Depends(get_db), current_admin: dict=Depends(require_admin_2fa_verified)):
     require_permission('payouts.verify', current_admin)
-    from models import Payout
+    from _legacy.models import Payout
     payout = db.query(Payout).filter(Payout.id == payout_id).first()
     amount = float(payout.amount) if payout and payout.amount is not None else None
     require_approval(db, current_admin['id'], 'payout', amount=amount)
@@ -206,7 +206,7 @@ def admin_email_stats(db: Session=Depends(get_db), current_admin: dict=Depends(g
     """Real email marketing statistics from the database."""
     require_permission('analytics.view', current_admin)
     from sqlalchemy import func as sqlfunc, case as sql_case
-    from models import NewsletterSubscriber, EmailCampaign, CampaignRecipient
+    from _legacy.models import NewsletterSubscriber, EmailCampaign, CampaignRecipient
     total_subscribers = db.query(sqlfunc.count(NewsletterSubscriber.id)).filter(NewsletterSubscriber.is_active == True).scalar() or 0
     campaign_stats = db.query(sqlfunc.count(EmailCampaign.id).label('total'), sqlfunc.sum(sql_case((EmailCampaign.status == 'sending', 1), else_=0)).label('active')).first()
     total_sent = db.query(sqlfunc.count(CampaignRecipient.id)).filter(CampaignRecipient.sent_at.isnot(None)).scalar() or 0
@@ -225,7 +225,7 @@ def admin_logistics_overview(db: Session=Depends(get_db), current_admin: dict=De
     """Admin overview of all shipments, carriers, and distribution channels."""
     require_permission('orders.manage', current_admin)
     from sqlalchemy import func as sqlfunc
-    from models import Shipment, ShippingCarrier, ShippingZone
+    from _legacy.models import Shipment, ShippingCarrier, ShippingZone
     shipment_counts = db.query(Shipment.status, sqlfunc.count(Shipment.id).label('count')).group_by(Shipment.status).all()
     channel_counts = db.query(Shipment.distribution_channel, sqlfunc.count(Shipment.id).label('count')).filter(Shipment.distribution_channel.isnot(None)).group_by(Shipment.distribution_channel).all()
     carriers = db.query(ShippingCarrier).filter(ShippingCarrier.is_active == True).all()

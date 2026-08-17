@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from models import User
+from _legacy.models import User
 from db.schemas import UserOut
 
 

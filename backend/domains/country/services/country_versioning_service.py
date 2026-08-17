@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from models import CountryConfigVersion
+from _legacy.models import CountryConfigVersion
 from services.logistics.logistics_partner_pricing import normalize_country_code
 
 

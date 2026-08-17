@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import Employee, AuditLog
+from _legacy.models import Employee, AuditLog
 from utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

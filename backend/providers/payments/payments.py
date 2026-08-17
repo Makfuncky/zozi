@@ -29,7 +29,7 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig
+from _legacy.models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig
 from events import PaymentConfirmedEvent
 from utils.config import settings
 from utils.cache import bump_product_cache_version as _bump_product_cache_version

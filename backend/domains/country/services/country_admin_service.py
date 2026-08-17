@@ -15,7 +15,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import CountryCommunication, CountryStaffAssignment
+from _legacy.models import CountryCommunication, CountryStaffAssignment
 
 from domains.country.models.country_enhancements import CountryCategoryTaxRate, CountryCity
 

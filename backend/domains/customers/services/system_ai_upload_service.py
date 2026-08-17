@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 
 from modules.admin.routers.auth import require_roles
-from models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
+from _legacy.models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
 
 from infrastructure.utils.variant_key import compute_variant_key
 

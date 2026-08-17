@@ -8,14 +8,14 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
-from models import (
+from _legacy.models import (
     LandedCostAllocation,
     CustomsEntry, ImportCostTemplate,
     Warehouse, Vendor, Product,
     Account, AccountGroup, AccountBalance,
     JournalEntry, JournalEntryLine,
 )
-from models.erp import (
+from _legacy.models.erp import (
     ImportShipment, ImportShipmentLine,
     PurchaseOrder, PurchaseOrderLine,
 )

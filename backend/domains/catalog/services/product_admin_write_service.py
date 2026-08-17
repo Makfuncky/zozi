@@ -11,7 +11,7 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Product
+from _legacy.models import Product
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -11,4 +11,4 @@ be the same object. ``models`` never imports ``db.base`` (it only depends on
 """
 from __future__ import annotations
 
-from models import Base  # noqa: F401  -- single canonical declarative base
+from _legacy.models import Base  # noqa: F401  -- single canonical declarative base

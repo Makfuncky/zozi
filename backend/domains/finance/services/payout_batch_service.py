@@ -16,7 +16,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from models import (
+from _legacy.models import (
     PayoutBatch,
     PayoutBatchItem,
     SupplierSettlement,

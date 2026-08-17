@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import Category
+from _legacy.models import Category
 
 
 def list_categories_paginated(

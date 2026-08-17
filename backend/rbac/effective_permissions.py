@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Set, Tuple
 from sqlalchemy.orm import Session
 
 from db.database import SessionLocal
-from models import User, Employee, CountryStaffAssignment, Permission, RolePermissionAssignment, UserPermissionOverride
+from _legacy.models import User, Employee, CountryStaffAssignment, Permission, RolePermissionAssignment, UserPermissionOverride
 from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP, STAFF_PERMISSION_GROUPS
 
 logger = logging.getLogger(__name__)
@@ -567,4 +567,4 @@ def require_permissions(permission_slugs: list):
 
 
 from db.database import get_db
-from models.permissions import PermissionAuditLog
+from _legacy.models.permissions import PermissionAuditLog

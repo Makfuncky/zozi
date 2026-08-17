@@ -8,4 +8,4 @@ this package forwards to it so ``models.catalog.Product`` and
 """
 from __future__ import annotations
 
-from models.products import *  # noqa: F401,F403
+from _legacy.models.products import *  # noqa: F401,F403

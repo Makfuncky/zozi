@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from models.core import (
+from _legacy.models.core import (
     EntityChatThread, EntityChatMessage, DirectChatRoom, DirectChatMessage,
     GroupChatRoom, GroupChatMember,
 )

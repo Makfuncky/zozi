@@ -9,4 +9,4 @@ tables).
 """
 from __future__ import annotations
 
-from models.media_models import *  # noqa: F401,F403
+from _legacy.models.media_models import *  # noqa: F401,F403

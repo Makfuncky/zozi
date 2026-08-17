@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     GatewaySettlementSchedule,
     Order,
     BankStatementLine,

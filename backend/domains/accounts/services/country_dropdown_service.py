@@ -15,7 +15,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import Category, CountryCity, CountryConfig
+from _legacy.models import Category, CountryCity, CountryConfig
 
 class CityResponse(BaseModel):
     id: int

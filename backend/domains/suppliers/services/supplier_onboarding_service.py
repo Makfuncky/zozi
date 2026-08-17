@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, List, Optional
 
 from db.database import get_db_context
-from models import CountryConfig, SupplierOnboardingSync
+from _legacy.models import CountryConfig, SupplierOnboardingSync
 
 logger = logging.getLogger(__name__)
 

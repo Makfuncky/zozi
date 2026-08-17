@@ -17,7 +17,7 @@ from typing import List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CountryCommunication,
     CountryConfig,
     CountryConfigVersion,

@@ -17,7 +17,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest
 
-from models import SupplierProfile, User
+from _legacy.models import SupplierProfile, User
 
 from infrastructure.utils.country_rls import enforce_country_access
 
@@ -157,7 +157,7 @@ def suspend_supplier(code: str, supplier_id: int, _: User, db: Session):
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from models import User as UserModel
+    from _legacy.models import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 0
@@ -169,7 +169,7 @@ def activate_supplier(code: str, supplier_id: int, _: User, db: Session):
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from models import User as UserModel
+    from _legacy.models import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 1

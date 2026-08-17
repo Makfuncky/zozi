@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.schemas import CategoryCreate, CategoryOut, CategoryUpdate, MessageResponse
-from models import Category, User
+from _legacy.models import Category, User
 from utils.dependencies import require_admin
 from utils.slug import generate_slug
 

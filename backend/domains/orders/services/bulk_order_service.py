@@ -9,7 +9,7 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from models import Order
+from _legacy.models import Order
 import structlog
 logger = structlog.get_logger(__name__)
 

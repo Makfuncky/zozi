@@ -13,7 +13,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import GoodsReceiptNote, PurchaseOrder, SalesOrder, StockMovement
+from _legacy.models import GoodsReceiptNote, PurchaseOrder, SalesOrder, StockMovement
 
 
 def get_purchase_order(db: Session, po_id: int) -> Optional[PurchaseOrder]:

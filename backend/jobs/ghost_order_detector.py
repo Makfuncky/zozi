@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from infrastructure.database.database import SessionLocal
-from models import Order, ProcessedWebhookEvent
+from _legacy.models import Order, ProcessedWebhookEvent
 
 logger = logging.getLogger(__name__)
 

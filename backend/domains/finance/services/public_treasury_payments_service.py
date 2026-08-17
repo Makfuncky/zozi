@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from infrastructure.database.database import get_db
 
-from models import (
+from _legacy.models import (
     LogisticsPartner,
     LogisticsPartnerPayout,
     Payout,

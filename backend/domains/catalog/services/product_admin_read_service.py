@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import Product
+from _legacy.models import Product
 from utils.pagination import paginated_response
 
 

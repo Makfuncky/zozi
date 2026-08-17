@@ -16,7 +16,7 @@ def get_logistics_health(partner_id: int, country_code: str, current_user: dict,
     return engine.calculate_health_score(partner_id, country_code)
 
 def list_logistics_health(country_code: str, current_user: dict, db: Session):
-    from models import LogisticsPartner, LogisticsPartnerProfile
+    from _legacy.models import LogisticsPartner, LogisticsPartnerProfile
     profiles = db.query(LogisticsPartnerProfile).all()
     results = []
     for p in profiles:

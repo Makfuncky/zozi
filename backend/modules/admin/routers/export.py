@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models.employee_models import Employee
+from _legacy.models.employee_models import Employee
 
 router = APIRouter()
 

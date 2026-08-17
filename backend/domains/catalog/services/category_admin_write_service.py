@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Category
+from _legacy.models import Category
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context
 from utils.category_tree import rebuild_category_paths

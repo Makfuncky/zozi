@@ -60,7 +60,7 @@ from sqlalchemy.orm import Session
 
 
 
-from models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig
+from _legacy.models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig
 
 from events import PaymentConfirmedEvent
 

@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from models import FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue, IPReputation, DeviceFingerprint, User
+from _legacy.models import FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue, IPReputation, DeviceFingerprint, User
 from infrastructure.database.schemas import FraudScoreRequest, FraudScoreResponse, FraudEventOut, FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut, ManualReviewOut, ManualReviewAssign, ManualReviewResolve, IPReputationOut, DeviceFingerprintOut, ThreatFeedStatus, FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck, ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
 from services.security.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
 from infrastructure.utils.dependencies import require_admin

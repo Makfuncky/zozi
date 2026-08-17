@@ -6,7 +6,7 @@ from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
 from infrastructure.database.schemas import EmailCampaignCreate
-from models import CampaignRecipient, EmailCampaign, NewsletterSubscriber
+from _legacy.models import CampaignRecipient, EmailCampaign, NewsletterSubscriber
 
 from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context

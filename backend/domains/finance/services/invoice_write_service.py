@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from models import Invoice, InvoiceItem
+from _legacy.models import Invoice, InvoiceItem
 import structlog
 logger = structlog.get_logger(__name__)
 

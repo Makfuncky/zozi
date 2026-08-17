@@ -8,7 +8,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     AccountGroup,

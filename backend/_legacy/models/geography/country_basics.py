@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, Column, DateTime, Index, Integer, Numeric, Strin
 from sqlalchemy.orm import relationship
 from utils.datetime_utils import utcnow as utcnow
 from . import Base
-from models.mixins import VersionMixin
+from _legacy.models.mixins import VersionMixin
 __all__ = ['CountryBasics']
 
 class CountryBasics(Base):

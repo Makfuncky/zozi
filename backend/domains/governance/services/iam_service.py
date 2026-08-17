@@ -12,7 +12,7 @@ from math import radians, sin, cos, sqrt, atan2
 
 from sqlalchemy.orm import Session
 
-from models import User, UserDevice, Employee
+from _legacy.models import User, UserDevice, Employee
 from domains.hr.models.employee_models import Office, GeoFenceLog
 
 

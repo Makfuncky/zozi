@@ -27,7 +27,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from fastapi import HTTPException
-from models import Order, OrderItem, Shipment, ShipmentEvent, User, LogisticsPartner, Notification
+from _legacy.models import Order, OrderItem, Shipment, ShipmentEvent, User, LogisticsPartner, Notification
 from utils.config import settings
 from utils.datetime_utils import utcnow as _utcnow
 

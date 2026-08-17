@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import CashAccount, CashTransaction, User
+from _legacy.models import CashAccount, CashTransaction, User
 from db.schemas import CashAccountCreate, CashAccountOut, CashTransactionCreate, CashTransactionOut
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404

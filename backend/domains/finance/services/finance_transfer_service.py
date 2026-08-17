@@ -18,7 +18,7 @@ from providers.payments.connect import (
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, FinanceBankAccount, LogisticsPartnerBankAccount, LogisticsPartnerPayout, LogisticsSettlement, Payout, SupplierBankAccount
+from _legacy.models import CountryConfig, FinanceBankAccount, LogisticsPartnerBankAccount, LogisticsPartnerPayout, LogisticsSettlement, Payout, SupplierBankAccount
 from utils.config import settings
 from utils.money import round_money, to_decimal
 

@@ -15,7 +15,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, Order, Product
+from _legacy.models import CountryConfig, Order, Product
 from services.finance.tax_service import calculate_tax, get_country_config
 from utils.money import to_decimal
 

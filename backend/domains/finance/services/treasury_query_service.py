@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CashFlowForecast,
     Employee,
     JournalEntry,

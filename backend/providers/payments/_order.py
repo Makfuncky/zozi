@@ -11,7 +11,7 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from models import Coupon, Order, OrderItem, Payment, Product, Notification
+from _legacy.models import Coupon, Order, OrderItem, Payment, Product, Notification
 from events import (
     PaymentConfirmedEvent,
     PaymentFailedEvent,

@@ -14,7 +14,7 @@ from typing import Any, Optional
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from models import AuditLog
+from _legacy.models import AuditLog
 
 __all__ = ["get_audit_logs", "get_unique_actions"]
 

@@ -14,7 +14,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from models import (
+from _legacy.models import (
     Customer, Vendor, APBill, ARInvoice, BankStatementLine, BankReconciliation,
     JournalEntry, JournalEntryLine, Account, AccountBalance, FiscalPeriod,
     Budget, FinanceAuditLog, BankMappingRule,

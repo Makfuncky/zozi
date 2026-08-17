@@ -17,7 +17,7 @@ from fastapi import HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CommissionAgreement,
     CommissionBadgeTier,
     CommissionCategoryRate,

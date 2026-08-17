@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models.core import Address
-from models.employee_models import (
+from _legacy.models.core import Address
+from _legacy.models.employee_models import (
     Employee,
     EmployeeDependent,
     EmployeeLeaveRequest,

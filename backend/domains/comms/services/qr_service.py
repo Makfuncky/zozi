@@ -10,7 +10,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from domains.hr.models.employee_models import Employee
-from models import User
+from _legacy.models import User
 from infrastructure.utils.config import settings
 
 

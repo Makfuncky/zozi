@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import Product, SupplierProfile
+from _legacy.models import Product, SupplierProfile
 from services.common.storage import storage as _storage
 from utils.config import settings
 from utils.datetime_utils import utcnow

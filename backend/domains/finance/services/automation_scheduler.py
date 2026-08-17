@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
-from models import (
+from _legacy.models import (
     TreasuryAccount, CashPositionSnapshot, CashFlowForecast,
     VATRemittance, JournalEntry, Account, AccountBalance,
     ARInvoice, Customer, Vendor, PurchaseOrder,
@@ -351,7 +351,7 @@ def _check_gateway_settlements(db: Session, country_code: str = None) -> list[di
 
 def _check_cod_remittances(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from models import Order
+    from _legacy.models import Order
     q = db.query(Order).filter(
         Order.payment_method == "cod",
         Order.status == "delivered",
@@ -430,7 +430,7 @@ def _check_orphan_journals(db: Session, country_code: str = None) -> list[dict]:
 
 def _check_pending_payouts(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from models import PayoutBatch
+    from _legacy.models import PayoutBatch
     q = db.query(PayoutBatch).filter(
         PayoutBatch.status.in_(["generated", "supplier_approved"]),
         PayoutBatch.created_at.isnot(None),
@@ -545,7 +545,7 @@ def run_full_automation(db: Session, country_code: str = None,
         # Period close (#28) - auto-close previous period on month-end
         try:
             from services.finance.period_close_service import close_period
-            from models import FiscalPeriod
+            from _legacy.models import FiscalPeriod
             prev_period = db.query(FiscalPeriod).filter(
                 FiscalPeriod.period_year == prev.year,
                 FiscalPeriod.period_month == prev.month,

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
-from models import SupplierProfile, User
+from _legacy.models import SupplierProfile, User
 from utils.dependencies import get_current_user, require_supplier
 from utils.slug import generate_slug
 

@@ -2,7 +2,7 @@
 from fastapi import Depends, HTTPException, Query, Body, Path
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from db.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404

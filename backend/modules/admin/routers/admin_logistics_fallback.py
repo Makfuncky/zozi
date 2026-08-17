@@ -22,7 +22,7 @@ from controllers.admin.admin_controller import (
     get_all_suppliers,
     list_pending_payouts,
 )
-from models import (
+from _legacy.models import (
     Category as CategoryModel,
     CommissionGlobalConfig,
     Employee,
@@ -45,7 +45,7 @@ def admin_dashboard_fallback(
 ):
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from models import User as UserModel, Order as OrderModel, Product as ProductModel
+    from _legacy.models import User as UserModel, Order as OrderModel, Product as ProductModel
 
     total_revenue = (
         db.query(sqlfunc.sum(Payment.amount))
@@ -76,7 +76,7 @@ def admin_stats_fallback(
 ):
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from models import User as UserModel, Order as OrderModel, Product as ProductModel
+    from _legacy.models import User as UserModel, Order as OrderModel, Product as ProductModel
 
     return {
         "total_users": db.query(sqlfunc.count(UserModel.id)).scalar() or 0,
@@ -185,7 +185,7 @@ def admin_employees_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all employees (no country code required)."""
-    from models import User as UserModel
+    from _legacy.models import User as UserModel
     skip = (page - 1) * page_size
     items = (
         db.query(Employee)
@@ -229,7 +229,7 @@ def admin_logistics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List logistics carriers and partners (no country code required)."""
-    from models import Shipment, ShippingZone
+    from _legacy.models import Shipment, ShippingZone
 
     carriers = db.query(ShippingCarrier).filter(
         ShippingCarrier.is_active == True
@@ -275,7 +275,7 @@ def admin_treasury_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury summary — redirect to /admin/treasury/metrics if you need full metrics."""
-    from models import Account as AccountModel, AccountBalance as AccountBalanceModel
+    from _legacy.models import Account as AccountModel, AccountBalance as AccountBalanceModel
 
     total_cash = (
         db.query(func.sum(AccountBalanceModel.balance))
@@ -300,7 +300,7 @@ def admin_treasury_metrics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury metrics summary (no country code required)."""
-    from models import Account as AccountModel, AccountBalance as AccountBalanceModel
+    from _legacy.models import Account as AccountModel, AccountBalance as AccountBalanceModel
 
     accounts = db.query(AccountModel).all()
     total_cash = (

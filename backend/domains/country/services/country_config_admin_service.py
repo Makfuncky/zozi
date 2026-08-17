@@ -16,7 +16,7 @@ from typing import Any
 from fastapi import HTTPException, Response
 from sqlalchemy.orm import Session
 
-from models import CountryCity, CountryCommissionRate, CountryConfig, CountryFeatureFlag
+from _legacy.models import CountryCity, CountryCommissionRate, CountryConfig, CountryFeatureFlag
 
 from services.geography.country_service import (
     _get_country_or_404,

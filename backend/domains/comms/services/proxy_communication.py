@@ -19,7 +19,7 @@ from providers.comms.twilio import (
     create_twilio_client,
 )
 
-from models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User, Order
+from _legacy.models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User, Order
 from db.database import get_service_session
 from utils.config import settings
 

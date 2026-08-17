@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from domains.media.services.db_read import all_rows, first
 
-from models import Order, OrderItem, User
+from _legacy.models import Order, OrderItem, User
 
 from modules.customer.routers.users import (
     _build_user_delete_blocker,

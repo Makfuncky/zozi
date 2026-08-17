@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, selectinload
 
-from models import AdminAnalyticsSnapshot, ChatbotQueryEvent, Product, Order, OrderItem, User
+from _legacy.models import AdminAnalyticsSnapshot, ChatbotQueryEvent, Product, Order, OrderItem, User
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_MAX_PAGE_SIZE, _ADMIN_DEFAULT_PAGE_SIZE
 from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP

@@ -17,7 +17,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Banner, Coupon, FlashSale, PromotionEngineConfig, PromotionOrderTier
+from _legacy.models import Banner, Coupon, FlashSale, PromotionEngineConfig, PromotionOrderTier
 
 
 def _banner_to_dict(b: Banner) -> dict:

@@ -28,7 +28,7 @@ def list_customer_health(
     page: int = 1,
     size: int = 100,
 ):
-    from models import User
+    from _legacy.models import User
     from utils.pagination import paginated_query
 
     users, total = paginated_query(

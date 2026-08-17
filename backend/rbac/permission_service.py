@@ -6,7 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models.permissions import (
+from _legacy.models.permissions import (
     Permission,
     PermissionAuditLog,
     PermissionCategory,

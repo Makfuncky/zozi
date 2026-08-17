@@ -8,7 +8,7 @@ import logging
 import json
 
 from db.database import get_db_context
-from models import CountryConfig
+from _legacy.models import CountryConfig
 from providers.geography.ip import detect_country_from_ip
 
 logger = logging.getLogger(__name__)

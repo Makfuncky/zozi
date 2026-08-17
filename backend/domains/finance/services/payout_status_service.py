@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from models import Payout
+from _legacy.models import Payout
 from utils.audit import AuditAction, audit_log
 from services.common.write_helpers import commit_and_refresh, commit_only
 from utils.datetime_utils import utcnow

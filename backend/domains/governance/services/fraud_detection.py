@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from sqlalchemy import text, func
 from sqlalchemy.orm import Session
 
-from models import AuditLog, Employee, User
+from _legacy.models import AuditLog, Employee, User
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

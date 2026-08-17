@@ -11,12 +11,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 from db.session import get_db
-from models import JournalEntry, JournalEntryLine, Account, AccountBalance, User, PayoutBatch, PayoutBatchItem, TreasuryAccount, VATRemittance, GatewaySettlementSchedule, CashPositionSnapshot, CashFlowForecast, BankTransaction, Invoice, SupplierSettlement, TransactionLedger
-from models.admin import LogisticsCODRemittanceReceipt
-from models.payments import Payout, Payment, LogisticsPartnerPayout
-from models.logistics import LogisticsPartner
-from models.orders import Order as OrderModel
-from models.employee_models import Employee
+from _legacy.models import JournalEntry, JournalEntryLine, Account, AccountBalance, User, PayoutBatch, PayoutBatchItem, TreasuryAccount, VATRemittance, GatewaySettlementSchedule, CashPositionSnapshot, CashFlowForecast, BankTransaction, Invoice, SupplierSettlement, TransactionLedger
+from _legacy.models.admin import LogisticsCODRemittanceReceipt
+from _legacy.models.payments import Payout, Payment, LogisticsPartnerPayout
+from _legacy.models.logistics import LogisticsPartner
+from _legacy.models.orders import Order as OrderModel
+from _legacy.models.employee_models import Employee
 from services.treasury.treasury_engine import TreasuryEngine
 from services.common.write_helpers import commit_only
 from utils.country_rls import get_country_or_404
@@ -59,8 +59,8 @@ def admin_payout_batches(db: Session, current_user: dict):
     return [{'id': b.id, 'batch_number': b.batch_number, 'country_code': b.country_code, 'total_amount': float(b.total_amount), 'status': b.status, 'created_at': b.created_at.isoformat(), 'created_by': b.created_by, 'created_by_name': b.creator.full_name if b.creator else None, 'approved_by': b.approved_by, 'approved_by_name': b.approver.full_name if b.approver else None} for b in batches]
 
 def admin_generate_payout_batch(country_code: str, cutoff_date: date, db: Session, current_user: dict):
-    from models.payments import Payout
-    from models.suppliers import SupplierProfile
+    from _legacy.models.payments import Payout
+    from _legacy.models.suppliers import SupplierProfile
     pending_payouts = db_read_execute(db, select(Payout).where(Payout.country_code == country_code, Payout.status == 'pending', Payout.created_at <= cutoff_date)).scalars().all()
     if not pending_payouts:
         raise HTTPException(status_code=404, detail='No pending payouts found for the given criteria')
@@ -108,7 +108,7 @@ def admin_vat_liability(country_code: Optional[str], period: str, db: Session, c
     return {'output_vat': float(output_vat), 'input_vat': float(input_vat), 'net_vat_due': float(output_vat - input_vat), 'country_code': country_code, 'period': period}
 
 def admin_cod_remittances(status: Optional[str], db: Session, current_user: dict):
-    from models.logistics import LogisticsPartner
+    from _legacy.models.logistics import LogisticsPartner
     query = select(LogisticsCODRemittanceReceipt, LogisticsPartner.name).outerjoin(LogisticsPartner, LogisticsCODRemittanceReceipt.partner_id == LogisticsPartner.id)
     if status:
         query = query.where(LogisticsCODRemittanceReceipt.status == status)
@@ -175,7 +175,7 @@ def consolidated_vat_liability(db: Session, current_user: dict):
     return [{'id': v.id, 'country_code': v.country_code, 'period_start': v.period_start.isoformat(), 'period_end': v.period_end.isoformat(), 'total_collected': float(v.vat_collected_amount or 0), 'total_deducted': float(v.vat_adjustment_amount or 0), 'net_due': float(v.amount_due or 0), 'status': v.status} for v in vats]
 
 def consolidated_cod_remittances(limit: int, db: Session, current_user: dict):
-    from models import Shipment as ShipmentModel
+    from _legacy.models import Shipment as ShipmentModel
     receipts = db_read_query(db, LogisticsCODRemittanceReceipt).order_by(LogisticsCODRemittanceReceipt.created_at.desc()).limit(limit).all()
     return [{'id': r.id, 'shipment_id': r.shipment_id, 'order_id': db_read_query(db, ShipmentModel.order_id).filter(ShipmentModel.id == r.shipment_id).scalar() if r.shipment_id else None, 'partner_id': r.partner_id, 'amount': float(r.amount), 'bank_reference': r.bank_reference, 'status': r.status, 'country_code': r.country_code, 'created_at': r.created_at.isoformat() if r.created_at else None} for r in receipts]
 
@@ -188,8 +188,8 @@ def consolidated_cash_forecasts(db: Session, current_user: dict):
     return [{'id': f.id, 'forecast_date': f.forecast_date.isoformat(), 'period_start': f.period_start.isoformat(), 'period_end': f.period_end.isoformat(), 'net_cash_flow': float(f.net_cash_flow), 'opening_balance': float(f.opening_balance), 'closing_balance': float(f.closing_balance)} for f in forecasts]
 
 def consolidated_reconciliation_pipeline(limit: int, db: Session, current_user: dict):
-    from models.orders import Order as OrderModel
-    from models.payments import Payment as PaymentModel, Payout
+    from _legacy.models.orders import Order as OrderModel
+    from _legacy.models.payments import Payment as PaymentModel, Payout
     pipeline = []
     orders = db_read_query(db, OrderModel).filter(OrderModel.status.in_(['shipped', 'delivered', 'completed', 'dispatched'])).order_by(OrderModel.updated_at.desc()).limit(limit).all()
     for order in orders:
@@ -236,7 +236,7 @@ def country_vat_liability(country_code: str, period: str, db: Session, current_u
     return {'output_vat': float(output_vat), 'input_vat': float(input_vat), 'net_vat_due': float(output_vat - input_vat), 'country_code': country_code.upper(), 'period': period}
 
 def country_cod_remittances(country_code: str, status: Optional[str], db: Session, current_user: dict):
-    from models.logistics import LogisticsPartner
+    from _legacy.models.logistics import LogisticsPartner
     cc = country_code.upper()
     query = select(LogisticsCODRemittanceReceipt, LogisticsPartner.name).outerjoin(LogisticsPartner, LogisticsCODRemittanceReceipt.partner_id == LogisticsPartner.id).where(LogisticsCODRemittanceReceipt.country_code == cc)
     if status:
@@ -264,17 +264,17 @@ def admin_reconciliation_pipeline(country_code: str, status: Optional[str], limi
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models.orders import Order as OrderModel, OrderItem
-        from models.payments import Payment as PaymentModel, Payout
-        from models.logistics import LogisticsPartner
-        from models.admin import LogisticsCODRemittanceReceipt
+        from _legacy.models.orders import Order as OrderModel, OrderItem
+        from _legacy.models.payments import Payment as PaymentModel, Payout
+        from _legacy.models.logistics import LogisticsPartner
+        from _legacy.models.admin import LogisticsCODRemittanceReceipt
         from services.finance.commission_engine import get_effective_rate
         pipeline = []
         orders = db_read_query(db, OrderModel).filter(OrderModel.country_code == cc, OrderModel.status.in_(['shipped', 'delivered', 'completed', 'dispatched'])).order_by(OrderModel.updated_at.desc()).limit(limit).all()
         for order in orders:
             order_total = float(getattr(order, 'total_amount', None) or getattr(order, 'total', 0) or 0)
             payment = db_read_query(db, PaymentModel).filter(PaymentModel.order_id == order.id).first()
-            from models import Shipment
+            from _legacy.models import Shipment
             shipment = db_read_query(db, Shipment).filter(Shipment.order_id == order.id).first()
             logistics_partner_name = None
             if shipment and shipment.carrier_name:
@@ -328,8 +328,8 @@ def admin_record_cod_remittance(country_code: str, order_id: int, partner_id: in
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models.orders import Order as OrderModel
-        from models import Shipment as ShipmentModel
+        from _legacy.models.orders import Order as OrderModel
+        from _legacy.models import Shipment as ShipmentModel
         shipment = db_read_query(db, ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
         receipt = LogisticsCODRemittanceReceipt(shipment_id=shipment.id if shipment else None, partner_id=partner_id, amount=amount, bank_reference=bank_reference, status='remitted', country_code=cc)
         db_write.add(db, receipt)
@@ -353,8 +353,8 @@ def admin_settle_supplier(country_code: str, order_id: int, supplier_id: int, ne
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models.orders import Order as OrderModel
-        from models.countries import CountryConfig
+        from _legacy.models.orders import Order as OrderModel
+        from _legacy.models.countries import CountryConfig
         gross = gross_amount if gross_amount is not None else net_amount
         resolved_currency = currency or 'USD'
         ccfg = db_read_query(db, CountryConfig).filter(CountryConfig.code == cc).first()
@@ -427,7 +427,7 @@ def country_payment_transactions(country_code: str, start_date: date, end_date: 
         clear_rls_context()
 
 def admin_supplier_payouts(status: Optional[str], db: Session, current_user: dict):
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
     query = select(Payout, SupplierProfile).outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id).order_by(Payout.created_at.desc())
     if status:
         query = query.where(Payout.status == status)
@@ -438,7 +438,7 @@ def country_supplier_payouts(country_code: str, status: Optional[str], db: Sessi
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from models.suppliers import SupplierProfile
+        from _legacy.models.suppliers import SupplierProfile
         query = select(Payout, SupplierProfile).outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id).where(Payout.country_code == country_code.upper()).order_by(Payout.created_at.desc())
         if status:
             query = query.where(Payout.status == status)

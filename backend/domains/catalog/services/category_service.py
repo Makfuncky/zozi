@@ -23,7 +23,7 @@ from typing import Any, Iterable, Mapping, Optional, Sequence
 
 from sqlalchemy.orm import Query, Session
 
-from models import Category
+from _legacy.models import Category
 from utils.category_tree import rebuild_category_paths
 from utils.slug import generate_slug
 import structlog

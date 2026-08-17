@@ -19,7 +19,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.database.database import SessionLocal
-from models import AuditLog, Coupon, Order, Product, User
+from _legacy.models import AuditLog, Coupon, Order, Product, User
 from services.finance.finance_transfer_service import build_transfer_export_payload
 from services.treasury.reporting_service import payroll_equity as _svc_payroll_equity
 from infrastructure.utils.background_jobs import enqueue_job, get_job

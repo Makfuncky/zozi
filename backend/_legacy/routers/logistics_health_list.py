@@ -28,7 +28,7 @@ def list_logistics_health(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models import LogisticsPartnerProfile, LogisticsPartner
+    from _legacy.models import LogisticsPartnerProfile, LogisticsPartner
     profiles = db.query(LogisticsPartnerProfile).all()
     results = []
     for p in profiles:

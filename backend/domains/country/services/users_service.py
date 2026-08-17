@@ -9,7 +9,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import UserAdminUpdate, UserOut, UserUpdate
 
-from models import User
+from _legacy.models import User
 
 from infrastructure.utils.dependencies import get_current_user, require_admin
 

@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from models import User, SupplierProfile as SP, Notification, SupplierProfile, Product, OrderItem, Order
+from _legacy.models import User, SupplierProfile as SP, Notification, SupplierProfile, Product, OrderItem, Order
 from services.common.db_read import (
     aggregate_rows,
     all_rows,
@@ -379,7 +379,7 @@ def get_pending_suppliers(db: Session, limit: Optional[int] = None, offset: int 
 
 
 def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
 
     user = first(db, User, [User.id == user_id, User.role == "supplier"])
     if not user:
@@ -411,7 +411,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
                 if isinstance(requirements, dict):
                     required_docs = requirements.get("required_documents", [])
                     if required_docs and isinstance(required_docs, list):
-                        from models import SupplierDocument
+                        from _legacy.models import SupplierDocument
                         approved_types = set()
                         for doc in all_rows(db, SupplierDocument, [
                             SupplierDocument.supplier_id == user_id,
@@ -456,7 +456,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
 
 
 def reject_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    from models import SupplierProfile
+    from _legacy.models import SupplierProfile
 
     user = first(db, User, [User.id == user_id, User.role == "supplier"])
     if not user:

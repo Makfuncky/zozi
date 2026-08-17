@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from models import Payout, TransactionLedger, SupplierSettlement, LogisticsSettlement, Notification
+from _legacy.models import Payout, TransactionLedger, SupplierSettlement, LogisticsSettlement, Notification
 from utils.audit import audit_log, AuditAction
 
 

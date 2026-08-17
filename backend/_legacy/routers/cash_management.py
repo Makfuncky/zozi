@@ -521,7 +521,7 @@ def logistics_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from models import LogisticsPartner
+    from _legacy.models import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return {"error": "Logistics partner not found"}, 404
@@ -536,7 +536,7 @@ def logistics_list_settlements(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from models import LogisticsPartner
+    from _legacy.models import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []
@@ -550,7 +550,7 @@ def logistics_list_ledger(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from models import LogisticsPartner
+    from _legacy.models import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []

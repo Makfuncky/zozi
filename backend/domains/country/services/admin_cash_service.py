@@ -9,7 +9,7 @@ from infrastructure.database.schemas import (
     CashTransactionCreate,
     CashTransactionOut,
 )
-from models import CashAccount
+from _legacy.models import CashAccount
 
 from services.common.misc_write_service import (
     create_cash_account as create_cash_account_model,

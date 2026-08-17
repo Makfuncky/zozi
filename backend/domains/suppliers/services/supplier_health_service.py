@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import SupplierProfile
+from _legacy.models import SupplierProfile
 from services.supplier.supplier_health_engine import get_supplier_health_engine
 import structlog
 logger = structlog.get_logger(__name__)

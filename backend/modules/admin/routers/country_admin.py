@@ -11,8 +11,8 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import CountryCommunication, CountryStaffAssignment
-from models.country_enhancements import CountryCategoryTaxRate, CountryCity
+from _legacy.models import CountryCommunication, CountryStaffAssignment
+from _legacy.models.country_enhancements import CountryCategoryTaxRate, CountryCity
 from services.audit.audit_trail_service import AuditTrailService
 from services.supplier.legal_contract_service import LegalContractService
 

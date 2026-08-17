@@ -12,7 +12,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import PushNotificationToken
+from _legacy.models import PushNotificationToken
 import structlog
 logger = structlog.get_logger(__name__)
 

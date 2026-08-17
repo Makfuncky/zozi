@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
 from utils.audit import AuditAction, audit_log
-from models import CityDistanceMatrix, LogisticsCategoryPricingRule, LogisticsCODRemittanceReceipt, LogisticsPartner, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsPartnerPayout, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsSettlement, LogisticsVehicleRule, Notification, Order, OrderLogisticsAllocation, Shipment, ShipmentConfirmation, ShipmentEvent, SupplierProfile, TransactionLedger, User
+from _legacy.models import CityDistanceMatrix, LogisticsCategoryPricingRule, LogisticsCODRemittanceReceipt, LogisticsPartner, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsPartnerPayout, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsSettlement, LogisticsVehicleRule, Notification, Order, OrderLogisticsAllocation, Shipment, ShipmentConfirmation, ShipmentEvent, SupplierProfile, TransactionLedger, User
 from services.treasury.cash_management_service import apply_shipment_vehicle_selection, create_cod_remittance_receipt, deserialize_pricing_breakdown_json, effective_allocation_delivery_amounts, list_cod_remittance_receipts, serialize_cod_remittance_receipt
 from services.finance.finance_transfer_service import build_transfer_reference
 from services.logistics.logistics_partner_pricing import normalize_city_name, normalize_country_code, partner_can_service_order, partner_is_profile_approved, quote_shipping_for_destination, serialize_category_pricing_rule, serialize_pricing_profile, serialize_service_area, serialize_vehicle_rule

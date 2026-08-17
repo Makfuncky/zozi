@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.schemas import UserAdminUpdate, UserOut, UserUpdate
-from models import User
+from _legacy.models import User
 from utils.dependencies import get_current_user, require_admin
 
 router = APIRouter()

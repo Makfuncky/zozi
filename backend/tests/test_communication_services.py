@@ -6,7 +6,7 @@ from datetime import date
 
 import pytest
 
-from models import User
+from _legacy.models import User
 from domains.hr.models.employee_models import Employee, EmailFolder, InternalEmail, ChatAttachment
 from domains.hr.services.employee_communication_service import (
     get_or_create_direct_room,

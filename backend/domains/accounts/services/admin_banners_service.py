@@ -27,7 +27,7 @@ from controllers.catalog.banner_controller import (
 
 from infrastructure.database.database import get_db
 
-from models import User
+from _legacy.models import User
 
 from infrastructure.utils.country_rls import get_country_or_404
 

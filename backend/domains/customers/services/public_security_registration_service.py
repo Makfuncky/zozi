@@ -10,7 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from models import User, UserLoginHistory
+from _legacy.models import User, UserLoginHistory
 from infrastructure.database.schemas import RegisterRequest, TokenResponse, UserOut
 from infrastructure.utils.auth import blacklist_token, create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
 from infrastructure.utils.audit import audit_log, AuditAction

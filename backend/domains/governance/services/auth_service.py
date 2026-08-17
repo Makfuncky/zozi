@@ -38,8 +38,8 @@ from infrastructure.utils.auth import (
     is_token_blacklisted,
 )
 from infrastructure.database.database import SessionLocal
-from models import User, UserDevice
-from models import (
+from _legacy.models import User, UserDevice
+from _legacy.models import (
     Employee,
     EmployeeBiometric,
     DynamicQRSession,
@@ -140,7 +140,7 @@ def _log_activity(
 ) -> None:
     """Append-only activity log entry."""
     try:
-        from models import EmployeeActivityLog
+        from _legacy.models import EmployeeActivityLog
 
         log_entry = EmployeeActivityLog(
             actor_employee_id=actor_employee_id,

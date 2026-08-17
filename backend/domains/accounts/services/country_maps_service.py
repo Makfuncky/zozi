@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from models import CountryCity, CountryConfig, CountryMapConfig
+from _legacy.models import CountryCity, CountryConfig, CountryMapConfig
 
 logger = logging.getLogger(__name__)
 

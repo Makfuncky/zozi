@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import Category, CountryCity, CountryConfig
+from _legacy.models import Category, CountryCity, CountryConfig
 
 router = APIRouter(tags=["country-data"])
 

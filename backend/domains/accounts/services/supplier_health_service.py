@@ -13,7 +13,7 @@ from services.supplier.supplier_health_engine import get_supplier_health_engine
 
 def get_supplier_health(supplier_id: int, country_code: str, current_user: dict, db: Session):
     if current_user.get("role") != "admin":
-        from models import SupplierProfile
+        from _legacy.models import SupplierProfile
         owns = db.query(SupplierProfile).filter(
             SupplierProfile.id == supplier_id,
             SupplierProfile.user_id == current_user["id"],
@@ -28,7 +28,7 @@ def list_supplier_health(country_code: str, current_user: dict, db: Session):
     arbitrary authenticated users (P0.8)."""
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    from models import SupplierProfile
+    from _legacy.models import SupplierProfile
     profiles = db.query(SupplierProfile).all()
     results = []
     for p in profiles:

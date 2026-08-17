@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.schemas import SupplierDocumentOut
-from models import SupplierDocument, SupplierProfile, User
+from _legacy.models import SupplierDocument, SupplierProfile, User
 from utils.dependencies import require_admin, require_supplier
 
 router = APIRouter()

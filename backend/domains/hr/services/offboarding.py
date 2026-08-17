@@ -9,8 +9,8 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from models.employee_models import Employee, PhysicalIDCard, DynamicQRSession
-from models import User, TreasuryAccount
+from _legacy.models.employee_models import Employee, PhysicalIDCard, DynamicQRSession
+from _legacy.models import User, TreasuryAccount
 from services.comms.notification_service import NotificationService
 
 

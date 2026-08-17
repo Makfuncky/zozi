@@ -370,7 +370,7 @@ async def auto_populate_country(body: AutoPopulateBody, current_user: dict, db: 
 def add_country_city(code: str, body: dict, current_user: dict, db: Session):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity, CountryConfig
+    from _legacy.models import CountryCity, CountryConfig
     country = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -391,7 +391,7 @@ def add_country_city(code: str, body: dict, current_user: dict, db: Session):
 def patch_country_city(code: str, city_id: int, body: dict, current_user: dict, db: Session):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity
+    from _legacy.models import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -404,7 +404,7 @@ def patch_country_city(code: str, city_id: int, body: dict, current_user: dict, 
 def delete_country_city(code: str, city_id: int, current_user: dict, db: Session):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity
+    from _legacy.models import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -429,7 +429,7 @@ def delete_country_city(code: str, city_id: int, current_user: dict, db: Session
 def toggle_country_active(code: str, current_user: dict, db: Session):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not c:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -468,7 +468,7 @@ def restore_country(code: str, current_user: dict, db: Session):
 def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict, db: Session):
     from controllers.country_controller import _record_admin_change, _require_full_admin
     _require_full_admin(current_user)
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = True
@@ -480,7 +480,7 @@ def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict, db: Sess
 def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict, db: Session):
     from controllers.country_controller import _record_admin_change, _require_full_admin
     _require_full_admin(current_user)
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = False
@@ -503,7 +503,7 @@ def list_country_commission_rates(code: str, current_user: dict, db: Session):
     from controllers.country_controller import _require_admin, _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from models import CountryCommissionRate
+    from _legacy.models import CountryCommissionRate
     rows = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper()
     ).order_by(CountryCommissionRate.supplier_tier, CountryCommissionRate.name).all()
@@ -519,7 +519,7 @@ def create_country_commission_rate(code: str, body: CountryCommissionRateItem, c
     _require_admin(current_user)
     _require_country_access(code, current_user)
     _get_country_or_404(code, db)
-    from models import CountryCommissionRate
+    from _legacy.models import CountryCommissionRate
     existing = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == body.supplier_tier,
@@ -549,7 +549,7 @@ def delete_country_commission_rate(code: str, tier: str, name: str, current_user
     )
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from models import CountryCommissionRate
+    from _legacy.models import CountryCommissionRate
     rate = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == tier,

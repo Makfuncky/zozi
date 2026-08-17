@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import CommissionBadgeTier, CommissionCategoryRate
+from _legacy.models import CommissionBadgeTier, CommissionCategoryRate
 import structlog
 logger = structlog.get_logger(__name__)
 

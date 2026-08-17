@@ -21,7 +21,7 @@ def resolve_country_from_ip(ip_address: str) -> Optional[str]:
 
 def get_country_details(country_code: Optional[str]) -> dict:
     from db.database import get_db_context
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
 
     with get_db_context() as db:
         country = (
@@ -41,7 +41,7 @@ def get_country_details(country_code: Optional[str]) -> dict:
 
 def list_geo_countries(skip: int, limit: int) -> list:
     from db.database import get_db_context
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
 
     with get_db_context() as db:
         countries = (

@@ -10,7 +10,7 @@ from sqlalchemy import func, text
 from pydantic import BaseModel, Field
 
 from utils.audit import AuditAction, audit_log
-from models import (
+from _legacy.models import (
     TreasuryAccount, TreasuryTransaction,
     JournalEntry, JournalEntryLine
 )
@@ -195,7 +195,7 @@ def create_journal_entry(
 
 def get_payroll_summary(country_code: str, db: Session) -> dict:
     """Get payroll summary for a country."""
-    from models.employee_models import Employee
+    from _legacy.models.employee_models import Employee
     result = db.execute(text("""
         SELECT 
             COUNT(*) as employee_count,

@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue,
     IPReputation, DeviceFingerprint, UserLoginHistory,
     CreditCardBin, ReturnAbusePattern, SupplierFraudIndicator,

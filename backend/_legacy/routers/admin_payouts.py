@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.schemas import PayoutCreate, PayoutOut
-from models import FinanceAutomationLog, Payout, User
+from _legacy.models import FinanceAutomationLog, Payout, User
 from utils.audit import AuditAction, audit_log
 from services.finance.auto_payout_scheduler import (
     get_background_job_status as _get_bg_status,

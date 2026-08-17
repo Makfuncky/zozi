@@ -1,7 +1,7 @@
 """Service methods for payroll read operations."""
 from __future__ import annotations
 from sqlalchemy.orm import Session
-from models import PayrollRecord
+from _legacy.models import PayrollRecord
 import structlog
 logger = structlog.get_logger(__name__)
 

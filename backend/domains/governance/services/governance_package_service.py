@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import Employee, EmployeeExpense, EmployeeLeaveLedger
+from _legacy.models import Employee, EmployeeExpense, EmployeeLeaveLedger
 from services.common.asset_tracking import AssetTrackingService
 from services.audit.compliance_engine import GCCComplianceEngine, get_compliance_engine
 from services.finance.expense_processing import ExpenseProcessingService

@@ -6,7 +6,7 @@ Allows linking messages to specific entities like orders, suppliers, tickets, or
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from db.database import get_db
-from models import Message, ShiftHandoverLog
+from _legacy.models import Message, ShiftHandoverLog
 
 
 class MessagingService:

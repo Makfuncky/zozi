@@ -9,7 +9,7 @@ from db.schemas import (
     CommissionCategoryRateCreate,
     CommissionCategoryRateOut,
 )
-from models import (
+from _legacy.models import (
     CommissionBadgeTier,
     CommissionCategoryRate,
     User,

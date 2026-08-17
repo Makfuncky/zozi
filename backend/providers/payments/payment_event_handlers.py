@@ -48,7 +48,7 @@ from events import (
 
 )
 
-from models import Order
+from _legacy.models import Order
 
 
 

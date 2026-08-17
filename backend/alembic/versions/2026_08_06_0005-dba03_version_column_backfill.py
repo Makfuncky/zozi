@@ -44,7 +44,7 @@ def _version_column() -> sa.Column:
 
 
 def _iter_deployed_tables(conn):
-    import models  # local import: keeps this revision importable in isolation
+    import _legacy.models as models  # local import: keeps this revision importable in isolation
     inspector = inspect(conn)
     for table in models.Base.metadata.tables.values():
         schema = table.schema

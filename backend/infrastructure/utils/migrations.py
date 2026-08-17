@@ -29,7 +29,7 @@ def check_schema_drift() -> bool:
     
     script = ScriptDirectory.from_config(cfg)
     
-    from models import Base as ModelsBase
+    from _legacy.models import Base as ModelsBase
     from infrastructure.database.database import engine
     from sqlalchemy import inspect
     

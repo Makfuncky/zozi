@@ -21,7 +21,7 @@ from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 from db.database import get_db
-from models import LogisticsPartner, LogisticsPartnerPayout, Payout, PayoutBatch, PayoutBatchItem, SupplierSettlement, User
+from _legacy.models import LogisticsPartner, LogisticsPartnerPayout, Payout, PayoutBatch, PayoutBatchItem, SupplierSettlement, User
 from utils.dependencies import require_admin
 from utils.datetime_utils import utcnow
 from utils.audit import audit_log, AuditAction

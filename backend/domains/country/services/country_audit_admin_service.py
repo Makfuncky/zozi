@@ -15,7 +15,7 @@ from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CountryCategoryTaxRate,
     CountryCity,
     CountryCommunication,

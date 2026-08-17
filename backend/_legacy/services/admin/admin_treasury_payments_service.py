@@ -24,7 +24,7 @@ from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 from db.database import get_db
-from models import LogisticsPartner, LogisticsPartnerPayout, Payout, PayoutBatch, PayoutBatchItem, SupplierSettlement, User
+from _legacy.models import LogisticsPartner, LogisticsPartnerPayout, Payout, PayoutBatch, PayoutBatchItem, SupplierSettlement, User
 from utils.dependencies import require_admin
 from controllers.treasury.payout_approval_controller import approve_payout as approve_payout_action, reject_payout as reject_payout_action, approve_batch as approve_batch_action, reject_batch as reject_batch_action, dispatch_batch as dispatch_batch_action
 

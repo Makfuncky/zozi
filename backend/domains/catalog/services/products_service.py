@@ -17,7 +17,7 @@ from fastapi.responses import Response
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from models import (
+from _legacy.models import (
     CartItem, Category, FlashSale, Notification, Order, OrderItem, Product, ProductVariant, Review, SupplierProfile, User, Wishlist, CountryConfig
 )
 from db.schemas import Product as ProductSchema, ProductCreate
@@ -550,7 +550,7 @@ def _list_products_cached(
         code = normalize_country_code(resolved_country)
         restriction_cache: dict[str, bool] = {}
         if code:
-            from models.countries import CountryConfig
+            from _legacy.models.countries import CountryConfig
             country = db.query(CountryConfig).filter(
                 CountryConfig.code == code,
                 CountryConfig.is_active == True,
@@ -890,7 +890,7 @@ def patch_product_stock(
     supplier_id = cast(int | None, getattr(product, "supplier_id"))
     if new_stock <= _LOW_STOCK_THRESHOLD and supplier_id:
         try:
-            from models import User as UserModel
+            from _legacy.models import User as UserModel
             from utils.email_service import send_email
             supplier = db.query(UserModel).filter(UserModel.id == supplier_id).first()
             supplier_email = cast(str | None, getattr(supplier, "email")) if supplier else None

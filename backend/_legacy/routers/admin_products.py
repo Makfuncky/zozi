@@ -14,7 +14,7 @@ from controllers.admin.admin_controller import (
 from controllers.products.products_controller import _bump_product_cache_version
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
-from models import Product
+from _legacy.models import Product
 from utils.country_rls import get_country_or_404
 from utils.dependencies import require_admin, require_super_admin
 from utils.pagination import paginated_response

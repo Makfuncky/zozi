@@ -13,7 +13,7 @@ from typing import Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     Account as AccountModel,
     AccountBalance as AccountBalanceModel,
     Category as CategoryModel,

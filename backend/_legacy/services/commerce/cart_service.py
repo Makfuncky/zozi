@@ -24,8 +24,8 @@ from db.schemas import (
     CartViewOut,
     ProductCartViewOut,
 )
-from models.comms.core import CartItem
-from models.products import Product
+from _legacy.models.comms.core import CartItem
+from _legacy.models.products import Product
 from services.orders.cart_write_service import (
     create_cart_item,
     delete_cart_items_by_user,

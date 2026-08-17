@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, File, UploadFile
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from utils.dependencies import require_admin
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context

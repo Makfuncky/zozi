@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import CountryCity, CountryConfig, CountryMapConfig
+from _legacy.models import CountryCity, CountryConfig, CountryMapConfig
 
 router = APIRouter(tags=["maps"])
 

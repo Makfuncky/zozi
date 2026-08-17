@@ -14,9 +14,9 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models import User
-from models.countries import CountryConfig
-from models.country_enhancements import CountryStaffAssignment
+from _legacy.models import User
+from _legacy.models.countries import CountryConfig
+from _legacy.models.country_enhancements import CountryStaffAssignment
 from utils.datetime_utils import utcnow as _utcnow
 import structlog
 logger = structlog.get_logger(__name__)

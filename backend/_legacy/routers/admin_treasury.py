@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     CashFlowForecast,
@@ -30,11 +30,11 @@ from models import (
     TreasuryAccount,
     VATRemittance,
 )
-from models.admin import LogisticsCODRemittanceReceipt
-from models.employee_models import Employee
-from models.logistics import LogisticsPartner
-from models.orders import Order as OrderModel
-from models.payments import LogisticsPartnerPayout, Payment, Payout
+from _legacy.models.admin import LogisticsCODRemittanceReceipt
+from _legacy.models.employee_models import Employee
+from _legacy.models.logistics import LogisticsPartner
+from _legacy.models.orders import Order as OrderModel
+from _legacy.models.payments import LogisticsPartnerPayout, Payment, Payout
 from services.treasury.treasury_engine import TreasuryEngine
 from utils.constants import (
     CASH_ACCOUNT,
@@ -212,7 +212,7 @@ def admin_generate_payout_batch(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from models.payments import Payout
+    from _legacy.models.payments import Payout
 
     pending_payouts = db.execute(
         select(Payout).where(
@@ -618,7 +618,7 @@ def consolidated_cod_remittances(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from models import Shipment as ShipmentModel
+    from _legacy.models import Shipment as ShipmentModel
     receipts = db.query(LogisticsCODRemittanceReceipt).order_by(LogisticsCODRemittanceReceipt.created_at.desc()).limit(limit).all()
     return [
         {
@@ -689,8 +689,8 @@ def consolidated_reconciliation_pipeline(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from models.payments import Payment as PaymentModel
-    from models.payments import Payout
+    from _legacy.models.payments import Payment as PaymentModel
+    from _legacy.models.payments import Payout
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -956,11 +956,11 @@ def admin_reconciliation_pipeline(
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models.admin import LogisticsCODRemittanceReceipt
-        from models.orders import Order as OrderModel
-        from models.orders import OrderItem
-        from models.payments import Payment as PaymentModel
-        from models.payments import Payout
+        from _legacy.models.admin import LogisticsCODRemittanceReceipt
+        from _legacy.models.orders import Order as OrderModel
+        from _legacy.models.orders import OrderItem
+        from _legacy.models.payments import Payment as PaymentModel
+        from _legacy.models.payments import Payout
         from services.commission_engine import get_effective_rate
 
         pipeline = []
@@ -975,7 +975,7 @@ def admin_reconciliation_pipeline(
                 PaymentModel.order_id == order.id
             ).first()
 
-            from models import Shipment
+            from _legacy.models import Shipment
             shipment = db.query(Shipment).filter(
                 Shipment.order_id == order.id
             ).first()
@@ -1078,8 +1078,8 @@ def admin_record_cod_remittance(
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models import Shipment as ShipmentModel
-        from models.orders import Order as OrderModel
+        from _legacy.models import Shipment as ShipmentModel
+        from _legacy.models.orders import Order as OrderModel
         shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
         receipt = LogisticsCODRemittanceReceipt(
             shipment_id=shipment.id if shipment else None,
@@ -1126,8 +1126,8 @@ def admin_settle_supplier(
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models.countries import CountryConfig
-        from models.orders import Order as OrderModel
+        from _legacy.models.countries import CountryConfig
+        from _legacy.models.orders import Order as OrderModel
         gross = gross_amount if gross_amount is not None else net_amount
         resolved_currency = currency or "USD"
         ccfg = db.query(CountryConfig).filter(CountryConfig.code == cc).first()
@@ -1335,7 +1335,7 @@ def admin_supplier_payouts(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from models.suppliers import SupplierProfile
+    from _legacy.models.suppliers import SupplierProfile
     query = (
         select(Payout, SupplierProfile)
         .outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id)
@@ -1371,7 +1371,7 @@ def country_supplier_payouts(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from models.suppliers import SupplierProfile
+        from _legacy.models.suppliers import SupplierProfile
         query = (
             select(Payout, SupplierProfile)
             .outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id)

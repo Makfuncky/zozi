@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from models import ProductVerification, Product, Order, Shipment
+from _legacy.models import ProductVerification, Product, Order, Shipment
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731

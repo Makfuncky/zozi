@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from utils.datetime_utils import utcnow as utcnow
-from models.mixins import VersionMixin
+from _legacy.models.mixins import VersionMixin
 __all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials', 'PayoutRule', 'TaxRule', 'ShippingRule', 'Message', 'PayoutRuleCategory', 'PayoutRuleProduct']
 
 class CountryConfig(Base):

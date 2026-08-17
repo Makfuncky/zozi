@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 
 
-from models import (
+from _legacy.models import (
 
     Notification,
 
@@ -426,7 +426,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
         from services.finance.invoice_service import create_invoice_from_order
 
-        from models import Invoice
+        from _legacy.models import Invoice
 
         has_invoice = db.query(Invoice).filter(
 
@@ -740,7 +740,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
 
 
 
-    from models import SupplierProfile as SP
+    from _legacy.models import SupplierProfile as SP
 
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
 

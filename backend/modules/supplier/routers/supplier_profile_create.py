@@ -7,7 +7,7 @@ Thin HTTP layer: delegates all profile business logic to
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from db.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
 from utils.dependencies import get_current_user, require_supplier
 from services.supplier.supplier_profile_write_service import (

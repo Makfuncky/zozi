@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CountryConfig,
     LogisticsPartner,
     LogisticsPartnerLocation,

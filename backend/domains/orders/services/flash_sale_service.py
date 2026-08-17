@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import FlashSale, FlashSaleItem
+from _legacy.models import FlashSale, FlashSaleItem
 from db.schemas import FlashSaleCreate
 import structlog
 logger = structlog.get_logger(__name__)

@@ -14,7 +14,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Product, SupplierProfile
+from _legacy.models import Product, SupplierProfile
 from utils.datetime_utils import utcnow
 from utils.pagination import paginated_response
 import structlog

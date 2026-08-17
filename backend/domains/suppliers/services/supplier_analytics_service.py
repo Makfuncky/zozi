@@ -8,7 +8,7 @@ from __future__ import annotations
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import OrderItem, Product
+from _legacy.models import OrderItem, Product
 from services.supplier.supplier_profile_write_service import get_supplier_profile
 import structlog
 logger = structlog.get_logger(__name__)

@@ -6,8 +6,8 @@ from fastapi import APIRouter, Body, Depends, Path, Request
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import User
-from models.core import VideoRoom
+from _legacy.models import User
+from _legacy.models.core import VideoRoom
 from services.comms.video_conferencing import get_video_conference
 from services.comms.video_room_service import (
     ensure_video_room_country,

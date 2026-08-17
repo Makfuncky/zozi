@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import CountryConfig, CountryStaffAssignment
+from _legacy.models import CountryConfig, CountryStaffAssignment
 from services.logistics.logistics_partner_pricing import normalize_country_code
 from utils.rls_interceptor import clear_rls_context, set_rls_context
 import structlog

@@ -218,7 +218,7 @@ def notify_suppliers_of_payout(
     users_by_id: dict[int, Any] = {}
     prefetch_error: Exception | None = None
     try:
-        from models import User
+        from _legacy.models import User
 
         unique_supplier_ids = list(dict.fromkeys(
             cast(int, entry.get("supplier_id")) for entry in payout_ids
@@ -332,8 +332,8 @@ def notify_logistics_partners_of_payout(
     users_by_id: dict[Any, Any] = {}
     prefetch_error: Exception | None = None
     try:
-        from models.logistics import LogisticsPartner
-        from models import User
+        from _legacy.models.logistics import LogisticsPartner
+        from _legacy.models import User
 
         unique_partner_ids = list(dict.fromkeys(
             cast(int, entry.get("partner_id")) for entry in payout_ids

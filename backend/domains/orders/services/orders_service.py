@@ -32,7 +32,7 @@ from services.gateways.payments import (
     is_checkout_payment_method_allowed,
     normalize_checkout_payment_method,
 )
-from models import (
+from _legacy.models import (
     LogisticsPartner,
     Notification,
     Order,
@@ -631,7 +631,7 @@ def _calculate_order_amounts(
             )
             # Persist cross-country session
             try:
-                from models.country_enhancements import CrossCountryCustomerSession
+                from _legacy.models.country_enhancements import CrossCountryCustomerSession
                 session = CrossCountryCustomerSession(
                     user_id=user_id,
                     source_country_code=home_country,

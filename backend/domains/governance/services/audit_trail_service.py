@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from db.database import get_db_context
-from models import CountryConfig
+from _legacy.models import CountryConfig
 import structlog
 logger = structlog.get_logger(__name__)
 

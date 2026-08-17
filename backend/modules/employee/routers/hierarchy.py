@@ -10,13 +10,13 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import (
+from _legacy.models import (
     CountryConfig,
     CountryHolidayCalendar,
     CountryStaffAssignment,
     OrgUnit,
 )
-from models.country_enhancements import CountryLocalization
+from _legacy.models.country_enhancements import CountryLocalization
 from services.hierarchy.hierarchy_service import (
     assign_matrix_manager,
     backfill_authority_levels,

@@ -21,7 +21,7 @@ from typing import Any, Optional, Sequence
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     CashFlowForecast,
@@ -35,12 +35,12 @@ from models import (
     TreasuryAccount,
     VATRemittance,
 )
-from models.admin import LogisticsCODRemittanceReceipt
-from models.employee_models import Employee
-from models.logistics import LogisticsPartner
-from models.orders import Order as OrderModel, OrderItem
-from models.payments import LogisticsPartnerPayout, Payment, Payout
-from models.suppliers import SupplierProfile
+from _legacy.models.admin import LogisticsCODRemittanceReceipt
+from _legacy.models.employee_models import Employee
+from _legacy.models.logistics import LogisticsPartner
+from _legacy.models.orders import Order as OrderModel, OrderItem
+from _legacy.models.payments import LogisticsPartnerPayout, Payment, Payout
+from _legacy.models.suppliers import SupplierProfile
 import structlog
 logger = structlog.get_logger(__name__)
 

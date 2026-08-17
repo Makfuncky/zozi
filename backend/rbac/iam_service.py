@@ -12,8 +12,8 @@ from math import asin, cos, radians, sin, sqrt
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
-from models import User
+from _legacy.models.employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
+from _legacy.models import User
 from utils.datetime_utils import utcnow as _utcnow
 
 _QR_SECRET_KEY = os.getenv("EMPLOYEE_QR_SECRET_KEY", "")

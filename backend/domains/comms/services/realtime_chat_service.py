@@ -12,7 +12,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models.core import (
+from _legacy.models.core import (
     DirectChatRoom,
     DirectChatMessage,
     GroupChatRoom,
@@ -20,7 +20,7 @@ from models.core import (
     EntityChatThread,
     EntityChatMessage,
 )
-from models import User
+from _legacy.models import User
 
 
 def get_user_name(db: Session, user_id: int) -> str:

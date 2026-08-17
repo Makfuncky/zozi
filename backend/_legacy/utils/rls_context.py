@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import Any, Generator
 
 from db.database import SessionLocal
-from models import User
+from _legacy.models import User
 from utils.rls_interceptor import clear_rls_context, set_rls_context
 
 logger = logging.getLogger(__name__)

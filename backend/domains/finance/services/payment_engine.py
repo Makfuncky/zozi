@@ -7,7 +7,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from models import CountryConfig, CountryGatewayCredentials
+from _legacy.models import CountryConfig, CountryGatewayCredentials
 from services.gateways.base import BasePaymentGateway
 from services.gateways.base_models import ConnectionTestResult, PaymentResult, RefundResult
 from services.gateways.registry import PaymentGatewayRegistry

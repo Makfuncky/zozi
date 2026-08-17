@@ -1,9 +1,9 @@
 """Service methods for WebSocket chat data access."""
 from __future__ import annotations
 from sqlalchemy.orm import Session
-from models import User
-from models.core import DirectChatRoom, GroupChatRoom, EntityChatThread, EntityChatMessage, DirectChatMessage, GroupChatMessage
-from models.comms import GroupChatMember
+from _legacy.models import User
+from _legacy.models.core import DirectChatRoom, GroupChatRoom, EntityChatThread, EntityChatMessage, DirectChatMessage, GroupChatMessage
+from _legacy.models.comms import GroupChatMember
 from utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)

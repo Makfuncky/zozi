@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from db.schemas import RegisterRequest, TokenResponse, UserOut
 from middleware.csrf_middleware import generate_csrf_token
-from models import User, UserLoginHistory
+from _legacy.models import User, UserLoginHistory
 from utils.audit import AuditAction, audit_log
 from utils.auth import (
     blacklist_token,

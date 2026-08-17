@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from utils.dependencies import require_supplier
 from services.supplier.supplier_analytics_service import get_supplier_analytics_summary
 

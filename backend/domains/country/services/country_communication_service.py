@@ -4,7 +4,7 @@ from utils.pagination import SAFE_QUERY_LIMIT
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from datetime import datetime, timezone
-from models import (
+from _legacy.models import (
     CountryCommunication,
     CrossCountryCustomerSession,
     LegalContractTemplate,

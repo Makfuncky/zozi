@@ -10,8 +10,8 @@ from typing import List, Optional, Dict
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from models.employee_models import Employee
-from models import User
+from _legacy.models.employee_models import Employee
+from _legacy.models import User
 
 logger = logging.getLogger("zozi.expense")
 

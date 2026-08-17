@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from models.core import VideoRoom, VideoRoomParticipant, VideoRoomRecording
+from _legacy.models.core import VideoRoom, VideoRoomParticipant, VideoRoomRecording
 from utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)
@@ -400,7 +400,7 @@ def get_video_conference(db: Session) -> VideoConferenceRoom:
 
 
 def list_all_video_rooms(db: Session, limit: int = 200) -> list:
-    from models.core import VideoRoom
+    from _legacy.models.core import VideoRoom
     from sqlalchemy import desc
     q = db.query(VideoRoom).order_by(desc(VideoRoom.created_at))
     return q.limit(limit).all()

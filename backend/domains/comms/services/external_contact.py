@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from models.comms import (
+from _legacy.models.comms import (
     ExternalContactMasking,
     ProxyChannel,
     ProxySession,

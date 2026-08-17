@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from db.schemas import CreateStaffAccount, UpdateStaffAccount
-from models import (
+from _legacy.models import (
     Address,
     AuditLog,
     BadgeBillingRecord,

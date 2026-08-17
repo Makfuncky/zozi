@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from controllers.admin.admin_controller import require_admin
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import ProxyChannel
+from _legacy.models import ProxyChannel
 from services.comms.proxy_communication import get_proxy_service
 
 router = APIRouter()

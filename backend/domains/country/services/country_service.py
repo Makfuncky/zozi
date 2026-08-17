@@ -10,7 +10,7 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session, Query
 from contextvars import ContextVar
 
-from models import (
+from _legacy.models import (
     AdminChangeAuditLog,
     CountryCommunication,
     CountryConfig,
@@ -1466,7 +1466,7 @@ def list_country_cities(
 
 def assign_staff_to_country(country_code: str, user_id: int, role_in_country: str, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    from models import User
+    from _legacy.models import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1497,7 +1497,7 @@ def list_country_staff(country_code: str, current_user: dict, db: Session) -> li
         CountryStaffAssignment.country_code == country_code.upper(),
         CountryStaffAssignment.is_active == True,
     ).order_by(CountryStaffAssignment.created_at.desc()).all()
-    from models import User
+    from _legacy.models import User
     user_ids = [r.user_id for r in rows]
     users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     return [

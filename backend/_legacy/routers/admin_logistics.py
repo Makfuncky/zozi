@@ -11,7 +11,7 @@ from controllers.admin.admin_controller import (
 )
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest
-from models import LogisticsPartner, User
+from _legacy.models import LogisticsPartner, User
 from utils.country_rls import get_country_or_404
 from utils.dependencies import require_admin, require_super_admin
 from utils.rls_interceptor import clear_rls_context, set_rls_context

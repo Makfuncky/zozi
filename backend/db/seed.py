@@ -9,7 +9,7 @@ from typing import Any, Callable
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from db.database import engine
-from models import (
+from _legacy.models import (
     Category,
     CountryConfig,
     EmailTemplate,
@@ -26,7 +26,7 @@ from models import (
     SupplierProfile,
     User,
 )
-from models.employee_models import (
+from _legacy.models.employee_models import (
     Employee,
     Office,
     EmployeeRole,
@@ -1129,7 +1129,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
 
 def _seed_countries(db: Session) -> None:
     logger.info("Seeding countries...")
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     
     existing_count = db.query(CountryConfig).count()
     if existing_count > 0:

@@ -22,7 +22,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from models import BOGOPromotion
+from _legacy.models import BOGOPromotion
 from utils.datetime_utils import utcnow
 
 logger = logging.getLogger(__name__)

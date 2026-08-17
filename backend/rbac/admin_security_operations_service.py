@@ -8,7 +8,7 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from models import IncidentWarRoom, User
+from _legacy.models import IncidentWarRoom, User
 
 from services.security.incident_service import get_incident_service, IncidentService
 

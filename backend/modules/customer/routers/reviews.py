@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db.schemas import ReviewCreate
-from models import Product, Review, User
+from _legacy.models import Product, Review, User
 from utils.dependencies import get_current_user
 
 router = APIRouter()

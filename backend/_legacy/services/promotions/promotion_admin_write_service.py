@@ -6,7 +6,7 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import Banner, Coupon, FlashSale, PromotionEngineConfig
+from _legacy.models import Banner, Coupon, FlashSale, PromotionEngineConfig
 import structlog
 logger = structlog.get_logger(__name__)
 

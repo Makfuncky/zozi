@@ -19,7 +19,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import EmployeeDocument
+from _legacy.models import EmployeeDocument
 
 from services.security.effective_permissions import check_permission
 

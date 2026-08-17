@@ -7,7 +7,7 @@ from typing import Any, Optional, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from models import SupportTicket, TicketMessage, TicketAttachment, Notification
+from _legacy.models import SupportTicket, TicketMessage, TicketAttachment, Notification
 from utils.audit import audit_log, AuditAction
 from utils.constants import _ADMIN_MAX_PAGE_SIZE
 

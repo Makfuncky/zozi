@@ -16,4 +16,4 @@ from .general_ledger import *  # noqa: F401,F403
 # ``commission`` stays a flat module (preserved for backward compatibility);
 # forward it here so ``models.finance.CommissionAgreement`` and
 # ``models.CommissionAgreement`` resolve to the same class object.
-from models.commission import *  # noqa: F401,F403
+from _legacy.models.commission import *  # noqa: F401,F403

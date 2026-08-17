@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from controllers.commerce.promotion_controller import get_promotion_config
 from db.database import get_db
-from models import Referral, User
+from _legacy.models import Referral, User
 from utils.dependencies import get_current_user
 
 router = APIRouter()

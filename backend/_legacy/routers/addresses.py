@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from utils.dependencies import get_current_user
 from db.database import get_db
-from models import Address
+from _legacy.models import Address
 from services.commerce.commerce_write_service import (
     create_address as create_address_model,
     update_address as update_address_model,

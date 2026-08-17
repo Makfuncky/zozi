@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import User, LogisticsPartner, Shipment
+from _legacy.models import User, LogisticsPartner, Shipment
 from utils.dependencies import require_logistics, require_admin
 from services.orders.order_tracking_service import (
     get_available_orders_for_logistics,

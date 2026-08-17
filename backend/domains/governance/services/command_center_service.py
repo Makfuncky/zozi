@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 
-from models import (
+from _legacy.models import (
     FraudAlert, SystemAlert, ExecutiveNews, CommandCenterView,
     User, Order, OrderItem, Product, Shipment, LogisticsPartner,
     CountryConfig, SystemHealthEvent, UserSession, ReturnRequest,

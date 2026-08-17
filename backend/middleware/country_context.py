@@ -30,7 +30,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
 from infrastructure.database.database import get_db
-from models import CountryConfig
+from _legacy.models import CountryConfig
 from infrastructure.utils.auth import decode_token, verify_token, SECRET_KEY, ALGORITHM
 from infrastructure.utils.config import settings
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context

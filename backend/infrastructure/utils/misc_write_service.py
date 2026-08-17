@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 
 
 
-from models import Banner, RolePermissionSetting, SupplierDispute
+from _legacy.models import Banner, RolePermissionSetting, SupplierDispute
 
 from db.seed import _ensure_demo_user, _seed_password
 

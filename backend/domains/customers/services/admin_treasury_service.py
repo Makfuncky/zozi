@@ -25,7 +25,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import (
+from _legacy.models import (
     Account,
     AccountBalance,
     CashFlowForecast,
@@ -516,7 +516,7 @@ def consolidated_vat_liability(db: Session = Depends(get_db), current_user: dict
 
 def consolidated_cod_remittances(limit: int = Query(50, ge=1, le=200), db: Session = Depends(get_db), current_user: dict = Depends(require_treasury_access)):
 
-    from models import Shipment as ShipmentModel
+    from _legacy.models import Shipment as ShipmentModel
     receipts = db.query(LogisticsCODRemittanceReceipt).order_by(LogisticsCODRemittanceReceipt.created_at.desc()).limit(limit).all()
     return [
         {
@@ -796,7 +796,7 @@ def admin_reconciliation_pipeline(country_code: str = Path(..., description='ISO
                 PaymentModel.order_id == order.id
             ).first()
 
-            from models import Shipment
+            from _legacy.models import Shipment
             shipment = db.query(Shipment).filter(
                 Shipment.order_id == order.id
             ).first()
@@ -889,7 +889,7 @@ def admin_record_cod_remittance(country_code: str = Path(..., description='ISO c
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from models import Shipment as ShipmentModel
+        from _legacy.models import Shipment as ShipmentModel
         from domains.orders.models import Order as OrderModel
         shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
         receipt = LogisticsCODRemittanceReceipt(

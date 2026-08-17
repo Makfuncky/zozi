@@ -21,7 +21,7 @@ from controllers.products.products_controller import (
     get_supplier_names as get_supplier_names_controller,
 )
 from db.database import get_db
-from models import Product
+from _legacy.models import Product
 from utils.slug import generate_slug, generate_slug_hash
 
 router = APIRouter()

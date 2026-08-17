@@ -25,7 +25,7 @@ from infrastructure.database.schemas import (
     OrderStatusUpdate,
 )
 
-from models import Order, User
+from _legacy.models import Order, User
 
 from infrastructure.utils.country_rls import get_country_or_404
 

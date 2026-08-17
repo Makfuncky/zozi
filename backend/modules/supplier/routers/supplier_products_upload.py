@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import Product
+from _legacy.models import Product
 from utils.dependencies import require_supplier
 from utils.config import settings
 from utils.file_validation import validate_upload_image

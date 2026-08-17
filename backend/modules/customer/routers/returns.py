@@ -14,7 +14,7 @@ from controllers.orders.returns_controller import (
 )
 from db.database import get_db
 from db.schemas import ReturnRequestCreate, ReturnRequestOut, ReturnRequestUpdate
-from models import ReturnRequest, User
+from _legacy.models import ReturnRequest, User
 from utils.dependencies import get_current_user, require_admin
 
 router = APIRouter()

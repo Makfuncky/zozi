@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from db.database import SessionLocal
 from utils.audit import AuditAction, audit_log
-from models import (
+from _legacy.models import (
     BadgeBillingRecord,
     BankTransaction,
     CommissionLedgerEntry,

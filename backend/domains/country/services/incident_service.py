@@ -11,7 +11,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import IncidentWarRoom
+from _legacy.models import IncidentWarRoom
 
 from services.security.incident_service import get_incident_service
 

@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import OrderItem, Product, SupplierProfile, User
+from _legacy.models import OrderItem, Product, SupplierProfile, User
 from utils.dependencies import require_supplier
 
 router = APIRouter()

@@ -10,4 +10,4 @@ directory resolves the file-vs-package name collision that broke
 """
 from __future__ import annotations
 
-from models.comms.core import *  # noqa: F401,F403
+from _legacy.models.comms.core import *  # noqa: F401,F403

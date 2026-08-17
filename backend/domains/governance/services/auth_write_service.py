@@ -17,7 +17,7 @@ from typing import Any, Callable, Optional
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import SessionLocal
-from models import (
+from _legacy.models import (
     EmailVerificationToken,
     LogisticsPartner,
     PasswordResetToken,

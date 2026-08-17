@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import Order, OrderItem, SupplierProfile, User
+from _legacy.models import Order, OrderItem, SupplierProfile, User
 from services.common.storage import storage as _storage
 from utils.dependencies import require_supplier
 
@@ -164,7 +164,7 @@ def _resolve_shipment_info(
 ) -> dict[str, Any]:
     """Resolve shipment info from the logistics models if available."""
     try:
-        from models import Shipment
+        from _legacy.models import Shipment
 
         shipment = (
             db.query(Shipment)

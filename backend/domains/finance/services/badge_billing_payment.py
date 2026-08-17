@@ -42,7 +42,7 @@ from sqlalchemy.orm import Session
 
 
 
-from models import BadgeBillingRecord, BankTransaction
+from _legacy.models import BadgeBillingRecord, BankTransaction
 
 from services.treasury.cash_management_service import log_bank_transaction
 

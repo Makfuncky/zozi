@@ -42,7 +42,7 @@ from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     FinanceAutomationLog,
     LogisticsPartnerPayout,
     LogisticsSettlement,
@@ -133,7 +133,7 @@ def run_auto_payout_sweep(
         # ── 2. Verify supplier bank accounts exist ───────────────────────────
         supplier_ids_in_scope = {cast(int, s.supplier_id) for s in settlements}
         try:
-            from models.suppliers import SupplierBankAccount
+            from _legacy.models.suppliers import SupplierBankAccount
 
             bank_accounts = (
                 db.query(SupplierBankAccount.supplier_id)
@@ -411,7 +411,7 @@ def run_auto_logistics_payout_sweep(
         # ── 2. Verify logistics partner bank accounts exist ─────────────────
         partner_ids_in_scope = {cast(int, s.partner_id) for s in settlements}
         try:
-            from models.admin import LogisticsPartnerBankAccount
+            from _legacy.models.admin import LogisticsPartnerBankAccount
 
             bank_accounts = (
                 db.query(LogisticsPartnerBankAccount.partner_id)

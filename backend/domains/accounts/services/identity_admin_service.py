@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import User
+from _legacy.models import User
 from services.admin.users_service import update_user_role, toggle_user_active
 from utils.country_rls import get_country_or_404
 from utils.rls_interceptor import set_rls_context, clear_rls_context

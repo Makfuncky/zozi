@@ -7,8 +7,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from models import CartItem
-from models.products import Product
+from _legacy.models import CartItem
+from _legacy.models.products import Product
 from utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)

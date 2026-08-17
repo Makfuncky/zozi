@@ -14,7 +14,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from models import Coupon, CouponUsage
+from _legacy.models import Coupon, CouponUsage
 from utils.datetime_utils import utcnow
 from utils.pagination import SAFE_QUERY_LIMIT
 import structlog

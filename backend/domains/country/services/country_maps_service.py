@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List
 import json
 from sqlalchemy.orm import Session
-from models import CountryCity, CountryStaffAssignment
+from _legacy.models import CountryCity, CountryStaffAssignment
 from utils.pagination import SAFE_QUERY_LIMIT
 import logging
 import structlog
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def get_country_map(country_code: str, include_cities: bool, limit: int = 20, cursor: str | None = None) -> dict:
     """Return a GeoJSON FeatureCollection for a country (regions + city markers)."""
     from db.database import get_db_context
-    from models import CountryConfig, CountryCity, CountryMapConfig
+    from _legacy.models import CountryConfig, CountryCity, CountryMapConfig
 
     cc = country_code.upper()
     with get_db_context() as db:
@@ -89,7 +89,7 @@ def get_country_map(country_code: str, include_cities: bool, limit: int = 20, cu
 def get_country_map_config(country_code: str) -> dict:
     """Get map display configuration for a country."""
     from db.database import get_db_context
-    from models import CountryMapConfig
+    from _legacy.models import CountryMapConfig
 
     cc = country_code.upper()
     with get_db_context() as db:

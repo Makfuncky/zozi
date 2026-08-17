@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
 
 from db.database import get_db
-from models import SupportTicket, TicketMessage, User
+from _legacy.models import SupportTicket, TicketMessage, User
 from utils.dependencies import get_current_user
 
 router = APIRouter()

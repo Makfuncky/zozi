@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from models import Employee, Notification, PushNotificationToken
+from _legacy.models import Employee, Notification, PushNotificationToken
 from services.hr.attendance_service import AttendanceService
 from services.finance.expense_processing import ExpenseProcessingService
 from services.hr.leave_accrual import LeaveAccrualEngine

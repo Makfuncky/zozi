@@ -13,7 +13,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import CountryConfig, LogisticsPartner, LogisticsPartnerLocation
+from _legacy.models import CountryConfig, LogisticsPartner, LogisticsPartnerLocation
 
 logger = logging.getLogger(__name__)
 

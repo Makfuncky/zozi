@@ -19,7 +19,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models import FraudEvent
+from _legacy.models import FraudEvent
 import structlog
 logger = structlog.get_logger(__name__)
 

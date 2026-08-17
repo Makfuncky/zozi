@@ -12,7 +12,7 @@ from controllers.admin.admin_controller import (
 )
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest
-from models import (
+from _legacy.models import (
     Banner,
     Coupon,
     FlashSale,

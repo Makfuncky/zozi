@@ -8,13 +8,13 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     User, LogisticsPartner, Order, CountryConfig,
     SystemHealthEvent, FraudAlert, NewsSource, NewsArticle,
     InternalNotice, PredictiveSimulation, AlertEscalationRule,
     ExecutiveNews
 )
-from models.employee_models import Employee
+from _legacy.models.employee_models import Employee
 from utils.config import settings
 from utils.redis_client import redis_client
 

@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
-from models import (
+from _legacy.models import (
     LandedCostAllocation,
     CustomsEntry, ImportCostTemplate,
     Warehouse, Vendor, Product,

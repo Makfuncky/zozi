@@ -9,7 +9,7 @@ from decimal import Decimal
 from datetime import datetime
 
 from db.database import get_db_context
-from models import CountryConfig, PaymentOrchestratorSync
+from _legacy.models import CountryConfig, PaymentOrchestratorSync
 
 logger = logging.getLogger(__name__)
 

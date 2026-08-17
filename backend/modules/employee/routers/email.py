@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from controllers.admin.admin_controller import require_roles
 from db.database import get_db
-from models.marketing import (
+from _legacy.models.marketing import (
     EmailCampaign,
     EmailRuntimeConfig,
     EmailSuppression,
@@ -148,7 +148,7 @@ def list_templates(current_user: AdminUser, db: Session = Depends(get_db)):
 
 @router.get("/campaigns")
 def list_campaigns(current_user: AdminUser, db: Session = Depends(get_db)):
-    from models.marketing import EmailCampaign
+    from _legacy.models.marketing import EmailCampaign
     campaigns = db.query(EmailCampaign).order_by(desc(EmailCampaign.created_at)).all()
     return [
         {

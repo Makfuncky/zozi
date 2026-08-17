@@ -21,7 +21,7 @@ class RLSMiddleware:
     def get_user_countries(self, user_id: int) -> List[str]:
         """Get list of countries the user is assigned to manage."""
         from db.database import get_service_session
-        from models import CountryStaffAssignment
+        from _legacy.models import CountryStaffAssignment
         
         with get_service_session() as db:
             assignments = db.query(CountryStaffAssignment).filter(

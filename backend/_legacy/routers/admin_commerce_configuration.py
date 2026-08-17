@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import PromotionEngineConfig, PromotionOrderTier, FlashSale, Banner, Coupon, User
+from _legacy.models import PromotionEngineConfig, PromotionOrderTier, FlashSale, Banner, Coupon, User
 from db.schemas import ArchiveRequest, BulkActionRequest
 from utils.dependencies import require_admin
 from utils.country_rls import enforce_country_access

@@ -8,4 +8,4 @@ to the same class object (no duplicate tables).
 """
 from __future__ import annotations
 
-from models.user import *  # noqa: F401,F403
+from _legacy.models.user import *  # noqa: F401,F403

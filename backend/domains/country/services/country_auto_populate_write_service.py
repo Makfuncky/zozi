@@ -12,8 +12,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from models.countries import CountryConfig
-from models.country_enhancements import (
+from _legacy.models.countries import CountryConfig
+from _legacy.models.country_enhancements import (
     CountryCity,
     CountryCommissionRate,
     SupplierKYCRequirement,

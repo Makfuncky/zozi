@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from models import IncidentWarRoom, User
+from _legacy.models import IncidentWarRoom, User
 from services.security.incident_service import get_incident_service, IncidentService
 from db.database import get_db
 from controllers.security.auth_controller import get_current_user

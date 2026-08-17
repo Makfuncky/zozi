@@ -11,7 +11,7 @@ from typing import Any, Mapping
 from sqlalchemy.orm import Session
 
 from db.database import SessionLocal
-from models import CampaignRecipient, EmailDeliveryEvent, EmailProviderConfig, EmailSuppression, ProcessedWebhookEvent
+from _legacy.models import CampaignRecipient, EmailDeliveryEvent, EmailProviderConfig, EmailSuppression, ProcessedWebhookEvent
 from utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)

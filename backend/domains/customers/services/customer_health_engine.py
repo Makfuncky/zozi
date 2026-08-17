@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from models import User, Order, ReturnRequest
+from _legacy.models import User, Order, ReturnRequest
 
 
 class CustomerHealthEngine:

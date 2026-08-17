@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from services.common.db_read import query as db_read_query
 import services.common.db_write as db_write
-from models import User
+from _legacy.models import User
 
 from utils.audit import audit_log, AuditAction
 from utils.country_rls import get_country_or_404

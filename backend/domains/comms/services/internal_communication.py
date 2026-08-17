@@ -6,12 +6,12 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from models.communication import (
+from _legacy.models.communication import (
     InternalChannel,
     InternalChannelMember,
     InternalMessage,
 )
-from models.comms.communication import EmailFolder, InternalEmail
+from _legacy.models.comms.communication import EmailFolder, InternalEmail
 
 logger = logging.getLogger("zozi.internal_comm")
 

@@ -34,7 +34,7 @@ from domains.accounts.models.core import (
     GroupChatRoom, GroupChatMember, GroupChatMessage,
 )
 from domains.hr.models.employee_models import InternalEmail, EmailFolder, Employee
-from models import CommissionCategoryRate, CommissionBadgeTier
+from _legacy.models import CommissionCategoryRate, CommissionBadgeTier
 from domains.finance.services.commission_engine import seed_defaults, get_global_config
 from infrastructure.utils.auth import get_password_hash
 from sqlalchemy import text

@@ -248,7 +248,7 @@ def coi_check_endpoint(
     """Run a simple conflict-of-interest check by examining employee relations
     and shared departments. Returns any detected conflicts."""
     try:
-        from models.employee_models import Employee, EmployeeRelation
+        from _legacy.models.employee_models import Employee, EmployeeRelation
     except Exception as exc:
         logger.warning("EmployeeRelation model not available: %s", exc)
         return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}

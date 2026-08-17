@@ -8,4 +8,4 @@ compatibility); this package forwards to it so ``models.hr.Employee`` and
 """
 from __future__ import annotations
 
-from models.employee_models import *  # noqa: F401,F403
+from _legacy.models.employee_models import *  # noqa: F401,F403

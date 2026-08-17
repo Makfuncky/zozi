@@ -10,7 +10,7 @@ from fastapi.responses import Response
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
-from models.products import Product
+from _legacy.models.products import Product
 from utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
 
 # ── Price-range keyword map ────────────────────────────────────────────────

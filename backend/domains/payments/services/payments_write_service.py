@@ -9,7 +9,7 @@ from domains.finance.services.invoice_write_service import _apply_changes
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from models import Notification, Payment, PaymentGatewayConnection, PaymentProviderConfig, ProcessedWebhookEvent, User
+from _legacy.models import Notification, Payment, PaymentGatewayConnection, PaymentProviderConfig, ProcessedWebhookEvent, User
 import structlog
 logger = structlog.get_logger(__name__)
 

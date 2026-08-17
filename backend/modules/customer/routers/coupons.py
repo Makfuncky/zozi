@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import Coupon, CouponUsage
+from _legacy.models import Coupon, CouponUsage
 from utils.datetime_utils import utcnow
 
 router = APIRouter()

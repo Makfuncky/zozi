@@ -12,7 +12,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 
-from models import FinanceAutomationLog, Payout, User
+from _legacy.models import FinanceAutomationLog, Payout, User
 
 from infrastructure.utils.audit import AuditAction, audit_log
 

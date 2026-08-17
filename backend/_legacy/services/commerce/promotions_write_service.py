@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from models.admin import (
+from _legacy.models.admin import (
     PromotionEngineConfig,
     PromotionLedgerEntry,
     PromotionOrderTier,

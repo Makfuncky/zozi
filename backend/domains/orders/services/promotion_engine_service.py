@@ -10,7 +10,7 @@ from typing import Optional
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import Session
 
-from models import Base, PromotionEngineConfig
+from _legacy.models import Base, PromotionEngineConfig
 from utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)

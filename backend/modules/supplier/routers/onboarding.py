@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import User
+from _legacy.models import User
 from services.supplier.onboarding_pipeline import (
     get_onboarding_service,
 )

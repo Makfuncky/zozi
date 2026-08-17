@@ -20,7 +20,7 @@ def get_supplier_health(
 ):
     # Allow admins, or the supplier who owns the profile identified by supplier_id.
     if current_user.get("role") != "admin":
-        from models import SupplierProfile
+        from _legacy.models import SupplierProfile
         owns = db.query(SupplierProfile).filter(
             SupplierProfile.id == supplier_id,
             SupplierProfile.user_id == current_user["id"],
@@ -41,7 +41,7 @@ def list_supplier_health(
     arbitrary authenticated users (P0.8)."""
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    from models import SupplierProfile
+    from _legacy.models import SupplierProfile
     profiles = db.query(SupplierProfile).all()
     results = []
     for p in profiles:

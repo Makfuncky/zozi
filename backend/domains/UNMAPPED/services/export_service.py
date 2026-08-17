@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 from utils.audit import audit_log, AuditAction
 from db.database import SessionLocal
-from models import AuditLog, Coupon, Order, Product, User
+from _legacy.models import AuditLog, Coupon, Order, Product, User
 from services.core.export_read_service import (
     MAX_EXPORT_ROWS,
     db_auditlog_query_4,

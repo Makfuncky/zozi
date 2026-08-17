@@ -9,7 +9,7 @@ banned for those layers. All model classes are re-exported unchanged.
 from __future__ import annotations
 
 import types as _types
-import models as _models
+import _legacy.models as _models
 
 _g = globals()
 for _n in dir(_models):

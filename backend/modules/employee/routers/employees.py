@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from controllers.hr import employees_controller as ctrl
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models.employee_models import Employee
+from _legacy.models.employee_models import Employee
 from utils.country_rls import enforce_country_access
 from utils.datetime_utils import utcnow as _utcnow
 
@@ -249,7 +249,7 @@ def list_employee_addresses(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.core import Address
+    from _legacy.models.core import Address
 
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if not employee:
@@ -279,7 +279,7 @@ def list_employee_dependents(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.employee_models import EmployeeDependent
+    from _legacy.models.employee_models import EmployeeDependent
 
     dependents = (
         db.query(EmployeeDependent).filter(EmployeeDependent.employee_id == employee_id).all()
@@ -522,7 +522,7 @@ def list_leave_requests(
     current_user: dict = Depends(get_current_user),
 ):
     enforce_country_access(code, db=db)
-    from models.employee_models import EmployeeLeaveRequest
+    from _legacy.models.employee_models import EmployeeLeaveRequest
     requests = db.query(EmployeeLeaveRequest).order_by(EmployeeLeaveRequest.created_at.desc()).all()
     result = []
     for r in requests:
@@ -565,7 +565,7 @@ def update_leave_request_status(
     current_user: dict = Depends(get_current_user),
 ):
     enforce_country_access(code, db=db)
-    from models.employee_models import EmployeeLeaveRequest
+    from _legacy.models.employee_models import EmployeeLeaveRequest
     r = db.query(EmployeeLeaveRequest).filter(EmployeeLeaveRequest.id == leave_id).first()
     if not r:
         raise HTTPException(status_code=404, detail="Leave request not found")
@@ -586,7 +586,7 @@ def list_shifts(
     current_user: dict = Depends(get_current_user),
 ):
     enforce_country_access(code, db=db)
-    from models.employee_models import EmployeeShiftRoster
+    from _legacy.models.employee_models import EmployeeShiftRoster
     shifts = db.query(EmployeeShiftRoster).order_by(EmployeeShiftRoster.shift_date.desc()).all()
     result = []
     for s in shifts:

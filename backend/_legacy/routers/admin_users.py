@@ -15,7 +15,7 @@ from controllers.admin.admin_controller import (
 )
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest, UserAdminUpdate, UserOut
-from models import User
+from _legacy.models import User
 from utils.country_rls import get_country_or_404
 from utils.dependencies import require_admin
 from utils.pagination import paginated_response

@@ -30,7 +30,7 @@ from uuid import UUID
 import structlog
 from sqlalchemy.orm import Session
 
-from models.core import AuditLog
+from _legacy.models.core import AuditLog
 from utils.logging_config import get_request_id
 
 logger = structlog.get_logger(__name__)

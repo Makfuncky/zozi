@@ -8,7 +8,7 @@ import controllers.commerce.cart_controller as cart_ctrl
 from controllers.products.products_controller import resolve_product_variant
 from db.database import get_db
 from db.schemas import CartItemCreate
-from models import CartItem, Product, User
+from _legacy.models import CartItem, Product, User
 from utils.dependencies import get_current_user
 
 router = APIRouter()

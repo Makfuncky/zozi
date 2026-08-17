@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from routers.generated.auto_router import get, post
 
 from utils.audit import AuditAction, audit_log
-from models import User
+from _legacy.models import User
 from db.schemas import (
     JournalEntryCreate,
     JournalLineInput,

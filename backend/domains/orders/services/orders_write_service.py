@@ -18,7 +18,7 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from models import Order, OrderItem
+from _legacy.models import Order, OrderItem
 
 
 def _utcnow() -> datetime:

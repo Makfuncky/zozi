@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from utils.dependencies import require_admin
 from utils.config import settings
-from models import User
+from _legacy.models import User
 
 router = APIRouter(prefix="/api/v1/admin")
 

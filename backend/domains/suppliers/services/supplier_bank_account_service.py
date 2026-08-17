@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from models import SupplierBankAccount
+from _legacy.models import SupplierBankAccount
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -43,7 +43,7 @@ from sqlalchemy.orm import Session
 
 from controllers.admin.admin_controller import require_roles
 from db.database import get_db
-from models import (
+from _legacy.models import (
     AIGenerationLog,
     AIStagingProduct,
     AIStagingVariant,

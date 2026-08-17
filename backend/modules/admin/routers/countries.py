@@ -424,7 +424,7 @@ def create_country_feature_flag(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.country_enhancements import CountryFeatureFlag
+    from _legacy.models.country_enhancements import CountryFeatureFlag
 
     flag = CountryFeatureFlag(
         country_code=code.upper(),
@@ -449,7 +449,7 @@ def update_country_feature_flag(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.country_enhancements import CountryFeatureFlag
+    from _legacy.models.country_enhancements import CountryFeatureFlag
 
     flag = (
         db.query(CountryFeatureFlag)
@@ -507,7 +507,7 @@ def update_country_localization(code: str, body: dict, current_user: dict = Depe
 
 @router.delete("/{code}/feature-flags/{key}")
 def delete_country_feature_flag(code: str, key: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from models.country_enhancements import CountryFeatureFlag
+    from _legacy.models.country_enhancements import CountryFeatureFlag
 
     flag = (
         db.query(CountryFeatureFlag)
@@ -591,7 +591,7 @@ def add_country_city(
 ):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity, CountryConfig
+    from _legacy.models import CountryCity, CountryConfig
     country = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -620,7 +620,7 @@ def patch_country_city(
 ):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity
+    from _legacy.models import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -640,7 +640,7 @@ def delete_country_city(
 ):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryCity
+    from _legacy.models import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -766,7 +766,7 @@ def delete_payout_rule_product(code: str, rule_id: str, current_user: dict = Dep
 def toggle_country_active(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     from controllers.country_controller import _require_admin
     _require_admin(current_user)
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not c:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -820,7 +820,7 @@ def restore_country(code: str, current_user: dict = Depends(get_current_user), d
 def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     from controllers.country_controller import _record_admin_change, _require_full_admin
     _require_full_admin(current_user)
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = True
@@ -834,7 +834,7 @@ def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict = Depends
 def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     from controllers.country_controller import _record_admin_change, _require_full_admin
     _require_full_admin(current_user)
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = False
@@ -874,7 +874,7 @@ def list_country_commission_rates(code: str, current_user: dict = Depends(get_cu
     from controllers.country_controller import _require_admin, _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from models import CountryCommissionRate
+    from _legacy.models import CountryCommissionRate
     rows = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper()
     ).order_by(CountryCommissionRate.supplier_tier, CountryCommissionRate.name).all()
@@ -892,7 +892,7 @@ def create_country_commission_rate(code: str, body: CountryCommissionRateItem, c
     _require_admin(current_user)
     _require_country_access(code, current_user)
     _get_country_or_404(code, db)
-    from models import CountryCommissionRate
+    from _legacy.models import CountryCommissionRate
     existing = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == body.supplier_tier,
@@ -924,7 +924,7 @@ def delete_country_commission_rate(code: str, tier: str, name: str, current_user
     )
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from models import CountryCommissionRate
+    from _legacy.models import CountryCommissionRate
     rate = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == tier,

@@ -11,7 +11,7 @@ from typing import Optional
 from sqlalchemy import func as sqlfunc, case as sql_case
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CampaignRecipient,
     EmailCampaign,
     NewsletterSubscriber,

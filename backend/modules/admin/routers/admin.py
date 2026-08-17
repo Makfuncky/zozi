@@ -1319,7 +1319,7 @@ def verify_payout_route(
     current_admin: dict = Depends(require_admin_2fa_verified),
 ):
     require_permission("payouts.verify", current_admin)
-    from models import Payout
+    from _legacy.models import Payout
     payout = db.query(Payout).filter(Payout.id == payout_id).first()
     amount = float(payout.amount) if payout and payout.amount is not None else None
     require_approval(db, current_admin["id"], "payout", amount=amount)
@@ -1338,7 +1338,7 @@ def admin_email_stats(
     from sqlalchemy import case as sql_case
     from sqlalchemy import func as sqlfunc
 
-    from models import CampaignRecipient, EmailCampaign, NewsletterSubscriber
+    from _legacy.models import CampaignRecipient, EmailCampaign, NewsletterSubscriber
 
     total_subscribers = db.query(sqlfunc.count(NewsletterSubscriber.id)).filter(
         NewsletterSubscriber.is_active == True
@@ -1406,7 +1406,7 @@ def admin_logistics_overview(
     require_permission("orders.manage", current_admin)
     from sqlalchemy import func as sqlfunc
 
-    from models import Shipment, ShippingCarrier, ShippingZone
+    from _legacy.models import Shipment, ShippingCarrier, ShippingZone
 
     shipment_counts = db.query(
         Shipment.status,

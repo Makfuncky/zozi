@@ -7,7 +7,7 @@ from infrastructure.database.schemas import (
     CommissionBadgeTierCreate,
     CommissionCategoryRateCreate,
 )
-from models import CommissionBadgeTier, CommissionCategoryRate
+from _legacy.models import CommissionBadgeTier, CommissionCategoryRate
 
 from infrastructure.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context

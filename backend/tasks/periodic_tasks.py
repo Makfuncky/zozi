@@ -248,7 +248,7 @@ def cleanup_old_jobs(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone, timedelta
         from infrastructure.database.database import SessionLocal
-        from models import FinanceAutomationLog
+        from _legacy.models import FinanceAutomationLog
         
         db = SessionLocal()
         try:

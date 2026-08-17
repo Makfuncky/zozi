@@ -18,7 +18,7 @@ from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
-from models.media_models import MediaAsset
+from _legacy.models.media_models import MediaAsset
 from services.common.storage import storage as _storage
 from utils.file_validation import validate_upload_image, validate_upload_video, VIDEO_EXTENSIONS
 

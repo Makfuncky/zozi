@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy.orm import Session
 
-from models import Notification, SystemSetting
+from _legacy.models import Notification, SystemSetting
 import logging
 import structlog
 logger = structlog.get_logger(__name__)
@@ -159,7 +159,7 @@ def _enqueue_notification_delivery(
 
         def _deliver() -> dict:
             from db.database import SessionLocal
-            from models import User
+            from _legacy.models import User
 
             db = SessionLocal()
             try:
@@ -180,7 +180,7 @@ def _enqueue_notification_delivery(
                 elif channel == NotificationChannel.IN_APP:
                     pass
 
-                from models.comms import Notification as NotificationModel
+                from _legacy.models.comms import Notification as NotificationModel
                 db.query(NotificationModel).filter(
                     NotificationModel.id == notification_id
                 ).update({"status": "delivered"})

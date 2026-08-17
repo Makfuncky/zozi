@@ -24,7 +24,7 @@ from typing import Any, Optional
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     AIGenerationLog,
     AIStagingProduct,
     AIStagingVariant,

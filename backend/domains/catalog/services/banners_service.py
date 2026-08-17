@@ -30,7 +30,7 @@ from controllers.catalog.banner_controller import (
 
 from infrastructure.database.database import get_db
 
-from models import User
+from _legacy.models import User
 
 from infrastructure.utils.dependencies import require_admin
 from services.admin.admin_commerce_geography_service import _admin_context

@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from controllers.security.auth_controller import get_current_user
 from db.database import get_db
-from models import User
-from models.employee_models import Employee
+from _legacy.models import User
+from _legacy.models.employee_models import Employee
 from services.hr.employee_activity_logger import log_activity
 
 logger = logging.getLogger(__name__)

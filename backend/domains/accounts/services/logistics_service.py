@@ -48,7 +48,7 @@ async def scan_lookup_shipment(code: str, db: Session, current_user: dict):
     """Look up a shipment by tracking number or scan code. Admin only."""
     if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
-    from models import Shipment
+    from _legacy.models import Shipment
     shipment = db.query(Shipment).filter(
         (Shipment.tracking_number == code) | (Shipment.id == (int(code) if code.isdigit() else -1))
     ).first()
@@ -73,7 +73,7 @@ async def admin_update_shipment_status(shipment_id: int, data: dict[str, Any], d
         raise HTTPException(status_code=403, detail="Admin access required")
     from datetime import datetime, timezone
 
-    from models import Shipment, ShipmentEvent
+    from _legacy.models import Shipment, ShipmentEvent
     shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
         raise HTTPException(status_code=404, detail="Shipment not found")

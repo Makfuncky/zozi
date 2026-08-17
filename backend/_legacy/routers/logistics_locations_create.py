@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import LogisticsPartnerLocation, CountryConfig, LogisticsPartner
+from _legacy.models import LogisticsPartnerLocation, CountryConfig, LogisticsPartner
 from controllers.security.auth_controller import get_current_user
 
 router = APIRouter(tags=["logistics-locations"], prefix="/api/v1/logistics")

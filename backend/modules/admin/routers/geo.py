@@ -36,7 +36,7 @@ def get_geo_info(
     elif current_user.get("preferred_country"):
         country_code = current_user.get("preferred_country")
     
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     country = db.query(CountryConfig).filter(CountryConfig.code == country_code).first() if country_code else None
     
     return {
@@ -52,7 +52,7 @@ def get_geo_info(
 @router.get("/geo/countries")
 def list_geo_countries(db: Session = Depends(get_db)):
     """List all countries with geo information."""
-    from models import CountryConfig
+    from _legacy.models import CountryConfig
     countries = db.query(CountryConfig).filter(CountryConfig.is_active == True).all()
     return [
         {

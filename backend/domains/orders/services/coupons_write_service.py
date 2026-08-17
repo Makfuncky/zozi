@@ -13,8 +13,8 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from models.payments import Coupon
-from models.admin import CouponUsage
+from _legacy.models.payments import Coupon
+from _legacy.models.admin import CouponUsage
 from utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)

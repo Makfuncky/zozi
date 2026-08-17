@@ -209,7 +209,7 @@ def test_login_nonexistent_user(client):
 
 @pytest.mark.integration
 def test_login_inactive_user(client, db_session):
-    from models import User
+    from _legacy.models import User
     from infrastructure.utils.auth import get_password_hash
     user = User(
         email=f"inactive_{uuid.uuid4().hex[:8]}@zozi.test",

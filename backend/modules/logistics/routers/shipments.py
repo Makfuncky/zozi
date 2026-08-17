@@ -10,7 +10,7 @@ from db.schemas import (
     ShipmentOut,
     ShipmentUpdate,
 )
-from models import Shipment, ShipmentEvent, User
+from _legacy.models import Shipment, ShipmentEvent, User
 from utils.dependencies import get_current_user, require_admin, require_logistics
 
 router = APIRouter()

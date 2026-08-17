@@ -15,7 +15,7 @@ from fastapi import Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from db.database import get_db
-from models import (
+from _legacy.models import (
     DeviceFingerprint,
     FraudBlacklist,
     FraudEvent,

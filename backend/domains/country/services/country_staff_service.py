@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import List
 from typing import Any, Optional
 from sqlalchemy.orm import Session
-from models import CountryStaffAssignment
+from _legacy.models import CountryStaffAssignment
 from utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
@@ -37,7 +37,7 @@ def _staff_payload(row: CountryStaffAssignment, user_map: dict[int, Any]) -> dic
 
 
 def _user_map(db: Session, rows: list[CountryStaffAssignment]) -> dict[int, Any]:
-    from models import User
+    from _legacy.models import User
     user_ids = [r.user_id for r in rows]
     if not user_ids:
         return {}
@@ -79,7 +79,7 @@ def assign_staff_to_country(
     """Assign a user to a country with a role."""
     from fastapi import HTTPException
     from db.database import get_db_context
-    from models import User
+    from _legacy.models import User
     user_id = int(getattr(body, "user_id", 0))
     role_in_country = getattr(body, "role_in_country", "country_manager") or "country_manager"
     notes = getattr(body, "notes", None)

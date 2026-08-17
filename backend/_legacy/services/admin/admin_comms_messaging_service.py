@@ -5,8 +5,8 @@ from fastapi import Body, Depends, HTTPException, Query, Path, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 from db.database import get_db
-from models import User
-from models.core import EntityChatThread, EntityChatMessage
+from _legacy.models import User
+from _legacy.models.core import EntityChatThread, EntityChatMessage
 from services.comms.chat_system import ChatSystem, get_chat_system
 from services.comms.entity_chat_service import EntityChatService, get_chat_service
 from utils.dependencies import require_admin

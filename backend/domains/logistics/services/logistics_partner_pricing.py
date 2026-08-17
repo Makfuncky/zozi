@@ -6,7 +6,7 @@ from typing import Any, Optional, cast
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from models import (
+from _legacy.models import (
     CityDistanceMatrix,
     CountryConfig,
     LogisticsCategoryPricingRule,

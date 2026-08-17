@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from models import Product, SupplierProfile
+from _legacy.models import Product, SupplierProfile
 
 from services.common.storage import storage as _storage
 

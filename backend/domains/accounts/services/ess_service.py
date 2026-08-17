@@ -17,7 +17,7 @@ from rbac.routers.auth_controller import get_current_user
 
 from infrastructure.database.database import get_db
 
-from models import User
+from _legacy.models import User
 
 from domains.hr.models.employee_models import Employee
 

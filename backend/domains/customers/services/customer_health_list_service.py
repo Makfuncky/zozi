@@ -9,7 +9,7 @@ from services.customer.customer_health_engine import get_customer_health_engine
 
 def list_customer_health(current_user: dict=Depends(get_current_user), db: Session=Depends(get_db), page: int=1, size: int=100):
     from utils.pagination import paginated_query
-    from models import User
+    from _legacy.models import User
     (users, total) = paginated_query(db.query(User).order_by(User.created_at.desc()), page=page, size=min(size, 100), max_size=100)
     results = []
     for u in users:

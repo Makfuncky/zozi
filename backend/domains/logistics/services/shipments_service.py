@@ -15,7 +15,7 @@ from infrastructure.database.schemas import (
     ShipmentUpdate,
 )
 
-from models import Shipment, ShipmentEvent, User
+from _legacy.models import Shipment, ShipmentEvent, User
 
 from infrastructure.utils.dependencies import get_current_user, require_admin, require_logistics
 

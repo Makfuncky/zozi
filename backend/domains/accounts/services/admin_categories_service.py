@@ -16,7 +16,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from models import Category, User
+from _legacy.models import Category, User
 
 from domains.catalog.services.products_write_service import (
     create_category as create_category_model,

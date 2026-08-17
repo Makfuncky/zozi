@@ -9,7 +9,7 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from models import Order, Payment
+from _legacy.models import Order, Payment
 from events import PaymentConfirmedEvent
 from services.comms.notification_service import NotificationService
 

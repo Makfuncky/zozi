@@ -10,7 +10,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models import SupplierProfile, User
+from _legacy.models import SupplierProfile, User
 from utils.slug import generate_slug
 import structlog
 logger = structlog.get_logger(__name__)

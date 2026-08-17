@@ -8,4 +8,4 @@ this package forwards to it so ``models.ai.AIUploadJob`` and
 """
 from __future__ import annotations
 
-from models.ai_upload import *  # noqa: F401,F403
+from _legacy.models.ai_upload import *  # noqa: F401,F403

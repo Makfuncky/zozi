@@ -34,7 +34,7 @@ def _ensure_tables_exist() -> bool:
     Returns ``False`` if tables already existed or creation failed.
     """
     try:
-        import models  # noqa: F401 — register ORM tables in Base.metadata
+        import _legacy.models as models  # noqa: F401 — register ORM tables in Base.metadata
     except Exception as exc:
         logger.warning("Could not import ORM models: %s", exc)
         return False

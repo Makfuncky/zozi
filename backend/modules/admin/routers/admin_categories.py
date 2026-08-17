@@ -10,7 +10,7 @@ from controllers.admin.admin_controller import (
 )
 from db.database import get_db
 from db.schemas import ArchiveRequest, BulkActionRequest
-from models import Category, User
+from _legacy.models import Category, User
 from services.catalog.products_write_service import (
     create_category as create_category_model,
     update_category as update_category_model,

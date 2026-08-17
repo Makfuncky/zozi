@@ -13,7 +13,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.hr.models.employee_models import Employee, Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog
-from models import User
+from _legacy.models import User
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 _QR_SECRET_KEY = os.getenv("EMPLOYEE_QR_SECRET_KEY", "")

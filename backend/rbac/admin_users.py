@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from services.common.db_read import all_rows, first
 
-from models import Order, OrderItem, User
+from _legacy.models import Order, OrderItem, User
 
 from controllers.customer.users import (
     _build_user_delete_blocker,
