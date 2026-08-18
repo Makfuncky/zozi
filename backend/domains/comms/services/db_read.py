@@ -491,4 +491,3 @@ def query(db: Session, *entities):
     return db.query(*entities)
 
 
-from services.common.db_write import execute  # noqa: F401  (re-export for legacy controllers)

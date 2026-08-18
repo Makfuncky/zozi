@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.finance import commission_controller
-from controllers.admin.admin_controller import require_admin
-from db.database import get_db
-from db.schemas import ListPage
+from domains.finance.services.finance import commission_controller
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ListPage
 
 router = APIRouter()
 
@@ -298,7 +298,7 @@ def get_effective_rate(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
-    from services.commission_engine import get_effective_rate as _engine_rate
+    from domains.finance.services.commission_engine import get_effective_rate as _engine_rate
     result = _engine_rate(supplier_id=supplier_id, product_id=product_id,
                           category_slug=category_slug, db=db)
     return {

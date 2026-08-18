@@ -25,7 +25,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 from sqlalchemy import text
 
 from infrastructure.database.database import SessionLocal
-from _legacy.models import CommissionBadgeTier, CommissionCategoryRate
+from domains.finance.models.commission import CommissionCategoryRate
+from domains.governance.models.admin import CommissionBadgeTier
 from domains.accounts.models.core import (
     DirectChatMessage,
     DirectChatRoom,

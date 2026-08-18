@@ -10,7 +10,8 @@ from math import radians, sin, cos, sqrt, atan2
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from _legacy.models.employee_models import GeoFenceLog, Employee
+from domains.hr.models.employee_models import GeoFenceLog
+from domains.hr.models.employee_models import Employee
 
 logger = logging.getLogger("zozi.travel")
 

@@ -12,14 +12,12 @@ from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Order,
-    OrderItem,
-    Payout,
-    SupplierBankAccount,
-    SupplierSettlement,
-    TransactionLedger,
-)
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import SupplierBankAccount
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Payout
 import structlog
 logger = structlog.get_logger(__name__)
 

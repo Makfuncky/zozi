@@ -6,9 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import Category, CountryCity, CountryConfig
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Category
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryCity
 
 router = APIRouter(tags=["country-data"])
 

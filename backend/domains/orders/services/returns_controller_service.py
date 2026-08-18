@@ -11,11 +11,18 @@ from providers.payments.stripe import refund_payment_intent
 from providers.payments.tap import refund_tap_charge
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import Notification, Order, OrderItem, Product, ReturnRequest, Shipment, User
-from db.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
-from utils.audit import audit_log, AuditAction
-from services.gateways.payments import _order_holds_inventory, apply_order_status_change
-from utils.config import settings
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import ReturnRequest
+from infrastructure.database.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
+from infrastructure.utils.audit import audit_log, AuditAction
+from domains.payments.services.payments import _order_holds_inventory
+from domains.payments.services.payments import apply_order_status_change
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -341,7 +348,7 @@ def create_return_request(current_user: dict, payload: ReturnRequestCreate, db: 
         db=db,
     )
     try:
-        from services.comms.transactional_email_service import enqueue_return_created_email
+        from domains.comms.services.transactional_email_service import enqueue_return_created_email
 
         enqueue_return_created_email(cast(int, return_request.id))
     except Exception:
@@ -410,7 +417,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                     try:
                         apply_order_status_change(order, "refunded", db)
                         try:
-                            from services.treasury.cash_management_service import log_refund_bank_transaction
+                            from domains.finance.services.cash_management_service import log_refund_bank_transaction
 
                             log_refund_bank_transaction(
                                 order,
@@ -453,7 +460,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                         if tap_data.get("status") in ("REFUNDED", "CAPTURED"):
                             apply_order_status_change(order, "refunded", db)
                             try:
-                                from services.treasury.cash_management_service import log_refund_bank_transaction
+                                from domains.finance.services.cash_management_service import log_refund_bank_transaction
 
                                 log_refund_bank_transaction(
                                     order,
@@ -503,7 +510,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
         db=db,
     )
     try:
-        from services.comms.transactional_email_service import enqueue_return_status_email
+        from domains.comms.services.transactional_email_service import enqueue_return_status_email
 
         enqueue_return_status_email(cast(int, req.id))
     except Exception:

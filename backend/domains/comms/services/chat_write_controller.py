@@ -10,14 +10,10 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from services.comms.chat_write_service import (
-    mark_messages_read as _mark_messages_read,
-    persist_message as _persist_message,
-)
-from services.core.user_read_service import (
-    get_user_display_name as _get_user_display_name,
-    get_user_role as _get_user_role,
-)
+from domains.comms.services.chat_write_service import mark_messages_read as _mark_messages_read
+from domains.comms.services.chat_write_service import persist_message as _persist_message
+from domains.accounts.services.user_read_service import get_user_display_name as _get_user_display_name
+from domains.accounts.services.user_read_service import get_user_role as _get_user_role
 import structlog
 logger = structlog.get_logger(__name__)
 

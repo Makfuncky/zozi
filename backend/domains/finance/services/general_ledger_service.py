@@ -8,23 +8,21 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    AccountGroup,
-    JournalEntry,
-    JournalEntryLine,
-    Order,
-    OrderItem,
-    User,
-    Payout,
-    TransactionLedger,
-    RefundLedger,
-    VATRemittance,
-    CommissionLedgerEntry,
-    TreasuryAccount,
-)
-from db.schemas import (
+from domains.accounts.models.user import User
+from domains.finance.models.commission import CommissionLedgerEntry
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import AccountGroup
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import TransactionLedger
+from domains.finance.models.finance import RefundLedger
+from domains.finance.models.finance import VATRemittance
+from domains.finance.models.finance import TreasuryAccount
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Payout
+from infrastructure.database.schemas import (
     AccountBalanceOut,
     AccountOut,
     JournalEntryCreate,
@@ -33,7 +31,7 @@ from db.schemas import (
     JournalLineInput,
     TrialBalanceOut,
 )
-from utils.money import round_money
+from kernel.money import round_money
 
 
 # ── Chart of Accounts ─────────────────────────────────────────────────────

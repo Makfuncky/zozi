@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import controllers.orders.logistics_partner_controller as ctrl
-from db.database import get_db
+import domains.orders.services.logistics_partner_controller as ctrl
+from infrastructure.database.database import get_db
 from modules.admin.routers.auth import get_current_user
 
 router = APIRouter()

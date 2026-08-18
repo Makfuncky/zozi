@@ -1,19 +1,21 @@
 """Admin logistics router."""
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import User
-from db.schemas import ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin, require_super_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
-from services.logistics.partner_geography_service import (
-    approve_partner,
-    list_partners,
-    reject_partner,
-    toggle_partner_active,
-)
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.logistics.services.partner_geography_service import approve_partner
+from domains.logistics.services.partner_geography_service import list_partners
+from domains.logistics.services.partner_geography_service import reject_partner
+from domains.logistics.services.partner_geography_service import toggle_partner_active
 
 router = APIRouter(prefix="/api/v1/admin")
 

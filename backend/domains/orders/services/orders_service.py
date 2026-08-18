@@ -22,41 +22,42 @@ from typing import Any, Dict, List, Tuple, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from services.commerce.coupons_service import build_coupon_quote
-from services.commerce.promotion_service import calculate_order_tier_discount, record_order_tier_ledger
-from services.products.products_service import resolve_product_variant
-from services.gateways.payments import (
-    apply_order_status_change,
-    build_order_payment_snapshot,
-    confirm_cash_on_delivery_order,
-    is_checkout_payment_method_allowed,
-    normalize_checkout_payment_method,
-)
-from _legacy.models import (
-    LogisticsPartner,
-    Notification,
-    Order,
-    OrderItem,
-    Product,
-    ReturnRequest,
-    Shipment,
-    ShipmentConfirmation,
-    ShipmentEvent,
-    ShippingZone,
-    SupplierProfile,
-    User,
-)
-from db.schemas import OrderCreate
-from utils.audit import audit_log, AuditAction
-from services.logistics.logistics_partner_pricing import normalize_country_code, normalize_pricing_breakdown_payload, parse_dimensions_to_volume_cm3, quote_shipping_for_destination
-from services.finance.tax_service import calculate_tax, get_country_config
-from utils.config import settings
-from utils.constants import STAFF_ROLES
-from utils.datetime_utils import utcnow as _utcnow
-from utils.money import round_money, to_decimal
-from utils.order_tracking import build_order_tracking_payload, derive_order_financials, normalize_shipment_event_type, order_status_label, reconcile_order_status, shipment_scan_codes
-from utils.redis_client import get_redis
-from utils.ip_utils import get_request_ip
+from domains.orders.services.coupons_service import build_coupon_quote
+from domains.orders.services.promotion_service import calculate_order_tier_discount
+from domains.orders.services.promotion_service import record_order_tier_ledger
+from domains.catalog.services.products_service import resolve_product_variant
+from domains.payments.services.payments import apply_order_status_change
+from domains.payments.services.payments import build_order_payment_snapshot
+from domains.payments.services.payments import confirm_cash_on_delivery_order
+from domains.payments.services.payments import is_checkout_payment_method_allowed
+from domains.payments.services.payments import normalize_checkout_payment_method
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierProfile
+from domains.governance.models.admin import ShipmentConfirmation
+from domains.governance.models.admin import ShippingZone
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import ReturnRequest
+from infrastructure.database.schemas import OrderCreate
+from infrastructure.utils.audit import audit_log, AuditAction
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code
+from domains.logistics.services.logistics_partner_pricing import normalize_pricing_breakdown_payload
+from domains.logistics.services.logistics_partner_pricing import parse_dimensions_to_volume_cm3
+from domains.logistics.services.logistics_partner_pricing import quote_shipping_for_destination
+from domains.finance.services.tax_service import calculate_tax
+from domains.finance.services.tax_service import get_country_config
+from infrastructure.utils.config import settings
+from infrastructure.utils.constants import STAFF_ROLES
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from kernel.money import round_money, to_decimal
+from domains.orders.utils.order_tracking import build_order_tracking_payload, derive_order_financials, normalize_shipment_event_type, order_status_label, reconcile_order_status, shipment_scan_codes
+from infrastructure.utils.redis_client import get_redis
+from infrastructure.utils.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)
 
@@ -620,7 +621,7 @@ def _calculate_order_amounts(
     currency = str(current_user.get("preferred_currency") or settings.default_currency)
 
     try:
-        from services.geography.cross_border_detection import CrossBorderDetectionMiddleware
+        from domains.country.services.cross_border_detection import CrossBorderDetectionMiddleware
         cb = CrossBorderDetectionMiddleware(db)
         user_id = current_user.get("id")
         home_country = current_user.get("country_code") or country_code
@@ -631,7 +632,7 @@ def _calculate_order_amounts(
             )
             # Persist cross-country session
             try:
-                from _legacy.models.country_enhancements import CrossCountryCustomerSession
+                from domains.country.models.country_enhancements import CrossCountryCustomerSession
                 session = CrossCountryCustomerSession(
                     user_id=user_id,
                     source_country_code=home_country,
@@ -841,7 +842,7 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
         status="success",
     )
     try:
-        from services.comms.transactional_email_service import enqueue_order_created_email
+        from domains.comms.services.transactional_email_service import enqueue_order_created_email
 
         enqueue_order_created_email(cast(int, cast(Any, db_order).id))
     except Exception:
@@ -1425,7 +1426,7 @@ def respond_to_shipment_confirmation(
             # ── Cash Management: create settlements when order is delivered ──
             if new_order_status == "delivered":
                 try:
-                    from services.treasury.cash_management_service import create_settlements_on_delivery
+                    from domains.finance.services.cash_management_service import create_settlements_on_delivery
                     create_settlements_on_delivery(order, db)
                 except Exception:
                     logger.exception("Failed to create settlements for delivered order %s", order.id)
@@ -1460,7 +1461,7 @@ def respond_to_shipment_confirmation(
     db.refresh(confirmation)
     if decision == "accepted":
         try:
-            from services.comms.transactional_email_service import enqueue_shipment_status_email
+            from domains.comms.services.transactional_email_service import enqueue_shipment_status_email
 
             enqueue_shipment_status_email(cast(int, shipment.id), event_type=cast(str, confirmation.requested_event_type))
         except Exception:

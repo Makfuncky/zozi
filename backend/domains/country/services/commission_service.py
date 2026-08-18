@@ -148,7 +148,7 @@ def delete_product_commission_override(product_id: int, db: Session, current_use
     )
 
 def get_effective_rate(supplier_id: int, product_id: Optional[int], category_slug: Optional[str], db: Session, current_user: dict):
-    from services.commission_engine import get_effective_rate as _engine_rate
+    from domains.finance.services.commission_engine import get_effective_rate as _engine_rate
     result = _engine_rate(supplier_id=supplier_id, product_id=product_id,
                           category_slug=category_slug, db=db)
     return {

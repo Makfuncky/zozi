@@ -7,9 +7,11 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import User, SupplierProfile as SP, Notification
-from utils.auth import require_permission
-from utils.audit import audit_log, AuditAction
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierProfile as SP
+from infrastructure.utils.auth import require_permission
+from infrastructure.utils.audit import audit_log, AuditAction
 
 
 def bulk_supplier_verification(
@@ -24,7 +26,7 @@ def bulk_supplier_verification(
     if len(supplier_ids) > 100:
         raise HTTPException(status_code=400, detail="Cannot process more than 100 suppliers at once")
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
 
     processed: List[dict] = []
     skipped: List[dict] = []
@@ -367,7 +369,8 @@ def get_pending_suppliers(db: Session, limit: Optional[int] = None, offset: int 
 
 
 def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile, CountryConfig
+    from domains.comms.models.suppliers import SupplierProfile
+    from domains.country.models.countries import CountryConfig
 
     user = db.query(User).filter(User.id == user_id, User.role == "supplier").first()
     if not user:
@@ -400,7 +403,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
                 if isinstance(requirements, dict):
                     required_docs = requirements.get("required_documents", [])
                     if required_docs and isinstance(required_docs, list):
-                        from _legacy.models import SupplierDocument
+                        from domains.comms.models.suppliers import SupplierDocument
                         approved_types = set()
                         for doc in db.query(SupplierDocument).filter(
                             SupplierDocument.supplier_id == user_id,
@@ -447,7 +450,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
 
 
 def reject_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     user = db.query(User).filter(User.id == user_id, User.role == "supplier").first()
     if not user:

@@ -12,21 +12,19 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Account as AccountModel,
-    AccountBalance as AccountBalanceModel,
-    Category as CategoryModel,
-    CommissionGlobalConfig,
-    Employee,
-    Order as OrderModel,
-    Payment,
-    Product as ProductModel,
-    Payout as PayoutModel,
-    Shipment,
-    ShippingCarrier,
-    ShippingZone,
-    User as UserModel,
-)
+from domains.accounts.models.user import User as UserModel
+from domains.catalog.models.products import Category as CategoryModel
+from domains.catalog.models.products import Product as ProductModel
+from domains.finance.models.finance import Account as AccountModel
+from domains.finance.models.finance import AccountBalance as AccountBalanceModel
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order as OrderModel
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout as PayoutModel
 
 
 def get_dashboard_stats(db: Session) -> dict:

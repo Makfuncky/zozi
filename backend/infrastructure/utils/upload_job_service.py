@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from db.database import get_db_session
-from _legacy.models.upload_job import UploadJob
+from infrastructure.database.database import get_db_session
+from domains.media.models.upload_job import UploadJob
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def _get_ws_manager():
     global _ws_manager
     if _ws_manager is None:
         try:
-            from services.comms.websocket_manager import user_manager
+            from domains.comms.services.websocket_manager import user_manager
             _ws_manager = user_manager
         except ImportError:
             logger.warning("WebSocket manager not available — real-time push disabled")

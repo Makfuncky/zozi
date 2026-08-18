@@ -14,10 +14,10 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import User
-from _legacy.models.countries import CountryConfig
-from _legacy.models.country_enhancements import CountryStaffAssignment
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.user import User
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

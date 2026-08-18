@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, List, Optional, cast
 from urllib.parse import urlparse
 
-from utils.datetime_utils import utcnow
+from infrastructure.utils.datetime_utils import utcnow
 from datetime import datetime
 
 from fastapi import HTTPException, UploadFile
@@ -26,19 +26,34 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import String, func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import BadgeBillingRecord, BankTransaction, CommissionBadgeTier, LogisticsPartner, Notification, Order, OrderItem, Payout, Product, ProductVariant, Shipment, ShipmentEvent, SupplierProfile, SupplierBankAccount, SupplierSettlement, User
-from services.ai import ai_service
-from services.finance.finance_transfer_service import build_transfer_reference
-from services.logistics.logistics_partner_pricing import normalize_country_code
-from utils.audit import audit_log, AuditAction
-from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from services.products.products_service import _bump_product_cache_version
-from utils.background_jobs import enqueue_job
-from utils.order_tracking import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
-from utils.realtime import logistics_realtime_hub
-from utils.config import settings
-from utils.money import to_decimal
-from utils.variant_key import compute_variant_key
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.finance import BankTransaction
+from domains.finance.models.finance import SupplierSettlement
+from domains.governance.models.admin import BadgeBillingRecord
+from domains.governance.models.admin import CommissionBadgeTier
+from domains.governance.models.admin import SupplierBankAccount
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Payout
+from domains.media.services.ai import ai_service
+from domains.finance.services.finance_transfer_service import build_transfer_reference
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from domains.catalog.services.products_service import _bump_product_cache_version
+from infrastructure.utils.background_jobs import enqueue_job
+from domains.orders.utils.order_tracking import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
+from infrastructure.utils.realtime import logistics_realtime_hub
+from infrastructure.utils.config import settings
+from kernel.money import to_decimal
+from infrastructure.utils.variant_key import compute_variant_key
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +203,7 @@ def _persist_supplier_product(
     supplier_country = str(current_user.get("preferred_country") or "").strip()
     country_code = current_user.get("country_code") or supplier_country or None
     if supplier_country:
-        from services.geography.country_restriction_service import is_product_restricted_for_country
+        from domains.country.services.country_restriction_service import is_product_restricted_for_country
         if is_product_restricted_for_country(category, supplier_country, db):
             raise HTTPException(
                 status_code=422,
@@ -248,7 +263,7 @@ def _persist_supplier_product(
     db.add(new_product)
     db.flush()
     if video_url:
-        from _legacy.models import ProductVideo
+        from domains.catalog.models.products import ProductVideo
         db.add(ProductVideo(product_id=new_product.id, video_url=video_url, upload_status="completed"))
     if parsed_variants:
         _replace_product_variants(new_product, parsed_variants, db)
@@ -509,7 +524,7 @@ def _resolve_category_id(category: Optional[str], db: Session) -> Optional[int]:
     text = str(category).strip()
     if not text:
         return None
-    from _legacy.models import Category
+    from domains.catalog.models.products import Category
 
     slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
     row = (
@@ -1411,7 +1426,7 @@ def upload_supplier_parcel_proof(
     scan_code = shipment.scan_code if shipment and shipment.scan_code else f"ORDER-{order.id}"
     note_text = (notes or "").strip() or "Packed parcel proof uploaded by supplier"
 
-    from services.products.product_verification_service import create_verification
+    from domains.catalog.services.product_verification_service import create_verification
 
     verification = create_verification(
         {
@@ -1523,13 +1538,13 @@ def get_supplier_product(product_id: int, current_user: dict, db: Session) -> di
 
 def _save_upload(file: UploadFile, supplier_id: int, country_code: str = None, product_id: int = None, db: Session = None) -> str:
     """Save an uploaded product media file using hierarchical path structure."""
-    from services.common.media_service import save_product_media
+    from domains.comms.services.media_service import save_product_media
     return save_product_media(file, db=db, supplier_id=supplier_id, country_code=country_code, product_id=product_id or 0, is_main=False)
 
 
 def _save_supplier_profile_media_upload(file: UploadFile, supplier_id: int, field: str, country_code: str = None, db: Session = None) -> str:
     """Save supplier profile media using hierarchical path structure."""
-    from services.common.media_service import save_supplier_media
+    from domains.comms.services.media_service import save_supplier_media
     return save_supplier_media(file, db=db, supplier_id=supplier_id, country_code=country_code, media_type=field.replace("_url", ""))
 
 
@@ -1543,7 +1558,7 @@ def _process_image_with_tools(data: bytes, tools: dict, bg_preset: Optional[str]
         return data
     if bg_preset:
         try:
-            from services.ai.bg_removal_service import remove_background
+            from domains.finance.services.bg_removal_service import remove_background
             data = remove_background(data, strategy=bg_preset)
         except Exception as exc:
             logger.warning("bg_preset application failed, using original: %s", exc)
@@ -1552,7 +1567,7 @@ def _process_image_with_tools(data: bytes, tools: dict, bg_preset: Optional[str]
     if not enabled:
         return data
     try:
-        from services.common.free_image_tools import auto_process_image
+        from domains.comms.services.free_image_tools import auto_process_image
         return auto_process_image(data, tools=enabled)
     except Exception as exc:
         logger.warning("Image processing failed: %s", exc)
@@ -1578,8 +1593,8 @@ async def process_product_image(
                 "angles_notice": "..."
       }
     """
-    from services.ai import image_ai_service
-    from services.common.storage import storage as _storage
+    from domains.media.services.ai import image_ai_service
+    from infrastructure.utils.storage import storage as _storage
 
     raw = image.file.read()
     if not raw:
@@ -2247,7 +2262,7 @@ def get_supplier_profile(current_user: dict, db: Session) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
 
     total_products = db.query(Product).filter(Product.supplier_id == current_user["id"]).count()
@@ -2287,7 +2302,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -2332,7 +2347,7 @@ def request_verification(current_user: dict, db: Session) -> dict:
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -2652,7 +2667,7 @@ async def import_products_csv(file: UploadFile, current_user: dict, db: Session)
         raise HTTPException(status_code=400, detail="File must be a CSV file")
 
     content = await file.read()
-    from utils.file_validation import validate_csv_bytes
+    from infrastructure.utils.file_validation import validate_csv_bytes
     validate_csv_bytes(content, file.filename or "")
     csv_content = content.decode("utf-8")
     csv_reader = csv.DictReader(io.StringIO(csv_content))
@@ -2879,7 +2894,7 @@ async def bulk_upload_products(
         )
 
     # â”€â”€ build upload map (filename â†’ content metadata) â”€â”€
-    from utils.file_validation import VIDEO_EXTENSIONS, _sniff_image_type, validate_upload_video
+    from infrastructure.utils.file_validation import VIDEO_EXTENSIONS, _sniff_image_type, validate_upload_video
 
     upload_map: dict[str, dict[str, object]] = {}
     primary_image_keys: list[str] = []
@@ -2985,7 +3000,7 @@ async def bulk_upload_products(
             if isinstance(u, str) and (u.startswith(("http://", "https://")) or u.startswith("uploads/"))
         ]
 
-        from services.common.storage import storage as _storage
+        from infrastructure.utils.storage import storage as _storage
 
         # Extra image files uploaded with naming convention p{idx}_e{i}.ext
         for extra_i in range(19):
@@ -3202,7 +3217,7 @@ def _public_supplier_slug(profile, user: User) -> str:
 
 
 def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -3213,7 +3228,7 @@ def get_supplier_profile_business(current_user: dict, db: Session) -> dict:
 
 
 def update_supplier_profile_business(body: dict, current_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"], verification_status="pending")
@@ -3254,7 +3269,7 @@ def upload_supplier_profile_business_media(
     db: Session,
     index: Optional[int] = None,
 ) -> dict:
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
 
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
@@ -3301,7 +3316,7 @@ def upload_supplier_profile_business_media(
 
 
 def accept_supplier_terms(current_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     if not profile:
         profile = SP(user_id=current_user["id"])
@@ -3314,7 +3329,7 @@ def accept_supplier_terms(current_user: dict, db: Session) -> dict:
 
 
 def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
     products_count = db.query(Product).filter(
         Product.supplier_id == current_user["id"],
@@ -3333,7 +3348,7 @@ def get_supplier_onboarding_status(current_user: dict, db: Session) -> dict:
 
 def get_supplier_regions(current_user: dict, db: Session) -> dict:
     """Return the supplier's configured operating regions."""
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
@@ -3351,7 +3366,7 @@ def get_supplier_regions(current_user: dict, db: Session) -> dict:
 
 def update_supplier_regions(body: dict, current_user: dict, db: Session) -> dict:
     """Save the supplier's list of operating countries/regions."""
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     if current_user["role"] not in ("supplier", "admin"):
         raise HTTPException(status_code=403, detail="Supplier access required")
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
@@ -3436,7 +3451,7 @@ def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
     if rows:
         return rows
 
-    from services.finance import commission_engine as _commission_engine
+    from domains.finance.services.finance import commission_engine as _commission_engine
 
     _commission_engine.seed_defaults(db)
     return (
@@ -3729,7 +3744,7 @@ def record_badge_billing_payment(
 
     paid_at = utcnow()
     if _round_badge_amount(record.amount) > 0 and not record.bank_transaction_id:
-        from services.treasury.cash_management_service import log_bank_transaction
+        from domains.finance.services.cash_management_service import log_bank_transaction
 
         txn = log_bank_transaction(
             source="badge_billing",
@@ -3870,7 +3885,11 @@ def compute_credibility_score(supplier_id: int, db: Session) -> int:
       - Account age in days          (max 10 pts)
       - Number of approved products  (max 10 pts)
     """
-    from _legacy.models import SupplierProfile as SP, Product, Order, OrderItem, Review
+    from domains.catalog.models.products import Product
+    from domains.catalog.models.products import Review
+    from domains.comms.models.suppliers import SupplierProfile as SP
+    from domains.orders.models.orders import Order
+    from domains.orders.models.orders import OrderItem
 
     # 1. Fulfilment rate
     total_orders = (
@@ -4052,9 +4071,9 @@ async def upload_verification_documents(
     Upload KYC/verification documents for the supplier.
     Stores file paths in SupplierProfile.verified_documents (JSON).
     """
-    from _legacy.models import SupplierProfile as SP
-    from utils.file_validation import validate_upload_image
-    from utils.config import settings as _settings
+    from domains.comms.models.suppliers import SupplierProfile as SP
+    from infrastructure.utils.file_validation import validate_upload_image
+    from infrastructure.utils.config import settings as _settings
 
     _VALID_DOC_TYPES = {"trade_license", "tax_certificate", "id_front", "id_back", "bank_statement", "other"}
 
@@ -4070,7 +4089,7 @@ async def upload_verification_documents(
         except Exception:
             existing_docs = {}
 
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.storage import storage as _storage
 
     saved = {}
     for file, doc_type in zip(files, doc_types):
@@ -4153,7 +4172,7 @@ def admin_set_supplier_badge(
     db: Session,
 ) -> dict:
     """Admin: manually override badge level for a supplier."""
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     normalized_badge_level = str(badge_level or "").strip().lower()
@@ -4199,7 +4218,7 @@ def _get_public_supplier_aggregates(supplier_ids: list[int], db: Session) -> dic
     if not supplier_ids:
         return {}
 
-    from _legacy.models import Review as ReviewModel
+    from domains.catalog.models.products import Review as ReviewModel
 
     aggregates: dict[int, dict[str, float | int]] = {
         supplier_id: {
@@ -4285,7 +4304,7 @@ def _supplier_lookup_sql_expression(column):
     )
 
 def _get_public_supplier_record(supplier_id: int, db: Session):
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
 
     row = (
         db.query(User, SP)
@@ -4329,7 +4348,7 @@ def list_public_suppliers(
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
 
     base_query = db.query(SP, User).join(User, User.id == SP.user_id).filter(
         User.is_active == 1,
@@ -4398,7 +4417,7 @@ def resolve_public_supplier_slug(slug: str, db: Session) -> dict:
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
 
     normalized_slug = _normalize_supplier_lookup_token(slug)
     if not normalized_slug:
@@ -4458,7 +4477,7 @@ def get_public_supplier_profile(supplier_id: int, db: Session) -> dict:
         {"product_count": 0, "avg_rating": 0.0, "total_reviews": 0, "total_sales": 0},
     )
 
-    from _legacy.models import Review as ReviewModel
+    from domains.catalog.models.products import Review as ReviewModel
 
     recent_reviews = [
         {

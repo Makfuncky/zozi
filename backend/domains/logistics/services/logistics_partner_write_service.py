@@ -20,29 +20,27 @@ import importlib
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CityDistanceMatrix,
-    CountryConfig,
-    LogisticsCategoryPricingRule,
-    LogisticsCODRemittanceReceipt,
-    LogisticsPartner,
-    LogisticsPartnerBankAccount,
-    LogisticsPartnerLocation,
-    LogisticsPartnerDocument,
-    LogisticsPartnerPayout,
-    LogisticsPartnerServiceArea,
-    LogisticsPricingProfile,
-    LogisticsSettlement,
-    LogisticsVehicleRule,
-    Notification,
-    Order,
-    OrderLogisticsAllocation,
-    Shipment,
-    ShipmentConfirmation,
-    ShipmentEvent,
-    TransactionLedger,
-)
-from utils.datetime_utils import utcnow as _utcnow  # noqa: F401
+from domains.accounts.models.core import CityDistanceMatrix
+from domains.comms.models.communication import Notification
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.governance.models.admin import LogisticsPartnerDocument
+from domains.governance.models.admin import LogisticsSettlement
+from domains.governance.models.admin import ShipmentConfirmation
+from domains.logistics.models.logistics import LogisticsCategoryPricingRule
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerServiceArea
+from domains.logistics.models.logistics import LogisticsPricingProfile
+from domains.logistics.models.logistics import LogisticsVehicleRule
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderLogisticsAllocation
+from domains.payments.models.payments import LogisticsPartnerPayout
+from infrastructure.utils.datetime_utils import utcnow as _utcnow  # noqa: F401
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -120,7 +118,7 @@ def _soft_delete(db: Session, obj: Any) -> None:
     # ``skip_audit=True`` keeps this helper commit-free to honour the
     # module's single-transaction-boundary contract; the surrounding request
     # transaction commits once.
-    from utils.soft_delete import soft_delete
+    from infrastructure.utils.soft_delete import soft_delete
 
     soft_delete(db, type(obj), obj.id, None, skip_audit=True)
 

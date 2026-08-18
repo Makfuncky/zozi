@@ -1,9 +1,11 @@
 """Logistics partner orders router."""
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import Shipment, LogisticsPartner, User
-from utils.dependencies import require_logistics
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import LogisticsPartner
+from infrastructure.utils.dependencies import require_logistics
 
 def list_assigned_shipments(current_user: User=Depends(require_logistics), db: Session=Depends(get_db)):
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user.id).first()

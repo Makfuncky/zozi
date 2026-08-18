@@ -6,12 +6,24 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Product, User, Order, Category, Coupon, Banner, FlashSale,
-    SupplierProfile, LogisticsPartner, CountryConfig, Payout, Shipment,
-    Invoice, SupportTicket, ReturnRequest, SupplierDocument, Review
-)
-from services.admin.misc_service import archive_entity
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import Review
+from domains.comms.models.marketing import FlashSale
+from domains.comms.models.suppliers import SupplierProfile
+from domains.comms.models.suppliers import SupplierDocument
+from domains.country.models.countries import CountryConfig
+from domains.finance.models.finance import Invoice
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import ReturnRequest
+from domains.payments.models.payments import Coupon
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Payout
+from domains.governance.services.misc_service import archive_entity
 
 
 def bulk_archive_entities(

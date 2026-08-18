@@ -30,7 +30,7 @@ def _get_ws_manager():
     global _ws_manager
     if _ws_manager is None:
         try:
-            from services.comms.websocket_manager import user_manager
+            from domains.comms.services.websocket_manager import user_manager
             _ws_manager = user_manager
         except ImportError:
             logger.warning("WebSocket manager not available — real-time push disabled")

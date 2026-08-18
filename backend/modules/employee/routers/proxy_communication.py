@@ -6,11 +6,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import require_admin
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import ProxyChannel
-from services.comms.proxy_communication import get_proxy_service
+from infrastructure.utils.dependencies import require_admin
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.comms.models.communication import ProxyChannel
+from domains.comms.services.proxy_communication import get_proxy_service
 
 router = APIRouter()
 

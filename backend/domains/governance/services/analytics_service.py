@@ -10,11 +10,16 @@ from fastapi import HTTPException
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import AdminAnalyticsSnapshot, ChatbotQueryEvent, Product, Order, OrderItem, User
-from utils.audit import audit_log, AuditAction
-from utils.constants import _ADMIN_MAX_PAGE_SIZE, _ADMIN_DEFAULT_PAGE_SIZE
-from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
-from utils.cache import cache_get_json, cache_set_json, build_versioned_cache_key
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.governance.models.admin import AdminAnalyticsSnapshot
+from domains.governance.models.admin import ChatbotQueryEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.constants import _ADMIN_MAX_PAGE_SIZE, _ADMIN_DEFAULT_PAGE_SIZE
+from infrastructure.utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
+from infrastructure.utils.cache import cache_get_json, cache_set_json, build_versioned_cache_key
 
 _ANALYTICS_SNAPSHOT_TTL = 3600
 _ANALYTICS_CACHE_TTL_SECONDS = 300

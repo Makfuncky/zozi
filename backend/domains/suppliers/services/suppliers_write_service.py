@@ -24,31 +24,20 @@ from sqlalchemy.orm import Session
 
 
 
-from _legacy.models import (
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierDocument
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.finance import SupplierSettlement
+from domains.governance.models.admin import SupplierBankAccount
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.payments.models.payments import Payout
 
-    Notification,
+from domains.comms.services.write_helpers import add_and_flush
+from domains.comms.services.write_helpers import commit_only
 
-    Payout,
-
-    Shipment,
-
-    ShipmentEvent,
-
-    SupplierBankAccount,
-
-    SupplierDocument,
-
-    SupplierProfile,
-
-    SupplierSettlement,
-
-    User,
-
-)
-
-from services.common.write_helpers import add_and_flush, commit_only  # noqa: F401
-
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 import structlog
 
@@ -424,9 +413,9 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
     try:
 
-        from services.finance.invoice_service import create_invoice_from_order
+        from domains.finance.services.invoice_service import create_invoice_from_order
 
-        from _legacy.models import Invoice
+        from domains.finance.models.finance import Invoice
 
         has_invoice = db.query(Invoice).filter(
 
@@ -740,7 +729,7 @@ def update_supplier_profile(profile_update: dict, current_user: dict, db: Sessio
 
 
 
-    from _legacy.models import SupplierProfile as SP
+    from domains.comms.models.suppliers import SupplierProfile as SP
 
     profile = db.query(SP).filter(SP.user_id == current_user["id"]).first()
 

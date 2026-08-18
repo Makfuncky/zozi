@@ -34,7 +34,7 @@ from providers.ai.huggingface import (
     _post_hf_request,
     _zero_shot_classify,
 )
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 

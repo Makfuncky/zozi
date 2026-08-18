@@ -13,8 +13,10 @@ from typing import Any, List, Optional
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryCommunication, CountryStaffAssignment
-from _legacy.models.country_enhancements import CountryCategoryTaxRate, CountryCity
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.country.models.country_enhancements import CountryCategoryTaxRate
+from domains.country.models.country_enhancements import CountryCity
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -7,14 +7,14 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
-from services.customer.customer_health_engine import get_customer_health_engine
+from domains.customers.services.customer_health_engine import get_customer_health_engine
 
 
 def list_customer_health(current_user: dict, db: Session, page: int, size: int):
     from infrastructure.utils.pagination import paginated_query
-    from _legacy.models import User
+    from domains.accounts.models.user import User
 
     users, total = paginated_query(
         db.query(User).order_by(User.created_at.desc()),
@@ -34,13 +34,11 @@ def list_customer_health(current_user: dict, db: Session, page: int, size: int):
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
     return {"customers": results, "total": total, "page": page, "size": size}
 
-from services.core.customer_health_service import get_customer_health  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 
 
 
 
 
-from services.core.customer_health_service import get_customer_health  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 

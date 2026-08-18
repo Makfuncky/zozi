@@ -9,23 +9,21 @@ from typing import Any, Callable
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from infrastructure.database.database import engine
-from _legacy.models import (
-    Category,
-    CountryConfig,
-    EmailTemplate,
-    LogisticsPartner,
-    LogisticsPartnerServiceArea,
-    LogisticsPricingProfile,
-    LogisticsVehicleRule,
-    Order,
-    OrderItem,
-    OrderLogisticsAllocation,
-    Product,
-    Shipment,
-    ShipmentEvent,
-    SupplierProfile,
-    User,
-)
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import Product
+from domains.comms.models.marketing import EmailTemplate
+from domains.comms.models.suppliers import SupplierProfile
+from domains.country.models.countries import CountryConfig
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerServiceArea
+from domains.logistics.models.logistics import LogisticsPricingProfile
+from domains.logistics.models.logistics import LogisticsVehicleRule
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import OrderLogisticsAllocation
 from domains.hr.models.employee_models import (
     Employee,
     Office,
@@ -1129,7 +1127,7 @@ def seed_data(session_factory: Callable[[], Session] | Session | None = None) ->
 
 def _seed_countries(db: Session) -> None:
     logger.info("Seeding countries...")
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     
     existing_count = db.query(CountryConfig).count()
     if existing_count > 0:

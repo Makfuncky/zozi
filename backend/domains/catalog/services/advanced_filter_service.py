@@ -8,7 +8,11 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func, and_, or_, case, cast, String
 from sqlalchemy.orm import Session
 
-from _legacy.models import Product, Category, ProductVideo, ProductFilterMetadata, ProductFilterOption
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import ProductVideo
+from domains.catalog.models.products import ProductFilterMetadata
+from domains.catalog.models.products import ProductFilterOption
 
 
 class AdvancedFilterService:

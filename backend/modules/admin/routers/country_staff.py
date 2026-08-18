@@ -10,13 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import require_admin
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import User
-from _legacy.models.countries import CountryConfig
-from _legacy.models.country_enhancements import CountryStaffAssignment
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.dependencies import require_admin
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 router = APIRouter()
 

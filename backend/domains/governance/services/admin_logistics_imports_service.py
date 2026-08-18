@@ -5,9 +5,9 @@ from typing import Optional
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from db.database import get_db
-from controllers.admin.admin_controller import require_admin
-from services.common import import_service as svc
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils import import_service as svc
 
 class ShipmentLineInput(BaseModel):
     po_line_id: Optional[int] = None

@@ -6,8 +6,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from utils.datetime_utils import utcnow as _utcnow
-from _legacy.models.employee_models import EmployeeTraining, TrainingModule
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from domains.hr.models.employee_models import EmployeeTraining
+from domains.hr.models.employee_models import TrainingModule
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -16,14 +16,12 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import OrgUnit
-from services.hierarchy.hierarchy_service import (
-    assign_matrix_manager,
-    backfill_authority_levels,
-    reassign_manager,
-    rebuild_paths,
-    remove_matrix_manager,
-)
+from domains.hr.models.employee_models import OrgUnit
+from domains.accounts.services.hierarchy_service import assign_matrix_manager
+from domains.accounts.services.hierarchy_service import backfill_authority_levels
+from domains.accounts.services.hierarchy_service import reassign_manager
+from domains.accounts.services.hierarchy_service import rebuild_paths
+from domains.accounts.services.hierarchy_service import remove_matrix_manager
 import structlog
 logger = structlog.get_logger(__name__)
 

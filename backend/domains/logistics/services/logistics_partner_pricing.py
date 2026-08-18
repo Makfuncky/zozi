@@ -6,17 +6,15 @@ from typing import Any, Optional, cast
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CityDistanceMatrix,
-    CountryConfig,
-    LogisticsCategoryPricingRule,
-    LogisticsPartner,
-    LogisticsPartnerServiceArea,
-    LogisticsPricingProfile,
-    LogisticsVehicleRule,
-    Order,
-)
-from utils.money import round_money, to_decimal
+from domains.accounts.models.core import CityDistanceMatrix
+from domains.country.models.countries import CountryConfig
+from domains.logistics.models.logistics import LogisticsCategoryPricingRule
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerServiceArea
+from domains.logistics.models.logistics import LogisticsPricingProfile
+from domains.logistics.models.logistics import LogisticsVehicleRule
+from domains.orders.models.orders import Order
+from kernel.money import round_money, to_decimal
 
 
 APPROVED_PROFILE_STATUS = "approved"

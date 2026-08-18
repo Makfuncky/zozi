@@ -1,7 +1,7 @@
 """controllers.hr.okr_controller (CONTROLLERS layer).
 
 Wraps ``services.hr.okr_engine`` and exposes the OKR endpoints. The HTTP
-contract is declared with ``core.route_contract`` decorators so
+contract is declared with ``infrastructure.routing.route_contract`` decorators so
 ``routers/generated/auto_router.py`` can auto-generate the thin router — the
 previous hand-written ``routers/okr.py`` only instantiated the engine and
 passed request bodies through, which is controller-level orchestration that
@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from core.route_contract import get, post
+from infrastructure.routing.route_contract import get, post
 
 from domains.hr.services.okr_engine import get_okr_engine
 

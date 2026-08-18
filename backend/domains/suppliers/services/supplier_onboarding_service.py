@@ -6,8 +6,9 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 
-from db.database import get_db_context
-from _legacy.models import CountryConfig, SupplierOnboardingSync
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import SupplierOnboardingSync
 
 logger = logging.getLogger(__name__)
 

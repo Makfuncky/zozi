@@ -12,7 +12,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from utils.audit import audit_log
+from infrastructure.utils.audit import audit_log
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -29,7 +29,7 @@ def _log_reset(
     status: str,
     error: str | None = None,
 ) -> None:
-    # NOTE: uses the real audit_log(...) signature from utils.audit. The
+    # NOTE: uses the real audit_log(...) signature from infrastructure.utils.audit. The
     # original router call used non-existent kwargs (user_id, resource_type,
     # status) and a missing AuditAction.INBOX_RESET, so the endpoint never
     # worked at runtime — this fixes it as part of the W1 move into a service.

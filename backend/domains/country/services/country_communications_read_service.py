@@ -11,12 +11,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CrossCountryCustomerSession
-from _legacy.models.country_control import (
-    LegalContractTemplate,
-    LogisticsPartnerLocation,
-    ShopWarehouseLocation,
-)
+from domains.country.models.country_enhancements import CrossCountryCustomerSession
+from domains.country.models.country_control import LegalContractTemplate
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.country.models.country_control import ShopWarehouseLocation
 
 
 def list_cross_border_sessions(db: Session, country_code: str) -> list[dict[str, Any]]:

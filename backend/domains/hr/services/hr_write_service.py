@@ -34,7 +34,9 @@ def __getattr__(name: str) -> Any:
 from datetime import datetime, timezone
 from typing import Optional
 
-from _legacy.models import EmployeeAddress, EmployeeDependent, EmployeeRiskScore
+from domains.hr.models.employee_models import EmployeeAddress
+from domains.hr.models.employee_models import EmployeeDependent
+from domains.hr.models.employee_models import EmployeeRiskScore
 import structlog
 logger = structlog.get_logger(__name__)
 

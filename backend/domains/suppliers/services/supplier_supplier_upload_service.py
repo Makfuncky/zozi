@@ -16,8 +16,10 @@ import base64
 import numpy as np
 from providers.image import Image
 from fastapi import Depends, File, Form, HTTPException, UploadFile
-from controllers.admin.admin_controller import require_roles
-from services.ai.bg_removal_service import VALID_STRATEGIES, remove_background, _HAS_CV2
+from domains.governance.services.admin_controller import require_roles
+from domains.finance.services.bg_removal_service import VALID_STRATEGIES
+from domains.finance.services.bg_removal_service import remove_background
+from domains.finance.services.bg_removal_service import _HAS_CV2
 from providers.image.bg_remover import _bytes_to_image
 logger = logging.getLogger(__name__)
 AB_TEST_STRATEGIES = ['clean_commercial', 'precision_geometry', 'birefnet_production', 'ultimate_gaps', 'marketing_variants', 'lite_variants']
@@ -31,8 +33,8 @@ async def ab_test_bg_strategies(image: UploadFile=File(...), strategies: Optiona
     up to 6 strategies and returns quality scores plus the winning image.
     """
     import uuid
-    from utils.background_jobs import enqueue_ml_job
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail='Empty image file')
@@ -42,7 +44,8 @@ async def ab_test_bg_strategies(image: UploadFile=File(...), strategies: Optiona
     _storage.save(image_key, raw, content_type=image.content_type or 'image/jpeg')
 
     def _run_ab_test() -> dict:
-        from services.ai.bg_removal_service import remove_background, VALID_STRATEGIES
+        from domains.finance.services.bg_removal_service import remove_background
+        from domains.finance.services.bg_removal_service import VALID_STRATEGIES
         from providers.image.bg_remover import _bytes_to_image
         from providers.image import Image
         import base64, time, gc

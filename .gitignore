@@ -45,3 +45,10 @@ build/
 *.sqlite
 *.sqlite3
 .data/
+.quarantine/
+
+# Build/audit artifacts that must not be committed (see SYSTEM_AUDIT_REPORT F4)
+backend/schema-audit-report.json
+backend/alembic_test.json
+backend/requirements.lock
+backend/schema_mapping.json

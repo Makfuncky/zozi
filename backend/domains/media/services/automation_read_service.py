@@ -1,19 +1,17 @@
 """Service methods for finance automation rules read operations."""
 from __future__ import annotations
-from utils.pagination import windowed_iterate, SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import windowed_iterate, SAFE_QUERY_LIMIT
 from typing import List
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Accrual,
-    AutomationLog,
-    AutomationRule,
-    BankMappingRule,
-    FixedAsset,
-    ScannedExpense,
-)
+from domains.finance.models.finance import Accrual
+from domains.finance.models.finance import BankMappingRule
+from domains.finance.models.finance import FixedAsset
+from domains.finance.models.finance import ScannedExpense
+from domains.finance.models.general_ledger import AutomationLog
+from domains.finance.models.general_ledger import AutomationRule
 import structlog
 logger = structlog.get_logger(__name__)
 

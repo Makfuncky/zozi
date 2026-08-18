@@ -16,15 +16,16 @@ from typing import Any
 from fastapi import HTTPException, Response
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryCity, CountryCommissionRate, CountryConfig, CountryFeatureFlag
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CountryCommissionRate
+from domains.country.models.country_enhancements import CountryFeatureFlag
 
-from services.geography.country_service import (
-    _get_country_or_404,
-    _record_admin_change,
-    _require_admin,
-    _require_country_access,
-    _require_full_admin,
-)
+from domains.country.services.country_service import _get_country_or_404
+from domains.country.services.country_service import _record_admin_change
+from domains.country.services.country_service import _require_admin
+from domains.country.services.country_service import _require_country_access
+from domains.country.services.country_service import _require_full_admin
 
 
 def create_feature_flag(code: str, body: dict, db: Session) -> dict:

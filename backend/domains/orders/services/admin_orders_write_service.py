@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 import structlog
-from _legacy.models import Order
+from domains.orders.models.orders import Order
 logger = structlog.get_logger(__name__)
 
 

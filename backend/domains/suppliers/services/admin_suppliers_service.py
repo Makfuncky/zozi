@@ -17,9 +17,10 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest
 
-from _legacy.models import SupplierProfile, User
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
 
-from infrastructure.utils.country_rls import enforce_country_access
+from domains.country.utils.country_rls import enforce_country_access
 
 from infrastructure.utils.dependencies import require_admin
 
@@ -157,7 +158,7 @@ def suspend_supplier(code: str, supplier_id: int, _: User, db: Session):
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 0
@@ -169,7 +170,7 @@ def activate_supplier(code: str, supplier_id: int, _: User, db: Session):
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 1
@@ -336,7 +337,7 @@ def refresh_supplier_badge(supplier_id: int, current_user: User, db: Session):
     return {"id": s.id, "badge_level": s.badge_level}
 
 def list_supplier_documents_frontend(status: Optional[str], supplier_id: Optional[int], page: int, page_size: int, _: User, db: Session):
-    import controllers.supplier_document_controller as doc_ctrl
+    import domains.suppliers.services as doc_ctrl
     return doc_ctrl.admin_list_documents(
         {"id": 0, "role": "admin"},
         db,
@@ -348,7 +349,7 @@ def list_supplier_documents_frontend(status: Optional[str], supplier_id: Optiona
     )
 
 def review_supplier_document_frontend(doc_id: int, data: dict, current_user: User, db: Session):
-    import controllers.supplier_document_controller as doc_ctrl
+    import domains.suppliers.services as doc_ctrl
     return doc_ctrl.admin_review_document(doc_id, data, {"id": 0, "role": "admin"}, db)
 
 def supplier_comparison_frontend(_: User, db: Session):

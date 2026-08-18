@@ -12,12 +12,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.countries import CountryConfig
-from _legacy.models.country_enhancements import (
-    CountryCity,
-    CountryCommissionRate,
-    SupplierKYCRequirement,
-)
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CountryCommissionRate
+from domains.country.models.country_enhancements import SupplierKYCRequirement
 import structlog
 logger = structlog.get_logger(__name__)
 

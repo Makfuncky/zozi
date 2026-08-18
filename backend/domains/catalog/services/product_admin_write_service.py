@@ -11,16 +11,16 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Product
+from domains.catalog.models.products import Product
 import structlog
 logger = structlog.get_logger(__name__)
 
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 
 def _bump_cache() -> None:
-    from services.products.products_service import _bump_product_cache_version
+    from domains.catalog.services.products_service import _bump_product_cache_version
 
     _bump_product_cache_version()
 

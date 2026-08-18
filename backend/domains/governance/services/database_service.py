@@ -10,11 +10,11 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session
 
-from db.base import Base
-from utils.auth import get_redis_health_status
-from utils.backup import get_backup_manager
-from utils.cache import cache_get_json, cache_set_json
-from utils.config import settings
+from infrastructure.database.base import Base
+from infrastructure.utils.auth import get_redis_health_status
+from infrastructure.utils.backup import get_backup_manager
+from infrastructure.utils.cache import cache_get_json, cache_set_json
+from infrastructure.utils.config import settings
 
 
 def _database_health_snapshot(db: Session) -> tuple[bool, str]:

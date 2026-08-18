@@ -20,53 +20,47 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    BadgeBillingRecord,
-    BankTransaction,
-    FinanceBankAccount,
-    LogisticsCODRemittanceReceipt,
-    LogisticsPartner,
-    LogisticsPartnerPayout,
-    LogisticsPartnerServiceArea,
-    LogisticsSettlement,
-    Order,
-    OrderItem,
-    OrderLogisticsAllocation,
-    PaymentReconciliationRun,
-    PaymentGatewayConnection,
-    Payout,
-    Product,
-    ProcessedWebhookEvent,
-    RefundLedger,
-    ReturnRequest,
-    Shipment,
-    SupplierSettlement,
-    TransactionLedger,
-    VATRemittance,
-)
-from services.logistics.logistics_partner_pricing import (
-    _build_service_area_pricing_breakdown,
-    lookup_city_distance_km,
-    normalize_pricing_breakdown_payload,
-    normalize_country_code,
-    normalize_vehicle_type,
-    resolve_category_rules_for_area,
-    resolve_pricing_profile_for_area,
-    resolve_vehicle_rule_for_area,
-    vehicle_baseline_multiplier,
-)
-from services.finance.finance_transfer_service import (
-    build_logistics_cod_remittance_instruction,
-    build_supplier_payout_instruction,
-    build_transfer_reference,
-    execute_transfer_batch,
-    get_default_transfer_provider,
-    list_transfer_export_providers,
-)
-from utils.config import settings
-from utils.datetime_utils import utcnow as _utcnow
-from utils.money import round_money, to_decimal
-from services.finance import commission_engine as _commission_engine
+from domains.catalog.models.products import Product
+from domains.finance.models.finance import BankTransaction
+from domains.finance.models.finance import RefundLedger
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TransactionLedger
+from domains.finance.models.finance import VATRemittance
+from domains.governance.models.admin import BadgeBillingRecord
+from domains.governance.models.admin import FinanceBankAccount
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.governance.models.admin import LogisticsSettlement
+from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerServiceArea
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import OrderLogisticsAllocation
+from domains.orders.models.orders import ReturnRequest
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import PaymentReconciliationRun
+from domains.payments.models.payments import PaymentGatewayConnection
+from domains.payments.models.payments import Payout
+from domains.logistics.services.logistics_partner_pricing import _build_service_area_pricing_breakdown
+from domains.logistics.services.logistics_partner_pricing import lookup_city_distance_km
+from domains.logistics.services.logistics_partner_pricing import normalize_pricing_breakdown_payload
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code
+from domains.logistics.services.logistics_partner_pricing import normalize_vehicle_type
+from domains.logistics.services.logistics_partner_pricing import resolve_category_rules_for_area
+from domains.logistics.services.logistics_partner_pricing import resolve_pricing_profile_for_area
+from domains.logistics.services.logistics_partner_pricing import resolve_vehicle_rule_for_area
+from domains.logistics.services.logistics_partner_pricing import vehicle_baseline_multiplier
+from domains.finance.services.finance_transfer_service import build_logistics_cod_remittance_instruction
+from domains.finance.services.finance_transfer_service import build_supplier_payout_instruction
+from domains.finance.services.finance_transfer_service import build_transfer_reference
+from domains.finance.services.finance_transfer_service import execute_transfer_batch
+from domains.finance.services.finance_transfer_service import get_default_transfer_provider
+from domains.finance.services.finance_transfer_service import list_transfer_export_providers
+from infrastructure.utils.config import settings
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from kernel.money import round_money, to_decimal
+from domains.finance.services.finance import commission_engine as _commission_engine
 
 logger = logging.getLogger(__name__)
 
@@ -1089,7 +1083,7 @@ def create_refund_ledger_entry(
 
     # Post general-ledger reversal leg for the refund
     try:
-        from services.finance.general_ledger_service import post_refund_journal
+        from domains.finance.services.general_ledger_service import post_refund_journal
 
         post_refund_journal(db, refund)
     except Exception:
@@ -1494,7 +1488,7 @@ def process_supplier_payout_batch(db: Session, settlement_ids: Optional[list[int
 
         # Post general-ledger leg for supplier payout (Supplier Payables -> Cash)
         try:
-            from services.finance.general_ledger_service import post_payout_journal
+            from domains.finance.services.general_ledger_service import post_payout_journal
 
             post_payout_journal(db, payout, total)
         except Exception:
@@ -2094,9 +2088,9 @@ def run_scheduled_finance_cycle(db: Session) -> dict:
     analytics_refresh: dict[str, Any] = {"refreshed": 0, "keys": []}
     retention: dict[str, Any] = {"targets": []}
 
-    from services.supplier.supplier_badge_service import run_badge_recalculation_cycle
-    from services.admin.analytics_service import refresh_admin_analytics_snapshots
-    from services.customer.retention_service import run_operational_retention_cycle
+    from domains.suppliers.services.supplier_badge_service import run_badge_recalculation_cycle
+    from domains.governance.services.analytics_service import refresh_admin_analytics_snapshots
+    from domains.customers.services.retention_service import run_operational_retention_cycle
 
     badge_recalculation = run_badge_recalculation_cycle(db)
     analytics_refresh = refresh_admin_analytics_snapshots(db)
@@ -2201,7 +2195,7 @@ def record_cod_remittance(
 
     # Post general-ledger leg for COD remittance (COD Receivable -> Cash)
     try:
-        from services.finance.general_ledger_service import post_logistics_cod_remittance_journal
+        from domains.finance.services.general_ledger_service import post_logistics_cod_remittance_journal
 
         post_logistics_cod_remittance_journal(db, settlement.id, to_decimal(amount))
     except Exception:

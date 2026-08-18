@@ -7,7 +7,7 @@ import logging
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from utils.rate_limiter import limiter
+from infrastructure.utils.rate_limiter import limiter
 
 router = APIRouter()
 __router_prefix__ = "/translate"

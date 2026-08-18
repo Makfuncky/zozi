@@ -1,651 +1,469 @@
-# ZOZI Target Architecture ("Should-Be")
-
-This document is the **canonical reference architecture** for the ZOZI platform. It describes the
-system **as it should be designed**, not merely as it exists today. `system_architecture_audit.py`
-validates the codebase against the contract defined here (especially §10). Where the current
-implementation diverges, the audit must report it as a deviation with the matching rule id.
-
-Verified structural facts (layer names, pool defaults, provider base classes, route contract)
-are taken from `backend/main.py`, `middleware/orchestrator.py`, `db/database.py`,
-`utils/dependencies.py` (auth deps), `routers/generated/*_health.py` (health),
-`providers/_base.py`, `utils/config.py`, `services/**`, and `frontend/web_app/src`.
-
-> **Reality caveat:** This is a *target* ("should-be") document. Some referenced layers are
-> **not yet implemented**: `backend/controllers/` is currently an **empty stub** (auth dependencies
-> live in `utils/dependencies.py`; auth service logic in `services/security/`), and there is
-> **no `routers/health.py`** — health endpoints are split across `routers/generated/*_health.py`.
-> Where this doc says a file "exists", verify against the current tree before trusting it.
-
----
-
-## 1. System Context (target)
-
-```mermaid
-    flowchart LR
-        subgraph FE["FRONTEND — Next.js 15 (frontend/web_app)"]
-            FEA["App Router (src/app/*)"]
-            FEL["API client (src/lib/api/*)"]
-            FES["Zustand stores (cart/currency/wishlist/...)"]
-        end
-
-        subgraph BE["BACKEND — FastAPI (backend/) — N stateless replicas"]
-            BEM["Middleware pipeline"]
-            BER["Routers (thin, response_model)"]
-            BEC["Controllers (orchestration)"]
-            BES["Services (business logic + DB access)"]
-            BEP["Providers (AI/ML + 3rd-party adapters)"]
-            BEJ["Jobs / Events (background)"]
-        end
-
-        subgraph DB["DATA — PostgreSQL (domain schemas: customer/supplier/logistic/admin/employee/…; no core/platform/identity)"]
-            DBE[("Pooled via PgBouncer")]
-            DBM[("Models / Schemas")]
-        end
-
-        subgraph CACHE["Redis tier (shared, required)"]
-            RED[(auth cache · catalog cache · sessions · realtime)]
-        end
-
-        subgraph EXT["EXTERNAL"]
-            PG[(Payment gateway)]
-            AI[("AI/ML models")]
-            SMTP[("SMTP / email")]
-            CDN[("CDN / static + images")]
-        end
-
-        CDN --> FE
-        FEA --> FEL --> BEM --> BER
-        FES -. state .- FEA
-        BER --> BEC --> BES
-        BES --> BEP
-        BES --> DBE
-        BES --> RED
-        BEP --> AI
-        BEJ --> DBE
-        DBE --> DBM
-        BES --> PG
-        BES --> SMTP
-```
-
----
-
-## 2. Backend Circuit (target request lifecycle)
-
-```mermaid
-    flowchart TD
-        Client([Client / Load Balancer])
-
-        subgraph BE["BACKEND — FastAPI + Middleware (middleware/orchestrator.py)"]
-            direction TB
-            L1["1 FOUNDATION: GZip · CORS · IP extract · RequestID · API-Version"]
-            L2["2 SECURITY: SecurityHeaders · ImpossibleTravel · CSRF"]
-            L3["3 RATE LIMIT: Sliding-window /path"]
-            L4["4 GEO/COUNTRY: CountryContext"]
-            L5["5 OBSERVABILITY: RequestLogging"]
-            L6["6 COMPLIANCE: PCI-DSS (prod only)"]
-            L1 --> L2 --> L3 --> L4 --> L5 --> L6
-        end
-
-        subgraph RT["ROUTERS/* — thin; response_model; NO db writes"]
-            H["GET /health · /health/deps · /health/ready"]
-            R["Domain routers: customer_coupons, customer_wishlist, admin_promotions ..."]
-            G["AUTO-GENERATED: public_commerce_coupons (emitted from controller decorators)"]
-        end
-
-        subgraph SEC["SECURITY / AUTH (utils/dependencies.py)"]
-            AUTH["get_current_user<br/>verify_token(JWT jti) → Redis cache → db lookup"]
-            ADMIN["get_current_admin → _dict_get_current_user"]
-        end
-
-        subgraph SVC["CONTROLLERS → SERVICES"]
-            C["controllers/* (orchestration only)"]
-            S["services/** (owns DB access + transactions)"]
-        end
-
-        subgraph DB["DATABASE LAYER (db/database.py)"]
-            POOL[("Engine + Pool (PgBouncer in front)")]
-            GETDB["get_db() dep — open → yield → rollback/close"]
-            KEYS["Keyset pagination (cursor), NEVER OFFSET on hot lists"]
-            MODELS[("Models — domain schemas (e.g. schema=customer); each domain owns its user table: customer.user, supplier.user, …")]
-        end
-
-        Client --> L1
-        L6 --> H
-        L6 --> R
-        H --> DB
-        R --> AUTH
-        R --> ADMIN
-        AUTH --> GETDB
-        ADMIN --> GETDB
-        R --> C
-        G --> AUTH
-        G --> ADMIN
-        G --> C
-        C --> S
-        S --> GETDB
-        GETDB --> POOL
-        POOL --> MODELS
-        S --> KEYS
-```
-
-### 2.1 Routers: two-track strategy + auto-generation
-
-Routers are created two ways; **both** mount through `main._load_routers()`
-(which globs `backend/routers/*.py` — there is **no central registry**):
-
-- **Legacy (hand-written)** — the existing `backend/routers/*.py` (domain routers,
-  websockets, country control-plane, aliases). These stay as-is and remain
-  auto-discovered. They are **not** mechanically converted to the auto-router:
-  legacy routers share controller functions across multiple files, which is
-  incompatible with the one-function = one-route model.
-- **Generated (new controllers only)** — NEW HTTP controllers declare their routes
-  with `@get/@post/@put/@patch/@delete/@route` decorators imported **only** from
-  `routers.generated.auto_router` (a controller never imports FastAPI).
-  `routers/generated/auto_router.py` reads those declarations from `controllers/**`
-  via **AST only** (it never imports or executes a controller), then emits a thin
-   delegating router into `routers/` named `{surface}_{domain}_{operation}.py`
-  (e.g. `public_commerce_coupons.py`) carrying the `AUTO-GENERATED` marker.
-  Generated files are **never** written over a hand-written router (identified by
-  absence of the marker).
-
-**Surfaces** are a first-class routing concept: `SURFACES` maps a path prefix to
-an auth dependency and a backing controller module (e.g. `admin → /api/v1/admin` +
-`get_current_admin`). The generator uses the surface to set the router prefix and
-the emitted file name. See the AI File Placement Contract (SYSTEM_AUDIT_REPORT.md §3)
-for the flat-file `{surface}_{domain}_{operation}.py` naming rule.
-
-**Generated routers are thin by construction** — they may import controllers only.
-The generator's guardrail forbids `db.commit`/`db.flush`, `from models import`,
-and `from services import` inside the emitted file. This is stricter than, and
-consistent with, the router allow-list in §10.2.
-
-**Governance gate:** `python routers/generated/auto_router.py --verify` is the
-CI/pre-commit check — it fails if any generated file is missing, drifted, or
-orphaned. Regenerate after every controller edit; `--clean` removes orphans.
-
-**Target layer contract (the "circuit" the auditor enforces — see §10):**
-
-| Layer | May import | Must NOT |
-|---|---|---|
-| `main.py` | middleware, dependencies, routers, db, utils, lifespan, data | controllers, services, models directly |
-| `routers/*` | controllers, schemas, auth deps, `get_db` | raw `db.query(...)`, **any `db.add/commit` (W1)**, business logic |
-| `controllers/*` | services, models, `get_db`, auth deps | `db.add/commit` (W1), ORM internals |
-| `services/**` | models, `get_db`, utils, providers, redis | routers, `main` |
-| `providers/*` | `providers._base`, utils, settings | routers, `main` |
-| `db/database.py` | `db.base.Base`, settings | app layers |
-| `middleware/*` | utils, settings, db (read-only) | routers, controllers |
-| `frontend/src/lib/api/*` | backend `/api/v1/*` only | direct DB; raw fetch from pages |
-
----
-
-## 3. Database Subsystem (target)
-
-```mermaid
-    flowchart TD
-        subgraph DBL["db/database.py — connection + sessions"]
-            URL["DATABASE_URL from settings"]
-            ENGINE["create_engine<br/>AsyncPG (target) or QueuePool (sync)"]
-            POOL["PgBouncer (transaction mode) in front<br/>pool_pre_ping · pool_recycle"]
-            SCHEMA["Domain-owned schemas<br/>customer.user · supplier.user · logistic.user · admin.user · employee.user<br/>(no core/platform/identity schemas)"]
-            GETDB["get_db() — one session source; rollback/close on exit"]
-            KEYS["Keyset cursor pagination helper (no OFFSET on hot paths)"]
-            CHK["check_connection_health() → SELECT 1"]
-        end
-
-        subgraph OPS["schema + migration"]
-            BASE["db/base.py → Base"]
-            MIG["alembic/ migrations (versioned, single source of truth)"]
-            SEED["db/seed.py · treasury_seeder.py (idempotent)"]
-        end
-
-        subgraph TBL["Tables — domain schemas; no core/platform/identity"]
-            S1["customer_users · customer_addresses · customer_orders"]
-            S2["commerce_orders · commerce_products · audit_logs"]
-            S3["finance_* · treasury_* · hr_* · logistics_* · media_* · security_*"]
-        end
-
-        URL --> ENGINE --> POOL --> SCHEMA
-        POOL --> GETDB --> SCHEMAS
-        KEYS --> GETDB
-        CHK --> ENGINE
-        BASE --> SCHEMAS --> MIG
-        SEED --> SCHEMAS
-```
-
-**Target rules**
-- `get_db()` is the only session source; services own transactions.
-- **Cross-domain FKs are correct and allowed** across domain schemas (e.g. `order.employee_id → employee.user.id`); each domain owns its `user` table. The auditor must resolve the referenced table's real name from ORM metadata —
-not parse `ForeignKey("table.column")` as a schema (this is the DBA06 parser bug to fix).
-- `create_all()` is dev-only and refuses production (`db/init_db.py`).
-- Hot list endpoints use **keyset cursors**, never `OFFSET` (DBA32).
-- Alembic is the single source of schema truth; ORM vs migration drift is a real (DBA13) check.
-
----
-
-## 4. Security Subsystem (target)
-
-```mermaid
-    flowchart TD
-        Client([Request])
-
-        subgraph MW["Middleware (middleware/orchestrator.py)"]
-            CORS["CORSMiddleware (CORS_ORIGINS env)"]
-            IP["IPExtractionMiddleware"]
-            SH["EnhancedSecurityHeadersMiddleware (CSP · HSTS)"]
-            IT["ImpossibleTravelMiddleware"]
-            CSRF["CSRFMiddleware (prod)"]
-            RL["RateLimitMiddleware (per-path)"]
-            CC["CountryContextMiddleware"]
-            PCI["PCIDSSMiddleware (prod only)"]
-        end
-
-        subgraph AUTH["Auth deps (utils/dependencies.py)"]
-            SCHEME["OAuth2PasswordBearer tokenUrl=auth/login"]
-            GU["get_current_user — verify_token(JWT jti) → Redis → db"]
-            GOU["get_optional_user"]
-            GA["get_current_admin"]
-        end
-
-        subgraph SECUTILS["Security utils"]
-            TOK["utils/auth.py — verify_token · cache · get_redis_health_status"]
-            RED[(Redis — token cache + blacklist)]
-            ZT["zero_trust_auth.py"]
-        end
-
-        Client --> CORS --> IP --> SH --> IT --> CSRF --> RL --> CC --> PCI
-        PCI --> GU & GOU & GA
-        GU --> TOK --> RED
-        ZT --> GU
-```
-
-**Target rules**
-- All SQL must be **parameterized**; the auditor flags only untrusted-input string concatenation,
-not every `text(...)` (SEC5/SEC101 false-positive fix).
-- JWT validated with `jti` blacklist; admin via `get_current_admin`.
-- CSRF + PCI-DSS active in production only.
-- No hardcoded secrets (SEC2 real check, not literal-scan noise).
-- **One canonical RLS enforcer** — multiple scattered RLS modules are a fail-open risk (a path that omits
-RLS silently bypasses tenant/country isolation). Audit flags any second/divergent RLS implementation.
-
----
-
-## 5. Providers Subsystem (target — AI / ML / 3rd-party adapters)
-
-```mermaid
-    flowchart TD
-        subgraph PB["providers/_base.py — abstraction (REQUIRED base)"]
-            BP["BaseProvider: is_available() · health_check()"]
-            BAI["BaseAIProvider: load_model · predict · preprocess · postprocess"]
-        end
-
-        subgraph PM["Provider modules (must subclass base)"]
-            ANA["analytics · bg_remover · chatbot · country · finance_ai"]
-            GEO["geo · image · map · ocr · parcel_verification"]
-            SRCH["search · text · vision · voice_to_text"]
-        end
-
-        subgraph PF["Domain sub-packages (swappable adapters)"]
-            PFPY["payments · logistics · media · hr · finance"]
-            PFC["country · configuration · geography · catalog · analytics · ai · legacy"]
-        end
-
-        subgraph INF["Infra"]
-            AW["async_workers.py (off-request AI)"]
-            CFG["config.py"]
-        end
-
-        BP --> PM --> AW
-        BP --> PF --> AW
-        AW --> EXT[("External AI/ML + 3rd-party APIs")]
-
-        subgraph CALLERS["Allowed callers (contract)"]
-            SVC["services/**"]
-            JOB["jobs/* (mcp_server, seed_all)"]
-        end
-        SVC --> PM & PF
-        JOB --> PM
-```
-
-**Target rules**
-- Every provider subclasses `BaseProvider`/`BaseAIProvider` and implements `health_check()`.
-- Only `services/**` and `jobs/*` may call providers — never routers (per circuit contract).
-- Heavy provider work runs via `async_workers` off the request path.
-
----
-
-## 6. Frontend Subsystem (target)
-
-```mermaid
-    flowchart TD
-        subgraph FEA["App Router (frontend/web_app/src/app)"]
-            LAY["layout.tsx · error.tsx · global-error.tsx · loading.tsx"]
-            ROUTES["Route groups: admin · auth · cart · checkout · products · orders · supplier · logistics-partner · wishlist · profile · chatbot · tracking"]
-        end
-
-        subgraph FEL["API + data (src/lib)"]
-            CLIENT["lib/api/client.ts (typed fetch wrapper)"]
-            AUTH["lib/api/auth.ts"]
-            ERR["lib/api/errors.ts · index.ts"]
-            USEAPI["useApi.ts · useAuth.tsx"]
-        end
-
-        subgraph FEST["State (Zustand)"]
-            CART["cartStore · wishlistStore"]
-            CUR["currencyStore · localeStore · themeStore"]
-            BG["backgroundJobs · backgroundJobStore"]
-        end
-
-        subgraph FEC["Components (src/components)"]
-            UI["ui/ (design-system, tokens only)"]
-            ADMIN["admin/ (command center)"]
-            AUTHc["auth/ · chat/ · country/ · map/ · supplier/ · comms/ · ems/"]
-        end
-
-        subgraph FER["Infra"]
-            RT["utils/realtime.ts (WebSocket)"]
-            THEME["theme/ · styles/ (Tailwind + DESIGN TOKENS — no inline <style>)"]
-        end
-
-        ROUTES --> CLIENT --> AUTH & ERR
-        USEAPI --> FEST
-        ROUTES --> FEC --> FEST
-        RT -. live .-> BG
-        FEL -->|HTTP /api/v1/*| BE[("Backend FastAPI")]
-```
-
-**Target rules**
-- All backend calls through `src/lib/api/*` (typed client); no raw `fetch` in pages.
-- Design tokens centralized in `theme/` + `styles/`; **inline `<style>` is forbidden (DS02)**.
-- `key={i}` only on static/loading lists; dynamic/mutable lists need stable ids (FEH402 fix).
-- `console.*` restricted to error handlers; loading skeletons use index keys benignly.
-
----
-
-## 7. Other Important Parts (target)
-
-### 7.1 Background jobs, events & realtime
-`events/` publisher + `jobs/` (`background_tasks`, `fraud_monitoring`, `seed_all`, `mcp_server`)
-+ `providers/async_workers.py` run heavy work off-request. `services/command_center_background.py`
-aggregates health into Redis; `utils/realtime.py` streams via WebSocket. Frontend subscribes
-through `FER` realtime.
-
-### 7.2 Lifespan / startup
-`lifespan.py` boots: migration gate → schema init (dev) → seed → cache warm-up. Readiness is
-re-checked per request by `/health/ready`.
-
-### 7.3 Monitoring
-`monitoring/` ships `docker-compose.monitoring.yml` + `prometheus.yml`. Health endpoints are the
-liveness/readiness contract for orchestrators.
-
----
-
-## 8. Health Check (target)
-
-| Endpoint | Purpose | Source |
-|---|---|---|
-| `GET /health` | Liveness — version + active API versions | `routers/generated/*_health.py` (there is **no** single `routers/health.py`; health is split per surface: `admin_security_health`, `customer_health`, `logistics_health`, `supplier_health`, `public_security_health`, plus `*_list` variants) |
-| `GET /health/deps` | Redis / email / payments / error-tracking | `routers/generated/*_health.py` (see above) |
-| `GET /health/ready` | `check_connection_health()` + readiness gates → 503 if blocking | `routers/generated/*_health.py` (see above) |
-
----
-
-## 9. Production Scaling Topology (target — 100K concurrent)
-
-> **Two capacity goals are conflated in "100K" and MUST be separated:**
-> - **Concurrency** = 100K long-lived, mostly-idle sessions (browsing + WebSocket presence).
->   Largely solved by stateless autoscaling + edge cache + Phase A infra.
-> - **Throughput** = 100K RPS of active requests. Requires the full event-driven / CQRS /
->   search-cluster stack (Phase C).
+# ZOZI Platform — System Architecture Diagram
+
+> Companion to `documents/TECHNOLOGY_USED.md` and the architecture rules.
+> This document is the visual and organizational description of the backend.
+> The rules and laws are maintained with it; the technology stack lives in
+> `documents/TECHNOLOGY_USED.md`. All stay in lock-step.
 >
-> 100K *concurrent users* ≠ 100K RPS. The phases below are ordered by which goal they serve.
-> The current single-instance code (sync SQLAlchemy, pool 15/process, single Postgres, in-process
-> WebSockets, optional single Redis) is **below mid-scale** until Phase A is deployed.
+> The codebase is organized around three orthogonal axes — **Modules, Domains,
+> Features**. Every package, dependency arrow and naming rule below is the single
+> organization the code follows. Code that does not fit this picture violates the
+> dependency laws and is reported by the architecture audit.
 
-### 9.1 Hyper-scale topology (Phase C target state)
+---
+
+## 1 · Technology Stack (from `documents/TECHNOLOGY_USED.md`)
+
+### Backend — FastAPI / Python
+| Concern | Technology |
+|---|---|
+| Framework / runtime | FastAPI `0.115.2`, Python `3.11` (Docker) / `3.10` (dev), Uvicorn `0.51.0`, Gunicorn `26.0.0` |
+| Database / ORM | PostgreSQL `15` (prod) / SQLite (dev), SQLAlchemy `2.0.51` (async), Alembic `1.18.5`, asyncpg `0.31.0`, psycopg2-binary `2.9.12`, pg8000 `1.31.5`, DuckDB `1.5.5` + duckdb-engine `0.17.0` |
+| Auth / security | python-jose `3.5.0` (JWT, `jti` blacklist), bcrypt `5.0.0`, pyotp `2.10.0` (TOTP), cryptography `49.0.0`, slowapi `0.1.10` (rate limit, limits `5.8.0`), CSRF + security-headers + PCI-DSS middleware |
+| Cache / sessions | Redis `8.0.1` (auth cache, catalog cache, sessions, realtime, rate-limit) |
+| Jobs | APScheduler `3.11.3` + custom background workers (`jobs/`) |
+| Payments / APIs | Stripe `15.3.1` + Stripe Connect, httpx `0.28.1`, requests `2.34.2` |
+| Observability | structlog `26.1.0`, OpenTelemetry (api / sdk / otlp, fastapi / asgi / sqlalchemy instrumentation), Prometheus (`prometheus-client` + `prometheus-fastapi-instrumentator`), Sentry (`sentry-sdk[fastapi]`) |
+| Media / AI | aiofiles `25.1.0`, Pillow `12.3.0`, python-magic `0.4.27`, rembg `2.0.69`, opencv-python `5.0.0`, onnxruntime `1.23.2` |
+| Email / comms | SMTP (stdlib) + `email-validator` `2.3.0`, Twilio (SMS), WebSockets `16.1.1` |
+| Validation / utils | Pydantic `2.13.4`, python-dotenv `1.2.2`, python-slugify `8.0.4`, pytz `2026.3`, tzlocal `5.4.4`, babel `2.18.0`, phonenumbers `9.0.35`, numpy / scipy / scikit-image, python-docx `1.2.0`, openpyxl `3.1.5`, feedparser `6.0.12` |
+| Testing | pytest `9.1.1` + pytest-asyncio `1.4.0`, httpx |
+
+### Frontend — Next.js / React
+| Concern | Technology |
+|---|---|
+| Framework | Next.js `16.3.1` (App Router, RSC), React `18.3.1`, TypeScript `5.8.2` (strict) |
+| Styling | Tailwind CSS `3.4.19` + design tokens, class-variance-authority `0.7.1`, clsx `2.1.1`, tailwind-merge `3.5.0`, lucide-react `1.25.0`, framer-motion `11.5.6` |
+| State | Zustand `5.0.11` |
+| Forms | React Hook Form + Zod |
+| Payments | `@stripe/react-stripe-js` `5.6.0`, `@stripe/stripe-js` `8.7.0` |
+| Charts | chart.js `4.5.1` + react-chartjs-2 `5.3.1` |
+| Maps | leaflet `1.9.4` + react-leaflet `5.0.0` |
+| Utilities | jose `6.2.9` (browser JWT), dompurify `3.3.3` (XSS), qrcode `1.5.4`, jspdf `4.1.0`, @zxing/library `0.21.3` |
+| Quality | ESLint `9` + typescript-eslint `8.62.0`, Prettier `3.3.3`, eslint-config-next `15.4.5`, Playwright `1.61.1`, jest `29.7.0` + ts-jest + RTL `16.3.0` + jest-axe `10.0.0` |
+| Build / deploy | Node.js `20` (Alpine), multi-stage Docker, Next.js rewrites for API proxying |
+
+### Infrastructure / DevOps
+- Docker Compose (local), multi-stage Dockerfiles
+- Railway (backend), Vercel (frontend)
+- Alembic multi-schema migrations (public, analytics, audit, commerce, …)
+- `.env` (compose) / `backend/.env` / `frontend/web_app/.env.local` / `.env.example` (source of truth)
+- Monorepo `root/`: `docker-compose.yml`, `Makefile`, `pnpm-workspace.yaml`,
+  `.github/workflows/*` (`ci.yml` · `import-lint.yml` · `schema-drift.yml` · `e2e.yml`),
+  `_extra_files/` (temporary audit / migration working files)
+
+### Key Architectural Patterns
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| API | FastAPI + auto-discovered routers | RESTful endpoints with versioning |
+| Auth | JWT (HS256) + refresh tokens + `jti` blacklisting | Stateless auth with revocation |
+| Middleware | 6-layer pipeline (Foundation → Security → Rate Limit → Geo → Observability → Compliance) | Cross-cutting concerns |
+| Database | SQLAlchemy `2.0` + RLS (Row Level Security) | Multi-tenant data isolation |
+| Caching | Redis + in-memory | Performance |
+| Real-time | WebSockets (native + custom manager) | Live updates |
+| Observability | OpenTelemetry + Prometheus + Sentry + structlog | Full-stack monitoring |
+
+### Shared Package
+- `@zozi/shared` (`frontend/shared`) — TS types / utils shared between web and mobile;
+  `permissions.ts` is **generated** from `GET /rbac/catalog`.
+
+---
+
+## 2 · The Three Orthogonal Axes
+
+A folder tree can only express **one** axis. The other two live in **naming +
+registration + configuration**. The three axes map to three different mechanisms:
+
+| Axis | What it is | Where it lives | Mechanism |
+|---|---|---|---|
+| **Module** (customer, supplier, logistics, admin, employee) | *Who* is acting — login, session, route prefix, UI shell | `modules/{module}/` | Separate auth + thin API surface |
+| **Domain** (finance, accounts, catalog, orders, payments, logistics, suppliers, customers, hr, comms, media, country, governance, …) | *What* the business does — logic + data | `domains/{domain}/` | Services, models, schemas, policies, events |
+| **Feature** (`finance.ledger`, `finance.reporting`, …) | *What may be done* — permission atoms | `rbac/` + `domains/*/features.py` | Data/config, enforced by `require_feature()` |
+
+**The rule that makes it coherent:** Modules compose. Domains own. Features gate.
+
+---
+
+## 3 · Backend Package Layout
+
+```
+backend/
+├── main.py                     # boots app; registers module routers per actor prefix
+├── config.py                   # settings, env, feature gates
+├── DOMAIN_ALLOWLIST.yaml       # temporary cross-domain imports (may only shrink)
+│
+├── modules/                    # AXIS 1 — MODULE (who)
+│   ├── customer/  supplier/  logistics/  admin/  employee/
+│   │     ├── auth/             # per-actor login/OTP/social → that actor's own tables; sessions; device binding
+│   │     ├── routers/          # THIN per-actor routers (auth + require_feature + ONE service call)
+│   │     │                     #   modules/{m}/routers/__init__.py lists routers/public_routers for main.py
+│   │     └── serializers/      # per-actor view models (customer-facing response shaping)
+│   │
+├── domains/                    # AXIS 2 — DOMAIN (what)
+│   ├── finance/  accounts/  catalog/  orders/  payments/  logistics/  suppliers/
+│   ├── customers/  hr/  comms/  media/  country/  governance/   # the 13 domains
+│   │     ├── services/  models/  schemas/  policies/   # heavy domains may instead slice:
+│   │     ├── events.py  subscribers.py                  #   ledger/ payouts/ treasury/ … (one sub-capability = one folder)
+│   │     ├── ports.py        # SANCTIONED cross-domain READ path (the only thing another domain may import)
+│   │     ├── read_models/    # CQRS-lite projections for this domain's own dashboards
+│   │     └── features.py      # AXIS 3 seed: this domain's permission atoms
+│   │
+├── rbac/                       # AXIS 3 — FEATURE (may)
+│   ├── catalog.py               # aggregates domains/*/features.py → single source of truth
+│   ├── roles.py                 # (module, role) → feature sets
+│   ├── resolution.py            # actor × role × country → effective set (Redis-cached)
+│   ├── dependencies.py          # require_feature(...), require_module(...)
+│   ├── service.py               # grant/revoke, delegation, maker-checker
+│   └── models.py                # permission_categories, role_permission_assignments, user_permission_overrides
+│
+├── infrastructure/             # PLATFORM — zero business logic; imports nothing above it
+│   ├── database/               # base.py · database.py (get_db/get_read_db) · session.py · transaction.py
+│   │                           #   security.py ← ONE canonical RLS enforcer · seeds/ · create_tables.py (dev-only)
+│   ├── redis/                  # client · cache · token blacklist · pub/sub
+│   ├── storage/                # S3/R2 adapters · presigned URLs (media blobs never in Postgres)
+│   ├── messaging/              # event_bus (in-proc → Redis later) · ws_manager · webhook ingress
+│   ├── observability/          # structlog · OTEL · Prometheus · Sentry
+│   ├── security/               # JWT · hashing · field encryption (KMS) · zero-trust primitives
+│   └── utils/                  # pure technical helpers: pagination.py · datetime_utils · variant_key
+├── kernel/                     # SHARED KERNEL — pure business primitives: money, currency, numbering, country, period
+│                             #   import rule: domains → kernel → (nothing); kernel may use platform primitives only
+├── providers/                  # 3rd-party/AI adapters (called ONLY by services/jobs; never by modules/domains directly)
+│   ├── ai/  analytics/  auth/  automation/  comms/  finance/  geography/
+│   ├── image/  media/  news/  payments/  security/  voice/
+│   └── _base.py                # BaseProvider / BaseAIProvider + health_check()
+├── jobs/                        # background workers/consumers (→ domains → infrastructure)
+│   ├── fraud_monitoring.py  ghost_order_detector.py  data_retention.py
+│   ├── payroll_run.py  payout_sweep.py  reconciliation_cron.py  bank_statement_importer.py
+│   ├── fx_revaluation.py  accrual_reversal.py  threat_feed_updater.py  mcp_server.py
+│   └── background_tasks.py
+├── middleware/                  # flat; orchestrator.py orders the pipeline BEFORE module routers
+│   └── orchestrator.py · api_version · country_context · csrf · database_security · device_binding
+│       · impossible_travel · ip_extraction · logging · pci_dss_compliance · rate_limit
+│       · request_id · rls_dependency · security_headers · webhook_ip_whitelist
+│       · webhook_verification · zero_trust_auth
+├── alembic/                     # SINGLE schema source of truth
+├── scripts/                     # analyze_tables.py, rewrite_imports.py, seed helpers (dev)
+└── tests/
+    ├── architecture/            # test_import_laws.py (layer direction + cross-domain ban), test_feature_catalog.py
+    └── domains/                 # per-domain unit/integration tests
+```
+
+> **Shared kernel (`kernel/`).** Business primitives used by *every* domain — `money`
+> (Decimal, never float), `currency`, `numbering` (centralized ORD-/INV-/PAY-/BATCH-),
+> `country`, `period` — live here as first-class residents so they are not smuggled into
+> `infrastructure/utils/` or duplicated per domain. **Dependency rule: `domains → kernel → (nothing)`.**
+> `kernel/` must not import `modules/`, `domains/`, `rbac/`, `providers/`, `jobs/`, or `middleware/`.
+> It may import `infrastructure/` platform primitives only.
+
+> **Canonical top-level packages.** The backend root contains **only**:
+> `main.py`, `config.py`, `DOMAIN_ALLOWLIST.yaml`, `modules/`, `domains/`,
+> `rbac/`, `kernel/`, `infrastructure/`, `providers/`, `jobs/`, `middleware/`,
+> `alembic/`, `scripts/`, `tests/`. A root-level `utils/` is **forbidden** — its
+> contents split into `infrastructure/utils/` (technical: pagination, datetime,
+> variant keys, slugs) and `kernel/` (business primitives: money, currency,
+> numbering, country, period). Likewise `routers/`, `controllers/`, `services/`,
+> `models/`, `db/` are **not** top-level packages; they live inside `modules/`,
+> `domains/`, or `infrastructure/` as shown above.
+
+> **Cross-domain contract (Law 3).** Writes across domains go *only* through `events.py`/`subscribers.py`.
+> Reads across domains go *only* through the publishing domain's `ports.py` (e.g.
+> `domains/catalog/ports.py → get_price(db, product_id, country)`). `read_models/` hold each domain's
+> own CQRS-lite projections; cross-domain dashboards live in `domains/governance/read_models/`.
+> `DOMAIN_ALLOWLIST.yaml` tracks the *temporary* cross-domain imports still permitted and must only shrink.
+
+> **Deployment model.** Shipped initially as a **modular monolith** (one deployable, one Postgres
+> ecosystem, shared Redis) — modules and domains are boundaries inside one process, not separate servers.
+> Module boundaries make later extraction to independent services possible *without* redesigning domains.
+
+### Frontend layout
+```
+frontend/
+├── web_app/                     # Next.js 16.3.1 (App Router, RSC)
+│   ├── src/app/                 # route tree: (customer), auth/, admin/*, supplier/*, logistics-partner/*,
+│   │                             #   employee/*, wishlist/, profile/, chatbot/, tracking/; app/api/ = Next server routes
+│   ├── src/components/          # ui/ (design system), admin/, auth/, chat/, comms/, country/, ems/, map/, supplier/
+│   ├── src/hooks/               # useApi, useAuth, WebSocket hooks
+│   ├── src/lib/                 # api/ (client.ts, auth.ts, country.ts, errors.ts), rbac.ts (fetches /rbac/catalog)
+│   ├── src/services/            # localizationService, crossBorderService, addressFormatService
+│   ├── src/theme/  src/styles/  src/types/  src/utils/
+│   ├── tests/  e2e/             # mocks + Playwright
+│   └── root/                    # next.config.ts (rewrites), middleware.ts, tailwind.config, playwright.config
+├── mobile_app/                  # Expo RN
+│   ├── app/                     # Expo Router: (auth)/(tabs) + admin/ supplier/ logistics/ employee/ tracking/ returns/
+│   ├── components/ui/           # design-system
+│   ├── lib/                     # api.ts, Zustand stores, authPrompt, countryContext, geo, paymentService,
+│   │                             #   expoSecureStorage, errorReporter
+│   └── theme/  assets/  android/  mocks/  e2e/  scripts/  root/
+└── shared/                      # cross-platform TS, imported by BOTH apps
+    └── src/                     # api-core.ts (apiFetch), money.ts, i18n.ts, cart/checkout/order/product/returns/
+                                  #   wishlist/notification helpers, statusColors.ts, requestCache.ts, realtime.ts,
+                                  #   chatbot.ts, types.ts, theme.ts + theme.native.ts,
+                                  #   permissions.ts  ← GENERATED from backend /rbac/catalog
+```
+
+---
+
+## 4 · The Seven Laws (enforced by the audit)
+
+1. **Arrows point down only:** `modules → domains → infrastructure`.
+   Domains never import modules. `rbac` is imported by modules + middleware only.
+   `infrastructure` / `kernel` import nothing above them. `providers ← services/jobs`.
+2. **Module routers stay thin:** auth context + `require_feature(...)` + one domain-service call.
+   No DB writes, no business rules.
+3. **Cross-domain writes only via events** (`events.py`/`subscribers.py`);
+   cross-domain *reads* only via `ports.py` / `read_models/`.
+4. **Features single-sourced** in `domains/*/features.py`; aggregated by `rbac/catalog.py`;
+   CI fails on any `require_feature("…")` literal not in the catalog.
+5. **Country is the orthogonal scope axis:** RLS session context + `country_staff_assignments`
+   — independent of the feature check.
+6. **Schema discipline:** every table in a domain Postgres schema; Alembic is the only
+   schema source; naming lint (`snake_case`, plural, `<thing>_id`, `created_at/updated_at`,
+   `country_code`, `is_deleted`).
+7. **Allowlist rule:** temporary cross-domain imports are tracked in `DOMAIN_ALLOWLIST.yaml`
+   and may only shrink; direct cross-domain writes outside `events.py` are forbidden.
+
+---
+
+## 5 · System Context
 
 ```mermaid
-    flowchart LR
-        subgraph EDGE["EDGE (CDN + WAF + rate limit)"]
-            WAF["WAF / DDoS"]; EC["Edge cache: catalog, static, images"]; RL["Edge rate limit"]
-        end
-        subgraph GW["GATEWAY"]
-            APIGW["API Gateway / LB (TLS, auth offload)"]; WSG["WS Gateway (Redis fan-out, Node/Go at 100K+)"]
-        end
-        subgraph COMPUTE["COMPUTE (stateless autoscale)"]
-            FE["Next.js 15 (ISR/edge)"]; BE["FastAPI pods (AsyncPG read+write)"]; WR["Async workers (Kafka consumers)"]
-        end
-        subgraph MESH["EVENT & DATA MESH"]
-            KAFKA["Kafka (event bus)"]; CDC["Debezium (WAL CDC)"]; REDIS["Redis Cluster (sessions, cart, cache, pub/sub)"]; ES["OpenSearch/ES (catalog facets)"]
-        end
-        subgraph DB["DATA"]
-            PGP[("Postgres PRIMARY (writes)")]; PGR[("Read replicas (auto)")]; PB["PgBouncer"]
-        end
-        EXT["AI / Payment gateways"]
-
-        U((100K users)) --> WAF --> EC --> APIGW
-        U --> WSG
-        APIGW --> FE & BE
-        BE --> REDIS & ES & PGR
-        BE -->|commands| KAFKA
-        KAFKA --> WR --> PGP & EXT
-        PGP -->|WAL| CDC --> KAFKA --> ES
-        PGP --> PB --> PGR
-        WSG <-->|pub/sub| REDIS
+flowchart LR
+    subgraph FE["FRONTEND — Next.js (frontend/web_app)"]
+        FEA["App Router (src/app/*)"]
+        FEL["API client (src/lib/api/*) — fetches /rbac/catalog"]
+        FES["Zustand stores (cart/currency/wishlist/...)"]
+    end
+    subgraph BE["BACKEND — FastAPI (backend/) — N stateless replicas"]
+        BEM["middleware/ pipeline (orchestrator.py)"]
+        BEMOD["modules/*/routers/ (thin: auth + require_feature + 1 service call)"]
+        BEDOM["domains/*/services/ (business logic + DB access)"]
+        BEFEAT["rbac/ (catalog · roles · resolution · dependencies)"]
+        BEK["kernel/ (money · numbering · country · period)"]
+        BEP["providers/ (AI/ML + 3rd-party adapters)"]
+        BEJ["jobs/ + events (background consumers)"]
+    end
+    subgraph INF["infrastructure/ (platform — zero business logic)"]
+        BEDB["database/ (get_db · RLS enforcer)"]
+        RED[(redis: auth cache · catalog cache · sessions · realtime)]
+    end
+    subgraph DB["DATA — PostgreSQL (domain schemas: finance/catalog/orders/…; one schema per domain)"]
+        DBE[("Pooled via PgBouncer")]
+        DBM[("Models — domains/*/models/ (schema per domain)")]
+    end
+    subgraph EXT["EXTERNAL"]
+        PG[(Payment gateway)]
+        AI[("AI/ML models")]
+        SMTP[("SMTP / email")]
+        CDN[("CDN / static + images")]
+    end
+    CDN --> FE
+    FEA --> FEL --> BEM --> BEMOD
+    FES -. state .- FEA
+    BEMOD --> BEFEAT
+    BEMOD --> BEDOM
+    BEDOM --> BEK
+    BEDOM --> BEP
+    BEDOM --> BEDB
+    BEDOM --> RED
+    BEP --> AI
+    BEJ --> DBE
+    BEDB --> DBE
+    DBE --> DBM
+    BEDOM --> PG
+    BEDOM --> SMTP
 ```
-
-**Read path (≈95% traffic):** Edge/CDN cache → API → OpenSearch (facets) + Redis (price/stock
-hydrate) + read replica. **Write path (≈5%):** API validates + publishes command to Kafka →
-`202 Accepted`; workers consume, reserve inventory, call payments, commit primary. CDC streams WAL
-→ OpenSearch + cache invalidation without app-level sync code.
-
-### 9.2 Phased rollout (codebase updates follow in later work)
-
-**Phase A — mid-scale on existing code (deploy, don't rewrite):** PgBouncer (transaction pooling),
-read replica, single Redis, CDN/edge cache, stateless autoscaling, keyset pagination on remaining
-hot lists, finish removing `W1` router-side writes. Reaches ~10K–20K concurrent with **today's sync
-code** — only config + the already-present `utils/cache.py` / `redis_client.py`. No new subsystems.
-
-**Phase B — async + replica fan-out:** convert hot write/read paths to `AsyncPG` + SQLAlchemy 2.0
-async sessions (`db`); route reads to replicas; move WebSocket fan-out fully onto Redis pub/sub
-(`utils/realtime.py` already wires a bridge). Mandatory before ~50K+ concurrent — sync drivers block
-the event loop.
-
-**Phase C — full event-driven / CQRS (only when throughput modeling justifies it):** Kafka command
-bus, Debezium CDC → OpenSearch for faceted catalog search, Redis Cluster (sharded), dedicated WS
-gateway for 100K+ persistent sockets, partitioned primary for write hotspots. The only phase that
-adds Kafka/ES/CDC.
-
-### 9.3 Known blockers still present in the codebase (verify before claiming any phase)
-- `DB_POOL_SIZE=5` + `DB_MAX_OVERFLOW=10` = 15 conn/replica (`utils/config.py:41-42`); must sit behind PgBouncer.
-- Backend is **100% sync SQLAlchemy** (async only in `experiments/`) → Phase B is a real rewrite.
-- WebSockets held in-process (`ws_chat.py`, `utils/realtime.py` keep `dict[...set[WebSocket]]`); must move to Redis pub/sub before scale.
-- No Kafka / Celery / Elasticsearch / Debezium anywhere in `backend/` → Phase C is greenfield.
-- Redis is single-node `redis.from_url(...)` with `_NoOpRedis` fallback (`utils/redis_client.py`); not a cluster and optional.
-
-### 9.4 Scaling policy (auditor warns if absent at target scale)
-Stateless replicas, PgBouncer, read replicas, Redis-fronted catalog reads, keyset pagination,
-CDN, rate limiting + circuit breakers, async DB driver at ~50K+, Redis Cluster + Kafka/ES/CDC at
-100K throughput.
 
 ---
 
-## 10. Canonical Architecture Contract (what the auditor encodes)
+## 6 · Backend Circuit (request lifecycle)
 
-This is the single source of truth `system_architecture_audit.py` validates against.
-
-### 10.1 Layers (allow-list)
-`main`, `middleware`, `dependencies`, `routers`, `controllers`, `services`, `providers`, `db`,
-`models`, `utils`, `data`, `events`, `jobs`,
-`settings`, `monitoring`, and frontend `app`/`components`/`lib`/`hooks`/`services`/`theme`/
-`styles`/`types`/`utils`. External subsystems (Kafka, OpenSearch, Redis Cluster, CDN, WS gateway,
-PgBouncer, Postgres) are **infrastructure**, reached only through the `db` / `utils` / `providers` / `events` / `jobs` adapters.
-
-`routers/generated/auto_router.py` is **tooling, not a runtime layer**: it discovers
-controller route declarations and emits thin routers into `routers/` (see §2.1). It must
-not appear in the dependency circuit, and generated routers remain plain members of the
-`routers` layer.
-
-### 10.2 Allowed dependency edges (the "circuit")
+```mermaid
+flowchart TD
+    Client([Client / Load Balancer])
+    subgraph BE["BACKEND — FastAPI + Middleware (middleware/orchestrator.py)"]
+        direction TB
+        L1["1 FOUNDATION: GZip · CORS · IP extract · RequestID · API-Version"]
+        L2["2 SECURITY: SecurityHeaders · ImpossibleTravel · CSRF"]
+        L3["3 RATE LIMIT: Sliding-window /path"]
+        L4["4 GEO/COUNTRY: CountryContext"]
+        L5["5 OBSERVABILITY: RequestLogging"]
+        L6["6 COMPLIANCE: PCI-DSS (prod only)"]
+        L1 --> L2 --> L3 --> L4 --> L5 --> L6
+    end
+    subgraph MOD["modules/*/routers/ — thin; require_feature gate; NO db writes"]
+        H["GET /health · /health/deps · /health/ready"]
+        R["Module routers: modules/admin/routers/finance_*, modules/customer/routers/checkout_*, ..."]
+        G["AUTO-GENERATED public routers (emitted from domain route contracts)"]
+    end
+    subgraph SEC["SECURITY / AUTH (modules/{m}/auth/ + rbac/dependencies.py)"]
+        AUTH["get_current_user<br/>verify_token(JWT jti) → Redis cache → db lookup"]
+        FEAT["require_feature(finance.ledger.post) → rbac/resolution.py"]
+    end
+    subgraph SVC["domains/*/services/ → infrastructure"]
+        S["domains/finance/services/* (owns DB access + transactions)"]
+        K["kernel/ (money · numbering · country · period)"]
+    end
+    subgraph DBL["infrastructure/database/ (single RLS enforcer)"]
+        POOL[("Engine + Pool (PgBouncer in front)")]
+        GETDB["get_db() dep — open → yield → rollback/close"]
+        KEYS["Keyset pagination (cursor), NEVER OFFSET on hot lists"]
+        MODELS[("Domain models — one Postgres schema per domain; e.g. schema=finance; each domain owns its tables")]
+    end
+    Client --> L1
+    L6 --> H
+    L6 --> R
+    H --> DBL
+    R --> AUTH
+    R --> FEAT
+    G --> AUTH
+    G --> FEAT
+    AUTH --> GETDB
+    FEAT --> S
+    R --> S
+    S --> K
+    S --> GETDB
 ```
-main          → middleware, dependencies, routers, db, utils, lifespan, data
-routers       → controllers, schemas, auth deps, get_db, events (publish commands)
-controllers   → services, models, get_db, auth deps
-services      → models, get_db, utils, providers, redis, events (publish), providers (OpenSearch read via utils)
-providers     → providers._base, utils, settings
-db            → db.base, settings, async engine (AsyncPG at scale)
-utils         → redis (cluster), redis pub/sub (realtime fan-out)
-middleware    → utils, settings, db (read-only)
-events/jobs   → services, db, providers, kafka (publish/consume), opensearch (via CDC consumer)
-frontend lib  → backend /api/v1/* only
-```
-
-**Auto-routed controllers obey the same circuit.** They are orchestration only and
-**must delegate DB work to `services`** — `deps=["db"]` only supplies `get_db`; it
-is **not** a license to `db.add/commit` inside the controller (still W1). A controller
-that writes to `db` directly, or a generated router that imports `models`/`services`,
-is a circuit violation caught by the auditor (CIR1 / CG1 / DG family), not by the
-auto-router generator — the generator only guards the *emitted router file*.
-
-Any edge **outside** this set is a circuit violation (CIR1 / DOM3 / MV1 / FT1 family). The
-`db` / `utils` / `providers` / `events` / `jobs` adapters isolate all external infra so the rest
-of the app never imports Kafka/OpenSearch/Redis drivers directly.
-
-### 10.3 Schema policy
-- **Domain schemas** are used (customer, supplier, logistic, admin, employee, …); each owns its `user` table (e.g. `customer.user.id`). The forbidden schemas are `core` / `platform` / `identity` — never use them.
-- Tables live in their domain schema: `customer.user`, `supplier.user`, `commerce.orders`, `admin.user`, `employee.user`, …
-- Cross-domain FKs are **allowed** (e.g. `order.employee_id → employee.user.id`); the auditor
-    resolves the referenced table's real name from ORM metadata — it must NOT treat
-    `ForeignKey("table.column")` as a schema (this is the DBA06 parser bug to fix).
-- Alembic is source of truth; ORM↔migration drift = DBA13 (real).
-- `create_all()` dev-only; refuses prod.
-
-### 10.4 Security policy
-- Parameterized SQL only; flag untrusted concatenation, not `text(...)`.
-- JWT + `jti` blacklist; admin via `get_current_admin`.
-- CSRF + PCI-DSS in prod; no hardcoded secrets.
-- All external-infra credentials (Kafka/OpenSearch/Redis/PG) from `settings` only; never in code.
-- Kafka command payloads validated + idempotency-keyed (no dropped/duplicated orders at scale).
-- **Target: exactly one canonical RLS enforcer** (a single module to be created, e.g. `db/security.py`,
-applied uniformly via a session/connection hook or a shared auth dependency). **Current reality:** RLS is
-scattered across `rls_dependency`, `rls_middleware`, `rls_interceptor`, `rls_context`, and `country_context`
-— this is precisely the fail-open risk described below and must be consolidated. Multiple independent RLS
-implementations across modules are a **fail-open risk** (one path that forgets to call RLS bypasses the
-policy) and are disallowed; the auditor flags a second/divergent RLS implementation as a security violation
-(SEC family).
-
-### 10.5 Performance policy
-- Keyset pagination on hot lists (no `OFFSET`).
-- DB writes only in `services` (never routers/controllers).
-- Heavy/AI work off-request via `async_workers`/`jobs`/`events` consumers.
-- At ~50K+ concurrent: `AsyncPG` + SQLAlchemy 2.0 async sessions (`db` async engine); reads fanned
-to replicas. Faceted catalog search moves off Postgres `LIKE`/JSONB to OpenSearch via a `jobs` CDC
-consumer + `providers`/`utils` adapters
-— introduced at **Phase C (CDC)** for 100K throughput, not before.
-- WebSocket broadcast fan-out via Redis pub/sub (`utils.realtime`), not in-process socket lists,
-before 100K concurrent sockets.
-
-### 10.6 Provider policy
-- Subclass `BaseProvider`/`BaseAIProvider`; implement `health_check()`.
-- Called only by `services`/`jobs`.
-
-### 10.7 Frontend policy
-- Typed API client only; design tokens (no inline `<style>`); stable keys on dynamic lists.
-- Edge-cache public read paths (`Cache-Control: public, s-maxage, stale-while-revalidate`);
-NEVER edge-cache user-scoped paths (cart/profile → `private, no-store`).
-
-### 10.8 Scaling policy
-- Phase A (mid-scale, existing code): PgBouncer + read replica + single Redis + CDN + stateless
-autoscaling + keyset pagination. ~10K–20K concurrent.
-- Phase B (~50K+): `AsyncPG` async sessions + replica fan-out + WebSocket fan-out on Redis pub/sub.
-- Phase C (100K throughput): Kafka command bus + Debezium CDC + OpenSearch + Redis Cluster +
-dedicated WS gateway + partitioned primary.
-- All external infra reached only via `db` / `utils` / `providers` / `events` / `jobs` adapters.
-
-### 10.9 Realtime policy
-- WebSocket connection managers live behind `utils.realtime` (Redis pub/sub); broadcast uses
-Redis pub/sub so any replica can publish to any socket.
-- In-process `dict[...set[WebSocket]]` fan-out allowed only below scale; must move to Redis pub/sub
-before 100K concurrent sockets. Dedicated WS gateway (Node/Go) only at Phase C.
 
 ---
 
-## 11. Capacity & SLOs (testable target — NOT a guarantee)
+## 7 · RBAC / Feature axis (AXIS 3)
 
-> **Honesty note:** This section is a **target with explicit assumptions and a validation plan**,
-> not a proof of capacity. The diagrams in §1–§10 describe an architecture *shaped* to reach the
-> targets below **only if deployed per §9 and verified by the load tests in §11.3**. As of this
-> writing the *implementation* still diverges from the should-be design (see §9.1 gaps), so the
-> current system does **not** meet these targets. Capacity is confirmed by measurement, not by a
-> diagram.
+- Feature atoms are **defined once** in `domains/{domain}/features.py` (e.g.
+  `finance.ledger.post`, `finance.reporting.read`).
+- `rbac/catalog.py` aggregates every domain's `features.py` via package scan →
+  single source of truth. It is served to the frontend at `GET /rbac/catalog`.
+- `rbac/roles.py` grants per **(module, role)**; `rbac/resolution.py` resolves
+  `actor × role × country → effective feature set` (Redis-cached).
+- `rbac/dependencies.py` provides `require_feature(...)` / `require_module(...)`
+  gates used by every module router.
+- Frontend `shared/src/permissions.ts` is **generated** from `/rbac/catalog` so
+  UI gating and backend gating share one source.
 
-### 11.1 Defined load model (what "100K at a time" means)
+---
 
-| Term | Definition used here |
-|---|---|
-| Registered customers | Total accounts (easy; not a capacity metric) |
-| **Concurrent users** | Peak simultaneous active sessions hitting the system |
-| **Concurrent requests** | In-flight HTTP requests at peak (the real scaling bar) |
-| Target | **100K concurrent users**, ~ **200–400K req/min** at peak, read-heavy (catalog browse) |
+## 8 · Schema discipline (Law 6)
 
-### 11.2 SLO table (targets to assert under load)
+- Every ORM model declares `__table_args__ = {"schema": "<domain>"}`
+  (slice tables use the parent domain's schema).
+- Alembic is the only schema source (`create_all` is dev-only).
+- Naming lint: `snake_case`, plural tables, `<thing>_id` FKs,
+  `created_at`/`updated_at`, `country_code`, `is_deleted`.
+- Forbidden schemas: `core` / `platform` / `identity` — every actor's `user`
+  table lives in its own domain schema (e.g. `customer.user`, `supplier.user`).
 
-| Metric | Target SLO | How measured |
-|---|---|---|
-| API p95 latency (cached reads) | ≤ 100 ms | `k6`/`wrk` p95 over `/api/v1/products`, `/health` |
-| API p95 latency (DB reads) | ≤ 250 ms | load test on non-cached paths |
-| API p99 latency (writes) | ≤ 500 ms | order/checkout flows |
-| Error rate at peak | < 0.5% | `pg_stat_activity` + app error logs |
-| DB connection saturation | < 80% of PgBouncer pool | PgBouncer `SHOW POOLS` |
-| Redis cache hit-rate (catalog) | > 90% | Redis `INFO stats` keyspace hits/misses |
-| Replica lag | < 1 s | `pg_stat_replication` |
+---
 
-### 11.3 Load-test plan (must pass before claiming 100K)
+## 9 · Database organization (Law 6)
 
-1. **Baseline (single replica, current code):** `k6` against `/health`, `/api/v1/products`,
-`/api/v1/coupons` at 1K → 10K VUs. Record p95, error rate, DB connections. Expect to saturate
-at the `DB_POOL_SIZE=5+10` limit — this quantifies the current ceiling.
-2. **Fix gate:** implement §9.2 Phase A (PgBouncer, read replicas, Redis catalog cache, keyset
-pagination, finish W1). Re-run baseline.
-3. **Scaling sweep:** increase replicas behind LB (2 → 4 → 8) at 25K / 50K / 100K VUs. Plot
-throughput vs replicas; find the knee.
-4. **Soak test:** 100K VUs for 1 hour; watch for connection leaks, memory growth, replica lag.
-5. **Spike test:** 10K → 100K in 60 s to validate rate limiting + autoscaling.
-6. **Write-path test:** checkout/order burst to find the primary-DB write bottleneck.
+Every domain owns one Postgres schema; the model classes live in
+`domains/{domain}/models/`. Cross-domain **writes** travel only through
+`events.py` / `subscribers.py`; cross-domain **reads** travel only through the
+owning domain's `ports.py` (or `read_models/`). The country scope is enforced by
+RLS on every schema.
 
-### 11.4 What would still block 100K even after §9
+```mermaid
+flowchart TD
+    ALE["alembic/ — SINGLE schema source of truth"]
+    subgraph SCHEMAS["PostgreSQL — one schema per domain"]
+        direction LR
+        SF["schema: finance<br/>domains/finance/models/*"]
+        SA["schema: accounts<br/>domains/accounts/models/*"]
+        SC["schema: catalog<br/>domains/catalog/models/*"]
+        SO["schema: orders<br/>domains/orders/models/*"]
+        SP["schema: payments<br/>domains/payments/models/*"]
+        SL["schema: logistics<br/>domains/logistics/models/*"]
+        SS["schema: suppliers<br/>domains/suppliers/models/*"]
+        SCU["schema: customers<br/>domains/customers/models/*"]
+        SH["schema: hr<br/>domains/hr/models/*"]
+        SCO["schema: comms<br/>domains/comms/models/*"]
+        SM["schema: media<br/>domains/media/models/*"]
+        SCN["schema: country<br/>domains/country/models/*"]
+        SG["schema: governance<br/>domains/governance/models/*"]
+    end
+    RLS["infrastructure/database/ RLS enforcer<br/>country_code session context (Law 5)"]
+    PORTS["ports.py — sanctioned cross-domain READ<br/>e.g. catalog.ports.get_price(db, product_id, country)"]
+    EVT["events.py / subscribers.py — cross-domain WRITE bus"]
+    ALE --> SCHEMAS
+    SCHEMAS --> RLS
+    SC -. read via .-> PORTS
+    PORTS -. resolves .-> SC
+    SO -. write via .-> EVT
+    EVT -. consumed by .-> SF
+    EVT -. consumed by .-> SP
+```
 
-- Primary-DB write throughput (orders/inventory) — needs partitioning/sharding or queue-based
-write buffering.
-- Third-party payment gateway latency under load (external, not in our control).
-- AI/provider calls (bg_remover, vision) must stay fully off-request (already designed, must hold).
-- Cold cache start (thundering herd on replica) — needs cache warm-up + request coalescing.
+---
 
-### 11.5 Verdict (current state)
+## 10 · Security architecture
 
-- **Diagram (should-be):** architecture *capable* of 100K **if** built per §9 + passes §11.3.
-- **Running system (today):** does **not** meet targets — pool default 15/process, sync DB,
-W1 router writes, OFFSET pagination in places, single Postgres, uncached catalog.
-- Capacity is **claimed only after** §11.3 steps 1–5 pass with §11.2 SLOs met.
+Authentication and authorization follow the axes: **modules** carry the actor
+(who), **features** gate the action (may), and **country RLS** scopes the data.
+The 6-layer middleware pipeline runs before any module router.
 
-### 11.6 Phase → SLO mapping
+```mermaid
+flowchart TD
+    subgraph CLIENT["Client (Browser / Mobile)"]
+        REQ["HTTPS request + Bearer JWT"]
+    end
+    subgraph MW["Middleware pipeline (middleware/orchestrator.py)"]
+        L2["2 SECURITY: SecurityHeaders · ImpossibleTravel · CSRF"]
+        L6["6 COMPLIANCE: PCI-DSS (prod only)"]
+    end
+    subgraph AUTH["Authentication — modules/{m}/auth/"]
+        VER["verify_token(jti) → Redis cache → db lookup"]
+        RT["refresh token rotation + device binding"]
+    end
+    subgraph RBAC["Authorization — rbac/dependencies.py"]
+        RF["require_feature(finance.ledger.post)"]
+        RES["rbac/resolution.py → actor × role × country<br/>(Redis-cached effective set)"]
+        RM["require_module(customer)"]
+    end
+    subgraph DATA["Data scope"]
+        RLSC["RLS enforcer — country_code session (Law 5)"]
+    end
+    REQ --> L2 --> L6 --> VER
+    VER --> RT
+    RT --> RF
+    RF --> RES
+    RES --> RM
+    RM --> RLSC
+```
 
-| Phase | Goal unlocked | SLOs asserted | Pre-req tests |
-|---|---|---|---|
-| A | ~10K–20K concurrent (existing code) | p95 cached ≤100ms, error <0.5%, pool <80% | §11.3 #1–#2 |
-| B | ~50K concurrent | + async no event-loop block, replica lag <1s | §11.3 #3 |
-| C | 100K throughput | + WS fan-out holds, Redis Cluster ops headroom | §11.3 #4–#6 |
+---
 
-### 11.7 Reference-implementation pitfalls (do NOT copy verbatim)
+## 11 · End-to-end flow (frontend ↔ backend)
 
-When the codebase is updated later per these phases, avoid the bugs found in the external
-hyper-scale sketch that motivated this section:
+The frontend route tree under `frontend/web_app/src/app/*` is grouped per actor
+(module). On boot it fetches `GET /rbac/catalog` once to build
+`shared/src/permissions.ts`; every later action calls a thin module router that
+authenticates, gates on a feature, and delegates to one domain service.
 
-- **CDC/Debezium consumer:** Debezium envelope is `{"payload": {"before":..,"after":..,"op":"c"}}`.
-Reading `op` at the top level (instead of `payload["op"]`) yields `None` and silently drops
-every sync event. Parse `op`/`before`/`after` from inside `payload`.
-- **Async `get_db`:** do **not** `await session.commit()` after every request — that commits on
-read-only GETs (wasted write txn, can mask errors). Commit only on mutation paths.
-- **EventBus:** `lz4` compression needs an extra dependency; declare it. Partition key gives
-per-key ordering only — fine for `country_code`/tenant ordering.
-- **Frontend edge cache:** `Cache-Control` must be `private, no-store` for cart/profile paths;
-only public catalog/static paths get `s-maxage` + `stale-while-revalidate`.
+```mermaid
+sequenceDiagram
+    participant P as Page (src/app/*)
+    participant S as Zustand + API client (src/lib)
+    participant C as /rbac/catalog (once)
+    participant M as Module router (modules/{m}/routers)
+    participant A as Auth + rbac/dependencies
+    participant D as Domain service (domains/*/services)
+    participant K as Kernel (money/numbering/country)
+    participant DB as infrastructure/database (RLS)
+
+    Note over P,C: Boot — permissions resolved once
+    P->>S: mount actor route group
+    S->>C: GET /rbac/catalog
+    C-->>S: feature catalog → shared/permissions.ts
+
+    Note over P,DB: Action — e.g. post ledger entry
+    P->>S: call api.finance.ledger.post(...)
+    S->>M: POST /admin/finance/ledger (Bearer JWT)
+    M->>A: get_current_user() + require_feature(finance.ledger.post)
+    A-->>M: actor × role × country resolved
+    M->>D: one service call (no db write in router)
+    D->>K: money/numbering primitives
+    D->>DB: get_db() → transaction (schema=finance, RLS country)
+    DB-->>D: rows
+    D-->>M: result
+    M-->>S: 200 + payload
+    S-->>P: update store → render
+```

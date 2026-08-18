@@ -3,18 +3,18 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import json
 
-from db.database import get_db
-from _legacy.models import CountryConfig
-from utils.websocket_manager import manager
-from utils.dependencies import get_current_user
-from _legacy.models.country_control import LogisticsPartnerLocation
+from infrastructure.database.database import get_db
+from domains.country.models.countries import CountryConfig
+from infrastructure.utils.websocket_manager import manager
+from infrastructure.utils.dependencies import get_current_user
+from domains.country.models.country_control import LogisticsPartnerLocation
 
 router = APIRouter(prefix="/api/v1/countries")
 
 
 @router.get("/admin/countries/{country_code}/cross-border-sessions")
 async def list_cross_border_sessions(country_code: str, db: Session = Depends(get_db)):
-    from _legacy.models import CrossCountryCustomerSession
+    from domains.country.models.country_enhancements import CrossCountryCustomerSession
     sessions = db.query(CrossCountryCustomerSession).filter(
         CrossCountryCustomerSession.target_country_code == country_code.upper()
     ).order_by(CrossCountryCustomerSession.created_at.desc()).limit(50).all()
@@ -34,7 +34,7 @@ async def list_cross_border_sessions(country_code: str, db: Session = Depends(ge
 
 @router.get("/admin/countries/{country_code}/legal-contracts")
 async def list_legal_contracts(country_code: str, db: Session = Depends(get_db)):
-    from _legacy.models.country_control import LegalContractTemplate
+    from domains.country.models.country_control import LegalContractTemplate
     contracts = db.query(LegalContractTemplate).filter(
         LegalContractTemplate.country_code == country_code.upper(),
         LegalContractTemplate.is_active == True
@@ -55,7 +55,7 @@ async def list_legal_contracts(country_code: str, db: Session = Depends(get_db))
 
 @router.get("/admin/countries/{country_code}/warehouses")
 async def list_warehouses(country_code: str, db: Session = Depends(get_db)):
-    from _legacy.models.country_control import ShopWarehouseLocation
+    from domains.country.models.country_control import ShopWarehouseLocation
     warehouses = db.query(ShopWarehouseLocation).filter(
         ShopWarehouseLocation.country_code == country_code.upper(),
         ShopWarehouseLocation.is_active == True

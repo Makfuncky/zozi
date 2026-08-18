@@ -2,10 +2,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from controllers.products.products_controller import get_products as get_products_controller
-from db.database import get_db
-from _legacy.models import Product, WishlistItem
-from utils.dependencies import get_current_user
+from domains.catalog.services.products_controller import get_products as get_products_controller
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import WishlistItem
+from infrastructure.utils.dependencies import get_current_user
 
 router = APIRouter()
 

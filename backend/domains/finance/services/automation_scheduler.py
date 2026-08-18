@@ -8,33 +8,41 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
-from _legacy.models import (
-    TreasuryAccount, CashPositionSnapshot, CashFlowForecast,
-    VATRemittance, JournalEntry, Account, AccountBalance,
-    ARInvoice, Customer, Vendor, PurchaseOrder,
-    ImportShipment, GatewaySettlementSchedule,
-    FinanceAutomationLog, FinanceAuditLog, FiscalPeriod,
-    Order, OrderItem, JournalEntryLine, SupplierSettlement,
-)
+from domains.finance.models.erp import PurchaseOrder
+from domains.finance.models.erp import ImportShipment
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import CashPositionSnapshot
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import VATRemittance
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import ARInvoice
+from domains.finance.models.finance import Customer
+from domains.finance.models.finance import Vendor
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from domains.finance.models.finance import FiscalPeriod
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import SupplierSettlement
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from services.finance.finance_automation import run_daily_automation as run_finance_daily
-from services.finance.financial_reports_service import (
-    generate_income_statement, generate_balance_sheet, generate_cash_flow_statement,
-    save_report,
-)
-from services.gateways.gateway_reconciliation_service import run_gateway_3way_reconciliation
-from services.treasury.payout_batch_service import (
-    generate_supplier_payout_batches,
-    generate_logistics_payout_batches,
-)
-from services.finance.credit_control_service import enforce_auto_credit_holds
-from services.ai.ai_automation_service import (
-    run_ai_bank_reconciliation,
-    process_email_inbox,
-    batch_categorize_all,
-)
-from services.finance.period_close_service import close_period
+from domains.finance.services.finance import general_ledger_service as gl
+from domains.finance.services.finance_automation import run_daily_automation as run_finance_daily
+from domains.finance.services.financial_reports_service import generate_income_statement
+from domains.finance.services.financial_reports_service import generate_balance_sheet
+from domains.finance.services.financial_reports_service import generate_cash_flow_statement
+from domains.finance.services.financial_reports_service import save_report
+from domains.payments.services.gateway_reconciliation_service import run_gateway_3way_reconciliation
+from domains.finance.services.payout_batch_service import generate_supplier_payout_batches
+from domains.finance.services.payout_batch_service import generate_logistics_payout_batches
+from domains.finance.services.credit_control_service import enforce_auto_credit_holds
+from domains.finance.services.ai_automation_service import run_ai_bank_reconciliation
+from domains.finance.services.ai_automation_service import process_email_inbox
+from domains.finance.services.ai_automation_service import batch_categorize_all
+from domains.finance.services.period_close_service import close_period
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 from infrastructure.utils.config import settings
@@ -234,7 +242,7 @@ def generate_distributor_statements(db: Session, period_year: int, period_month:
         
         # Send statement email to distributor
         try:
-            from services.comms.transactional_email_service import enqueue_distributor_statement_email
+            from domains.comms.services.transactional_email_service import enqueue_distributor_statement_email
             enqueue_distributor_statement_email(
                 customer.id, statement_data["period"], statement_data
             )
@@ -351,7 +359,7 @@ def _check_gateway_settlements(db: Session, country_code: str = None) -> list[di
 
 def _check_cod_remittances(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from _legacy.models import Order
+    from domains.orders.models.orders import Order
     q = db.query(Order).filter(
         Order.payment_method == "cod",
         Order.status == "delivered",
@@ -413,7 +421,7 @@ def _check_fx_exposure(db: Session, country_code: str = None) -> list[dict]:
 
 def _check_orphan_journals(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from services.treasury.treasury_engine import TreasuryEngine
+    from domains.finance.services.treasury_engine import TreasuryEngine
     try:
         orphans = TreasuryEngine(db).run_orphan_detector()
         if orphans:
@@ -430,7 +438,7 @@ def _check_orphan_journals(db: Session, country_code: str = None) -> list[dict]:
 
 def _check_pending_payouts(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from _legacy.models import PayoutBatch
+    from domains.finance.models.finance import PayoutBatch
     q = db.query(PayoutBatch).filter(
         PayoutBatch.status.in_(["generated", "supplier_approved"]),
         PayoutBatch.created_at.isnot(None),
@@ -474,7 +482,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # FX revaluation (#17) - daily for open import shipments
     try:
-        from services.common.import_service import run_fx_revaluation
+        from domains.comms.services.import_service import run_fx_revaluation
         results["fx_revaluation"] = run_fx_revaluation(db, country_code=country_code)
     except Exception as e:
         logger.warning("FX revaluation failed: %s", e)
@@ -482,7 +490,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # 3-way match scan (#10) - daily for unmatched POs
     try:
-        from services.finance.trading_service import scan_unmatched_pos
+        from domains.finance.services.trading_service import scan_unmatched_pos
         results["three_way_match"] = scan_unmatched_pos(db, country_code=country_code)
     except Exception as e:
         logger.warning("3-way match scan failed: %s", e)
@@ -491,7 +499,7 @@ def run_full_automation(db: Session, country_code: str = None,
     # Dunning engine (#12) - weekly on Mondays
     if today.weekday() == 0:  # Monday
         try:
-            from services.finance.trading_service import run_dunning_engine
+            from domains.finance.services.trading_service import run_dunning_engine
             results["dunning"] = run_dunning_engine(db)
         except Exception as e:
             logger.warning("Dunning engine failed: %s", e)
@@ -499,7 +507,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # E-commerce auto-invoice on delivery (#11) - daily
     try:
-        from services.finance.trading_service import auto_invoice_ecommerce_orders
+        from domains.finance.services.trading_service import auto_invoice_ecommerce_orders
         results["ecommerce_invoice"] = auto_invoice_ecommerce_orders(db, country_code=country_code)
     except Exception as e:
         logger.warning("E-commerce auto-invoice failed: %s", e)
@@ -507,7 +515,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # COD batch reconciliation (#5) - daily
     try:
-        from services.gateways.gateway_reconciliation_service import reconcile_all_cod_deposits
+        from domains.payments.services.gateway_reconciliation_service import reconcile_all_cod_deposits
         results["cod_reconciliation"] = reconcile_all_cod_deposits(db, country_code=country_code)
     except Exception as e:
         logger.warning("COD reconciliation failed: %s", e)
@@ -544,8 +552,8 @@ def run_full_automation(db: Session, country_code: str = None,
         
         # Period close (#28) - auto-close previous period on month-end
         try:
-            from services.finance.period_close_service import close_period
-            from _legacy.models import FiscalPeriod
+            from domains.finance.services.period_close_service import close_period
+            from domains.finance.models.finance import FiscalPeriod
             prev_period = db.query(FiscalPeriod).filter(
                 FiscalPeriod.period_year == prev.year,
                 FiscalPeriod.period_month == prev.month,

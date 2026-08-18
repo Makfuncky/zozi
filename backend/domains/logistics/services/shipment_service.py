@@ -11,7 +11,8 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Shipment, ShipmentEvent
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
 import structlog
 logger = structlog.get_logger(__name__)
 

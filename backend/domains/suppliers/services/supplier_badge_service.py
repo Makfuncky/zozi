@@ -66,19 +66,12 @@ from sqlalchemy.orm import Session
 
 
 
-from _legacy.models import (
+from domains.comms.models.suppliers import SupplierBadge
+from domains.comms.models.suppliers import SupplierBadgeBillingHistory
+from domains.comms.models.suppliers import SupplierBadgeCatalog
+from domains.comms.models.suppliers import SupplierProfile
 
-    SupplierBadge,
-
-    SupplierBadgeBillingHistory,
-
-    SupplierBadgeCatalog,
-
-    SupplierProfile,
-
-)
-
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 import structlog
 

@@ -15,7 +15,11 @@ from typing import Any
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import AuditLog, Coupon, Order, Product, User
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.orders.models.orders import Order
+from domains.payments.models.payments import Coupon
 
 MAX_EXPORT_ROWS: int = 5000
 

@@ -7,8 +7,12 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from _legacy.models import Payout, TransactionLedger, SupplierSettlement, LogisticsSettlement, Notification
-from utils.audit import audit_log, AuditAction
+from domains.comms.models.communication import Notification
+from domains.finance.models.finance import TransactionLedger
+from domains.finance.models.finance import SupplierSettlement
+from domains.governance.models.admin import LogisticsSettlement
+from domains.payments.models.payments import Payout
+from infrastructure.utils.audit import audit_log, AuditAction
 
 
 def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list:

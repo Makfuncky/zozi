@@ -13,8 +13,11 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Account, AccountBalance, AccountGroup, FixedAsset
-from services.finance import general_ledger_service as gl
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import AccountGroup
+from domains.finance.models.finance import FixedAsset
+from domains.finance.services.finance import general_ledger_service as gl
 import structlog
 logger = structlog.get_logger(__name__)
 

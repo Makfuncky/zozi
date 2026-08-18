@@ -8,8 +8,9 @@ from typing import Optional, Dict, Any, List
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.employee_models import Employee, EmployeeCertification
-from db.database import get_service_session
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeCertification
+from infrastructure.database.database import get_service_session
 
 logger = logging.getLogger("zozi.lms")
 

@@ -3,7 +3,7 @@
 Moved out of `controllers/audit_controller.py` (rule **W3** — a controller must
 not be imported as shared logic). DB access belongs in `services/**` per the
 circuit contract, so the audit *query* surface lives here while the audit
-*write* primitive lives in `utils.audit` (importable from every layer).
+*write* primitive lives in `infrastructure.utils.audit` (importable from every layer).
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from typing import Any, Optional
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from _legacy.models import AuditLog
+from domains.accounts.models.core import AuditLog
 
 __all__ = ["get_audit_logs", "get_unique_actions"]
 

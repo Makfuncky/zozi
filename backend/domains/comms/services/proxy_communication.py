@@ -19,9 +19,14 @@ from providers.comms.twilio import (
     create_twilio_client,
 )
 
-from _legacy.models import ProxyChannel, ProxySession, ProxyMessage, ProxyCallLog, User, Order
-from db.database import get_service_session
-from utils.config import settings
+from domains.accounts.models.user import User
+from domains.comms.models.communication import ProxyChannel
+from domains.comms.models.communication import ProxySession
+from domains.comms.models.communication import ProxyMessage
+from domains.comms.models.communication import ProxyCallLog
+from domains.orders.models.orders import Order
+from infrastructure.database.database import get_service_session
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger("zozi.proxy")
 

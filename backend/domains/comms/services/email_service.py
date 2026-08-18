@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from __future__ import annotations
-from services.comms.email_management_service import _serialize_template
+from domains.comms.services.email_management_service import _serialize_template
 
 import logging
 
@@ -28,13 +28,11 @@ from domains.comms.models.marketing import (
     EmailTemplate,
 )
 
-from services.comms.email_gateway import EmailGateway
+from domains.comms.services.email_gateway import EmailGateway
 
-from services.comms.transactional_email_service import (
-    enqueue_invoice_email,
-    enqueue_low_stock_alert_email,
-    enqueue_order_created_email,
-)
+from domains.comms.services.transactional_email_service import enqueue_invoice_email
+from domains.comms.services.transactional_email_service import enqueue_low_stock_alert_email
+from domains.comms.services.transactional_email_service import enqueue_order_created_email
 
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -364,7 +362,7 @@ def send_internal_email(payload: InternalEmailPayload, current_user: AdminUser, 
 
 def get_my_inbox(folder: str, limit: int, offset: int, current_user: AdminUser, db: Session):
     """Get internal emails for the current admin/staff user."""
-    from services.employee_communication_service import get_inbox
+    from domains.hr.services.employee_communication_service import get_inbox
     employee_id = current_user.get("id") if isinstance(current_user, dict) else 0
     return get_inbox(db, employee_id=employee_id, folder=folder, limit=limit, offset=offset)
 

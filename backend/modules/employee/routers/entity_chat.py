@@ -6,10 +6,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import User
-from services.comms.entity_chat_service import get_chat_service
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.services.entity_chat_service import get_chat_service
 
 router = APIRouter()
 

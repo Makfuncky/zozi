@@ -14,7 +14,7 @@ NOTE — audit logging: the router previously called
 ``audit_log(db=db, action=AuditAction.PAYOUT_PROCESSED, user_id=..., username=...,
 user_role=..., resource_type=..., resource_id=...)``. That call could never
 succeed: ``AuditAction`` has no ``PAYOUT_PROCESSED`` member (AttributeError) and
-``utils.audit.audit_log`` takes ``actor_id`` / ``entity`` / ``entity_key`` rather
+``infrastructure.utils.audit.audit_log`` takes ``actor_id`` / ``entity`` / ``entity_key`` rather
 than ``user_id`` / ``resource_type`` / ``resource_id``. Every write endpoint
 therefore raised HTTP 500 *after* committing. The calls below preserve the
 original intent while matching the real ``audit_log`` signature.
@@ -27,9 +27,12 @@ from typing import Any, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from _legacy.models import LogisticsPartnerPayout, Payout, PayoutBatch, SupplierProfile
-from utils.audit import audit_log
-from utils.datetime_utils import utcnow
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.finance import PayoutBatch
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payout
+from infrastructure.utils.audit import audit_log
+from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -3,9 +3,72 @@ from __future__ import annotations
 
 from __future__ import annotations
 
-import services.public.admin_treasury_service as admin_treasury_svc
+import domains.accounts.services as admin_treasury_svc
 
-from services.public.admin_treasury_service import _resolve_stage, admin_approve_payout_batch, admin_approve_pending, admin_approve_settlement, admin_cash_forecasts, admin_cash_position, admin_cod_remittances, admin_detect_orphans, admin_dispatch_payout_batch, admin_gateway_exceptions, admin_gateway_summary, admin_generate_payout_batch, admin_liabilities_exposure, admin_logistics_payouts, admin_manual_adjustment, admin_payment_transactions, admin_payout_batches, admin_pending_entries, admin_reconciliation_pipeline, admin_record_cod_remittance, admin_reject_pending, admin_settle_supplier, admin_snapshot_cash_position, admin_supplier_earnings, admin_supplier_payouts, admin_treasury_ledger, admin_treasury_metrics, admin_treasury_root, admin_trial_balance, admin_vat_liability, consolidated_cash_forecasts, consolidated_cash_position, consolidated_cod_remittances, consolidated_gateway_summary, consolidated_payout_batches, consolidated_reconciliation_pipeline, consolidated_treasury_ledger, consolidated_treasury_metrics, consolidated_trial_balance, consolidated_vat_liability, country_approve_pending, country_cash_position, country_cod_remittances, country_detect_orphans, country_gateway_exceptions, country_gateway_summary, country_liabilities_exposure, country_logistics_payouts, country_manual_adjustment, country_payment_transactions, country_payout_batches, country_payroll, country_pending_entries, country_reject_pending, country_supplier_earnings, country_supplier_payouts, country_treasury_ledger, country_treasury_metrics, country_trial_balance, country_vat_liability, get_engine, logger, payroll_equity, require_treasury_access
+from domains.accounts.services.admin_treasury_service import _resolve_stage
+from domains.accounts.services.admin_treasury_service import admin_approve_payout_batch
+from domains.accounts.services.admin_treasury_service import admin_approve_pending
+from domains.accounts.services.admin_treasury_service import admin_approve_settlement
+from domains.accounts.services.admin_treasury_service import admin_cash_forecasts
+from domains.accounts.services.admin_treasury_service import admin_cash_position
+from domains.accounts.services.admin_treasury_service import admin_cod_remittances
+from domains.accounts.services.admin_treasury_service import admin_detect_orphans
+from domains.accounts.services.admin_treasury_service import admin_dispatch_payout_batch
+from domains.accounts.services.admin_treasury_service import admin_gateway_exceptions
+from domains.accounts.services.admin_treasury_service import admin_gateway_summary
+from domains.accounts.services.admin_treasury_service import admin_generate_payout_batch
+from domains.accounts.services.admin_treasury_service import admin_liabilities_exposure
+from domains.accounts.services.admin_treasury_service import admin_logistics_payouts
+from domains.accounts.services.admin_treasury_service import admin_manual_adjustment
+from domains.accounts.services.admin_treasury_service import admin_payment_transactions
+from domains.accounts.services.admin_treasury_service import admin_payout_batches
+from domains.accounts.services.admin_treasury_service import admin_pending_entries
+from domains.accounts.services.admin_treasury_service import admin_reconciliation_pipeline
+from domains.accounts.services.admin_treasury_service import admin_record_cod_remittance
+from domains.accounts.services.admin_treasury_service import admin_reject_pending
+from domains.accounts.services.admin_treasury_service import admin_settle_supplier
+from domains.accounts.services.admin_treasury_service import admin_snapshot_cash_position
+from domains.accounts.services.admin_treasury_service import admin_supplier_earnings
+from domains.accounts.services.admin_treasury_service import admin_supplier_payouts
+from domains.accounts.services.admin_treasury_service import admin_treasury_ledger
+from domains.accounts.services.admin_treasury_service import admin_treasury_metrics
+from domains.accounts.services.admin_treasury_service import admin_treasury_root
+from domains.accounts.services.admin_treasury_service import admin_trial_balance
+from domains.accounts.services.admin_treasury_service import admin_vat_liability
+from domains.accounts.services.admin_treasury_service import consolidated_cash_forecasts
+from domains.accounts.services.admin_treasury_service import consolidated_cash_position
+from domains.accounts.services.admin_treasury_service import consolidated_cod_remittances
+from domains.accounts.services.admin_treasury_service import consolidated_gateway_summary
+from domains.accounts.services.admin_treasury_service import consolidated_payout_batches
+from domains.accounts.services.admin_treasury_service import consolidated_reconciliation_pipeline
+from domains.accounts.services.admin_treasury_service import consolidated_treasury_ledger
+from domains.accounts.services.admin_treasury_service import consolidated_treasury_metrics
+from domains.accounts.services.admin_treasury_service import consolidated_trial_balance
+from domains.accounts.services.admin_treasury_service import consolidated_vat_liability
+from domains.accounts.services.admin_treasury_service import country_approve_pending
+from domains.accounts.services.admin_treasury_service import country_cash_position
+from domains.accounts.services.admin_treasury_service import country_cod_remittances
+from domains.accounts.services.admin_treasury_service import country_detect_orphans
+from domains.accounts.services.admin_treasury_service import country_gateway_exceptions
+from domains.accounts.services.admin_treasury_service import country_gateway_summary
+from domains.accounts.services.admin_treasury_service import country_liabilities_exposure
+from domains.accounts.services.admin_treasury_service import country_logistics_payouts
+from domains.accounts.services.admin_treasury_service import country_manual_adjustment
+from domains.accounts.services.admin_treasury_service import country_payment_transactions
+from domains.accounts.services.admin_treasury_service import country_payout_batches
+from domains.accounts.services.admin_treasury_service import country_payroll
+from domains.accounts.services.admin_treasury_service import country_pending_entries
+from domains.accounts.services.admin_treasury_service import country_reject_pending
+from domains.accounts.services.admin_treasury_service import country_supplier_earnings
+from domains.accounts.services.admin_treasury_service import country_supplier_payouts
+from domains.accounts.services.admin_treasury_service import country_treasury_ledger
+from domains.accounts.services.admin_treasury_service import country_treasury_metrics
+from domains.accounts.services.admin_treasury_service import country_trial_balance
+from domains.accounts.services.admin_treasury_service import country_vat_liability
+from domains.accounts.services.admin_treasury_service import get_engine
+from domains.accounts.services.admin_treasury_service import logger
+from domains.accounts.services.admin_treasury_service import payroll_equity
+from domains.accounts.services.admin_treasury_service import require_treasury_access
 
 import logging
 
@@ -23,25 +86,23 @@ from sqlalchemy import func, select
 
 from sqlalchemy.orm import Session, joinedload
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    CashFlowForecast,
-    CashPositionSnapshot,
-    GatewaySettlementSchedule,
-    Invoice,
-    JournalEntry,
-    JournalEntryLine,
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-    TreasuryAccount,
-    VATRemittance,
-)
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import CashPositionSnapshot
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import VATRemittance
 
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
 
@@ -53,7 +114,7 @@ from domains.orders.models import Order as OrderModel
 
 from domains.payments.models.payments import LogisticsPartnerPayout, Payment, Payout
 
-from services.treasury.treasury_engine import TreasuryEngine
+from domains.finance.services.treasury_engine import TreasuryEngine
 
 from infrastructure.utils.constants import (
     CASH_ACCOUNT,
@@ -65,7 +126,7 @@ from infrastructure.utils.constants import (
     TREASURY_ROLES,
 )
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 

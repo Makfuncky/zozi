@@ -15,14 +15,12 @@ from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.commerce.coupons_controller import (
-    create_coupon as ctrl_create,
-    delete_coupon as ctrl_delete,
-    list_coupons as ctrl_list,
-    validate_coupon as ctrl_validate,
-)
-from db.schemas import CouponCreate
-from utils.dependencies import get_current_user, get_db, require_admin
+from domains.orders.services.coupons_controller import create_coupon as ctrl_create
+from domains.orders.services.coupons_controller import delete_coupon as ctrl_delete
+from domains.orders.services.coupons_controller import list_coupons as ctrl_list
+from domains.orders.services.coupons_controller import validate_coupon as ctrl_validate
+from infrastructure.database.schemas import CouponCreate
+from infrastructure.utils.dependencies import get_current_user, get_db, require_admin
 
 
 # Local Pydantic schemas (previously sourced from a missing `data.schemas`

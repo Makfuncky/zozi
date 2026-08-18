@@ -1,4 +1,4 @@
-﻿"""Modular startup / shutdown hooks for the FastAPI application.
+"""Modular startup / shutdown hooks for the FastAPI application.
 
 Each ``_on_startup_*`` / ``_on_shutdown_*`` function is a self-contained
 hook that can be independently tested, disabled, or extended without
@@ -34,7 +34,7 @@ def _ensure_tables_exist() -> bool:
     Returns ``False`` if tables already existed or creation failed.
     """
     try:
-        import _legacy.models as models  # noqa: F401 — register ORM tables in Base.metadata
+        from infrastructure.database import models  # noqa: F401 — register ORM tables in Base.metadata
     except Exception as exc:
         logger.warning("Could not import ORM models: %s", exc)
         return False
@@ -115,7 +115,7 @@ def _startup_register_services() -> None:
 def _startup_register_event_listeners() -> None:
     try:
         from domains.payments.services.payments import _event_publisher
-        from events import PaymentConfirmedEvent
+        from infrastructure.messaging.events import PaymentConfirmedEvent
         from domains.orders.services.fulfillment_service import FulfillmentService
 
         fulfillment = FulfillmentService()
@@ -212,14 +212,14 @@ def _startup_background_jobs() -> list:
     
     This function is kept for compatibility but returns empty list.
     Celery workers should be started separately via:
-        celery -A celery_app worker -Q ml,periodic,payouts,emails -l info
-        celery -A celery_app beat -l info
+        celery -A jobs.celery_app worker -Q ml,periodic,payouts,emails -l info
+        celery -A jobs.celery_app beat -l info
     """
     from infrastructure.utils.config import settings
     
     logger.info("Background jobs delegated to Celery (workers + beat)")
-    logger.info("Start Celery worker: celery -A celery_app worker -Q ml,periodic,payouts,emails -l info")
-    logger.info("Start Celery beat: celery -A celery_app beat -l info")
+    logger.info("Start Celery worker: celery -A jobs.celery_app worker -Q ml,periodic,payouts,emails -l info")
+    logger.info("Start Celery beat: celery -A jobs.celery_app beat -l info")
     
     return []
 

@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.admin.admin_controller as _ctrl
+    import domains.governance.services.admin_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:

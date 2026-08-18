@@ -6,15 +6,13 @@ Thin HTTP layer: delegates all profile business logic to
 """
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import User
-from db.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
-from utils.dependencies import get_current_user, require_supplier
-from services.supplier.supplier_profile_write_service import (
-    create_supplier_profile,
-    get_supplier_profile,
-    update_supplier_profile,
-)
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.database.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
+from infrastructure.utils.dependencies import get_current_user, require_supplier
+from domains.suppliers.services.supplier_profile_write_service import create_supplier_profile
+from domains.suppliers.services.supplier_profile_write_service import get_supplier_profile
+from domains.suppliers.services.supplier_profile_write_service import update_supplier_profile
 
 router = APIRouter(prefix="/api/v1/supplier")
 

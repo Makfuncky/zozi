@@ -23,9 +23,9 @@ from typing import Any, Iterable, Mapping, Optional, Sequence
 
 from sqlalchemy.orm import Query, Session
 
-from _legacy.models import Category
-from utils.category_tree import rebuild_category_paths
-from utils.slug import generate_slug
+from domains.catalog.models.products import Category
+from domains.catalog.utils.category_tree import rebuild_category_paths
+from infrastructure.utils.slug import generate_slug
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -78,7 +78,7 @@ def get_category_query(
     """Build the canonical ordered ``Category`` query.
 
     Returned as a :class:`~sqlalchemy.orm.Query` (not a list) so callers can
-    hand it to :func:`utils.pagination.paginated_response` without loading the
+    hand it to :func:`infrastructure.utils.pagination.paginated_response` without loading the
     whole table — this is what keeps the list endpoints bounded (PERF4).
     """
     query = db.query(Category)
@@ -115,7 +115,7 @@ def list_categories(
     page_size: int = 20,
 ) -> tuple[Sequence[Category], int]:
     """Return ``(items, total)`` for one page of categories."""
-    from utils.pagination import paginated_query  # local: avoids import cycle
+    from infrastructure.utils.pagination import paginated_query  # local: avoids import cycle
 
     query = get_category_query(
         db,

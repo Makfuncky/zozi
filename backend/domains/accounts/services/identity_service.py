@@ -10,8 +10,8 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import User
-from db.schemas import UserOut
+from domains.accounts.models.user import User
+from infrastructure.database.schemas import UserOut
 
 
 def get_profile(db: Session, current_user: dict) -> User:

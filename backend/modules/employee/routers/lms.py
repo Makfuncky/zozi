@@ -4,14 +4,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from controllers.hr.lms_controller import (
-    assign_training,
-    check_permission_lock,
-    create_training_module,
-    get_training_progress,
-    verify_training_completion,
-)
-from db.database import get_db
+from domains.hr.services.lms_controller import assign_training
+from domains.hr.services.lms_controller import check_permission_lock
+from domains.hr.services.lms_controller import create_training_module
+from domains.hr.services.lms_controller import get_training_progress
+from domains.hr.services.lms_controller import verify_training_completion
+from infrastructure.database.database import get_db
 
 router = APIRouter()
 

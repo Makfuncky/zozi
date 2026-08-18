@@ -23,17 +23,15 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    User,
-    UserDevice,
-    UserBrowsingHistory,
-    UserLoginHistory,
-    PasswordResetToken,
-    EmailVerificationToken,
-    SupplierProfile,
-    LogisticsPartner,
-    ReferralPointEvent,
-)
+from domains.accounts.models.core import UserBrowsingHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
+from domains.accounts.models.user import UserLoginHistory
+from domains.accounts.models.user import PasswordResetToken
+from domains.accounts.models.user import EmailVerificationToken
+from domains.accounts.models.user import ReferralPointEvent
+from domains.comms.models.suppliers import SupplierProfile
+from domains.logistics.models.logistics import LogisticsPartner
 from infrastructure.database.schemas import (
     UserCreate,
     User as UserSchema,
@@ -1606,7 +1604,7 @@ def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User
 
 async def upload_avatar(file: UploadFile, current_user: dict, db: Session) -> dict:
     from infrastructure.utils.file_validation import validate_upload_image
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.storage import storage as _storage
 
     contents = await file.read()
     max_bytes = settings.max_upload_size_mb * 1024 * 1024

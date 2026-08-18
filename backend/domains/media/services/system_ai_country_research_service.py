@@ -4,9 +4,15 @@ import logging
 from typing import Any, Dict
 from fastapi import HTTPException
 from pydantic import BaseModel
-from services.ai.ai_research_jobs import decrement_running_jobs, enqueue_job, get_completed_result, get_job, increment_running_jobs, mark_job_failed, mark_job_running
-from services.ai.country_ai_research import CountryAIResearchService
-from utils.config import settings
+from domains.finance.services.ai_research_jobs import decrement_running_jobs
+from domains.finance.services.ai_research_jobs import enqueue_job
+from domains.finance.services.ai_research_jobs import get_completed_result
+from domains.finance.services.ai_research_jobs import get_job
+from domains.finance.services.ai_research_jobs import increment_running_jobs
+from domains.finance.services.ai_research_jobs import mark_job_failed
+from domains.finance.services.ai_research_jobs import mark_job_running
+from domains.finance.services.country_ai_research import CountryAIResearchService
+from infrastructure.utils.config import settings
 logger = logging.getLogger(__name__)
 
 class AIResearchRequest(BaseModel):

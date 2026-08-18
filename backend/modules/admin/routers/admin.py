@@ -10,83 +10,79 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
-from controllers.orders import disputes_controller
-from controllers.admin.admin_controller import (
-    approve_product,
-    bulk_delete_orders_admin,
-    bulk_delete_products_admin,
-    bulk_delete_users_admin,
-    bulk_manage_suppliers,
-    bulk_product_moderation,
-    bulk_supplier_verification,
-    bulk_toggle_users_active,
-    bulk_update_order_status_admin,
-    bulk_update_staff_accounts,
-    bulk_update_users_role,
-    create_coupon,
-    create_staff_account,
-    delete_bank_account_record,
-    delete_coupon,
-    delete_order_admin,
-    delete_product_admin,
-    delete_staff_account,
-    delete_user_admin,
-    force_reset_password_admin,
-    get_all_orders,
-    get_all_products,
-    get_all_suppliers,
-    get_all_users,
-    get_analytics,
-    get_analytics_timeseries,
-    get_audit_log_page,
-    get_available_audit_actions,
-    get_chatbot_analytics,
-    get_current_admin,
-    get_current_user,
-    get_customer_insights,
-    get_database_overview,
-    get_hierarchy_permissions,
-    get_pending_products,
-    get_pending_suppliers,
-    get_staff_permission_catalog,
-    get_supplier_comparison,
-    get_ticket_detail,
-    get_top_products_analytics,
-    get_user_growth_analytics,
-    list_coupons,
-    list_pending_bank_accounts,
-    list_pending_payouts,
-    list_staff_accounts,
-    list_tickets,
-    refund_order,
-    reject_product,
-    reject_supplier,
-    reply_to_ticket,
-    require_admin,
-    require_admin_2fa_verified,
-    require_permission,
-    restore_product_admin,
-    toggle_product_badge,
-    toggle_user_active,
-    update_coupon,
-    update_order_status,
-    update_order_tracking,
-    update_role_permissions,
-    update_staff_account,
-    update_ticket_status,
-    update_user_role,
-    verify_bank_account,
-    verify_payout,
-    verify_supplier,
-)
-from controllers.catalog.banner_controller import (
-    BannerCreate,
-    BannerUpdate,
-    create_banner,
-    delete_banner,
-    get_banner_by_id,
-    update_banner,
-)
+from domains.orders.models.orders import disputes_controller
+from domains.accounts.services.admin_products_service import approve_product
+from domains.governance.services.orders_service import bulk_delete_orders_admin
+from domains.governance.services.products_service import bulk_delete_products_admin
+from domains.governance.services.admin_users import bulk_delete_users_admin
+from domains.governance.services.suppliers_service import bulk_manage_suppliers
+from domains.governance.services.products_service import bulk_product_moderation
+from domains.governance.services.suppliers_service import bulk_supplier_verification
+from domains.governance.services.users_service import bulk_toggle_users_active
+from domains.governance.services.orders_service import bulk_update_order_status_admin
+from domains.governance.services.users_service import bulk_update_staff_accounts
+from domains.governance.services.users_service import bulk_update_users_role
+from domains.accounts.services.admin_promotions_service import create_coupon
+from domains.governance.services.users_service import create_staff_account
+from domains.governance.services.users_service import delete_bank_account_record
+from domains.accounts.services.customer_coupons_create_service import delete_coupon
+from domains.governance.services.orders_service import delete_order_admin
+from domains.governance.services.products_service import delete_product_admin
+from domains.governance.services.users_service import delete_staff_account
+from domains.accounts.services.identity_admin_service import delete_user_admin
+from domains.governance.services.admin_users import force_reset_password_admin
+from domains.governance.services.orders_service import get_all_orders
+from domains.governance.services.products_service import get_all_products
+from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.governance.services.users_service import get_all_users
+from domains.governance.services.analytics_service import get_analytics
+from domains.governance.services.analytics_service import get_analytics_timeseries
+from domains.governance.services.misc_service import get_audit_log_page
+from domains.governance.services.misc_service import get_available_audit_actions
+from domains.governance.services.analytics_service import get_chatbot_analytics
+from domains.governance.services.admin_controller import get_current_admin
+from domains.governance.services.auth_controller_service import get_current_user
+from domains.governance.services.analytics_service import get_customer_insights
+from domains.governance.services.database_service import get_database_overview
+from domains.governance.services.permissions_service import get_hierarchy_permissions
+from domains.governance.services.products_service import get_pending_products
+from domains.governance.services.suppliers_service import get_pending_suppliers
+from domains.governance.services.permissions_service import get_staff_permission_catalog
+from domains.governance.services.suppliers_service import get_supplier_comparison
+from domains.governance.services.admin_controller import get_ticket_detail
+from domains.governance.services.analytics_service import get_top_products_analytics
+from domains.governance.services.analytics_service import get_user_growth_analytics
+from domains.accounts.services.customer_coupons_create_service import list_coupons
+from domains.governance.services.users_service import list_pending_bank_accounts
+from domains.finance.services.payout_approval_read_service import list_pending_payouts
+from domains.governance.services.users_service import list_staff_accounts
+from domains.comms.services.tickets_service import list_tickets
+from domains.governance.services.orders_service import refund_order
+from domains.accounts.services.admin_products_service import reject_product
+from domains.governance.services.suppliers_service import reject_supplier
+from domains.comms.services.tickets_service import reply_to_ticket
+from infrastructure.utils.dependencies import require_admin
+from domains.governance.services.admin_controller import require_admin_2fa_verified
+from domains.governance.services.effective_permissions import require_permission
+from domains.governance.services.products_service import restore_product_admin
+from domains.governance.services.products_service import toggle_product_badge
+from domains.governance.services.users_service import toggle_user_active
+from domains.orders.services.coupons_write_service import update_coupon
+from domains.governance.services.orders_service import update_order_status
+from domains.governance.services.orders_service import update_order_tracking
+from domains.governance.services.permissions_service import update_role_permissions
+from domains.governance.services.users_service import update_staff_account
+from domains.comms.services.tickets_write_service import update_ticket_status
+from domains.governance.services.users_service import update_user_role
+from domains.accounts.services.payroll_service import verify_bank_account
+from domains.accounts.services.logistics_partner_service import verify_payout
+from domains.governance.services.suppliers_service import verify_supplier
+from domains.catalog.services.banner_controller import BannerCreate
+from domains.catalog.services.banner_controller import BannerUpdate
+from domains.catalog.services.banner_controller import create_banner
+from domains.catalog.services.banner_controller import delete_banner
+from domains.catalog.services.banner_controller import get_banner_by_id
+from domains.catalog.services.banner_controller import update_banner
 from controllers.core.export_controller import (
     download_export_job_result,
     export_audit_logs_csv,
@@ -97,17 +93,15 @@ from controllers.core.export_controller import (
     export_users_csv,
     queue_export_job,
 )
-from controllers.commerce.promotion_controller import (
-    create_promotion_tier,
-    delete_promotion_tier,
-    get_promotion_config,
-    list_promotion_tiers,
-    preview_order_tier_discount,
-    update_promotion_config,
-    update_promotion_tier,
-)
-from db.database import get_db
-from db.schemas import (
+from domains.orders.services.promotion_controller import create_promotion_tier
+from domains.orders.services.promotion_controller import delete_promotion_tier
+from domains.orders.services.promotion_controller import get_promotion_config
+from domains.orders.services.promotion_controller import list_promotion_tiers
+from domains.orders.services.promotion_controller import preview_order_tier_discount
+from domains.orders.services.promotion_controller import update_promotion_config
+from domains.orders.services.promotion_controller import update_promotion_tier
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
     AuditLogPage,
     BulkUpdateStaffBody,
     CouponSchema,
@@ -115,35 +109,29 @@ from db.schemas import (
     ListPage,
     UpdateStaffAccount,
 )
-from db.schemas import (
+from infrastructure.database.schemas import (
     Order as OrderSchema,
 )
-from db.schemas import (
+from infrastructure.database.schemas import (
     Product as ProductSchema,
 )
-from services.security.approval_matrix_service import (
-    APPROVAL_RULES,
-    can_approve,
-    get_approval_chain,
-    require_approval,
-    resolve_approvers,
-)
-from services.hierarchy.hierarchy_service import (
-    backfill_authority_levels,
-    get_all_subordinates,
-    get_authority_level,
-    get_org_chart,
-    get_team_members,
-    get_user_chain,
-    is_in_chain,
-    reassign_manager,
-)
-from services.hierarchy.hierarchy_service import (
-    can_manage as hierarchy_can_manage_service,
-)
-from services.common.misc_write_service import reset_demo_data
-from utils.backup import get_backup_manager
-from utils.constants import MAX_BULK_ITEMS
+from domains.accounts.services.approval_matrix_service import APPROVAL_RULES
+from domains.accounts.services.approval_matrix_service import can_approve
+from domains.accounts.services.approval_matrix_service import get_approval_chain
+from domains.accounts.services.approval_matrix_service import require_approval
+from domains.accounts.services.approval_matrix_service import resolve_approvers
+from domains.accounts.services.hierarchy_service import backfill_authority_levels
+from domains.accounts.services.hierarchy_service import get_all_subordinates
+from domains.accounts.services.hierarchy_service import get_authority_level
+from domains.accounts.services.hierarchy_service import get_org_chart
+from domains.accounts.services.hierarchy_service import get_team_members
+from domains.accounts.services.hierarchy_service import get_user_chain
+from domains.accounts.services.hierarchy_service import is_in_chain
+from domains.accounts.services.hierarchy_service import reassign_manager
+from domains.accounts.services.hierarchy_service import can_manage as hierarchy_can_manage_service
+from domains.comms.services.misc_write_service import reset_demo_data
+from infrastructure.utils.backup import get_backup_manager
+from infrastructure.utils.constants import MAX_BULK_ITEMS
 
 router = APIRouter()
 
@@ -595,7 +583,7 @@ def admin_country_dashboard(
     unknown) so the admin UI can render the top-row stat cards.
     """
     require_permission("analytics.view", current_admin)
-    from utils.analytics_service import get_country_dashboard_stats
+    from infrastructure.utils.analytics_service import get_country_dashboard_stats
     return get_country_dashboard_stats(db, country_code=country_code.upper())
 
 
@@ -673,7 +661,7 @@ def set_supplier_badge(
 ):
     """Admin: manually set a supplier's credibility badge level."""
     require_permission("moderation.suppliers", current_admin)
-    import controllers.supplier.supplier_controller as _sc
+    import domains.suppliers.services.supplier_controller as _sc
     return _sc.admin_set_supplier_badge(user_id, badge_level, current_admin, db)
 
 @router.post("/suppliers/{user_id}/refresh-badge")
@@ -684,7 +672,7 @@ def refresh_supplier_badge(
 ):
     """Admin: recompute a supplier's credibility score and auto-assign badge."""
     require_permission("moderation.suppliers", current_admin)
-    import controllers.supplier.supplier_controller as _sc
+    import domains.suppliers.services.supplier_controller as _sc
     return _sc.refresh_supplier_badge(user_id, db)
 
 
@@ -1056,13 +1044,11 @@ def bulk_admin_dispute_action(
 
 # ── Flash Sales ────────────────────────────────────────────────────────────────
 
-from controllers.commerce.flash_sale_controller import (
-    create_flash_sale,
-    delete_flash_sale,
-    get_all_flash_sales,
-    update_flash_sale,
-)
-from db.schemas import FlashSaleCreate, FlashSaleOut
+from domains.orders.services.flash_sale_controller import create_flash_sale
+from domains.orders.services.flash_sale_controller import delete_flash_sale
+from domains.orders.services.flash_sale_controller import get_all_flash_sales
+from domains.orders.services.flash_sale_controller import update_flash_sale
+from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 
 
 @router.get("/flash-sales", response_model=ListPage[FlashSaleOut])
@@ -1319,7 +1305,7 @@ def verify_payout_route(
     current_admin: dict = Depends(require_admin_2fa_verified),
 ):
     require_permission("payouts.verify", current_admin)
-    from _legacy.models import Payout
+    from domains.payments.models.payments import Payout
     payout = db.query(Payout).filter(Payout.id == payout_id).first()
     amount = float(payout.amount) if payout and payout.amount is not None else None
     require_approval(db, current_admin["id"], "payout", amount=amount)
@@ -1338,7 +1324,9 @@ def admin_email_stats(
     from sqlalchemy import case as sql_case
     from sqlalchemy import func as sqlfunc
 
-    from _legacy.models import CampaignRecipient, EmailCampaign, NewsletterSubscriber
+    from domains.comms.models.marketing import CampaignRecipient
+    from domains.comms.models.marketing import EmailCampaign
+    from domains.comms.models.marketing import NewsletterSubscriber
 
     total_subscribers = db.query(sqlfunc.count(NewsletterSubscriber.id)).filter(
         NewsletterSubscriber.is_active == True
@@ -1406,7 +1394,9 @@ def admin_logistics_overview(
     require_permission("orders.manage", current_admin)
     from sqlalchemy import func as sqlfunc
 
-    from _legacy.models import Shipment, ShippingCarrier, ShippingZone
+    from domains.governance.models.admin import ShippingCarrier
+    from domains.governance.models.admin import ShippingZone
+    from domains.logistics.models.logistics import Shipment
 
     shipment_counts = db.query(
         Shipment.status,
@@ -1469,7 +1459,7 @@ def admin_supplier_documents(
 ):
     """Admin: view all supplier KYC documents."""
     require_permission("moderation.suppliers", current_admin)
-    import controllers.supplier_document_controller as _sdc
+    import domains.suppliers.services as _sdc
     return _sdc.admin_list_documents(
         current_admin,
         db,
@@ -1489,7 +1479,7 @@ def admin_review_document(
 ):
     """Admin: approve or reject a supplier document."""
     require_permission("moderation.suppliers", current_admin)
-    import controllers.supplier_document_controller as _sdc
+    import domains.suppliers.services as _sdc
     return _sdc.admin_review_document(doc_id, data, current_admin, db)
 
 
@@ -1502,7 +1492,7 @@ def admin_invoices_overview(
 ):
     """Admin overview of supply chain invoices."""
     require_permission("orders.manage", current_admin)
-    import controllers.finance.invoice_controller as _ic
+    import domains.finance.services.invoice_controller as _ic
     return _ic.get_invoice_overview(db)
 
 
@@ -1515,7 +1505,7 @@ def admin_logistics_partners(
 ):
     """Admin: list all logistics partners."""
     require_permission("orders.manage", current_admin)
-    import controllers.orders.logistics_partner_controller as _lpc
+    import domains.orders.services.logistics_partner_controller as _lpc
     return _lpc.list_partners(current_admin, db)
 
 @router.post("/logistics/partners", status_code=201)
@@ -1525,7 +1515,7 @@ def admin_create_logistics_partner(
     current_admin: dict = Depends(require_admin),
 ):
     """Admin: onboard a new logistics partner."""
-    import controllers.orders.logistics_partner_controller as _lpc
+    import domains.orders.services.logistics_partner_controller as _lpc
     return _lpc.create_partner(data, current_admin, db)
 
 @router.put("/logistics/partners/{partner_id}")
@@ -1537,7 +1527,7 @@ def admin_update_logistics_partner(
 ):
     """Admin: update logistics partner details."""
     require_permission("orders.manage", current_admin)
-    import controllers.orders.logistics_partner_controller as _lpc
+    import domains.orders.services.logistics_partner_controller as _lpc
     return _lpc.update_partner(partner_id, data, current_admin, db)
 
 
@@ -1626,7 +1616,7 @@ def admin_list_banners(
     current_admin: dict = Depends(require_admin),
 ):
     """Admin: list all banners (active and inactive)."""
-    from controllers.catalog.banner_controller import get_banners_page
+    from domains.catalog.services.banner_controller import get_banners_page
     return get_banners_page(db, active_only=False, limit=page_size, offset=(page - 1) * page_size)
 
 
@@ -1894,7 +1884,7 @@ def admin_rotate_encryption_key(
     if old_key == new_key:
         raise HTTPException(status_code=422, detail="new_key must differ from old_key")
 
-    from utils.key_rotation import rotate_encryption_key
+    from infrastructure.utils.key_rotation import rotate_encryption_key
     result = rotate_encryption_key(old_key, new_key, db)
     return result
 
@@ -1973,7 +1963,7 @@ def generate_legal_contract(
 ):
     """Generate a legal contract for a country."""
     require_permission("legal.contracts", current_admin)
-    from services.supplier.legal_contract_service import LegalContractService
+    from domains.suppliers.services.legal_contract_service import LegalContractService
     
     if payload is None:
         payload = {}
@@ -1998,7 +1988,7 @@ def get_country_audit_trail(
 ):
     """Get audit trail for a country's financial changes."""
     require_permission("audit.read", current_admin)
-    from services.audit.audit_trail_service import AuditTrailService
+    from domains.governance.services.audit_trail_service import AuditTrailService
     
     return AuditTrailService.get_audit_trail(
         country_code,

@@ -13,15 +13,15 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
 from domains.accounts.models.core import EntityChatMessage, EntityChatThread
 
-from services.comms.chat_system import get_chat_system
+from domains.comms.services.chat_system import get_chat_system
 
-from services.comms.entity_chat_service import EntityChatService
+from domains.comms.services.entity_chat_service import EntityChatService
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin
 
@@ -42,9 +42,8 @@ logger = logging.getLogger("zozi.api.admin_chat")
 
 
 
-from services.admin.admin_comms_messaging_service import admin_list_all_threads  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
-from services.admin.admin_comms_messaging_service import admin_list_chat_threads  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_comms_messaging_service import admin_list_chat_threads
 
 
 
@@ -67,7 +66,7 @@ from services.admin.admin_comms_messaging_service import admin_list_chat_threads
 
 
 
-from services.admin.admin_comms_messaging_service import admin_get_chat_thread_messages  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_comms_messaging_service import admin_get_chat_thread_messages
 
 
 
@@ -82,7 +81,7 @@ from services.admin.admin_comms_messaging_service import admin_get_chat_thread_m
 
 
 
-from services.admin.admin_comms_messaging_service import admin_send_chat_thread_message  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_comms_messaging_service import admin_send_chat_thread_message
 
 
 
@@ -94,7 +93,7 @@ from services.admin.admin_comms_messaging_service import admin_send_chat_thread_
 
 
 
-from services.admin.admin_comms_messaging_service import admin_create_direct_chat  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_comms_messaging_service import admin_create_direct_chat
 
 
 
@@ -108,7 +107,7 @@ from services.admin.admin_comms_messaging_service import admin_create_direct_cha
 
 
 
-from services.admin.admin_comms_messaging_service import admin_create_group_chat  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_comms_messaging_service import admin_create_group_chat
 
 
 
@@ -123,18 +122,15 @@ from services.admin.admin_comms_messaging_service import admin_create_group_chat
 
 
 
-from services.admin.admin_comms_messaging_service import admin_chat_metrics  # [MIGRATION COMPAT] re-export relocated symbol
-from services.admin.admin_comms_messaging_service import admin_list_threads  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_comms_messaging_service import admin_chat_metrics
+from domains.governance.services.admin_comms_messaging_service import admin_list_threads
 
 
 # === auto-wiring re-exports (migration repair) ===
-from services.admin.admin_comms_messaging_service import (
-    admin_create_thread,
-    admin_create_thread_global,
-    admin_get_thread_messages,
-    admin_send_thread_message
-)
+from domains.governance.services.admin_comms_messaging_service import admin_create_thread
+from domains.governance.services.admin_comms_messaging_service import admin_create_thread_global
+from domains.governance.services.admin_comms_messaging_service import admin_get_thread_messages
+from domains.governance.services.admin_comms_messaging_service import admin_send_thread_message
 
-from services.admin.admin_comms_messaging_service import admin_list_all_threads  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 

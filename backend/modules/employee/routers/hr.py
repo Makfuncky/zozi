@@ -6,20 +6,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from controllers.hr_controller import (
-    check_coi_conflict,
-    create_coi_report,
-    create_disciplinary_case,
-    create_offboarding_case,
-    get_disciplinary_cases,
-    get_employee_graph,
-    get_offboarding_cases,
-    register_address,
-    register_dependent,
-    validate_gcc_compliance,
-)
-from db.database import get_db
-from _legacy.models.employee_models import AlumniNetwork, Employee
+from domains.hr.services.hr_controller import check_coi_conflict
+from domains.hr.services.hr_controller import create_coi_report
+from domains.hr.services.hr_controller import create_disciplinary_case
+from domains.hr.services.hr_controller import create_offboarding_case
+from domains.hr.services.hr_controller import get_disciplinary_cases
+from domains.hr.services.hr_controller import get_employee_graph
+from domains.hr.services.hr_controller import get_offboarding_cases
+from domains.hr.services.hr_controller import register_address
+from domains.hr.services.hr_controller import register_dependent
+from domains.hr.services.hr_controller import validate_gcc_compliance
+from infrastructure.database.database import get_db
+from domains.hr.models.employee_models import AlumniNetwork
+from domains.hr.models.employee_models import Employee
 
 router = APIRouter()
 

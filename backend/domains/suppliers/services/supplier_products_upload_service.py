@@ -14,9 +14,10 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Product, SupplierProfile
-from utils.datetime_utils import utcnow
-from utils.pagination import paginated_response
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.pagination import paginated_response
 import structlog
 
 logger = structlog.get_logger(__name__)

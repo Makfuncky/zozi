@@ -3,11 +3,16 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from controllers.finance.sub_ledger_controller import controller_get_ap_summary, controller_get_ar_summary, controller_post_ap_payable, controller_post_ap_payment, controller_post_ar_invoice, controller_post_ar_payment
+from domains.finance.services.sub_ledger_controller import controller_get_ap_summary
+from domains.finance.services.sub_ledger_controller import controller_get_ar_summary
+from domains.finance.services.sub_ledger_controller import controller_post_ap_payable
+from domains.finance.services.sub_ledger_controller import controller_post_ap_payment
+from domains.finance.services.sub_ledger_controller import controller_post_ar_invoice
+from domains.finance.services.sub_ledger_controller import controller_post_ar_payment
 
 router = APIRouter(prefix="/api/v1")
 

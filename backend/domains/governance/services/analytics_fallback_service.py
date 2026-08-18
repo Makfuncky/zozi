@@ -12,23 +12,19 @@ from typing import Any, Dict
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Account as AccountModel,
-    AccountBalance as AccountBalanceModel,
-    CommissionGlobalConfig,
-    Payment,
-    Product as ProductModel,
-    Payout as PayoutModel,
-    User as UserModel,
-)
-from services.common.db_read import (
-    all_rows,
-    count,
-    first,
-    scalar,
-    scalar_sum,
-    scalar_with_filters,
-)
+from domains.accounts.models.user import User as UserModel
+from domains.catalog.models.products import Product as ProductModel
+from domains.finance.models.finance import Account as AccountModel
+from domains.finance.models.finance import AccountBalance as AccountBalanceModel
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout as PayoutModel
+from domains.comms.services.db_read import all_rows
+from domains.comms.services.db_read import count
+from domains.comms.services.db_read import first
+from domains.comms.services.db_read import scalar
+from domains.comms.services.db_read import scalar_sum
+from domains.comms.services.db_read import scalar_with_filters
 
 
 def get_dashboard_stats(db: Session) -> Dict[str, Any]:

@@ -6,7 +6,7 @@ import pytest
 from decimal import Decimal
 from datetime import datetime, timezone
 
-from _legacy.models import (
+from infrastructure.database.models import (
     User, Category, Product, ProductVariant, Order, OrderItem,
     Payment, Coupon, Banner, Review, WishlistItem, CartItem,
     Address, Notification, CountryConfig, LogisticsPartner,
@@ -141,7 +141,7 @@ def test_product_slug_unique(db_session):
 @pytest.mark.integration
 def test_product_variant_unique_constraint(db_session):
     from sqlalchemy.exc import IntegrityError
-    from _legacy.models import Product, ProductVariant
+    from infrastructure.database.models import Product, ProductVariant
     product = Product(name="Var Product", slug="var-prod", price=10.0)
     db_session.add(product)
     db_session.flush()
@@ -166,7 +166,7 @@ def test_user_email_unique(db_session):
 
 @pytest.mark.integration
 def test_order_items_relationship(db_session):
-    from _legacy.models import User, Product, Order, OrderItem
+    from infrastructure.database.models import User, Product, Order, OrderItem
     user = User(email=f"rel_{uuid.uuid4().hex[:8]}@zozi.test", username=f"rel_{uuid.uuid4().hex[:8]}", hashed_password="x", role="customer")
     product = Product(name="Rel Product", slug="rel-prod", price=10.0)
     db_session.add_all([user, product])

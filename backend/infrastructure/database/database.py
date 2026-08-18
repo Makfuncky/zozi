@@ -275,7 +275,7 @@ def _guard_dev_only(operation: str) -> None:
 def create_tables() -> None:
     """Create all database tables (development/SQLite only)."""
     _guard_dev_only("create_tables")
-    from _legacy.models import Base as ModelsBase
+    from infrastructure.database.base import Base as ModelsBase
     ModelsBase.metadata.create_all(bind=engine)
     logger.info("Tables created")
 
@@ -283,7 +283,7 @@ def create_tables() -> None:
 def reset_tables() -> None:
     """Drop and recreate all tables (development/SQLite only — destructive)."""
     _guard_dev_only("reset_tables")
-    from _legacy.models import Base as ModelsBase
+    from infrastructure.database.base import Base as ModelsBase
     ModelsBase.metadata.drop_all(bind=engine)
     ModelsBase.metadata.create_all(bind=engine)
     logger.info("Tables reset")

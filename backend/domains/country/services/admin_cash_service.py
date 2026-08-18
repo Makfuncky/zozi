@@ -9,14 +9,12 @@ from infrastructure.database.schemas import (
     CashTransactionCreate,
     CashTransactionOut,
 )
-from _legacy.models import CashAccount
+from domains.finance.models.finance import CashAccount
 
-from services.common.misc_write_service import (
-    create_cash_account as create_cash_account_model,
-    create_cash_transaction as create_cash_transaction_model,
-)
+from domains.comms.services.misc_write_service import create_cash_account as create_cash_account_model
+from domains.comms.services.misc_write_service import create_cash_transaction as create_cash_transaction_model
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 

@@ -2,10 +2,12 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import ReviewCreate
-from _legacy.models import Product, Review, User
-from utils.dependencies import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ReviewCreate
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Review
+from infrastructure.utils.dependencies import get_current_user
 
 router = APIRouter()
 __router_prefix__ = "/reviews"

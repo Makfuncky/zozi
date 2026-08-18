@@ -11,10 +11,6 @@ from typing import Optional
 
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _BACKEND_DIR)
-# Migration shim (NEW_STRUCTURE.md): controllers/services/routers packages were
-# moved under _legacy/. Appended at lowest sys.path priority so root packages
-# (models/utils/db) keep precedence while moved packages stay importable.
-sys.path.append(os.path.join(_BACKEND_DIR, "_legacy"))
 
 
 from fastapi import FastAPI, Request, WebSocket, Depends, HTTPException
@@ -28,14 +24,14 @@ from infrastructure.database.base import Base
 # RLS is auto-registered via @event.listens_for(Engine, ...) in rls_interceptor.py
 from infrastructure.utils.config import settings
 from infrastructure.utils.logging_config import setup_structlog, get_request_id
-from infrastructure.utils.error_handler import ErrorHandler, create_error_handler, global_exception_handler
+from kernel.error_handler import ErrorHandler, create_error_handler, global_exception_handler
 from infrastructure.utils.versioning import VERSION_PREFIX, get_version_path, versioned_prefix, get_active_versions
 
 # Initialize structured logging
 setup_structlog(log_level=logging.INFO if settings.debug else logging.WARNING)
 
 # Instrument SQLAlchemy engine for query timing (enables db_query_time_ms in logs)
-from database_logging import instrument_database_engine
+from infrastructure.database.database_logging import instrument_database_engine
 instrument_database_engine(engine)
 
 import structlog
@@ -252,10 +248,13 @@ def _load_routers():
 
 _load_routers()
 
-# Auto-generated routers (Design 3) are emitted by `routers/generated/auto_router.py`
-# directly into the `routers/` surface folder, so the auto-discovery above already
-# includes them. Keep them in sync after controller changes with
-# `python routers/generated/auto_router.py` (CI runs `--verify`).
+# Router registration (NEW_STRUCTURE.md §3)
+# Thin FastAPI routers are hand-maintained under
+# ``modules/{customer,supplier,logistics,admin,employee}/routers/`` and discovered
+# above. The old auto-router code-generator surface was retired during the
+# NEW_STRUCTURE migration: controller ``@get/@post/...`` decorators are now
+# HTTP-contract *markers* only (see ``infrastructure.routing.route_contract``).
+# The retired generator lives in ``scripts/retired_auto_router.py``.
 
 # Serve uploaded media files — only mount local disk when using local storage
 if str(getattr(settings, "storage_backend", "") or os.getenv("STORAGE_BACKEND", "local")).lower() != "s3":

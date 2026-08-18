@@ -4,12 +4,15 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import (
-    FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue,
-    IPReputation, DeviceFingerprint, User
-)
-from db.schemas import (
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.governance.models.fraud import FraudEvent
+from domains.governance.models.fraud import FraudBlacklist
+from domains.governance.models.fraud import FraudRule
+from domains.governance.models.fraud import ManualReviewQueue
+from domains.governance.models.fraud import IPReputation
+from domains.governance.models.fraud import DeviceFingerprint
+from infrastructure.database.schemas import (
     FraudScoreRequest, FraudScoreResponse,
     FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut,
     ManualReviewOut, ManualReviewAssign, ManualReviewResolve,
@@ -18,14 +21,13 @@ from db.schemas import (
     ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck,
     FraudEventOut,
 )
-from services.security.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
-from services.security.fraud_admin_service import (
-    add_to_blacklist as _svc_add_to_blacklist,
-    create_rule as _svc_create_rule,
-    get_threat_feed_status as _svc_get_threat_feed_status,
-)
-from utils.dependencies import require_admin
-from utils.redis_client import get_redis
+from domains.governance.services.fraud_detection_service import FraudScoringEngine
+from domains.governance.services.fraud_detection_service import ThreatFeedUpdater
+from domains.governance.services.fraud_admin_service import add_to_blacklist as _svc_add_to_blacklist
+from domains.governance.services.fraud_admin_service import create_rule as _svc_create_rule
+from domains.governance.services.fraud_admin_service import get_threat_feed_status as _svc_get_threat_feed_status
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.redis_client import get_redis
 import json
 
 router = APIRouter(prefix="/api/v1/admin")
@@ -288,7 +290,7 @@ def check_impossible_travel(
 @router.post("/check/device-stacking", response_model=DeviceStackingCheck)
 def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check device account stacking."""
-    from services.security.fraud_detection_service import GraphAnalysisService
+    from domains.governance.services.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_device_account_stacking(device_hash)
 
@@ -296,7 +298,7 @@ def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends
 @router.post("/check/return-abuse", response_model=ReturnAbuseCheck)
 def check_return_abuse(user_id: int, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check return abuse patterns."""
-    from services.security.fraud_detection_service import GraphAnalysisService
+    from domains.governance.services.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_return_abuse_pattern(user_id)
 

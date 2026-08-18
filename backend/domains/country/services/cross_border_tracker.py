@@ -6,8 +6,8 @@ import logging
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from db.database import get_db_context
-from _legacy.models import CountryConfig
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class CrossBorderTracker:
         user_id: Optional[int] = None
     ) -> Optional[Dict[str, Any]]:
         """Track a customer session with country detection."""
-        from services.geography.cross_border_service import GeoDetectionService
+        from domains.country.services.cross_border_service import GeoDetectionService
         
         country_code = GeoDetectionService.detect_country_from_ip(ip_address)
         if not country_code:

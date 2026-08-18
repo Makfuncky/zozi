@@ -8,22 +8,24 @@ from fastapi import HTTPException
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from _legacy.models import User, SupplierProfile as SP, Notification, SupplierProfile, Product, OrderItem, Order
-from services.common.db_read import (
-    aggregate_rows,
-    all_rows,
-    count,
-    first,
-    scalar_with_filters,
-)
-from services.supplier.suppliers_write_service import (
-    add_and_flush,
-    add_to_session,
-    commit_only,
-)
-from utils.auth import require_permission
-from utils.audit import audit_log, AuditAction
-from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierProfile as SP
+from domains.comms.models.suppliers import SupplierProfile
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import Order
+from domains.comms.services.db_read import aggregate_rows
+from domains.comms.services.db_read import all_rows
+from domains.comms.services.db_read import count
+from domains.comms.services.db_read import first
+from domains.comms.services.db_read import scalar_with_filters
+from domains.suppliers.services.suppliers_write_service import add_and_flush
+from domains.suppliers.services.suppliers_write_service import add_to_session
+from domains.suppliers.services.suppliers_write_service import commit_only
+from infrastructure.utils.auth import require_permission
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -379,7 +381,7 @@ def get_pending_suppliers(db: Session, limit: Optional[int] = None, offset: int 
 
 
 def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
 
     user = first(db, User, [User.id == user_id, User.role == "supplier"])
     if not user:
@@ -411,7 +413,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
                 if isinstance(requirements, dict):
                     required_docs = requirements.get("required_documents", [])
                     if required_docs and isinstance(required_docs, list):
-                        from _legacy.models import SupplierDocument
+                        from domains.comms.models.suppliers import SupplierDocument
                         approved_types = set()
                         for doc in all_rows(db, SupplierDocument, [
                             SupplierDocument.supplier_id == user_id,
@@ -456,7 +458,7 @@ def verify_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Se
 
 
 def reject_supplier(user_id: int, note: Optional[str], acting_user: dict, db: Session) -> dict:
-    from _legacy.models import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     user = first(db, User, [User.id == user_id, User.role == "supplier"])
     if not user:

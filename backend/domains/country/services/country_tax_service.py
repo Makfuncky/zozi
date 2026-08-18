@@ -2,8 +2,8 @@
 from __future__ import annotations
 from typing import List
 from sqlalchemy.orm import Session
-from _legacy.models import CountryCategoryTaxRate
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.country.models.country_enhancements import CountryCategoryTaxRate
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -26,7 +26,7 @@ def list_active_category_tax_rates(
     db: Session, country_code: str, limit: int = 20, cursor: str | None = None
 ) -> dict:
     """List active category tax rates for a country (cursor-paginated)."""
-    from utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
+    from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
     query = (
         db.query(CountryCategoryTaxRate)

@@ -7,15 +7,13 @@ response shapes are unchanged from the previous inline implementation.
 """
 from fastapi import APIRouter, Body, Depends, Request, status
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from utils.dependencies import require_admin
-from services.commerce.coupons_write_service import (
-    create_coupon_from_payload,
-    delete_coupon_by_id,
-    list_coupons_paginated,
-    validate_coupon,
-)
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
+from domains.orders.services.coupons_write_service import create_coupon_from_payload
+from domains.orders.services.coupons_write_service import delete_coupon_by_id
+from domains.orders.services.coupons_write_service import list_coupons_paginated
+from domains.orders.services.coupons_write_service import validate_coupon
 
 router = APIRouter(prefix="/api/v1")
 

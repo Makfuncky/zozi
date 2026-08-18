@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import PaginatedResponse
 from infrastructure.utils.pagination import paginated_query, safe_page
-from infrastructure.utils.error_handler import ErrorCategory, _build_problem_response
+from kernel.error_handler import ErrorCategory, _build_problem_response
 from infrastructure.utils.logging_config import get_request_id
 
 logger = logging.getLogger(__name__)

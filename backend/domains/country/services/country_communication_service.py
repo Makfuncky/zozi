@@ -1,17 +1,15 @@
 """Service methods for country communication data access."""
 from __future__ import annotations
-from utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from datetime import datetime, timezone
-from _legacy.models import (
-    CountryCommunication,
-    CrossCountryCustomerSession,
-    LegalContractTemplate,
-    ShopWarehouseLocation,
-    LogisticsPartnerLocation,
-    LogisticsPartner,
-)
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.country_control import LegalContractTemplate
+from domains.country.models.country_control import ShopWarehouseLocation
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.country.models.country_enhancements import CrossCountryCustomerSession
+from domains.logistics.models.logistics import LogisticsPartner
 import structlog
 logger = structlog.get_logger(__name__)
 

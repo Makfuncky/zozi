@@ -23,10 +23,20 @@ from typing import Any, cast
 from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
-from db.database import get_db
-from _legacy.models import LogisticsPartner, LogisticsPartnerPayout, Payout, PayoutBatch, PayoutBatchItem, SupplierSettlement, User
-from utils.dependencies import require_admin
-from controllers.treasury.payout_approval_controller import approve_payout as approve_payout_action, reject_payout as reject_payout_action, approve_batch as approve_batch_action, reject_batch as reject_batch_action, dispatch_batch as dispatch_batch_action
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payout
+from infrastructure.utils.dependencies import require_admin
+from domains.finance.services.payout_approval_controller import approve_payout as approve_payout_action
+from domains.finance.services.payout_approval_controller import reject_payout as reject_payout_action
+from domains.finance.services.payout_approval_controller import approve_batch as approve_batch_action
+from domains.finance.services.payout_approval_controller import reject_batch as reject_batch_action
+from domains.finance.services.payout_approval_controller import dispatch_batch as dispatch_batch_action
 
 class ActionRequest(BaseModel):
     notes: str | None = None

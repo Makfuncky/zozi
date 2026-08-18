@@ -11,12 +11,14 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from _legacy.models import Employee, Notification, PushNotificationToken
-from services.hr.attendance_service import AttendanceService
-from services.finance.expense_processing import ExpenseProcessingService
-from services.hr.leave_accrual import LeaveAccrualEngine
-from services.security.mobile_auth_service import MobileAuthService
-from utils.constants import NOTIFICATIONS_PAGE_LIMIT
+from domains.comms.models.communication import Notification
+from domains.governance.models.admin import PushNotificationToken
+from domains.hr.models.employee_models import Employee
+from domains.hr.services.attendance_service import AttendanceService
+from domains.finance.services.expense_processing import ExpenseProcessingService
+from domains.hr.services.leave_accrual import LeaveAccrualEngine
+from domains.governance.services.mobile_auth_service import MobileAuthService
+from infrastructure.utils.constants import NOTIFICATIONS_PAGE_LIMIT
 
 logger = logging.getLogger(__name__)
 

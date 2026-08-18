@@ -6,9 +6,11 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryCity, CountryCommissionRate, CountryConfig
-from _legacy.models.country_enhancements import CountryFeatureFlag
-from services.geography.country_write_service import record_admin_change
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CountryCommissionRate
+from domains.country.models.country_enhancements import CountryFeatureFlag
+from domains.country.services.country_write_service import record_admin_change
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -1,15 +1,13 @@
 """Supplier payouts sub-router."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.database import get_db
-from db.schemas import PayoutOut
-from _legacy.models import User
-from utils.dependencies import require_supplier
-from services.supplier.supplier_payout_service import (
-    create_supplier_payout,
-    list_supplier_payouts,
-)
-from services.supplier.supplier_profile_write_service import get_supplier_profile
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import PayoutOut
+from domains.accounts.models.user import User
+from infrastructure.utils.dependencies import require_supplier
+from domains.suppliers.services.supplier_payout_service import create_supplier_payout
+from domains.suppliers.services.supplier_payout_service import list_supplier_payouts
+from domains.suppliers.services.supplier_profile_write_service import get_supplier_profile
 
 router = APIRouter(prefix="/api/v1/supplier")
 

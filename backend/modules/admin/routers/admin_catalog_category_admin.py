@@ -3,11 +3,21 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from controllers.catalog.category_admin_controller import ArchiveRequest, BulkActionRequest, archive_category, bulk_archive_categories, bulk_restore_categories, create_category, delete_category, list_categories, reorder_categories, restore_category, update_category
+from domains.catalog.services.category_admin_controller import ArchiveRequest
+from domains.catalog.services.category_admin_controller import BulkActionRequest
+from domains.catalog.services.category_admin_controller import archive_category
+from domains.catalog.services.category_admin_controller import bulk_archive_categories
+from domains.catalog.services.category_admin_controller import bulk_restore_categories
+from domains.catalog.services.category_admin_controller import create_category
+from domains.catalog.services.category_admin_controller import delete_category
+from domains.catalog.services.category_admin_controller import list_categories
+from domains.catalog.services.category_admin_controller import reorder_categories
+from domains.catalog.services.category_admin_controller import restore_category
+from domains.catalog.services.category_admin_controller import update_category
 
 router = APIRouter(prefix="/api/v1/admin")
 

@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.geography import country_controller
-from controllers.hr import employees_controller as ctrl
-from controllers.security.auth_controller import get_current_user
+from domains.country.services.country_controller import country_controller
+from modules.employee.routers import employees_controller as ctrl
+from rbac import get_current_user
 from modules.admin.routers.country_versioning import router as versioning_router
-from db.database import get_db
+from infrastructure.database.database import get_db
 from modules.admin.routers.country_auto_populate import router as auto_populate_router
 
 router = APIRouter()
@@ -424,7 +424,7 @@ def create_country_feature_flag(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from _legacy.models.country_enhancements import CountryFeatureFlag
+    from domains.country.models.country_enhancements import CountryFeatureFlag
 
     flag = CountryFeatureFlag(
         country_code=code.upper(),
@@ -449,7 +449,7 @@ def update_country_feature_flag(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from _legacy.models.country_enhancements import CountryFeatureFlag
+    from domains.country.models.country_enhancements import CountryFeatureFlag
 
     flag = (
         db.query(CountryFeatureFlag)
@@ -507,7 +507,7 @@ def update_country_localization(code: str, body: dict, current_user: dict = Depe
 
 @router.delete("/{code}/feature-flags/{key}")
 def delete_country_feature_flag(code: str, key: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from _legacy.models.country_enhancements import CountryFeatureFlag
+    from domains.country.models.country_enhancements import CountryFeatureFlag
 
     flag = (
         db.query(CountryFeatureFlag)
@@ -559,7 +559,7 @@ class AutoPopulateBody(BaseModel):
 @router.post("/auto-populate")
 async def auto_populate_country(body: AutoPopulateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Fetch country data from external APIs and curated profiles."""
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
     return await country_controller.auto_populate_async(body.search_term)
 
@@ -589,9 +589,10 @@ def add_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryCity, CountryConfig
+    from domains.country.models.countries import CountryConfig
+    from domains.country.models.country_enhancements import CountryCity
     country = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -618,9 +619,9 @@ def patch_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryCity
+    from domains.country.models.country_enhancements import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -638,9 +639,9 @@ def delete_country_city(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryCity
+    from domains.country.models.country_enhancements import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -764,9 +765,9 @@ def delete_payout_rule_product(code: str, rule_id: str, current_user: dict = Dep
 
 @router.post("/{code}/toggle-active")
 def toggle_country_active(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not c:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -786,11 +787,9 @@ class BulkIdsPayload(BaseModel):
 
 @router.post("/{code}/archive")
 def archive_country(code: str, payload: ArchivePayload = None, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import (
-        _get_country_or_404,
-        _record_admin_change,
-        _require_full_admin,
-    )
+    from domains.country.services.country_controller import _get_country_or_404
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
     c = _get_country_or_404(code, db)
     c.is_deleted = True
@@ -802,11 +801,9 @@ def archive_country(code: str, payload: ArchivePayload = None, current_user: dic
 
 @router.post("/{code}/restore")
 def restore_country(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import (
-        _get_country_or_404,
-        _record_admin_change,
-        _require_full_admin,
-    )
+    from domains.country.services.country_controller import _get_country_or_404
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
     c = _get_country_or_404(code, db)
     c.is_deleted = False
@@ -818,9 +815,10 @@ def restore_country(code: str, current_user: dict = Depends(get_current_user), d
 
 @router.post("/bulk/archive")
 def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _record_admin_change, _require_full_admin
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = True
@@ -832,9 +830,10 @@ def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict = Depends
 
 @router.post("/bulk/restore")
 def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _record_admin_change, _require_full_admin
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = False
@@ -846,7 +845,7 @@ def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict = Depends
 
 @router.delete("/{code}")
 def hard_delete_country(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_full_admin
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
     c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not c:
@@ -871,10 +870,11 @@ class CountryCommissionRateItem(BaseModel):
 
 @router.get("/countries/{code}/commission-rates")
 def list_country_commission_rates(code: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import _require_admin, _require_country_access
+    from domains.country.services.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from _legacy.models import CountryCommissionRate
+    from domains.country.models.country_enhancements import CountryCommissionRate
     rows = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper()
     ).order_by(CountryCommissionRate.supplier_tier, CountryCommissionRate.name).all()
@@ -883,16 +883,14 @@ def list_country_commission_rates(code: str, current_user: dict = Depends(get_cu
 
 @router.post("/countries/{code}/commission-rates")
 def create_country_commission_rate(code: str, body: CountryCommissionRateItem, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import (
-        _get_country_or_404,
-        _record_admin_change,
-        _require_admin,
-        _require_country_access,
-    )
+    from domains.country.services.country_controller import _get_country_or_404
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
     _get_country_or_404(code, db)
-    from _legacy.models import CountryCommissionRate
+    from domains.country.models.country_enhancements import CountryCommissionRate
     existing = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == body.supplier_tier,
@@ -917,14 +915,12 @@ def create_country_commission_rate(code: str, body: CountryCommissionRateItem, c
 
 @router.delete("/countries/{code}/commission-rates/{tier}/{name}")
 def delete_country_commission_rate(code: str, tier: str, name: str, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
-    from controllers.country_controller import (
-        _record_admin_change,
-        _require_admin,
-        _require_country_access,
-    )
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from _legacy.models import CountryCommissionRate
+    from domains.country.models.country_enhancements import CountryCommissionRate
     rate = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == tier,

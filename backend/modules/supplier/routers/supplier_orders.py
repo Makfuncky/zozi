@@ -12,10 +12,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import Order, OrderItem, SupplierProfile, User
-from services.common.storage import storage as _storage
-from utils.dependencies import require_supplier
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.storage import storage as _storage
+from infrastructure.utils.dependencies import require_supplier
 
 ai_logger = logging.getLogger(__name__)
 
@@ -164,7 +167,7 @@ def _resolve_shipment_info(
 ) -> dict[str, Any]:
     """Resolve shipment info from the logistics models if available."""
     try:
-        from _legacy.models import Shipment
+        from domains.logistics.models.logistics import Shipment
 
         shipment = (
             db.query(Shipment)

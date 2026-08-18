@@ -2,16 +2,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import (
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
     ShipmentCreate,
     ShipmentEventCreate,
     ShipmentEventOut,
     ShipmentOut,
     ShipmentUpdate,
 )
-from _legacy.models import Shipment, ShipmentEvent, User
-from utils.dependencies import get_current_user, require_admin, require_logistics
+from domains.accounts.models.user import User
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from infrastructure.utils.dependencies import get_current_user, require_admin, require_logistics
 
 router = APIRouter()
 __router_prefix__ = "/shipments"

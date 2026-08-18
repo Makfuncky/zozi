@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 
-from controllers.admin.analytics_controller import analytics_chatbot, analytics_customers, analytics_overview, analytics_timeseries, analytics_top_products, analytics_user_growth
+from domains.governance.services.analytics_controller import analytics_chatbot, analytics_customers, analytics_overview, analytics_timeseries, analytics_top_products, analytics_user_growth
 
 router = APIRouter(prefix="/api/v1/admin")
 

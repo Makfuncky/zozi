@@ -7,8 +7,8 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from db.database import get_db_context
-from _legacy.models import CountryConfig
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -53,7 +53,7 @@ class AuditTrailService:
         
         # Also write to the central audit_logs table for unified querying
         try:
-            from utils.audit import audit_log as _audit_log
+            from infrastructure.utils.audit import audit_log as _audit_log
             with get_db_context() as _db:
                 _audit_log(
                     db=_db,
@@ -152,7 +152,7 @@ class DataResidencyService:
             kms_key = "default-key"
         
         try:
-            from utils.encryption import encrypt_data
+            from infrastructure.utils.encryption import encrypt_data
             encrypted = encrypt_data(data, key_suffix=country_code)
         except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
             logger.exception("encrypt_pii_failed", error=str(e))
@@ -169,7 +169,7 @@ class DataResidencyService:
     def decrypt_pii(encrypted_data: str, country_code: str) -> str:
         """Decrypt PII data."""
         try:
-            from utils.encryption import decrypt_data
+            from infrastructure.utils.encryption import decrypt_data
             return decrypt_data(encrypted_data)
         except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
             logger.exception("decrypt_pii_failed", error=str(e))

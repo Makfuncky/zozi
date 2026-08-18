@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from sqlalchemy import func
 
-from utils.pagination import SAFE_QUERY_LIMIT, windowed_iterate
-from _legacy.models import Shipment, ShipmentEvent
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT, windowed_iterate
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
 import structlog
 logger = structlog.get_logger(__name__)
 

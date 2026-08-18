@@ -7,8 +7,8 @@ from __future__ import annotations
 from typing import List
 from typing import Any, Optional
 from sqlalchemy.orm import Session
-from _legacy.models import CountryStaffAssignment
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -37,7 +37,7 @@ def _staff_payload(row: CountryStaffAssignment, user_map: dict[int, Any]) -> dic
 
 
 def _user_map(db: Session, rows: list[CountryStaffAssignment]) -> dict[int, Any]:
-    from _legacy.models import User
+    from domains.accounts.models.user import User
     user_ids = [r.user_id for r in rows]
     if not user_ids:
         return {}
@@ -52,8 +52,8 @@ def list_country_staff(
 ) -> dict:
     """List staff assignments for a country (cursor-paginated)."""
     from typing import Optional
-    from db.database import get_db_context
-    from utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
+    from infrastructure.database.database import get_db_context
+    from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
     with get_db_context() as db:
         q = db.query(CountryStaffAssignment).filter(
@@ -78,8 +78,8 @@ def assign_staff_to_country(
 ) -> dict[str, Any]:
     """Assign a user to a country with a role."""
     from fastapi import HTTPException
-    from db.database import get_db_context
-    from _legacy.models import User
+    from infrastructure.database.database import get_db_context
+    from domains.accounts.models.user import User
     user_id = int(getattr(body, "user_id", 0))
     role_in_country = getattr(body, "role_in_country", "country_manager") or "country_manager"
     notes = getattr(body, "notes", None)
@@ -113,7 +113,7 @@ def update_staff_assignment(
 ) -> dict[str, Any]:
     """Update a staff assignment (role, active, notes)."""
     from fastapi import HTTPException
-    from db.database import get_db_context
+    from infrastructure.database.database import get_db_context
     with get_db_context() as db:
         row = db.query(CountryStaffAssignment).filter(
             CountryStaffAssignment.id == assignment_id,
@@ -134,7 +134,7 @@ def update_staff_assignment(
 def remove_staff_from_country(country_code: str, user_id: int) -> dict[str, Any]:
     """Soft-delete (deactivate) a staff assignment for a user in a country."""
     from fastapi import HTTPException
-    from db.database import get_db_context
+    from infrastructure.database.database import get_db_context
     with get_db_context() as db:
         row = db.query(CountryStaffAssignment).filter(
             CountryStaffAssignment.user_id == user_id,
@@ -154,8 +154,8 @@ def get_my_assigned_countries(
 ) -> dict:
     """Get countries where the given user is an active staff member (cursor-paginated)."""
     from typing import Optional
-    from db.database import get_db_context
-    from utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
+    from infrastructure.database.database import get_db_context
+    from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
     with get_db_context() as db:
         query = (
@@ -180,7 +180,7 @@ def list_all_staff_assignments(
     limit: int = 100,
 ) -> list[dict[str, Any]]:
     """List all staff assignments across countries, optionally filtered by role."""
-    from db.database import get_db_context
+    from infrastructure.database.database import get_db_context
     with get_db_context() as db:
         q = db.query(CountryStaffAssignment)
         if role:

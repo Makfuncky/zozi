@@ -6,12 +6,19 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue,
-    IPReputation, DeviceFingerprint, UserLoginHistory,
-    CreditCardBin, ReturnAbusePattern, SupplierFraudIndicator,
-    LogisticsFraudIndicator, FraudAlert, IPAccountLinkage
-)
+from domains.accounts.models.user import UserLoginHistory
+from domains.governance.models.fraud import FraudEvent
+from domains.governance.models.fraud import FraudBlacklist
+from domains.governance.models.fraud import FraudRule
+from domains.governance.models.fraud import ManualReviewQueue
+from domains.governance.models.fraud import IPReputation
+from domains.governance.models.fraud import DeviceFingerprint
+from domains.governance.models.fraud import CreditCardBin
+from domains.governance.models.fraud import ReturnAbusePattern
+from domains.governance.models.fraud import SupplierFraudIndicator
+from domains.governance.models.fraud import LogisticsFraudIndicator
+from domains.governance.models.fraud import FraudAlert
+from domains.governance.models.fraud import IPAccountLinkage
 
 
 class FraudService:

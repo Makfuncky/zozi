@@ -7,7 +7,8 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import CashAccount, CashTransaction
+from domains.finance.models.finance import CashAccount
+from domains.finance.models.finance import CashTransaction
 import structlog
 logger = structlog.get_logger(__name__)
 

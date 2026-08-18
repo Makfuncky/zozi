@@ -26,7 +26,7 @@ from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
-from utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -203,7 +203,7 @@ def notify_suppliers_of_payout(
         One entry per notification sent (or attempted), each with keys:
         ``supplier_id``, ``email``, ``status``, and optionally ``error``.
     """
-    from utils.email_service import send_email
+    from infrastructure.utils.email_service import send_email
 
     notifications: list[dict[str, Any]] = []
     payout_ids = sweep_result.get("payout_ids", [])
@@ -218,7 +218,7 @@ def notify_suppliers_of_payout(
     users_by_id: dict[int, Any] = {}
     prefetch_error: Exception | None = None
     try:
-        from _legacy.models import User
+        from domains.accounts.models.user import User
 
         unique_supplier_ids = list(dict.fromkeys(
             cast(int, entry.get("supplier_id")) for entry in payout_ids
@@ -317,7 +317,7 @@ def notify_logistics_partners_of_payout(
     list[dict]
         One entry per notification sent (or attempted).
     """
-    from utils.email_service import send_email
+    from infrastructure.utils.email_service import send_email
 
     notifications: list[dict[str, Any]] = []
     payout_ids = sweep_result.get("payout_ids", [])
@@ -332,8 +332,8 @@ def notify_logistics_partners_of_payout(
     users_by_id: dict[Any, Any] = {}
     prefetch_error: Exception | None = None
     try:
-        from _legacy.models.logistics import LogisticsPartner
-        from _legacy.models import User
+        from domains.logistics.models.logistics import LogisticsPartner
+        from domains.accounts.models.user import User
 
         unique_partner_ids = list(dict.fromkeys(
             cast(int, entry.get("partner_id")) for entry in payout_ids
@@ -446,8 +446,10 @@ def _send_in_app_notification_separate_session(
     committed).  The notification is best-effort — errors are logged.
     """
     try:
-        from db.database import SessionLocal
-        from services.comms.notification_engine import NotificationEngine, NotificationChannel, NotificationPriority
+        from infrastructure.database.database import SessionLocal
+        from domains.comms.services.notification_engine import NotificationEngine
+        from domains.comms.services.notification_engine import NotificationChannel
+        from domains.comms.services.notification_engine import NotificationPriority
 
         notif_db = SessionLocal()
         try:

@@ -3,29 +3,21 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import PayoutCreate, PayoutOut
-from _legacy.models import FinanceAutomationLog, Payout, User
-from utils.audit import AuditAction, audit_log
-from services.finance.auto_payout_scheduler import (
-    get_background_job_status as _get_bg_status,
-)
-from services.finance.auto_payout_scheduler import (
-    run_auto_logistics_payout_sweep as _run_logistics_sweep,
-)
-from services.finance.auto_payout_scheduler import (
-    run_auto_payout_sweep as _run_supplier_sweep,
-)
-from services.finance.auto_payout_scheduler import (
-    start_auto_payout_background_job as _start_bg_job,
-)
-from services.finance.auto_payout_scheduler import (
-    stop_auto_payout_background_job as _stop_bg_job,
-)
-from utils.country_rls import get_country_or_404
-from utils.datetime_utils import utcnow
-from utils.dependencies import require_admin
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import PayoutCreate, PayoutOut
+from domains.accounts.models.user import User
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.payments.models.payments import Payout
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
+from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as _run_logistics_sweep
+from domains.finance.services.auto_payout_scheduler import run_auto_payout_sweep as _run_supplier_sweep
+from domains.finance.services.auto_payout_scheduler import start_auto_payout_background_job as _start_bg_job
+from domains.finance.services.auto_payout_scheduler import stop_auto_payout_background_job as _stop_bg_job
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 
@@ -329,7 +321,7 @@ def _update_bg_status_after_manual_trigger(
     logistics_result: dict,
 ) -> None:
     """Update the in-memory background job status after a manual trigger."""
-    from services.finance.auto_payout_scheduler import update_background_status
+    from domains.finance.services.auto_payout_scheduler import update_background_status
 
     supplier_status = supplier_result.get("status", "error")
     logistics_status = logistics_result.get("status", "error")

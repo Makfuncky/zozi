@@ -9,7 +9,10 @@ from sqlalchemy.orm import Session
 from providers.auth.jwt import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
 from domains.accounts.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
-from _legacy.models import User, Notification, SupportTicket, TicketReply
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.governance.models.admin import TicketReply
 from infrastructure.utils.config import settings
 logger = logging.getLogger(__name__)
 

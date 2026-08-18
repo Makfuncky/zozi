@@ -11,8 +11,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from services.comms.chat_system import ChatSystem, get_chat_system
+from infrastructure.database.database import get_db
+from domains.comms.services.chat_system import ChatSystem
+from domains.comms.services.chat_system import get_chat_system
 
 logger = logging.getLogger("zozi.api.chat")
 router = APIRouter()

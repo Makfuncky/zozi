@@ -1,15 +1,21 @@
 """Admin products router."""
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import Product
-from db.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
-from utils.dependencies import require_admin, require_super_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.pagination import paginated_response
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, bulk_product_moderation, bulk_category_change
-from controllers.products.products_controller import _bump_product_cache_version
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Product
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.pagination import paginated_response
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.products_service import bulk_product_moderation
+from domains.governance.services.bulk_ops_service import bulk_category_change
+from domains.catalog.services.products_controller import _bump_product_cache_version
 
 router = APIRouter(prefix="/api/v1/admin")
 

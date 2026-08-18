@@ -19,7 +19,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text, func
 
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def log_activity(
 
     # Broadcast to HR activity WebSocket room (fire-and-forget, best-effort)
     try:
-        from utils.websocket_manager import broadcast_activity_event
+        from infrastructure.utils.websocket_manager import broadcast_activity_event
         broadcast_activity_event({
             "type": "activity.new",
             "id": log_entry["id"],
@@ -166,8 +166,8 @@ def get_team_activity(
     since: Optional[datetime] = None,
 ) -> List[Dict[str, Any]]:
     """Get activity log for all employees under a manager's subtree."""
-    from services.hierarchy.hierarchy_service import get_all_subordinates as get_subs
-    from _legacy.models.employee_models import Employee
+    from domains.accounts.services.hierarchy_service import get_all_subordinates as get_subs
+    from domains.hr.models.employee_models import Employee
     mgr_emp = db.query(Employee).filter(Employee.id == manager_employee_id).first()
     if not mgr_emp:
         return []
@@ -226,7 +226,7 @@ def get_collaboration_heatmap(
     target_ids = list(set(r["target_employee_id"] for r in rows if r["target_employee_id"]))
     target_names: Dict[int, str] = {}
     if target_ids:
-        from _legacy.models.employee_models import Employee
+        from domains.hr.models.employee_models import Employee
         emps = db.query(Employee).filter(Employee.id.in_(target_ids)).all()
         for emp in emps:
             target_names[emp.id] = emp.employee_code

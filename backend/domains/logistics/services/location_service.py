@@ -8,14 +8,12 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CountryConfig,
-    LogisticsPartner,
-    LogisticsPartnerLocation,
-    ParcelLocationTracker,
-    Shipment,
-    ShopWarehouseLocation,
-)
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.country.models.country_control import ParcelLocationTracker
+from domains.country.models.country_control import ShopWarehouseLocation
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
 import structlog
 logger = structlog.get_logger(__name__)
 

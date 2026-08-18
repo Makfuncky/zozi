@@ -237,7 +237,7 @@ def _load_models() -> None:
     """Idempotently import the models package so ``Base.metadata`` is populated."""
     if "models" in sys.modules:
         return
-    import _legacy.models as models  # noqa: F401
+        from infrastructure.database import models  # noqa: F401
 
 
 def _get_orm_type_str(orm_col: Any) -> str:

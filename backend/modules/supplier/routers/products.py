@@ -4,25 +4,15 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from controllers.products.products_controller import (
-    _bump_product_cache_version,
-)
-from controllers.products.products_controller import (
-    get_product as get_product_controller,
-)
-from controllers.products.products_controller import (
-    get_product_by_barcode as get_product_by_barcode_controller,
-)
-from controllers.products.products_controller import (
-    get_products as get_products_controller,
-)
-from controllers.products.products_controller import (
-    get_supplier_names as get_supplier_names_controller,
-)
-from db.database import get_db
-from _legacy.models import Product
-from utils.slug import generate_slug, generate_slug_hash
+from rbac import get_current_user
+from domains.catalog.services.products_controller import _bump_product_cache_version
+from domains.catalog.services.products_controller import get_product as get_product_controller
+from domains.catalog.services.products_controller import get_product_by_barcode as get_product_by_barcode_controller
+from domains.catalog.services.products_controller import get_products as get_products_controller
+from domains.catalog.services.products_controller import get_supplier_names as get_supplier_names_controller
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Product
+from infrastructure.utils.slug import generate_slug, generate_slug_hash
 
 router = APIRouter()
 

@@ -2,21 +2,19 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from services.promotions.promotion_admin_write_service import (
-    create_banner,
-    create_banner_by_country,
-    create_coupon,
-    create_coupon_by_country,
-    create_flash_sale,
-    delete_banner,
-    delete_banner_by_country,
-    update_banner,
-    update_banner_by_country,
-    update_flash_sale,
-    update_promotion_config,
-)
+from domains.catalog.services.promotion_admin_write_service import create_banner
+from domains.catalog.services.promotion_admin_write_service import create_banner_by_country
+from domains.catalog.services.promotion_admin_write_service import create_coupon
+from domains.catalog.services.promotion_admin_write_service import create_coupon_by_country
+from domains.catalog.services.promotion_admin_write_service import create_flash_sale
+from domains.catalog.services.promotion_admin_write_service import delete_banner
+from domains.catalog.services.promotion_admin_write_service import delete_banner_by_country
+from domains.catalog.services.promotion_admin_write_service import update_banner
+from domains.catalog.services.promotion_admin_write_service import update_banner_by_country
+from domains.catalog.services.promotion_admin_write_service import update_flash_sale
+from domains.catalog.services.promotion_admin_write_service import update_promotion_config
 import structlog
-from routers.generated.auto_router import post, put, delete
+from infrastructure.routing.route_contract import post, put, delete
 
 logger = structlog.get_logger(__name__)
 

@@ -8,8 +8,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from _legacy.models.employee_models import Employee
-from utils.datetime_utils import utcnow as _utcnow
+from domains.hr.models.employee_models import Employee
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
 def create_video_room(room_data: dict, db: Session) -> dict:

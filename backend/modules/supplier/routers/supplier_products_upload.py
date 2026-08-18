@@ -10,20 +10,18 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import Product
-from utils.dependencies import require_supplier
-from utils.config import settings
-from utils.file_validation import validate_upload_image
-from services.common.storage import storage as _storage
-from services.supplier.supplier_products_upload_service import (
-    delete_supplier_product,
-    get_supplier_product,
-    list_my_products,
-    update_product_discount,
-    update_supplier_product,
-    upload_supplier_product_image,
-)
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Product
+from infrastructure.utils.dependencies import require_supplier
+from infrastructure.utils.config import settings
+from infrastructure.utils.file_validation import validate_upload_image
+from infrastructure.utils.storage import storage as _storage
+from domains.suppliers.services.supplier_products_upload_service import delete_supplier_product
+from domains.suppliers.services.supplier_products_upload_service import get_supplier_product
+from domains.suppliers.services.supplier_products_upload_service import list_my_products
+from domains.suppliers.services.supplier_products_upload_service import update_product_discount
+from domains.suppliers.services.supplier_products_upload_service import update_supplier_product
+from domains.suppliers.services.supplier_products_upload_service import upload_supplier_product_image
 
 router = APIRouter(prefix="/api/v1/supplier")
 

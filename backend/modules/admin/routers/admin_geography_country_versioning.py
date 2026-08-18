@@ -3,11 +3,23 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import get_current_user
 from typing import Optional
 
-from controllers.geography.country_versioning_controller import VersionDraftBody, approve_config_version, approve_config_version_public, create_config_version, create_config_version_public, get_config_version, get_config_version_public, list_config_versions, list_config_versions_public, publish_config_version, publish_config_version_public, rollback_config_version, rollback_config_version_public
+from domains.country.services.country_versioning_controller import VersionDraftBody
+from domains.country.services.country_versioning_controller import approve_config_version
+from domains.country.services.country_versioning_controller import approve_config_version_public
+from domains.country.services.country_versioning_controller import create_config_version
+from domains.country.services.country_versioning_controller import create_config_version_public
+from domains.country.services.country_versioning_controller import get_config_version
+from domains.country.services.country_versioning_controller import get_config_version_public
+from domains.country.services.country_versioning_controller import list_config_versions
+from domains.country.services.country_versioning_controller import list_config_versions_public
+from domains.country.services.country_versioning_controller import publish_config_version
+from domains.country.services.country_versioning_controller import publish_config_version_public
+from domains.country.services.country_versioning_controller import rollback_config_version
+from domains.country.services.country_versioning_controller import rollback_config_version_public
 
 router = APIRouter(prefix="/api/v1")
 

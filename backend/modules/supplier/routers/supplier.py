@@ -19,14 +19,14 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-import controllers.disputes_controller as disputes_ctrl
-import controllers.returns_controller as returns_ctrl
+import domains.orders.services as disputes_ctrl
+import domains.orders.services as returns_ctrl
 import controllers.supplier_controller as ctrl
 from controllers import commission_controller
-from controllers.admin_controller import require_roles
-from db.database import get_db
-from db.schemas import ListPage, SupplierReturnReviewUpdate
-from db.schemas import Product as ProductSchema
+from domains.governance.services import require_roles
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ListPage, SupplierReturnReviewUpdate
+from infrastructure.database.schemas import Product as ProductSchema
 
 router = APIRouter()
 
@@ -311,8 +311,8 @@ async def process_image_ai(
     """
     import uuid
 
-    from services.storage import storage as _storage
-    from utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
 
     raw = await image.read()
     if not raw:
@@ -534,10 +534,10 @@ async def create_product(
         visibility_regions = countries
     if weight_kg is not None and weight is None:
         weight = weight_kg
-    from services.shipping_tier import resolve_shipping_tier
+    from domains.logistics.services.shipping_tier import resolve_shipping_tier
     shipping_tier = resolve_shipping_tier(weight_kg=weight, dimensions=dimensions)
 
-    from services.content_service import moderate_content
+    from domains.comms.services.content_service import moderate_content
     moderation = moderate_content(text=f"{name or ''} {description or ''}", category=category or "")
 
     extra_attributes = {
@@ -602,8 +602,8 @@ async def analyze_async(
     """
     import uuid
 
-    from services.storage import storage as _storage
-    from utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
 
     raw = await image.read()
     if not raw:
@@ -619,9 +619,9 @@ async def analyze_async(
     def _run_analysis() -> dict:
         import asyncio
 
-        from services.ai_variant_config import analyze_product_image
-        from services.bg_removal_service import remove_background
-        from services.storage import storage as _store
+        from domains.finance.services.ai_variant_config import analyze_product_image
+        from domains.finance.services.bg_removal_service import remove_background
+        from infrastructure.utils.storage import storage as _store
 
         bg_result = remove_background(raw, strategy="general", fast_mode=True)
         ai_result = asyncio.run(analyze_product_image(
@@ -664,7 +664,7 @@ async def analyze_async(
 @router.get("/upload/jobs/{job_id}")
 async def get_async_job_result(job_id: str):
     """Poll the result of an async analysis job."""
-    from utils.background_jobs import get_job
+    from infrastructure.utils.background_jobs import get_job
 
     job = get_job(job_id)
     if job is None:
@@ -696,8 +696,8 @@ async def remove_background(
     """
     import uuid
 
-    from services.storage import storage as _storage
-    from utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
 
     raw = await image.read()
     if not raw:
@@ -710,18 +710,16 @@ async def remove_background(
     _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
 
     def _run_remove_background() -> dict:
-        from services.bg_removal_service import (
-            AVAILABLE_MODELS,
-            VALID_STRATEGIES,
-            remove_background_model,
-        )
-        from services.storage import storage as _store
+        from domains.finance.services.bg_removal_service import AVAILABLE_MODELS
+        from domains.finance.services.bg_removal_service import VALID_STRATEGIES
+        from domains.finance.services.bg_removal_service import remove_background_model
+        from infrastructure.utils.storage import storage as _store
 
         if model and model in AVAILABLE_MODELS:
             processed = remove_background_model(raw, model, fast_mode=fast_mode)
         else:
             preset_effective = preset if preset in VALID_STRATEGIES else "general"
-            from services.bg_removal_service import remove_background
+            from domains.finance.services.bg_removal_service import remove_background
             processed = remove_background(raw, strategy=preset_effective, fast_mode=fast_mode)
 
         out_key = f"supplier_uploads/{uuid.uuid4().hex}_nobg.png"
@@ -755,13 +753,13 @@ async def ai_analyze(
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty image file")
-    from services.ai_variant_config import analyze_product_image
+    from domains.finance.services.ai_variant_config import analyze_product_image
     # Instant, photo-derived heuristic result (colours from the actual pixels,
     # category/name from the filename + config). Real vision understanding runs
     # in the background job below and the frontend polls it to refine the form.
     result = await analyze_product_image(raw, filename=image.filename or "", generate_copy=False)
     if generate_copy:
-        from services.ai_copy_jobs import enqueue_copy_job
+        from domains.finance.services.ai_copy_jobs import enqueue_copy_job
         result["copy_job_id"] = enqueue_copy_job(raw, filename=image.filename or "")
     return result
 
@@ -780,7 +778,7 @@ async def voice_transcribe(
     raw = await audio.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty audio file")
-    from services.video_conferencing import VideoConferenceRoom
+    from domains.comms.services.video_conferencing import VideoConferenceRoom
     vcr = VideoConferenceRoom()
     transcript = await vcr._transcribe_audio(raw, source_language=language)
     return {"transcript": transcript, "detected_language": language}
@@ -806,11 +804,9 @@ async def nlp_extract(
     import re
 
     # Try structured extraction via direct Ollama call
-    from services.ai_variant_config import (
-        _OLLAMA_TEXT_MODEL,
-        _extract_json,
-        _ollama_chat,
-    )
+    from domains.finance.services.ai_variant_config import _OLLAMA_TEXT_MODEL
+    from domains.finance.services.ai_variant_config import _extract_json
+    from domains.finance.services.ai_variant_config import _ollama_chat
 
     canonical_list = "Clothing, Electronics, Home & Kitchen, Beauty, Sports, Books, Toys, Automotive, Grocery, Health, Jewelry, Office, Pet Supplies, Shoes, Bags, Furniture"
     en_prompt = (
@@ -881,7 +877,7 @@ async def ai_copy_status(
     Returns ``{status: pending|done|error, result?}``. ``result`` carries the
     full EN/AR marketing copy once ``status == "done"``.
     """
-    from services.ai_copy_jobs import get_job
+    from domains.finance.services.ai_copy_jobs import get_job
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Unknown or expired copy job")
@@ -895,7 +891,7 @@ async def translate_text(
     target: str = Form("ar"),
 ):
     """Step 6 — EN→AR translation for product titles/descriptions (best-effort)."""
-    from services.content_service import translate_en_to_ar
+    from domains.comms.services.content_service import translate_en_to_ar
     translated = await translate_en_to_ar(text)
     return {"translated_text": translated, "target": target}
 
@@ -917,7 +913,7 @@ async def get_variant_axes(
 
     Reads from zozi_variant_config.json at runtime.
     """
-    from services.variant_config_service import get_axes_for_category
+    from domains.catalog.services.variant_config_service import get_axes_for_category
     return {
         "category": category,
         "axes": get_axes_for_category(category, subcategory=subcategory),
@@ -931,7 +927,7 @@ async def moderate_text(
     category: str = Form(""),
 ):
     """Step 6 — GCC content moderation for text (alcohol/pork/gambling/tobacco)."""
-    from services.content_service import moderate_content
+    from domains.comms.services.content_service import moderate_content
     return moderate_content(text=text, category=category)
 
 
@@ -947,8 +943,8 @@ async def generate_angles(
     """
     import uuid
 
-    from services.storage import storage as _storage
-    from utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
 
     raw = await image.read()
     if not raw:
@@ -1136,7 +1132,7 @@ def update_return_window(
         days: int = Field(..., ge=10, le=365, description="Return window in days (minimum 10)")
 
     validated = ReturnWindowBody(**body)
-    import controllers.products_controller as products_ctrl
+    import domains.catalog.services as products_ctrl
     return products_ctrl.update_product_return_window(
         product_id=product_id,
         days=validated.days,

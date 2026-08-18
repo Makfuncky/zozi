@@ -14,9 +14,10 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import Coupon, CouponUsage
-from utils.datetime_utils import utcnow
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.governance.models.admin import CouponUsage
+from domains.payments.models.payments import Coupon
+from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 

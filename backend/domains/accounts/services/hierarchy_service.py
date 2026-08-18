@@ -13,38 +13,16 @@ from pydantic import BaseModel, Field
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import (
-    CountryConfig,
-    CountryHolidayCalendar,
-    CountryStaffAssignment,
-    OrgUnit,
-)
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryHolidayCalendar
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.hr.models.employee_models import OrgUnit
 
 from domains.country.models.country_enhancements import CountryLocalization
-
-from services.hierarchy.hierarchy_service import (
-    assign_matrix_manager,
-    backfill_authority_levels,
-    can_manage,
-    detect_circular_reporting,
-    get_all_subordinates,
-    get_approval_chain,
-    get_employees_in_subtree,
-    get_matrix_managers,
-    get_matrix_subordinates,
-    get_org_chart,
-    get_org_unit_path,
-    get_org_unit_subtree,
-    get_team_members,
-    get_user_chain,
-    reassign_manager,
-    rebuild_paths,
-    remove_matrix_manager,
-)
 
 logger = logging.getLogger(__name__)
 

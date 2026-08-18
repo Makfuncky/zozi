@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import services.gateways.payments as _ctrl
+    import domains.payments.models as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:

@@ -21,7 +21,7 @@ from sqlalchemy import text as sa_text
 def _create_test_user(db_session, role: str = "admin", email_suffix: str = None) -> int:
     """Create a test User and return its id."""
     from infrastructure.utils.auth import get_password_hash
-    from _legacy.models import User
+    from infrastructure.database.models import User
 
     suffix = email_suffix or uuid.uuid4().hex[:8]
     user = User(
@@ -59,7 +59,7 @@ def _create_test_employee(db_session, user_id: int = None, country_code: str = "
 
 def _create_test_company_config(db_session):
     """Ensure a minimal country_config row exists."""
-    from _legacy.models import CountryConfig
+    from infrastructure.database.models import CountryConfig
 
     existing = db_session.query(CountryConfig).filter(CountryConfig.code == "OM").first()
     if not existing:

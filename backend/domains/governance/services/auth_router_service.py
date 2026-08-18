@@ -7,7 +7,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import User, UserLoginHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
 from infrastructure.utils.auth import verify_password
 from infrastructure.utils.ip_utils import get_request_ip
 

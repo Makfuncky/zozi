@@ -1,135 +1,270 @@
-"""Service module registry (import side-effects only).
-
-Some service modules are only reachable through runtime dispatch (schedulers,
-webhook handlers, event consumers). They still must be imported once so their
-decorators/handlers register and so they are not reported as orphan modules.
-
-This registry lives *inside* the services layer on purpose: `main` may not
-import `services` directly (circuit contract), but a services module importing
-sibling services modules is a legal, same-layer edge.
-
-Do not add business logic here. Import-only.
-"""
-from __future__ import annotations
-
-import services.ai.automation_scheduler
-import services.finance.financial_reports_service
-import services.audit.audit_trail_service
-import services.audit.worm_audit
-import services.treasury.bank_transaction_service
-import services.catalog.advanced_filter_service
-import services.ai.ai_search_service
-import services.commerce.wishlist_read_service
-import services.geography.cross_border_tracker
-import services.customer.customer_health_engine
-import services.commerce.promotion_bogo_service
-import services.customer.retention_service
-import services.commerce.reviews_service
-import services.comms.chat_enrichment
-import services.comms.communication_audit
-import services.comms.content_service
-import services.comms.email_enrichment
-import services.comms.email_event_service
-import services.comms.email_reputation
-import services.comms.entity_messaging
-import services.comms.escalation_sla
-import services.comms.external_contact
-import services.comms.internal_communication
-import services.comms.notification_engine
-import services.comms.notification_worker
-import services.comms.payout_notification_service
-import services.comms.translation_service
-import services.comms.video_service
-import services.comms.websocket_manager
-import services.users.approval_matrix_service
-import services.comms.chat_system
-# REMOVED: registry referenced 'services.core.health_service' but no such module exists in the codebase
-import services.users.rbac_service
-import services.users.workflow_engine
-import services.analytics.confidence_scoring
-import services.ai.country_ai_research
-import services.geography.country_communication_service
-import services.geography.country_data_orchestrator
-import services.geography.country_detection
-import services.geography.country_heuristic_engine
-import services.geography.country_research
-import services.geography.country_rls_service
-import services.geography.cross_border_detection
-import services.common.downstream_hooks
-import services.supplier.legal_contract_service
-import services.geography.localization_service
-import services.logistics.map_service
-# REMOVED: registry referenced 'services.finance.base_models' but no such module exists in the codebase
-import services.finance.financial_reporting
-# REMOVED: registry referenced 'services.finance.ghost_order_detector' but no such module exists in the codebase
-# REMOVED: registry referenced 'services.finance.invoice_service' but no such module exists in the codebase
-import services.finance.invoice_write_service
-# REMOVED: registry referenced 'services.finance.orphan_detector_service' but no such module exists in the codebase
-import services.treasury.payment_orchestrator
-# REMOVED: registry referenced 'services.treasury.payouts_write_service' but no such module exists in the codebase
-import services.finance.sub_ledger_service
-import services.finance.tax_service
-import services.common.asset_tracking
-import services.hr.attendance_service
-import services.hr.background_check
-import services.hr.coi_engine
-import services.audit.compliance_engine
-import services.hr.dei_auditor
-import services.hr.employee_activity_logger
-import services.hr.employee_communication_service
-import services.finance.expense_processing
-import services.finance.expense_routing
-import services.hierarchy.hierarchy_service
-import services.hr.hse_manager
-import services.security.iam_service
-import services.hr.leave_accrual
-import services.hr.lms
-import services.hr.lms_permission_lock
-import services.hr.offboarding
-import services.hr.okr_engine
-import services.hr.payroll_engine
-import services.hr.payroll_service
-import services.hr.performance_service
-import services.hr.shift_handover
-import services.hr.shift_roster_service
-import services.hr.shift_scheduling
-import services.hr.succession_service
-import services.geography.travel_detector
-import services.geography.travel_service
-# REMOVED: registry referenced 'services.location.main' but no such module exists in the codebase
-import services.logistics.geo_fence_service
-import services.logistics.live_tracking_service
-import services.logistics.logistics_engine
-import services.logistics.logistics_health_engine
-import services.logistics.logistics_sla_service
-import services.logistics.logistics_write_service
-import services.logistics.shipping_tier
-import services.common.free_image_tools
-import services.common.image_ai_service
-import services.common.media_service
-import services.common.media_storage
-import services.common.upload_job_service
-import services.orders.orders_write_service
-import services.common.qr_service
-import services.orders.returns_write_service
-import services.security.biometric_auth
-import services.security.data_residency
-import services.security.data_residency_service
-# REMOVED: registry referenced 'services.security.effective_permissions' but no such module exists in the codebase
-import services.security.fraud_detection
-# REMOVED: registry referenced 'services.security.fraud_monitoring' but no such module exists in the codebase
-import services.security.fraud_service
-import services.orders.ghost_watchdog
-import services.security.iam_write_service
-import services.security.incident_service
-import services.security.kms_encryption
-import services.security.mobile_auth_service
-import services.security.permission_service
-import services.security.permission_primitive_write_service
-# REMOVED: registry referenced 'services.security.threat_feed_updater' but no such module exists in the codebase
-import services.security.triple_auth
-import services.supplier.supplier_badge_service
-import services.supplier.supplier_health_engine
-import services.supplier.suppliers_write_service
-import structlog
-logger = structlog.get_logger(__name__)
+"""Service module registry (import side-effects only).
+
+
+
+Some service modules are only reachable through runtime dispatch (schedulers,
+
+webhook handlers, event consumers). They still must be imported once so their
+
+decorators/handlers register and so they are not reported as orphan modules.
+
+
+
+This registry lives *inside* the services layer on purpose: `main` may not
+
+import `services` directly (circuit contract), but a services module importing
+
+sibling services modules is a legal, same-layer edge.
+
+
+
+Do not add business logic here. Import-only.
+
+"""
+
+from __future__ import annotations
+
+
+
+import domains.media.services.automation_scheduler
+
+import domains.finance.services.financial_reports_service
+
+import domains.governance.services.audit_trail_service
+
+import domains.governance.services.worm_audit
+
+import domains.finance.services.bank_transaction_service
+
+import domains.catalog.services.advanced_filter_service
+
+import domains.media.services.ai_search_service
+
+import domains.orders.services
+
+import domains.country.services.cross_border_tracker
+
+import domains.customers.services.customer_health_engine
+
+import domains.orders.services
+
+import domains.customers.services.retention_service
+
+import domains.orders.services
+
+import domains.comms.services.chat_enrichment
+
+import domains.comms.services.communication_audit
+
+import domains.comms.services.content_service
+
+import domains.comms.services.email_enrichment
+
+import domains.comms.services.email_event_service
+
+import domains.comms.services.email_reputation
+
+import domains.comms.services.entity_messaging
+
+import domains.comms.services.escalation_sla
+
+import domains.comms.services.external_contact
+
+import domains.comms.services.internal_communication
+
+import domains.comms.services.notification_engine
+
+import domains.comms.services.notification_worker
+
+import domains.comms.services.payout_notification_service
+
+import domains.comms.services.translation_service
+
+import domains.comms.services.video_service
+
+import domains.comms.services.websocket_manager
+
+import domains.accounts.services
+
+import domains.comms.services.chat_system
+
+# REMOVED: registry referenced 'services.core.health_service' but no such module exists in the codebase
+
+import domains.accounts.services
+
+import domains.accounts.services
+
+import domains.governance.services
+
+import domains.media.services.country_ai_research
+
+import domains.country.services.country_communication_service
+
+import domains.country.services.country_data_orchestrator
+
+import domains.country.services.country_detection
+
+import domains.country.services.country_heuristic_engine
+
+import domains.country.services.country_research
+
+import domains.country.services.country_rls_service
+
+import domains.country.services.cross_border_detection
+
+import domains.comms.services
+
+import domains.suppliers.services.legal_contract_service
+
+import domains.country.services.localization_service
+
+import domains.logistics.services.map_service
+
+# REMOVED: registry referenced 'services.finance.base_models' but no such module exists in the codebase
+
+import domains.finance.services.financial_reporting
+
+# REMOVED: registry referenced 'services.finance.ghost_order_detector' but no such module exists in the codebase
+
+# REMOVED: registry referenced 'services.finance.invoice_service' but no such module exists in the codebase
+
+import domains.finance.services.invoice_write_service
+
+# REMOVED: registry referenced 'services.finance.orphan_detector_service' but no such module exists in the codebase
+
+import domains.finance.services.payment_orchestrator
+
+# REMOVED: registry referenced 'services.treasury.payouts_write_service' but no such module exists in the codebase
+
+import domains.finance.services.sub_ledger_service
+
+import domains.finance.services.tax_service
+
+import domains.comms.services
+
+import domains.hr.services.attendance_service
+
+import domains.hr.services.background_check
+
+import domains.hr.services.coi_engine
+
+import domains.governance.services.compliance_engine
+
+import domains.hr.services.dei_auditor
+
+import domains.hr.services.employee_activity_logger
+
+import domains.hr.services.employee_communication_service
+
+import domains.finance.services.expense_processing
+
+import domains.finance.services.expense_routing
+
+import domains.accounts.services
+
+import domains.hr.services.hse_manager
+
+import domains.governance.services.iam_service
+
+import domains.hr.services.leave_accrual
+
+import domains.hr.services.lms
+
+import domains.hr.services.lms_permission_lock
+
+import domains.hr.services.offboarding
+
+import domains.hr.services.okr_engine
+
+import domains.hr.services.payroll_engine
+
+import domains.hr.services.payroll_service
+
+import domains.hr.services.performance_service
+
+import domains.hr.services.shift_handover
+
+import domains.hr.services.shift_roster_service
+
+import domains.hr.services.shift_scheduling
+
+import domains.hr.services.succession_service
+
+import domains.country.services.travel_detector
+
+import domains.country.services.travel_service
+
+# REMOVED: registry referenced 'services.location.main' but no such module exists in the codebase
+
+import domains.logistics.services.geo_fence_service
+
+import domains.logistics.services.live_tracking_service
+
+import domains.logistics.services.logistics_engine
+
+import domains.logistics.services.logistics_health_engine
+
+import domains.logistics.services.logistics_sla_service
+
+import domains.logistics.services.logistics_write_service
+
+import domains.logistics.services.shipping_tier
+
+import domains.comms.services
+
+import domains.comms.services
+
+import domains.comms.services
+
+import domains.comms.services
+
+import domains.comms.services
+
+import domains.orders.services.orders_write_service
+
+import domains.comms.services
+
+import domains.orders.services.returns_write_service
+
+import domains.governance.services.biometric_auth
+
+import domains.governance.services.data_residency
+
+import domains.governance.services.data_residency_service
+
+# REMOVED: registry referenced 'services.security.effective_permissions' but no such module exists in the codebase
+
+import domains.governance.services.fraud_detection
+
+# REMOVED: registry referenced 'services.security.fraud_monitoring' but no such module exists in the codebase
+
+import domains.governance.services.fraud_service
+
+import domains.orders.services.ghost_watchdog
+
+import domains.governance.services.iam_write_service
+
+import domains.governance.services.incident_service
+
+import domains.governance.services.kms_encryption
+
+import domains.governance.services.mobile_auth_service
+
+import domains.governance.services.permission_service
+
+import domains.governance.services.permission_primitive_write_service
+
+# REMOVED: registry referenced 'services.security.threat_feed_updater' but no such module exists in the codebase
+
+import domains.governance.services.triple_auth
+
+import domains.suppliers.services.supplier_badge_service
+
+import domains.suppliers.services.supplier_health_engine
+
+import domains.suppliers.services.suppliers_write_service
+
+import structlog
+
+logger = structlog.get_logger(__name__)
+

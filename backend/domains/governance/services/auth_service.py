@@ -38,14 +38,13 @@ from infrastructure.utils.auth import (
     is_token_blacklisted,
 )
 from infrastructure.database.database import SessionLocal
-from _legacy.models import User, UserDevice
-from _legacy.models import (
-    Employee,
-    EmployeeBiometric,
-    DynamicQRSession,
-    GeoFenceLog,
-    EmployeeAttendance,
-)
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeBiometric
+from domains.hr.models.employee_models import DynamicQRSession
+from domains.hr.models.employee_models import GeoFenceLog
+from domains.hr.models.employee_models import EmployeeAttendance
 from infrastructure.utils.config import settings
 from infrastructure.utils.geo import haversine_distance
 
@@ -140,7 +139,7 @@ def _log_activity(
 ) -> None:
     """Append-only activity log entry."""
     try:
-        from _legacy.models import EmployeeActivityLog
+        from domains.hr.models.employee_models import EmployeeActivityLog
 
         log_entry = EmployeeActivityLog(
             actor_employee_id=actor_employee_id,

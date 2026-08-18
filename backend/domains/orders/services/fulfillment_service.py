@@ -9,9 +9,10 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Order, Payment
-from events import PaymentConfirmedEvent
-from services.comms.notification_service import NotificationService
+from domains.orders.models.orders import Order
+from domains.payments.models.payments import Payment
+from infrastructure.messaging.events import PaymentConfirmedEvent
+from domains.comms.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 

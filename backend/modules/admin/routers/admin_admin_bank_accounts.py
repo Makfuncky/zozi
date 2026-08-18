@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
 from controllers.admin.bank_accounts_controller import delete_bank_account_route, list_pending_bank_accounts_route, verify_bank_account_route

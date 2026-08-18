@@ -18,7 +18,7 @@ from domains.accounts.services.user_read_service import (
     get_user_display_name as _get_user_display_name,
     get_user_role as _get_user_role,
 )
-from routers.generated.auto_router import get, post
+from infrastructure.routing.route_contract import get, post
 
 import structlog
 logger = structlog.get_logger(__name__)

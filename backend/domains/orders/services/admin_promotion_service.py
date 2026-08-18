@@ -17,7 +17,11 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Banner, Coupon, FlashSale, PromotionEngineConfig, PromotionOrderTier
+from domains.comms.models.marketing import FlashSale
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionOrderTier
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Coupon
 
 
 def _banner_to_dict(b: Banner) -> dict:
@@ -322,7 +326,7 @@ def delete_banner(db: Session, banner_id: int, admin_id: int) -> dict:
     banner.is_active = False
     if hasattr(banner, "deleted_by_id"):
         banner.deleted_by_id = admin_id
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     if hasattr(banner, "deleted_at"):
         banner.deleted_at = utcnow()
     db.commit()
@@ -454,7 +458,7 @@ def delete_banner_by_country(db: Session, code: str, banner_id: int, admin_id: i
     banner.is_active = False
     if hasattr(banner, "deleted_by_id"):
         banner.deleted_by_id = admin_id
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     if hasattr(banner, "deleted_at"):
         banner.deleted_at = utcnow()
     db.commit()

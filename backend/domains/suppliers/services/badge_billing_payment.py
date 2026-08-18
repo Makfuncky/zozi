@@ -20,10 +20,11 @@ from fastapi import HTTPException, status
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from _legacy.models import BadgeBillingRecord, BankTransaction
-from services.treasury.cash_management_service import log_bank_transaction
-from utils.datetime_utils import utcnow
-from utils.money import round_money, to_decimal
+from domains.finance.models.finance import BankTransaction
+from domains.governance.models.admin import BadgeBillingRecord
+from domains.finance.services.cash_management_service import log_bank_transaction
+from infrastructure.utils.datetime_utils import utcnow
+from kernel.money import round_money, to_decimal
 import structlog
 logger = structlog.get_logger(__name__)
 

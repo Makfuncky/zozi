@@ -8,8 +8,9 @@ from __future__ import annotations
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import OrderItem, Product
-from services.supplier.supplier_profile_write_service import get_supplier_profile
+from domains.catalog.models.products import Product
+from domains.orders.models.orders import OrderItem
+from domains.suppliers.services.supplier_profile_write_service import get_supplier_profile
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -7,8 +7,9 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import EmployeeExpense, AuditLog
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.core import AuditLog
+from domains.governance.models.admin import EmployeeExpense
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

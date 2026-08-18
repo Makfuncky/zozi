@@ -10,11 +10,11 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from controllers.admin.admin_controller import require_admin
-from db.database import get_db
-from services.security import permission_service as svc
-from utils.country_rls import get_country_or_404
+from rbac import get_current_user
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.database import permission_service as svc
+from domains.country.utils.country_rls import get_country_or_404
 
 router = APIRouter(tags=["permissions"], prefix="/api/v1")
 
@@ -208,16 +208,14 @@ def check_permission(
 # ══════════════════════════════════════════════════════════════════
 
 
-from services.security.effective_permissions import (
-    get_effective_permissions as resolve_effective_perms,
-    check_permission as resolve_check_perm,
-    request_permission_change,
-    approve_permission_change,
-    invalidate_permission_cache,
-    HR_PERMISSION_MAP,
-    COUNTRY_ROLE_PERMISSION_MAP,
-    MAKER_CHECKER_PERMISSIONS,
-)
+from domains.governance.services.effective_permissions import get_effective_permissions as resolve_effective_perms
+from domains.governance.services.effective_permissions import check_permission as resolve_check_perm
+from domains.governance.services.effective_permissions import request_permission_change
+from domains.governance.services.effective_permissions import approve_permission_change
+from domains.governance.services.effective_permissions import invalidate_permission_cache
+from domains.governance.services.effective_permissions import HR_PERMISSION_MAP
+from domains.governance.services.effective_permissions import COUNTRY_ROLE_PERMISSION_MAP
+from domains.governance.services.effective_permissions import MAKER_CHECKER_PERMISSIONS
 
 
 @router.get("/effective/{user_id}")

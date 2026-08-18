@@ -32,7 +32,7 @@ from sqlalchemy.orm import sessionmaker
 
 def _create_test_user(db_session, role: str = "admin", email_suffix: str = None) -> int:
     from infrastructure.utils.auth import get_password_hash
-    from _legacy.models import User
+    from infrastructure.database.models import User
 
     suffix = email_suffix or uuid.uuid4().hex[:8]
     user = User(
@@ -76,7 +76,7 @@ def _create_test_employee(
 
 
 def _ensure_country_config(db_session):
-    from _legacy.models import CountryConfig
+    from infrastructure.database.models import CountryConfig
     existing = db_session.query(CountryConfig).filter(CountryConfig.code == "OM").first()
     if not existing:
         cfg = CountryConfig(code="OM", name="Oman", currency="OMR", currency_symbol="﷼")
@@ -856,7 +856,7 @@ class TestBackgroundCheckStep:
         user_id = _create_test_user(db_session)
 
         # Set the user's full_name to a watchlist match
-        from _legacy.models import User
+        from infrastructure.database.models import User
         user = db_session.query(User).filter(User.id == user_id).first()
         user.full_name = "John Doe Flagged"  # In _KNOWN_FLAGGED_NAMES
         db_session.flush()
@@ -916,7 +916,7 @@ class TestBackgroundCheckStep:
         """An employee from a sanctions-flagged country should still pass (advisory, not block)."""
         _ensure_country_config(db_session)
         # Add Iran to country configs for the FK constraint
-        from _legacy.models import CountryConfig
+        from infrastructure.database.models import CountryConfig
         existing = db_session.query(CountryConfig).filter(CountryConfig.code == "IR").first()
         if not existing:
             db_session.add(CountryConfig(code="IR", name="Iran", currency="IRR", currency_symbol="﷼"))
@@ -1135,7 +1135,7 @@ class TestRedTeamOnboarding:
         def _worker(idx: int) -> dict:
             """Worker: create own engine → User → Employee → Pipeline."""
             from infrastructure.utils.auth import get_password_hash
-            from _legacy.models import User, CountryConfig
+            from infrastructure.database.models import User, CountryConfig
             from domains.hr.models.employee_models import Employee
             from domains.hr.services.employee_lifecycle_service import create_onboarding_pipeline
             from decimal import Decimal
@@ -1248,7 +1248,7 @@ class TestRedTeamOnboarding:
         the *same* employee.  Exactly one must succeed; the rest must
         fail with ``IntegrityError`` (UNIQUE constraint)."""
         from infrastructure.utils.auth import get_password_hash
-        from _legacy.models import User, CountryConfig
+        from infrastructure.database.models import User, CountryConfig
         from domains.hr.models.employee_models import Employee
         from decimal import Decimal
         from datetime import date, timedelta
@@ -1368,7 +1368,7 @@ class TestRedTeamOnboarding:
         - ``completed_steps`` is at least 1 (progress was made)
         """
         from infrastructure.utils.auth import get_password_hash
-        from _legacy.models import User, CountryConfig
+        from infrastructure.database.models import User, CountryConfig
         from domains.hr.models.employee_models import Employee
         from domains.hr.services.employee_lifecycle_service import (
             create_onboarding_pipeline,

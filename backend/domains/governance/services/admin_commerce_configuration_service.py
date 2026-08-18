@@ -2,12 +2,21 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import PromotionEngineConfig, PromotionOrderTier, FlashSale, Banner, Coupon, User
-from db.schemas import ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin
-from utils.country_rls import enforce_country_access
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.models.marketing import FlashSale
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionOrderTier
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Coupon
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import enforce_country_access
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
 
 def _banner_to_dict(b: Banner) -> dict:
     return {'id': b.id, 'title': b.title, 'subtitle': b.subtitle, 'image_url': b.image_url, 'link': b.link, 'cta_label': getattr(b, 'cta_label', None), 'cta_url': getattr(b, 'cta_url', b.link), 'banner_type': b.banner_type, 'position': getattr(b, 'position', b.banner_type), 'is_active': b.is_active, 'is_deleted': b.is_deleted, 'sort_order': b.sort_order, 'bg_color': b.bg_color, 'text_color': b.text_color, 'subtitle_color': b.subtitle_color, 'btn_bg_color': b.btn_bg_color, 'btn_text_color': b.btn_text_color, 'badge_text': b.badge_text, 'badge_color': b.badge_color, 'effect': getattr(b, 'effect', None), 'layout_json': getattr(b, 'layout_json', None), 'video_url': getattr(b, 'video_url', None), 'country_code': b.country_code, 'starts_at': getattr(b, 'starts_at', None), 'ends_at': getattr(b, 'ends_at', None), 'created_at': b.created_at.isoformat() if b.created_at else None, 'updated_at': getattr(b, 'updated_at', b.created_at)}
@@ -39,7 +48,7 @@ def list_coupons(include_deleted: bool=False, country: Optional[str]=Query(None,
 
 def create_coupon(code: str, discount_type: str='percentage', discount_value: float=0, minimum_order: Optional[float]=None, maximum_discount: Optional[float]=None, usage_limit: Optional[int]=None, starts_at: Optional[str]=None, expires_at: Optional[str]=None, is_active: bool=True, country_code: Optional[str]=None, _: User=Depends(require_admin), db: Session=Depends(get_db)):
     """Create a coupon (optionally scoped to a country)."""
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     from datetime import datetime
     existing = db.query(Coupon).filter(Coupon.code == code).first()
     if existing:
@@ -178,7 +187,7 @@ def delete_banner_promotion(banner_id: int, admin: User=Depends(require_admin), 
     banner.is_active = False
     if hasattr(banner, 'deleted_by_id'):
         banner.deleted_by_id = admin.id
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     if hasattr(banner, 'deleted_at'):
         banner.deleted_at = utcnow()
     db.commit()
@@ -307,7 +316,7 @@ def delete_banner_by_country(code: str=Path(...), banner_id: int=Path(...), admi
     banner.is_active = False
     if hasattr(banner, 'deleted_by_id'):
         banner.deleted_by_id = admin.id
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     if hasattr(banner, 'deleted_at'):
         banner.deleted_at = utcnow()
     db.commit()

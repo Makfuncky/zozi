@@ -7,7 +7,11 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 
-from _legacy.models.employee_models import Employee, EmployeeAttendance, EmployeeWorkLog, EmployeeLeaveRequest, EmployeeLeaveLedger
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeAttendance
+from domains.hr.models.employee_models import EmployeeWorkLog
+from domains.hr.models.employee_models import EmployeeLeaveRequest
+from domains.hr.models.employee_models import EmployeeLeaveLedger
 
 
 def calculate_monthly_payroll(employee_id: int, month: int, year: int, db: Session) -> dict:

@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from modules.admin.routers.auth import get_current_user
-from utils.background_jobs import get_job
+from infrastructure.utils.background_jobs import get_job
 
 router = APIRouter()
 

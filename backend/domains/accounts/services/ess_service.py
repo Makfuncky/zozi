@@ -13,15 +13,15 @@ from sqlalchemy import text
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
 from domains.hr.models.employee_models import Employee
 
-from services.hr.employee_activity_logger import log_activity
+from domains.hr.services.employee_activity_logger import log_activity
 
 logger = logging.getLogger(__name__)
 

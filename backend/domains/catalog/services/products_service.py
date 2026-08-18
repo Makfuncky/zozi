@@ -17,12 +17,22 @@ from fastapi.responses import Response
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import (
-    CartItem, Category, FlashSale, Notification, Order, OrderItem, Product, ProductVariant, Review, SupplierProfile, User, Wishlist, CountryConfig
-)
-from db.schemas import Product as ProductSchema, ProductCreate
-from utils.audit import audit_log, AuditAction
-from utils.cache import cache_or_compute, cache_get_json, cache_set_json
+from domains.accounts.models.core import CartItem
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.catalog.models.products import Review
+from domains.catalog.models.products import Wishlist
+from domains.comms.models.communication import Notification
+from domains.comms.models.marketing import FlashSale
+from domains.comms.models.suppliers import SupplierProfile
+from domains.country.models.countries import CountryConfig
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.database.schemas import Product as ProductSchema, ProductCreate
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.cache import cache_or_compute, cache_get_json, cache_set_json
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +138,7 @@ def _resolve_product_category_fields(payload: dict[str, Any], db: Session) -> di
 
 def _get_redis_client():
     try:
-        from utils.auth import _get_redis
+        from infrastructure.utils.auth import _get_redis
         return _get_redis()
     except Exception:
         return None
@@ -176,7 +186,7 @@ def _get_product_cache_version() -> str:
 
 
 def _bump_product_cache_version() -> None:
-    from utils.cache import bump_product_cache_version as _bump
+    from infrastructure.utils.cache import bump_product_cache_version as _bump
 
     _bump()
 
@@ -347,7 +357,7 @@ def _is_product_restricted_for_country(
     """Check if a product category is restricted in a given country."""
     if not country_code:
         return False
-    from services.logistics.logistics_partner_pricing import normalize_country_code
+    from domains.logistics.services.logistics_partner_pricing import normalize_country_code
     import json as _json
     code = normalize_country_code(country_code)
     if not code:
@@ -546,11 +556,11 @@ def _list_products_cached(
     serialized_products = _serialize_products(hydrated_products)
 
     if resolved_country:
-        from services.logistics.logistics_partner_pricing import normalize_country_code
+        from domains.logistics.services.logistics_partner_pricing import normalize_country_code
         code = normalize_country_code(resolved_country)
         restriction_cache: dict[str, bool] = {}
         if code:
-            from _legacy.models.countries import CountryConfig
+            from domains.country.models.countries import CountryConfig
             country = db.query(CountryConfig).filter(
                 CountryConfig.code == code,
                 CountryConfig.is_active == True,
@@ -890,8 +900,8 @@ def patch_product_stock(
     supplier_id = cast(int | None, getattr(product, "supplier_id"))
     if new_stock <= _LOW_STOCK_THRESHOLD and supplier_id:
         try:
-            from _legacy.models import User as UserModel
-            from utils.email_service import send_email
+            from domains.accounts.models.user import User as UserModel
+            from infrastructure.utils.email_service import send_email
             supplier = db.query(UserModel).filter(UserModel.id == supplier_id).first()
             supplier_email = cast(str | None, getattr(supplier, "email")) if supplier else None
             if supplier and supplier_email:
@@ -933,8 +943,8 @@ def create_supplier_product_with_upload(
     current_user: dict,
     db: Session,
 ) -> Product:
-    from utils.file_validation import validate_upload_image
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.file_validation import validate_upload_image
+    from infrastructure.utils.storage import storage as _storage
 
     MAX_SIZE = 10 * 1024 * 1024  # 10 MB
     content = file.file.read()

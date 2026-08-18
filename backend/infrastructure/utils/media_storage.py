@@ -9,8 +9,9 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import MediaAsset, MediaUploadSession
-from utils.config import settings
+from domains.media.models.media_models import MediaAsset
+from domains.media.models.media_models import MediaUploadSession
+from infrastructure.utils.config import settings
 
 
 class MediaStorageService:

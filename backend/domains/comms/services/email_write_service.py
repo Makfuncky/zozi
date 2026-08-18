@@ -5,15 +5,18 @@ from typing import List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models.comms.communication import EmailFolder, InternalEmail
-from _legacy.models.comms.marketing import EmailCampaign
-from _legacy.models.employee_models import Employee
-from _legacy.models.user import User
+from domains.comms.models.communication import EmailFolder
+from domains.comms.models.communication import InternalEmail
+from domains.comms.models.marketing import EmailCampaign
+from domains.hr.models.employee_models import Employee
+from domains.accounts.models.user import User
 from sqlalchemy import func, desc
-from utils.pagination import SAFE_QUERY_LIMIT
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
-from _legacy.models.marketing import EmailTemplate, EmailRuntimeConfig, EmailSuppression
+from domains.comms.models.marketing import EmailTemplate
+from domains.comms.models.marketing import EmailRuntimeConfig
+from domains.comms.models.marketing import EmailSuppression
 import structlog
 logger = structlog.get_logger(__name__)
 

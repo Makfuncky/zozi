@@ -5,7 +5,7 @@ lookup, duplicate prevention) and delegates ALL persistence to
 ``services.commerce.wishlist_read_service`` / ``wishlist_write_service``. It
 must not issue ``db.query`` directly and must not perform commits.
 
-The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so the auto-router emits ``routers/public_commerce_wishlist.py``.
 """
 from __future__ import annotations
@@ -18,19 +18,15 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post
+from infrastructure.routing.route_contract import delete, get, post
 
-from services.commerce.wishlist_read_service import (
-    get_user_wishlist as service_get_user_wishlist,
-    get_wishlist_item_by_id as service_get_item_by_id,
-    get_wishlist_item_by_product as service_get_item_by_product,
-    product_exists as service_product_exists,
-)
-from services.commerce.wishlist_write_service import (
-    clear_wishlist as service_clear_wishlist,
-    create_wishlist_item as service_create_item,
-    delete_wishlist_item as service_delete_item,
-)
+from domains.orders.services.wishlist_read_service import get_user_wishlist as service_get_user_wishlist
+from domains.orders.services.wishlist_read_service import get_wishlist_item_by_id as service_get_item_by_id
+from domains.orders.services.wishlist_read_service import get_wishlist_item_by_product as service_get_item_by_product
+from domains.orders.services.wishlist_read_service import product_exists as service_product_exists
+from domains.orders.services.wishlist_write_service import clear_wishlist as service_clear_wishlist
+from domains.orders.services.wishlist_write_service import create_wishlist_item as service_create_item
+from domains.orders.services.wishlist_write_service import delete_wishlist_item as service_delete_item
 import structlog
 logger = structlog.get_logger(__name__)
 

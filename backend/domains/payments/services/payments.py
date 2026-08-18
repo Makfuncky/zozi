@@ -60,17 +60,27 @@ from sqlalchemy.orm import Session
 
 
 
-from _legacy.models import Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig, Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.country.models.countries import CountryConfig
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import PaymentProviderConfig
+from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Coupon
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import PaymentGatewayConnection
 
-from events import PaymentConfirmedEvent
+from infrastructure.messaging.events import PaymentConfirmedEvent
 
 from infrastructure.config import settings
 
 from infrastructure.redis.cache import bump_product_cache_version as _bump_product_cache_version
 
-from kernel.currency import convert_from_aed, get_currency_context, money_to_minor_units_for_currency
+from kernel.money import convert_from_aed, get_currency_context, money_to_minor_units_for_currency
 
-from events import EventPublisher
+from infrastructure.messaging.events import EventPublisher
 
 
 

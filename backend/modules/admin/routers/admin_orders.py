@@ -4,25 +4,24 @@ import math
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    hard_delete_entity,
-    restore_entity,
-    update_order_status,
-)
-from db.database import get_db
-from db.schemas import (
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.governance.services.orders_service import update_order_status
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
     ArchiveRequest,
     BulkActionRequest,
     BulkStatusUpdateRequest,
     OrderStatusUpdate,
 )
-from _legacy.models import Order, User
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin, require_super_admin
-from utils.rls_interceptor import set_rls_context
+from domains.accounts.models.user import User
+from domains.orders.models.orders import Order
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from infrastructure.utils.rls_interceptor import set_rls_context
 
 router = APIRouter()
 
@@ -52,7 +51,7 @@ def list_all_orders(
         items = q.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
         return {"items": items, "total": total, "page": page, "pages": math.ceil(total / size) if total else 1}
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -80,7 +79,7 @@ def update_status(
             "to": result.get("new_status", payload.status),
         }
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -104,7 +103,7 @@ def archive_order(
             payload.reason if payload else None,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -126,7 +125,7 @@ def restore_order(
             db,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -149,7 +148,7 @@ def bulk_archive_orders(
             payload.reason,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -171,7 +170,7 @@ def bulk_restore_orders(
             db,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -194,7 +193,7 @@ def bulk_update_order_status(
         db.commit()
         return {"message": f"Status updated for {updated} orders", "updated": updated}
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 
@@ -216,7 +215,7 @@ def delete_order_permanent(
             db,
         )
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 

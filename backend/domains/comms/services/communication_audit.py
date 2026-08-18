@@ -1,5 +1,5 @@
 from __future__ import annotations
-from utils.pagination import windowed_iterate, SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import windowed_iterate, SAFE_QUERY_LIMIT
 
 import logging
 from datetime import datetime, timezone
@@ -7,7 +7,7 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.comms import CommunicationAuditTrail
+from domains.comms.models.communication import CommunicationAuditTrail
 import structlog
 logger = structlog.get_logger(__name__)
 

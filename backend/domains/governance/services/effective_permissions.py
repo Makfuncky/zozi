@@ -19,7 +19,12 @@ from typing import Dict, List, Optional, Set, Tuple
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import SessionLocal
-from _legacy.models import User, Employee, CountryStaffAssignment, Permission, RolePermissionAssignment, UserPermissionOverride
+from domains.accounts.models.user import User
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.hr.models.employee_models import Employee
+from rbac.models.permissions import Permission
+from rbac.models.permissions import RolePermissionAssignment
+from rbac.models.permissions import UserPermissionOverride
 from infrastructure.utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP, STAFF_PERMISSION_GROUPS
 
 logger = logging.getLogger(__name__)
@@ -236,7 +241,7 @@ def _resolve_country_role_permissions(user_id: int, country_code: str, db: Sessi
 
 def _resolve_hierarchy_permissions(employee: Employee, db: Session) -> Set[str]:
     """Layer 3: Hierarchy-derived permissions based on authority_level and subtree."""
-    from services.hierarchy.hierarchy_service import get_all_subordinates
+    from domains.accounts.services.hierarchy_service import get_all_subordinates
 
     permissions: Set[str] = set()
 

@@ -25,7 +25,7 @@ from sqlalchemy import create_engine  # noqa: E402
 from sqlalchemy.schema import CreateTable  # noqa: E402
 from sqlalchemy.exc import NoReferencedTableError  # noqa: E402
 
-import _legacy.models as models  # noqa: E402
+import infrastructure.database.models as models  # noqa: E402
 
 md = models.Base.metadata
 tables = md.tables

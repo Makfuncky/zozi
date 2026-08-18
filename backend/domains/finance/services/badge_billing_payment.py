@@ -42,13 +42,14 @@ from sqlalchemy.orm import Session
 
 
 
-from _legacy.models import BadgeBillingRecord, BankTransaction
+from domains.finance.models.finance import BankTransaction
+from domains.governance.models.admin import BadgeBillingRecord
 
-from services.treasury.cash_management_service import log_bank_transaction
+from domains.finance.services.cash_management_service import log_bank_transaction
 
-from utils.datetime_utils import utcnow
+from infrastructure.utils.datetime_utils import utcnow
 
-from utils.money import round_money, to_decimal
+from kernel.money import round_money, to_decimal
 
 import structlog
 

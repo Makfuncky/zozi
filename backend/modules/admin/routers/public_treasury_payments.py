@@ -24,19 +24,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
-from db.database import get_db
-from _legacy.models import (
-    LogisticsPartner,
-    LogisticsPartnerPayout,
-    Payout,
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-    User,
-)
-from utils.dependencies import require_admin
-from utils.datetime_utils import utcnow
-from utils.audit import audit_log, AuditAction
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payout
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.audit import audit_log, AuditAction
 
 logger = logging.getLogger(__name__)
 

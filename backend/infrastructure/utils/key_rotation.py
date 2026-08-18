@@ -40,10 +40,12 @@ def _build_registry():
     """Lazy import so that circular imports are avoided."""
     if _ENCRYPTED_COLUMNS:
         return
-    from _legacy.models import (
-        User, Order, Shipment, ShipmentEvent,
-        SupplierProfile, LogisticsPartner,
-    )
+    from domains.accounts.models.user import User
+    from domains.comms.models.suppliers import SupplierProfile
+    from domains.logistics.models.logistics import Shipment
+    from domains.logistics.models.logistics import ShipmentEvent
+    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.orders.models.orders import Order
     _ENCRYPTED_COLUMNS.extend([
         (User, ["phone", "address_book"]),
         (Order, ["shipping_address", "customer_phone"]),

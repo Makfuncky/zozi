@@ -11,7 +11,8 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig, CountryGatewayCredentials
+from domains.country.models.countries import CountryConfig
+from domains.country.models.countries import CountryGatewayCredentials
 from domains.country.services.country_auto_populate import GATEWAY_REGISTRY
 
 logger = logging.getLogger(__name__)

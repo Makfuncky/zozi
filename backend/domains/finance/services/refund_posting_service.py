@@ -20,17 +20,15 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    RefundLedger,
-    Order,
-    SupplierSettlement,
-    TransactionLedger,
-    FinanceAutomationLog,
-    FinanceAuditLog,
-)
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from utils.datetime_utils import utcnow as _utcnow
+from domains.finance.models.finance import RefundLedger
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TransactionLedger
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from domains.orders.models.orders import Order
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

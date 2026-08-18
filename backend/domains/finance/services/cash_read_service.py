@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CashAccount
+from domains.finance.models.finance import CashAccount
 
 
 def list_country_cash_accounts(db: Session, *, country_code: str) -> list[CashAccount]:

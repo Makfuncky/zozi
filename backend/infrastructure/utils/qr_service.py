@@ -9,9 +9,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.employee_models import Employee
-from _legacy.models import User
-from utils.config import settings
+from domains.hr.models.employee_models import Employee
+from domains.accounts.models.user import User
+from infrastructure.utils.config import settings
 
 
 QR_TOKEN_EXPIRY_SECONDS = 60

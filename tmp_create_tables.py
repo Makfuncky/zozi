@@ -1,12 +1,12 @@
 import os, sys, traceback
 os.chdir(r"D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend")
 sys.path.insert(0, os.getcwd())
-# Ensure dev SQLite is targeted
-os.environ.setdefault("DATABASE_URL", "sqlite:///zozi.db")
+# Ensure dev SQLite is targeted (canonical path: backend/infrastructure/database/zozi.db)
+os.environ.setdefault("DATABASE_URL", "sqlite:///database/zozi.db")
 
 print("== importing models ==")
 try:
-    import models
+    from infrastructure.database import models
     n_tables = len(models.Base.metadata.tables)
     print("OK: models imported. tables in metadata =", n_tables)
     if n_tables == 0:
@@ -16,9 +16,9 @@ except Exception:
     traceback.print_exc()
     sys.exit(1)
 
-print("== creating tables via db.database.create_tables() ==")
+print("== creating tables via infrastructure.database.database.create_tables() ==")
 try:
-    import db.database as dbmod
+    from infrastructure.database import database as dbmod
     print("engine url:", dbmod.DATABASE_URL)
     dbmod.create_tables()
 except Exception:

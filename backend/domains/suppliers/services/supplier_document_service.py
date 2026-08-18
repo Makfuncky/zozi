@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import SupplierDocument
+from domains.comms.models.suppliers import SupplierDocument
 import structlog
 logger = structlog.get_logger(__name__)
 

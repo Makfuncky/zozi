@@ -1,5 +1,6 @@
 from __future__ import annotations
-from _legacy.models import Order, Invoice
+from domains.finance.models.finance import Invoice
+from domains.orders.models.orders import Order
 from typing import Any, List
 """Tickets write service — DB write operations for ticket entities."""
 
@@ -7,8 +8,10 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models.comms.communication import Notification, TicketMessage
-from _legacy.models.comms.core import SupportTicket, TicketAttachment
+from domains.comms.models.communication import Notification
+from domains.comms.models.communication import TicketMessage
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.core import TicketAttachment
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -50,7 +53,7 @@ def list_tickets(
     offset: int = 0,
 ) -> list[SupportTicket]:
     """List support tickets with optional status filter, preload user + attachments + messages."""
-    from utils.constants import _ADMIN_MAX_PAGE_SIZE
+    from infrastructure.utils.constants import _ADMIN_MAX_PAGE_SIZE
     resolved_limit = 200 if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
     q = db.query(SupportTicket)
     if status:

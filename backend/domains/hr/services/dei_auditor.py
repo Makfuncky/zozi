@@ -13,8 +13,8 @@ from sqlalchemy import func, distinct
 from sqlalchemy.orm import Session
 import numpy as np
 
-from _legacy.models.employee_models import Employee
-from _legacy.models import User
+from domains.hr.models.employee_models import Employee
+from domains.accounts.models.user import User
 
 logger = logging.getLogger("zozi.dei")
 

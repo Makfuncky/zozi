@@ -13,16 +13,14 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import User
-from utils.dependencies import require_supplier
-from services.supplier.supplier_finance_service import (
-    get_order_payment_status,
-    get_supplier_bank_account,
-    get_supplier_payout_summary,
-    list_supplier_orders_with_payout_status,
-    upsert_supplier_bank_account,
-)
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.utils.dependencies import require_supplier
+from domains.suppliers.services.supplier_finance_service import get_order_payment_status
+from domains.suppliers.services.supplier_finance_service import get_supplier_bank_account
+from domains.suppliers.services.supplier_finance_service import get_supplier_payout_summary
+from domains.suppliers.services.supplier_finance_service import list_supplier_orders_with_payout_status
+from domains.suppliers.services.supplier_finance_service import upsert_supplier_bank_account
 
 router = APIRouter(prefix="/api/v1/supplier")
 

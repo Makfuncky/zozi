@@ -4,10 +4,11 @@ from typing import Optional
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from controllers.comms.chatbot_controller import handle_message, record_product_click
-from db.database import get_db
-from _legacy.models import User
-from utils.dependencies import get_current_user_optional
+from domains.comms.services.chatbot_controller import handle_message
+from domains.comms.services.chatbot_controller import record_product_click
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.utils.dependencies import get_current_user_optional
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=500)

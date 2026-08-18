@@ -10,7 +10,7 @@ from typing import Optional
 from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import VideoRoom
+from domains.accounts.models.core import VideoRoom
 import structlog
 logger = structlog.get_logger(__name__)
 

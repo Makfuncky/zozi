@@ -18,9 +18,9 @@ from pathlib import Path
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models.media_models import MediaAsset
-from services.common.storage import storage as _storage
-from utils.file_validation import validate_upload_image, validate_upload_video, VIDEO_EXTENSIONS
+from domains.media.models.media_models import MediaAsset
+from infrastructure.utils.storage import storage as _storage
+from infrastructure.utils.file_validation import validate_upload_image, validate_upload_video, VIDEO_EXTENSIONS
 
 
 def _build_storage_key(

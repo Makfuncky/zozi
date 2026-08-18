@@ -6,13 +6,13 @@ from typing import Annotated, Any, List, Optional, cast
 from fastapi import Body, Depends, UploadFile, File, Form, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 from datetime import datetime
-from db.database import get_db
-from db.schemas import ListPage, Product as ProductSchema, SupplierReturnReviewUpdate
-from controllers.admin.admin_controller import require_roles
-from controllers.finance import commission_controller
-import controllers.supplier.supplier_controller as ctrl
-import controllers.orders.returns_controller as returns_ctrl
-import controllers.orders.disputes_controller as disputes_ctrl
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ListPage, Product as ProductSchema, SupplierReturnReviewUpdate
+from domains.governance.services.admin_controller import require_roles
+from domains.finance.services.finance import commission_controller
+import domains.suppliers.services.supplier_controller as ctrl
+import domains.orders.services.returns_controller as returns_ctrl
+import domains.orders.services.disputes_controller as disputes_ctrl
 SupplierOrAdminUser = Annotated[dict, Depends(require_roles('supplier', 'admin'))]
 SupplierAdminOrSubAdminUser = Annotated[dict, Depends(require_roles('supplier', 'admin', 'sub_admin'))]
 
@@ -53,8 +53,8 @@ async def process_image_ai(current_user: dict=Depends(require_roles('supplier', 
     removes the background and optionally generates novel-angle views.
     """
     import uuid
-    from utils.background_jobs import enqueue_ml_job
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail='Empty image file')
@@ -64,7 +64,7 @@ async def process_image_ai(current_user: dict=Depends(require_roles('supplier', 
     _storage.save(image_key, raw, content_type=image.content_type or 'image/jpeg')
 
     def _run_process_image() -> dict:
-        from controllers.supplier.supplier_controller import process_product_image
+        from domains.suppliers.services.supplier_controller import process_product_image
         from io import BytesIO
         from fastapi import UploadFile
         import asyncio
@@ -111,9 +111,9 @@ async def create_product(request: Request, current_user: dict=Depends(require_ro
         visibility_regions = countries
     if weight_kg is not None and weight is None:
         weight = weight_kg
-    from services.logistics.shipping_tier import resolve_shipping_tier
+    from domains.logistics.services.shipping_tier import resolve_shipping_tier
     shipping_tier = resolve_shipping_tier(weight_kg=weight, dimensions=dimensions)
-    from services.comms.content_service import moderate_content
+    from domains.comms.services.content_service import moderate_content
     moderation = moderate_content(text=f"{name or ''} {description or ''}", category=category or '')
     extra_attributes = {'shipping_tier': shipping_tier, 'moderation': moderation}
     if saso_cert:
@@ -136,8 +136,8 @@ async def analyze_async(current_user: dict=Depends(require_roles('supplier', 'ad
     burst the job is queued and processed by the dedicated ML worker pool.
     """
     import uuid
-    from utils.background_jobs import enqueue_ml_job
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail='Empty image file')
@@ -148,9 +148,9 @@ async def analyze_async(current_user: dict=Depends(require_roles('supplier', 'ad
 
     def _run_analysis() -> dict:
         import asyncio
-        from services.ai.bg_removal_service import remove_background
-        from services.ai.ai_variant_config import analyze_product_image
-        from services.common.storage import storage as _store
+        from domains.finance.services.bg_removal_service import remove_background
+        from domains.finance.services.ai_variant_config import analyze_product_image
+        from infrastructure.utils.storage import storage as _store
         bg_result = remove_background(raw, strategy='general', fast_mode=True)
         ai_result = asyncio.run(analyze_product_image(raw, filename=image.filename or '', generate_copy=True))
         bg_key = f'supplier_uploads/{uuid.uuid4().hex}_nobg.png'
@@ -166,8 +166,8 @@ async def remove_background(current_user: dict=Depends(require_roles('supplier',
     rembg inference off the HTTP worker so upload bursts can't freeze the API.
     """
     import uuid
-    from utils.background_jobs import enqueue_ml_job
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail='Empty image file')
@@ -177,13 +177,15 @@ async def remove_background(current_user: dict=Depends(require_roles('supplier',
     _storage.save(image_key, raw, content_type=image.content_type or 'image/jpeg')
 
     def _run_remove_background() -> dict:
-        from services.ai.bg_removal_service import remove_background_model, AVAILABLE_MODELS, VALID_STRATEGIES
-        from services.common.storage import storage as _store
+        from domains.finance.services.bg_removal_service import remove_background_model
+        from domains.finance.services.bg_removal_service import AVAILABLE_MODELS
+        from domains.finance.services.bg_removal_service import VALID_STRATEGIES
+        from infrastructure.utils.storage import storage as _store
         if model and model in AVAILABLE_MODELS:
             processed = remove_background_model(raw, model, fast_mode=fast_mode)
         else:
             preset_effective = preset if preset in VALID_STRATEGIES else 'general'
-            from services.ai.bg_removal_service import remove_background
+            from domains.finance.services.bg_removal_service import remove_background
             processed = remove_background(raw, strategy=preset_effective, fast_mode=fast_mode)
         out_key = f'supplier_uploads/{uuid.uuid4().hex}_nobg.png'
         out_url = _store.save(out_key, processed, content_type='image/png')
@@ -205,7 +207,9 @@ async def nlp_extract(current_user: dict=Depends(require_roles('supplier', 'admi
     if not transcript.strip():
         raise HTTPException(status_code=400, detail='Empty transcript')
     import json, re
-    from services.ai.ai_variant_config import _ollama_chat, _OLLAMA_TEXT_MODEL, _extract_json
+    from domains.finance.services.ai_variant_config import _ollama_chat
+    from domains.finance.services.ai_variant_config import _OLLAMA_TEXT_MODEL
+    from domains.finance.services.ai_variant_config import _extract_json
     canonical_list = 'Clothing, Electronics, Home & Kitchen, Beauty, Sports, Books, Toys, Automotive, Grocery, Health, Jewelry, Office, Pet Supplies, Shoes, Bags, Furniture'
     en_prompt = f'You are a product data extraction assistant for an Oman/GCC marketplace.\nGiven the voice transcript below, extract structured product data.\nChoose the category from exactly this list: {canonical_list}.\nTRANSCRIPT: ' + transcript + '\n\nReply ONLY with valid JSON (double quotes, no markdown, no commentary).\n{\n  "product_name": "best guess product name (REQUIRED)",\n  "category": "one from the list or null",\n  "subcategory": "subcategory or null",\n  "colors": ["extracted colors"],\n  "fabric": "fabric type or null",\n  "print_text": "any print/pattern text or null",\n  "description": "2-3 sentence auto-generated product description",\n  "suggested_tags": ["8-12 lowercase SEO tags"],\n  "variants": {"color": ["Blue","Black"], "size": ["S","M","L"]},\n  "stock_hints": {"Blue": {"S": 0, "M": 0, "L": 0}},\n  "quantity": null,\n  "price": null\n}'
     try:
@@ -227,8 +231,8 @@ async def generate_angles(current_user: dict=Depends(require_roles('supplier', '
     removes the background and creates novel-angle product views.
     """
     import uuid
-    from utils.background_jobs import enqueue_ml_job
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.background_jobs import enqueue_ml_job
+    from infrastructure.utils.storage import storage as _storage
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail='Empty image file')
@@ -238,7 +242,7 @@ async def generate_angles(current_user: dict=Depends(require_roles('supplier', '
     _storage.save(image_key, raw, content_type=image.content_type or 'image/jpeg')
 
     def _run_generate_angles() -> dict:
-        from controllers.supplier.supplier_controller import process_product_image
+        from domains.suppliers.services.supplier_controller import process_product_image
         from io import BytesIO
         from fastapi import UploadFile
         import asyncio

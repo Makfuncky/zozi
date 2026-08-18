@@ -21,26 +21,27 @@ from typing import Any, Optional, Sequence
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    CashFlowForecast,
-    GatewaySettlementSchedule,
-    Invoice,
-    JournalEntry,
-    JournalEntryLine,
-    PayoutBatch,
-    Shipment,
-    SupplierSettlement,
-    TreasuryAccount,
-    VATRemittance,
-)
-from _legacy.models.admin import LogisticsCODRemittanceReceipt
-from _legacy.models.employee_models import Employee
-from _legacy.models.logistics import LogisticsPartner
-from _legacy.models.orders import Order as OrderModel, OrderItem
-from _legacy.models.payments import LogisticsPartnerPayout, Payment, Payout
-from _legacy.models.suppliers import SupplierProfile
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import VATRemittance
+from domains.logistics.models.logistics import Shipment
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order as OrderModel
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout
+from domains.comms.models.suppliers import SupplierProfile
 import structlog
 logger = structlog.get_logger(__name__)
 

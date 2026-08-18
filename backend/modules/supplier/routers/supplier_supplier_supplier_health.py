@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import get_current_user
 from typing import Optional
 
 from controllers.supplier.supplier_health_controller import get_supplier_health, list_supplier_health

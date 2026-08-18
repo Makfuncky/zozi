@@ -5,18 +5,18 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from services.customer.customer_health_engine import get_customer_health_engine
+from domains.customers.services.customer_health_engine import get_customer_health_engine
 
 def get_customer_health(user_id: int, current_user: dict, db: Session):
     engine = get_customer_health_engine(db)
     return engine.calculate_health_score(user_id)
 
 def list_customer_health(current_user: dict, db: Session, page: int, size: int):
-    from _legacy.models import User
+    from domains.accounts.models.user import User
     from infrastructure.utils.pagination import paginated_query
 
     users, total = paginated_query(

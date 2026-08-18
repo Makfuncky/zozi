@@ -14,7 +14,7 @@ from infrastructure.utils.middleware_helpers import (
     raise_unauthorized,
     raise_forbidden,
 )
-from infrastructure.utils.error_handler import ErrorCategory
+from kernel.error_handler import ErrorCategory
 
 
 class TestRaiseHelpers:

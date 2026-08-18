@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
+from rbac import get_current_user
+from infrastructure.database.database import get_db
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def create_objective_endpoint(
     """Create an OKR objective at any cascade level (company → individual).
     Optionally accepts key_results to create KPIs in the same call.
     """
-    from services.performance_service import create_objective
+    from domains.accounts.services.performance_service import create_objective
     try:
         result = create_objective(
             db=db,
@@ -107,7 +107,7 @@ def get_objective_tree_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Get an objective with all its child objectives (aligned cascade)."""
-    from services.performance_service import get_objective_tree
+    from domains.accounts.services.performance_service import get_objective_tree
     result = get_objective_tree(db, objective_id)
     if not result:
         raise HTTPException(status_code=404, detail="Objective not found")
@@ -122,7 +122,7 @@ def update_objective_progress_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Update objective progress. Auto-computes from child KPIs if progress_pct not provided."""
-    from services.performance_service import update_objective_progress
+    from domains.accounts.services.performance_service import update_objective_progress
     return update_objective_progress(
         db, objective_id,
         progress_pct=body.progress_pct if body else None,
@@ -142,7 +142,7 @@ def create_kpi_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Create a KPI metric tied to an objective."""
-    from services.performance_service import create_kpi_metric
+    from domains.accounts.services.performance_service import create_kpi_metric
     return create_kpi_metric(
         db=db,
         objective_id=body.objective_id,
@@ -165,7 +165,7 @@ def record_kpi_value_endpoint(
     """Record a new current value for a KPI metric and recalc objective progress."""
     if body is None:
         raise HTTPException(status_code=422, detail="Request body required")
-    from services.performance_service import record_kpi_value
+    from domains.accounts.services.performance_service import record_kpi_value
     return record_kpi_value(db, kpi_id, value=body.value, source=body.source)
 
 
@@ -176,7 +176,7 @@ def get_kpi_dashboard_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Get all KPIs and objectives for an employee."""
-    from services.performance_service import get_kpi_dashboard
+    from domains.accounts.services.performance_service import get_kpi_dashboard
     return get_kpi_dashboard(db, employee_id)
 
 
@@ -192,7 +192,7 @@ def submit_review_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Submit a 360° performance review entry (self, manager, peer, subordinate)."""
-    from services.performance_service import submit_performance_review
+    from domains.accounts.services.performance_service import submit_performance_review
     try:
         return submit_performance_review(
             db=db,
@@ -216,7 +216,7 @@ def get_employee_reviews_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Get all reviews for an employee, grouped by review type."""
-    from services.performance_service import get_employee_reviews
+    from domains.accounts.services.performance_service import get_employee_reviews
     return get_employee_reviews(db, employee_id, review_cycle=review_cycle)
 
 
@@ -232,7 +232,7 @@ def compute_health_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Compute a Performance Health Score (red/amber/green) from multiple signals."""
-    from services.performance_service import compute_performance_health
+    from domains.accounts.services.performance_service import compute_performance_health
     result = compute_performance_health(db, employee_id)
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
@@ -248,7 +248,8 @@ def coi_check_endpoint(
     """Run a simple conflict-of-interest check by examining employee relations
     and shared departments. Returns any detected conflicts."""
     try:
-        from _legacy.models.employee_models import Employee, EmployeeRelation
+        from domains.hr.models.employee_models import Employee
+        from domains.hr.models.employee_models import EmployeeRelation
     except Exception as exc:
         logger.warning("EmployeeRelation model not available: %s", exc)
         return {"employee_id": employee_id, "has_conflicts": False, "conflicts": []}
@@ -331,5 +332,5 @@ def health_board_endpoint(
     current_user: dict = Depends(get_current_user),
 ):
     """Get a performance health board for all subordinates of a manager."""
-    from services.performance_service import get_performance_health_board
+    from domains.accounts.services.performance_service import get_performance_health_board
     return get_performance_health_board(db, manager_employee_id, department=department)

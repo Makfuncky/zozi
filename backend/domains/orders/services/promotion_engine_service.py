@@ -10,8 +10,9 @@ from typing import Optional
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import Session
 
-from _legacy.models import Base, PromotionEngineConfig
-from utils.config import settings
+from domains.governance.models.admin import PromotionEngineConfig
+from infrastructure.database.base import Base
+from infrastructure.utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)
 

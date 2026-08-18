@@ -16,9 +16,10 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from utils.audit import audit_log, AuditAction
-from _legacy.models import Coupon, CouponUsage
-from utils.money import round_money
+from infrastructure.utils.audit import audit_log, AuditAction
+from domains.governance.models.admin import CouponUsage
+from domains.payments.models.payments import Coupon
+from kernel.money import round_money
 
 
 def create_coupon(

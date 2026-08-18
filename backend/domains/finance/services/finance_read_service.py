@@ -18,17 +18,15 @@ from typing import List, Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    GatewaySettlementSchedule,
-    JournalEntry,
-    JournalEntryLine,
-    Payout,
-    SupplierSettlement,
-    TreasuryAccount,
-)
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TreasuryAccount
+from domains.payments.models.payments import Payout
+from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 

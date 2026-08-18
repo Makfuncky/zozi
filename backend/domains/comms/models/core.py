@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from ..mixins import TenantMixin
-from _legacy.models.mixins import VersionMixin
+from domains.comms.mixins import VersionMixin
 __all__ = ['Address', 'Cart', 'CartItem', 'AuditLog', 'SupportTicket', 'SupportTicketReply', 'TicketAttachment', 'UserBrowsingHistory', 'CityDistanceMatrix', 'ExecutiveNews', 'UserSession', 'SystemHealthEvent', 'CommandCenterView', 'NewsSource', 'NewsArticle', 'InternalNotice', 'PredictiveSimulation', 'AlertEscalationRule', 'EntityChatThread', 'EntityChatMessage', 'VideoRoom', 'VideoRoomParticipant', 'VideoRoomRecording', 'DirectChatRoom', 'DirectChatMessage', 'GroupChatRoom', 'GroupChatMember', 'GroupChatMessage', 'ShiftHandoverSession', 'ShiftHandoverTask', 'EscalationSLARule', 'EscalationSLALog']
 
 class Address(Base, TenantMixin):

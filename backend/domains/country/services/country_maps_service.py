@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import List
 import json
 from sqlalchemy.orm import Session
-from _legacy.models import CountryCity, CountryStaffAssignment
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import logging
 import structlog
 logger = structlog.get_logger(__name__)
@@ -14,8 +15,10 @@ logger = logging.getLogger(__name__)
 
 def get_country_map(country_code: str, include_cities: bool, limit: int = 20, cursor: str | None = None) -> dict:
     """Return a GeoJSON FeatureCollection for a country (regions + city markers)."""
-    from db.database import get_db_context
-    from _legacy.models import CountryConfig, CountryCity, CountryMapConfig
+    from infrastructure.database.database import get_db_context
+    from domains.country.models.countries import CountryConfig
+    from domains.country.models.country_control import CountryMapConfig
+    from domains.country.models.country_enhancements import CountryCity
 
     cc = country_code.upper()
     with get_db_context() as db:
@@ -88,8 +91,8 @@ def get_country_map(country_code: str, include_cities: bool, limit: int = 20, cu
 
 def get_country_map_config(country_code: str) -> dict:
     """Get map display configuration for a country."""
-    from db.database import get_db_context
-    from _legacy.models import CountryMapConfig
+    from infrastructure.database.database import get_db_context
+    from domains.country.models.country_control import CountryMapConfig
 
     cc = country_code.upper()
     with get_db_context() as db:
@@ -154,7 +157,7 @@ def list_active_staff_assignments(
     db: Session, country_code: str, limit: int = 20, cursor: str | None = None
 ) -> dict:
     """List active staff assignments for a country (cursor-paginated)."""
-    from utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
+    from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
 
     query = (

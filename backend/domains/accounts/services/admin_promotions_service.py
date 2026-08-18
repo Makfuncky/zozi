@@ -18,20 +18,18 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from _legacy.models import (
-    Banner,
-    Coupon,
-    FlashSale,
-    PromotionEngineConfig,
-    PromotionOrderTier,
-    User,
-)
+from domains.accounts.models.user import User
+from domains.comms.models.marketing import FlashSale
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionOrderTier
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Coupon
 
-from infrastructure.utils.country_rls import enforce_country_access
+from domains.country.utils.country_rls import enforce_country_access
 
 from infrastructure.utils.dependencies import require_admin
-from services.admin.admin_commerce_configuration_service import _banner_to_dict
-from services.admin.admin_commerce_configuration_service import _user_ctx
+from domains.governance.services.admin_commerce_configuration_service import _banner_to_dict
+from domains.governance.services.admin_commerce_configuration_service import _user_ctx
 
 
 
@@ -92,7 +90,7 @@ def create_coupon(code: str, discount_type: str, discount_value: float, minimum_
 
 
 
-from services.admin.admin_commerce_configuration_service import get_promotion_config  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_commerce_configuration_service import get_promotion_config
 
 
 
@@ -106,7 +104,7 @@ from services.admin.admin_commerce_configuration_service import get_promotion_co
 
 
 
-from services.admin.admin_commerce_configuration_service import update_promotion_config  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_commerce_configuration_service import update_promotion_config
 
 
 
@@ -117,20 +115,7 @@ from services.admin.admin_commerce_configuration_service import update_promotion
 
 
 
-from services.admin.admin_commerce_configuration_service import list_coupons  # [MIGRATION COMPAT] re-export relocated symbol
-
-
-
-
-
-
-
-
-
-
-
-
-from services.admin.admin_commerce_configuration_service import archive_coupon  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_commerce_configuration_service import list_coupons
 
 
 
@@ -143,38 +128,49 @@ from services.admin.admin_commerce_configuration_service import archive_coupon  
 
 
 
+from domains.governance.services.admin_commerce_configuration_service import archive_coupon
 
 
-from services.admin.admin_commerce_configuration_service import restore_coupon  # [MIGRATION COMPAT] re-export relocated symbol
-from services.admin.admin_commerce_configuration_service import bulk_archive_coupons  # [MIGRATION COMPAT] re-export relocated symbol
+
+
+
+
+
+
+
+
+
+
+
+
+from domains.governance.services.admin_commerce_configuration_service import restore_coupon
+from domains.governance.services.admin_commerce_configuration_service import bulk_archive_coupons
 
 
 # === auto-wiring re-exports (migration repair) ===
-from services.admin.admin_commerce_configuration_service import (
-    archive_banner,
-    archive_flash_sale,
-    bulk_archive_banners,
-    bulk_archive_flash_sales,
-    bulk_restore_banners,
-    bulk_restore_coupons,
-    bulk_restore_flash_sales,
-    create_banner_by_country,
-    create_banner_promotion,
-    create_coupon_by_country,
-    create_flash_sale,
-    delete_banner_by_country,
-    delete_banner_promotion,
-    list_banners_by_country,
-    list_banners_promotions,
-    list_coupons_by_country,
-    list_flash_sales,
-    list_flash_sales_by_country,
-    list_promotion_tiers,
-    restore_banner,
-    restore_flash_sale,
-    update_banner_by_country,
-    update_banner_promotion,
-    update_flash_sale
-)
+from domains.governance.services.admin_commerce_configuration_service import archive_banner
+from domains.governance.services.admin_commerce_configuration_service import archive_flash_sale
+from domains.governance.services.admin_commerce_configuration_service import bulk_archive_banners
+from domains.governance.services.admin_commerce_configuration_service import bulk_archive_flash_sales
+from domains.governance.services.admin_commerce_configuration_service import bulk_restore_banners
+from domains.governance.services.admin_commerce_configuration_service import bulk_restore_coupons
+from domains.governance.services.admin_commerce_configuration_service import bulk_restore_flash_sales
+from domains.governance.services.admin_commerce_configuration_service import create_banner_by_country
+from domains.governance.services.admin_commerce_configuration_service import create_banner_promotion
+from domains.governance.services.admin_commerce_configuration_service import create_coupon_by_country
+from domains.governance.services.admin_commerce_configuration_service import create_flash_sale
+from domains.governance.services.admin_commerce_configuration_service import delete_banner_by_country
+from domains.governance.services.admin_commerce_configuration_service import delete_banner_promotion
+from domains.governance.services.admin_commerce_configuration_service import list_banners_by_country
+from domains.governance.services.admin_commerce_configuration_service import list_banners_promotions
+from domains.governance.services.admin_commerce_configuration_service import list_coupons_by_country
+from domains.governance.services.admin_commerce_configuration_service import list_flash_sales
+from domains.governance.services.admin_commerce_configuration_service import list_flash_sales_by_country
+from domains.governance.services.admin_commerce_configuration_service import list_promotion_tiers
+from domains.governance.services.admin_commerce_configuration_service import restore_banner
+from domains.governance.services.admin_commerce_configuration_service import restore_flash_sale
+from domains.governance.services.admin_commerce_configuration_service import update_banner_by_country
+from domains.governance.services.admin_commerce_configuration_service import update_banner_promotion
+from domains.governance.services.admin_commerce_configuration_service import update_flash_sale
 
 

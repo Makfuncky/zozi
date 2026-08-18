@@ -7,9 +7,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from _legacy.models import CartItem
-from _legacy.models.products import Product
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.accounts.models.core import CartItem
+from domains.catalog.models.products import Product
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 

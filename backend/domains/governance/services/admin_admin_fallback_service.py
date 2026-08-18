@@ -1,3 +1,13 @@
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.admin.admin_fallback_service re-exports for HTTP routers."""
-from services.admin.admin_fallback_service import get_admin_stats, get_commission_config_fallback, get_dashboard_stats, get_treasury_fallback, get_treasury_metrics_fallback, list_categories_fallback, list_employees_fallback, list_logistics_fallback, list_logistics_partners_fallback, list_payments_fallback, list_payouts_fallback
+from domains.governance.services.admin_fallback_service import get_admin_stats
+from domains.governance.services.admin_fallback_service import get_commission_config_fallback
+from domains.governance.services.admin_fallback_service import get_dashboard_stats
+from domains.governance.services.admin_fallback_service import get_treasury_fallback
+from domains.governance.services.admin_fallback_service import get_treasury_metrics_fallback
+from domains.governance.services.admin_fallback_service import list_categories_fallback
+from domains.governance.services.admin_fallback_service import list_employees_fallback
+from domains.governance.services.admin_fallback_service import list_logistics_fallback
+from domains.governance.services.admin_fallback_service import list_logistics_partners_fallback
+from domains.governance.services.admin_fallback_service import list_payments_fallback
+from domains.governance.services.admin_fallback_service import list_payouts_fallback

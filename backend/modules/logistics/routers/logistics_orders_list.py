@@ -1,9 +1,11 @@
 """Logistics partner orders router."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import Shipment, LogisticsPartner, User
-from utils.dependencies import require_logistics
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import LogisticsPartner
+from infrastructure.utils.dependencies import require_logistics
 
 router = APIRouter(prefix="/api/v1/logistics")
 

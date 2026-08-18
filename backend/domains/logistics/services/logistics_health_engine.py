@@ -6,7 +6,9 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
-from _legacy.models import LogisticsPartnerProfile, Shipment, LogisticsPartnerPayout
+from domains.logistics.models.logistics import LogisticsPartnerProfile
+from domains.logistics.models.logistics import Shipment
+from domains.payments.models.payments import LogisticsPartnerPayout
 
 
 class LogisticsHealthEngine:
@@ -104,7 +106,7 @@ class LogisticsHealthEngine:
     def _calculate_dispute_rate(self, shipments) -> float:
         if not shipments:
             return 0.0
-        from _legacy.models import LogisticsFraudIndicator
+        from domains.governance.models.fraud import LogisticsFraudIndicator
         disputes = self.db.query(LogisticsFraudIndicator).filter(
             LogisticsFraudIndicator.shipment_id.in_([s.id for s in shipments])
         ).count()

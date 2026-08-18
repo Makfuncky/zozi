@@ -1,13 +1,13 @@
 """Service methods for unified inbox communication queries."""
 from __future__ import annotations
-from utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 from sqlalchemy import Row, text, select, func
 from sqlalchemy.orm import Session
 from typing import Any
-from utils.datetime_utils import utcnow as utcnow
+from infrastructure.utils.datetime_utils import utcnow as utcnow
 
-from db.base import Base
-import _legacy.models as models  # noqa: F401  (registers all ORM tables on Base.metadata)
+from infrastructure.database.base import Base
+from infrastructure.database import models  # noqa: F401  (registers all ORM tables on Base.metadata)
 import logging
 import structlog
 logger = structlog.get_logger(__name__)

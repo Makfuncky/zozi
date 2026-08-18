@@ -4,10 +4,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import SupplierDocumentOut
-from _legacy.models import SupplierDocument, SupplierProfile, User
-from utils.dependencies import require_admin, require_supplier
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import SupplierDocumentOut
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierDocument
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.dependencies import require_admin, require_supplier
 
 router = APIRouter()
 __router_prefix__ = "/supplier/documents"

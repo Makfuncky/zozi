@@ -34,3 +34,40 @@ without a tracked plan.
 - import-pattern `Select-String` scan (services/models/controllers/domains/modules/rbac/_legacy)
 - `git log --oneline -10` (clean tree; recent "source-folder consolidation" commits)
 - background: `python scripts/system_trackers/system_architecture_audit.py`
+
+## 2026-08-18 — Session 2 (complete NS15–NS22 enforcement)
+
+**Context:** Continue converting the OLD flat-circuit audit into the
+NEW_STRUCTURE.md (three axes + Seven Laws) gate. NS0–NS14 were already
+wired; the Seven-Laws coverage (NS15–NS22) was missing.
+
+**What I did:**
+1. Added NS15–NS22 descriptions to `_RULE_DESCRIPTIONS` and to the NS hotlist.
+2. Added helper functions before `check_new_structure_compliance`:
+   `_ns_collect_feature_atoms` (Law 4 single-source), `_ns_scan_thin_router_
+   violations` (Law 2), `_ns_scan_module_actor_violations` (Law 5 strangler),
+   `_ns_scan_inverted_arrows` (Law 1), `_ns_scan_country_scope` (axis 3),
+   `_ns_scan_schema_discipline` (Law 6).
+3. Added emission logic for NS15–NS22 inside the gate, after the NS14 block.
+4. Fixed a splice bug (EMIT was nested in the wrong NS14 branch) and re-ran
+   `py_compile` — now compiles clean.
+5. Tightened NS22 heuristic to require `__tablename__` so service files that
+   merely import `Base` are no longer false-flagged as models.
+6. Ran the gate against the real repo (stub Report): NS15–NS22 all execute
+   without error and emit real findings (NS18=238, NS19=124, NS20=165,
+   NS22=32 genuine; NS15/16/17/21 = 0 because no feature atoms are defined).
+7. Updated `findings.md` §3 (full NS0–NS22 coverage + refreshed line numbers)
+   and §5 (added measured NS15–NS22 debt rows).
+
+**Verification:**
+- `python -m py_compile system_architecture_audit.py` → OK.
+- Targeted execution of `check_new_structure_compliance` on the real tree →
+  407 NS findings total; NS15–NS22 produce correct, non-false-positive output.
+
+**Note:** The full `main()` audit run is slow (>240s whole-repo scan); the NS
+gate itself runs in seconds and was validated in isolation.
+
+**Pending:**
+- Generate the full SYSTEM_AUDIT_REPORT.md (run main() to completion) so the
+  report itself reflects NS15–NS22 (timed out in this session).
+- Tune NS19 actor allow-list if the 124 count is noisier than desired.

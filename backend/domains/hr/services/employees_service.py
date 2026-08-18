@@ -12,14 +12,12 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import Address
-from _legacy.models.employee_models import (
-    Employee,
-    EmployeeDependent,
-    EmployeeLeaveRequest,
-    EmployeeShiftRoster,
-)
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.core import Address
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeDependent
+from domains.hr.models.employee_models import EmployeeLeaveRequest
+from domains.hr.models.employee_models import EmployeeShiftRoster
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

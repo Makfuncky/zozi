@@ -6,8 +6,9 @@ Allows linking messages to specific entities like orders, suppliers, tickets, or
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from db.database import get_db
-from _legacy.models import Message, ShiftHandoverLog
+from infrastructure.database.database import get_db
+from domains.country.models.countries import Message
+from domains.country.models.country_control import ShiftHandoverLog
 import structlog
 logger = structlog.get_logger(__name__)
 

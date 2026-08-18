@@ -10,7 +10,9 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Order, OrderItem, SupplierProfile
+from domains.comms.models.suppliers import SupplierProfile
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -97,7 +99,7 @@ def get_supplier_order_items_for_verify(db: Session, order_id: int, user_id: int
 def resolve_shipment_info(db: Session, order_id: int) -> dict[str, Any]:
     """Resolve shipment info from the logistics models if available."""
     try:
-        from _legacy.models import Shipment
+        from domains.logistics.models.logistics import Shipment
 
         shipment = db.query(Shipment).filter(Shipment.order_id == order_id).first()
         if not shipment:

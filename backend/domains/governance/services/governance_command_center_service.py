@@ -1,3 +1,31 @@
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.governance.command_center_service re-exports for HTTP routers."""
-from services.governance.command_center_service import AlertResponse, CommandCenterDashboardResponse, ConnectionManager, FraudAlertResponse, NewsArticleResponse, RealtimeMetrics, SystemMetricsResponse, TreasuryMetricsResponse, _ALLOWED_TABLES, _validate_table_name, create_executive_news, delete_executive_news, get_alerts, get_command_center, get_command_center_headlines, get_command_center_heartbeat, get_comprehensive_dashboard, get_dashboard, get_dashboard_stats, get_executive_news, get_fraud_alerts, get_realtime_metrics, get_system_metrics, get_treasury_metrics, manager, resolve_alert, safe_count, safe_fetch, safe_scalar
+from domains.governance.services.command_center_service import AlertResponse
+from domains.governance.services.command_center_service import CommandCenterDashboardResponse
+from domains.governance.services.command_center_service import ConnectionManager
+from domains.governance.services.command_center_service import FraudAlertResponse
+from domains.governance.services.command_center_service import NewsArticleResponse
+from domains.governance.services.command_center_service import RealtimeMetrics
+from domains.governance.services.command_center_service import SystemMetricsResponse
+from domains.governance.services.command_center_service import TreasuryMetricsResponse
+from domains.governance.services.command_center_service import _ALLOWED_TABLES
+from domains.governance.services.command_center_service import _validate_table_name
+from domains.governance.services.command_center_service import create_executive_news
+from domains.governance.services.command_center_service import delete_executive_news
+from domains.governance.services.command_center_service import get_alerts
+from domains.governance.services.command_center_service import get_command_center
+from domains.governance.services.command_center_service import get_command_center_headlines
+from domains.governance.services.command_center_service import get_command_center_heartbeat
+from domains.governance.services.command_center_service import get_comprehensive_dashboard
+from domains.governance.services.command_center_service import get_dashboard
+from domains.governance.services.command_center_service import get_dashboard_stats
+from domains.governance.services.command_center_service import get_executive_news
+from domains.governance.services.command_center_service import get_fraud_alerts
+from domains.governance.services.command_center_service import get_realtime_metrics
+from domains.governance.services.command_center_service import get_system_metrics
+from domains.governance.services.command_center_service import get_treasury_metrics
+from domains.governance.services.command_center_service import manager
+from domains.governance.services.command_center_service import resolve_alert
+from domains.governance.services.command_center_service import safe_count
+from domains.governance.services.command_center_service import safe_fetch
+from domains.governance.services.command_center_service import safe_scalar

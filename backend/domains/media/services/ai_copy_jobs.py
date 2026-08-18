@@ -37,7 +37,7 @@ def _prune() -> None:
 
 
 async def _run_copy_job(job_id: str, image_bytes: bytes, filename: str) -> None:
-    from services.ai.ai_variant_config import analyze_product_image
+    from domains.finance.services.ai_variant_config import analyze_product_image
 
     try:
         result = await analyze_product_image(

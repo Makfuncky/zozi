@@ -21,9 +21,9 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
 
-from _legacy.models import Product
+from domains.catalog.models.products import Product
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 

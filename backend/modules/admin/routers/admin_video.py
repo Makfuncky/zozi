@@ -6,13 +6,13 @@ from fastapi import APIRouter, Body, Depends, Path, Request
 from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import User
-from _legacy.models.core import VideoRoom
-from services.comms.video_conferencing import get_video_conference
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.accounts.models.core import VideoRoom
+from domains.comms.services.video_conferencing import get_video_conference
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 logger = logging.getLogger("zozi.api.admin_video")
 router = APIRouter()

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartner
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 

@@ -3,11 +3,18 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import get_current_user
 from typing import List, Optional
 
-from controllers.commerce.reviews_controller import ReviewCreate, ReviewOut, create_review, delete_review, get_product_reviews, get_review, list_reviews, update_review
+from domains.orders.services.reviews_controller import ReviewCreate
+from domains.orders.services.reviews_controller import ReviewOut
+from domains.orders.services.reviews_controller import create_review
+from domains.orders.services.reviews_controller import delete_review
+from domains.orders.services.reviews_controller import get_product_reviews
+from domains.orders.services.reviews_controller import get_review
+from domains.orders.services.reviews_controller import list_reviews
+from domains.orders.services.reviews_controller import update_review
 
 router = APIRouter(prefix="/api/v1")
 

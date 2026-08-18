@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from controllers.security.risk_controller import (
-    detect_ghost_employees, detect_impossible_travel,
-    update_flight_risk_score, get_team_health_radar, get_audit_timeline
-)
-from db.database import get_db
+from rbac import detect_ghost_employees
+from rbac import detect_impossible_travel
+from rbac import update_flight_risk_score
+from rbac import get_team_health_radar
+from rbac import get_audit_timeline
+from infrastructure.database.database import get_db
 
 router = APIRouter(prefix="/api/v1")
 

@@ -9,8 +9,11 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Order, OrderItem, SupplierProfile, User
-from services.common.storage import storage as _storage
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.storage import storage as _storage
 from infrastructure.utils.dependencies import require_supplier
 
 logger = logging.getLogger(__name__)
@@ -138,7 +141,7 @@ def get_supplier_label(current_user: User | dict, order_id: int, db: Session) ->
 
 def _resolve_shipment_info(db: Session, order_id: int, supplier_id: int) -> dict[str, Any]:
     try:
-        from _legacy.models import Shipment
+        from domains.logistics.models.logistics import Shipment
 
         shipment = (
             db.query(Shipment)

@@ -6,17 +6,15 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    GatewaySettlementSchedule,
-    Order,
-    BankStatementLine,
-    PaymentGatewayConnection,
-    FinanceAutomationLog,
-    FinanceAuditLog,
-)
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from utils.datetime_utils import utcnow as _utcnow
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import BankStatementLine
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from domains.orders.models.orders import Order
+from domains.payments.models.payments import PaymentGatewayConnection
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

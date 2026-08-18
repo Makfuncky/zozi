@@ -2,10 +2,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import PayoutOut
-from _legacy.models import Payout, SupplierProfile, User
-from utils.dependencies import require_supplier
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import PayoutOut
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from domains.payments.models.payments import Payout
+from infrastructure.utils.dependencies import require_supplier
 
 router = APIRouter()
 __router_prefix__ = "/supplier/payouts"

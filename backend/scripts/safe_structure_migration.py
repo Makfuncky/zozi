@@ -228,7 +228,7 @@ ALLOWED_BACKEND_ROOT_FILES = {
     "lifespan.py",
     "run_server.py",
     "start_server.py",
-    "alembic.ini",
+    "alembic/alembic.ini",
     "pyproject.toml",
     "requirements.txt",
     "requirements.lock",

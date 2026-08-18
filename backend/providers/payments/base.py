@@ -8,10 +8,75 @@ expected to subclass ``BasePaymentGateway`` and register itself with
 """
 from __future__ import annotations
 
-from typing import Any, Union
+from dataclasses import dataclass, field
+from typing import Any, Callable, Optional, Union
 
 from .base_models import ConnectionTestResult, PaymentResult, RefundResult
 from .webhook_models import ZoziChargebackEvent, ZoziPaymentEvent, ZoziRefundEvent
+
+
+# Standard gateway operation keys dispatched through ``dispatch_provider_operation``.
+OPERATION_CREATE = "create"
+OPERATION_CONFIRM = "confirm"
+OPERATION_WEBHOOK = "webhook"
+
+
+@dataclass
+class GatewaySettings:
+    """Resolved runtime configuration for a single payment gateway."""
+
+    provider_code: str
+    provider_kind: str
+    display_name: str
+    is_enabled: bool = False
+    mode: str = "test"
+    public_key: Optional[str] = None
+    secret_key: Optional[str] = None
+    webhook_secret: Optional[str] = None
+    api_base_url: Optional[str] = None
+    webhook_url: Optional[str] = None
+    supports_customer_checkout: bool = False
+    supports_payouts: bool = False
+
+    def is_usable(self) -> bool:
+        return bool(self.is_enabled and self.secret_key)
+
+
+@dataclass
+class GatewayDefinition:
+    """Registration record for a concrete payment gateway adapter."""
+
+    code: str
+    kind: str
+    label: str
+    module: str
+    settings_resolver: Callable[..., Any]
+    is_configured: Callable[..., bool]
+    operations: dict = field(default_factory=dict)
+
+
+_REGISTRY: dict = {}
+
+
+def register_provider(definition: GatewayDefinition) -> None:
+    """Register a gateway adapter under its ``code``."""
+    _REGISTRY[definition.code] = definition
+
+
+def get_provider(code: str) -> Optional[GatewayDefinition]:
+    """Look up a registered gateway adapter by code."""
+    return _REGISTRY.get(code)
+
+
+def dispatch_provider_operation(code: str, operation: str, *args: Any, **kwargs: Any) -> Any:
+    """Dispatch a standard operation to the registered gateway adapter."""
+    definition = get_provider(code)
+    if definition is None:
+        raise LookupError(f"No payment provider registered for code {code!r}")
+    handler = definition.operations.get(operation)
+    if handler is None:
+        raise LookupError(f"Provider {code!r} does not implement operation {operation!r}")
+    return handler(*args, **kwargs)
 
 
 class BasePaymentGateway:

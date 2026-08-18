@@ -14,7 +14,7 @@ import pytest
 import domains.finance.services.commission_write_service as commission
 import domains.payments.services.payments_write_service as payments
 import domains.finance.services.invoice_write_service as invoice
-from _legacy.models import (
+from infrastructure.database.models import (
     CommissionAgreement,
     CommissionBadgeTier,
     CommissionCategoryRate,

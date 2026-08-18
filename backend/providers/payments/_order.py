@@ -1,4 +1,4 @@
-﻿"""Order-lifecycle helpers used by payment-gateway providers.
+"""Order-lifecycle helpers used by payment-gateway providers.
 
 Relocated from controllers/payments_controller.py.
 """
@@ -11,8 +11,13 @@ from typing import Any, Optional, cast
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Coupon, Order, OrderItem, Payment, Product, Notification
-from events import (
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Coupon
+from domains.payments.models.payments import Payment
+from infrastructure.messaging.events import (
     PaymentConfirmedEvent,
     PaymentFailedEvent,
     PaymentRefundedEvent,

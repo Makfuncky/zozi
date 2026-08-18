@@ -3,7 +3,7 @@ Enterprise Email Gateway
 Features: Role-Based Aliases, DLP, PII Redaction, Legal Templating
 """
 from __future__ import annotations
-from utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import uuid
 import json
 import logging
@@ -14,11 +14,13 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import User
-from _legacy.models.comms import Notification, InternalEmail, EmailFolder
-from _legacy.models.employee_models import Employee
-from _legacy.models.fraud import DLPViolation
-from utils.email_service import send_email, get_email_sender_address, build_email_open_tracking_url
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.comms.models.communication import InternalEmail
+from domains.comms.models.communication import EmailFolder
+from domains.hr.models.employee_models import Employee
+from domains.governance.models.fraud import DLPViolation
+from infrastructure.utils.email_service import send_email, get_email_sender_address, build_email_open_tracking_url
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -172,7 +174,7 @@ class EmailGateway:
         self.db.refresh(email)
 
         try:
-            from services.hr.employee_communication_service import log_comm_event
+            from domains.hr.services.employee_communication_service import log_comm_event
             log_comm_event(self.db, sender_id, to_user_ids[0] if to_user_ids else None, "email_sent", "internal_email", email.id)
         except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
             logger.debug("Activity log skipped: %s", exc)
@@ -329,8 +331,8 @@ class EmailGateway:
     def get_email_history(
         self, user_id: int, limit: int = 50, offset: int = 0
     ) -> dict:
-        from _legacy.models import User
-        from _legacy.models.comms import Notification
+        from domains.accounts.models.user import User
+        from domains.comms.models.communication import Notification
         
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
@@ -363,12 +365,12 @@ def get_email_gateway(db: Session) -> EmailGateway:
 def _enqueue_email_delivery(email_id: int, body_html: str, subject: str) -> None:
     """Enqueue a background job to deliver an internal email via SMTP."""
     try:
-        from utils.background_jobs import enqueue_job, JobKind
+        from infrastructure.utils.background_jobs import enqueue_job, JobKind
 
         def _deliver() -> dict:
-            from db.database import SessionLocal
-            from _legacy.models.comms import InternalEmail
-            from utils.email_service import send_email, get_email_sender_address
+            from infrastructure.database.database import SessionLocal
+            from domains.comms.models.communication import InternalEmail
+            from infrastructure.utils.email_service import send_email, get_email_sender_address
 
             db = SessionLocal()
             try:
@@ -376,7 +378,7 @@ def _enqueue_email_delivery(email_id: int, body_html: str, subject: str) -> None
                 if not email:
                     return {"status": "skipped", "reason": "email_not_found"}
 
-                from _legacy.models import User
+                from domains.accounts.models.user import User
                 recipients = email.recipients or []
                 if isinstance(recipients, str):
                     import json

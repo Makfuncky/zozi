@@ -10,8 +10,10 @@ from enum import Enum
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from _legacy.models.employee_models import Employee, EmployeeRelation, COIReport
-from _legacy.models import User
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeRelation
+from domains.hr.models.employee_models import COIReport
+from domains.accounts.models.user import User
 
 logger = logging.getLogger("zozi.coi")
 

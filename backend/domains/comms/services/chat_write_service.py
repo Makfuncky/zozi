@@ -12,14 +12,12 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import (
-    DirectChatMessage,
-    DirectChatRoom,
-    EntityChatMessage,
-    EntityChatThread,
-    GroupChatMessage,
-    GroupChatRoom,
-)
+from domains.accounts.models.core import DirectChatMessage
+from domains.accounts.models.core import DirectChatRoom
+from domains.accounts.models.core import EntityChatMessage
+from domains.accounts.models.core import EntityChatThread
+from domains.accounts.models.core import GroupChatMessage
+from domains.accounts.models.core import GroupChatRoom
 import structlog
 logger = structlog.get_logger(__name__)
 

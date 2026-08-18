@@ -4,24 +4,20 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    restore_entity,
-)
-from db.database import get_db
-from db.schemas import ArchiveRequest, BulkActionRequest
-from _legacy.models import (
-    Banner,
-    Coupon,
-    FlashSale,
-    PromotionEngineConfig,
-    PromotionOrderTier,
-    User,
-)
-from utils.country_rls import enforce_country_access
-from utils.dependencies import require_admin
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import restore_entity
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from domains.accounts.models.user import User
+from domains.comms.models.marketing import FlashSale
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionOrderTier
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Coupon
+from domains.country.utils.country_rls import enforce_country_access
+from infrastructure.utils.dependencies import require_admin
 
 router = APIRouter()
 
@@ -449,7 +445,7 @@ def delete_banner_promotion(
     banner.is_active = False
     if hasattr(banner, "deleted_by_id"):
         banner.deleted_by_id = admin.id
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     if hasattr(banner, "deleted_at"):
         banner.deleted_at = utcnow()
     db.commit()
@@ -755,7 +751,7 @@ def delete_banner_by_country(
     banner.is_active = False
     if hasattr(banner, "deleted_by_id"):
         banner.deleted_by_id = admin.id
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     if hasattr(banner, "deleted_at"):
         banner.deleted_at = utcnow()
     db.commit()

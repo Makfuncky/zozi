@@ -5,7 +5,7 @@ business rules (authorization, duplicate prevention, verified-purchase
 detection, rating recompute) and delegates ALL persistence to
 services.commerce.reviews_service. It must not issue db.query directly.
 
-The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so the auto-router emits ``routers/public_commerce_reviews.py``.
 """
 from __future__ import annotations
@@ -14,22 +14,20 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
-from db.schemas import ReviewCreate, ReviewOut
+from infrastructure.database.schemas import ReviewCreate, ReviewOut
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post, put
+from infrastructure.routing.route_contract import delete, get, post, put
 
-from services.commerce.reviews_service import (
-    create_review as service_create_review,
-    find_existing_review,
-    get_product_reviews as service_get_product_reviews,
-    get_review_by_id,
-    has_verified_purchase,
-    product_exists,
-    recompute_product_rating,
-    soft_delete_review as service_soft_delete_review,
-    update_review as service_update_review,
-)
+from domains.orders.services.reviews_service import create_review as service_create_review
+from domains.orders.services.reviews_service import find_existing_review
+from domains.orders.services.reviews_service import get_product_reviews as service_get_product_reviews
+from domains.orders.services.reviews_service import get_review_by_id
+from domains.orders.services.reviews_service import has_verified_purchase
+from domains.orders.services.reviews_service import product_exists
+from domains.orders.services.reviews_service import recompute_product_rating
+from domains.orders.services.reviews_service import soft_delete_review as service_soft_delete_review
+from domains.orders.services.reviews_service import update_review as service_update_review
 import structlog
 logger = structlog.get_logger(__name__)
 

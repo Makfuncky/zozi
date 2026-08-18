@@ -11,10 +11,18 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from db.database import get_db, get_db_session
-from _legacy.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
-from _legacy.models import User, Notification, SupportTicket, TicketReply
-from utils.config import settings
+from infrastructure.database.database import get_db, get_db_session
+from domains.accounts.models.core import DirectChatRoom
+from domains.accounts.models.core import DirectChatMessage
+from domains.accounts.models.core import GroupChatRoom
+from domains.accounts.models.core import GroupChatMessage
+from domains.accounts.models.core import EntityChatThread
+from domains.accounts.models.core import EntityChatMessage
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.governance.models.admin import TicketReply
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +32,7 @@ router = APIRouter(tags=["websocket"], prefix="/api/v1")
 def _decode_ws_token(token: str) -> Optional[dict]:
     """Decode JWT token for WebSocket authentication."""
     try:
-        from utils.auth import SECRET_KEY, ALGORITHM
+        from infrastructure.utils.auth import SECRET_KEY, ALGORITHM
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except Exception:
         return None

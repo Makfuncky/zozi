@@ -17,17 +17,15 @@ from typing import List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CountryCommunication,
-    CountryConfig,
-    CountryConfigVersion,
-    CountryFeatureFlag,
-    CountryStaffAssignment,
-    CrossCountryCustomerSession,
-    OmanDeliveryZone,
-    SupplierCountryCommission,
-    User,
-)
+from domains.accounts.models.user import User
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryConfigVersion
+from domains.country.models.country_enhancements import CountryFeatureFlag
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.country.models.country_enhancements import CrossCountryCustomerSession
+from domains.country.models.country_enhancements import OmanDeliveryZone
+from domains.governance.models.admin import SupplierCountryCommission
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -3,11 +3,21 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Any, Optional
 
-from controllers.commerce.promotion_admin_controller import create_banner, create_banner_by_country, create_coupon, create_coupon_by_country, create_flash_sale, delete_banner, delete_banner_by_country, update_banner, update_banner_by_country, update_config, update_flash_sale
+from domains.orders.services.promotion_admin_controller import create_banner
+from domains.orders.services.promotion_admin_controller import create_banner_by_country
+from domains.orders.services.promotion_admin_controller import create_coupon
+from domains.orders.services.promotion_admin_controller import create_coupon_by_country
+from domains.orders.services.promotion_admin_controller import create_flash_sale
+from domains.orders.services.promotion_admin_controller import delete_banner
+from domains.orders.services.promotion_admin_controller import delete_banner_by_country
+from domains.orders.services.promotion_admin_controller import update_banner
+from domains.orders.services.promotion_admin_controller import update_banner_by_country
+from domains.orders.services.promotion_admin_controller import update_config
+from domains.orders.services.promotion_admin_controller import update_flash_sale
 
 router = APIRouter(prefix="/api/v1/admin")
 

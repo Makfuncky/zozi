@@ -8,7 +8,7 @@ from alembic import context
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from infrastructure.database.database import Base
-from _legacy.models import Base as ModelsBase
+from infrastructure.database.base import Base as ModelsBase
 
 config = context.config
 

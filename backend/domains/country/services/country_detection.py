@@ -8,7 +8,7 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig
+from domains.country.models.countries import CountryConfig
 from providers.geography.ip import lookup_ipapi_co
 from providers.geography.geoip import lookup_country_code
 

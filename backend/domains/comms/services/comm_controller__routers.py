@@ -4,7 +4,7 @@ Coordinates communication business rules and delegates ALL persistence to
 ``services.comms.comm_service``. It must not issue ``db.query`` directly
 and must not perform commits.
 
-The HTTP contract is declared with ``core.route_contract`` decorators
+The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so the auto-router emits ``routers/public_comms_comm.py``.
 """
 
@@ -15,7 +15,7 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from core.route_contract import get, post
+from infrastructure.routing.route_contract import get, post
 
 from domains.comms.services.comm_service import (
     create_chat_thread as service_create_chat_thread,

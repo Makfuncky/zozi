@@ -1,183 +1,62 @@
-import os, ast, sys, json
+"""ZOZI System — NEW_STRUCTURE.md Architecture & Implementation Audit.
+
+This tracker measures the codebase *only* against the target taxonomy in
+``documents/NEW_STRUCTURE.md``. It is organised around the three orthogonal
+axes the document defines:
+
+  * **Module**  (who acts)   : ``backend/modules/{m}/`` — auth + thin routers.
+  * **Domain**  (what the business does) : ``backend/domains/{d}/`` —
+    services / models / schemas / policies / events / features / ports /
+    read_models / repositories, optionally sliced (``{d}/{slice}/...``).
+  * **Feature** (what may be done) : ``backend/domains/{d}/features.py``
+    aggregated by ``backend/rbac/catalog.py`` and enforced by
+    ``require_feature(...)``.
+
+What makes this tracker different from a naive file-counter:
+
+  1. **Content-aware.** Every file is parsed with ``ast`` so the audit reports
+     *what is actually written* (ORM models, Pydantic schemas, service classes,
+     event classes, policy functions) — not just whether a folder exists.
+  2. **LLM-reviewed.** When OLLAMA is reachable, an LLM reads the extracted
+     signatures and writes a detailed, human description of what each module,
+     domain and feature actually implements, and judges whether module routers
+     are "thin" per Law 2. All LLM answers are cached to disk so repeat runs
+     are fast and never crash when the model is offline.
+  3. **Law-enforcing.** The seven laws of ``NEW_STRUCTURE.md`` are checked
+     directly against the source and every breach is raised as a violation
+     alert (direction of arrows, thin routers, cross-domain wiring, single-
+     sourced features, country scope, schema discipline, strangler rule).
+
+The report is organised strictly by hierarchy: **Modules → Domains →
+Features**, followed by the cross-axis wiring and the violation register.
+"""
+
+import os
+import ast
+import re
+import json
+import hashlib
+import urllib.request
+import threading
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # zozi/
 BACKEND = os.path.join(REPO, "backend")
-FRONTEND = os.path.join(REPO, "frontend")
+DOCS_AUDIT = os.path.join(REPO, "docs", "audit")
+
+# Folders that must never be treated as project source.
+EXCLUDE_DIRS = {"__pycache__", ".venv", "venv", "node_modules", ".git", "var", "uploads",
+                "_legacy", ".pytest_cache", ".hypothesis"}
+
 
 # ---------------------------------------------------------------------------
-# Layer scanning (identity mapping: module == real directory name)
+# Generic helpers
 # ---------------------------------------------------------------------------
-LAYERS = ["models", "db", "providers", "services", "controllers",
-          "routers", "middleware", "utils", "dependencies", "events", "jobs"]
-
-ROUTER_RULES = [
-    ("admin_", "admin"), ("core_", "core"), ("store_", "commerce"),
-    ("public_commerce_", "commerce"), ("public_comms_", "comms"),
-    ("public_finance_", "finance"), ("public_geography_", "geography"),
-    ("public_treasury_", "treasury"), ("public_suppliers_", "supplier"),
-    ("public_country_", "geography"), ("public_identity_", "identity"),
-    ("public_security_", "security"), ("public_effective_", "permissions"),
-    ("public_permission", "permissions"), ("public_auth_", "identity"),
-    ("public_", "identity"), ("supplier_", "supplier"), ("country_", "geography"),
-    ("system_ai_", "ai"), ("ai_", "ai"), ("customer_", "customer"),
-    ("finance_", "finance"), ("governance_", "governance"),
-    ("logistics_", "logistics"), ("comms_", "comms"),
-    ("internal_comms_", "comms"), ("hr_", "hr"), ("product_", "products"),
-    ("security_", "security"), ("treasury_", "treasury"),
-    ("ws_chat", "comms"), ("mobile_controller", "customer"),
-    ("push_notifications", "comms"), ("csp_reporting", "security"),
-    ("fraud_", "security"), ("cross_border", "commerce"),
-    ("flash_sales", "promotions"), ("parcel_tracking", "logistics"),
-    ("shift_handover", "hr"), ("expense_controller", "finance"),
-    ("operational_controller", "governance"), ("batch_upload", "uploads"),
-    ("upload_jobs", "uploads"), ("payout_approval", "treasury"),
-    ("command_center", "admin"), ("frontend_errors", "platform"),
-    ("email_controller", "comms"), ("product_moderation", "products"),
-    ("product_verification", "products"), ("product_videos", "products"),
-]
-
-UTILS_RULES = [
-    ("auth", "identity"), ("crypto", "security"), ("kms", "security"),
-    ("vault", "security"), ("encryption", "security"), ("rls", "security"),
-    ("csrf", "security"), ("country", "geography"), ("geo", "geography"),
-    ("cache", "platform"), ("redis", "platform"),
-]
-
-
 def norm(p):
     return p.replace(os.sep, "/")
 
 
-# Directories that are not feature modules (tooling / caches / VCS / venv).
-EXCLUDE_DIRS = {
-    "__pycache__", ".pytest_cache", ".hypothesis", ".kilo", ".git",
-    "venv", "var", "tests", "alembic", "scripts",
-    "_routers_clean", "_services_bak",
-}
-# Shared/platform layers that do NOT require a full vertical (model→service→
-# controller→router) slice — they are infrastructure, not domain features.
-PLATFORM_LAYERS = {
-    "utils", "middleware", "events", "dependencies", "jobs", "db", "models",
-    "providers", "migrations", "platform", "configuration", "provider_test",
-    "root",
-}
-
-
-def scan_backend_py():
-    """Single source of truth: every backend .py file as (rel, module_dotted, name).
-
-    Walks the whole backend, excluding caches, venv, tests, alembic, scripts and
-    temp/backup `_`-prefixed dirs, so the scan reflects the real, complete
-    codebase. `collect()` and `build_module_index()` both consume this."""
-    out = []
-    if not os.path.isdir(BACKEND):
-        return out
-    for root, dirs, files in os.walk(BACKEND):
-        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS and not d.startswith("_")]
-        for f in files:
-            if not f.endswith(".py") or f == "__init__.py" or f.endswith(".bak"):
-                continue
-            full = os.path.join(root, f)
-            rel = norm(os.path.relpath(full, BACKEND))
-            out.append((rel, "backend." + rel[:-3].replace("/", "."), f))
-    return sorted(out)
-
-
-def module_for(layer, rel, name):
-    parts = rel.split("/")
-    in_subdir = len(parts) > 2
-    if layer == "routers":
-        n = name[:-3]
-        for pref, feat in ROUTER_RULES:
-            if n.startswith(pref):
-                return feat
-        return "platform"
-    if layer == "utils":
-        n = name[:-3]
-        for pref, feat in UTILS_RULES:
-            if n.startswith(pref) or n.endswith(pref):
-                return feat
-        return "utils"
-    if layer == "middleware":
-        return "middleware"
-    if layer == "events":
-        return "events"
-    if layer == "dependencies":
-        return "dependencies"
-    if layer == "root":
-        return "platform"
-    if in_subdir:
-        return parts[1]
-    return layer
-
-
-def collect():
-    data = defaultdict(lambda: defaultdict(list))
-    for rel, mod, name in scan_backend_py():
-        layer = rel.split("/")[0] if "/" in rel else "root"
-        feat = module_for(layer, rel, name)
-        data[feat][layer].append((rel, mod, name))
-    return data
-
-
-def feature_alignment(feat, layers):
-    """Return (signal, reason). signal in {GREEN, AMBER, RED, SHARED}.
-
-    GREEN  = full vertical slice present (model/service/controller/router).
-    AMBER  = logic present but not fully exposed, or a data/provider leaf whose
-             completeness should be verified.
-    RED    = an endpoint surface (router) exists but there is NO service or
-             controller behind it — business logic is missing or bypassed.
-    SHARED = platform/infra layer or provider-only leaf (no slice required).
-    """
-    if feat in PLATFORM_LAYERS or feat == "platform":
-        return ("SHARED", "Shared platform/infrastructure layer — no full vertical slice required.")
-    has_model = bool(layers.get("models") or layers.get("db"))
-    has_provider = bool(layers.get("providers"))
-    has_service = bool(layers.get("services"))
-    has_controller = bool(layers.get("controllers"))
-    has_router = bool(layers.get("routers"))
-    if has_service and has_controller and has_router:
-        return ("GREEN", "Full vertical slice present (model → service → controller → router).")
-    if has_router and not has_service and not has_controller:
-        return ("RED", "Endpoint surface (router) exists but NO service or controller — business logic "
-                       "missing or bypassed.")
-    if has_service:
-        miss = []
-        if not has_controller:
-            miss.append("controller")
-        if not has_router:
-            miss.append("router")
-        return ("AMBER", "Service present but not fully exposed: missing " + ", ".join(miss)
-                + " (often dynamic importlib loading).")
-    if has_controller or has_router:
-        miss = [x for x in ("service", "controller", "router")
-                if not (x == "service" and has_service) and not (x == "controller" and has_controller)
-                and not (x == "router" and has_router)]
-        return ("AMBER", "Exposed (router/controller) but missing " + ", ".join(miss) + ".")
-    if has_provider:
-        return ("SHARED", "Provider/integration implementation (leaf) — no service/controller required.")
-    if has_model:
-        return ("AMBER", "Data model present but NO service/controller/router — verify if business logic "
-                         "is missing.")
-    return ("SHARED", "No backend logic layers present (frontend-only or empty module).")
-
-
-LAYER_LETTERS = [("models", "Mo"), ("db", "Db"), ("providers", "Pv"),
-                 ("services", "Sv"), ("controllers", "Ct"), ("routers", "Rt"),
-                 ("middleware", "Mw"), ("utils", "Ut"), ("events", "Ev"),
-                 ("jobs", "Jb"), ("dependencies", "Dp")]
-
-
-def layers_badge(layers):
-    return "·".join(code for key, code in LAYER_LETTERS if layers.get(key)) or "—"
-
-
-# ---------------------------------------------------------------------------
-# Cross-reference engine  (feature -> feature, function -> function,
-#                            operation -> operation)
-# ---------------------------------------------------------------------------
 def read_text(path):
     try:
         with open(path, encoding="utf-8", errors="ignore") as f:
@@ -186,1160 +65,1411 @@ def read_text(path):
         return ""
 
 
-# First-segment names that denote an in-repo backend module (so we can turn a
-# source-code import like `services.orders.orders_service` into the indexed
-# `backend.services.orders.orders_service`).
-INTERNAL_ROOTS = {
-    "services", "controllers", "models", "providers", "routers", "utils",
-    "db", "middleware", "dependencies", "events", "jobs", "scripts",
-    "schemas", "core", "migrations", "tests",
-}
-
-
-def normalize_internal(mod_path):
-    """Prefix an in-repo import target with `backend.` so it matches indexed
-    module/function qualnames. External modules (fastapi, os, …) pass through."""
-    if not mod_path:
-        return mod_path
-    first = mod_path.split(".", 1)[0]
-    if first in INTERNAL_ROOTS and not mod_path.startswith("backend."):
-        return "backend." + mod_path
-    return mod_path
-
-
-def feature_of_module(mod_dotted):
-    """mod_dotted like 'backend.services.orders.orders_service' -> ('services','orders')."""
-    parts = mod_dotted.split(".")
-    if len(parts) < 3 or parts[0] != "backend":
-        return ("platform", "platform")
-    layer = parts[1]
-    feat = module_for(layer, "/".join(parts[1:]) + ".py", parts[-1] + ".py")
-    return (layer, feat)
-
-
-def build_module_index():
-    """module dotted path -> (file_rel, layer, feature). Uses the same complete
-    backend scan as collect() so every file is indexed for cross-referencing."""
-    idx = {}
-    for rel, mod, name in scan_backend_py():
-        layer = rel.split("/")[0] if "/" in rel else "root"
-        _, feat = feature_of_module(mod)
-        idx[mod] = (rel, layer, feat)
-    return idx
-
-
-def collect_calls(func_node):
-    """Yield Call nodes that are directly descendants of func_node, not inside
-    nested function/class definitions."""
-    for child in ast.iter_child_nodes(func_node):
-        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            continue
-        if isinstance(child, ast.Call):
-            yield child
-        else:
-            yield from collect_calls(child)
-
-
-def dotted_root(node):
-    """Return (root_name, suffix_parts) for an attribute chain like a.b.c."""
-    parts = []
-    cur = node
-    while isinstance(cur, ast.Attribute):
-        parts.append(cur.attr)
-        cur = cur.value
-    if isinstance(cur, ast.Name):
-        parts.append(cur.id)
-    else:
-        return None
-    parts.reverse()
-    return parts[0], parts[1:]
-
-
-def parse_py(path, mod_dotted):
-    """Return dict with funcs(dict qualname->{kind,cls}), imports(dict
-    alias->module_path), calls(list of (src_qualname, target_module_path_or_None,
-    target_attr_or_None, raw))."""
-    text = read_text(path)
-    res = {"funcs": {}, "imports": {}, "calls": [], "routes": [], "syntax_error": False}
-    try:
-        tree = ast.parse(text)
-    except SyntaxError:
-        res["syntax_error"] = True
-        return res
-    except Exception:
-        return res
-
-    # imports
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom):
-            base = node.module or ""
-            if base.startswith("."):
-                # relative import -> resolve against file package
-                pkg = ".".join(mod_dotted.split(".")[:-1])
-                level = node.level
-                segs = pkg.split(".")
-                if level > 1:
-                    segs = segs[:-(level - 1)]
-                base = ".".join(segs + ([base[level:]] if base[level:] else []))
-            for a in node.names:
-                res["imports"][a.asname or a.name] = base  # alias -> module path
-        elif isinstance(node, ast.Import):
-            for a in node.names:
-                res["imports"][a.asname or a.name.split(".")[-1]] = a.name
-
-    # funcs / methods + their calls
-    for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            qn = mod_dotted + "." + node.name
-            res["funcs"][qn] = {"kind": "function", "cls": None}
-            for c in collect_calls(node):
-                res["calls"].append(_classify_call(qn, c, res["imports"], None))
-        elif isinstance(node, ast.ClassDef):
-            for sub in node.body:
-                if isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    qn = mod_dotted + "." + node.name + "." + sub.name
-                    res["funcs"][qn] = {"kind": "method", "cls": node.name}
-                    for c in collect_calls(sub):
-                        res["calls"].append(_classify_call(qn, c, res["imports"], node.name))
-
-    # routes (only in routers layer files)
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            for dec in node.decorator_list:
-                m = _route_dec_method_path(dec)
-                if m:
-                    res["routes"].append((m[0], m[1], mod_dotted + "." + node.name))
-    return res
-
-
-def _route_dec_method_path(dec):
-    if not isinstance(dec, ast.Call):
-        return None
-    f = dec.func
-    method = None
-    if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name):
-        if f.value.id in ("router", "app"):
-            method = f.attr.upper()
-    elif isinstance(f, ast.Attribute):  # router.something.get?
-        method = f.attr.upper()
-    if method not in ("GET", "POST", "PUT", "PATCH", "DELETE", "WEBSOCKET"):
-        return None
-    if not dec.args:
-        return None
-    p = dec.args[0]
-    if isinstance(p, ast.Constant) and isinstance(p.value, str):
-        return (method, _norm_path(p.value))
-    return None
-
-
-def _norm_path(p):
-    return "/".join("{}" if "{" in s else s for s in p.split("/"))
-
-
-def _classify_call(src_qn, call, imports, classname):
-    """Return (src_qn, target_qualname, target_attr, raw_str).
-
-    target_qualname is the resolved backend function/module (prefixed with
-    `backend.`); target_attr is unused legacy (kept for call-site compat)."""
-    f = call.func
-    raw = ""
-    try:
-        raw = ast.unparse(call.func)
-    except Exception:
-        pass
-    if isinstance(f, ast.Attribute):
-        root = dotted_root(f)
-        if root is None:
-            return (src_qn, None, None, raw)
-        root_name, rest = root
-        if root_name in ("self", "cls"):
-            # method call on self/cls -> same class
-            if classname and rest:
-                return (src_qn, ".".join(src_qn.split(".")[:-1]) + "." + classname + "." + rest[0], None, raw)
-            return (src_qn, None, None, raw)
-        if root_name in imports:
-            mod = normalize_internal(imports[root_name])
-            target = mod + ("." + ".".join(rest) if rest else "")
-            return (src_qn, target, None, raw)
-        # local var attribute call (self.repo.x) -> unresolved
-        return (src_qn, None, None, raw)
-    if isinstance(f, ast.Name):
-        name = f.id
-        if name in imports:
-            mod = normalize_internal(imports[name])
-            # `from X import foo` -> the imported symbol is X.foo
-            return (src_qn, mod + "." + name, None, raw)
-        # same-file call: resolve to current module + name
-        src_mod = src_qn.rsplit(".", 1)[0]
-        return (src_qn, src_mod + "." + name, None, raw)
-    return (src_qn, None, None, raw)
-
-
-def build_crossref():
-    mod_index = build_module_index()
-    files = {}          # mod -> parse result
-    func_index = {}     # qualname -> (file_rel, layer, feature)
-    for mod, (rel, layer, feat) in mod_index.items():
-        path = os.path.join(BACKEND, rel)
-        pr = parse_py(path, mod)
-        files[mod] = pr
-        for qn in pr["funcs"]:
-            func_index[qn] = (rel, layer, feat)
-
-    func_edges = []     # (src_qn, tgt_qn_or_module, src_feat, tgt_feat, src_layer, tgt_layer, kind)
-    feat_deps = defaultdict(lambda: defaultdict(int))   # src_feat -> tgt_feat -> count
-    import_deps = defaultdict(lambda: defaultdict(int))  # src_feat -> tgt_feat -> count
-    unresolved = 0
-    unresolved_by = defaultdict(int)  # category -> count (external_or_runtime / missing_internal)
-
-    for mod, pr in files.items():
-        (rel, layer, feat) = mod_index[mod]
-        # import-based feature deps (coarse, always reliable)
-        for alias, target_mod in pr["imports"].items():
-            tmod = normalize_internal(target_mod)
-            if tmod in mod_index:
-                tlayer, tfeat = mod_index[tmod][1], mod_index[tmod][2]
-                if tfeat != feat:
-                    import_deps[feat][tfeat] += 1
-        # call-based function edges
-        for (src_qn, target, _attr, raw) in pr["calls"]:
-            if not target:
-                continue
-            # exact function match
-            if target in func_index:
-                trel, tlayer, tfeat = func_index[target]
-                func_edges.append((src_qn, target, feat, tfeat, layer, tlayer, "call"))
-                if tfeat != feat:
-                    feat_deps[feat][tfeat] += 1
-                continue
-            # module-level match (call to a function defined in target module but
-            # maybe not indexed, e.g. nested) -> attribute call resolved to module
-            tmod = target.rsplit(".", 1)[0] if "." in target else target
-            if tmod in mod_index:
-                trel, tlayer, tfeat = mod_index[tmod][0], mod_index[tmod][2], mod_index[tmod][2]
-                func_edges.append((src_qn, target, feat, tfeat, layer, tlayer, "call"))
-                if tfeat != feat:
-                    feat_deps[feat][tfeat] += 1
-            else:
-                unresolved += 1
-                tn = normalize_internal(target)
-                if tn.startswith("backend."):
-                    unresolved_by["missing_internal"] += 1
-                else:
-                    unresolved_by["external_or_runtime"] += 1
-
-    return {
-        "mod_index": mod_index,
-        "func_index": func_index,
-        "files": files,
-        "func_edges": func_edges,
-        "feat_deps": feat_deps,
-        "import_deps": import_deps,
-        "unresolved": unresolved,
-        "unresolved_by": dict(unresolved_by),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Operation -> operation wiring (router operations -> handler -> backend fns)
-# ---------------------------------------------------------------------------
-def build_operation_wiring(cross):
-    mod_index = cross["mod_index"]
-    files = cross["files"]
-    ops = []
-    for mod, pr in files.items():
-        (rel, layer, feat) = mod_index[mod]
-        if layer != "routers":
-            continue
-        for (method, path, handler_qn) in pr["routes"]:
-            called = []
-            if handler_qn in cross["func_index"]:
-                # find calls made by this handler
-                for (src_qn, tgt, sfeat, tfeat, slayer, tlayer, kind) in cross["func_edges"]:
-                    if src_qn == handler_qn:
-                        called.append(tgt if tgt else src_qn)
-            # also detect dynamic imports of controllers/services inside handler body.
-            # parse_py stores raw import paths (e.g. "controllers.x"), so normalize first.
-            nv = {normalize_internal(v) for v in pr["imports"].values()}
-            dyn = sorted(d for d in nv
-                         if d.startswith("backend.controllers") or d.startswith("backend.services"))
-            ops.append({
-                "method": method, "path": path, "router_feat": feat,
-                "handler": handler_qn, "called": called, "dyn_imports": dyn,
-                "wired": bool(called or dyn),
-            })
-    return ops
-
-
-# ---------------------------------------------------------------------------
-# Frontend scan  (feature->feature via cross-feature imports; op linkage)
-# ---------------------------------------------------------------------------
-FRONTEND_TOKENS = {
-    "admin": ["admin", "command-center", "commission", "audit-fixes", "moderation"],
-    "analytics": ["analytics", "dashboard", "report"],
-    "audit": ["audit", "ediscovery", "worm"],
-    "catalog": ["catalog", "category"],
-    "commerce": ["cart", "checkout", "coupon", "flash-sale", "promotion", "package", "store"],
-    "comms": ["chat", "email", "campaign", "inbox", "video", "notification", "communication", "messag"],
-    "core": ["core", "hr", "employee", "hierarchy", "shift"],
-    "customer": ["customer", "account", "profile", "orders", "tracking"],
-    "hr": ["hr", "employee", "hierarchy", "shift", "onboarding"],
-    "finance": ["finance", "commission", "ledger", "invoice"],
-    "gateway": ["gateway", "integration", "webhook"],
-    "geography": ["country", "geograph", "region", "tax"],
-    "governance": ["governance", "policy", "operational"],
-    "identity": ["auth", "login", "signin", "session", "oauth", "register"],
-    "logistics": ["logistic", "parcel", "shipping", "delivery", "tracking"],
-    "media": ["media", "upload", "image", "voice", "asset"],
-    "orders": ["order", "returns"],
-    "permissions": ["permission", "role", "access", "rbac"],
-    "products": ["product", "supplier-storefront", "storefront"],
-    "security": ["security", "fraud", "csp", "encrypt"],
-    "supplier": ["supplier", "suppliers"],
-    "treasury": ["treasury", "payout"],
-    "uploads": ["upload", "batch-upload"],
-    "promotions": ["promotion", "flash-sale", "promo"],
-    "system": ["system", "settings", "config"],
-    "users": ["user", "profile", "account"],
-    "common": ["common", "shared", "utils", "lib"],
-    "ai": ["ai", "assistant", "search", "ocr"],
-    "delegators": ["delegator"],
-}
-EXCLUDE = {"node_modules", ".next", ".expo", "build", "android", "ios",
-           "web-dist", "playwright-report", "playwright-out", "test-output",
-           "test-results", "coverage", ".git", "__pycache__", ".expo"}
-
-
-def walk_fe(root):
+def walk_py_dir(root):
+    """Return .py files under ``root`` (absolute) as paths relative to BACKEND,
+    excluding ``__init__.py`` and ignored dirs."""
     out = []
     if not os.path.isdir(root):
         return out
     for dirpath, dirs, files in os.walk(root):
-        dirs[:] = [d for d in dirs if d not in EXCLUDE]
+        dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
         for f in files:
-            if f.endswith((".ts", ".tsx", ".js", ".jsx", ".vue")):
-                out.append(norm(os.path.relpath(os.path.join(dirpath, f), REPO)))
+            if f.endswith(".py") and f != "__init__.py":
+                out.append(norm(os.path.relpath(os.path.join(dirpath, f), BACKEND)))
+    return sorted(out)
+
+
+def list_dirs(root):
+    if not os.path.isdir(root):
+        return []
+    return sorted(d for d in os.listdir(root)
+                 if os.path.isdir(os.path.join(root, d)) and d not in EXCLUDE_DIRS)
+
+
+# ---------------------------------------------------------------------------
+# OLLAMA helper (optional, cached, resilient)
+# ---------------------------------------------------------------------------
+class Llm:
+    """Tiny OLLAMA ``/api/generate`` client. Degrades silently when offline."""
+
+    def __init__(self, base_url="http://localhost:11434", model="qwen2.5:latest",
+                 enabled=True, cache_path=None, timeout=180):
+        self.base_url = base_url.rstrip("/")
+        self.model = model
+        self.enabled = enabled
+        self.cache_path = cache_path
+        self.timeout = timeout
+        self._lock = threading.Lock()
+        self.cache = self._load()
+
+    def _load(self):
+        if self.cache_path and os.path.isfile(self.cache_path):
+            try:
+                with open(self.cache_path, encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                return {}
+        return {}
+
+    def _save(self):
+        if self.cache_path:
+            try:
+                with self._lock:
+                    with open(self.cache_path, "w", encoding="utf-8") as f:
+                        json.dump(self.cache, f, indent=2)
+            except Exception:
+                pass
+
+    def ask(self, prompt, system=None, max_tokens=700):
+        if not self.enabled:
+            return ""
+        key = hashlib.sha256((self.model + "|" + (system or "") + "|" + prompt).encode()).hexdigest()
+        if key in self.cache:
+            return self.cache[key]
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "system": system or "You are a concise senior software architect.",
+            "stream": False,
+            "options": {"num_predict": max_tokens, "temperature": 0.2},
+        }
+        text = ""
+        try:
+            req = urllib.request.Request(
+                self.base_url + "/api/generate",
+                data=json.dumps(payload).encode(),
+                headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                data = json.loads(resp.read().decode())
+            text = (data.get("response") or "").strip()
+        except Exception:
+            text = ""
+        # Only cache successful, non-empty answers so failed calls can be retried.
+        if text:
+            self.cache[key] = text
+            self._save()
+        return text
+
+
+# ---------------------------------------------------------------------------
+# AST content extraction
+# ---------------------------------------------------------------------------
+def file_signatures(path):
+    """Return a dict describing what is actually written in a .py file."""
+    txt = read_text(path)
+    if not txt.strip():
+        return {"loc": 0, "classes": [], "functions": [], "models": [], "schemas": [],
+               "services": [], "events": [], "policies": [], "repositories": []}
+    try:
+        tree = ast.parse(txt)
+    except Exception:
+        return {"loc": len(txt.splitlines()), "classes": [], "functions": [],
+                "models": [], "schemas": [], "services": [], "events": [],
+                "policies": [], "repositories": []}
+
+    classes, functions = [], []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            classes.append(node.name)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            functions.append(node.name)
+
+    models, schemas, services, events, policies, repos = [], [], [], [], [], []
+    for cls in [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]:
+        name = cls.name
+        bases = [b.id for b in cls.bases if isinstance(b, ast.Name)]
+        body_src = ast.get_source_segment(txt, cls) or ""
+        is_model = ("Column(" in body_src or "__tablename__" in body_src
+                    or any(b in ("Base", "Model", "SQLModel") for b in bases))
+        is_schema = ("BaseModel" in bases or name.endswith(("Schema", "DTO"))
+                     and "Column(" not in body_src)
+        is_event = name.endswith("Event") or "Event" in bases
+        is_repo = name.endswith(("Repository", "Repo")) or "Repository" in bases
+        if is_model:
+            models.append(name)
+        elif is_schema:
+            schemas.append(name)
+        elif is_event:
+            events.append(name)
+        elif is_repo:
+            repos.append(name)
+        elif name.endswith("Service") or name.endswith("Controller") or "Service" in name:
+            services.append(name)
+    for fn in functions:
+        if fn.startswith("policy_") or fn.endswith("_policy") or "policy" in fn:
+            policies.append(fn)
+
+    return {
+        "loc": len(txt.splitlines()),
+        "classes": classes,
+        "functions": functions,
+        "models": models,
+        "schemas": schemas,
+        "services": services,
+        "events": events,
+        "policies": policies,
+        "repositories": repos,
+    }
+
+
+# Cached signatures so several passes over the same file do not re-parse it.
+_SIG_CACHE = {}
+
+
+def sig(path):
+    """``file_signatures`` wrapped in a per-run cache (path is backend-relative)."""
+    if path not in _SIG_CACHE:
+        _SIG_CACHE[path] = file_signatures(path)
+    return _SIG_CACHE[path]
+
+
+def content_line(label, paths, top=6):
+    """One-line 'what is actually written' digest for a set of files.
+
+    Returns "" (no bullet) when there is nothing meaningful to report, else a
+    ready-to-print bullet: ``- content: <label> (N files, X classes, Y functions,
+    Z LOC): SampleClass, sample_func, ...``
+    """
+    if not paths:
+        return ""
+    cls = funcs = loc = 0
+    names = []
+    for p in paths:
+        s = sig(os.path.join(BACKEND, p))
+        loc += s["loc"]
+        cls += len(s["classes"])
+        funcs += len(s["functions"])
+        for n in (s["models"] + s["schemas"] + s["services"] + s["events"]):
+            if len(names) < top:
+                names.append(n)
+    if not cls and not funcs:
+        return f"- content: {label} ({len(paths)} files, {loc} LOC) — no classes/functions detected"
+    return (f"- content: {label} ({len(paths)} files, {cls} classes, {funcs} functions, "
+            f"{loc} LOC): {', '.join(names[:top])}")
+
+
+# Layer order used everywhere a domain's anatomy is listed (hierarchy-wise).
+LAYER_ORDER = ["services", "models", "schemas", "policies", "repositories",
+               "read_models", "events.py", "subscribers.py", "features.py", "ports.py"]
+
+
+# ---------------------------------------------------------------------------
+# Three-axis taxonomy (from documents/NEW_STRUCTURE.md, verified on disk)
+# ---------------------------------------------------------------------------
+def discover_modules():
+    mods = list_dirs(os.path.join(BACKEND, "modules"))
+    return [m for m in mods if m not in EXCLUDE_DIRS]
+
+
+def discover_domains():
+    doms = list_dirs(os.path.join(BACKEND, "domains"))
+    return [d for d in doms if d not in EXCLUDE_DIRS and d != "UNMAPPED"]
+
+
+PLATFORM_LAYERS = ["infrastructure", "kernel", "providers", "jobs", "middleware",
+                   "events", "dependencies", "db", "utils", "tests", "scripts"]
+
+MODULE_DESC = {
+    "admin": "Admin console (MFA/TOTP, moderation, payouts, command center, RBAC).",
+    "customer": "Customer storefront (catalog, checkout, tracking, wishlist).",
+    "employee": "Employee self-service (payslip, leave, expenses, attendance).",
+    "logistics": "Logistics partner (pickups, shipments, settlements, COD remittance).",
+    "supplier": "Supplier portal (onboarding, products, orders, payouts, finance).",
+}
+DOMAIN_DESC = {
+    "accounts": "AR/AP sub-ledgers, invoices, reconciliation.",
+    "catalog": "Products, variants, categories, coupons, reviews, moderation.",
+    "comms": "Chat, email, campaigns, notifications, escalation.",
+    "country": "Country configs, tax rates, staff assignments, RLS scope axis.",
+    "customers": "Addresses, referrals, badge tiers, wishlists.",
+    "finance": "Ledger, treasury, reporting, payouts, VAT, cash forecast.",
+    "governance": "Audit logs, fraud, manual review, command center, system health.",
+    "hr": "Employees, org units, attendance, shifts, leave, biometrics, payroll.",
+    "logistics": "Partners, shipments, tracking, settlements, distance matrix.",
+    "media": "Media assets, product videos, video rooms, AI upload jobs.",
+    "orders": "Orders, items, carts, returns, disputes, lifecycle.",
+    "payments": "Gateway connections, webhook events, settlement schedules.",
+    "suppliers": "Profiles, documents, KYC, onboarding.",
+}
+
+# Layer anatomy a healthy domain exposes (Law-implied).
+FOLDER_LAYERS = ["services", "models", "schemas", "policies", "repositories", "read_models"]
+SINGLE_FILE_LAYERS = {"events.py", "subscribers.py", "features.py", "ports.py"}
+
+
+def layer_of(relpath):
+    """Map a backend-relative path to the domain layer it belongs to (or None)."""
+    parts = relpath.split("/")
+    base = parts[-1]
+    for layer in FOLDER_LAYERS:
+        if ("/" + layer + "/") in relpath:
+            return layer
+    # vertical slices: finance/ledger/service.py, finance/ledger/models.py ...
+    if base in ("service.py", "services.py") or base.endswith("_service.py"):
+        return "services"
+    if base == "models.py":
+        return "models"
+    if base == "schemas.py":
+        return "schemas"
+    if base == "policies.py":
+        return "policies"
+    if base == "repositories.py":
+        return "repositories"
+    if base == "read_models.py":
+        return "read_models"
+    if base in SINGLE_FILE_LAYERS:
+        return base
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Feature-atom parsing (Axis 3 seed)
+# ---------------------------------------------------------------------------
+def _const(node):
+    if isinstance(node, ast.Constant):
+        return node.value
+    return ""
+
+
+def _list_const(node):
+    if isinstance(node, ast.List):
+        return [_const(e) for e in node.elts]
+    return []
+
+
+def _snake(name):
+    """Class name → snake_case (e.g. CountryConfigVersion → country_config_version)."""
+    s = re.sub(r"(?<!^)(?=[A-Z])", "_", name)
+    s = re.sub(r"[^A-Za-z0-9_]", "", s)
+    return s.lower()
+
+
+def _plural(word):
+    """NEW_STRUCTURE.md naming lint: tables must be plural snake_case."""
+    return bool(re.search(r"(ies|ses|es|s)$", word))
+
+
+def parse_features(path):
+    """Return [(key, label, risk, actions, description)] from a domain FEATURES dict."""
+    res = []
+    txt = read_text(path)
+    if not txt.strip():
+        return res
+    try:
+        tree = ast.parse(txt)
+    except Exception:
+        return res
+    for node in ast.walk(tree):
+        target = value = None
+        if isinstance(node, ast.Assign):
+            if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                target, value = node.targets[0].id, node.value
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name):
+                target, value = node.target.id, node.value
+        if target != "FEATURES" or not isinstance(value, ast.Dict):
+            continue
+        for k, v in zip(value.keys, value.values):
+            if not isinstance(k, ast.Constant):
+                continue
+            label = risk = desc = ""
+            actions = []
+            if isinstance(v, ast.Dict):
+                for dk, dv in zip(v.keys, v.values):
+                    if isinstance(dk, ast.Constant):
+                        if dk.value == "label":
+                            label = _const(dv)
+                        elif dk.value == "risk":
+                            risk = _const(dv)
+                        elif dk.value == "description":
+                            desc = _const(dv)
+                        elif dk.value == "actions":
+                            actions = _list_const(dv)
+            res.append((str(k.value), label, risk, actions, desc))
+    return res
+
+
+# ---------------------------------------------------------------------------
+# Import regexes (used for law enforcement)
+# ---------------------------------------------------------------------------
+DOMAIN_IMPORT_RE = re.compile(r"from\s+domains\.([a-z_]+)")
+MODULE_IMPORT_RE = re.compile(r"from\s+modules\.([a-z_]+)")
+DOMAIN_ATTR_RE = re.compile(r"domains\.([a-z_]+)\.")
+REQUIRE_FEATURE_RE = re.compile(r'require_feature\(\s*["\']([a-z0-9_.]+)["\']')
+RISK_RE = re.compile(r"risk", re.I)
+
+
+# ---------------------------------------------------------------------------
+# Axis 1 — Modules (content-aware)
+# ---------------------------------------------------------------------------
+def classify_module_file(relpath, sig):
+    """Thin-router heuristic (Law 2). Returns (thin_score, notes)."""
+    base = os.path.basename(relpath).lower()
+    notes = []
+    score = 0
+    if "/routers/" in relpath:
+        t = read_text(os.path.join(BACKEND, relpath))
+        writes = len(re.findall(r"\.(commit|flush|add|merge|delete)\s*\(", t))
+        model_inst = len(re.findall(r"=\s*[A-Z]\w*\([^)]*\)", t))
+        direct_orm = len(re.findall(r"session\.(execute|query|add|commit)", t, re.I))
+        # Law 2 (thin router): flag only genuine business logic / DB writes.
+        if writes or direct_orm or model_inst > 3:
+            score += writes + direct_orm + max(0, model_inst - 3)
+            notes.append("contains DB writes / model instantiation (Law 2)")
+        if not re.search(r"require_feature|Depends\(", t):
+            notes.append("no require_feature gate detected")
+    return score, notes
+
+
+def scan_modules():
+    out = {}
+    for m in discover_modules():
+        root = os.path.join(BACKEND, "modules", m)
+        files = walk_py_dir(root)
+        exposed = set()
+        gated = set()
+        residual = set()
+        router_files = []
+        for r in files:
+            t = read_text(os.path.join(BACKEND, r))
+            for mm in DOMAIN_IMPORT_RE.finditer(t):
+                if discover_domains_contains(mm.group(1)):
+                    exposed.add(mm.group(1))
+            for mm in DOMAIN_ATTR_RE.finditer(t):
+                if discover_domains_contains(mm.group(1)):
+                    exposed.add(mm.group(1))
+            for mm in REQUIRE_FEATURE_RE.finditer(t):
+                gated.add(mm.group(1))
+            if re.search(r"from\s+controllers\.|import\s+controllers", t):
+                residual.add(r)
+            if "/routers/" in r:
+                router_files.append(r)
+        # filename-token inference (supplementary)
+        for r in files:
+            base = os.path.basename(r).lower()
+            for seg in re.split(r"[^a-z0-9]+", base):
+                if discover_domains_contains(seg):
+                    exposed.add(seg)
+        # router thickness
+        thick = []
+        for r in router_files:
+            score, notes = classify_module_file(r, None)
+            if score >= 3 or any("controller" in n for n in notes):
+                thick.append((r, notes))
+        out[m] = {
+            "files": files,
+            "routers": router_files,
+            "auth": [r for r in files if "/auth/" in r],
+            "serializers": [r for r in files if "/serializers/" in r],
+            "exposed": sorted(exposed),
+            "gated": sorted(gated),
+            "residual": sorted(residual),
+            "thick_routers": thick,
+            "status": "Active" if router_files else "Empty",
+        }
     return out
 
 
-def classify_fe(path):
-    low = path.lower()
-    for feat, toks in FRONTEND_TOKENS.items():
-        for t in toks:
-            if ("/" + t + "/") in low or low.endswith("/" + t) or ("-" + t + "-") in low or low.startswith(t + "/"):
-                return feat
-    return "platform"
+# Digest of all domains (filled later) — placeholder for inference.
+_ALL_DOMAINS = []
 
 
-def fe_imports_and_api(path):
-    text = read_text(os.path.join(REPO, path))
-    imps = []
-    apis = []
-    for m in re_imp.finditer(text):
-        if m.group(1):
-            imps.append(m.group(1).strip())
-        elif m.group(2):
-            for part in m.group(2).split(","):
-                part = part.strip()
-                if part:
-                    imps.append(part)
-    for m in re_api.finditer(text):
-        apis.append(m.group(1))
-    return imps, apis
+def discover_domains_contains(name):
+    return name in _ALL_DOMAINS
 
 
-import re
-# `from "x" import` / `from x import` -> group(1); `import a, b, c` -> group(2) (comma list).
-re_imp = re.compile(r"""from\s+['"]?([^'";]+?)['"]?\s+import|import\s+([^;]+?)(?=\s+from|$)""")
-re_api = re.compile(r"""(?:fetch|apiFetch|axios\.(?:get|post|put|patch|delete)|useSWR|useQuery|ky\()\s*\(\s*[`'"]([^`'"]+)[`'"]""")
-
-
-def build_frontend_xref():
-    roots = {
-        "web_app": os.path.join(FRONTEND, "web_app"),
-        "mobile_app": os.path.join(FRONTEND, "mobile_app"),
-        "shared": os.path.join(FRONTEND, "shared"),
+# ---------------------------------------------------------------------------
+# Axis 2 — Domains (slice-aware, content-aware)
+# ---------------------------------------------------------------------------
+def scan_domain(d):
+    root = os.path.join(BACKEND, "domains", d)
+    files = walk_py_dir(root)
+    layers = defaultdict(list)
+    for r in files:
+        ly = layer_of(r)
+        if ly:
+            layers[ly].append(r)
+    # content depth per layer
+    layer_depth = {}
+    for ly, fl in layers.items():
+        classes = funcs = models = 0
+        for r in fl:
+            s = file_signatures(os.path.join(BACKEND, r))
+            classes += len(s["classes"])
+            funcs += len(s["functions"])
+            models += len(s["models"])
+        layer_depth[ly] = {"files": len(fl), "classes": classes,
+                           "functions": funcs, "models": models}
+    atoms = parse_features(os.path.join(root, "features.py"))
+    # backing: capability token present in file/class/func names or blob
+    sig_by_file = {}
+    for r in files:
+        sig_by_file[r] = file_signatures(os.path.join(BACKEND, r))
+    blob = "\n".join(read_text(os.path.join(BACKEND, r)) for r in files)
+    backed = []
+    for (key, _l, _r, _a, _de) in atoms:
+        cap = key.split(".")[-1]
+        hit = (key in blob) or (cap in blob)
+        if not hit:
+            for r, s in sig_by_file.items():
+                hay = " ".join(s["classes"] + s["functions"] + [os.path.basename(r)])
+                if cap in hay or cap.replace("_", "") in hay.replace("_", ""):
+                    hit = True
+                    break
+        backed.append(hit)
+    # inter-domain dependencies (Law 3)
+    deps = defaultdict(int)
+    cross_violations = []
+    for r in files:
+        ly = layer_of(r)
+        t = read_text(os.path.join(BACKEND, r))
+        for mm in DOMAIN_IMPORT_RE.finditer(t):
+            target = mm.group(1)
+            if target in _ALL_DOMAINS and target != d:
+                deps[target] += 1
+                legal = ("/ports" in r or "/ports/" in r or "ports.py" in r
+                         or "events.py" in r or "/events/" in r
+                         or "/read_models" in r or "read_models.py" in r)
+                if not legal:
+                    cross_violations.append((r, target))
+    return {
+        "files": files,
+        "layers": dict(layers),
+        "layer_depth": layer_depth,
+        "atoms": atoms,
+        "backed": backed,
+        "deps": dict(deps),
+        "cross_violations": cross_violations,
+        "total_classes": sum(v["classes"] for v in layer_depth.values()),
+        "total_models": sum(v["models"] for v in layer_depth.values()),
     }
-    feats = defaultdict(lambda: {"files": [], "import_deps": defaultdict(int),
-                                 "api_calls": []})
-    api_to_feat = defaultdict(set)
-    for rname, rdir in roots.items():
-        for p in walk_fe(rdir):
-            f = classify_fe(p)
-            feats[f]["files"].append(p)
-            imps, apis = fe_imports_and_api(p)
-            for spec in imps:
-                # local cross-feature import: relative path that crosses feature dir
-                if spec.startswith(".") or spec.startswith("/"):
-                    low = spec.lower()
-                    tgt = classify_fe(low)
-                    if tgt != f and tgt not in ("platform",):
-                        feats[f]["import_deps"][tgt] += 1
-                elif spec.startswith("backend"):
-                    # frontend -> backend import (rare)
-                    feats[f]["import_deps"]["backend"] += 1
-            for a in apis:
-                if a.startswith("/"):
-                    feats[f]["api_calls"].append(_norm_path(a.split("?")[0]))
-                    api_to_feat[_norm_path(a.split("?")[0])].add(f)
-    return feats, api_to_feat
+
+
+def scan_domains():
+    out = {}
+    for d in _ALL_DOMAINS:
+        out[d] = scan_domain(d)
+    return out
 
 
 # ---------------------------------------------------------------------------
-# Metadata
+# Axis 3 aggregation — rbac catalog
 # ---------------------------------------------------------------------------
-SURFACE = {
-    "admin": "Admin Web", "analytics": "Admin Web", "audit": "Admin Web",
-    "catalog": "Admin + Store", "commerce": "Customer Web + Store", "comms": "Cross-channel",
-    "communication": "Cross-channel", "core": "Internal Platform", "customer": "Customer Web + Mobile",
-    "hr": "Internal Platform", "employee": "Internal Platform", "hierarchy": "Internal Platform",
-    "finance": "Admin + Supplier", "gateway": "System/Integration", "gateways": "System/Integration",
-    "geography": "Cross-cutting", "country": "Cross-cutting", "location_service": "Cross-cutting",
-    "governance": "Admin Web", "identity": "Cross-cutting", "auth": "Cross-cutting",
-    "logistics": "Supplier + Admin", "media": "Cross-cutting", "image": "Cross-cutting",
-    "voice": "Cross-cutting", "orders": "Cross-cutting", "permissions": "Cross-cutting",
-    "products": "Store + Supplier", "security": "Cross-cutting", "supplier": "Supplier Portal",
-    "suppliers": "Supplier Portal", "treasury": "Admin + Supplier", "uploads": "Cross-cutting",
-    "promotions": "Store", "system": "Internal", "users": "Cross-cutting", "common": "Shared",
-    "mcp": "Internal", "legacy": "Cross-cutting", "automation": "Internal", "payments": "Cross-cutting",
-    "ai": "Internal", "delegators": "Generated", "generated": "Generated", "migrations": "Database",
-    "middleware": "Platform", "events": "Platform", "utils": "Platform", "dependencies": "Platform",
-    "db": "Platform", "models": "Platform", "providers": "Platform", "services": "Platform",
-    "jobs": "Platform/Async", "platform": "Platform", "configuration": "Cross-cutting",
-    "provider_test": "Shared",
-}
-DOMAIN = {
-    "admin": "Administration", "analytics": "Analytics", "audit": "Compliance & Audit",
-    "catalog": "Catalog", "commerce": "Commerce", "comms": "Communications",
-    "communication": "Communications", "core": "People / HR Platform", "customer": "Commerce",
-    "hr": "HR / People", "employee": "HR / People", "hierarchy": "HR / People",
-    "finance": "Finance", "gateway": "Integrations", "gateways": "Integrations",
-    "geography": "Geography", "country": "Geography", "location_service": "Geography",
-    "governance": "Governance", "identity": "Identity & Auth", "auth": "Identity & Auth",
-    "logistics": "Logistics", "media": "Media", "image": "Media", "voice": "Communications",
-    "orders": "Orders", "permissions": "Access Control", "products": "Products",
-    "security": "Security", "supplier": "Suppliers", "suppliers": "Suppliers",
-    "treasury": "Treasury", "uploads": "Media / Uploads", "promotions": "Promotions",
-    "system": "System", "users": "Identity", "common": "Shared", "mcp": "AI / ML",
-    "legacy": "Legacy", "automation": "Automation", "payments": "Payments", "ai": "AI / ML",
-    "delegators": "Generated Delegation", "generated": "Generated Routers",
-    "migrations": "Database", "middleware": "Platform", "events": "Platform", "utils": "Platform",
-    "dependencies": "Platform", "jobs": "Async Jobs", "platform": "Platform",
-    "configuration": "Configuration", "provider_test": "Shared", "db": "Database",
-    "models": "Database Models", "providers": "Providers", "services": "Services",
-}
-DESC = {
-    "admin": "Admin console, bulk ops, moderation, payouts, command center",
-    "analytics": "Reporting, dashboards, admin analytics",
-    "audit": "Immutable audit trail, e-discovery, WORM compliance",
-    "catalog": "Category / catalog taxonomy and administration",
-    "commerce": "Storefront commerce: cart, coupons, flash sales, packages",
-    "comms": "Chat, email, campaigns, unified inbox, video, notifications",
-    "communication": "Internal communication services (separate dir from comms)",
-    "core": "Core people/HR platform, users, base schema",
-    "customer": "Customer web + mobile self-service flows",
-    "hr": "HR / employee / hierarchy / shift handover",
-    "employee": "Employee module (services dir, related to hr)",
-    "hierarchy": "Org hierarchy module (services dir, related to hr)",
-    "finance": "Finance, commissions, contractor milestones, ledgers",
-    "gateway": "External integrations / payment gateways (models)",
-    "gateways": "External integrations / payment gateways (services)",
-    "geography": "Countries, regions, tax/legal/economic country data",
-    "country": "Country services (services dir, related to geography)",
-    "location_service": "Location service (services dir, related to geography)",
-    "governance": "Operational governance and policy enforcement",
-    "identity": "Auth, identity, sessions, public auth surfaces",
-    "auth": "Auth providers (providers dir, related to identity)",
-    "logistics": "Logistics, parcel tracking, supplier logistics",
-    "media": "Media storage, uploads, image/voice processing",
-    "image": "Image processing providers (providers dir, related to media)",
-    "voice": "Voice / telephony providers (providers dir, related to comms)",
-    "orders": "Order lifecycle and order entities",
-    "permissions": "Access control, permission entities and checks",
-    "products": "Product catalog, moderation, verification, videos",
-    "security": "Security: fraud, CSP, RLS, encryption",
-    "supplier": "Supplier portal, supplier storefronts",
-    "suppliers": "Suppliers services (services dir, related to supplier)",
-    "treasury": "Treasury, payout approvals, supplier finance",
-    "uploads": "Batch uploads and upload jobs",
-    "promotions": "Promotions, flash sales, promo points",
-    "system": "Internal system tooling and scripts",
-    "users": "User accounts and profile management",
-    "common": "Shared cross-cutting services and helpers",
-    "mcp": "Model-context-protocol / AI tool surface",
-    "legacy": "Legacy compatibility shims (providers)",
-    "automation": "Internal automation providers (schedulers)",
-    "payments": "Payments processing providers",
-    "ai": "AI assistance, search, OCR, automation research",
-    "delegators": "Auto-generated delegation controllers/routers",
-    "generated": "Generated routers (routers/generated)",
-    "migrations": "Database migration scripts (Alembic)",
-    "middleware": "Platform HTTP middleware",
-    "events": "Platform event bus / handlers",
-    "utils": "Platform utilities",
-    "dependencies": "Platform DI dependencies",
-    "jobs": "Async / background jobs",
-    "platform": "Platform-level shared concerns",
-    "configuration": "Configuration models/controllers",
-    "provider_test": "Provider test helpers (shared)",
-    "db": "Database core: engine, session, base, init/schema bootstrap",
-    "models": "Top-level ORM models at models/ root",
-    "providers": "Top-level providers at providers/ root",
-    "services": "Top-level services at services/ root (registry etc.)",
-}
-ORDER = ["admin", "analytics", "audit", "catalog", "commerce", "comms", "communication",
-         "core", "customer", "hr", "employee", "hierarchy", "finance", "gateway", "gateways",
-         "geography", "country", "location_service", "governance", "identity", "auth",
-         "logistics", "media", "image", "voice", "orders", "permissions", "products",
-         "security", "supplier", "suppliers", "treasury", "uploads", "promotions", "system",
-         "users", "common", "mcp", "legacy", "automation", "payments", "ai", "delegators",
-         "generated", "migrations", "middleware", "events", "utils", "dependencies", "jobs",
-         "configuration", "provider_test", "platform"]
+def scan_rbac():
+    atoms = []
+    for d in _ALL_DOMAINS:
+        for (key, label, risk, actions, desc) in parse_features(
+                os.path.join(BACKEND, "domains", d, "features.py")):
+            atoms.append((d, key, label, risk, actions, desc))
+    gated = set()
+    for m in discover_modules():
+        for r in walk_py_dir(os.path.join(BACKEND, "modules", m)):
+            for mm in REQUIRE_FEATURE_RE.finditer(read_text(os.path.join(BACKEND, r))):
+                gated.add(mm.group(1))
+    for r in walk_py_dir(os.path.join(BACKEND, "rbac")):
+        for mm in REQUIRE_FEATURE_RE.finditer(read_text(os.path.join(BACKEND, r))):
+            gated.add(mm.group(1))
+    # unknown gates: require_feature literals not present in the catalog
+    catalog_keys = {k for (_d, k, *_x) in atoms}
+    unknown_gates = sorted(g for g in gated if g not in catalog_keys)
+    return atoms, gated, catalog_keys, unknown_gates, \
+        os.path.isfile(os.path.join(BACKEND, "rbac", "catalog.py"))
 
 
 # ---------------------------------------------------------------------------
-# Build
+# Platform layers (context — what else is running)
 # ---------------------------------------------------------------------------
-def cell(files):
-    if not files:
-        return "—"
-    names = sorted({(x if isinstance(x, str) else x[2]) for x in files})
-    return " · ".join(names)
+def scan_platform():
+    out = {}
+    for layer in PLATFORM_LAYERS:
+        root = os.path.join(BACKEND, layer)
+        if os.path.isdir(root):
+            files = walk_py_dir(root)
+            out[layer] = {
+                "files": len(files),
+                "has_init": os.path.isfile(os.path.join(root, "__init__.py")),
+            }
+    return out
 
 
-def main(out_dir=None, report_name="SYSTEM_TRACKING_REPORT.md",
-          json_name="FEATURE_CROSS_REFERENCES.json"):
-    out_dir = out_dir or BACKEND
-    data = collect()
-    cross = build_crossref()
-    ops = build_operation_wiring(cross)
-    fe, api_to_feat = build_frontend_xref()
+# ---------------------------------------------------------------------------
+# Completion / status model (content-aware)
+# ---------------------------------------------------------------------------
+CORE_LAYERS = ["models", "services", "schemas", "events"]
 
-    # backend route index (normalized path -> set of router features)
-    route_index = defaultdict(set)
-    for op in ops:
-        route_index[op["path"]].add(op["router_feat"])
 
-    web_files = walk_fe(os.path.join(FRONTEND, "web_app"))
-    mob_files = walk_fe(os.path.join(FRONTEND, "mobile_app"))
-    shared_files = walk_fe(os.path.join(FRONTEND, "shared"))
+def domain_completion(dom):
+    """Return (status, pct, present_layers) for a domain.
 
-    fe_buckets = defaultdict(lambda: {"web": [], "mob": [], "shared": [], "webt": [], "mobt": [], "bt": []})
-    for p in web_files:
-        bn = os.path.basename(p)
-        f = classify_fe(p)
-        if "__tests__" in p or "__mocks__" in p or ".test." in p or ".spec." in p:
-            fe_buckets[f]["webt"].append(bn)
+    A layer counts as *present* only when it has at least one real class or
+    function (content check, not just an empty folder). Core layers earn 20%
+    each; features earn 20% only when atoms are defined; bonuses:
+    policies(+8)/subscribers(+8)/ports(+4)/read_models(+4)/repositories(+4).
+    Status: Implemented >=80 · Partial >=45 · Scaffold <45.
+    """
+    depth = dom["layer_depth"]
+    present = []
+    for ly in CORE_LAYERS:
+        d = depth.get(ly)
+        if d and (d["files"] > 0 and (d["classes"] + d["functions"]) > 0):
+            present.append(ly)
+    pct = 20 * len(present)
+    if depth.get("features", {}).get("files", 0) > 0 and dom["atoms"]:
+        pct += 20
+        present.append("features")
+    for ly, bonus in (("policies", 8), ("subscribers", 8), ("ports", 4),
+                      ("read_models", 4), ("repositories", 4)):
+        d = depth.get(ly)
+        if d and (d["files"] > 0 and (d["classes"] + d["functions"]) > 0):
+            pct += bonus
+            present.append(ly)
+    pct = min(100, round(pct))
+    if pct >= 80:
+        status = "Implemented"
+    elif pct >= 45:
+        status = "Partial"
+    else:
+        status = "Scaffold"
+    return status, pct, present
+
+
+def feature_status(backed, gated):
+    if backed and gated:
+        return "Active"
+    if backed:
+        return "Implemented"
+    if gated:
+        return "Enforced"
+    return "Defined"
+
+
+# ---------------------------------------------------------------------------
+# Law violations (the 7 laws of NEW_STRUCTURE.md)
+# ---------------------------------------------------------------------------
+def detect_violations(modules, domains, rbac_atoms, unknown_gates):
+    """Return list of (law, severity, area, finding, action)."""
+    v = []
+    domains_set = set(_ALL_DOMAINS)
+    modules_set = set(discover_modules())
+
+    # ---- Law 1: arrows point down only ----
+    # domain -> module, infrastructure -> upper, domain -> rbac
+    for d in domains_set:
+        root = os.path.join(BACKEND, "domains", d)
+        for r in walk_py_dir(root):
+            t = read_text(os.path.join(BACKEND, r))
+            if MODULE_IMPORT_RE.search(t):
+                v.append(("Law 1", "HIGH", "direction",
+                          f"domain/{d} imports a module: {r}",
+                          "Remove the upward import; modules compose domains, never the reverse."))
+            if re.search(r"from\s+rbac\b", t):
+                v.append(("Law 1", "HIGH", "direction",
+                          f"domain/{d} imports rbac: {r}",
+                          "Domains enforce policies, not permissions; rbac is imported only by modules/middleware."))
+    for layer in ("infrastructure", "kernel", "providers", "jobs", "middleware"):
+        root = os.path.join(BACKEND, layer)
+        for r in walk_py_dir(root):
+            t = read_text(os.path.join(BACKEND, r))
+            if DOMAIN_IMPORT_RE.search(t) or MODULE_IMPORT_RE.search(t):
+                v.append(("Law 1", "MED", "direction",
+                          f"platform/{layer} imports an upper layer: {r}",
+                          "Platform layers must import nothing above them."))
+    # residual `controllers` imports anywhere
+    residual_hits = []
+    for r in walk_py_dir(BACKEND):
+        t = read_text(os.path.join(BACKEND, r))
+        if re.search(r"from\s+controllers\.|import\s+controllers", t):
+            residual_hits.append(r)
+    if residual_hits:
+        v.append(("Law 1", "HIGH", "residual",
+                  f"{len(residual_hits)} files bypass the module→domain composition rule "
+                  f"by importing from the deprecated controllers layer "
+                  f"(e.g. {', '.join(residual_hits[:3])}).",
+                  "Route logic must live in module routers; business logic must live in domain services."))
+
+    # ---- Law 2: thin module routers ----
+    thick_all = []
+    ungated_all = []
+    for m in modules_set:
+        for (r, notes) in modules[m]["thick_routers"]:
+            thick_all.append((m, r, notes))
+        for r in modules[m]["routers"]:
+            t = read_text(os.path.join(BACKEND, r))
+            if not re.search(r"require_feature|Depends\(", t):
+                ungated_all.append((m, r))
+    if thick_all:
+        sample = "; ".join(f"{m}/{os.path.basename(r)}" for m, r, _n in thick_all[:5])
+        v.append(("Law 2", "HIGH", "thin-router",
+                  f"{len(thick_all)} module routers carry business logic / DB writes "
+                  f"(e.g. {sample}).",
+                  "Push logic into domain services; routers keep only auth + require_feature + one call."))
+    if ungated_all:
+        sample = "; ".join(f"{m}/{os.path.basename(r)}" for m, r in ungated_all[:5])
+        v.append(("Law 2", "HIGH", "thin-router",
+                  f"{len(ungated_all)} module routers have no feature/auth gate at all "
+                  f"(e.g. {sample}).",
+                  "Every router endpoint must include require_feature(...) or equivalent auth dependency."))
+
+    # ---- Law 3: cross-domain wiring ----
+    cross_total = 0
+    cross_write_violations = []
+    cross_read_violations = []
+    for d in domains_set:
+        for (r, target) in domains[d]["cross_violations"]:
+            cross_total += 1
+            if len(cross_write_violations) < 3:
+                cross_write_violations.append(f"{d} → {target} ({os.path.basename(r)})")
+    allowlist = read_text(os.path.join(BACKEND, "DOMAIN_ALLOWLIST.yaml"))
+    allowlist_entries = len(re.findall(r"-\s+\S+", allowlist)) if allowlist else 0
+    if cross_total:
+        v.append(("Law 3", "HIGH", "cross-domain",
+                  f"{cross_total} cross-domain imports bypass the sanctioned ports/events path "
+                  f"(e.g. {', '.join(cross_write_violations)}). Allowlist entries: {allowlist_entries}.",
+                  "Route cross-domain reads through the target domain's ports.py or read_models/; "
+                  "route cross-domain writes through events.py/subscribers.py only."))
+
+    # ---- Law 4: features single-sourced ----
+    empty_feature_domains = [d for d in domains_set if not domains[d]["atoms"]]
+    if empty_feature_domains:
+        v.append(("Law 4", "HIGH", "features",
+                  f"{len(empty_feature_domains)}/{len(domains_set)} domains have an empty "
+                  f"features.py (no atoms): {', '.join(empty_feature_domains)}.",
+                  "Seed each domain's feature atoms so the rbac catalog is complete and single-sourced."))
+    # duplicate feature keys across domains (single-sourced = one definition)
+    key_seen = {}
+    for d in domains_set:
+        for (key, *_rest) in domains[d]["atoms"]:
+            key_seen.setdefault(key, []).append(d)
+    dups = {k: v_ for k, v_ in key_seen.items() if len(v_) > 1}
+    if dups:
+        sample = "; ".join(f"{k} defined in {', '.join(v_)}" for k, v_ in list(dups.items())[:5])
+        v.append(("Law 4", "HIGH", "features",
+                  f"{len(dups)} feature keys are defined in more than one domain (e.g. {sample}).",
+                  "A feature atom must be defined in exactly one domain's features.py; merge or rename."))
+    if unknown_gates:
+        v.append(("Law 4", "HIGH", "features",
+                  f"{len(unknown_gates)} require_feature(...) literals are NOT in any domain "
+                  f"features.py (e.g. {', '.join(unknown_gates[:6])}).",
+                  "Add the missing atom to the owning domain's features.py or fix the literal (CI must fail)."))
+    if not os.path.isfile(os.path.join(BACKEND, "rbac", "catalog.py")):
+        v.append(("Law 4", "HIGH", "rbac",
+                  "backend/rbac/catalog.py missing — no single source of truth for features.",
+                  "Create catalog.py that package-scans domains/*/features.py."))
+
+    # ---- Law 5: country as orthogonal scope axis ----
+    country_imports = 0
+    for r in walk_py_dir(BACKEND):
+        if re.search(r"country_code|country_staff_assignments|rls|row_level_security",
+                     read_text(os.path.join(BACKEND, r)), re.I):
+            country_imports += 1
+    if country_imports == 0:
+        v.append(("Law 5", "INFO", "country-axis",
+                  "No RLS / country-scoped access markers detected yet.",
+                  "Introduce country_code + country_staff_assignments as an independent scope axis."))
+
+    # ---- Law 6: schema discipline (ast-based, no fragile regex) ----
+    # NEW_STRUCTURE.md: every table in a domain Postgres schema; Alembic is the
+    # only schema source; naming lint = snake_case, plural, <thing>_id,
+    # created_at/updated_at, country_code, is_deleted.
+    models_missing_schema = 0
+    models_bad_name = 0
+    models_missing_country = 0
+    models_missing_ts = 0
+    models_missing_deleted = 0
+    samples = {"schema": [], "name": [], "country": [], "ts": [], "deleted": []}
+    for d in domains_set:
+        for r in domains[d]["layers"].get("models", []):
+            raw = read_text(os.path.join(BACKEND, r))
+            try:
+                tree = ast.parse(raw)
+            except Exception:
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                body = ast.get_source_segment(raw, node) or ""
+                is_model = ("Column(" in body or "__tablename__" in body
+                            or any(isinstance(b, ast.Name) and b.id in ("Base", "Model", "SQLModel")
+                                   for b in node.bases))
+                if not is_model:
+                    continue
+                tag = f"{os.path.basename(r)}::{node.name}"
+                # 1) explicit Postgres schema per domain
+                if "__table_args__" not in body:
+                    models_missing_schema += 1
+                    if len(samples["schema"]) < 5:
+                        samples["schema"].append(tag)
+                # 2) naming lint: plural snake_case table name
+                tbl = _snake(node.name)
+                if not _plural(tbl):
+                    models_bad_name += 1
+                    if len(samples["name"]) < 5:
+                        samples["name"].append(tag)
+                # 3) country_code + created_at/updated_at on business tables
+                if "country_code" not in body:
+                    models_missing_country += 1
+                    if len(samples["country"]) < 5:
+                        samples["country"].append(tag)
+                if "created_at" not in body or "updated_at" not in body:
+                    models_missing_ts += 1
+                    if len(samples["ts"]) < 5:
+                        samples["ts"].append(tag)
+                if "is_deleted" not in body:
+                    models_missing_deleted += 1
+                    if len(samples["deleted"]) < 5:
+                        samples["deleted"].append(tag)
+    if models_missing_schema:
+        v.append(("Law 6", "MED", "schema",
+                  f"{models_missing_schema} ORM model classes omit an explicit Postgres schema in "
+                  f"__table_args__ (e.g. {', '.join(samples['schema'])}).",
+                  "Declare __table_args__ = {'schema': '<domain>'} so each domain owns one DB schema."))
+    if models_bad_name:
+        v.append(("Law 6", "MED", "naming",
+                  f"{models_bad_name} ORM model classes have a non-plural snake_case table name "
+                  f"(e.g. {', '.join(samples['name'])}).",
+                  "Rename to plural snake_case (e.g. CountryConfig → country_configs)."))
+    if models_missing_country:
+        v.append(("Law 6", "MED", "naming",
+                  f"{models_missing_country} ORM model classes omit the country_code column "
+                  f"(e.g. {', '.join(samples['country'])}).",
+                  "Add country_code as an independent RLS scope axis on every business table."))
+    if models_missing_ts:
+        v.append(("Law 6", "MED", "naming",
+                  f"{models_missing_ts} ORM model classes omit created_at/updated_at "
+                  f"(e.g. {', '.join(samples['ts'])}).",
+                  "Add created_at and updated_at to every business table."))
+    if models_missing_deleted:
+        v.append(("Law 6", "MED", "naming",
+                  f"{models_missing_deleted} ORM model classes omit is_deleted "
+                  f"(e.g. {', '.join(samples['deleted'])}).",
+                  "Add is_deleted to every business table for soft-delete compliance."))
+
+    # ---- Law 7: strangler rule ----
+    if os.path.isdir(os.path.join(BACKEND, "_legacy")):
+        v.append(("Law 7", "MED", "strangler",
+                  "_legacy/ shims still present — delete when each slice is migration-ready.",
+                  "Remove shims as domains reach 100% and tests go green."))
+    else:
+        v.append(("Law 7", "INFO", "strangler",
+                  "_legacy/ folder absent — no deprecated shims tracked.",
+                  "Keep DOMAIN_ALLOWLIST.yaml shrinking to zero."))
+
+    return v
+
+
+# ---------------------------------------------------------------------------
+# OLLAMA descriptions (features / domains / modules)
+# ---------------------------------------------------------------------------
+SYS_FEATURE = ("You are a senior software architect documenting a modular "
+               "monolith. Be precise, concrete, and concise (2-3 sentences).")
+SYS_REVIEW = ("You are a strict architecture reviewer. Answer in 1-2 sentences, "
+              "flagging whether the code follows a thin-adapter pattern.")
+
+
+def ollama_domain_description(d, dom, llm):
+    if not llm.enabled:
+        return ""
+    sig = []
+    for r in dom["files"][:12]:
+        s = file_signatures(os.path.join(BACKEND, r))
+        if s["classes"]:
+            sig.append(f"- {os.path.basename(r)}: {', '.join(s['classes'][:5])}")
+    atoms = "; ".join(f"{k} ({lb or 'no label'})" for (k, lb, _r, _a, _de) in dom["atoms"]) or "none defined"
+    content_snippets = []
+    for r in dom["files"][:8]:
+        actual = read_text(os.path.join(BACKEND, r))[:400].strip()
+        if actual:
+            content_snippets.append(f"- {os.path.basename(r)}: {actual[:180]}")
+    content_txt = "\n".join(content_snippets[:6]) or "no readable content"
+    prompt = (f"Domain '{d}' in a modular-monolith e-commerce backend.\n"
+              f"Feature atoms: {atoms}.\n"
+              f"Signatures:\n" + "\n".join(sig) + "\n"
+              f"Code:\n{content_txt}\n\n"
+              f"Describe what this domain implements (2-3 sentences). Note if feature atoms are missing.")
+    return llm.ask(prompt, system=SYS_FEATURE, max_tokens=240)
+
+
+def ollama_feature_description(d, key, label, risk, actions, desc, backed, gated, dom, llm):
+    if not llm.enabled:
+        return ""
+    cap = key.split(".")[-1]
+    related = [os.path.basename(r) for r in dom["files"]
+               if cap in r or cap.replace("_", "") in r.replace("_", "")]
+    state = ("backed by domain code" if backed else "no backing code detected") + \
+            (", gated by require_feature" if gated else ", not yet gated by require_feature")
+    content_snippets = []
+    for r in dom["files"][:6]:
+        actual = read_text(os.path.join(BACKEND, r))[:300].strip()
+        hay = actual.lower()
+        if cap in hay or cap.replace("_", "") in hay.replace("_", ""):
+            content_snippets.append(f"- {os.path.basename(r)}: {actual[:180]}")
+    content_txt = "\n".join(content_snippets[:4]) or "no directly related code snippets found"
+    prompt = (f"Feature '{key}' (label: {label or 'n/a'}, risk: {risk or 'n/a'}, "
+              f"actions: {', '.join(actions) or 'n/a'}).\n"
+              f"State: {state}.\n"
+              f"Related: {', '.join(related[:6]) or 'none'}.\n"
+              f"Code:\n{content_txt}\n\n"
+              f"Describe what this feature gates (2-3 sentences). Be concrete about risk and implementation.")
+    return llm.ask(prompt, system=SYS_FEATURE, max_tokens=220)
+
+
+def ollama_module_description(m, info, llm):
+    if not llm.enabled:
+        return ""
+    routers = [os.path.basename(r) for r in info["routers"][:25]]
+    content = []
+    for r in info["routers"][:6]:
+        s = sig(os.path.join(BACKEND, r))
+        names = (s["models"] + s["schemas"] + s["services"] + s["events"]
+                 + s["classes"] + s["functions"])
+        actual = read_text(os.path.join(BACKEND, r))[:500].strip()
+        if names:
+            content.append(f"- {os.path.basename(r)}: {', '.join(names[:4])}\n  code: {actual[:180]}")
+    content_txt = "\n".join(content[:6]) or "no service/schema/model classes in routers"
+    prompt = (f"Module '{m}' is an access surface (actor) in a modular monolith.\n"
+              f"Routers present: {', '.join(routers) or 'none'}.\n"
+              f"Domains it composes: {', '.join(info['exposed']) or 'none'}.\n"
+              f"Content:\n{content_txt}\n\n"
+              f"Describe what this module exposes (2-3 sentences).")
+    return llm.ask(prompt, system=SYS_FEATURE, max_tokens=220)
+
+
+# ---------------------------------------------------------------------------
+# Report assembly
+# ---------------------------------------------------------------------------
+def build_ollama_cache(modules, domains, rbac_atoms, rbac_gated, llm):
+    """Generate LLM descriptions in parallel (OLLAMA queues concurrent requests)."""
+    mod_desc, dom_desc, feat_desc = {}, {}, {}
+
+    def runner(kind, key, fn):
+        return kind, key, fn()
+
+    tasks = []  # (kind, key, callable)
+    for m in discover_modules():
+        tasks.append(("mod", m, lambda mm=m: ollama_module_description(mm, modules[mm], llm)))
+    for d in _ALL_DOMAINS:
+        tasks.append(("dom", d, lambda dd=d: ollama_domain_description(dd, domains[dd], llm)))
+        for (key, label, risk, actions, desc), b in zip(domains[d]["atoms"], domains[d]["backed"]):
+            g = key in rbac_gated
+            tasks.append(("feat", (d, key),
+                          lambda dd=d, kk=key, lb=label, rk=risk, ac=actions, de=desc, bb=b, gg=g:
+                          ollama_feature_description(dd, kk, lb, rk, ac, de, bb, gg, domains[dd], llm)))
+    if llm.enabled and tasks:
+        done = 0
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            futs = [ex.submit(runner, kind, key, fn) for (kind, key, fn) in tasks]
+            for fut in futs:
+                kind, key, val = fut.result()
+                done += 1
+                if kind == "mod":
+                    mod_desc[key] = val
+                elif kind == "dom":
+                    dom_desc[key] = val
+                else:
+                    feat_desc[key] = val
+                if done % 5 == 0 or done == len(tasks):
+                    print(f"  OLLAMA progress: {done}/{len(tasks)}")
+    return mod_desc, dom_desc, feat_desc
+
+
+def report(modules, domains, rbac_atoms, rbac_gated, rbac_keys, unknown_gates,
+           rbac_exists, platform, violations, llm_descriptions):
+    mod_desc, dom_desc, feat_desc = llm_descriptions
+    NEW_MODS = discover_modules()
+    L = []
+    total_mod_files = sum(len(modules[m]["files"]) for m in NEW_MODS)
+    total_dom_files = sum(len(domains[d]["files"]) for d in _ALL_DOMAINS)
+    n_mod_active = sum(1 for m in NEW_MODS if modules[m]["status"] == "Active")
+    n_dom_impl = sum(1 for d in _ALL_DOMAINS if domain_completion(domains[d])[0] == "Implemented")
+    n_dom_part = sum(1 for d in _ALL_DOMAINS if domain_completion(domains[d])[0] == "Partial")
+    n_atoms = len(rbac_atoms)
+    n_backed = sum(1 for d in _ALL_DOMAINS for b in domains[d]["backed"] if b)
+    n_gated = sum(1 for (d, key, *_rest) in rbac_atoms if key in rbac_gated)
+    n_high = sum(1 for (_l, sev, *_x) in violations if sev == "HIGH")
+
+    L.append("# ZOZI System — NEW_STRUCTURE.md Architecture & Implementation Audit")
+    L.append("")
+    L.append("> Generated by ``scripts/system_trackers/feature_tracking_report.py``. This audit "
+             "measures the codebase **only** against the three-axis taxonomy in "
+             "``documents/NEW_STRUCTURE.md``:")
+    L.append(">")
+    L.append("> - **Axis 1 — Module** (who acts): ``backend/modules/{m}/`` — auth + thin routers.")
+    L.append("> - **Axis 2 — Domain** (what the business does): ``backend/domains/{d}/`` — "
+             "services/models/schemas/policies/events/features (optionally sliced).")
+    L.append("> - **Axis 3 — Feature** (what may be done): ``backend/domains/{d}/features.py`` "
+             "aggregated by ``backend/rbac/catalog.py``.")
+    L.append(">")
+    L.append("> Content is parsed with ``ast`` (real classes/functions), and where OLLAMA was "
+             "reachable the LLM wrote the detailed feature/module/domain descriptions. "
+             "Violations of the seven NEW_STRUCTURE.md laws are raised as alerts.")
+    L.append("")
+
+    # ---------------- codebase content digest ----------------
+    mod_classes = mod_funcs = mod_models = 0
+    for m in NEW_MODS:
+        for r in modules[m]["files"]:
+            s = sig(os.path.join(BACKEND, r))
+            mod_classes += len(s["classes"])
+            mod_funcs += len(s["functions"])
+            mod_models += len(s["models"])
+    dom_classes = dom_funcs = dom_models = 0
+    for d in _ALL_DOMAINS:
+        for r in domains[d]["files"]:
+            s = sig(os.path.join(BACKEND, r))
+            dom_classes += len(s["classes"])
+            dom_funcs += len(s["functions"])
+            dom_models += len(s["models"])
+    plat_files = sum(v["files"] for v in platform.values())
+
+    L.append("## Codebase content digest")
+    L.append("")
+    L.append("What is actually written in the codebase (``ast``-parsed classes/functions, not "
+             "folder counts):")
+    L.append("")
+    L.append(f"- **Modules** (access surfaces): {total_mod_files} files, {mod_classes} classes, "
+             f"{mod_funcs} functions, {mod_models} ORM models.")
+    L.append(f"- **Domains** (business logic): {total_dom_files} files, {dom_classes} classes, "
+             f"{dom_funcs} functions, {dom_models} ORM models.")
+    L.append(f"- **Platform layers** (infrastructure/kernel/providers/jobs/middleware/...): "
+             f"{plat_files} files.")
+    L.append(f"- **Features**: {n_atoms} atoms, {n_backed} backed, {n_gated} gated, "
+             f"{len(unknown_gates)} unknown gates.")
+    L.append("")
+    L.append("> Read top-to-bottom: **Modules** (section 1) show the actor surfaces, "
+             "**Domains** (section 2) show what each business capability actually implements, "
+             "**Features** (section 3) show what may be done. **Violations** (section 6) flag "
+             "anything that breaks the NEW_STRUCTURE.md shape.")
+    L.append("")
+
+    L.append("## Executive summary")
+    L.append("")
+    L.append(f"- **Modules (Axis 1):** {n_mod_active}/{len(NEW_MODS)} active "
+             f"({total_mod_files} module files scanned).")
+    L.append(f"- **Domains (Axis 2):** {len(_ALL_DOMAINS)} domains "
+             f"({n_dom_impl} Implemented / {n_dom_part} Partial); {total_dom_files} domain files scanned.")
+    L.append(f"- **Features (Axis 3):** {n_atoms} feature atoms defined across domains; "
+             f"**{n_backed} backed** by domain code, **{n_gated} gated** by ``require_feature(...)``.")
+    L.append(f"- **Feature catalog:** ``backend/rbac/catalog.py`` present = {rbac_exists}; "
+             f"aggregates {n_atoms} atoms. Unknown gates (not in catalog): {len(unknown_gates)}.")
+    L.append(f"- **Law violations:** {len(violations)} total, **{n_high} HIGH-severity**.")
+    L.append("")
+    L.append("> **Completion %** = content-present core layers "
+             "(models/services/schemas/events × 20%) + features (20% only when atoms exist) + "
+             "bonuses policies(+8)/subscribers(+8)/ports(+4)/read_models(+4)/repositories(+4), "
+             "capped at 100. Status: Implemented ≥80 · Partial ≥45 · Scaffold <45. "
+             "A layer counts as *present* only when it contains real classes/functions.")
+    L.append("")
+
+    # ===================== ARCHITECTURE AT A GLANCE =====================
+    L.append("## Architecture at a glance")
+    L.append("")
+    L.append("The codebase follows the three orthogonal axes of ``documents/NEW_STRUCTURE.md``:")
+    L.append("")
+    L.append("- **Modules act** (section 1) — ``backend/modules/{m}/`` are entry points; each composes "
+             "domains via thin routers. Think *who* uses the system.")
+    L.append("- **Domains own** (section 2) — ``backend/domains/{d}/`` hold business logic in "
+             "services / models / schemas / events / features. Each domain lists its **feature atoms** "
+             "right below it. Think *what the business does*.")
+    L.append("- **Features gate** (section 3) — atoms in each domain's ``features.py``, aggregated by "
+             "``backend/rbac/catalog.py`` and enforced with ``require_feature(...)``. Think *what may be done*.")
+    L.append("- **Kernel provides** shared business primitives (money, numbering, country, period) in "
+             "``backend/kernel/`` — imported by domains, never the reverse.")
+    L.append("")
+    L.append("Read top-to-bottom: start at the modules to see the surfaces, drill into a domain to see "
+             "its logic and the capabilities it exposes, then use the feature catalog to scan all "
+             "permissions. Law violations (section 6) flag anything that breaks this shape.")
+    L.append("")
+
+    # ===================== 1. MODULES =====================
+    L.append("## 1 — Modules (Axis 1: who acts)")
+    L.append("")
+    L.append("Modules are the system's entry points — each ``backend/modules/{m}/`` exposes thin "
+             "routers and **composes** one or more domains (section 2). The indented list below shows, "
+             "per module, which domains it acts on.")
+    L.append("")
+    L.append("### Hierarchy: Modules → Domains they compose")
+    L.append("")
+    for m in NEW_MODS:
+        info = modules[m]
+        exposed = ", ".join(info["exposed"]) if info["exposed"] else "—"
+        L.append(f"- **{m}** — {MODULE_DESC.get(m, '—')}")
+        L.append(f"  - status: **{info['status']}** · routers: {len(info['routers'])} · "
+                 f"auth files: {len(info['auth'])} · serializers: {len(info['serializers'])}")
+        L.append(content_line("router content", info["routers"]))
+        L.append(content_line("auth content", info["auth"]))
+        L.append(content_line("serializer content", info["serializers"]))
+        L.append(f"  - composes domains: {exposed}")
+        thin = len(info["routers"]) - len(info["thick_routers"])
+        thin_pct = round(100 * thin / max(1, len(info["routers"])))
+        L.append(f"  - feature gates wired: {len(info['gated'])} · "
+                 f"thin routers: {thin}/{len(info['routers'])} ({thin_pct}%) · "
+                 f"thick routers (Law 2): {len(info['thick_routers'])}")
+        if info["thick_routers"]:
+            for (r, notes) in info["thick_routers"][:5]:
+                L.append(f"    - ⚠ {os.path.basename(r)}: {'; '.join(notes)}")
+        if mod_desc.get(m):
+            L.append(f"  - **LLM description:** {mod_desc[m]}")
+    L.append("")
+
+    # ===================== 2. DOMAINS + FEATURES =====================
+    L.append("## 2 — Domains (Axis 2: what the business does) & Features (Axis 3: what may be done)")
+    L.append("")
+    L.append("Each **domain** owns a slice of business logic. Where a domain defines **feature atoms** "
+             "(``backend/domains/{d}/features.py``), those atoms are listed directly under the domain "
+             "so you can see *what the domain lets you do* alongside *how it is built*.")
+    L.append("")
+    L.append("### Hierarchy: Domain → Layers → Features")
+    L.append("")
+    L.append("| Domain | Status | Completion % | Models | Services | Schemas | Policies | "
+             "Events | Subscribers | Features (atoms) | Ports | ReadModels | Repos |")
+    L.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    for d in _ALL_DOMAINS:
+        dom = domains[d]
+        ld = dom["layer_depth"]
+        status, pct, _p = domain_completion(dom)
+        L.append(
+            f"| {d} | {status} | {pct}% | {ld.get('models', {}).get('files', 0)} "
+            f"({ld.get('models', {}).get('models', 0)} orm) | "
+            f"{ld.get('services', {}).get('files', 0)} | {ld.get('schemas', {}).get('files', 0)} | "
+            f"{ld.get('policies', {}).get('files', 0)} | {ld.get('events', {}).get('files', 0)} | "
+            f"{ld.get('subscribers', {}).get('files', 0)} | "
+            f"{ld.get('features', {}).get('files', 0)} ({len(dom['atoms'])}) | "
+            f"{ld.get('ports', {}).get('files', 0)} | {ld.get('read_models', {}).get('files', 0)} | "
+            f"{ld.get('repositories', {}).get('files', 0)} |")
+    L.append("")
+    for d in _ALL_DOMAINS:
+        dom = domains[d]
+        status, pct, _p = domain_completion(dom)
+        L.append(f"### {d} — {status} ({pct}%)")
+        L.append("")
+        L.append(f"{DOMAIN_DESC.get(d, '—')}")
+        if dom_desc.get(d):
+            L.append("")
+            L.append(f"**LLM implementation review:** {dom_desc[d]}")
+        L.append("")
+        for ly in LAYER_ORDER:
+            fl = dom["layers"].get(ly, [])
+            if not fl:
+                continue
+            L.append(content_line(f"{d}/{ly}", fl))
+        L.append("")
+        if dom["deps"]:
+            L.append(f"- Cross-domain dependencies: " +
+                     ", ".join(f"{k} ({v})" for k, v in
+                               sorted(dom["deps"].items(), key=lambda x: -x[1])))
+            L.append("")
+        # ---- Features belonging to this domain (Axis 3 embedded) ----
+        if not dom["atoms"]:
+            L.append("- **Features:** none defined yet (`features.py` is empty).")
+            L.append("")
         else:
-            fe_buckets[f]["web"].append(bn)
-    for p in mob_files:
-        bn = os.path.basename(p)
-        f = classify_fe(p)
-        if "__tests__" in p or "e2e" in p or ".test." in p or ".spec." in p:
-            fe_buckets[f]["mobt"].append(bn)
-        else:
-            fe_buckets[f]["mob"].append(bn)
-    for p in shared_files:
-        fe_buckets[classify_fe(p)]["shared"].append(os.path.basename(p))
+            n_backed = sum(1 for b in dom["backed"] if b)
+            n_gated = sum(1 for (key, *_r) in dom["atoms"] if key in rbac_gated)
+            L.append(f"- **Features ({len(dom['atoms'])} atoms — {n_backed} backed, "
+                     f"{n_gated} gated):**")
+            L.append("")
+            for (key, label, risk, actions, desc), b in zip(dom["atoms"], dom["backed"]):
+                g = key in rbac_gated
+                cap = key.split(".")[-1]
+                related = [os.path.basename(r) for r in dom["files"]
+                           if cap in r or cap.replace("_", "") in r.replace("_", "")]
+                L.append(f"  - **{key}** — *{label or 'no label'}* "
+                         f"· risk: {risk or '—'} · actions: {', '.join(actions) or '—'} "
+                         f"· **{feature_status(b, g)}** "
+                         f"(backed={'yes' if b else 'no'}, gated={'yes' if g else 'no'})")
+                if related:
+                    L.append(f"    - related files: {', '.join(related[:8])}")
+                if desc:
+                    L.append(f"    - provided description: {desc}")
+                llm_d = feat_desc.get((d, key))
+                if llm_d:
+                    L.append(f"    - **LLM description:** {llm_d}")
+            L.append("")
 
-    test_dir = os.path.join(BACKEND, "tests")
-    for dirpath, dirs, files in os.walk(test_dir):
-        dirs[:] = [d for d in dirs if d != "__pycache__"]
-        for f in files:
-            if f.endswith(".py") and f != "__init__.py":
-                low = norm(os.path.join(dirpath, f)).lower()
-                hit = "platform"
-                for feat, toks in FRONTEND_TOKENS.items():
-                    if any(t in low for t in toks):
-                        hit = feat
-                        break
-                fe_buckets[hit]["bt"].append(f)
+    # ===================== 3. FEATURE CATALOG (consolidated) =====================
+    L.append("## 3 — Feature catalog (Axis 3: what may be done — consolidated across all domains)")
+    L.append("")
+    L.append("Quick reference of every feature atom in the system, grouped by domain. Full LLM "
+             "descriptions and related files live under each domain in section 2; this table is for "
+             "scanning capabilities at a glance.")
+    L.append("")
+    L.append("| Domain | Feature atom | Risk | Actions | Backed | Gated | Status |")
+    L.append("| --- | --- | --- | --- | --- | --- | --- |")
+    for d in _ALL_DOMAINS:
+        dom = domains[d]
+        if not dom["atoms"]:
+            continue
+        for (key, label, risk, actions, desc), b in zip(dom["atoms"], dom["backed"]):
+            g = key in rbac_gated
+            L.append(f"| {d} | {key} | {risk or '—'} | {', '.join(actions) or '—'} | "
+                     f"{'yes' if b else 'no'} | {'yes' if g else 'no'} | {feature_status(b, g)} |")
+    L.append("")
 
-    present = set(data.keys()) | set(fe_buckets.keys())
-    ordered = [m for m in ORDER if m in present] + sorted(present - set(ORDER))
+    # ===================== 4. CROSS-AXIS =====================
+    L.append("## 4 — Cross-axis — Module → Domain composition")
+    L.append("")
+    L.append("| Module | # Domains | Domains composed |")
+    L.append("| --- | --- | --- |")
+    for m in NEW_MODS:
+        exposed = modules[m]["exposed"]
+        L.append(f"| {m} | {len(exposed)} | {', '.join(exposed) if exposed else '—'} |")
+    L.append("")
+    L.append("### Reverse — Domain exposed by which modules")
+    L.append("")
+    dom_modules = defaultdict(list)
+    for m in NEW_MODS:
+        for d in modules[m]["exposed"]:
+            dom_modules[d].append(m)
+    L.append("| Domain | Modules composing it |")
+    L.append("| --- | --- |")
+    for d in _ALL_DOMAINS:
+        mods = dom_modules.get(d, [])
+        L.append(f"| {d} | {', '.join(mods) if mods else '— (not composed by any module yet)'} |")
+    L.append("")
 
-    COLS = ["Sno", "Surface", "Domain", "Module", "Health", "Description of Module",
-            "backend:utils", "backend:jobs", "backend:events", "backend:dependencies",
-            "backend:models", "backend:db", "backend:providers", "backend:services",
-            "backend:controllers", "backend:routers", "backend:middlewares",
-            "backend:tests", "backend:connection report", "Layers",
-            "frontend:web_app", "frontend:mobile_app", "frontend:Shared / Utils",
-            "frontend: Web Tests", "frontend: Mobile Tests", "Depends on (features)",
-            "Cross-func edges", "Ops wired", "Completion %", "Remaining todo", "Comments"]
+    # ===================== 5. PLATFORM =====================
+    L.append("## 5 — Platform layers (context — what else is running)")
+    L.append("")
+    L.append("| Layer | Files | Has __init__ |")
+    L.append("| --- | --- | --- |")
+    for layer, info in platform.items():
+        L.append(f"| {layer} | {info['files']} | {'yes' if info['has_init'] else 'no'} |")
+    L.append("")
 
-    def L(feat, layer):
-        return data.get(feat, {}).get(layer, [])
+    # ===================== 6. VIOLATIONS =====================
+    L.append("## 6 — Violation register — NEW_STRUCTURE.md laws")
+    L.append("")
+    L.append("Every breach of the seven laws is raised here. Severity: **HIGH** blocks the target "
+             "structure; **MED** risky / hard-to-verify; **INFO** by-design or not-yet-started.")
+    L.append("")
+    L.append("| Law | Severity | Area | Finding | Recommended action |")
+    L.append("| --- | --- | --- | --- | --- |")
+    order = {"HIGH": 0, "MED": 1, "INFO": 2}
+    for law, sev, area, finding, action in sorted(violations, key=lambda x: order.get(x[1], 3)):
+        L.append(f"| {law} | {sev} | {area} | {finding} | {action} |")
+    L.append("")
 
-    align = {}
-    rows = []
-    for i, feat in enumerate(ordered, 1):
-        layers = {l: L(feat, l) for l in LAYERS}
-        signal, reason = feature_alignment(feat, layers)
-        align[feat] = (signal, reason)
-        deps = sorted(cross["feat_deps"].get(feat, {}).items(), key=lambda x: -x[1])
-        dep_str = ", ".join(f"{d}({n})" for d, n in deps) if deps else "—"
-        n_cross = sum(1 for (_, _, sf, tf, _, _, _) in cross["func_edges"] if sf == feat and tf != feat)
-        n_ops = sum(1 for op in ops if op["router_feat"] == feat)
-        n_ops_wired = sum(1 for op in ops if op["router_feat"] == feat and op["wired"])
+    # ===================== 7. FILE INVENTORY =====================
+    L.append("## 7 — File inventory (hierarchy-wise)")
+    L.append("")
+    L.append("Every file is grouped by its NEW_STRUCTURE.md layer so the anatomy of each "
+             "module and domain is visible at a glance. Modules split into routers / auth / "
+             "serializers; domains split by the layer each file implements.")
+    L.append("")
 
-        w, m, sh = fe_buckets[feat]["web"], fe_buckets[feat]["mob"], fe_buckets[feat]["shared"]
-        wt, mt, bt = fe_buckets[feat]["webt"], fe_buckets[feat]["mobt"], fe_buckets[feat]["bt"]
+    # --- Modules: files grouped by sub-layer ---
+    L.append("### Modules — files by layer")
+    L.append("")
+    for m in NEW_MODS:
+        info = modules[m]
+        if not info["files"]:
+            continue
+        thin = len(info["routers"]) - len(info["thick_routers"])
+        L.append(f"<details><summary><b>modules/{m}</b> — {len(info['files'])} files "
+                 f"({len(info['routers'])} routers, {thin} thin, "
+                 f"{len(info['thick_routers'])} thick, {len(info['auth'])} auth)</summary>")
+        L.append("")
+        groups = defaultdict(list)
+        for r in info["files"]:
+            if "/routers/" in r:
+                groups["routers"].append(r)
+            elif "/auth/" in r:
+                groups["auth"].append(r)
+            elif "/serializers/" in r:
+                groups["serializers"].append(r)
+            else:
+                groups["other"].append(r)
+        for sub in ("routers", "auth", "serializers", "other"):
+            if not groups[sub]:
+                continue
+            L.append(f"**{sub}** ({len(groups[sub])}):")
+            L.append("")
+            L.append("```")
+            L.append("\n".join(groups[sub]))
+            L.append("```")
+            L.append("")
+        L.append("</details>")
+        L.append("")
 
-        # Completion % is a REVIEW-ONLY heuristic (NOT a certified metric).
-        # Weights: model 8 · service 15 · controller 22 · router 22 · web 10 · mobile 10
-        #          · tests 5 · shared 3.
-        score = 0
-        if layers["models"]: score += 8
-        if layers["services"]: score += 15
-        if layers["controllers"]: score += 22
-        if layers["routers"]: score += 22
-        if w: score += 10
-        if m: score += 10
-        if bt or wt or mt: score += 5
-        if sh: score += 3
-        score = min(100, score)
+    # --- Domains: files grouped by layer ---
+    L.append("### Domains — files by layer")
+    L.append("")
+    layer_order = ["services", "models", "schemas", "policies", "repositories",
+                   "read_models", "events.py", "subscribers.py", "features.py",
+                   "ports.py", "unclassified"]
+    for d in _ALL_DOMAINS:
+        dom = domains[d]
+        if not dom["files"]:
+            continue
+        status, pct, _p = domain_completion(dom)
+        L.append(f"<details><summary><b>domains/{d}</b> — {len(dom['files'])} files "
+                 f"({status}, {pct}%, {dom['total_models']} ORM models)</summary>")
+        L.append("")
+        groups = defaultdict(list)
+        for r in dom["files"]:
+            groups[layer_of(r) or "unclassified"].append(r)
+        for ly in layer_order:
+            if not groups.get(ly):
+                continue
+            L.append(f"**{ly}** ({len(groups[ly])}):")
+            L.append("")
+            L.append("```")
+            L.append("\n".join(groups[ly]))
+            L.append("```")
+            L.append("")
+        L.append("</details>")
+        L.append("")
 
-        comments = []
-        if feat == "permissions":
-            comments.append("MODEL present, NO service layer (genuine gap).")
-        if feat == "delegators":
-            comments.append("Controllers loaded dynamically (importlib) - invisible to static scan.")
-        if not layers["controllers"] and layers["services"]:
-            comments.append("Services present but no controller here (cross-feature/dynamic exposure likely).")
-        if not layers["routers"] and layers["controllers"]:
-            comments.append("Controllers present but no static router import (dynamic loading).")
-        if deps:
-            comments.append("Depends on: " + ", ".join(d for d, _ in deps) + ".")
-        if not comments:
-            comments.append("Utility / cross-cutting layer.")
-        todo = ""
-        if "NO service" in " ".join(comments):
-            todo = "Add permissions service layer or confirm logic lives elsewhere."
-        elif not layers["routers"] and layers["controllers"]:
-            todo = "Confirm router wiring (dynamic loader) for these controllers."
+    L.append("## Notes")
+    L.append("")
+    L.append("- Completion % and status measure implementation progress of each domain toward the "
+             "layer anatomy in ``documents/NEW_STRUCTURE.md``, now verified by *content* "
+             "(real classes/functions) rather than folder existence alone.")
+    L.append("- \"Backed\" is a heuristic (atom capability token present in a domain file's names "
+             "or body); it is a proxy for an implemented capability, not a certified test.")
+    L.append("- LLM descriptions require a running OLLAMA server; without it the audit still runs "
+             "and falls back to the machine-extracted signals above.")
+    L.append("- Law violations are derived directly from imports and file content across the backend.")
+    L.append("")
+    return L
 
-        rows.append([
-            i, SURFACE.get(feat, "—"), DOMAIN.get(feat, "—"), feat, signal, DESC.get(feat, feat),
-            cell(layers["utils"]), cell(layers["jobs"]), cell(layers["events"]),
-            cell(layers["dependencies"]), cell(layers["models"]), cell(layers["db"]),
-            cell(layers["providers"]), cell(layers["services"]), cell(layers["controllers"]),
-            cell(layers["routers"]), cell(layers["middleware"]), cell(bt),
-            f"R={len(layers['routers'])} · C={len(layers['controllers'])} · S={len(layers['services'])} · M={len(layers['models'])}",
-            layers_badge(layers),
-            cell(w), cell(m), cell(sh), cell(wt), cell(mt), dep_str, n_cross,
-            f"{n_ops_wired}/{n_ops}", f"{score}%", todo, " ".join(comments),
-        ])
 
-    head = "| " + " | ".join(COLS) + " |"
-    sep = "| " + " | ".join(["---"] * len(COLS)) + " |"
-    body = "\n".join("| " + " | ".join(str(c) for c in r) + " |" for r in rows)
-
-    totals = {l: sum(len(data.get(f, {}).get(l, [])) for f in data) for l in LAYERS}
-    total_fe = (sum(len(fe_buckets[f]["web"]) for f in fe_buckets)
-                + sum(len(fe_buckets[f]["mob"]) for f in fe_buckets)
-                + sum(len(fe_buckets[f]["shared"]) for f in fe_buckets))
-
-    # ----- Feature -> Feature dependency map -----
-    # Blends two relationship types (kept separate so readers don't conflate them):
-    #   * calls = backend: A's code statically calls B's code (AST, fine-grained, reliable)
-    #   * feimp = frontend: A's module imports B (path-token classified, approximate)
-    all_feats = sorted(present)
-    feat_dep_rows = []
-    for sf in all_feats:
-        calls = cross["feat_deps"].get(sf, {})
-        feimp = fe.get(sf, {}).get("import_deps", {})
-        merged = defaultdict(int)
-        for d, n in calls.items():
-            merged[d] += n
-        for d, n in feimp.items():
-            merged[d] += n
-        if sf in merged:
-            del merged[sf]
-        if merged:
-            row = [(d, n, calls.get(d, 0), feimp.get(d, 0))
-                   for d, n in sorted(merged.items(), key=lambda x: -x[1])]
-            feat_dep_rows.append((sf, row))
-
-    # ----- Function -> Function (cross-feature edges sample) -----
-    cross_func_edges = [(s, t, sf, tf, sl, tl) for (s, t, sf, tf, sl, tl, k)
-                        in cross["func_edges"] if sf != tf]
-    # top edges by source module pair
-    pair_counts = defaultdict(int)
-    for s, t, sf, tf, sl, tl in cross_func_edges:
-        pair_counts[(sf, tf, sl, tl)] += 1
-    top_pairs = sorted(pair_counts.items(), key=lambda x: -x[1])[:60]
-
-    # ----- Operation -> Operation wiring -----
-    wired_ops = [op for op in ops if op["wired"]]
-    unwired_ops = [op for op in ops if not op["wired"]]
-    # cross-stack: frontend api calls matched to backend routes
-    cross_stack = []
-    for path, feats_set in api_to_feat.items():
-        if path in route_index:
-            cross_stack.append((path, sorted(route_index[path]), sorted(feats_set)))
-    cross_stack.sort()
-
-    # ----- machine-readable JSON -----
-    json_out = {
-        "feature_deps": {sf: dict(deps) for sf, deps in
-                         ((f, cross["feat_deps"].get(f, {})) for f in all_feats)},
-        "frontend_feature_deps": {f: dict(fe[f]["import_deps"]) for f in fe},
-        "func_edges_cross_feature": [
-            {"src": s, "tgt": t, "src_feat": sf, "tgt_feat": tf,
-             "src_layer": sl, "tgt_layer": tl}
-            for (s, t, sf, tf, sl, tl) in cross_func_edges
+# ---------------------------------------------------------------------------
+# JSON output
+# ---------------------------------------------------------------------------
+def build_json(modules, domains, rbac_atoms, rbac_gated, rbac_keys, unknown_gates,
+               rbac_exists, platform, violations, llm_descriptions):
+    mod_desc, dom_desc, feat_desc = llm_descriptions
+    atom_backed = {}
+    for d in _ALL_DOMAINS:
+        for (k, *_x), bk in zip(domains[d]["atoms"], domains[d]["backed"]):
+            atom_backed[(d, k)] = bk
+    return {
+        "schema": "new_structure_audit_v2",
+        "axes": {
+            "modules": {
+                m: {
+                    "status": modules[m]["status"],
+                    "routers": len(modules[m]["routers"]),
+                    "auth_files": len(modules[m]["auth"]),
+                    "serializers": len(modules[m]["serializers"]),
+                    "exposed_domains": modules[m]["exposed"],
+                    "gated_features": modules[m]["gated"],
+                    "residual_imports": modules[m]["residual"],
+                    "thick_routers": [os.path.basename(r) for r, _n in modules[m]["thick_routers"]],
+                    "files": modules[m]["files"],
+                    "llm_description": mod_desc.get(m, ""),
+                } for m in discover_modules()
+            },
+            "domains": {
+                d: {
+                    "layers": {ly: domains[d]["layer_depth"].get(ly, {})
+                               for ly in CORE_LAYERS + ["policies", "subscribers", "ports",
+                                                         "read_models", "repositories", "features"]},
+                    "features": [
+                        {"key": k, "label": lb, "risk": rk, "actions": ac, "description": de,
+                         "backed": bk, "gated": k in rbac_gated,
+                         "status": feature_status(bk, k in rbac_gated),
+                         "llm_description": feat_desc.get((d, k), "")}
+                        for (k, lb, rk, ac, de), bk in zip(domains[d]["atoms"], domains[d]["backed"])
+                    ],
+                    "inter_domain_deps": domains[d]["deps"],
+                    "cross_violations": domains[d]["cross_violations"],
+                    "status": domain_completion(domains[d])[0],
+                    "completion_pct": domain_completion(domains[d])[1],
+                    "orm_models": domains[d]["total_models"],
+                    "files": domains[d]["files"],
+                    "llm_description": dom_desc.get(d, ""),
+                } for d in _ALL_DOMAINS
+            },
+            "features": {
+                "total_atoms": len(rbac_atoms),
+                "backed_atoms": sum(1 for d in _ALL_DOMAINS for b in domains[d]["backed"] if b),
+                "gated_atoms": sum(1 for (d, key, *_r) in rbac_atoms if key in rbac_gated),
+                "unknown_gates": unknown_gates,
+                "catalog_present": rbac_exists,
+                "atoms": [
+                    {"domain": d, "key": key, "label": lb, "risk": rk, "actions": ac,
+                     "description": de, "backed": atom_backed.get((d, key), False),
+                     "gated": key in rbac_gated,
+                     "status": feature_status(atom_backed.get((d, key), False), key in rbac_gated),
+                     "llm_description": feat_desc.get((d, key), "")}
+                    for (d, key, lb, rk, ac, de) in rbac_atoms
+                ],
+            },
+        },
+        "platform_layers": platform,
+        "violations": [
+            {"law": law, "severity": sev, "area": area, "finding": finding, "action": action}
+            for (law, sev, area, finding, action) in violations
         ],
-        "operations": [
-            {"method": op["method"], "path": op["path"], "router_feat": op["router_feat"],
-             "handler": op["handler"], "called": op["called"], "dyn_imports": op["dyn_imports"],
-             "wired": op["wired"]}
-            for op in ops
-        ],
-        "frontend_api_to_backend_route": [
-            {"path": p, "backend_feats": bf, "frontend_feats": ff} for p, bf, ff in cross_stack
-        ],
-        "stats": {
-            "modules": len(cross["mod_index"]),
-            "func_edges_total": len(cross["func_edges"]),
-            "func_edges_cross_feature": len(cross_func_edges),
-            "unresolved_call_targets": cross["unresolved"],
-            "unresolved_by": cross["unresolved_by"],
-            "operations_total": len(ops),
-            "operations_wired": len(wired_ops),
-            "operations_unwired": len(unwired_ops),
+        "cross_axis": {
+            "module_exposes": {m: modules[m]["exposed"] for m in discover_modules()},
+            "domain_exposed_by": {
+                d: [m for m in discover_modules() if d in modules[m]["exposed"]] for d in _ALL_DOMAINS
+            },
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+def main(out_dir=None, report_name="SYSTEM_TRACKING_REPORT.md",
+         json_name="FEATURE_CROSS_REFERENCES.json", use_ollama=True,
+         ollama_model="qwen2.5:latest", ollama_url="http://localhost:11434"):
+    global _ALL_DOMAINS
+    out_dir = out_dir or DOCS_AUDIT
+    os.makedirs(out_dir, exist_ok=True)
+
+    _ALL_DOMAINS = discover_domains()
+
+    llm = Llm(base_url=ollama_url, model=ollama_model, enabled=use_ollama,
+             cache_path=os.path.join(out_dir, "ollama_cache.json"))
+
+    modules = scan_modules()
+    domains = scan_domains()
+    rbac_atoms, rbac_gated, rbac_keys, unknown_gates, rbac_exists = scan_rbac()
+    platform = scan_platform()
+    violations = detect_violations(modules, domains, rbac_atoms, unknown_gates)
+    llm_descriptions = build_ollama_cache(modules, domains, rbac_atoms, rbac_gated, llm) if use_ollama else ({}, {}, {})
+
+    report_lines = report(modules, domains, rbac_atoms, rbac_gated, rbac_keys,
+                          unknown_gates, rbac_exists, platform, violations, llm_descriptions)
+    json_out = build_json(modules, domains, rbac_atoms, rbac_gated, rbac_keys,
+                          unknown_gates, rbac_exists, platform, violations, llm_descriptions)
+
     json_path = os.path.join(out_dir, json_name)
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(json_out, f, indent=2)
 
-    # ----- assemble report -----
-    out = []
-    out.append("# ZOZI System — Comprehensive Tracking Report (with Cross-References)")
-    out.append("")
-    out.append(f"> **{len(rows)} modules** enumerated (real backend directories + classified "
-               f"routers/utils + frontend path tokens). Backend `connection report` = module counts "
-               f"(Routers/Controllers/Services/Models per module).")
-    out.append("")
-    out.append("> **This version adds three relationship dimensions the previous build lacked:**")
-    out.append("> - **Feature → Feature** — derived from real function-call edges and import edges "
-               "across module boundaries (see *Feature → Feature Dependency Map*).")
-    out.append("> - **Function → Function** — AST call graph: every `module.fn()` / imported call "
-               f"resolved to its target function. {len(cross_func_edges)} cross-feature edges captured "
-               f"(see *Function → Function Call Graph*; full graph in FEATURE_CROSS_REFERENCES.json).")
-    out.append("> - **Operation → Operation** — every FastAPI route (`@router.METHOD(path)`) traced to "
-               f"its handler and the backend functions it invokes ({len(wired_ops)}/{len(ops)} router "
-               "operations wired; see *Operation → Operation Wiring*).")
-    out.append("")
-    out.append("> **Completion %** is a heuristic weight for review only, not a certified metric.")
-    out.append("")
-    out.append("**Backend totals:** " + " · ".join(f"{l}={totals[l]}" for l in LAYERS)
-               + f" · modules={len(data)}")
-    out.append("")
-    out.append(f"**Frontend totals:** web_app={sum(len(fe_buckets[f]['web']) for f in fe_buckets)} · "
-                f"mobile_app={sum(len(fe_buckets[f]['mob']) for f in fe_buckets)} · "
-                f"shared={sum(len(fe_buckets[f]['shared']) for f in fe_buckets)} · "
-                f"web_tests={sum(len(fe_buckets[f]['webt']) for f in fe_buckets)} · "
-                f"mob_tests={sum(len(fe_buckets[f]['mobt']) for f in fe_buckets)} · "
-                f"backend_tests={sum(len(fe_buckets[f]['bt']) for f in fe_buckets)}")
-    out.append("")
-
-    # ---- gap register + executive summary (computed here, reused below) ----
-    cross_func_edges = [(s, t, sf, tf, sl, tl) for (s, t, sf, tf, sl, tl, k)
-                        in cross["func_edges"] if sf != tf]
-    wired_ops = [op for op in ops if op["wired"]]
-    unwired_ops = [op for op in ops if not op["wired"]]
-
-    gaps = []  # (severity, area, finding, recommended_action)
-    if not data.get("permissions", {}).get("services", []):
-        gaps.append(("HIGH", "permissions",
-                     "Permission **model** exists but there is **no service layer, controller, or "
-                     "router** — access-control logic has no clear backend entry point.",
-                     "Confirm checks live in middleware/security; otherwise add a permissions "
-                     "service + router."))
-    dyn_controllers = sorted(f for f, layers in data.items()
-                             if layers.get("controllers") and not layers.get("routers")
-                             and f not in ("delegators",))
-    if dyn_controllers:
-        gaps.append(("MED", "controllers",
-                     "Controllers exist but have no static router import for: "
-                     f"{', '.join(dyn_controllers)}. They are exposed via dynamic `importlib` loading "
-                     "(main._load_routers) — invisible to a static scan.",
-                     "Confirm router wiring through the dynamic loader; add a route registry for visibility."))
-    gaps.append(("MED", "database",
-                 "Local backend/zozi.db is **EMPTY (0 tables)** and Alembic has a **2-head branch** "
-                 "(20260727_0908, 20260729_1914). The schema-audit (934 issues, ~909 index items) was "
-                 "run on a **different populated DB**, so those numbers are unverified here.",
-                 "Confirm the target DB, merge the two Alembic heads, then re-run the audit against the "
-                 "real database before fixing any drift."))
-    gaps.append(("LOW", "operations",
-                 f"{len(unwired_ops)}/{len(ops)} router operations are **unwired** (stub health/status "
-                 "routes with no backend call).",
-                 "Expected for health checks; verify none are real endpoints masked as stubs."))
-    ub = cross.get("unresolved_by", {})
-    gaps.append(("INFO", "function graph",
-                  f"{cross['unresolved']} call targets are unresolved: "
-                  f"{ub.get('external_or_runtime', 0)} external/runtime (third-party libs, self.repo.* DI) and "
-                  f"{ub.get('missing_internal', 0)} internal-but-not-found (dynamic/delegator/Generated code). "
-                  "Expected for a DI-style codebase — not a defect.",
-                  "Resolve by tracing repository/provider wiring, or include Generated/Delegator dirs, if "
-                  "deeper precision is needed."))
-
-    out.append("## How to read this report")
-    out.append("")
-    out.append("**Health legend:** `GREEN` = full vertical slice (model→service→controller→router) present · "
-                "`AMBER` = logic present but not fully exposed (usually dynamic `importlib` loading) · "
-                "`RED` = data model only / no business-logic wiring · `SHARED` = platform/infra layer.")
-    out.append("")
-    out.append("1. **System Alignment Dashboard** — every feature with its red/green health and counts.")
-    out.append("2. **Master Tracking Table** — every feature with its `Health` and `Layers` (which of "
-                "models/providers/services/controllers/routers/middleware exist), plus completion % and TODO.")
-    out.append("3. **Feature → Feature Alignment Map** — *who calls whom* across features, with each link's "
-                "health (red/green) and `BROKEN` flagged when a feature depends on an unwired (RED) feature.")
-    out.append("4. **Function → Function Call Graph** — the resolved static call graph (top lanes; the full "
-                "edge list lives in `FEATURE_CROSS_REFERENCES.json`).")
-    out.append("5. **Operation → Operation Wiring** — every API route traced to the handler and backend "
-                "functions it runs.")
-    out.append("6. **Wiring Problems (what to fix)** — concrete layer-to-layer gaps (controllers without "
-                "routers, services without controllers, RED features, broken dependencies).")
-    out.append("7. **Gap register** — platform-level gaps with a recommended action per item.")
-    out.append("")
-    out.append("> **Built vs missing at a glance:** the codebase is *wide* ({len(rows)} modules, "
-               f"{sum(totals.values())} backend files) but the static wiring only proves "
-               f"{len(wired_ops)}/{len(ops)} routes and {len(cross_func_edges)} cross-feature calls. The "
-               "rest is either dynamic (runtime `importlib`), third-party, or genuinely absent — the gap "
-               "register lists the genuinely absent/risky items.")
-    out.append("")
-    out.append("## Executive summary — what's built and what's missing")
-    out.append("")
-    out.append(f"- **{len(rows)} modules** enumerated; **{sum(totals.values())} backend files** and "
-               f"**{total_fe} frontend files** scanned.")
-    ub = cross.get("unresolved_by", {})
-    out.append(f"- **Function graph:** {len(cross['func_edges'])} total edges, "
-               f"**{len(cross_func_edges)} cross-feature** resolved, **{cross['unresolved']}** unresolved "
-               f"({ub.get('external_or_runtime', 0)} external/runtime, "
-               f"{ub.get('missing_internal', 0)} internal-but-not-found — expected).")
-    out.append(f"- **Operations:** {len(ops)} API routes — **{len(wired_ops)} wired**, "
-               f"**{len(unwired_ops)} unwired** (stubs).")
-    out.append(f"- **Tracked gaps:** {len(gaps)} items in the Gap register below "
-               "(incl. permissions having a model but no service, and the empty local DB + Alembic branch).")
-    out.append("")
-
-    # ---- System Alignment Dashboard ----
-    sig_counts = defaultdict(int)
-    for f, (s, r) in align.items():
-        sig_counts[s] += 1
-    broken = []
-    for sf in align:
-        for d in cross["feat_deps"].get(sf, {}):
-            if d in align and align[d][0] == "RED":
-                broken.append((sf, d))
-    out.append("## System Alignment Dashboard")
-    out.append("")
-    out.append(f"**{len(align)} features** — "
-                f"**{sig_counts['GREEN']} GREEN** (fully wired), "
-                f"**{sig_counts['AMBER']} AMBER** (logic present, not fully exposed), "
-                f"**{sig_counts['RED']} RED** (model only / unwired), "
-                f"**{sig_counts['SHARED']} SHARED** (platform/infra).")
-    out.append(f"**Broken dependencies:** {len(broken)} (a feature depends on a RED/unwired feature).")
-    out.append("")
-    out.append("| Health | Feature | Why |")
-    out.append("| --- | --- | --- |")
-    for signal in ["GREEN", "AMBER", "RED", "SHARED"]:
-        for f, (s, r) in sorted(align.items()):
-            if s == signal:
-                out.append(f"| {s} | {f} | {r} |")
-    out.append("")
-
-    # Master table
-    out.append("## Master Tracking Table")
-    out.append("")
-    out.append(head)
-    out.append(sep)
-    out.append(body)
-    out.append("")
-
-    # Feature -> Feature (annotated alignment map with per-link health + edge type)
-    out.append("## Feature → Feature Alignment Map")
-    out.append("")
-    out.append("Each edge `A --> B (n)` means feature **A** depends on feature **B**. The weight `n` is the "
-               "sum of two relationship types, shown separately in the table below: `call` = backend A's code "
-               "statically calls B's code (AST, fine-grained, reliable); `fe-import` = frontend A's module "
-               "imports B (path-token classified, approximate). Node colour = B's health "
-               "(green/amber/red/shared). A link is **BROKEN** when A depends on a RED (unwired) feature.")
-    out.append("")
-    mermaid = ["```mermaid", "graph LR"]
-    mermaid.append("classDef green fill:#1f7a3d,stroke:#0c3,color:#fff;")
-    mermaid.append("classDef amber fill:#9a6b00,stroke:#a80,color:#fff;")
-    mermaid.append("classDef red fill:#9a1f1f,stroke:#a33,color:#fff;")
-    mermaid.append("classDef shared fill:#555,stroke:#777,color:#fff;")
-    cls_map = {"GREEN": "green", "AMBER": "amber", "RED": "red", "SHARED": "shared"}
-    for f, (s, r) in align.items():
-        mermaid.append(f"    {f}:::{cls_map[s]}")
-    for sf, row in feat_dep_rows:
-        for d, n, c, fi in row:
-            mermaid.append(f"    {sf} -->|{n}| {d}")
-    mermaid.append("```")
-    out.append("\n".join(mermaid))
-    out.append("")
-    out.append("| From feature | → To feature | Edges (call / fe-import) | To-feature health | Link status |")
-    out.append("| --- | --- | --- | --- | --- |")
-    for sf, row in feat_dep_rows:
-        for d, n, c, fi in row:
-            tgt = align.get(d, ("SHARED", ""))[0]
-            status = "BROKEN — target not wired" if tgt == "RED" else "ok"
-            out.append(f"| {sf} | {d} | {c} call / {fi} fe-import | {tgt} | {status} |")
-    out.append("")
-    out.append("_Features with no inter-feature dependencies are not listed here but appear in the "
-                "Alignment Dashboard and Master Table above._")
-    out.append("")
-
-    # Function -> Function
-    out.append("## Function → Function Call Graph (cross-feature edges)")
-    out.append("")
-    out.append(f"Total function→function edges resolved: **{len(cross['func_edges'])}** "
-               f"({len(cross_func_edges)} cross-feature). Unresolved call targets: "
-               f"**{cross['unresolved']}** (dynamic/`self.repo.x`/runtime dispatch — expected).")
-    out.append("")
-    out.append("Top cross-feature call lanes (source feature → target feature, by layer):")
-    out.append("")
-    out.append("| Source feature | Target feature | Source layer | Target layer | Cross calls |")
-    out.append("| --- | --- | --- | --- | --- |")
-    for (sf, tf, sl, tl), n in top_pairs:
-        out.append(f"| {sf} | {tf} | {sl} | {tl} | {n} |")
-    out.append("")
-    out.append("Full edge list (src → tgt, with features) is written to "
-               "`backend/FEATURE_CROSS_REFERENCES.json` under `func_edges_cross_feature`.")
-    out.append("")
-
-    # Operation -> Operation
-    out.append("## Operation → Operation Wiring")
-    out.append("")
-    out.append(f"Router operations scanned: **{len(ops)}** — "
-               f"**{len(wired_ops)} wired** (handler resolves to backend functions or dynamically "
-               f"imports a controller/service), **{len(unwired_ops)} not wired** (stub health/status "
-               "routes with no backend call — honest gap tracking).")
-    out.append("")
-    out.append("### Wired operations (route → handler → backend functions invoked)")
-    out.append("")
-    out.append("| Method | Path | Router feature | Handler | Invokes |")
-    out.append("| --- | --- | --- | --- | --- |")
-    for op in wired_ops[:400]:
-        invokes = ", ".join(op["called"][:6]) or ", ".join(op["dyn_imports"][:3])
-        if len(op["called"]) > 6:
-            invokes += ", …"
-        out.append(f"| {op['method']} | {op['path']} | {op['router_feat']} | "
-                   f"{op['handler'].split('.')[-1]} | {invokes} |")
-    out.append("")
-    if len(wired_ops) > 400:
-        out.append(f"_(showing first 400 of {len(wired_ops)} wired operations; full list in JSON)_")
-        out.append("")
-    out.append("### Cross-stack operation links (frontend API call → backend route)")
-    out.append("")
-    out.append(f"{len(cross_stack)} distinct frontend API paths resolve to a scanned backend route:")
-    out.append("")
-    out.append("| Frontend API path | Backend feature(s) | Frontend feature(s) |")
-    out.append("| --- | --- | --- |")
-    for p, bf, ff in cross_stack[:200]:
-        out.append(f"| {p} | {', '.join(bf)} | {', '.join(ff)} |")
-    out.append("")
-
-    # ---- Wiring Problems (concrete layer-to-layer gaps) ----
-    red_features = sorted(f for f, (s, r) in align.items() if s == "RED")
-    amber_features = sorted(f for f, (s, r) in align.items() if s == "AMBER")
-    green_features = sorted(f for f, (s, r) in align.items() if s == "GREEN")
-    shared_features = sorted(f for f, (s, r) in align.items() if s == "SHARED")
-    svc_no_ctrl = sorted(f for f in data
-                         if data[f].get("services") and not data[f].get("controllers"))
-    ctrl_no_rt = sorted(f for f in data
-                        if data[f].get("controllers") and not data[f].get("routers")
-                        and f != "delegators")
-    models_only = sorted(f for f in data
-                         if f not in PLATFORM_LAYERS
-                         and (data[f].get("models") or data[f].get("db"))
-                         and not data[f].get("services")
-                         and not data[f].get("controllers")
-                         and not data[f].get("routers"))
-    provider_features = sorted(f for f in data if data[f].get("providers"))
-    middleware_features = sorted(f for f in data if data[f].get("middleware"))
-
-    out.append("## Wiring Problems (what to fix)")
-    out.append("")
-    out.append("Concrete gaps between **every** backend layer (models → db → providers → services → "
-               "controllers → routers → middleware → utils). Each item is something to **verify or fix** — "
-               "nothing here is flagged as dead code; these are un-wired, dynamically wired via `importlib`, "
-               "or data-only layers. The matrix below shows how the complete backend is wired end-to-end.")
-    out.append("")
-
-    # Layer wiring matrix — how the whole backend is wired, layer by layer.
-    out.append("### Layer wiring matrix")
-    out.append("")
-    out.append("| Layer | Files | Features using this layer | Wired to next layer? |")
-    out.append("| --- | --- | --- | --- |")
-    layer_notes = {
-        "models": "ORM data models.",
-        "db": "engine / session / bootstrap.",
-        "providers": "external integrations (leaf layer).",
-        "services": "business logic.",
-        "controllers": "HTTP orchestration.",
-        "routers": "API surface (endpoints).",
-        "middleware": "cross-cutting HTTP middleware.",
-        "utils": "shared helpers.",
-        "events": "event bus / handlers.",
-        "jobs": "async / background jobs.",
-        "dependencies": "DI wiring.",
-    }
-    for l in LAYERS:
-        feats_with = sorted(f for f in data if data[f].get(l))
-        nf = len(feats_with)
-        feats_str = ", ".join(feats_with) if nf <= 12 else f"{nf} features"
-        # simple "wired to next layer?" heuristic
-        if l == "models":
-            nxt = sum(1 for f in feats_with if data[f].get("services") or data[f].get("controllers"))
-            wired = f"{nxt}/{nf} have a service/controller"
-        elif l == "providers":
-            nxt = sum(1 for f in feats_with if data[f].get("services"))
-            wired = f"{nxt}/{nf} consumed by a service"
-        elif l == "services":
-            nxt = sum(1 for f in feats_with if data[f].get("controllers"))
-            wired = f"{nxt}/{nf} have a controller"
-        elif l == "controllers":
-            nxt = sum(1 for f in feats_with if data[f].get("routers"))
-            wired = f"{nxt}/{nf} have a static router (rest dynamic)"
-        elif l == "routers":
-            wired = "API surface"
-        elif l in ("db", "middleware", "utils", "events", "jobs", "dependencies"):
-            wired = "platform / cross-cutting"
-        else:
-            wired = "—"
-        out.append(f"| {l} | {totals[l]} | {feats_str} | {wired} |")
-    out.append("")
-
-    out.append(f"### RED — endpoint surface (router) exists but no service/controller ({len(red_features)})")
-    out.append("")
-    if red_features:
-        for f in red_features:
-            out.append(f"- **{f}** — {align[f][1]}")
-    else:
-        out.append("- none")
-    out.append("")
-    out.append(f"### AMBER — services present but no controller here ({len(svc_no_ctrl)})")
-    out.append("")
-    if svc_no_ctrl:
-        out.append("- " + ", ".join(svc_no_ctrl))
-    else:
-        out.append("- none")
-    out.append("")
-    out.append(f"### AMBER — controllers present but no static router import (dynamic importlib) ({len(ctrl_no_rt)})")
-    out.append("")
-    if ctrl_no_rt:
-        out.append("- " + ", ".join(ctrl_no_rt))
-    else:
-        out.append("- none")
-    out.append("")
-    out.append(f"### MODELS / DB — data layer with no service, controller or router ({len(models_only)})")
-    out.append("")
-    out.append("These features expose a data model but no business-logic layer — verify the logic lives "
-               "cross-feature (e.g. in a shared service) or is genuinely absent.")
-    out.append("")
-    if models_only:
-        for f in models_only:
-            out.append(f"- **{f}** — {align[f][1]}")
-    else:
-        out.append("- none")
-    out.append("")
-    out.append(f"### PROVIDERS — external/integration implementations ({len(provider_features)})")
-    out.append("")
-    out.append("Provider layers are leaves (no controller/router required). Confirm each is actually "
-               "consumed by a service.")
-    out.append("")
-    if provider_features:
-        for f in provider_features:
-            consumes = sorted(x for x in data
-                              if data[x].get("services") and f in cross["feat_deps"].get(x, {}))
-            note = f"consumed by: {', '.join(consumes)}" if consumes else "no service dependency detected"
-            out.append(f"- **{f}** ({len(data[f].get('providers', []))} providers) — {note}")
-    else:
-        out.append("- none")
-    out.append("")
-    out.append(f"### MIDDLEWARE — platform HTTP middleware ({len(middleware_features)})")
-    out.append("")
-    if middleware_features:
-        for f in middleware_features:
-            files = data[f].get("middleware", [])
-            out.append(f"- **{f}** — {len(files)} middleware file(s): "
-                       + (", ".join(sorted(files)) if isinstance(files[0], str) else ", ".join(sorted(x[2] for x in files))))
-    else:
-        out.append("- none")
-    out.append("")
-    out.append(f"### STUB — routers whose handlers are unwired ({len(unwired_ops)}/{len(ops)})")
-    out.append("")
-    out.append(f"- {len(unwired_ops)} router operations have a stub handler (health/status) with no backend "
-               "call — expected, but verify none are real endpoints masked as stubs.")
-    out.append("")
-    out.append(f"### BROKEN DEPENDENCIES — feature depends on a RED/unwired feature ({len(broken)})")
-    out.append("")
-    if broken:
-        for sf, d in broken:
-            out.append(f"- **{sf}** depends on **{d}** (RED — {align[d][1]})")
-    else:
-        out.append("- none")
-    out.append("")
-
-    # Gap register
-    out.append("## Gap register (what is missing / risky)")
-    out.append("")
-    out.append("Severity: **HIGH** = genuine absence that breaks a feature; **MED** = risky / "
-               "hard-to-verify; **LOW** = expected stub, verify anyway; **INFO** = by-design, not a defect.")
-    out.append("")
-    out.append("| Severity | Area | Finding | Recommended action |")
-    out.append("| --- | --- | --- | --- |")
-    for sev, area, finding, action in gaps:
-        out.append(f"| {sev} | {area} | {finding} | {action} |")
-    out.append("")
-
-    # Notes
-    out.append("## Notes")
-    out.append("")
-    out.append("- Module = the real backend directory name (e.g. `services/employee`, `services/hierarchy`, "
-               "`services/country` are distinct rows, not folded into `hr`/`geography`).")
-    out.append("- **Feature→Feature** is computed from AST call edges + import edges; an edge means A's code "
-               "literally calls B's code. It is a static read — runtime dispatch (dynamic `importlib` in "
-               "`main._load_routers`, `delegators/`) is NOT visible and shows as fewer/no edges.")
-    out.append("- **Function→Function** resolves `module.fn()` and imported-name calls to the target function "
-               "via the file's import map. `self.repo.method()` and other attribute-on-instance calls are "
-               "left unresolved (counted in `unresolved_call_targets`) because they need runtime types.")
-    out.append("- **Operation→Operation** traces each `@router.METHOD(path)` to its handler and the backend "
-               "functions that handler calls. Unwired = stub routes (health/status) with no backend call.")
-    out.append("- Frontend attribution is path-based and approximate; review per-feature frontend file lists before trusting them.")
-    out.append("- The empty local `zozi.db` and the Alembic 2-head branch (see DIAGNOSIS_REPORT.md) are "
-               "platform-level issues affecting ALL modules and are tracked separately.")
-    out.append("")
-
     dest = os.path.join(out_dir, report_name)
     with open(dest, "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
-    print(f"Wrote {dest}: {len(rows)} module rows, backend files={sum(totals.values())}, "
-          f"frontend files={total_fe}")
-    print(f"Wrote {json_path}: func_edges={len(cross['func_edges'])} "
-          f"(cross={len(cross_func_edges)}), ops={len(ops)} wired={len(wired_ops)}, "
-          f"unresolved={cross['unresolved']}")
+        f.write("\n".join(report_lines))
+
+    n_impl = sum(1 for d in _ALL_DOMAINS if domain_completion(domains[d])[0] == "Implemented")
+    n_part = sum(1 for d in _ALL_DOMAINS if domain_completion(domains[d])[0] == "Partial")
+    n_high = sum(1 for (_l, sev, *_x) in violations if sev == "HIGH")
+    print(f"Wrote {dest}: modules={len(discover_modules())}, domains={len(_ALL_DOMAINS)} "
+          f"({sum(len(domains[d]['files']) for d in _ALL_DOMAINS)} files), "
+          f"implemented={n_impl}, partial={n_part}, atoms={len(rbac_atoms)}")
+    print(f"Wrote {json_path}: schema=new_structure_audit_v2, "
+          f"violations={len(violations)} (HIGH={n_high}), ollama={'on:'+ollama_model if use_ollama else 'off'}")
 
 
 if __name__ == "__main__":
     import argparse
     ap = argparse.ArgumentParser(
-        description="Generate the ZOZI system cross-reference tracking report.")
-    ap.add_argument("--backend", default=BACKEND,
-                    help="Backend source dir (default: <repo>/backend)")
-    ap.add_argument("--frontend", default=FRONTEND,
-                    help="Frontend source dir (default: <repo>/frontend)")
-    ap.add_argument("--out-dir", default=BACKEND,
-                    help="Output dir for report + json (default: <repo>/backend)")
+        description="Generate the ZOZI NEW_STRUCTURE.md architecture & implementation audit.")
+    ap.add_argument("--backend", default=BACKEND, help="Backend source dir")
+    ap.add_argument("--out-dir", default=DOCS_AUDIT, help="Output dir for report + json")
     ap.add_argument("--report-name", default="SYSTEM_TRACKING_REPORT.md")
     ap.add_argument("--json-name", default="FEATURE_CROSS_REFERENCES.json")
+    ap.add_argument("--no-ollama", action="store_true", help="Disable OLLAMA (use heuristics only)")
+    ap.add_argument("--ollama-model", default="qwen2.5:latest", help="OLLAMA model name")
+    ap.add_argument("--ollama-url", default="http://localhost:11434", help="OLLAMA base URL")
     args = ap.parse_args()
-    # Globals are read by the scanning helpers (scan_backend_py, build_module_index).
     BACKEND = args.backend
-    FRONTEND = args.frontend
-    main(args.out_dir, args.report_name, args.json_name)
+    main(args.out_dir, args.report_name, args.json_name,
+         use_ollama=not args.no_ollama,
+         ollama_model=args.ollama_model, ollama_url=args.ollama_url)

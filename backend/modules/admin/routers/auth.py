@@ -14,12 +14,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import RegisterRequest, TokenResponse, UserOut
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import RegisterRequest, TokenResponse, UserOut
 from middleware.csrf_middleware import generate_csrf_token
-from _legacy.models import User, UserLoginHistory
-from utils.audit import AuditAction, audit_log
-from utils.auth import (
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
+from infrastructure.utils.audit import AuditAction, audit_log
+from infrastructure.utils.auth import (
     blacklist_token,
     create_access_token,
     create_refresh_token,
@@ -27,9 +28,9 @@ from utils.auth import (
     get_password_hash,
     verify_password,
 )
-from utils.config import settings
-from utils.dependencies import get_current_user
-from utils.ip_utils import get_request_ip
+from infrastructure.utils.config import settings
+from infrastructure.utils.dependencies import get_current_user
+from infrastructure.utils.ip_utils import get_request_ip
 
 router = APIRouter()
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -171,7 +172,7 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
                 detail=f"Invalid role '{payload.role}'. Allowed roles: {', '.join(sorted(valid_roles))}",
             )
 
-        from db.schemas import _validate_password_complexity
+        from infrastructure.database.schemas import _validate_password_complexity
         try:
             _validate_password_complexity(payload.password)
         except ValueError as exc:

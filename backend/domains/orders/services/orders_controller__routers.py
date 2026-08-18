@@ -5,7 +5,7 @@ creation, preview, lookup, tracking, invoice, cancellation and
 shipment-confirmation logic. The controller is the stable boundary the router
 imports; the service owns the business rules.
 
-Routes are declared with the metadata-only decorators from ``core.route_contract``
+Routes are declared with the metadata-only decorators from ``infrastructure.routing.route_contract``
 so ``routers/generated/auto_router.py`` can auto-generate the FastAPI surface.
 A controller never imports FastAPI directly.
 """
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from core.route_contract import get, post
+from infrastructure.routing.route_contract import get, post
 from infrastructure.database.schemas import OrderCreate, OrderPreviewOut
 
 from domains.orders.services.orders_service import (

@@ -7,10 +7,14 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMember, GroupChatMessage
-from _legacy.models import User
-from _legacy.models.comms.communication import ChatAttachment
-from services.common.storage import storage as _storage
+from domains.accounts.models.core import DirectChatRoom
+from domains.accounts.models.core import DirectChatMessage
+from domains.accounts.models.core import GroupChatRoom
+from domains.accounts.models.core import GroupChatMember
+from domains.accounts.models.core import GroupChatMessage
+from domains.accounts.models.user import User
+from domains.comms.models.communication import ChatAttachment
+from infrastructure.utils.storage import storage as _storage
 
 logger = logging.getLogger("zozi.chat")
 
@@ -40,7 +44,7 @@ class ChatSystem:
         is_external: bool = False,
         country_code: Optional[str] = None,
     ) -> dict:
-        from _legacy.models.core import EntityChatThread
+        from domains.accounts.models.core import EntityChatThread
         thread = EntityChatThread(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -187,7 +191,8 @@ class ChatSystem:
                 message_type=message_type,
             )
         else:
-            from _legacy.models.core import EntityChatThread, EntityChatMessage
+            from domains.accounts.models.core import EntityChatThread
+            from domains.accounts.models.core import EntityChatMessage
             thread = self.db.query(EntityChatThread).filter(
                 EntityChatThread.id == int(chat_id)
             ).first()
@@ -279,7 +284,8 @@ class ChatSystem:
         message_type = "text" if not files else "file"
 
         if chat_type == "entity":
-            from _legacy.models.core import EntityChatThread, EntityChatMessage
+            from domains.accounts.models.core import EntityChatThread
+            from domains.accounts.models.core import EntityChatMessage
             thread = self.db.query(EntityChatThread).filter(
                 EntityChatThread.id == int(chat_id)
             ).first()
@@ -291,7 +297,8 @@ class ChatSystem:
                 message=content or f"{len(files)} file(s)",
             )
         elif chat_type == "dm" or chat_type == "direct":
-            from _legacy.models.core import DirectChatRoom, DirectChatMessage
+            from domains.accounts.models.core import DirectChatRoom
+            from domains.accounts.models.core import DirectChatMessage
             room = self.db.query(DirectChatRoom).filter(
                 DirectChatRoom.chat_id == chat_id,
                 DirectChatRoom.is_active == True,
@@ -305,7 +312,8 @@ class ChatSystem:
                 message_type=message_type,
             )
         elif chat_type == "group":
-            from _legacy.models.core import GroupChatRoom, GroupChatMessage
+            from domains.accounts.models.core import GroupChatRoom
+            from domains.accounts.models.core import GroupChatMessage
             room = self.db.query(GroupChatRoom).filter(
                 GroupChatRoom.chat_id == chat_id,
                 GroupChatRoom.is_active == True,
@@ -416,7 +424,7 @@ class ChatSystem:
                 msg.read_at = now
                 count += 1
         else:
-            from _legacy.models.core import EntityChatMessage
+            from domains.accounts.models.core import EntityChatMessage
             messages = self.db.query(EntityChatMessage).filter(
                 EntityChatMessage.thread_id == int(chat_id),
                 EntityChatMessage.sender_id != user_id,
@@ -430,7 +438,7 @@ class ChatSystem:
         return {"chat_id": chat_id, "marked_read": count}
 
     def create_thread(self, title: str, entity_type: Optional[str] = None, entity_id: Optional[int] = None) -> dict:
-        from _legacy.models.core import EntityChatThread
+        from domains.accounts.models.core import EntityChatThread
         thread = EntityChatThread(
             title=title,
             entity_type=entity_type or "admin",
@@ -459,8 +467,9 @@ class ChatSystem:
                 "next_cursor": int | None,
             }
         """
-        from _legacy.models.core import EntityChatThread, EntityChatMessage
-        from _legacy.models import User
+        from domains.accounts.models.core import EntityChatThread
+        from domains.accounts.models.core import EntityChatMessage
+        from domains.accounts.models.user import User
         thread = self.db.query(EntityChatThread).filter(
             EntityChatThread.id == thread_id
         ).first()
@@ -509,7 +518,8 @@ class ChatSystem:
         }
 
     def list_threads(self) -> list:
-        from _legacy.models.core import EntityChatThread, EntityChatMessage
+        from domains.accounts.models.core import EntityChatThread
+        from domains.accounts.models.core import EntityChatMessage
         from sqlalchemy import func, desc
         subq = (
             self.db.query(
@@ -562,7 +572,8 @@ def get_chat_system(db: Session) -> ChatSystem:
 
 def get_chat_metrics(db: Session) -> dict:
     """Aggregate chat counts across all countries (admin metrics)."""
-    from _legacy.models.core import EntityChatThread, EntityChatMessage
+    from domains.accounts.models.core import EntityChatThread
+    from domains.accounts.models.core import EntityChatMessage
     from sqlalchemy import func
 
     total_threads = db.query(func.count(EntityChatThread.id)).scalar() or 0

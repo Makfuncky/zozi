@@ -11,11 +11,13 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import Category, CountryCity, CountryConfig
+from domains.catalog.models.products import Category
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryCity
 
 class CityResponse(BaseModel):
     id: int

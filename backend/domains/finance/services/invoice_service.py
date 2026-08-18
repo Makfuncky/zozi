@@ -13,8 +13,14 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from _legacy.models import Invoice, InvoiceItem, Order, OrderItem, Product, Shipment, User
-from utils.audit import AuditAction, audit_log
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import InvoiceItem
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
@@ -222,7 +228,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
     )
     # Email the invoice to the customer — enqueued async, failure is non-blocking
     try:
-        from services.comms.transactional_email_service import enqueue_invoice_email
+        from domains.comms.services.transactional_email_service import enqueue_invoice_email
         enqueue_invoice_email(cast(int, inv.id))
     except Exception:
         logger.warning("Failed to enqueue invoice email for invoice %s", inv.id)
@@ -277,7 +283,7 @@ def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: S
     # Email delivery confirmation to customer — enqueued async, failure is non-blocking
     if new_status == "delivered":
         try:
-            from services.comms.transactional_email_service import enqueue_invoice_email
+            from domains.comms.services.transactional_email_service import enqueue_invoice_email
             enqueue_invoice_email(cast(int, inv.id))
         except Exception:
             logger.warning("Failed to enqueue delivery confirmation email for invoice %s", inv.id)

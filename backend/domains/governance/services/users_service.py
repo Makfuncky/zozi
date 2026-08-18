@@ -7,13 +7,73 @@ from typing import Any, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Shipment, User, OrderLogisticsAllocation, Invoice, TransactionLedger, SupplierSettlement, CommissionLedgerEntry, BadgeBillingRecord, AuditLog, ReferralPointEvent, ChatbotQueryEvent, CampaignRecipient, EmailTemplate, EmailCampaign, ShippingCarrier, ShipmentEvent, Banner, SupplierDocument, ProductVerification, LogisticsPartner, LogisticsPartnerDocument, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsCategoryPricingRule, LogisticsVehicleRule, PromotionEngineConfig, PromotionOrderTier, PromotionLedgerEntry, PaymentGatewayConnection, PaymentProviderConfig, EmailProviderConfig, LogisticsCODRemittanceReceipt, BankTransaction, VATRemittance, SupplierBankAccount, LogisticsPartnerBankAccount, FinanceBankAccount, RolePermissionSetting, TicketReply, SupportTicket, CommissionAgreement, ProductCommissionOverride, CommissionGlobalConfig, CommissionCategoryRate, CommissionBadgeTier, Wishlist, Address, Review, Notification, CouponUsage, PasswordResetToken, EmailVerificationToken, ReturnRequest, Payout, CartItem, PushNotificationToken, RevokedToken, ShippingZone, SupplierProfile, Order, OrderItem
-from utils.auth import get_password_hash, require_permission
-from utils.audit import audit_log, AuditAction
-from utils.constants import STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
-from utils.staff_permissions import default_permissions_for_role, sanitize_staff_permissions
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.core import Address
+from domains.accounts.models.core import CartItem
+from domains.accounts.models.user import User
+from domains.accounts.models.user import ReferralPointEvent
+from domains.accounts.models.user import PasswordResetToken
+from domains.accounts.models.user import EmailVerificationToken
+from domains.accounts.models.user import RevokedToken
+from domains.catalog.models.products import Wishlist
+from domains.catalog.models.products import Review
+from domains.comms.models.communication import Notification
+from domains.comms.models.marketing import CampaignRecipient
+from domains.comms.models.marketing import EmailTemplate
+from domains.comms.models.marketing import EmailCampaign
+from domains.comms.models.suppliers import SupplierDocument
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.commission import CommissionLedgerEntry
+from domains.finance.models.commission import CommissionAgreement
+from domains.finance.models.commission import ProductCommissionOverride
+from domains.finance.models.commission import CommissionCategoryRate
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import TransactionLedger
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import BankTransaction
+from domains.finance.models.finance import VATRemittance
+from domains.governance.models.admin import BadgeBillingRecord
+from domains.governance.models.admin import ChatbotQueryEvent
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ProductVerification
+from domains.governance.models.admin import LogisticsPartnerDocument
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionOrderTier
+from domains.governance.models.admin import PromotionLedgerEntry
+from domains.governance.models.admin import PaymentProviderConfig
+from domains.governance.models.admin import EmailProviderConfig
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.governance.models.admin import SupplierBankAccount
+from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.governance.models.admin import FinanceBankAccount
+from domains.governance.models.admin import RolePermissionSetting
+from domains.governance.models.admin import TicketReply
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.governance.models.admin import CommissionBadgeTier
+from domains.governance.models.admin import CouponUsage
+from domains.governance.models.admin import PushNotificationToken
+from domains.governance.models.admin import ShippingZone
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerServiceArea
+from domains.logistics.models.logistics import LogisticsPricingProfile
+from domains.logistics.models.logistics import LogisticsCategoryPricingRule
+from domains.logistics.models.logistics import LogisticsVehicleRule
+from domains.orders.models.orders import OrderLogisticsAllocation
+from domains.orders.models.orders import ReturnRequest
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import PaymentGatewayConnection
+from domains.payments.models.payments import Payout
+from infrastructure.utils.auth import get_password_hash, require_permission
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.constants import STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
+from infrastructure.utils.staff_permissions import default_permissions_for_role, sanitize_staff_permissions
 
-from db.schemas import CreateStaffAccount, UpdateStaffAccount
+from infrastructure.database.schemas import CreateStaffAccount, UpdateStaffAccount
 
 
 def _build_list_page_payload(items: list, total: int, offset: int, page_size: int) -> dict:

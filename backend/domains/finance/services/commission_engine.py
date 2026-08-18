@@ -23,15 +23,13 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CommissionAgreement,
-    CommissionBadgeTier,
-    CommissionCategoryRate,
-    CommissionGlobalConfig,
-    CommissionLedgerEntry,
-    SupplierProfile,
-)
-from utils.datetime_utils import utcnow as _utcnow
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.commission import CommissionAgreement
+from domains.finance.models.commission import CommissionCategoryRate
+from domains.finance.models.commission import CommissionLedgerEntry
+from domains.governance.models.admin import CommissionBadgeTier
+from domains.governance.models.admin import CommissionGlobalConfig
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +244,7 @@ def get_effective_rate(
     # 2. Base commission component: product override, else category, else global.
     product_override_rate = None
     if product_id is not None:
-        from _legacy.models import ProductCommissionOverride
+        from domains.finance.models.commission import ProductCommissionOverride
 
         product_override_row = (
             db.query(ProductCommissionOverride)
@@ -447,8 +445,8 @@ def create_commission_ledger_entry(
 
 import json as _json
 
-from _legacy.models import CountryConfig
-from services.logistics.logistics_partner_pricing import normalize_country_code as _normalize_country
+from domains.country.models.countries import CountryConfig
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code as _normalize_country
 
 
 def resolve_country_commission_tiers(

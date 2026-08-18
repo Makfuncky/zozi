@@ -5,25 +5,23 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    AdminChangeAuditLog,
-    CountryCity,
-    CountryConfig,
-    CountryConfigVersion,
-    CountryCommunication,
-    CountryFeatureFlag,
-    CountryStaffAssignment,
-    EmailVerificationToken,
-    OmanDeliveryZone,
-    PasswordResetToken,
-    ProcessedWebhookEvent,
-    SupplierCountryCommission,
-)
+from domains.accounts.models.user import EmailVerificationToken
+from domains.accounts.models.user import PasswordResetToken
+from domains.country.models.countries import CountryConfig
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CountryConfigVersion
+from domains.country.models.country_enhancements import CountryFeatureFlag
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.country.models.country_enhancements import OmanDeliveryZone
+from domains.governance.models.admin import AdminChangeAuditLog
+from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.governance.models.admin import SupplierCountryCommission
 
 import structlog
 logger = structlog.get_logger(__name__)
 
-from utils.datetime_utils import utcnow as utcnow
+from infrastructure.utils.datetime_utils import utcnow as utcnow
 
 
 def _to_json(value: Any) -> str:
@@ -118,7 +116,7 @@ def create_reset_token(
 def execute_password_reset(
     db: Session, user: Any, db_token: PasswordResetToken, new_password: str
 ) -> None:
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
     setattr(user, "hashed_password", get_password_hash(new_password))
     setattr(db_token, "used", True)
     db.commit()
@@ -275,7 +273,7 @@ def create_country_feature_flag(
     rollout_audience: str | None = None,
     notes: str | None = None,
 ) -> "CountryFeatureFlag":
-    from _legacy.models import CountryFeatureFlag
+    from domains.country.models.country_enhancements import CountryFeatureFlag
     flag = CountryFeatureFlag(
         country_code=country_code,
         feature_key=feature_key,
@@ -292,7 +290,7 @@ def create_country_feature_flag(
 def update_country_feature_flag(
     db: Session, flag: "CountryFeatureFlag", updates: dict
 ) -> "CountryFeatureFlag":
-    from _legacy.models import CountryFeatureFlag
+    from domains.country.models.country_enhancements import CountryFeatureFlag
     for key, value in updates.items():
         setattr(flag, key, value)
     db.commit()
@@ -310,7 +308,7 @@ def create_country_communication(
     priority: str = "normal",
     category: str | None = None,
 ) -> "CountryCommunication":
-    from _legacy.models import CountryCommunication
+    from domains.country.models.countries import CountryCommunication
     comm = CountryCommunication(
         country_code=country_code.upper(),
         from_user_id=from_user_id,
@@ -327,7 +325,7 @@ def create_country_communication(
 
 
 def mark_communication_read(db: Session, comm: "CountryCommunication") -> None:
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     comm.status = "read"
     comm.read_at = utcnow()
     db.commit()
@@ -340,7 +338,7 @@ def create_country_staff_assignment(
     role_in_country: str,
     assigned_by: int,
 ) -> "CountryStaffAssignment":
-    from _legacy.models import CountryStaffAssignment
+    from domains.country.models.country_enhancements import CountryStaffAssignment
     assignment = CountryStaffAssignment(
         user_id=user_id,
         country_code=country_code.upper(),
@@ -354,7 +352,7 @@ def create_country_staff_assignment(
 
 
 def deactivate_country_staff_assignment(db: Session, assignment: "CountryStaffAssignment") -> None:
-    from _legacy.models import CountryStaffAssignment
+    from domains.country.models.country_enhancements import CountryStaffAssignment
     assignment.is_active = False
     db.commit()
 
@@ -415,7 +413,7 @@ def add_country_communication(db: Session, comm: "CountryCommunication") -> "Cou
 
 
 def mark_communication_read_at(db: Session, comm: "CountryCommunication") -> None:
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     comm.status = "read"
     comm.read_at = utcnow()
     db.commit()
@@ -502,8 +500,8 @@ def create_rollback_version(
     draft_by: int | None = None,
     approved_by: int | None = None,
 ) -> CountryConfigVersion:
-    from _legacy.models import CountryConfigVersion
-    from utils.datetime_utils import utcnow
+    from domains.country.models.country_enhancements import CountryConfigVersion
+    from infrastructure.utils.datetime_utils import utcnow
     rollback_row = CountryConfigVersion(
         country_code=country_code,
         config_type=config_type,

@@ -1,14 +1,19 @@
 """Admin categories router."""
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import Category, User
-from db.schemas import ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.category_tree import rebuild_category_paths
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from domains.catalog.utils.category_tree import rebuild_category_paths
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
 
 def list_categories(country_code: str=Path(..., description='ISO country code'), include_deleted: bool=False, page: int=Query(1, ge=1), page_size: int=Query(20, ge=1, le=100), _: User=Depends(require_admin), db: Session=Depends(get_db)):
     get_country_or_404(country_code.upper(), db)

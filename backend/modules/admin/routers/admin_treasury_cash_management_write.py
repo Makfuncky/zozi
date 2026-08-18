@@ -3,11 +3,26 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Any, Optional
 
-from controllers.treasury.cash_management_write_controller import auto_reconcile_transactions, create_bank_transaction, dispatch_transfer_batch, flag_transaction, import_bank_transactions, queue_dispatch_transfer_batch, reconcile_transaction, record_badge_billing_payment, record_cod_remittance, record_vat_remittance, reject_cod_remittance_receipt, resolve_transaction_exception, trigger_logistics_payouts, trigger_supplier_payouts, upsert_bank_settings, verify_cod_remittance_receipt
+from domains.finance.services.cash_management_write_controller import auto_reconcile_transactions
+from domains.finance.services.cash_management_write_controller import create_bank_transaction
+from domains.finance.services.cash_management_write_controller import dispatch_transfer_batch
+from domains.finance.services.cash_management_write_controller import flag_transaction
+from domains.finance.services.cash_management_write_controller import import_bank_transactions
+from domains.finance.services.cash_management_write_controller import queue_dispatch_transfer_batch
+from domains.finance.services.cash_management_write_controller import reconcile_transaction
+from domains.finance.services.cash_management_write_controller import record_badge_billing_payment
+from domains.finance.services.cash_management_write_controller import record_cod_remittance
+from domains.finance.services.cash_management_write_controller import record_vat_remittance
+from domains.finance.services.cash_management_write_controller import reject_cod_remittance_receipt
+from domains.finance.services.cash_management_write_controller import resolve_transaction_exception
+from domains.finance.services.cash_management_write_controller import trigger_logistics_payouts
+from domains.finance.services.cash_management_write_controller import trigger_supplier_payouts
+from domains.finance.services.cash_management_write_controller import upsert_bank_settings
+from domains.finance.services.cash_management_write_controller import verify_cod_remittance_receipt
 
 router = APIRouter(prefix="/api/v1/admin")
 

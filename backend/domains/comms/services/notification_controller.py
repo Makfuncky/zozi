@@ -1,7 +1,7 @@
 """controllers.comms.notification_controller (CONTROLLERS layer).
 
 Wraps ``services.comms.notification_engine`` and exposes the notification
-endpoints. The HTTP contract is declared with ``core.route_contract`` decorators
+endpoints. The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so ``routers/generated/auto_router.py`` can auto-generate the thin router — the
 previous hand-written ``routers/notifications.py`` instantiated the engine,
 parsed channel/priority enums inline, and read ``current_user["id"]``; that
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from core.route_contract import get, post
+from infrastructure.routing.route_contract import get, post
 
 from domains.comms.services.notification_engine import (
     NotificationChannel,

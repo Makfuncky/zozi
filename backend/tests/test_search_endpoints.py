@@ -22,7 +22,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(autouse=True)
 def _setup_db():
     """Create tables before each test and drop after."""
-    from _legacy.models import Base
+    from infrastructure.database.models import Base
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -52,7 +52,7 @@ def client(db_session):
 
 def _seed_test_products(db_session):
     """Insert sample products for search tests."""
-    from _legacy.models import Product
+    from infrastructure.database.models import Product
     import random
     from datetime import datetime, timezone
 

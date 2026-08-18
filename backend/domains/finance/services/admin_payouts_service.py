@@ -1,6 +1,6 @@
 """Auto-migrated service logic from routers/admin_payouts.py."""
 from __future__ import annotations
-from services.admin.admin_treasury_status_service import _update_bg_status_after_manual_trigger
+from domains.governance.services.admin_treasury_status_service import _update_bg_status_after_manual_trigger
 
 from fastapi import Depends, HTTPException, Path, Query
 
@@ -12,31 +12,23 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 
-from _legacy.models import FinanceAutomationLog, Payout, User
+from domains.accounts.models.user import User
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.payments.models.payments import Payout
 
 from infrastructure.utils.audit import AuditAction, audit_log
 
-from services.finance.auto_payout_scheduler import (
-    get_background_job_status as _get_bg_status,
-)
+from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
 
-from services.finance.auto_payout_scheduler import (
-    run_auto_logistics_payout_sweep as _run_logistics_sweep,
-)
+from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as _run_logistics_sweep
 
-from services.finance.auto_payout_scheduler import (
-    run_auto_payout_sweep as _run_supplier_sweep,
-)
+from domains.finance.services.auto_payout_scheduler import run_auto_payout_sweep as _run_supplier_sweep
 
-from services.finance.auto_payout_scheduler import (
-    start_auto_payout_background_job as _start_bg_job,
-)
+from domains.finance.services.auto_payout_scheduler import start_auto_payout_background_job as _start_bg_job
 
-from services.finance.auto_payout_scheduler import (
-    stop_auto_payout_background_job as _stop_bg_job,
-)
+from domains.finance.services.auto_payout_scheduler import stop_auto_payout_background_job as _stop_bg_job
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.datetime_utils import utcnow
 
@@ -63,9 +55,8 @@ class PayoutVerifyRequest(BaseModel):
 
 
 
-from services.core.supplier_payouts_service import list_payouts  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
-from services.admin.admin_treasury_status_service import create_payout  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_treasury_status_service import create_payout
 
 
 
@@ -88,7 +79,7 @@ from services.admin.admin_treasury_status_service import create_payout  # [MIGRA
 
 
 
-from services.admin.admin_treasury_status_service import list_pending_payouts  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_treasury_status_service import list_pending_payouts
 
 
 
@@ -103,7 +94,7 @@ from services.admin.admin_treasury_status_service import list_pending_payouts  #
 
 
 
-from services.admin.admin_treasury_status_service import list_pending_payouts_by_country  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_treasury_status_service import list_pending_payouts_by_country
 
 
 
@@ -115,7 +106,7 @@ from services.admin.admin_treasury_status_service import list_pending_payouts_by
 
 
 
-from services.admin.admin_treasury_status_service import verify_payout  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_treasury_status_service import verify_payout
 
 
 
@@ -129,7 +120,7 @@ from services.admin.admin_treasury_status_service import verify_payout  # [MIGRA
 
 
 
-from services.admin.admin_treasury_status_service import run_auto_payout_sweep  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_treasury_status_service import run_auto_payout_sweep
 
 
 
@@ -144,18 +135,15 @@ from services.admin.admin_treasury_status_service import run_auto_payout_sweep  
 
 
 
-from services.admin.admin_treasury_status_service import process_payout  # [MIGRATION COMPAT] re-export relocated symbol
-from services.admin.admin_treasury_status_service import get_background_job_status_endpoint  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_treasury_status_service import process_payout
+from domains.governance.services.admin_treasury_status_service import get_background_job_status_endpoint
 
 
 # === auto-wiring re-exports (migration repair) ===
-from services.admin.admin_treasury_status_service import (
-    start_background_job,
-    stop_background_job,
-    trigger_background_job,
-    trigger_background_job_kind
-)
+from domains.governance.services.admin_treasury_status_service import start_background_job
+from domains.governance.services.admin_treasury_status_service import stop_background_job
+from domains.governance.services.admin_treasury_status_service import trigger_background_job
+from domains.governance.services.admin_treasury_status_service import trigger_background_job_kind
 
-from services.core.supplier_payouts_service import list_payouts  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 

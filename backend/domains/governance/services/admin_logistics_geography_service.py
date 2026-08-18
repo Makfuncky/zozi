@@ -7,24 +7,22 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 from modules.admin.routers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
 
-from services.logistics.partner_geography_service import (
-    approve_partner,
-    list_partners,
-    reject_partner,
-    toggle_partner_active,
-)
+from domains.logistics.services.partner_geography_service import approve_partner
+from domains.logistics.services.partner_geography_service import list_partners
+from domains.logistics.services.partner_geography_service import reject_partner
+from domains.logistics.services.partner_geography_service import toggle_partner_active
 
 def list_partners_route(country_code: str, include_deleted: bool, page: int, page_size: int, _: User, db: Session):
     get_country_or_404(country_code.upper(), db)

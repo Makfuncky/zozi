@@ -7,29 +7,27 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from controllers.geography import country_controller
-from controllers.geography.country_controller import _require_admin
-from controllers.hr import employees_controller as ctrl
-from db.database import get_db
+from rbac import get_current_user
+from domains.country.services.country_controller import country_controller
+from domains.country.services.country_controller import _require_admin
+from modules.employee.routers import employees_controller as ctrl
+from infrastructure.database.database import get_db
 from modules.admin.routers.country_auto_populate import router as auto_populate_router
-from services.geography.country_config_admin_service import (
-    add_country_city as svc_add_country_city,
-    archive_country as svc_archive_country,
-    bulk_archive_countries as svc_bulk_archive_countries,
-    bulk_restore_countries as svc_bulk_restore_countries,
-    create_country_commission_rate as svc_create_country_commission_rate,
-    create_feature_flag as svc_create_feature_flag,
-    delete_country_commission_rate as svc_delete_country_commission_rate,
-    delete_country_city as svc_delete_country_city,
-    delete_feature_flag as svc_delete_feature_flag,
-    hard_delete_country as svc_hard_delete_country,
-    list_country_commission_rates as svc_list_country_commission_rates,
-    patch_country_city as svc_patch_country_city,
-    restore_country as svc_restore_country,
-    toggle_country_active as svc_toggle_country_active,
-    update_feature_flag as svc_update_feature_flag,
-)
+from domains.country.services.country_config_admin_service import add_country_city as svc_add_country_city
+from domains.country.services.country_config_admin_service import archive_country as svc_archive_country
+from domains.country.services.country_config_admin_service import bulk_archive_countries as svc_bulk_archive_countries
+from domains.country.services.country_config_admin_service import bulk_restore_countries as svc_bulk_restore_countries
+from domains.country.services.country_config_admin_service import create_country_commission_rate as svc_create_country_commission_rate
+from domains.country.services.country_config_admin_service import create_feature_flag as svc_create_feature_flag
+from domains.country.services.country_config_admin_service import delete_country_commission_rate as svc_delete_country_commission_rate
+from domains.country.services.country_config_admin_service import delete_country_city as svc_delete_country_city
+from domains.country.services.country_config_admin_service import delete_feature_flag as svc_delete_feature_flag
+from domains.country.services.country_config_admin_service import hard_delete_country as svc_hard_delete_country
+from domains.country.services.country_config_admin_service import list_country_commission_rates as svc_list_country_commission_rates
+from domains.country.services.country_config_admin_service import patch_country_city as svc_patch_country_city
+from domains.country.services.country_config_admin_service import restore_country as svc_restore_country
+from domains.country.services.country_config_admin_service import toggle_country_active as svc_toggle_country_active
+from domains.country.services.country_config_admin_service import update_feature_flag as svc_update_feature_flag
 from middleware.rls_dependency import get_country_scope as _get_country_scope
 
 
@@ -513,7 +511,7 @@ class AutoPopulateBody(BaseModel):
 @router.post("/auto-populate")
 async def auto_populate_country(body: AutoPopulateBody, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Fetch country data from external APIs and curated profiles."""
-    from controllers.geography.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
     return await country_controller.auto_populate_async(body.search_term)
 

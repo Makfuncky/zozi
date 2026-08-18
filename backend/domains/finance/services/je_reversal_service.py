@@ -11,9 +11,11 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import JournalEntry, JournalEntryLine
-from services.finance.general_ledger_service import create_journal_entry, get_journal_entry
-from db.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.services.general_ledger_service import create_journal_entry
+from domains.finance.services.general_ledger_service import get_journal_entry
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 
 logger = logging.getLogger(__name__)
 

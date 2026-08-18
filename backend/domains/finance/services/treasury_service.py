@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 from pydantic import BaseModel, Field
 
-from utils.audit import AuditAction, audit_log
-from _legacy.models import (
-    TreasuryAccount, TreasuryTransaction,
-    JournalEntry, JournalEntryLine
-)
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import TreasuryTransaction
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
 
 
 
@@ -195,7 +195,7 @@ def create_journal_entry(
 
 def get_payroll_summary(country_code: str, db: Session) -> dict:
     """Get payroll summary for a country."""
-    from _legacy.models.employee_models import Employee
+    from domains.hr.models.employee_models import Employee
     result = db.execute(text("""
         SELECT 
             COUNT(*) as employee_count,

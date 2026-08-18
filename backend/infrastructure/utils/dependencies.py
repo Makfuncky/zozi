@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from _legacy.models import User
+from domains.accounts.models.user import User
 from infrastructure.utils.auth import decode_token
 
 logger = logging.getLogger(__name__)

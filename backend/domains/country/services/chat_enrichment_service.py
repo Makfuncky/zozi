@@ -11,24 +11,22 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
-from services.comms.chat_enrichment import (
-    add_reaction,
-    apply_legal_hold,
-    create_voice_note_attachment,
-    delete_message,
-    edit_message,
-    get_reactions,
-    is_legal_hold_active,
-    release_legal_hold,
-    remove_reaction,
-    upload_attachment,
-)
+from domains.comms.services.chat_enrichment import add_reaction
+from domains.comms.services.chat_enrichment import apply_legal_hold
+from domains.comms.services.chat_enrichment import create_voice_note_attachment
+from domains.comms.services.chat_enrichment import delete_message
+from domains.comms.services.chat_enrichment import edit_message
+from domains.comms.services.chat_enrichment import get_reactions
+from domains.comms.services.chat_enrichment import is_legal_hold_active
+from domains.comms.services.chat_enrichment import release_legal_hold
+from domains.comms.services.chat_enrichment import remove_reaction
+from domains.comms.services.chat_enrichment import upload_attachment
 
 logger = logging.getLogger(__name__)
 

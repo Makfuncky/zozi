@@ -32,7 +32,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Banner
+from domains.payments.models.payments import Banner
 import structlog
 logger = structlog.get_logger(__name__)
 

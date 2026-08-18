@@ -30,17 +30,23 @@ import uuid
 from typing import Optional
 from fastapi import BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
-from db.database import get_db
-from controllers.admin.admin_controller import require_roles
-from _legacy.models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
-from utils.variant_key import compute_variant_key
-from utils.config import BASE_DIR
+from infrastructure.database.database import get_db
+from domains.governance.services.admin_controller import require_roles
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.media.models.ai_upload import AIUploadJob
+from domains.media.models.ai_upload import AIStagingProduct
+from domains.media.models.ai_upload import AIStagingVariant
+from domains.media.models.ai_upload import AIGenerationLog
+from infrastructure.utils.variant_key import compute_variant_key
+from infrastructure.utils.config import BASE_DIR
 logger = logging.getLogger(__name__)
 _AUTH = Depends(require_roles('supplier', 'admin'))
 
 def process_ai_upload_job(job_id: int) -> None:
     """Worker: enrich a job's media and write staging rows. Runs in a worker thread."""
-    from db.database import get_db_context
+    from infrastructure.database.database import get_db_context
     with get_db_context() as db:
         job = db.get(AIUploadJob, job_id)
         if job is None:
@@ -64,7 +70,7 @@ def process_ai_upload_job(job_id: int) -> None:
                 if image_bytes_str:
                     img_bytes = bytes(image_bytes_str) if isinstance(image_bytes_str, str) else image_bytes_str
                 elif media.get('key'):
-                    from services.common.storage import storage as _storage
+                    from infrastructure.utils.storage import storage as _storage
                     img_bytes = _storage.read(media['key'])
                 else:
                     continue
@@ -130,7 +136,7 @@ def _save_upload(file: UploadFile, job_dir: str) -> tuple[str, str, bytes]:
 
     Returns ``(storage_key, public_url, content_bytes)``.
     """
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.storage import storage as _storage
     ext = os.path.splitext(file.filename or '')[1] or '.bin'
     fname = f'{uuid.uuid4().hex}{ext}'
     key = f'ai_upload/{os.path.basename(job_dir)}/{fname}'
@@ -149,7 +155,7 @@ def _slugify(name: str) -> str:
 
 def _enrich_one(img_bytes: bytes, idx: int, job: AIUploadJob, image_url: str) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     """Run AI enrichment for a single image. Returns staging product, its variants, and logs."""
-    from services.ai import ai_service
+    from domains.media.services.ai import ai_service
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f'Untitled Product {idx + 1}'
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)
     tags = ai_service.suggest_tags(name=name, category=category)

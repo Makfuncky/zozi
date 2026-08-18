@@ -13,17 +13,15 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    CashFlowForecast,
-    JournalEntry,
-    JournalEntryLine,
-    SupplierSettlement,
-    PayoutBatch,
-)
-from utils.money import round_money
-from utils.datetime_utils import utcnow as _utcnow
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import PayoutBatch
+from kernel.money import round_money
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

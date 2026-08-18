@@ -14,7 +14,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Address
+from domains.accounts.models.core import Address
 import structlog
 logger = structlog.get_logger(__name__)
 

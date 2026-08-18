@@ -7,7 +7,7 @@ from datetime import date
 import pytest
 
 from domains.hr.models.employee_models import InternalEmail, EmailFolder, Employee
-from _legacy.models import User
+from infrastructure.database.models import User
 
 
 @pytest.fixture

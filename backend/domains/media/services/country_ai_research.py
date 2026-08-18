@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from providers.ai.text import ollama_chat_json
 from providers.ai.web_search import duckduckgo_search
-from utils.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 

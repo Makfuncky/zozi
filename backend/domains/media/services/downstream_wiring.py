@@ -15,8 +15,11 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig, Order, Product
-from services.finance.tax_service import calculate_tax, get_country_config
+from domains.catalog.models.products import Product
+from domains.country.models.countries import CountryConfig
+from domains.orders.models.orders import Order
+from domains.finance.services.tax_service import calculate_tax
+from domains.finance.services.tax_service import get_country_config
 from infrastructure.utils.money import to_decimal
 
 logger = logging.getLogger(__name__)

@@ -9,14 +9,19 @@ from fastapi import HTTPException
 from sqlalchemy import or_, func, String, cast as sql_cast
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import (
-    Product, Order, OrderItem, CartItem, Wishlist, Review,
-    Notification, User, AuditLog
-)
-from services.products.products_service import _bump_product_cache_version
-from utils.auth import require_permission
-from utils.audit import audit_log, AuditAction
-from utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
+from domains.accounts.models.core import CartItem
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Wishlist
+from domains.catalog.models.products import Review
+from domains.comms.models.communication import Notification
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.catalog.services.products_service import _bump_product_cache_version
+from infrastructure.utils.auth import require_permission
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.constants import _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 
 # Module-level helper functions
 
@@ -377,7 +382,7 @@ def approve_product(product_id: int, acting_user: dict, db: Session) -> dict:
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    from services.geography.country_restriction_service import is_product_restricted_for_country
+    from domains.country.services.country_restriction_service import is_product_restricted_for_country
     supplier = db.query(User).filter(User.id == product.supplier_id).first()
     if supplier:
         supplier_country = str(getattr(supplier, "preferred_country", "") or "").strip()

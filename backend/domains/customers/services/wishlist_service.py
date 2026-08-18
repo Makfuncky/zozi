@@ -9,7 +9,8 @@ from modules.products.routers.products_controller import get_products as get_pro
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import Product, WishlistItem
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import WishlistItem
 
 from infrastructure.utils.dependencies import get_current_user
 

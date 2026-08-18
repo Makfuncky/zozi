@@ -17,13 +17,13 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from services.common.db_read import query as db_read_query
-import services.common.db_write as db_write
-from _legacy.models import User
+from domains.comms.services.db_read import query as db_read_query
+import domains.comms.services as db_write
+from domains.accounts.models.user import User
 
-from utils.audit import audit_log, AuditAction
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.audit import audit_log, AuditAction
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ def delete_user_permanent_for_country(
     db: Session,
     delete_orders: bool = False,
 ) -> dict:
-    from services.admin.misc_service import hard_delete_entity
+    from domains.governance.services.misc_service import hard_delete_entity
 
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)

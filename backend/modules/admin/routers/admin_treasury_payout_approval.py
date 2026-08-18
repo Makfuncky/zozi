@@ -3,11 +3,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Any
 
-from controllers.treasury.payout_approval_controller import approve_batch, approve_payout, dispatch_batch, reject_batch, reject_payout
+from domains.finance.services.payout_approval_controller import approve_batch
+from domains.finance.services.payout_approval_controller import approve_payout
+from domains.finance.services.payout_approval_controller import dispatch_batch
+from domains.finance.services.payout_approval_controller import reject_batch
+from domains.finance.services.payout_approval_controller import reject_payout
 
 router = APIRouter(prefix="/api/v1/admin")
 

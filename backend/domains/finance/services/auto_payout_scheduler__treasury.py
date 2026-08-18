@@ -42,17 +42,15 @@ from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    FinanceAutomationLog,
-    LogisticsPartnerPayout,
-    LogisticsSettlement,
-    Payout,
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-)
-from utils.datetime_utils import utcnow as _utcnow
-from utils.money import round_money, to_decimal
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.governance.models.admin import LogisticsSettlement
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payout
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from kernel.money import round_money, to_decimal
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +131,7 @@ def run_auto_payout_sweep(
         # â”€â”€ 2. Verify supplier bank accounts exist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         supplier_ids_in_scope = {cast(int, s.supplier_id) for s in settlements}
         try:
-            from _legacy.models.suppliers import SupplierBankAccount
+            from domains.governance.models.admin import SupplierBankAccount
 
             bank_accounts = (
                 db.query(SupplierBankAccount.supplier_id)
@@ -281,7 +279,7 @@ def run_auto_payout_sweep(
         # â”€â”€ 7. Send payout notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         notifications: list[dict[str, Any]] = []
         try:
-            from services.comms.payout_notification_service import notify_suppliers_of_payout
+            from domains.comms.services.payout_notification_service import notify_suppliers_of_payout
 
             summary = {
                 "payout_ids": [
@@ -411,7 +409,7 @@ def run_auto_logistics_payout_sweep(
         # â”€â”€ 2. Verify logistics partner bank accounts exist â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         partner_ids_in_scope = {cast(int, s.partner_id) for s in settlements}
         try:
-            from _legacy.models.admin import LogisticsPartnerBankAccount
+            from domains.governance.models.admin import LogisticsPartnerBankAccount
 
             bank_accounts = (
                 db.query(LogisticsPartnerBankAccount.partner_id)
@@ -555,7 +553,7 @@ def run_auto_logistics_payout_sweep(
         # â”€â”€ 8. Send payout notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         logistics_notifications: list[dict[str, Any]] = []
         try:
-            from services.comms.payout_notification_service import notify_logistics_partners_of_payout
+            from domains.comms.services.payout_notification_service import notify_logistics_partners_of_payout
 
             summary = {
                 "payout_ids": [
@@ -716,7 +714,7 @@ def _broadcast_sweep_completed(
     Fires from sync code; silently no-ops if no event loop is running.
     """
     try:
-        from utils.websocket_manager import broadcast_background_job_update
+        from infrastructure.utils.websocket_manager import broadcast_background_job_update
 
         broadcast_background_job_update(
             {
@@ -784,7 +782,7 @@ def _run_once_with_retry(delay_before: int = 0) -> None:
         time.sleep(delay_before)
 
     try:
-        from db.database import SessionLocal
+        from infrastructure.database.database import SessionLocal
 
         # Supplier sweep
         db = SessionLocal()

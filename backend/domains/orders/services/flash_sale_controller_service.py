@@ -7,12 +7,12 @@ from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from utils.audit import audit_log, AuditAction
-from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from services.products.products_service import _bump_product_cache_version
-from _legacy.models import FlashSale
-from db.schemas import FlashSaleCreate, FlashSaleOut
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from domains.catalog.services.products_service import _bump_product_cache_version
+from domains.comms.models.marketing import FlashSale
+from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 _FLASH_SALE_CACHE_TTL = 45
 

@@ -8,31 +8,25 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.finance import accounting_controller
-from controllers.admin.admin_controller import require_admin
-from controllers.finance.sub_ledger_controller import (
-    controller_get_ap_summary,
-    controller_get_ar_summary,
-    controller_post_ap_payable,
-    controller_post_ap_payment,
-    controller_post_ar_invoice,
-    controller_post_ar_payment,
-)
-from db.database import get_db
-from utils.audit import AuditAction, audit_log
-from services.finance.cash_flow_forecast_service import (
-    generate_forecast as generate_cash_forecast,
-)
-from services.finance.financial_reporting import FinancialReportingService
-from services.finance.je_reversal_service import reverse_journal_entry
-from services.finance.period_close_service import (
-    close_period,
-    get_current_fiscal_period,
-    get_or_create_fiscal_period,
-    list_periods,
-)
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.finance.services.finance import accounting_controller
+from infrastructure.utils.dependencies import require_admin
+from domains.finance.services.sub_ledger_controller import controller_get_ap_summary
+from domains.finance.services.sub_ledger_controller import controller_get_ar_summary
+from domains.finance.services.sub_ledger_controller import controller_post_ap_payable
+from domains.finance.services.sub_ledger_controller import controller_post_ap_payment
+from domains.finance.services.sub_ledger_controller import controller_post_ar_invoice
+from domains.finance.services.sub_ledger_controller import controller_post_ar_payment
+from infrastructure.database.database import get_db
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.finance.services.cash_flow_forecast_service import generate_forecast as generate_cash_forecast
+from domains.finance.services.financial_reporting import FinancialReportingService
+from domains.finance.services.je_reversal_service import reverse_journal_entry
+from domains.finance.services.period_close_service import close_period
+from domains.finance.services.period_close_service import get_current_fiscal_period
+from domains.finance.services.period_close_service import get_or_create_fiscal_period
+from domains.finance.services.period_close_service import list_periods
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

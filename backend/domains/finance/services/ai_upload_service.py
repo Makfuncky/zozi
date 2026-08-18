@@ -9,15 +9,13 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    AIGenerationLog,
-    AIStagingProduct,
-    AIStagingVariant,
-    AIUploadJob,
-    Product,
-    ProductVariant,
-)
-from services.common.storage import storage as _storage
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.media.models.ai_upload import AIGenerationLog
+from domains.media.models.ai_upload import AIStagingProduct
+from domains.media.models.ai_upload import AIStagingVariant
+from domains.media.models.ai_upload import AIUploadJob
+from infrastructure.utils.storage import storage as _storage
 from infrastructure.utils.variant_key import compute_variant_key
 
 logger = logging.getLogger(__name__)

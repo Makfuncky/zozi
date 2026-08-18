@@ -1,7 +1,7 @@
 """controllers.comms.communication_audit_controller (CONTROLLERS layer).
 
 Wraps ``services.comms.communication_audit`` and exposes the communication
-audit endpoints. The HTTP contract is declared with ``core.route_contract``
+audit endpoints. The HTTP contract is declared with ``infrastructure.routing.route_contract``
 decorators so ``routers/generated/auto_router.py`` can auto-generate the thin
 router — the previous hand-written ``routers/audit.py`` only instantiated the
 service and passed query params through, which is controller-level
@@ -14,7 +14,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from core.route_contract import get
+from infrastructure.routing.route_contract import get
 
 from domains.comms.services.communication_audit import get_communication_audit_service
 

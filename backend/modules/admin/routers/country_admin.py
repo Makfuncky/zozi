@@ -9,12 +9,14 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import CountryCommunication, CountryStaffAssignment
-from _legacy.models.country_enhancements import CountryCategoryTaxRate, CountryCity
-from services.audit.audit_trail_service import AuditTrailService
-from services.supplier.legal_contract_service import LegalContractService
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.country.models.country_enhancements import CountryCategoryTaxRate
+from domains.country.models.country_enhancements import CountryCity
+from domains.governance.services.audit_trail_service import AuditTrailService
+from domains.suppliers.services.legal_contract_service import LegalContractService
 
 router = APIRouter(tags=["country-admin"])
 
@@ -180,7 +182,7 @@ def get_data_residency(
     current_user = Depends(get_current_user)
 ):
     """Get data residency tier for a country."""
-    from services.audit.audit_trail_service import DataResidencyService
+    from domains.governance.services.audit_trail_service import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {

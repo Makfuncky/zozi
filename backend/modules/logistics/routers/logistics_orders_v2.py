@@ -10,18 +10,18 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import User, LogisticsPartner, Shipment
-from utils.dependencies import require_logistics, require_admin
-from services.orders.order_tracking_service import (
-    get_available_orders_for_logistics,
-    get_order_shipment_label,
-    logistics_confirm_pickup,
-    logistics_scan_and_receive,
-    logistics_update_transit_status,
-    logistics_deliver_order,
-    logistics_cancel_pickup,
-)
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from infrastructure.utils.dependencies import require_logistics, require_admin
+from domains.orders.services.order_tracking_service import get_available_orders_for_logistics
+from domains.orders.services.order_tracking_service import get_order_shipment_label
+from domains.orders.services.order_tracking_service import logistics_confirm_pickup
+from domains.orders.services.order_tracking_service import logistics_scan_and_receive
+from domains.orders.services.order_tracking_service import logistics_update_transit_status
+from domains.orders.services.order_tracking_service import logistics_deliver_order
+from domains.orders.services.order_tracking_service import logistics_cancel_pickup
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/logistics")

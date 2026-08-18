@@ -1,8 +1,8 @@
 """AI image router — product image analysis."""
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
-from utils.dependencies import require_supplier
-from utils.config import settings
-from _legacy.models import User
+from infrastructure.utils.dependencies import require_supplier
+from infrastructure.utils.config import settings
+from domains.accounts.models.user import User
 
 router = APIRouter(prefix="/api/v1/ai")
 

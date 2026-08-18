@@ -14,7 +14,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
 def create_video_room(room_data: dict, db: Session) -> dict:

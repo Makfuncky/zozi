@@ -13,13 +13,13 @@ from sqlalchemy.orm import Session
 
 from modules.employee.routers import employees_controller as ctrl
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
 from domains.hr.models.employee_models import Employee
 
-from infrastructure.utils.country_rls import enforce_country_access
+from domains.country.utils.country_rls import enforce_country_access
 
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 

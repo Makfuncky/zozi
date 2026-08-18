@@ -24,7 +24,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import RolePermissionSetting
+from domains.governance.models.admin import RolePermissionSetting
 from infrastructure.utils.audit import AuditAction, audit_log
 import structlog
 logger = structlog.get_logger(__name__)

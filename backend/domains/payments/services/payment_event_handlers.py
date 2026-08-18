@@ -38,7 +38,7 @@ from typing import Optional
 
 
 
-from events import (
+from infrastructure.messaging.events import (
 
     PaymentConfirmedEvent,
 
@@ -48,7 +48,7 @@ from events import (
 
 )
 
-from _legacy.models import Order
+from domains.orders.models.orders import Order
 
 
 

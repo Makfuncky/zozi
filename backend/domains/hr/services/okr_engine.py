@@ -10,8 +10,8 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from _legacy.models.employee_models import Employee
-from db.database import get_service_session
+from domains.hr.models.employee_models import Employee
+from infrastructure.database.database import get_service_session
 
 logger = logging.getLogger("zozi.okr")
 

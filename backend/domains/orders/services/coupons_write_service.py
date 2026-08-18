@@ -13,9 +13,9 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from _legacy.models.payments import Coupon
-from _legacy.models.admin import CouponUsage
-from utils.datetime_utils import utcnow
+from domains.payments.models.payments import Coupon
+from domains.governance.models.admin import CouponUsage
+from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

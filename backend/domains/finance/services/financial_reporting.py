@@ -7,18 +7,18 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import JournalEntry, TreasuryAccount, AuditLog
-from utils.datetime_utils import utcnow as _utcnow
-from services.finance.financial_reports_service import (
-    generate_income_statement as _generate_income_statement,
-    generate_balance_sheet as _generate_balance_sheet,
-    generate_cash_flow_statement as _generate_cash_flow_statement,
-    save_report,
-    get_saved_reports,
-    IncomeStatementReport,
-    BalanceSheetReport,
-    CashFlowStatementReport,
-)
+from domains.accounts.models.core import AuditLog
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import TreasuryAccount
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from domains.finance.services.financial_reports_service import generate_income_statement as _generate_income_statement
+from domains.finance.services.financial_reports_service import generate_balance_sheet as _generate_balance_sheet
+from domains.finance.services.financial_reports_service import generate_cash_flow_statement as _generate_cash_flow_statement
+from domains.finance.services.financial_reports_service import save_report
+from domains.finance.services.financial_reports_service import get_saved_reports
+from domains.finance.services.financial_reports_service import IncomeStatementReport
+from domains.finance.services.financial_reports_service import BalanceSheetReport
+from domains.finance.services.financial_reports_service import CashFlowStatementReport
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +153,6 @@ def _get_account_balances_for_period(
     period_end: Optional[datetime] = None,
 ) -> list[dict]:
     """Helper exposed for profitability reporting."""
-    from services.finance.financial_reports_service import _get_account_balances_for_period as _inner
+    from domains.finance.services.financial_reports_service import _get_account_balances_for_period as _inner
     return _inner(db, currency, period_start, period_end)
 

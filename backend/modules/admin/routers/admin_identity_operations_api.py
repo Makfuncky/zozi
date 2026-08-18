@@ -1,10 +1,10 @@
 """Users router — profile CRUD, admin user management."""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import User
-from db.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse
-from utils.dependencies import get_current_user, require_admin
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.database.schemas import UserOut, UserUpdate, UserAdminUpdate, MessageResponse
+from infrastructure.utils.dependencies import get_current_user, require_admin
 
 router = APIRouter(prefix="/api/v1/admin")
 

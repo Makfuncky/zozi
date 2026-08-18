@@ -24,15 +24,13 @@ from typing import Any, Optional
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    AIGenerationLog,
-    AIStagingProduct,
-    AIStagingVariant,
-    AIUploadJob,
-    Product,
-    ProductVariant,
-)
-from utils.variant_key import compute_variant_key
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.media.models.ai_upload import AIGenerationLog
+from domains.media.models.ai_upload import AIStagingProduct
+from domains.media.models.ai_upload import AIStagingVariant
+from domains.media.models.ai_upload import AIUploadJob
+from infrastructure.utils.variant_key import compute_variant_key
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -55,7 +53,7 @@ def save_upload(file: UploadFile, job_dir: str) -> tuple[str, str, bytes]:
 
     Returns ``(storage_key, public_url, content_bytes)``.
     """
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.storage import storage as _storage
 
     ext = os.path.splitext(file.filename or "")[1] or ".bin"
     fname = f"{uuid.uuid4().hex}{ext}"
@@ -73,7 +71,7 @@ def enrich_one(
     image_url: str,
 ) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     """Run AI enrichment for a single image. Returns staging product, its variants, and logs."""
-    from services.ai import ai_service
+    from domains.media.services.ai import ai_service
 
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)
@@ -302,7 +300,7 @@ def run_ai_upload_job(db: Session, job_id: int) -> None:
             if image_bytes_str:
                 img_bytes = bytes(image_bytes_str) if isinstance(image_bytes_str, str) else image_bytes_str
             elif media.get("key"):
-                from services.common.storage import storage as _storage
+                from infrastructure.utils.storage import storage as _storage
                 img_bytes = _storage.read(media["key"])
             else:
                 continue
@@ -350,7 +348,7 @@ def process_ai_upload_job(job_id: int) -> None:
     Runs outside the request context (RLS restricted flag is False, so it can
     read/write across the job's country).
     """
-    from db.database import get_db_context
+    from infrastructure.database.database import get_db_context
 
     with get_db_context() as db:
         run_ai_upload_job(db, job_id)

@@ -10,8 +10,8 @@ from typing import Any, Dict, Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from db.database import get_service_session
-from _legacy.models import AuditLog
+from infrastructure.database.database import get_service_session
+from domains.accounts.models.core import AuditLog
 import structlog
 logger = structlog.get_logger(__name__)
 

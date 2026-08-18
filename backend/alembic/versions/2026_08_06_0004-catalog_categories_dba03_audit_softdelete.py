@@ -24,7 +24,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import text
 
-from migration_helpers import safe_add_column, safe_drop_column
+from alembic.migration_helpers import safe_add_column, safe_drop_column
 
 
 revision: str = "20260806_0004"

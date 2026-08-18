@@ -12,15 +12,13 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import (
-    DirectChatRoom,
-    DirectChatMessage,
-    GroupChatRoom,
-    GroupChatMessage,
-    EntityChatThread,
-    EntityChatMessage,
-)
-from _legacy.models import User
+from domains.accounts.models.core import DirectChatRoom
+from domains.accounts.models.core import DirectChatMessage
+from domains.accounts.models.core import GroupChatRoom
+from domains.accounts.models.core import GroupChatMessage
+from domains.accounts.models.core import EntityChatThread
+from domains.accounts.models.core import EntityChatMessage
+from domains.accounts.models.user import User
 
 
 def get_user_name(db: Session, user_id: int) -> str:

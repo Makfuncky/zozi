@@ -32,17 +32,15 @@ def __getattr__(name: str) -> Any:
 # re-exported from the canonical `services.users.user_write_ops` module (recovered
 # from 624a1a2), so legacy imports and the live admin endpoints that call them work
 # again. These are real, behavior-preserving implementations -- not stubs.
-from services.users.user_write_ops import (
-    build_user_delete_blocker,
-    delete_order_records,
-    hard_delete_user_record,
-    create_chatbot_query_event,
-    create_staff_user,
-    force_reset_password,
-    update_bank_account_verification,
-    update_staff_user,
-    update_user_browsing_history,
-)
+from domains.accounts.services.user_write_ops import build_user_delete_blocker
+from domains.accounts.services.user_write_ops import delete_order_records
+from domains.accounts.services.user_write_ops import hard_delete_user_record
+from domains.accounts.services.user_write_ops import create_chatbot_query_event
+from domains.accounts.services.user_write_ops import create_staff_user
+from domains.accounts.services.user_write_ops import force_reset_password
+from domains.accounts.services.user_write_ops import update_bank_account_verification
+from domains.accounts.services.user_write_ops import update_staff_user
+from domains.accounts.services.user_write_ops import update_user_browsing_history
 
 # Private-name aliases re-exported for legacy imports and the recovery tests.
 # The recovered implementations are the public names imported above.

@@ -10,8 +10,9 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import SupplierProfile, User
-from utils.slug import generate_slug
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.slug import generate_slug
 import structlog
 logger = structlog.get_logger(__name__)
 

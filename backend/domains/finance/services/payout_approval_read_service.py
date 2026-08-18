@@ -11,15 +11,13 @@ from typing import Any, cast
 
 from sqlalchemy.orm import Session, joinedload
 
-from _legacy.models import (
-    FinanceAutomationLog,
-    LogisticsPartner,
-    LogisticsPartnerPayout,
-    Payout,
-    PayoutBatch,
-    PayoutBatchItem,
-    User,
-)
+from domains.accounts.models.user import User
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payout
 
 
 def _serialize_payout(p: Payout) -> dict[str, Any]:

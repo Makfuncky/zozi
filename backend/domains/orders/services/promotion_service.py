@@ -11,10 +11,12 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from utils.audit import audit_log
-from db.base import Base
-from _legacy.models import PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier
-from utils.money import to_decimal
+from infrastructure.utils.audit import audit_log
+from infrastructure.database.base import Base
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionLedgerEntry
+from domains.governance.models.admin import PromotionOrderTier
+from kernel.money import to_decimal
 
 _ALLOWED_STACKING_MODES = {"best_only", "stack_all", "custom"}
 

@@ -28,21 +28,18 @@ from sqlalchemy.orm import Session
 
 
 
-from _legacy.models import Banner, RolePermissionSetting, SupplierDispute
+from domains.governance.models.admin import RolePermissionSetting
+from domains.governance.models.admin import SupplierDispute
+from domains.payments.models.payments import Banner
 
-from db.seed import _ensure_demo_user, _seed_password
+from infrastructure.database.seed import _ensure_demo_user, _seed_password
 
-from services.treasury.cash_write_service import (
+from domains.finance.services.cash_write_service import create_cash_account
+from domains.finance.services.cash_write_service import create_cash_transaction
 
-    create_cash_account,
+from infrastructure.utils.config import settings
 
-    create_cash_transaction,
-
-)
-
-from utils.config import settings
-
-from utils.soft_delete import (
+from infrastructure.utils.soft_delete import (
 
     _has_soft_delete as has_soft_delete,
 
@@ -66,7 +63,7 @@ logger = structlog.get_logger(__name__)
 
 def soft_delete_record(db, record, acting_user, reason=None):
 
-    """Delegate generic soft-delete to the canonical ``utils.soft_delete`` impl."""
+    """Delegate generic soft-delete to the canonical ``infrastructure.utils.soft_delete`` impl."""
 
     _soft_delete_soft_delete(db, type(record), record.id, acting_user, reason)
 
@@ -76,7 +73,7 @@ def soft_delete_record(db, record, acting_user, reason=None):
 
 def restore_record(db, record, acting_user):
 
-    """Delegate generic restore to the canonical ``utils.soft_delete`` impl."""
+    """Delegate generic restore to the canonical ``infrastructure.utils.soft_delete`` impl."""
 
     _soft_delete_restore(db, type(record), record.id, acting_user)
 
@@ -86,7 +83,7 @@ def restore_record(db, record, acting_user):
 
 def hard_delete_record(db, record, acting_user, reason=None):
 
-    """Delegate generic hard-delete to the canonical ``utils.soft_delete`` impl."""
+    """Delegate generic hard-delete to the canonical ``infrastructure.utils.soft_delete`` impl."""
 
     _soft_delete_hard_delete(db, type(record), record.id, acting_user, reason)
 

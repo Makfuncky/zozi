@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 from __future__ import annotations
-from services.system.system_ai_upload_service import _enrich_one, _slugify, _save_upload, _publish_staging
-from services.system.system_ai_upload_service import process_ai_upload_job
+from domains.accounts.services.system_ai_upload_service import _enrich_one
+from domains.accounts.services.system_ai_upload_service import _slugify
+from domains.accounts.services.system_ai_upload_service import _save_upload
+from domains.accounts.services.system_ai_upload_service import _publish_staging
+from domains.accounts.services.system_ai_upload_service import process_ai_upload_job
 
 import json
 
@@ -22,7 +25,13 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 
 from modules.admin.routers.auth import require_roles
-from _legacy.models import AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, Product, ProductVariant, User
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.media.models.ai_upload import AIUploadJob
+from domains.media.models.ai_upload import AIStagingProduct
+from domains.media.models.ai_upload import AIStagingVariant
+from domains.media.models.ai_upload import AIGenerationLog
 
 from infrastructure.utils.variant_key import compute_variant_key
 

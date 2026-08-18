@@ -10,21 +10,19 @@ from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session, Query
 from contextvars import ContextVar
 
-from _legacy.models import (
-    AdminChangeAuditLog,
-    CountryCommunication,
-    CountryConfig,
-    CountryConfigVersion,
-    CountryFeatureFlag,
-    CountryStaffAssignment,
-    CountryCity,
-    CrossCountryCustomerSession,
-    OmanDeliveryZone,
-    SupplierCountryCommission,
-)
-from services.logistics.logistics_partner_pricing import normalize_country_code
-from services.finance.tax_service import calculate_tax
-from utils.datetime_utils import utcnow as _utcnow
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryConfigVersion
+from domains.country.models.country_enhancements import CountryFeatureFlag
+from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CrossCountryCustomerSession
+from domains.country.models.country_enhancements import OmanDeliveryZone
+from domains.governance.models.admin import AdminChangeAuditLog
+from domains.governance.models.admin import SupplierCountryCommission
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code
+from domains.finance.services.tax_service import calculate_tax
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 _country_scope_var: ContextVar[Set[str]] = ContextVar('country_scope', default=set())
 
@@ -84,8 +82,8 @@ def _from_json(raw: str | None, *, default: Any) -> Any:
 
 async def auto_populate_async(search_term: str) -> dict[str, Any]:
     """Async wrapper around the auto-populate service with heuristic engine enrichment."""
-    from services.geography.country_auto_populate import auto_populate_country
-    from services.geography.country_heuristic_engine import generate_ecommerce_defaults
+    from domains.country.services.country_auto_populate import auto_populate_country
+    from domains.country.services.country_heuristic_engine import generate_ecommerce_defaults
 
     base = await auto_populate_country(search_term)
     if "error" in base:
@@ -1375,7 +1373,7 @@ def get_commission_tiers(code: str, current_user: dict, db: Session) -> list[dic
 def test_gateway_connection(code: str, gateway_id: str, environment: str, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from services.treasury.payment_engine import PaymentEngine
+    from domains.finance.services.payment_engine import PaymentEngine
 
     engine = PaymentEngine(db)
     result = engine.test_gateway_connection(country_code=code, gateway_id=gateway_id, environment=environment)
@@ -1439,7 +1437,7 @@ def list_country_cities(
         }
 
     # 2. Fallback: CITY_SUGGESTIONS + open-meteo (for seeding new countries)
-    from services.geography.vat_rates import CITY_SUGGESTIONS
+    from domains.finance.services.vat_rates import CITY_SUGGESTIONS
 
     cities = list(CITY_SUGGESTIONS.get(cc, []))
     if not cities:
@@ -1466,7 +1464,7 @@ def list_country_cities(
 
 def assign_staff_to_country(country_code: str, user_id: int, role_in_country: str, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    from _legacy.models import User
+    from domains.accounts.models.user import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1497,7 +1495,7 @@ def list_country_staff(country_code: str, current_user: dict, db: Session) -> li
         CountryStaffAssignment.country_code == country_code.upper(),
         CountryStaffAssignment.is_active == True,
     ).order_by(CountryStaffAssignment.created_at.desc()).all()
-    from _legacy.models import User
+    from domains.accounts.models.user import User
     user_ids = [r.user_id for r in rows]
     users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     return [
@@ -1589,7 +1587,7 @@ def mark_communication_read(comm_id: int, current_user: dict, db: Session) -> di
         if role != "admin":
             raise HTTPException(status_code=403, detail="Only recipient or admin can mark as read")
     comm.status = "read"
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     comm.read_at = utcnow()
     db.commit()
     return {"message": "Marked as read"}
@@ -1631,7 +1629,7 @@ def is_product_restricted_for_country(
     """Check if a product category is restricted in a given country."""
     if not country_code:
         return False
-    from services.logistics.logistics_partner_pricing import normalize_country_code
+    from domains.logistics.services.logistics_partner_pricing import normalize_country_code
     code = normalize_country_code(country_code)
     if not code:
         return False

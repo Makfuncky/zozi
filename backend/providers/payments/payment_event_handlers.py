@@ -38,7 +38,7 @@ from typing import Optional
 
 
 
-from events import (
+from infrastructure.messaging.events import (
 
     PaymentConfirmedEvent,
 
@@ -48,35 +48,22 @@ from events import (
 
 )
 
-from _legacy.models import Order
+from domains.orders.models.orders import Order
 
 
 
-from services.treasury.cash_management_service import (
+from domains.finance.services.cash_management_service import create_ledger_entries_for_order
+from domains.finance.services.cash_management_service import log_card_payment_received
+from domains.finance.services.cash_management_service import log_refund_bank_transaction
+from domains.finance.services.cash_management_service import create_refund_ledger_entry
 
-    create_ledger_entries_for_order,
+from domains.finance.services.general_ledger_service import post_order_payment_journal
 
-    log_card_payment_received,
+from domains.comms.services.transactional_email_service import enqueue_payment_confirmed_email
+from domains.comms.services.transactional_email_service import enqueue_payment_failed_email
+from domains.comms.services.transactional_email_service import enqueue_refund_processed_email
 
-    log_refund_bank_transaction,
-
-    create_refund_ledger_entry,
-
-)
-
-from services.finance.general_ledger_service import post_order_payment_journal
-
-from services.comms.transactional_email_service import (
-
-    enqueue_payment_confirmed_email,
-
-    enqueue_payment_failed_email,
-
-    enqueue_refund_processed_email,
-
-)
-
-from utils.cache import bump_product_cache_version
+from infrastructure.utils.cache import bump_product_cache_version
 
 import structlog
 

@@ -1,14 +1,20 @@
 """Admin orders router — country-scoped."""
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import Order, User
-from db.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
-from utils.dependencies import require_admin, require_super_admin
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_order_status
-from utils.audit import audit_log
-from utils.country_rls import enforce_country_access, get_country_or_404
-from utils.rls_interceptor import set_rls_context
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.orders.models.orders import Order
+from infrastructure.database.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.orders_service import update_order_status
+from infrastructure.utils.audit import audit_log
+from domains.country.utils.country_rls import enforce_country_access, get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context
 import math
 
 def list_all_orders(country_code: str=Path(..., description="ISO country code, or '*' for all"), page: int=Query(1, ge=1), size: int=Query(50), status: str=None, include_deleted: bool=False, _: User=Depends(require_admin), db: Session=Depends(get_db)):
@@ -27,7 +33,7 @@ def list_all_orders(country_code: str=Path(..., description="ISO country code, o
         items = q.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
         return {'items': items, 'total': total, 'page': page, 'pages': math.ceil(total / size) if total else 1}
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def bulk_update_order_status(country_code: str=Path(..., description='ISO country code'), payload: BulkStatusUpdateRequest=..., _: User=Depends(require_admin), db: Session=Depends(get_db)):
@@ -43,5 +49,5 @@ def bulk_update_order_status(country_code: str=Path(..., description='ISO countr
         db.commit()
         return {'message': f'Status updated for {updated} orders', 'updated': updated}
     finally:
-        from utils.rls_interceptor import clear_rls_context
+        from infrastructure.utils.rls_interceptor import clear_rls_context
         clear_rls_context()

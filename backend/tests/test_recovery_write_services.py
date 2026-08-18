@@ -14,7 +14,7 @@ from decimal import Decimal
 
 import pytest
 
-from _legacy.models import (
+from infrastructure.database.models import (
     Banner,
     CountryConfig,
     DynamicQRSession,

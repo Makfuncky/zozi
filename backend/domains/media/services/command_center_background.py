@@ -22,31 +22,17 @@ from providers.automation.scheduler import IntervalTrigger
 from providers.automation.scheduler import create_scheduler
 from infrastructure.database.database import get_service_session
 
-from _legacy.models import (
-
-    CountryConfig,
-
-    Employee,
-
-    LogisticsPartner,
-
-    Order,
-
-    ReturnRequest,
-
-    Shipment,
-
-    SupportTicket,
-
-    User,
-
-    NewsSource,
-
-    FraudAlert,
-
-    SystemHealthEvent,
-
-)
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.core import NewsSource
+from domains.accounts.models.core import SystemHealthEvent
+from domains.accounts.models.user import User
+from domains.country.models.countries import CountryConfig
+from domains.governance.models.fraud import FraudAlert
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import ReturnRequest
 
 from infrastructure.utils.config import settings
 
@@ -718,7 +704,7 @@ async def _run_finance_cycle_job() -> None:
 
     try:
 
-        from services.finance.cash_management_service import run_scheduled_finance_cycle
+        from domains.finance.services.cash_management_service import run_scheduled_finance_cycle
 
 
         with get_service_session() as db:
@@ -745,8 +731,8 @@ async def _run_reconciliation_cycle_job() -> None:
 
     try:
 
-        from services.treasury.cash_management_service import run_scheduled_reconciliation_cycle
-        from services.finance.cash_management_service import run_scheduled_reconciliation_cycle
+        from domains.finance.services.cash_management_service import run_scheduled_reconciliation_cycle
+        from domains.finance.services.cash_management_service import run_scheduled_reconciliation_cycle
 
         with get_service_session() as db:
 

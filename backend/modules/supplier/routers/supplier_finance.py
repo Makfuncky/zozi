@@ -28,17 +28,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import (
-    Order,
-    OrderItem,
-    Payout,
-    SupplierBankAccount,
-    SupplierSettlement,
-    TransactionLedger,
-    User,
-)
-from utils.dependencies import require_supplier
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import SupplierBankAccount
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Payout
+from infrastructure.utils.dependencies import require_supplier
 
 logger = logging.getLogger(__name__)
 

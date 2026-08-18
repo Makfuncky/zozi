@@ -12,8 +12,8 @@ from typing import Any, Dict, Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from utils.country_access import enforce_country_access
-from utils.datetime_utils import utcnow as _utcnow
+from domains.country.utils.country_access import enforce_country_access
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -28,7 +28,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Optional
 
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from providers.security.watchlist import screen_watchlist, WatchlistProviderError
 
 logger = logging.getLogger(__name__)

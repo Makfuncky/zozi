@@ -5,9 +5,9 @@ Escalation SLA Router
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.comms.escalation_sla import get_escalation_sla_service
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.comms.services.escalation_sla import get_escalation_sla_service
 
 router = APIRouter(tags=["escalation"])
 

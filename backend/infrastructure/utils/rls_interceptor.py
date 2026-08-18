@@ -248,7 +248,7 @@ def validate_rls_coverage(engine=None) -> list[str]:
             issues.append(f"{table_name}: registry references missing column '{column_name}'")
 
     try:
-        from _legacy.models import Base
+        from infrastructure.database.base import Base
     except Exception:
         return issues
 

@@ -7,24 +7,22 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
 from infrastructure.database.schemas import CommissionCategoryRateCreate, CommissionCategoryRateOut, CommissionBadgeTierCreate, CommissionBadgeTierOut
 
 from infrastructure.utils.dependencies import require_admin
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
-from services.finance.commission_geography_service import (
-    create_badge_tier,
-    create_category_rate,
-    list_badge_tiers,
-    list_category_rates,
-    update_badge_tier,
-    update_category_rate,
-)
+from domains.finance.services.commission_geography_service import create_badge_tier
+from domains.finance.services.commission_geography_service import create_category_rate
+from domains.finance.services.commission_geography_service import list_badge_tiers
+from domains.finance.services.commission_geography_service import list_category_rates
+from domains.finance.services.commission_geography_service import update_badge_tier
+from domains.finance.services.commission_geography_service import update_category_rate
 
 def list_rates(country_code: str, _: User, db: Session, page: int, page_size: int):
     get_country_or_404(country_code.upper(), db)

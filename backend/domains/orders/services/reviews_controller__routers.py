@@ -5,7 +5,7 @@ business rules (authorization, duplicate prevention, verified-purchase
 detection, rating recompute) and delegates ALL persistence to
 services.commerce.reviews_service. It must not issue db.query directly.
 
-The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so the auto-router emits ``routers/public_commerce_reviews.py``.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from fastapi import HTTPException
 from infrastructure.database.schemas import ReviewCreate, ReviewOut
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post, put
+from infrastructure.routing.route_contract import delete, get, post, put
 
 from domains.orders.services.reviews_service import (
     create_review as service_create_review,

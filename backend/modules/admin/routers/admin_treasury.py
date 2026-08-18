@@ -13,30 +13,30 @@ from fastapi import Body as FastAPIBody
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    CashFlowForecast,
-    CashPositionSnapshot,
-    GatewaySettlementSchedule,
-    Invoice,
-    JournalEntry,
-    JournalEntryLine,
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-    TreasuryAccount,
-    VATRemittance,
-)
-from _legacy.models.admin import LogisticsCODRemittanceReceipt
-from _legacy.models.employee_models import Employee
-from _legacy.models.logistics import LogisticsPartner
-from _legacy.models.orders import Order as OrderModel
-from _legacy.models.payments import LogisticsPartnerPayout, Payment, Payout
-from services.treasury.treasury_engine import TreasuryEngine
-from utils.constants import (
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import CashPositionSnapshot
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import VATRemittance
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order as OrderModel
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout
+from domains.finance.services.treasury_engine import TreasuryEngine
+from infrastructure.utils.constants import (
     CASH_ACCOUNT,
     DEFAULT_PAGE_SIZE,
     INPUT_VAT_ACCOUNT,
@@ -45,8 +45,8 @@ from utils.constants import (
     PAYABLES_ACCOUNT,
     TREASURY_ROLES,
 )
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 
@@ -212,7 +212,7 @@ def admin_generate_payout_batch(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from _legacy.models.payments import Payout
+    from domains.payments.models.payments import Payout
 
     pending_payouts = db.execute(
         select(Payout).where(
@@ -618,7 +618,7 @@ def consolidated_cod_remittances(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from _legacy.models import Shipment as ShipmentModel
+    from domains.logistics.models.logistics import Shipment as ShipmentModel
     receipts = db.query(LogisticsCODRemittanceReceipt).order_by(LogisticsCODRemittanceReceipt.created_at.desc()).limit(limit).all()
     return [
         {
@@ -689,8 +689,8 @@ def consolidated_reconciliation_pipeline(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from _legacy.models.payments import Payment as PaymentModel
-    from _legacy.models.payments import Payout
+    from domains.payments.models.payments import Payment as PaymentModel
+    from domains.payments.models.payments import Payout
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -956,12 +956,12 @@ def admin_reconciliation_pipeline(
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from _legacy.models.admin import LogisticsCODRemittanceReceipt
-        from _legacy.models.orders import Order as OrderModel
-        from _legacy.models.orders import OrderItem
-        from _legacy.models.payments import Payment as PaymentModel
-        from _legacy.models.payments import Payout
-        from services.commission_engine import get_effective_rate
+        from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+        from domains.orders.models.orders import Order as OrderModel
+        from domains.orders.models.orders import OrderItem
+        from domains.payments.models.payments import Payment as PaymentModel
+        from domains.payments.models.payments import Payout
+        from domains.finance.services.commission_engine import get_effective_rate
 
         pipeline = []
         orders = db.query(OrderModel).filter(
@@ -975,7 +975,7 @@ def admin_reconciliation_pipeline(
                 PaymentModel.order_id == order.id
             ).first()
 
-            from _legacy.models import Shipment
+            from domains.logistics.models.logistics import Shipment
             shipment = db.query(Shipment).filter(
                 Shipment.order_id == order.id
             ).first()
@@ -1078,8 +1078,8 @@ def admin_record_cod_remittance(
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from _legacy.models import Shipment as ShipmentModel
-        from _legacy.models.orders import Order as OrderModel
+        from domains.logistics.models.logistics import Shipment as ShipmentModel
+        from domains.orders.models.orders import Order as OrderModel
         shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
         receipt = LogisticsCODRemittanceReceipt(
             shipment_id=shipment.id if shipment else None,
@@ -1098,9 +1098,7 @@ def admin_record_cod_remittance(
         db.refresh(receipt)
         # Keep the double-entry ledger in sync with the reconciliation engine.
         try:
-            from services.general_ledger_service import (
-                post_logistics_cod_remittance_journal,
-            )
+            from domains.finance.services.general_ledger_service import post_logistics_cod_remittance_journal
             post_logistics_cod_remittance_journal(db, receipt.id, Decimal(str(amount)), country_code=cc)
         except Exception as gl_err:
             logger.warning(f"COD remittance GL post skipped: {gl_err}")
@@ -1126,8 +1124,8 @@ def admin_settle_supplier(
     set_rls_context({country_code.upper()}, is_restricted=True)
     cc = country_code.upper()
     try:
-        from _legacy.models.countries import CountryConfig
-        from _legacy.models.orders import Order as OrderModel
+        from domains.country.models.countries import CountryConfig
+        from domains.orders.models.orders import Order as OrderModel
         gross = gross_amount if gross_amount is not None else net_amount
         resolved_currency = currency or "USD"
         ccfg = db.query(CountryConfig).filter(CountryConfig.code == cc).first()
@@ -1175,7 +1173,7 @@ def admin_approve_settlement(
         settlement.status = "paid"
         db.commit()
         try:
-            from services.general_ledger_service import post_supplier_settlement_journal
+            from domains.finance.services.general_ledger_service import post_supplier_settlement_journal
             post_supplier_settlement_journal(
                 db,
                 settlement.id,
@@ -1335,7 +1333,7 @@ def admin_supplier_payouts(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from _legacy.models.suppliers import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
     query = (
         select(Payout, SupplierProfile)
         .outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id)
@@ -1371,7 +1369,7 @@ def country_supplier_payouts(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from _legacy.models.suppliers import SupplierProfile
+        from domains.comms.models.suppliers import SupplierProfile
         query = (
             select(Payout, SupplierProfile)
             .outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id)

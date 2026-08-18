@@ -18,9 +18,9 @@ from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from utils.audit import audit_log, AuditAction
-from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from _legacy.models import Banner
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from domains.payments.models.payments import Banner
 
 logger = logging.getLogger(__name__)
 
@@ -404,8 +404,8 @@ async def upload_banner_image(
     db: Session,
 ) -> dict:
     """Upload and attach an image to a banner."""
-    from utils.file_validation import validate_upload_image
-    from services.common.storage import storage as _storage
+    from infrastructure.utils.file_validation import validate_upload_image
+    from infrastructure.utils.storage import storage as _storage
 
     banner = db.query(Banner).filter(Banner.id == banner_id).first()
     if not banner:

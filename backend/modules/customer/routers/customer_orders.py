@@ -3,10 +3,20 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import get_current_user
 
-from controllers.orders_controller import OrderCreate, OrderPreviewOut, cancel_order, confirm_order_scan_receipt, create_order, get_order, get_order_invoice, get_order_tracking, get_orders, preview_order, respond_to_shipment_confirmation
+from domains.orders.services.orders_controller import OrderCreate
+from domains.orders.services.orders_controller import OrderPreviewOut
+from domains.orders.services.orders_controller import cancel_order
+from domains.orders.services.orders_controller import confirm_order_scan_receipt
+from domains.orders.services.orders_controller import create_order
+from domains.orders.services.orders_controller import get_order
+from domains.orders.services.orders_controller import get_order_invoice
+from domains.orders.services.orders_controller import get_order_tracking
+from domains.orders.services.orders_controller import get_orders
+from domains.orders.services.orders_controller import preview_order
+from domains.orders.services.orders_controller import respond_to_shipment_confirmation
 
 router = APIRouter(prefix="/api/v1/customer")
 

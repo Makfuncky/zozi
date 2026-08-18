@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from core.route_contract import post, put
+from infrastructure.routing.route_contract import post, put
 from domains.finance.services import payout_approval_write_service as svc
 import structlog
 logger = structlog.get_logger(__name__)

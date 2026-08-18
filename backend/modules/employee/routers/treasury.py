@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from utils.audit import AuditAction, audit_log
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from infrastructure.utils.audit import AuditAction, audit_log
 from modules.employee.routers.treasury_api import (
     get_cash_position,
     get_supplier_payables,

@@ -9,13 +9,22 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 
-from _legacy.models import (
-    FraudAlert, SystemAlert, ExecutiveNews, CommandCenterView,
-    User, Order, OrderItem, Product, Shipment, LogisticsPartner,
-    CountryConfig, SystemHealthEvent, UserSession, ReturnRequest,
-    SupportTicket,
-)
-from services.common.command_center_service import CommandCenterService
+from domains.accounts.models.core import ExecutiveNews
+from domains.accounts.models.core import CommandCenterView
+from domains.accounts.models.core import SystemHealthEvent
+from domains.accounts.models.core import UserSession
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.country.models.countries import CountryConfig
+from domains.governance.models.admin import SystemAlert
+from domains.governance.models.fraud import FraudAlert
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import ReturnRequest
+from domains.comms.services.command_center_service import CommandCenterService
 
 _ALLOWED_TABLES = {
     "orders", "order_items", "shipments", "users", "user_sessions",

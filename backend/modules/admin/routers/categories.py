@@ -6,11 +6,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import CategoryCreate, CategoryOut, CategoryUpdate, MessageResponse
-from _legacy.models import Category, User
-from utils.dependencies import require_admin
-from utils.slug import generate_slug
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import CategoryCreate, CategoryOut, CategoryUpdate, MessageResponse
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.slug import generate_slug
 
 router = APIRouter()
 

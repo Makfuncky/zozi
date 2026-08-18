@@ -1,14 +1,22 @@
 """Admin users router."""
 from fastapi import APIRouter, Depends, HTTPException, Query, Body, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import User
-from db.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.pagination import paginated_response
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_user_role, toggle_user_active, force_reset_password_admin, delete_user_admin
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.database.schemas import UserOut, UserAdminUpdate, ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.pagination import paginated_response
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.users_service import update_user_role
+from domains.governance.services.users_service import toggle_user_active
+from domains.governance.services.admin_users import force_reset_password_admin
+from domains.accounts.services.identity_admin_service import delete_user_admin
 
 router = APIRouter(prefix="/api/v1/admin")
 

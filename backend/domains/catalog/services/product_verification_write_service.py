@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import ProductVerification
+from domains.governance.models.admin import ProductVerification
 
 
 def verification_persist_create(db: Session, verification: ProductVerification) -> ProductVerification:

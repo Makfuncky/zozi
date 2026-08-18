@@ -6,10 +6,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig
-from services.logistics.logistics_partner_pricing import normalize_country_code
-from utils.config import settings
-from utils.money import round_money, to_decimal
+from domains.country.models.countries import CountryConfig
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code
+from infrastructure.utils.config import settings
+from kernel.money import round_money, to_decimal
 
 
 def _safe_json_list(raw: str | None) -> set[str]:

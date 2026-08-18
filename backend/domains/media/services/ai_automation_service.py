@@ -9,24 +9,22 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from _legacy.models import (
-    BankStatementLine,
-    BankReconciliation,
-    ScannedExpense,
-    JournalEntry,
-    Account,
-    FinanceAutomationLog,
-    FinanceAuditLog,
-)
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
+from domains.finance.models.finance import BankStatementLine
+from domains.finance.models.finance import BankReconciliation
+from domains.finance.models.finance import ScannedExpense
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
 from providers.ai.finance_ai import (
     suggest_reconciliation_match,
     parse_email_to_ledger,
     extract_bill_fields,
 )
 from providers.image.ocr import parse_bill_text
-from utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

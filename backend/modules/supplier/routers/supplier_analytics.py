@@ -3,9 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import OrderItem, Product, SupplierProfile, User
-from utils.dependencies import require_supplier
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.dependencies import require_supplier
 
 router = APIRouter()
 

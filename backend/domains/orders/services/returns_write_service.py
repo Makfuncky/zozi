@@ -27,8 +27,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Notification
-from db.database import SessionLocal
+from domains.comms.models.communication import Notification
+from infrastructure.database.database import SessionLocal
 import structlog
 logger = structlog.get_logger(__name__)
 

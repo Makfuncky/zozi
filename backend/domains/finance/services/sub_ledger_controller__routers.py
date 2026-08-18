@@ -16,7 +16,7 @@ from domains.finance.services.sub_ledger_service import (
     post_ap_payable,
     post_ap_payment,
 )
-from routers.generated.auto_router import get, post
+from infrastructure.routing.route_contract import get, post
 from infrastructure.utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)

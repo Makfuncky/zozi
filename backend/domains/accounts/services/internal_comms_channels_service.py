@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from services.comms.internal_communication import get_internal_communication_service
+from domains.comms.services.internal_communication import get_internal_communication_service
 
 logger = logging.getLogger("zozi.api.internal")
 
@@ -22,9 +22,8 @@ logger = logging.getLogger("zozi.api.internal")
 
 
 
-from services.core.internal_channels_service import create_channel  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
-from services.core.internal_channels_service import list_channels  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.accounts.services.internal_channels_service import list_channels
 
 
 
@@ -47,7 +46,7 @@ from services.core.internal_channels_service import list_channels  # [MIGRATION 
 
 
 
-from services.core.internal_channels_service import get_channel  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.accounts.services.internal_channels_service import get_channel
 
 
 
@@ -61,7 +60,7 @@ from services.core.internal_channels_service import get_channel  # [MIGRATION CO
 
 
 
-from services.core.internal_channels_service import add_member  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.accounts.services.internal_channels_service import add_member
 
 
 
@@ -73,7 +72,7 @@ from services.core.internal_channels_service import add_member  # [MIGRATION COM
 
 
 
-from services.core.internal_channels_service import remove_member  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.accounts.services.internal_channels_service import remove_member
 
 
 
@@ -87,7 +86,7 @@ from services.core.internal_channels_service import remove_member  # [MIGRATION 
 
 
 
-from services.core.internal_channels_service import send_message  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.accounts.services.internal_channels_service import send_message
 
 
 
@@ -102,7 +101,6 @@ from services.core.internal_channels_service import send_message  # [MIGRATION C
 
 
 
-from services.core.internal_channels_service import get_messages  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.accounts.services.internal_channels_service import get_messages
 
-from services.core.internal_channels_service import create_channel  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 

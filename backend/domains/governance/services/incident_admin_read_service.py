@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import IncidentWarRoom
+from domains.governance.models.incident import IncidentWarRoom
 import structlog
 
 logger = structlog.get_logger(__name__)

@@ -22,14 +22,12 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    DeviceFingerprint,
-    FraudBlacklist,
-    FraudEvent,
-    FraudRule,
-    IPReputation,
-    ManualReviewQueue,
-)
+from domains.governance.models.fraud import DeviceFingerprint
+from domains.governance.models.fraud import FraudBlacklist
+from domains.governance.models.fraud import FraudEvent
+from domains.governance.models.fraud import FraudRule
+from domains.governance.models.fraud import IPReputation
+from domains.governance.models.fraud import ManualReviewQueue
 from infrastructure.database.schemas import FraudEventOut, ThreatFeedStatus
 import structlog
 logger = structlog.get_logger(__name__)

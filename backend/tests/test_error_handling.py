@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
-from infrastructure.utils.error_handler import (
+from kernel.error_handler import (
     ErrorHandler,
     create_error_handler,
     global_exception_handler,

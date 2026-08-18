@@ -2,19 +2,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    hard_delete_entity,
-    restore_entity,
-)
-from db.database import get_db
-from db.schemas import ArchiveRequest, BulkActionRequest
-from _legacy.models import LogisticsPartner, User
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin, require_super_admin
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.misc_service import restore_entity
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from domains.accounts.models.user import User
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from rbac.routers.risk_controller import detect_ghost_employees, detect_impossible_travel, update_flight_risk_score, get_team_health_radar, get_audit_timeline
+from domains.governance.services.risk_service import detect_ghost_employees, detect_impossible_travel, update_flight_risk_score, get_team_health_radar, get_audit_timeline
 from infrastructure.database.database import get_db
 
 def get_risk_score(employee_id: int, db: Session=Depends(get_db)):

@@ -12,11 +12,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from modules.admin.routers.auth import require_admin
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
 from domains.country.models.countries import CountryConfig
 

@@ -19,9 +19,13 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.database.database import SessionLocal
-from _legacy.models import AuditLog, Coupon, Order, Product, User
-from services.finance.finance_transfer_service import build_transfer_export_payload
-from services.treasury.reporting_service import payroll_equity as _svc_payroll_equity
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.orders.models.orders import Order
+from domains.payments.models.payments import Coupon
+from domains.finance.services.finance_transfer_service import build_transfer_export_payload
+from domains.finance.services.reporting_service import payroll_equity as _svc_payroll_equity
 from infrastructure.utils.background_jobs import enqueue_job, get_job
 logger = logging.getLogger(__name__)
 _ADMIN_ROLES = {'admin', 'superadmin'}

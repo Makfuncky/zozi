@@ -38,9 +38,9 @@ IDLE_SHUTDOWN = int(os.getenv("NOTIFICATION_WORKER_IDLE_SHUTDOWN", "0"))
 
 
 def _deliver_notification(notification_id: int) -> dict:
-    from db.database import SessionLocal
-    from _legacy.models.comms import Notification as NotificationModel
-    from _legacy.models import User
+    from infrastructure.database.database import SessionLocal
+    from domains.comms.models.communication import Notification as NotificationModel
+    from domains.accounts.models.user import User
 
     db = SessionLocal()
     try:
@@ -61,7 +61,7 @@ def _deliver_notification(notification_id: int) -> dict:
 
         channel = notification.channel
         if channel == "email" and user.email:
-            from utils.email_service import send_email, get_email_sender_address
+            from infrastructure.utils.email_service import send_email, get_email_sender_address
             from_addr = get_email_sender_address("notification")
             send_email(
                 to=user.email,
@@ -88,8 +88,8 @@ def _deliver_notification(notification_id: int) -> dict:
 
 
 def _poll_once() -> int:
-    from db.database import SessionLocal
-    from _legacy.models.comms import Notification as NotificationModel
+    from infrastructure.database.database import SessionLocal
+    from domains.comms.models.communication import Notification as NotificationModel
 
     db = SessionLocal()
     try:

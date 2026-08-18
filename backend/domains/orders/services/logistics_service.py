@@ -10,23 +10,21 @@ from typing import Any, Optional, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from utils.audit import AuditAction, audit_log
-from _legacy.models import (
-    LogisticsPartner,
-    Notification,
-    Order,
-    OrderItem,
-    Product,
-    ShippingCarrier,
-    ShippingZone,
-    Shipment,
-    ShipmentEvent,
-    SupplierProfile,
-)
-from utils.order_tracking import canonical_scan_code, ensure_shipment_identifiers, reconcile_order_status, shipment_scan_codes
-from utils.order_tracking import shipment_event_label, shipment_status_label
-from utils.datetime_utils import utcnow as _utcnow
-from utils.realtime import logistics_realtime_hub
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierProfile
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.utils.order_tracking import canonical_scan_code, ensure_shipment_identifiers, reconcile_order_status, shipment_scan_codes
+from domains.orders.utils.order_tracking import shipment_event_label, shipment_status_label
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from infrastructure.utils.realtime import logistics_realtime_hub
 
 logger = logging.getLogger(__name__)
 
@@ -683,8 +681,8 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
     # Auto-create invoice for this shipment if one doesn't exist yet (non-blocking)
     try:
-        from _legacy.models import Invoice
-        from services.finance.invoice_service import create_invoice_from_order
+        from domains.finance.models.finance import Invoice
+        from domains.finance.services.invoice_service import create_invoice_from_order
         has_invoice = db.query(Invoice).filter(
             Invoice.order_id == order_id,
             Invoice.supplier_id == supplier_id,

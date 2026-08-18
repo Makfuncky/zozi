@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from services.comms.internal_communication import get_internal_communication_service
+from domains.comms.services.internal_communication import get_internal_communication_service
 
 logger = logging.getLogger("zozi.api.internal")
 

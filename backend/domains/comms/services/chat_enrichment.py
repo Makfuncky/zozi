@@ -1,6 +1,6 @@
 """Chat Enrichment — typing indicators, emoji reactions, legal hold, voice notes, message edit/delete."""
 from __future__ import annotations
-from utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 
 import json
 import logging
@@ -10,9 +10,9 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text, table, column, select, update, delete
 
-from _legacy.models.employee_models import Employee
-from utils.datetime_utils import utcnow as utcnow
-from utils.websocket_manager import ws_manager
+from domains.hr.models.employee_models import Employee
+from infrastructure.utils.datetime_utils import utcnow as utcnow
+from infrastructure.utils.websocket_manager import ws_manager
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -435,7 +435,7 @@ def _log_activity(
     target_employee_id: Optional[int] = None,
 ) -> None:
     try:
-        from services.hr.employee_activity_logger import log_activity
+        from domains.hr.services.employee_activity_logger import log_activity
         log_activity(
             db=db,
             actor_employee_id=actor_employee_id,

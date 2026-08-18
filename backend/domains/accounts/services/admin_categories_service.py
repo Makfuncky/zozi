@@ -16,7 +16,8 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from _legacy.models import Category, User
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category
 
 from domains.catalog.services.products_write_service import (
     create_category as create_category_model,
@@ -25,9 +26,9 @@ from domains.catalog.services.products_write_service import (
     reorder_categories as reorder_categories_model,
 )
 
-from infrastructure.utils.category_tree import rebuild_category_paths
+from domains.catalog.utils.category_tree import rebuild_category_paths
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin
 

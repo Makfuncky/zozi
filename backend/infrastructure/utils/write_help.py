@@ -6,11 +6,8 @@ imports resolve without editing every caller.
 """
 from __future__ import annotations
 
-from services.common.write_helpers import (  # noqa: F401
-    add_and_flush,
-    commit_and_refresh,
-    commit_only,
-)
+from domains.comms.services.write_helpers import commit_and_refresh
+from domains.comms.services.write_helpers import commit_only
 import structlog
 logger = structlog.get_logger(__name__)
 

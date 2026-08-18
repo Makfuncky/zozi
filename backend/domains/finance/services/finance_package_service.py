@@ -13,14 +13,15 @@ from typing import Optional
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from utils.audit import AuditAction, audit_log
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.finance.contractor_milestone_read_service import list_contractor_milestones
-from services.finance.expense_routing import ExpenseRoutingEngine, get_expense_router
-from services.finance.financial_reporting import FinancialReportingService
-from services.hr.payroll_engine import PayrollEngine
-from services.treasury.treasury_adapter import TreasuryAdapter
+from infrastructure.utils.audit import AuditAction, audit_log
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.finance.services.contractor_milestone_read_service import list_contractor_milestones
+from domains.finance.services.expense_routing import ExpenseRoutingEngine
+from domains.finance.services.expense_routing import get_expense_router
+from domains.finance.services.financial_reporting import FinancialReportingService
+from domains.hr.services.payroll_engine import PayrollEngine
+from domains.finance.services.treasury_adapter import TreasuryAdapter
 logger = logging.getLogger(__name__)
 
 class PayrollProcessRequest(BaseModel):

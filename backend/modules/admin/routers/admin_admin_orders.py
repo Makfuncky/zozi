@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 
-from controllers.admin.orders_controller import bulk_delete_orders_route, refund_order_route, update_order_tracking_route
+from domains.orders.services.orders_controller import bulk_delete_orders_route
+from domains.orders.services.orders_controller import refund_order_route
+from domains.orders.services.orders_controller import update_order_tracking_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

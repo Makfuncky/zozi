@@ -6,7 +6,7 @@ The dependency itself lives in `controllers.security.auth_controller`.
 """
 from fastapi import APIRouter
 
-from controllers.security.auth_controller import get_current_user
+from rbac import get_current_user
 
 router = APIRouter(prefix="/api/v1")
 

@@ -11,7 +11,16 @@ from fastapi import WebSocket
 from sqlalchemy import and_, event, inspect as sa_inspect
 from sqlalchemy.orm import Session as OrmSession
 
-from _legacy.models import AuditLog, Notification, Payout, Product, SupplierDispute, SupportTicket, SupplierProfile, TicketReply, User, InternalEmail
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.comms.models.communication import InternalEmail
+from domains.comms.models.suppliers import SupplierProfile
+from domains.governance.models.admin import SupplierDispute
+from domains.governance.models.admin import TicketReply
+from domains.payments.models.payments import Payout
 from infrastructure.utils.config import settings
 
 

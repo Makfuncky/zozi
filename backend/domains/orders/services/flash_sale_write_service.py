@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import FlashSale
+from domains.comms.models.marketing import FlashSale
 
 
 def flash_sale_persist_create(db: Session, sale: FlashSale) -> FlashSale:

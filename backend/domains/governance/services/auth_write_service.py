@@ -17,16 +17,14 @@ from typing import Any, Callable, Optional
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import SessionLocal
-from _legacy.models import (
-    EmailVerificationToken,
-    LogisticsPartner,
-    PasswordResetToken,
-    ReferralPointEvent,
-    SupplierProfile,
-    User,
-    UserDevice,
-    UserLoginHistory,
-)
+from domains.accounts.models.user import EmailVerificationToken
+from domains.accounts.models.user import PasswordResetToken
+from domains.accounts.models.user import ReferralPointEvent
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
+from domains.accounts.models.user import UserLoginHistory
+from domains.comms.models.suppliers import SupplierProfile
+from domains.logistics.models.logistics import LogisticsPartner
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)

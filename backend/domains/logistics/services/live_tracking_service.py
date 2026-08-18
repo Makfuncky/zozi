@@ -12,8 +12,10 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from _legacy.models import ParcelLocationTracker, Shipment, LogisticsPartner
-from _legacy.models.country_control import ShopWarehouseLocation
+from domains.country.models.country_control import ParcelLocationTracker
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.country.models.country_control import ShopWarehouseLocation
 
 logger = logging.getLogger(__name__)
 

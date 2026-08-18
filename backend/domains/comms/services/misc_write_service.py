@@ -28,17 +28,14 @@ from sqlalchemy.orm import Session
 
 
 
-from _legacy.models import Banner, RolePermissionSetting, SupplierDispute
+from domains.governance.models.admin import RolePermissionSetting
+from domains.governance.models.admin import SupplierDispute
+from domains.payments.models.payments import Banner
 
 from infrastructure.database.seed import _ensure_demo_user, _seed_password
 
-from services.treasury.cash_write_service import (
-
-    create_cash_account,
-
-    create_cash_transaction,
-
-)
+from domains.finance.services.cash_write_service import create_cash_account
+from domains.finance.services.cash_write_service import create_cash_transaction
 
 from infrastructure.utils.config import settings
 

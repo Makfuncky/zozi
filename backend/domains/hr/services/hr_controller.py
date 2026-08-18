@@ -5,7 +5,7 @@ dependents, conflict-of-interest (COI) reporting, GCC labor-law compliance
 validation, disciplinary and offboarding case management, and the employee
 relationship graph. The controller is the stable boundary the router imports.
 
-Routes are declared with the metadata-only decorators from ``core.route_contract``
+Routes are declared with the metadata-only decorators from ``infrastructure.routing.route_contract``
 so ``routers/generated/auto_router.py`` can auto-generate the FastAPI surface.
 A controller never imports FastAPI directly.
 
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from core.route_contract import get, post
+from infrastructure.routing.route_contract import get, post
 
 from domains.hr.services.hr_service import (
     check_coi_conflict as _check_coi_conflict,

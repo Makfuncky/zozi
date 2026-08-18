@@ -14,18 +14,16 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from _legacy.models import (
-    ARLedgerEntry,
-    APLedger,
-    Account,
-    AccountBalance,
-    Invoice,
-    SupplierSettlement,
-    Order,
-    User,
-)
-from _legacy.models.finance import APLedger as _APLedger
-from utils.money import round_money
+from domains.accounts.models.user import User
+from domains.finance.models.finance import ARLedgerEntry
+from domains.finance.models.finance import APLedger
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import SupplierSettlement
+from domains.orders.models.orders import Order
+from domains.finance.models.finance import APLedger as _APLedger
+from kernel.money import round_money
 
 logger = logging.getLogger(__name__)
 

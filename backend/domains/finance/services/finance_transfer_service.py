@@ -18,9 +18,15 @@ from providers.payments.connect import (
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig, FinanceBankAccount, LogisticsPartnerBankAccount, LogisticsPartnerPayout, LogisticsSettlement, Payout, SupplierBankAccount
-from utils.config import settings
-from utils.money import round_money, to_decimal
+from domains.country.models.countries import CountryConfig
+from domains.governance.models.admin import FinanceBankAccount
+from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.governance.models.admin import LogisticsSettlement
+from domains.governance.models.admin import SupplierBankAccount
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payout
+from infrastructure.utils.config import settings
+from kernel.money import round_money, to_decimal
 
 TransferExportType = Literal[
     "supplier-payout-transfers",
@@ -1083,7 +1089,7 @@ def get_country_payout_settings(country_code: str, db: Session) -> dict[str, Any
 
     Returns default values if the country or its settings are not configured.
     """
-    from services.logistics.logistics_partner_pricing import normalize_country_code
+    from domains.logistics.services.logistics_partner_pricing import normalize_country_code
 
     code = normalize_country_code(country_code)
     if not code:

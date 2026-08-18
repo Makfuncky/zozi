@@ -4,9 +4,9 @@ Customer Health API Endpoints
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.customer.customer_health_engine import get_customer_health_engine
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.customers.services.customer_health_engine import get_customer_health_engine
 
 router = APIRouter()
 
@@ -28,8 +28,8 @@ def list_customer_health(
     page: int = 1,
     size: int = 100,
 ):
-    from _legacy.models import User
-    from utils.pagination import paginated_query
+    from domains.accounts.models.user import User
+    from infrastructure.utils.pagination import paginated_query
 
     users, total = paginated_query(
         db.query(User).order_by(User.created_at.desc()),

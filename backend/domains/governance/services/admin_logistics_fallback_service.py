@@ -14,14 +14,25 @@ from typing import List, Optional
 from fastapi import Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
-from db.database import get_db
-from controllers.admin.admin_controller import get_current_admin, get_all_suppliers, list_pending_payouts
-from _legacy.models import Category as CategoryModel, CommissionGlobalConfig, Employee, Payment, Payout as PayoutModel, ShippingCarrier, Shipment, ShippingZone
+from infrastructure.database.database import get_db
+from domains.governance.services.admin_controller import get_current_admin
+from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.finance.services.payout_approval_read_service import list_pending_payouts
+from domains.catalog.models.products import Category as CategoryModel
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import Shipment
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout as PayoutModel
 
 def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from _legacy.models import User as UserModel, Order as OrderModel, Product as ProductModel
+    from domains.accounts.models.user import User as UserModel
+    from domains.catalog.models.products import Product as ProductModel
+    from domains.orders.models.orders import Order as OrderModel
     total_revenue = db.query(sqlfunc.sum(Payment.amount)).filter(Payment.status == 'completed').scalar() or 0
     total_users = db.query(sqlfunc.count(UserModel.id)).scalar() or 0
     total_orders = db.query(sqlfunc.count(OrderModel.id)).scalar() or 0
@@ -30,7 +41,9 @@ def admin_dashboard_fallback(db: Session=Depends(get_db), current_admin: dict=De
 def admin_stats_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from _legacy.models import User as UserModel, Order as OrderModel, Product as ProductModel
+    from domains.accounts.models.user import User as UserModel
+    from domains.catalog.models.products import Product as ProductModel
+    from domains.orders.models.orders import Order as OrderModel
     return {'total_users': db.query(sqlfunc.count(UserModel.id)).scalar() or 0, 'total_customers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'customer').scalar() or 0, 'total_suppliers': db.query(sqlfunc.count(UserModel.id)).filter(UserModel.role == 'supplier').scalar() or 0, 'total_orders': db.query(sqlfunc.count(OrderModel.id)).scalar() or 0, 'total_products': db.query(sqlfunc.count(ProductModel.id)).filter(ProductModel.is_deleted == False).scalar() or 0, 'pending_payouts': db.query(PayoutModel).filter(PayoutModel.status == 'pending').count()}
 
 def admin_payouts_fallback(page: int=Query(1, ge=1), page_size: int=Query(100, ge=1, le=500), db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
@@ -54,7 +67,7 @@ def admin_commission_fallback(db: Session=Depends(get_db), current_admin: dict=D
 
 def admin_employees_fallback(page: int=Query(1, ge=1), page_size: int=Query(100, ge=1, le=500), db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """List all employees (no country code required)."""
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = db.query(Employee).join(UserModel, Employee.user_id == UserModel.id).order_by(UserModel.full_name.asc().nullslast(), Employee.id).offset(skip).limit(page_size).all()
     total = db.query(Employee).count()
@@ -69,7 +82,8 @@ def admin_payments_fallback(page: int=Query(1, ge=1), page_size: int=Query(100, 
 
 def admin_logistics_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """List logistics carriers and partners (no country code required)."""
-    from _legacy.models import Shipment, ShippingZone
+    from domains.governance.models.admin import ShippingZone
+    from domains.logistics.models.logistics import Shipment
     carriers = db.query(ShippingCarrier).filter(ShippingCarrier.is_active == True).all()
     zone_count = db.query(ShippingZone).filter(ShippingZone.is_active == True).count()
     shipment_count = db.query(Shipment).count()
@@ -82,14 +96,16 @@ def admin_logistics_partners_fallback(db: Session=Depends(get_db), current_admin
 
 def admin_treasury_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Treasury summary — redirect to /admin/treasury/metrics if you need full metrics."""
-    from _legacy.models import Account as AccountModel, AccountBalance as AccountBalanceModel
+    from domains.finance.models.finance import Account as AccountModel
+    from domains.finance.models.finance import AccountBalance as AccountBalanceModel
     total_cash = db.query(func.sum(AccountBalanceModel.balance)).select_from(AccountBalanceModel).scalar() or 0
     account_count = db.query(AccountModel).count()
     return {'total_cash': float(total_cash), 'total_accounts': account_count, 'metrics_available_at': '/admin/treasury/metrics'}
 
 def admin_treasury_metrics_fallback(db: Session=Depends(get_db), current_admin: dict=Depends(get_current_admin)):
     """Treasury metrics summary (no country code required)."""
-    from _legacy.models import Account as AccountModel, AccountBalance as AccountBalanceModel
+    from domains.finance.models.finance import Account as AccountModel
+    from domains.finance.models.finance import AccountBalance as AccountBalanceModel
     accounts = db.query(AccountModel).all()
     total_cash = db.query(func.sum(AccountBalanceModel.balance)).select_from(AccountBalanceModel).scalar() or 0
     return {'total_accounts': len(accounts), 'total_cash': float(total_cash), 'accounts': [{'id': a.id, 'name': a.name, 'type': a.type, 'currency': a.currency} for a in accounts]}

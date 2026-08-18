@@ -8,9 +8,10 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import ShiftHandoverSession, ShiftHandoverTask
-from _legacy.models.employee_models import Employee
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.core import ShiftHandoverSession
+from domains.accounts.models.core import ShiftHandoverTask
+from domains.hr.models.employee_models import Employee
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger("zozi.shift_handover")
 

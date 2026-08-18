@@ -9,8 +9,9 @@ from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import LogisticsPartner, LogisticsPartnerProfile
-from services.logistics.logistics_health_engine import get_logistics_health_engine
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerProfile
+from domains.logistics.services.logistics_health_engine import get_logistics_health_engine
 
 # Number of partners returned by the list endpoint.
 LIST_LIMIT = 50

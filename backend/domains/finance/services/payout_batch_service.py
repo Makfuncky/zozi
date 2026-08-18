@@ -16,19 +16,17 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from _legacy.models import (
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-    LogisticsPartnerPayout,
-    Vendor,
-    LogisticsPartner,
-    FinanceAutomationLog,
-    FinanceAuditLog,
-)
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from utils.datetime_utils import utcnow as _utcnow
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import Vendor
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.payments.models.payments import LogisticsPartnerPayout
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +100,7 @@ def generate_supplier_payout_batches(
         
         # Send approval email to supplier
         try:
-            from services.comms.transactional_email_service import enqueue_supplier_approval_email
+            from domains.comms.services.transactional_email_service import enqueue_supplier_approval_email
             enqueue_supplier_approval_email(
                 supplier_id, batch.id, batch.batch_number, float(total_amount)
             )

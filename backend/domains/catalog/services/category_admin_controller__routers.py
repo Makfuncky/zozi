@@ -5,7 +5,7 @@ RLS context and delegates persistence to
 domains.catalog.services.category_admin_{read,write}_service and the shared
 modules.admin.routers.admin_controller archive helpers.
 
-The HTTP contract is declared with ``core.route_contract`` decorators
+The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so the auto-router emits ``routers/admin_catalog_category_admin.py``.
 """
 from __future__ import annotations
@@ -16,9 +16,9 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
-from core.route_contract import delete, get, post, put
+from infrastructure.routing.route_contract import delete, get, post, put
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 from modules.admin.routers.admin_controller import (

@@ -15,31 +15,25 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    get_all_suppliers,
-    get_current_admin,
-)
-from db.database import get_db
-from _legacy.models import Category as CategoryModel
-from _legacy.models import (
-    CommissionGlobalConfig,
-    Employee,
-    Payment,
-    Product as ProductModel,
-    Shipment,
-    ShippingCarrier,
-    ShippingZone,
-)
-from _legacy.models import Payout as PayoutModel
-from _legacy.models import User as UserModel
-from services.common.db_read import (
-    all_rows,
-    count,
-    first,
-    scalar,
-    scalar_sum,
-    scalar_with_filters,
-)
+from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.governance.services.admin_controller import get_current_admin
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Category as CategoryModel
+from domains.catalog.models.products import Product as ProductModel
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import Shipment
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout as PayoutModel
+from domains.accounts.models.user import User as UserModel
+from domains.comms.services.db_read import all_rows
+from domains.comms.services.db_read import count
+from domains.comms.services.db_read import first
+from domains.comms.services.db_read import scalar
+from domains.comms.services.db_read import scalar_sum
+from domains.comms.services.db_read import scalar_with_filters
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -266,8 +260,8 @@ def admin_treasury_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury summary — redirect to /admin/treasury/metrics if you need full metrics."""
-    from _legacy.models import Account as AccountModel
-    from _legacy.models import AccountBalance as AccountBalanceModel
+    from domains.finance.models.finance import Account as AccountModel
+    from domains.finance.models.finance import AccountBalance as AccountBalanceModel
 
     total_cash = (
         scalar(
@@ -295,8 +289,8 @@ def admin_treasury_metrics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury metrics summary (no country code required)."""
-    from _legacy.models import Account as AccountModel
-    from _legacy.models import AccountBalance as AccountBalanceModel
+    from domains.finance.models.finance import Account as AccountModel
+    from domains.finance.models.finance import AccountBalance as AccountBalanceModel
 
     accounts = all_rows(db, AccountModel)
     total_cash = (

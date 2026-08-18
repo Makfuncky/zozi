@@ -12,16 +12,16 @@ from fastapi import HTTPException
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CashFlowForecast,
-    Employee,
-    JournalEntry,
-    JournalEntryLine,
-    TreasuryAccount,
-    TreasuryTransaction,
-)
-from utils.audit import AuditAction, audit_log
-from services.common.write_helpers import add_and_flush, commit_and_refresh, commit_only
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import TreasuryTransaction
+from domains.hr.models.employee_models import Employee
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.comms.services.write_helpers import add_and_flush
+from domains.comms.services.write_helpers import commit_and_refresh
+from domains.comms.services.write_helpers import commit_only
 import structlog
 logger = structlog.get_logger(__name__)
 

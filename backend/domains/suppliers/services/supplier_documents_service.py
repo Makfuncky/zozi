@@ -11,7 +11,9 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import SupplierDocumentOut
 
-from _legacy.models import SupplierDocument, SupplierProfile, User
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierDocument
+from domains.comms.models.suppliers import SupplierProfile
 
 from infrastructure.utils.dependencies import require_admin, require_supplier
 

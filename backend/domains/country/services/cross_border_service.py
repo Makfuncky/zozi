@@ -7,8 +7,8 @@ from typing import Optional, Dict, Any
 import logging
 import json
 
-from db.database import get_db_context
-from _legacy.models import CountryConfig
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
 from providers.geography.ip import detect_country_from_ip
 
 logger = logging.getLogger(__name__)

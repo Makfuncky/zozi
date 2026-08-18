@@ -7,14 +7,15 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import Product, SupplierProfile
-from services.common.storage import storage as _storage
-from utils.config import settings
-from utils.datetime_utils import utcnow
-from utils.dependencies import require_supplier
-from utils.file_validation import validate_upload_image
-from utils.pagination import paginated_response
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.storage import storage as _storage
+from infrastructure.utils.config import settings
+from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.dependencies import require_supplier
+from infrastructure.utils.file_validation import validate_upload_image
+from infrastructure.utils.pagination import paginated_response
 
 router = APIRouter()
 

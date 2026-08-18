@@ -19,11 +19,7 @@ Purpose:
         rbac/*  (feature axis; imported by modules + middleware ONLY)
         providers/*  (imported by services/jobs ONLY)
         jobs/*  ->  domains/*  ->  infrastructure
-
-    The OLD flat circuit (controllers -> services -> models) is ABOLISHED by
-    NEW_STRUCTURE.md: controllers are split (shell->module routers, logic->domain
-    services); routers are re-homed per actor into modules/*/routers/; models are
-    ORM-only and live under domains/*/models/, never at backend root.
+        kernel/*  ->  domains/*  ->  infrastructure
 
     Validates:
     system_architecture_audit.py
@@ -135,7 +131,6 @@ SEVEN LAWS (enforced by check_new_structure_compliance - anti-cheat gate):
   4. Features single-sourced in domains/*/features.py; CI fails on literal not in catalog.
   5. Country is the orthogonal scope axis (RLS + country_staff_assignments).
   6. Schema discipline: every table in a domain Postgres schema; Alembic is sole schema source.
-  7. Strangler rule: _legacy is re-export only; DOMAIN_ALLOWLIST.yaml may only shrink.
 
 Severity:
     [RED] VIOLATION   high-confidence architectural / structural / security problem
@@ -188,37 +183,37 @@ SEV_TAG  = {RED: "[RED]", YEL: "[YEL]", GRN: "[GRN]"}
 # RULE_MEANING — SINGLE consolidated dict (all rules from v3.2 through v3.7)
 # ---------------------------------------------------------------------------
 RULE_MEANING: dict[str, str] = {
-    # Layer violations
-    "W1":  "controller/router writes to DB (must be a service)",
-    "W2":  "misnamed writer-controller -> relocate to services/",
-    "W3":  "imports a mis-housed controller (logic belongs in services/utils)",
-    "W4":  "controller imports another controller (shared logic -> service/util)",
-    "Q1":  "controller/router reads via db.query (delegate)",
-    "M1":  "ORM model outside models/ package",
-    "R1":  "APIRouter instantiated outside routers/",
-    "G1":  "second migrations home / dual schema-creator",
+    # Layer violations (NEW_STRUCTURE.md: Modules=who, Domains=what, Features=may)
+    "W1":  "module router writes to DB (must be a domain service)",
+    "W2":  "business logic inside a module router -> relocate to domains/*/services/",
+    "W3":  "imports a mis-housed controller (logic belongs in domains/*/services or infrastructure/utils)",
+    "W4":  "controller imports another controller (controllers abolished; shared logic -> domain service/util)",
+    "Q1":  "module router reads via db.query (delegate to domain service)",
+    "M1":  "ORM model outside its domain models/ package (must be domains/*/models/)",
+    "R1":  "APIRouter instantiated outside modules/*/routers/",
+    "G1":  "second migrations home / dual schema-creator (Alembic is the only schema source)",
     "X1":  "ghost/duplicate backend skeleton",
     # Duplicates
     "D1":  "duplicate module basename within backend (import-shadow)",
     "D2":  "duplicate module basename across top dirs",
     "D3":  "duplicate class name across modules",
     # Structure
-    "S1":  "services/ is flat (needs domain sub-packages)",
+    "S1":  "service not under a domain (must be domains/*/services/)",
     "S2":  "overlapping service stems (ownership ambiguity)",
-    "S3":  "controllers/ flat (group by domain; routers/ is flat by design)",
-    "S4":  "surface sub-folder in services/ (must be domain)",
-    "S5":  "service domain sub-package too large (split bounded context)",
-    "M2":  "models/ is flat (group by domain)",
-    "M3":  "surface sub-folder in models/ (must be domain)",
-    "M4":  "models domain sub-package too large",
+    "S3":  "abolished flat controllers/ still present (split into modules/*/routers + domains/*/services)",
+    "S4":  "surface sub-folder in domains/*/services/ (must be domain)",
+    "S5":  "domain service package too large (slice bounded context)",
+    "M2":  "ORM model not under a domain models/ (must be domains/*/models/)",
+    "M3":  "surface sub-folder in domains/*/models/ (must be domain)",
+    "M4":  "domain models package too large",
     "L1":  "multiple RLS enforcers (fail-open risk)",
     # Hotspots / dead code
     "A1":  "architecture hotspot (high coupling / instability)",
     "A2":  "possibly dead/orphan module (no inbound imports; not an entrypoint)",
     # Package shape
     "P1":  "scratch script at backend root (delete / scripts/)",
-    "P2":  "controller file outside controllers/",
-    "P3":  "module at backend root (belongs in a layer package)",
+    "P2":  "controller-named file present (controllers/ abolished -> split into modules/*/routers + domains/*/services)",
+    "P3":  "abolished flat root layer package present (controllers/ routers/ services/ models/ db/ utils/ core/ dependencies/)",
     "P4":  "missing expected backend package",
     "P5":  "python package missing __init__.py",
     "H1":  "sys.path.insert/append (import-resolution footgun)",
@@ -257,7 +252,7 @@ RULE_MEANING: dict[str, str] = {
     # Domain placement
     "DOM1": "file should be moved into its detected domain folder",
     "DOM2": "file is inside the wrong domain folder",
-    "DOM3": "surface folder used where domain folder is required",
+    "DOM3": "surface/flat folder used where a domain-scoped home is required (incl. abolished root layers controllers/ services/ models/ events/)",
     "DOM6": "new domain candidate auto-detected",
     "DOM7": "unknown or non-canonical domain folder",
     "DOM8": "correctly placed domain files",
@@ -282,9 +277,10 @@ RULE_MEANING: dict[str, str] = {
     "CIR1":  "circuit violation: import is outside the allowed layer circuit",
     "CIR2":  "circuit bypass: import skips the preferred layer (migration warning)",
     # Router naming
-    "RN1": "router path/name does not match the configured router contract",
+    "RN1": "module router name does not match NEW pattern modules/{module}/routers/{domain}_router.py",
     "RN2": "router file is nested deeper than the configured router contract allows",
     "RN3": "router sub-folder does not match the configured surface contract",
+    "RN4": "router still lives under abolished root backend/routers/ (pre-NEW_STRUCTURE flat layer)",
     "SCF1": "folder is explicitly forbidden by the scaffolding contract",
     # Auto-discovery
     "AUTO0":  "auto-discovery baseline created",
@@ -338,7 +334,7 @@ RULE_MEANING: dict[str, str] = {
     "SEC8":  "insecure JWT/token handling",
     "SEC9":  "missing CSRF protection on state-changing endpoint",
     "SEC10": "insecure CORS configuration",
-    # ═══ ARCHITECTURE_DIAGRAM §2.4 / §9.3 / §10.4 ═══
+    # ═══ NEW_STRUCTURE §2.4 / §9.3 / §10.4 ═══
     "SEC11": "multiple independent RLS enforcers — fail-open risk (§10.4)",
     "SC1":   "DB pool_size exceeds PgBouncer-safe limit (§9.3)",
     "SC2":   "sync-only SQLAlchemy blocks event loop at scale (§9.3 Phase B)",
@@ -353,6 +349,9 @@ RULE_MEANING: dict[str, str] = {
     "FE8":   "shared package boundary violation",
     "FE9":   "state management boundary violation",
     "FE10":  "raw fetch()/XMLHttpRequest bypasses typed API client",
+    "FE11":  "frontend/shared/src/adminPermissions.ts must be deleted (replaced by generated permissions.ts from /rbac/catalog)",
+    "FE12":  "frontend/web_app/src/lib/rbac.ts missing — must fetch /rbac/catalog so UI gating and backend gating share one source",
+    "FE13":  "frontend/shared/src/permissions.ts missing — must be generated from backend /rbac/catalog",
     # Architecture Metrics
     "MET2":  "module instability exceeds threshold",
     "MET3":  "abstractness below threshold (no interfaces)",
@@ -377,8 +376,24 @@ RULE_MEANING: dict[str, str] = {
     "NS6":  "domain imports a module layer (law 1: arrows point down only)",
     "NS7":  "infrastructure imports an application/domain layer (law 1 violation)",
     "NS8":  "cross-domain import bypasses ports.py/events.py (law 3 violation)",
-    "NS9":  "_legacy/ shim carries real logic instead of re-export only (strangler rule)",
     "NS11": "root models/ still canonical while domain models absent (migration not done)",
+    "NS14": "NEW_STRUCTURE.md adoption ratio below target (measured over backend imports)",
+    "NS15": "feature atom used via require_feature() literal but not registered in domains/*/features.py (Law 4 single-source, P0)",
+    "NS16": "rbac feature aggregates split across multiple sources instead of one domains/*/features.py per domain (P0)",
+    "NS17": "duplicate feature-atom keys across domains/*/features.py (ambiguous capability, P1)",
+    "NS18": "thin-router violation: router module carries business logic instead of delegating to module service/use-case (Law 2, P1)",
+    "NS20": "inverted dependency arrow: middleware/providers/infrastructure import upward application layers (Law 1, P0)",
+    "NS21": "country scope axis missing: no per-country data scoping layer where the platform needs it (axis 3, P2)",
+    "NS22": "schema discipline violation: domain model table lacks __table_args__ schema='<domain>' (Law 6, P1)",
+    "NS23": "abolished db/ layer still present at backend root (must be infrastructure/database/)",
+    "NS24": "abolished utils/ layer still present at backend root (must be infrastructure/utils/ + kernel/)",
+    "NS25": "abolished core/ layer still present at backend root (must be domains/*/services/ or infrastructure/)",
+    "NS26": "abolished dependencies/ layer still present at backend root (must be domains/*/ or infrastructure/)",
+    "NS33": "module router gates with a pre-NEW_STRUCTURE per-module auth helper (require_admin/require_finance_permission/...) instead of rbac.dependencies.require_feature — Feature axis (Law 4) not wired (P2)",
+    "NS34": "kernel/ imports a layer above it (modules/domains/rbac/providers/jobs/...); kernel must be a pure shared kernel (law: domains -> kernel -> nothing) (P1)",
+    "NS35": "module router imports providers/ directly; providers are called only by services/jobs, never by thin module routers (law 1) (P0)",
+    "NS36": "domain imports rbac/; rbac is imported by modules/middleware only — domains enforce policies, not permissions (law 4) (P0)",
+    "NS37": "DOMAIN_ALLOWLIST.yaml missing, or contains a phantom cross-domain entry that matches no real import (strangler-debt tracker, law 7) (P2)",
 
     # ═══════════════════════════════════════════════════════════
     # DATABASE AUDIT RULES (DBA prefix to avoid collision with DB1-DB3)
@@ -408,7 +423,7 @@ RULE_MEANING: dict[str, str] = {
     "DBA23": "partition strategy missing for hot append-only tables",
     "DBA24": "production checklist gap",
     "DBA25": "live database drift / live check result",
-    "DBA26": "ORM model outside backend/models/",
+    "DBA26": "ORM model outside domains/*/models/",
     "DBA27": "broken or suspicious migration file (ADR-018 risk)",
     "DBA28": "migration contract-test harness missing",
     "DBA29": "required canonical table missing",
@@ -550,7 +565,7 @@ HOTLIST_RULES: set[str] = {
     "SEC5", "SEC6", "SEC7", "SEC8", "SEC9", "SEC10",
     "SEC11", "SC1", "SC2", "SC3",
     "PERF3", "PERF4", "PERF5", "PERF6",
-    "FE7", "FE8", "FE9",
+    "FE7", "FE8", "FE9", "FE10", "FE11", "FE12", "FE13",
     "MET2", "MET3", "MET4", "MET5",
     "BC1", "BC2", "BC3",
     "REG1", "REG2", "REG3",
@@ -568,6 +583,8 @@ HOTLIST_RULES: set[str] = {
 
     # NEW_STRUCTURE.md compliance gate (anti-cheat)
     "NS0", "NS1", "NS2", "NS3", "NS4", "NS5", "NS6", "NS7", "NS8", "NS9", "NS11",
+    "NS12", "NS13", "NS14", "NS15", "NS16", "NS17", "NS18", "NS19", "NS20", "NS21", "NS22",
+    "NS33", "NS34", "NS35", "NS36", "NS37",
 }
 
 # ---------------------------------------------------------------------------
@@ -612,7 +629,6 @@ DEFAULT_SCRIPTS_SAFE_TOKENS = {"tmp", "temp", "scratch", "debug", "diag", "inspe
 
 DEFAULT_BACKEND_ROOT_ALLOW = {
     "__init__.py", "main.py", "lifespan.py", "run_server.py", "start_server.py",
-    "audit_controllers.py",
 }
 
 DEFAULT_ALLOW_ROOT_MD = {
@@ -623,6 +639,7 @@ DEFAULT_ALLOW_ROOT_MD = {
     "PROJECT_SCAFFOLDING.md", "FEATURES_LIST.md",
     "GOVERNANCE_REPORT.md", "GOVERNANCE_AUDIT_REPORT.md",
     "HEALTH_AUDIT_REPORT.md",
+    "ARCHITECTURE_DIAGRAM.md",
 }
 
 DEFAULT_ALLOW_DOCS_ROOT = {"scope", "archive", "README.md", "DOCUMENTATION_INDEX.md", "INDEX.md"}
@@ -667,92 +684,70 @@ DEFAULT_FORBIDDEN_ANY = {
     "frontend/mobile_app/scripts": [r".*\.(log|err)$"],
 }
 
+# NEW_STRUCTURE.md dependency circuit (SEVEN LAWS — arrows point DOWN only):
+#   modules -> domains -> infrastructure
+#   modules/modules.{actor}/routers -> rbac.dependencies (feature gate)
+#   jobs -> domains -> infrastructure
+#   providers <- services/jobs only
+#   kernel -> (nothing)
+#   infrastructure -> (nothing above it)
+#   rbac -> imported by modules + middleware ONLY (it is configuration/decision logic)
+#   _legacy -> re-export shims only (deleted when a slice is 100% ready)
 DEFAULT_FORBIDDEN_EDGES = {
-    # Middleware / dependencies are request-preprocessing layers.
-    # They must not reach into business/domain layers.
+    # DOMAINS own logic + data. They MUST NEVER import a module layer.
+    "domains": [
+        "modules",
+    ],
+
+    # MODULES compose. Thin routers (modules/{actor}/routers) import
+    # rbac.dependencies (feature gate) + ONE domain service call only.
+    # They must not reach infrastructure/providers/kernel directly.
+    "modules": [
+        "infrastructure",
+        "providers",
+        "kernel",
+        "jobs",
+    ],
+
+    # RBAC is configuration/decision logic. Imported by modules + middleware ONLY.
+    "rbac": [
+        "domains", "modules", "infrastructure", "providers",
+        "kernel", "jobs", "middleware",
+    ],
+
+    # INFRASTRUCTURE imports nothing above it (zero business logic).
+    "infrastructure": [
+        "modules", "domains", "rbac", "providers", "kernel", "jobs", "middleware",
+    ],
+
+    # KERNEL = pure business primitives (money/numbering/country/period).
+    # Imports nothing above it.
+    "kernel": [
+        "modules", "domains", "rbac", "infrastructure", "providers", "jobs", "middleware",
+    ],
+
+    # PROVIDERS are leaf adapters. Used ONLY by services + jobs.
+    "providers": [
+        "modules", "rbac", "infrastructure", "kernel", "middleware",
+    ],
+
+    # JOBS -> domains -> infrastructure only.
+    "jobs": [
+        "modules", "rbac", "infrastructure", "kernel", "middleware",
+    ],
+
+    # MIDDLEWARE may import infrastructure + rbac.dependencies only.
     "middleware": [
-        "services",
-        "controllers",
-        "routers",
-        "models",
-        "providers",
-        "events",
-        "jobs",
-    ],
-    "dependencies": [
-        "services",
-        "controllers",
-        "routers",
-        "models",
-        "providers",
-        "events",
-        "jobs",
+        "modules", "domains", "providers", "kernel", "jobs",
     ],
 
-    # Routers should stay thin.
-    # They may call controllers/services/utils during migration,
-    # but must not use providers or direct DB infrastructure.
-    "routers": [
-        "providers",
-        "db.database",
-        "db.create_tables",
-        "db.init_db",
+    # _LEGACY shims re-export only; never import application/domain layers.
+    "_legacy": [
+        "modules", "domains", "rbac", "infrastructure", "kernel",
+        "providers", "jobs", "middleware",
     ],
-
-    # Controllers orchestrate.
-    # They must not import routers or security middleware,
-    # and must not touch DB engine/session creation directly.
-    # NOTE: `dependencies` (auth deps such as get_current_user/get_current_admin)
-    # is ALLOWED here — ARCHITECTURE_DIAGRAM §10.2 explicitly permits
-    # `controllers → auth deps`, matching CIRCUIT_ALLOWED_IMPORTS.
-    "controllers": [
-        "routers",
-        "middleware",
-        "db.database",
-        "db.create_tables",
-        "db.init_db",
-    ],
-
-    # Services are business logic and the only normal DB writers.
-    # They must not depend upward on routers/controllers/middleware.
-    "services": [
-        "routers",
-        "controllers",
-        "middleware",
-        "dependencies",
-    ],
-
-    # Providers are external adapters.
-    # They must not depend on application layers or ORM models.
-    "providers": ["routers","controllers","services","models","middleware","dependencies","db.database","db.create_tables","db.init_db","events","jobs",],
-
-    # Models are data entities.
-    # They must not depend on application layers.
-    "models": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
-
-    # Events/jobs may use services/models/providers,
-    # but must not depend upward on HTTP/middleware layers.
-    "events": ["routers","controllers","middleware","dependencies",],
-
-    "jobs": ["routers","controllers","middleware","dependencies",],
-
-    # Utils should be pure helpers.
-    "utils": ["routers","controllers","services","models","providers","middleware","dependencies","db.database","db.create_tables","db.init_db",],
-
-    # DB infrastructure must not depend on application layers.
-    "db": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
-
-    # Core is shared infrastructure (config, base types) — must not depend on
-    # application layers.
-    "core": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
-
-    # tools/ is audit/migration tooling (route_contract, migrate_router, triage).
-    # It must not depend on runtime application layers.
-    "tools": ["routers","controllers","services","providers","middleware","dependencies","events","jobs",],
 }
 
-DEFAULT_MIS_HOUSED_CONTROLLERS = {"audit_controllers", "payments_controller", "cache_utils"}
-DEFAULT_KNOWN_WRITER_CONTROLLERS = {"audit_controller.py"}
 
 # Variable names that represent DB sessions — only method calls on these
 # objects should be flagged as W1 layer-contract violations.
@@ -818,32 +813,43 @@ DEFAULT_ARTIFACT_NAMES = {
 DEFAULT_DUP_IGNORE_BASENAMES = {"__init__", "conftest"}
 
 DEFAULT_CANONICAL_HOME = {
-    "database.py": "db/database.py",
-    "schemas.py": "db/schemas.py",
-    "config.py": "utils/config.py",
-    "auth.py": "utils/auth.py",
-    "email_service.py": "utils/email_service.py",
+    "database.py": "infrastructure/database/database.py",
+    "schemas.py": "domains/{domain}/schemas/{name}.py",
+    "config.py": "infrastructure/utils/config.py",
+    "auth.py": "infrastructure/security/auth.py",
+    "email_service.py": "infrastructure/utils/email_service.py",
 }
+
+# Modules treated as audit/route-generation TOOLING that must never originate a
+# dependency-graph edge (they discover routes via AST and emit thin routers).
+_AUDIT_TOOLING_MODULES: set[str] = set()
 
 DEFAULT_SURFACE_NAMES = {"admin","supplier","customer","logistics","public",
                          "webhooks","webhook","api","internal","external","partner",}
 
-DEFAULT_DOMAIN_LAYERS    = {"services", "models"}
+# Domain-internal layers (a domain owns these sub-folders under domains/{domain}/).
+# NOTE: there is NO flat backend layer for these anymore — they live UNDER a domain.
+DEFAULT_DOMAIN_LAYERS    = {"services", "models", "schemas", "policies",
+                            "events", "subscribers", "features", "read_models", "ports"}
+# Ownership layers = the layers that "own" a business domain (used by placement engine).
 DEFAULT_OWNERSHIP_LAYERS = {"services", "models"}
 
-DEFAULT_GRAPH_EXEMPT_LAYERS = {"tests", "scripts", "alembic", "monitoring", "docs", "tools"}
+DEFAULT_GRAPH_EXEMPT_LAYERS = {"tests", "scripts", "alembic", "_legacy", "monitoring", "docs", "tools"}
 
-DEFAULT_DEAD_EXEMPT_LAYERS = {"tests","scripts","alembic","monitoring","docs","tools"}
+DEFAULT_DEAD_EXEMPT_LAYERS = {"tests","scripts","alembic","_legacy","monitoring","docs","tools"}
 
-DEFAULT_DEAD_AUDIT_LAYERS = {"services","models","controllers","routers","providers","utils","events","jobs","middleware","dependencies","db"}
+# Audit layers = application layers that may host live code in the NEW structure.
+DEFAULT_DEAD_AUDIT_LAYERS = {"modules","domains","rbac","infrastructure","kernel","providers","jobs","middleware","events"}
 
 DEFAULT_DEAD_ENTRYPOINTS = [
     r"^main$", r"^lifespan$", r"^run_server$", r"^start_server$",
-    r"^routers(\.|$)", r"^alembic\.env$", r"^scripts(\.|$)", r"^tests(\.|$)",
+    r"^modules(\.|$)", r"^domains(\.|$)", r"^rbac(\.|$)",
+    r"^infrastructure(\.|$)", r"^kernel(\.|$)",
+    r"^alembic\.env$", r"^scripts(\.|$)", r"^tests(\.|$)",
     r"^tools(\.|$)",
-    r"^middleware(\.|$)", r"^dependencies(\.|$)", r"^providers(\.|$)",
-    r"^events(\.|$)", r"^jobs(\.|$)", r"^data(\.|$)",
-    r"^db\.base$", r"^db\.database$",
+    r"^middleware(\.|$)", r"^providers(\.|$)",
+    r"^events(\.|$)", r"^jobs(\.|$)", r"^_legacy(\.|$)",
+    r"^infrastructure\.database\.base$", r"^infrastructure\.database\.database$",
 ]
 
 DEFAULT_DUP_CLASS_IGNORE = {
@@ -851,13 +857,14 @@ DEFAULT_DUP_CLASS_IGNORE = {
     "Table", "Mixin", "Settings", "Exception", "Error",
 }
 
+# NEW_STRUCTURE.md canonical backend packages (AXIS 1/2/3 + platform).
 DEFAULT_EXPECTED_BACKEND_PACKAGES = [
-    "routers", "controllers", "services", "models", "middleware",
-    "dependencies", "providers", "utils", "db", "alembic",
-    "tests", "scripts", "events", "jobs", "core",
+    "modules", "domains", "rbac", "infrastructure", "kernel",
+    "providers", "jobs", "middleware", "alembic",
+    "tests", "scripts", "_legacy",
 ]
 
-DEFAULT_NO_INIT_DIRS = {"scripts", "tests", "alembic", "tools", "dependencies", "monitoring", "docs"}
+DEFAULT_NO_INIT_DIRS = {"scripts", "tests", "alembic", "tools", "_legacy", "monitoring", "docs"}
 DEFAULT_FRONTEND_WORKSPACES = {"web_app", "mobile_app", "shared"}
 
 DEFAULT_FRONTEND_ROOT_ALLOW = {
@@ -1182,8 +1189,10 @@ PLACEMENT_FOLDER_STABLE_TOKENS: set[str] = {
     "settings", "uploads", "upload", "labels", "label", "pricing", "insights",
 }
 
+# Domain-internal layers (sub-folders of domains/{domain}/), per NEW_STRUCTURE.md.
 PLACEMENT_DOMAIN_LAYERS = [
-    "services", "models", "controllers", "providers", "events", "jobs",
+    "services", "models", "schemas", "policies",
+    "events", "subscribers", "features", "read_models", "ports",
 ]
 
 PLACEMENT_SKIP_PARTS = {
@@ -1212,47 +1221,106 @@ AUTO_ROUTE_TAGS_RE = re.compile(
 )
 
 # ============================================================================
-# SECTION 3: CIRCUIT CONTRACT — ACTIVE
+# SECTION 3: CIRCUIT CONTRACT — ACTIVE (documents/NEW_STRUCTURE.md, seven laws)
 # ============================================================================
-
-CIRCUIT_ALLOWED_IMPORTS: dict[str, set[str]] = {
-    "main": {"middleware", "dependencies", "routers", "db", "utils", "lifespan", "data"},
-    "lifespan": {"db", "utils", "middleware", "dependencies", "data"},
-    "middleware": {"db", "utils", "dependencies", "data"},          # db READ-ONLY
-    "dependencies": {"db", "utils", "data", "models"},             # auth deps: JWT→Redis→db lookup
-    "routers": {"controllers", "dependencies", "utils", "data", "db", "events"},
-    "controllers": {"services", "models", "dependencies", "utils", "data", "db"},  # reads OK; NO writes (W1)
-    "services": {"models", "providers", "utils", "events", "jobs", "db", "data"},  # only DB writers
-    "providers": {"utils", "data"},
-    "models": {"db", "utils"},
-    "db": {"utils"},
-    "events": {"services", "models", "providers", "utils", "db", "data"},
-    "jobs": {"services", "models", "providers", "utils", "db", "data"},
+# Canonical layers and the ONLY imports each may make. This table IS the circuit the
+# audit enforces (Law 1: arrows point down only):
+#
+#   modules      -> domains, rbac, infrastructure           (thin routers; no DB writes)
+#   domains       -> infrastructure, kernel, providers       (owns logic + data)
+#   rbac          -> infrastructure, kernel                  (aggregates features; decision only)
+#   kernel        -> infrastructure                          (pure business primitives)
+#   infrastructure-> (nothing above it)                      (platform; zero business logic)
+#   providers     -> infrastructure, kernel                  (3rd-party/AI adapters)
+#   jobs          -> domains, infrastructure, kernel, providers
+#   middleware     -> infrastructure, kernel
+#
+# Abolished flat root layers (controllers/ routers/ services/ models/ db/ utils/
+# core/ dependencies/) are deliberately ABSENT here. check_new_structure_compliance
+# reports them as NS1-NS4 at the folder level; check_circuit_contract skips any layer
+# not present in this table, so an abolished layer can never be validated as a
+# legitimate circuit (which would let a cheating AI fake a pre-migration implementation).
+NEW_CIRCUIT_ALLOWED_IMPORTS: dict[str, set[str]] = {
+    "main": {"modules", "domains", "rbac", "infrastructure", "kernel",
+             "providers", "jobs", "middleware", "config"},
+    "modules": {"domains", "rbac", "infrastructure"},
+    "domains": {"infrastructure", "kernel", "providers"},
+    "rbac": {"infrastructure", "kernel"},
+    "kernel": {"infrastructure"},
+    "infrastructure": set(),
+    "providers": {"infrastructure", "kernel"},
+    "jobs": {"domains", "infrastructure", "kernel", "providers"},
+    "middleware": {"infrastructure", "kernel"},
+    "config": set(),
     "data": set(),
-    "utils": set(),
 }
 
-CIRCUIT_BYPASS_IMPORTS: dict[tuple[str, str], str] = {
-    ("routers", "services"): (
-        "routers should call controllers; direct router -> service usage skips the orchestration layer"
+NEW_CIRCUIT_BYPASS_IMPORTS: dict[tuple[str, str], str] = {
+    ("modules", "infrastructure"): (
+        "module routers stay thin (Law 2): no direct infrastructure/DB access — "
+        "delegate to domains/*/services"
     ),
-    ("routers", "models"): (
-        "routers should not read models directly; use controllers/services"
+    ("modules", "providers"): (
+        "providers are called by domains/*/services and jobs only, never by module routers"
     ),
-    # NOTE: ("controllers", "models") is ALLOWED per ARCHITECTURE_DIAGRAM §2 (reads only; writes = W1)
+    ("modules", "kernel"): (
+        "module routers stay thin (Law 2): no direct kernel primitives — delegate to domains/*/services"
+    ),
+    ("domains", "modules"): (
+        "arrows point down only (Law 1) — domains must never import a module"
+    ),
+    ("domains", "rbac"): (
+        "rbac is imported by modules/middleware only — domains enforce policies, not permissions"
+    ),
+    ("rbac", "modules"): (
+        "rbac is imported by modules/middleware only — never the reverse"
+    ),
+    ("rbac", "domains"): (
+        "rbac aggregates feature definitions; it must not import domain logic"
+    ),
+    ("kernel", "modules"): (
+        "kernel is a leaf primitive — imports nothing above it"
+    ),
+    ("kernel", "domains"): (
+        "kernel is a leaf primitive — imports nothing above it"
+    ),
+    ("kernel", "rbac"): (
+        "kernel is a leaf primitive — imports nothing above it"
+    ),
+    ("infrastructure", "modules"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("infrastructure", "domains"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("infrastructure", "rbac"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("infrastructure", "kernel"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("infrastructure", "providers"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("infrastructure", "jobs"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("infrastructure", "middleware"): (
+        "infrastructure imports nothing above it (Law 1)"
+    ),
+    ("providers", "modules"): (
+        "providers are imported by services/jobs only — never the reverse"
+    ),
+    ("providers", "domains"): (
+        "providers are imported by services/jobs only — never the reverse"
+    ),
+    ("providers", "rbac"): (
+        "providers are imported by services/jobs only — never the reverse"
+    ),
 }
 
-# ARCHITECTURE_DIAGRAM §10.1: routers/generated/auto_router.py is TOOLING, not a
-# runtime layer. It reads controllers via AST only and emits thin routers, so it
-# must never originate a dependency-graph edge. Generated routers remain plain
-# members of the `routers` layer.
-_AUDIT_TOOLING_MODULES: set[str] = {"routers.generated.auto_router"}
-
-# Sub-folders under backend/routers that are audit tooling output (e.g. the
-# auto-generated `generated/` folder produced by routers.generated.auto_router).
-# They must be skipped by the flat-layout router decomposition checks (RN1/RN2/RN3)
-# so the tooling scaffold is never reported as an illegal router sub-folder.
 _AUDIT_ROUTER_TOOLING_SUBDIRS: set[str] = {"generated"}
+
 
 # ============================================================================
 # SECTION 4: DATA MODELS
@@ -1327,7 +1395,7 @@ def _get_rule_priority(code: str) -> str:
         "SEC2": "P0", "SEC3": "P0", "SEC4": "P0",
         "X1": "P0", "F5": "P0", "M1": "P0", "R1": "P0",
         "CG1": "P0", "CG2": "P0", "CG3": "P0",
-        "MW3": "P0", "FE8": "P0", "CA3": "P0",
+        "MW3": "P0", "FE8": "P0", "FE11": "P0", "CA3": "P0",
         # ── P1: Scaling / performance risk ──
         "HL403": "P1", "HL601": "P1", "HL602": "P1", "SC102": "P1",
         "PG102": "P1", "PG103": "P1", "SC501": "P1", "SC101": "P1",
@@ -1359,7 +1427,7 @@ def _get_rule_priority(code: str) -> str:
         "RN1": "P2", "RN2": "P2", "RN3": "P2",
         "DB1": "P2", "DB2": "P2", "DB3": "P2",
         "FE1": "P2", "FE3": "P2", "FE4": "P2", "FE5": "P2",
-        "FE7": "P2", "FE9": "P2", "FE10": "P2",
+        "FE7": "P2", "FE9": "P2", "FE10": "P2", "FE12": "P2", "FE13": "P2",
         "QUAL1": "P2", "QUAL3": "P2",
         "A1": "P2", "MET2": "P2",
         "CFG1": "P2", "CFG2": "P2", "CFG3": "P2", "CFG4": "P2",
@@ -1645,7 +1713,7 @@ def is_relative_to(path: Path, base: Path) -> bool:
         return False
 
 
-def _domain_of_legacy(path_rel: str) -> str:
+def _domain_of_fallback(path_rel: str) -> str:
     parts = [p.lower() for p in Path(path_rel).parts]
     base = parts[-1] if parts else ""
     if "alembic" in parts or "db" in parts or "models" in parts:
@@ -1671,7 +1739,7 @@ def domain_of_cfg(path_rel: str, eff: dict | None) -> str:
     parts = [p.lower() for p in Path(path_rel).parts]
     base = parts[-1] if parts else ""
     if not eff:
-        return _domain_of_legacy(path_rel)
+        return _domain_of_fallback(path_rel)
     logical_domains = eff.get("logical_domains", {})
     for domain_name, cfg in logical_domains.items():
         if not isinstance(cfg, dict):
@@ -1891,14 +1959,14 @@ def _apply_policy(eff: dict, data: dict | None) -> None:
     }
     set_exact_keys = {
         "backend_root_allow", "allow_root_md", "allow_docs_root",
-        "artifact_names", "known_writer_controllers", "dup_class_ignore",
+        "artifact_names", "dup_class_ignore",
         "expected_backend_packages", "frontend_root_allow",
     }
     scalar_keys = {
         "max_read_bytes", "flat_threshold", "large_subpackage_threshold",
         "god_fan_out", "god_fan_in", "max_cycles", "max_cycle_length",
         "frontend_flat_threshold", "frontend_large_folder_threshold",
-        "forbidden_controller_to_controller", "detect_module_cycles",
+        "detect_module_cycles",
         "detect_domain_cycles", "detect_dead_modules", "detect_metrics",
         "detect_duplicate_classes", "detect_dynamic_imports",
         "detect_policy_config", "detect_frontend", "detect_auto_discovery",
@@ -2007,16 +2075,6 @@ def _apply_layer(eff: dict, layer: dict | None) -> None:
             for k, v in layer["forbidden_edges"].items()
             if isinstance(v, list)
         }
-    if isinstance(layer.get("mis_housed_controllers"), list):
-        eff["mis_housed_controllers"] = {str(x) for x in layer["mis_housed_controllers"]}
-    if "forbidden_controller_to_controller" in layer:
-        val = layer["forbidden_controller_to_controller"]
-        if isinstance(val, str):
-            eff["forbidden_controller_to_controller"] = val.strip().lower() in {
-                "1", "true", "yes", "on",
-            }
-        else:
-            eff["forbidden_controller_to_controller"] = bool(val)
     if isinstance(layer.get("domains"), dict):
         normalized: dict[str, dict[str, list[str]]] = {}
         for domain, cfg in layer["domains"].items():
@@ -2054,7 +2112,7 @@ def _apply_scaffolding_contract(eff: dict, contract: dict | None) -> None:
         placement_rules = {}
 
     valid_domains: set[str] = set()
-    for layer_name in ("controllers", "services", "models", "providers"):
+    for layer_name in ("domains", "services", "models", "providers"):
         layer_rule = placement_rules.get(layer_name)
         if not isinstance(layer_rule, dict):
             continue
@@ -2076,13 +2134,13 @@ def _apply_scaffolding_contract(eff: dict, contract: dict | None) -> None:
         for domain in valid_domains:
             normalized_keywords.setdefault(domain, {domain})
 
-        legacy_aliases = {
+        domain_aliases = {
             "comms": "communication",
             "comm": "communication",
             "geography": "country",
             "geo": "country",
         }
-        for alias, canonical in legacy_aliases.items():
+        for alias, canonical in domain_aliases.items():
             if canonical in normalized_keywords:
                 normalized_keywords[canonical].add(alias)
 
@@ -2093,7 +2151,7 @@ def _apply_scaffolding_contract(eff: dict, contract: dict | None) -> None:
         for domain in sorted(valid_domains):
             eff.setdefault("domains", {}).setdefault(domain, {"may_import": []})
 
-    router_rule = placement_rules.get("routers")
+    router_rule = placement_rules.get("router_layout")
     if isinstance(router_rule, dict):
         pattern = str(router_rule.get("pattern", "") or "")
         eff["router_pattern"] = pattern
@@ -2149,8 +2207,6 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         "scripts_safe_tokens": set(DEFAULT_SCRIPTS_SAFE_TOKENS),
         # layers / dependencies
         "forbidden_edges": {k: list(v) for k, v in DEFAULT_FORBIDDEN_EDGES.items()},
-        "mis_housed_controllers": set(DEFAULT_MIS_HOUSED_CONTROLLERS),
-        "forbidden_controller_to_controller": True,
         "domains": {},
         "ownership_layers": set(DEFAULT_OWNERSHIP_LAYERS),
         "domain_layers": set(DEFAULT_DOMAIN_LAYERS),
@@ -2167,7 +2223,6 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         "backend_root_allow": set(DEFAULT_BACKEND_ROOT_ALLOW),
         "write_verbs": set(DEFAULT_WRITE_VERBS),
         "read_verbs": set(DEFAULT_READ_VERBS),
-        "known_writer_controllers": set(DEFAULT_KNOWN_WRITER_CONTROLLERS),
         "secret_file_patterns": list(DEFAULT_SECRET_FILE_PATTERNS),
         "env_secret_keys": DEFAULT_ENV_SECRET_KEYS,
         "local_path": DEFAULT_LOCAL_PATH,
@@ -2209,8 +2264,8 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         "from_yaml": False,
         "rule_sources": [],
         "known_layers": set(),
-        "router_layout": "flat",
-        "router_pattern": "backend/routers/{surface}_{domain}_{operation}.py",
+        "router_layout": "modules",
+        "router_pattern": "backend/modules/{surface}/routers/{domain}_{operation}_router.py",
         "forbidden_contract_folders": [],
         # configurable policy defaults
         "feature_stop_names": set(FEATURE_STOP_NAMES),
@@ -2219,11 +2274,12 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         "repo_root_min_py_files": 50,
         "local_path_scan_tops": ["backend", "frontend", "scripts"],
         "media_scan_layers": [
-            "controllers", "services", "routers", "providers", "models", "utils",
+            "modules", "domains", "rbac", "infrastructure", "kernel",
+            "providers", "jobs", "middleware",
         ],
         "scratch_scan_roots": ["frontend", "scripts", "."],
         "logical_domains": {
-            "database": {"parts": ["alembic", "db", "models"]},
+            "database": {"parts": ["alembic", "infrastructure.database"]},
             "security": {"parts": ["middleware", "dependencies"], "basename": ["security_config.ini"]},
             "frontend": {"first": "frontend"},
             "docs": {"first": "documents"},
@@ -2239,19 +2295,21 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
             {"path": "frontend/shared/src", "threshold_key": "frontend_flat_threshold"},
         ],
         "domain_layer_configs": [
-            {"layer": "services", "flat_code": "S1", "surface_code": "S4", "large_code": "S5"},
-            {"layer": "models", "flat_code": "M2", "surface_code": "M3", "large_code": "M4"},
+            {"layer": "services", "flat_code": "S1", "large_code": "S5"},
+            {"layer": "models", "flat_code": "M2", "large_code": "M4"},
+            {"layer": "policies", "flat_code": "S1", "large_code": "S5"},
+            {"layer": "schemas", "flat_code": "M2", "large_code": "M4"},
         ],
         "codeowners": {
             "default_owner": "@zozi/backend",
             "domain_owner_template": "@zozi/{domain}",
-            "domain_paths": ["backend/services/{domain}/", "backend/models/{domain}/"],
-            "surface_paths": ["backend/routers/{surface}/", "backend/controllers/{surface}/"],
+            "domain_paths": ["backend/domains/{domain}/services/", "backend/domains/{domain}/models/"],
+            "surface_paths": ["backend/modules/{surface}/routers/", "backend/modules/{surface}/auth/"],
         },
         "placement": {
             "enabled": True,
-            "layers": ["services", "models", "providers", "events", "jobs", "controllers"],
-            "router_layer": "routers",
+            "layers": ["services", "models", "policies", "schemas", "events", "subscribers", "features", "providers", "jobs"],
+            "router_layer": "modules",
             "min_confidence_root_move": 0.45,
             "min_confidence_wrong_folder": 0.65,
             "min_confidence_surface_to_domain": 0.60,
@@ -2354,7 +2412,7 @@ def build_module_graph(repo: Path, eff: dict) -> ModuleGraph:
 
     known_top = {str(x).lower() for x in eff["expected_backend_packages"]}
 
-    # ARCHITECTURE_DIAGRAM §10.1: routers/generated/auto_router.py is TOOLING,
+    # NEW_STRUCTURE §10.1: routers/generated/auto_router.py is TOOLING,
     # not a runtime layer. It discovers controller route declarations via AST only
     # and emits thin routers into routers/ — it must never originate a
     # dependency-graph edge, and generated routers stay plain `routers` members.
@@ -2855,7 +2913,7 @@ def _intended_for_any(f: Path) -> str:
     if "migrations" in f.parts and "alembic" not in f.parts:
         return "fold into an Alembic revision or delete (no second migrations home)"
     if f.name == "employee_models.py" and "models" not in f.parts:
-        return "move into backend/models/<domain>/ and add __table_args__ schema"
+        return "move into domains/<domain>/models/ and add __table_args__ schema"
     return "relocate per scope/repo_structure.yaml"
 
 
@@ -2957,7 +3015,7 @@ def check_backend_root_modules(repo: Path, rep: Report, eff: dict) -> None:
             )
         else:
             home = eff["canonical_home"].get(
-                c.name, "a layer package (routers/controllers/services/utils/db)",
+                c.name, "a layer package (modules/ domains/ rbac/ infrastructure/ kernel/ providers/ jobs/ middleware/)",
             )
             rep.add(
                 YEL, "P3", "backend", rp,
@@ -3079,8 +3137,10 @@ def check_subfolder_axis_and_shape(repo: Path, rep: Report, eff: dict) -> None:
         return sum(1 for f in iter_text_files(d, eff) if f.suffix.lower() == ".py")
 
     domain_layer_configs = eff.get("domain_layer_configs", [
-        {"layer": "services", "flat_code": "S1", "surface_code": "S4", "large_code": "S5"},
-        {"layer": "models", "flat_code": "M2", "surface_code": "M3", "large_code": "M4"},
+        {"layer": "services", "flat_code": "S1", "large_code": "S5"},
+        {"layer": "models", "flat_code": "M2", "large_code": "M4"},
+        {"layer": "schemas", "flat_code": "SC1", "large_code": "SC5"},
+        {"layer": "policies", "flat_code": "P1", "large_code": "P5"},
     ])
     for cfg in domain_layer_configs:
         if not isinstance(cfg, dict):
@@ -3167,26 +3227,12 @@ def check_subfolder_axis_and_shape(repo: Path, rep: Report, eff: dict) -> None:
                         f"overlapping service stems '{a[:6].rstrip('_')}*' ({len(grp)}) -> ambiguous ownership",
                         intended="merge or document each role in an ADR: " + ", ".join(grp[:6]),
                     )
-    # routers/ is intentionally flat.
-    # Only controllers/ should be domain-grouped.
-    controllers_dir = backend / "controllers"
+    # Abolished flat root layers (controllers/ routers/ services/ models/
+    # utils/ db/ core/) are reported by check_new_structure_compliance as
+    # NS1-NS4 (abolished / must be re-homed). They are NOT a valid grouping
+    # target here. Domain-internal layers (domains/{d}/services|models|...)
+    # are surface-agnostic by design and must not contain surface sub-folders.
 
-    if controllers_dir.exists():
-        direct = [p for p in controllers_dir.glob("*.py") if p.name != "__init__.py"]
-
-        if len(direct) > eff["flat_threshold"]:
-            rep.add(
-                YEL,
-                "S3",
-                "backend",
-                rel(controllers_dir, repo),
-                f"controllers/ FLAT ({len(direct)} files at layer root)",
-                intended=(
-                    "group controllers/ by domain "
-                    "(finance/orders/catalog/...) with surface-prefixed "
-                    "controller filenames"
-                ),
-            )
 
 
 def check_contract_forbidden_folders(repo: Path, rep: Report, eff: dict) -> None:
@@ -3213,7 +3259,7 @@ def check_rls_cluster(repo: Path, rep: Report, eff: dict) -> None:
 
     L1:    Multiple files *named* rls_* / country_rls          (YEL)
     SEC11: Multiple *independent* RLS policy definitions        (RED)
-           Per ARCHITECTURE_DIAGRAM §2.4 / §10.4:
+           Per NEW_STRUCTURE §2.4 / §10.4:
            exactly ONE canonical RLS enforcer.  A second/divergent
            implementation is a fail-open security violation.
     """
@@ -3239,9 +3285,10 @@ def check_rls_cluster(repo: Path, rep: Report, eff: dict) -> None:
         rep.add(
             YEL, "L1", "security", "middleware/ + dependencies/",
             f"{len(hits)} RLS-named modules -> two enforcers = fail-open risk",
-            intended="consolidate to ONE canonical RLS enforcer (e.g. backend/db/security.py) "
-                     "applied uniformly via a session hook or shared auth dependency; "
-                     "alias/delete the rest: " + ", ".join(hits),
+            intended="consolidate to ONE canonical RLS enforcer (e.g. "
+                     "backend/infrastructure/security.py) applied uniformly via a "
+                     "session hook or shared auth dependency; alias/delete the rest: "
+                     + ", ".join(hits),
         )
 
     # ── SEC11: content-based detection of independent RLS implementations ──
@@ -3276,7 +3323,7 @@ def check_rls_cluster(repo: Path, rep: Report, eff: dict) -> None:
             f"{len(rls_definers)} independent RLS policy definitions detected. "
             f"A path that omits RLS silently bypasses tenant/country isolation.",
             intended="consolidate to ONE canonical RLS enforcer "
-                     "(e.g. backend/db/security.py) applied uniformly via a "
+                     "(e.g. backend/infrastructure/security.py) applied uniformly via a "
                      "session/connection hook or a shared auth dependency; a single "
                      "RLS SQL policy file (data/*rls*.sql) is acceptable only if it is "
                      "THE one canonical source, never a second scattered module",
@@ -3294,7 +3341,7 @@ def check_rls_cluster(repo: Path, rep: Report, eff: dict) -> None:
 
 
 def check_scaling_readiness(repo: Path, rep: Report, eff: dict) -> None:
-    """SC1 / SC2 / SC3: Scaling-readiness checks per ARCHITECTURE_DIAGRAM §9.3.
+    """SC1 / SC2 / SC3: Scaling-readiness checks per NEW_STRUCTURE §9.3.
 
     SC1: DB pool_size must be ≤ 5 behind PgBouncer.
     SC2: Sync-only SQLAlchemy blocks the event loop (Phase B blocker).
@@ -3435,18 +3482,26 @@ def check_media_on_disk(repo: Path, rep: Report, eff: dict) -> None:
 # SECTION 10: CIRCUIT ENFORCEMENT CHECKS
 # ============================================================================
 """
-These checks enforce the ZOZI backend circuit:
-  ENTRY → MIDDLEWARE → ROUTERS → CONTROLLERS → SERVICES → PROVIDERS → MODELS → DB
+These checks enforce the ZOZI backend circuit per documents/NEW_STRUCTURE.md
+(three axes + seven laws). Arrows point DOWN only:
+
+  modules/*/routers (thin) → domains/*/services → infrastructure/database
+  jobs/* → domains/*/services → infrastructure
+  providers/* ← services/* + jobs/* only
+  rbac/* imported by modules/* + middleware/* only
+  infrastructure/* imports nothing above it; kernel/* imports nothing above it
+  _legacy/* re-export shims only
 
 Rules enforced:
   - Imports may only flow DOWNWARD (higher layer → lower layer)
-  - DB writes (session.add/commit/delete) only in services/
-  - Surface folders only in routers/ (not in services/models)
-  - Middleware may NOT import from services/controllers/models
-  - Providers may NOT import from services/controllers/routers
-  - Controllers may NOT do DB writes
-  - Routers may NOT contain business logic (only call controllers)
-  - Domain A may NOT import from Domain B (unless explicitly allowed)
+  - DB writes (session.add/commit/delete) only in domains/*/services/
+  - Module routers stay THIN: auth ctx + require_feature(...) + one service call
+  - Middleware may NOT import from domains/*/rbac/*/providers/*/modules/*
+  - Providers may NOT import from modules/*/domains/*/rbac/*
+  - Module routers may NOT contain business logic (only call a domain service)
+  - Domain A may NOT import from Domain B except via ports.py/events.py/subscribers.py
+  - Abolished flat layers (controllers/ routers/ services/ models/ db/ utils/ core/
+    dependencies/) are violations, not targets.
 """
 
 
@@ -3464,12 +3519,12 @@ def check_router_outside(repo: Path, rep: Report, eff: dict) -> None:
     allowed_top = {
         str(x).lower()
         for x in eff.get("known_layers", set())
-        if str(x).lower() not in exempt and str(x).lower() != "routers"
+        if str(x).lower() not in exempt and str(x).lower() not in ("routers", "modules")
     }
     if not allowed_top:
         allowed_top = {
-            "controllers", "services", "middleware", "dependencies",
-            "providers", "utils", "events", "jobs", "tasks", "api",
+            "modules", "domains", "rbac", "infrastructure", "kernel",
+            "providers", "jobs", "middleware", "events", "tasks", "api",
         }
     for f in iter_text_files(backend, eff):
         if f.suffix.lower() != ".py":
@@ -3492,8 +3547,8 @@ def check_router_outside(repo: Path, rep: Report, eff: dict) -> None:
                 if nm == "APIRouter":
                     rep.add(
                         RED, "R1", "backend", rel(f, repo),
-                        "APIRouter outside routers/ -> endpoint mis-registered/shadowed",
-                        intended="backend/routers/",
+                        "APIRouter outside modules/*/routers/ -> endpoint mis-registered/shadowed",
+                        intended="modules/{module}/routers/{domain}_router.py",
                         line=node.lineno,
                     )
                     break
@@ -3573,10 +3628,11 @@ def _classify_execute(node: ast.Call, source_lines: list[str] | None) -> str:
 
 def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
     """
-    W1: Flag DB WRITE operations in routers/controllers.
-    Q1: Flag DB READ operations in routers/controllers (advisory).
+    W1: Flag DB WRITE operations in module routers (modules/*/routers) and the
+        abolished routers/controllers layers.
+    Q1: Flag DB READ operations in module routers / abolished routers/controllers (advisory).
 
-    ARCHITECTURE_DIAGRAM §2 contract:
+    NEW_STRUCTURE.md laws:
       - W1 = db.add / db.add_all / db.commit / db.flush / db.delete / db.merge
       - Q1 = db.query / db.scalar / db.first / db.all / db.get / db.refresh
       - session.execute() is classified by SQL content:
@@ -3584,7 +3640,8 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
           SELECT/SHOW/WITH     → Q1 (read, advisory)
           unknown              → YEL advisory (not RED)
 
-    Only services/** may own DB transactions.
+    Only domains/*/services/ may own DB transactions. Module routers stay thin
+    (auth + require_feature + one service call).
     """
     backend = repo / "backend"
     if not backend.exists():
@@ -3673,8 +3730,8 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
                         RED, "W1", layer_name, rel_f,
                         f"{layer_name} must not call session.{method_name}() "
                         f"— DB writes belong in services/",
-                        intended="move this write into services/<domain>/; "
-                                 "routers/controllers are read-only orchestration",
+                        intended="move this write into domains/<domain>/services/; "
+                                 "module routers (modules/*/routers) stay thin — no DB writes",
                         line=line_no,
                     )
 
@@ -3688,8 +3745,8 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
                             f"{layer_name} must not call session.execute() "
                             f"with a WRITE statement (INSERT/UPDATE/DELETE) — "
                             f"DB writes belong in services/",
-                            intended="move this write into services/<domain>/; "
-                                     "routers/controllers must not mutate data",
+                            intended="move this write into domains/<domain>/services/; "
+                                     "module routers (modules/*/routers) must not mutate data",
                             line=line_no,
                         )
                     elif classification == "read":
@@ -3698,8 +3755,8 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
                             YEL, "Q1", layer_name, rel_f,
                             f"{layer_name} reads via session.execute(SELECT ...) — "
                             f"delegate reads to services/",
-                            intended="delegate DB reads to services/<domain>/; "
-                                     "routers/controllers should call service methods",
+                            intended="delegate DB reads to domains/<domain>/services/; "
+                                     "module routers stay thin: call one domain-service method",
                             line=line_no,
                         )
                     else:
@@ -3708,8 +3765,9 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
                             YEL, "Q1", layer_name, rel_f,
                             f"{layer_name} calls session.execute() with "
                             f"unclassifiable SQL — verify it is not a write",
-                            intended="if this is a write, move to services/; "
-                                     "if a read, delegate to a service method",
+                            intended="if this is a write, move it into "
+                                     "domains/<domain>/services/; if a read, "
+                                     "delegate to a domain-service method",
                             line=line_no,
                         )
 
@@ -3722,16 +3780,14 @@ def check_layer_writes(repo: Path, rep: Report, eff: dict) -> None:
                         YEL, "Q1", layer_name, rel_f,
                         f"{layer_name} reads via session.{method_name}() — "
                         f"delegate reads to services/",
-                        intended="delegate DB reads to services/<domain>/; "
-                                 "routers/controllers should call service methods",
+                        intended="delegate DB reads to domains/<domain>/services/; "
+                                 "module routers stay thin: call one domain-service method",
                         line=line_no,
                     )
 
 
 def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> None:
     edges = eff["forbidden_edges"]
-    mis = eff["mis_housed_controllers"]
-    forbid_cc = eff["forbidden_controller_to_controller"]
     for caller in sorted(graph.imports.keys()):
         caller_layer = layer_of_module(caller)
         if caller_layer in eff["graph_exempt_layers"]:
@@ -3743,23 +3799,29 @@ def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGrap
                 continue
             leaf = mod.rsplit(".", 1)[-1]
             if mod == "controllers" or mod.startswith("controllers."):
-                is_mis_housed = leaf in mis
-                if caller_layer in {"services", "models", "providers", "events", "jobs"}:
-                    is_mis_housed = True
+                # controllers/ is an ABOLISHED layer (NS1). Any import from it is
+                # abolished-layer code still reachable at runtime. Report it as a violation
+                # of the new structure, never as a normal live-layer import.
+                is_mis_housed = caller_layer in {
+                    "services", "models", "providers", "events", "jobs",
+                    "domains", "modules", "rbac", "kernel", "middleware",
+                }
                 if is_mis_housed:
                     key = ("W3", mod)
                     if key not in reported:
                         reported.add(key)
                         rep.add(
                             RED, "W3", "backend", caller_path,
-                            f"imports controller '{mod}' from {caller_layer} (controller logic belongs in services/utils)",
-                            intended="move the imported logic to services/<domain>/ or utils/",
+                            f"imports abolished controller '{mod}' from {caller_layer} "
+                            f"(controllers/ is abolished by NEW_STRUCTURE.md — see NS1). "
+                            f"Controller logic must live in domains/<domain>/services/",
+                            intended="delete the controllers/ import; re-home the logic "
+                                     "into domains/<domain>/services/ (or a kernel/ primitive)",
                             line=line,
                         )
                     continue
             if (
-                forbid_cc
-                and caller_layer == "controllers"
+                caller_layer == "controllers"
                 and mod.startswith("controllers.")
                 and mod != "controllers"
             ):
@@ -3768,8 +3830,9 @@ def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGrap
                     reported.add(key)
                     rep.add(
                         YEL, "W4", "backend", caller_path,
-                        f"controller imports another controller ('{mod}')",
-                        intended="extract shared logic into a service or util; controllers stay thin",
+                        f"abolished controllers/ layer imports another controller ('{mod}')",
+                        intended="controllers/ is abolished (NS1); delete this file or "
+                                 "re-home the shared logic into domains/<domain>/services/",
                         line=line,
                     )
                 continue
@@ -3781,7 +3844,8 @@ def check_dependency_graph(repo: Path, rep: Report, eff: dict, graph: ModuleGrap
                         rep.add(
                             RED, "DG", "backend", caller_path,
                             f"forbidden dependency edge: {caller_layer} -> {mod}",
-                            intended=f"layer contract: {caller_layer} may not depend on {pref}; route via services/",
+                            intended=f"layer contract: {caller_layer} may not depend on {pref}; "
+                                     f"route via domains/<domain>/services/ (downward arrow only, Law 1)",
                             line=line,
                         )
                     break
@@ -3808,119 +3872,6 @@ def _module_matches_prefix(mod: str, prefix: str) -> bool:
     """Return True if module equals prefix or is inside prefix package."""
     return mod == prefix or mod.startswith(prefix + ".")
 
-
-def check_circuit_contract(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> None:
-    """
-    Enforce the ZOZI backend circuit.
-
-    RED CIR1:
-        Import is outside the allowed circuit.
-
-    YEL CIR2:
-        Import is a migration bypass, for example:
-        router -> service
-        router -> model
-        controller -> model
-
-    Explicit forbidden edges in DEFAULT_FORBIDDEN_EDGES / layer_rules.yaml
-    are still reported by check_dependency_graph as DG.
-    """
-    allowed = CIRCUIT_ALLOWED_IMPORTS
-    bypass = CIRCUIT_BYPASS_IMPORTS
-    edges = eff.get("forbidden_edges", {})
-
-    exempt = set(eff.get("graph_exempt_layers", set())) | {
-        "tests",
-        "scripts",
-        "alembic",
-        "monitoring",
-        "docs",
-    }
-
-    # Data modules may be imported by application layers.
-    # But data itself must not import application layers.
-    target_always_ok = {"data"}
-
-    reported = 0
-
-    for caller in sorted(graph.imports.keys()):
-        caller_layer = layer_of_module(caller)
-
-        if not caller_layer:
-            continue
-
-        if caller_layer in exempt:
-            continue
-
-        if caller_layer not in allowed:
-            continue
-
-        caller_path = module_path_rel(caller, graph, repo)
-        seen: set[tuple[str, str]] = set()
-
-        for mod, line in graph.imports[caller]:
-            target_layer = layer_of_module(mod)
-
-            if not target_layer:
-                continue
-
-            if target_layer in exempt:
-                continue
-
-            if target_layer in target_always_ok:
-                continue
-
-            if target_layer == caller_layer:
-                continue
-
-            # If this is already an explicit forbidden edge, let
-            # check_dependency_graph() report DG to avoid duplicate findings.
-            if any(
-                _module_matches_prefix(mod, prefix)
-                for prefix in edges.get(caller_layer, [])
-            ):
-                continue
-
-            # Allowed by circuit contract.
-            if target_layer in allowed.get(caller_layer, set()):
-                continue
-
-            key = (caller_layer, target_layer)
-
-            if key in seen:
-                continue
-
-            seen.add(key)
-
-            if key in bypass:
-                rep.add(
-                    YEL,
-                    "CIR2",
-                    "backend",
-                    caller_path,
-                    f"circuit bypass: {caller_layer} -> {target_layer} ({mod})",
-                    intended=bypass[key],
-                    line=line,
-                )
-            else:
-                allowed_list = ", ".join(sorted(allowed.get(caller_layer, set()))) or "none"
-
-                rep.add(
-                    RED,
-                    "CIR1",
-                    "backend",
-                    caller_path,
-                    f"circuit violation: {caller_layer} -> {target_layer} ({mod}) "
-                    f"is outside the allowed circuit",
-                    intended=f"{caller_layer} may import only: {allowed_list}",
-                    line=line,
-                )
-
-            reported += 1
-
-            if reported >= 800:
-                return
-            
 
 def detect_cycles(edges: dict[str, set[str]], max_len: int, max_cycles: int) -> list[list[str]]:
     nodes = set(edges.keys())
@@ -3991,7 +3942,8 @@ def check_dependency_cycles(repo: Path, rep: Report, eff: dict, graph: ModuleGra
                 YEL, "DG2", "backend",
                 module_path_rel(first, graph, repo),
                 f"circular module dependency: {path}",
-                intended="break the cycle by extracting shared logic into a lower layer (utils/service interface)",
+                intended="break the cycle by extracting shared logic into a lower layer "
+                                     "(infrastructure/ or kernel/ primitive)",
             )
     if eff.get("detect_domain_cycles"):
         domain_edges: dict[str, set[str]] = defaultdict(set)
@@ -4163,346 +4115,6 @@ def check_sys_path_manipulation(repo: Path, rep: Report, eff: dict) -> None:
         if reported >= 100:
             return
 
-
-def check_controller_outside(repo: Path, rep: Report, eff: dict) -> None:
-    """
-    P2: detect controller-named files outside controllers/.
-
-    Examples:
-        backend/services/audit/audit_controller.py
-        backend/utils/cache_controller.py
-
-    If the file contains business logic, it should usually be renamed to *_service.py.
-    If it is truly a controller, it should move to controllers/<domain>/.
-    """
-    backend = repo / "backend"
-    if not backend.exists():
-        return
-
-    reported = 0
-
-    for f in iter_text_files(backend, eff):
-        if f.suffix.lower() != ".py":
-            continue
-
-        try:
-            parts = [p.lower() for p in f.relative_to(backend).parts]
-        except ValueError:
-            continue
-
-        if not parts:
-            continue
-
-        layer = parts[0]
-
-        if layer in {
-            "controllers",
-            "tests",
-            "scripts",
-            "alembic",
-            "data",
-            "monitoring",
-            "docs",
-        }:
-            continue
-
-        stem = f.stem.lower()
-
-        if not stem.endswith("_controller"):
-            continue
-
-        rep.add(
-            YEL,
-            "P2",
-            "backend",
-            rel(f, repo),
-            f"controller-named file '{f.name}' outside controllers/",
-            intended=(
-                "if it contains business logic, rename to *_service.py; "
-                "if it is truly a controller, move to controllers/<domain>/"
-            ),
-        )
-
-        reported += 1
-
-        if reported >= 100:
-            return
-
-
-def check_router_naming_convention(repo: Path, rep: Report, eff: dict) -> None:
-    """
-    Validate router placement against the configured router contract.
-
-    Supported layouts:
-      - flat: backend/routers/{surface}_{domain}_{operation}.py
-      - surface_dirs: backend/routers/{surface}/{domain_or_feature}.py
-    """
-    backend = repo / "backend"
-    routers = backend / "routers"
-
-    if not routers.exists():
-        return
-
-    surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
-    stop = set(PLACEMENT_STOP_TOKENS)
-    aliases = PLACEMENT_ALIAS_TO_DOMAIN
-    router_layout = str(eff.get("router_layout", "flat")).lower()
-    router_pattern = str(eff.get("router_pattern", "") or "")
-
-    def _tokens(stem: str) -> list[str]:
-        return [t.lower() for t in re.split(r"[^A-Za-z0-9]+", stem) if t]
-
-    def _surface(toks: list[str], hint: str | None = None) -> str | None:
-        if hint and hint in surfaces:
-            return hint
-
-        for t in toks:
-            if t in surfaces:
-                return t
-
-        return None
-
-    def _domain(toks: list[str]) -> str | None:
-        for t in toks:
-            d = aliases.get(t)
-            if d:
-                return d
-
-        return None
-
-    def _domain_or_feature(toks: list[str], surface: str | None = None) -> str | None:
-        for t in toks:
-            d = aliases.get(t)
-            if d:
-                return d
-        for t in toks:
-            if len(t) < 3:
-                continue
-            if t in stop:
-                continue
-            if surface and t == surface:
-                continue
-            return t
-        return None
-
-    def _has_operation(
-        toks: list[str],
-        surface: str | None,
-        domain: str | None,
-    ) -> bool:
-        """
-        Return True if the filename contains at least one meaningful
-        operation token beyond surface/domain.
-        """
-        for t in toks:
-            if len(t) < 3:
-                continue
-
-            if t in stop:
-                continue
-
-            if surface and t == surface:
-                continue
-
-            if domain and (t == domain or aliases.get(t) == domain):
-                continue
-
-            return True
-
-        return False
-
-    def _surface_dir_target(stem: str, surface: str | None, domain_or_feature: str | None) -> str:
-        if surface:
-            rest = stem.lower()
-            prefix = f"{surface}_"
-            if rest.startswith(prefix):
-                rest = rest[len(prefix):]
-            if not rest:
-                rest = domain_or_feature or stem.lower()
-            return f"backend/routers/{surface}/{rest}.py"
-        return "backend/routers/{surface}/{domain_or_feature}.py"
-
-    def _flat_target(
-        stem: str,
-        surface: str | None,
-        domain: str | None,
-    ) -> str:
-        new = stem.lower()
-
-        if surface and not new.startswith(f"{surface}_"):
-            new = f"{surface}_{new}"
-
-        if domain:
-            parts = new.split("_")
-            first = parts[0] if parts else ""
-
-            if domain not in parts and aliases.get(first) != domain:
-                if surface and new.startswith(f"{surface}_"):
-                    rest = new[len(surface) + 1:]
-                    new = f"{surface}_{domain}_{rest}"
-                else:
-                    new = f"{domain}_{new}"
-
-        return f"backend/routers/{new}.py"
-
-    if router_layout == "surface_dirs":
-        try:
-            subdirs = [
-                p for p in routers.iterdir()
-                if p.is_dir()
-                and p.name.lower() not in eff.get("ignore_dirs", set())
-                and p.name.lower() != "__pycache__"
-                and p.name.lower() not in _AUDIT_ROUTER_TOOLING_SUBDIRS
-            ]
-        except OSError:
-            subdirs = []
-
-        for sd in sorted(subdirs):
-            surface = sd.name.lower()
-            if surface not in surfaces:
-                rep.add(
-                    YEL,
-                    "RN3",
-                    "routers",
-                    rel(sd, repo),
-                    f"router sub-folder '{sd.name}/' is not a configured surface",
-                    intended=(
-                        "use the configured router pattern "
-                        f"`{router_pattern or 'backend/routers/{surface}/{domain_or_feature}.py'}`"
-                    ),
-                )
-                continue
-
-            for f in sorted(sd.rglob("*.py")):
-                if f.name == "__init__.py":
-                    continue
-                try:
-                    parts = f.relative_to(sd).parts
-                except ValueError:
-                    parts = ()
-                if len(parts) > 1:
-                    rep.add(
-                        YEL,
-                        "RN2",
-                        "routers",
-                        rel(f, repo),
-                        "router file is nested deeper than the surface folder contract",
-                        intended=f"move to backend/routers/{surface}/{f.name}",
-                    )
-                    continue
-
-                toks = _tokens(f.stem)
-                domain_or_feature = _domain_or_feature(toks, surface)
-                if not domain_or_feature:
-                    rep.add(
-                        YEL,
-                        "RN1",
-                        "routers",
-                        rel(f, repo),
-                        f"router filename '{f.name}' has no domain/feature token",
-                        intended=f"rename to backend/routers/{surface}/{{domain_or_feature}}.py",
-                    )
-
-        for f in sorted(routers.glob("*.py")):
-            if f.name == "__init__.py":
-                continue
-            toks = _tokens(f.stem)
-            surface = _surface(toks)
-            domain_or_feature = _domain_or_feature(toks, surface)
-            target = _surface_dir_target(f.stem, surface, domain_or_feature)
-            missing = []
-            if not surface:
-                missing.append("surface")
-            if not domain_or_feature:
-                missing.append("domain_or_feature")
-            detail = f"; missing {', '.join(missing)}" if missing else ""
-            rep.add(
-                YEL,
-                "RN1",
-                "routers",
-                rel(f, repo),
-                f"router file is at routers/ root, but contract requires a surface folder{detail}",
-                intended=f"move to {target}",
-            )
-        return
-
-    # ------------------------------------------------------------------
-    # RN3 + RN2: router sub-folders are not allowed.
-    # ------------------------------------------------------------------
-    try:
-        subdirs = [
-            p for p in routers.iterdir()
-            if p.is_dir()
-            and p.name.lower() not in eff.get("ignore_dirs", set())
-            and p.name.lower() != "__pycache__"
-            and p.name.lower() not in _AUDIT_ROUTER_TOOLING_SUBDIRS
-        ]
-    except OSError:
-        subdirs = []
-
-    for sd in sorted(subdirs):
-        rep.add(
-            YEL,
-            "RN3",
-            "routers",
-            rel(sd, repo),
-            f"router sub-folder '{sd.name}/' found; routers/ must be flat",
-            intended=(
-                "move router files to "
-                "backend/routers/{surface}_{domain}_{operation}.py"
-            ),
-        )
-
-        for f in sorted(sd.rglob("*.py")):
-            if f.name == "__init__.py":
-                continue
-
-            toks = _tokens(f.stem)
-            surface = _surface(toks, sd.name.lower())
-            domain = _domain(toks)
-            target = _flat_target(f.stem, surface, domain)
-
-            rep.add(
-                YEL,
-                "RN2",
-                "routers",
-                rel(f, repo),
-                f"router file inside sub-folder '{sd.name}/'",
-                intended=f"move to flat router: {target}",
-            )
-
-    # ------------------------------------------------------------------
-    # RN1: flat router filenames must be comprehensive.
-    # ------------------------------------------------------------------
-    for f in sorted(routers.glob("*.py")):
-        if f.name == "__init__.py":
-            continue
-
-        toks = _tokens(f.stem)
-        # Surface is optional for flat routers; unprefixed routers are treated
-        # as the `internal` surface (already a configured surface name).
-        surface = _surface(toks) or "internal"
-        domain = _domain(toks)
-
-        missing: list[str] = []
-
-        if not domain:
-            missing.append("domain")
-
-        if missing:
-            rep.add(
-                YEL,
-                "RN1",
-                "routers",
-                rel(f, repo),
-                f"flat router filename '{f.name}' is not comprehensive; "
-                f"missing {', '.join(missing)}",
-                intended=(
-                    "name as {surface}_{domain}.py (surface optional, defaults "
-                    "to 'internal'), e.g. admin_orders.py, supplier_orders.py, "
-                    "customer_cart.py, ai.py, finance.py"
-                ),
-            )
 
 # ============================================================================
 # SECTION 12: DYNAMIC IMPORTS, POLICY VALIDATION, FRONTEND, AUTO-POLICY
@@ -4779,6 +4391,59 @@ def check_frontend_structure(repo: Path, rep: Report, eff: dict) -> None:
                     break
             if reported_ws >= 50:
                 break
+
+    # FE11: frontend/shared/src/adminPermissions.ts must be deleted.
+    # NEW_STRUCTURE.md mandates shared/src/permissions.ts (generated from
+    # /rbac/catalog) as the single permission source for the shared package.
+    # adminPermissions.ts is the old hand-written map — its presence proves the
+    # frontend RBAC contract is not yet satisfied.
+    _adm_perm = frontend / "shared" / "src" / "adminPermissions.ts"
+    if _adm_perm.exists():
+        rep.add(
+            RED, "FE11", "frontend", rel(_adm_perm, repo),
+            "frontend/shared/src/adminPermissions.ts must be DELETED. "
+            "NEW_STRUCTURE.md mandates shared/src/permissions.ts (generated "
+            "from backend /rbac/catalog) as the single shared permission source. "
+            "adminPermissions.ts is the old hand-written map; keeping it "
+            "duplicates the source of truth and allows drift.",
+            intended="delete frontend/shared/src/adminPermissions.ts and rely "
+                     "solely on the generated frontend/shared/src/permissions.ts",
+            priority="P0",
+        )
+
+    # FE12: frontend/web_app/src/lib/rbac.ts must exist.
+    # NEW_STRUCTURE.md mandates this file as the sole consumer of /rbac/catalog
+    # in the web_app workspace, so UI gating and backend gating share one source.
+    _rbac_ts = frontend / "web_app" / "src" / "lib" / "rbac.ts"
+    if not _rbac_ts.exists():
+        rep.add(
+            RED, "FE12", "frontend", rel(_rbac_ts, repo),
+            "frontend/web_app/src/lib/rbac.ts is MISSING. NEW_STRUCTURE.md "
+            "mandates this file as the sole consumer of /rbac/catalog in the "
+            "web_app workspace; without it UI gating cannot share one source "
+            "with the backend.",
+            intended="create frontend/web_app/src/lib/rbac.ts that fetches "
+                     "/rbac/catalog once and exports helpers consumed by all "
+                     "admin/customer/employee/supplier/logistics route guards",
+            priority="P2",
+        )
+
+    # FE13: frontend/shared/src/permissions.ts must exist.
+    # NEW_STRUCTURE.md mandates this file as the generated, shared permission
+    # map consumed by all workspaces (web_app + mobile_app).
+    _perm_ts = frontend / "shared" / "src" / "permissions.ts"
+    if not _perm_ts.exists():
+        rep.add(
+            RED, "FE13", "frontend", rel(_perm_ts, repo),
+            "frontend/shared/src/permissions.ts is MISSING. NEW_STRUCTURE.md "
+            "mandates this file as the generated, shared permission map consumed "
+            "by all workspaces (web_app + mobile_app); it must be produced from "
+            "the backend /rbac/catalog response.",
+            intended="generate frontend/shared/src/permissions.ts from the "
+                     "backend /rbac/catalog endpoint so all workspaces import "
+                     "permissions from one source",
+            priority="P2",
+        )
 
 
 def collect_frontend_metrics(repo: Path, eff: dict) -> dict:
@@ -5254,10 +4919,7 @@ def check_enhanced_print_debug(repo: Path, rep: Report, eff: dict) -> None:
     backend = repo / "backend"
     if not backend.exists():
         return
-    app_layers = {
-        "routers", "controllers", "services", "middleware", "dependencies",
-        "providers", "utils", "events", "jobs",
-    }
+    app_layers = BACKEND_SCAN_LAYERS
     reported = 0
     for f in iter_text_files(backend, eff):
         if f.suffix.lower() != ".py":
@@ -5652,435 +5314,6 @@ def _pl_check_unknown_folders(repo: Path, rep: Report, eff: dict, known_domains:
                     ),
             )
 
-
-def check_move_suggestions(repo: Path, rep: Report, eff: dict, graph, reg,) -> list[dict]:
-    """
-    SINGLE authoritative move-suggestion engine.
-    Suggests:
-    - flat domain-layer file -> domain folder
-    - wrong domain folder -> correct domain folder
-    - router file -> surface/domain folder
-    - backend-root file -> proper package
-    - generic/unknown folder -> cleanup
-    - correctly placed files -> keep summary
-    """
-    backend = repo / "backend"
-    moves: list[dict] = []
-    if not backend.exists():
-        return moves
-
-    known_domains = _pl_known_domains(repo, eff, reg)
-
-    # ── CORRECTED: Filter out domain folders where ALL files are orphans ──
-    # In check_move_suggestions, REPLACE the active_domains block:
-    # ── Filter out orphan-only domain folders ──
-    backend_dir = repo / "backend"
-    for layer_name in PLACEMENT_DOMAIN_LAYERS:
-        layer_dir = backend_dir / layer_name
-        if not layer_dir.exists():
-            continue
-        try:
-            subdirs = [d for d in layer_dir.iterdir()
-                       if d.is_dir() and d.name.lower() not in eff.get("ignore_dirs", set())]
-        except OSError:
-            continue
-        for sd in subdirs:
-            domain_name = sd.name.lower()
-            prefix = f"{layer_name}.{domain_name}."
-            has_active = any(
-                graph.fan_in.get(mod, 0) > 0
-                for mod in graph.modules
-                if mod.startswith(prefix)
-            )
-            if not has_active:
-                known_domains.discard(domain_name)
-            # else:
-            #     # Domain folder exists but is all orphans — remove from
-            #     # known_domains so placement engine won't target it
-            #     known_domains.discard(domain_name)
-
-    correct_count = 0
-    rename_folders: set[tuple[str, str, str]] = set()
-    group_files: dict[tuple[str, str, str], list[str]] = defaultdict(list)
-    group_reasons: dict[tuple[str, str, str], list[str]] = {}
-    # Routers are flat.
-    # Router naming/movement is handled by RN1/RN2/RN3 and the router-flat
-    # move block below.
-    scan_layers = PLACEMENT_DOMAIN_LAYERS
-
-    for layer in scan_layers:
-        layer_dir = backend / layer
-        if not layer_dir.exists():
-            continue
-        try:
-            files = sorted(layer_dir.rglob("*.py"))
-        except OSError:
-            files = []
-        for f in files:
-            if f.name == "__init__.py":
-                continue
-            try:
-                rel_backend_parts = [p.lower() for p in f.relative_to(backend).parts]
-            except ValueError:
-                continue
-            if any(x in PLACEMENT_SKIP_PARTS for x in rel_backend_parts):
-                continue
-            try:
-                rel_layer_parts = f.relative_to(layer_dir).parts
-            except ValueError:
-                continue
-            current_folder = rel_layer_parts[0].lower() if len(rel_layer_parts) > 1 else None
-            text = read_text(f) or ""
-            signals = _pl_extract_signals(f, text, eff)
-            inferred_domain, confidence, reasons = _pl_infer_domain(signals, known_domains, eff)
-
-            if layer == "routers":
-                target_folder, inference_kind = _pl_infer_router_target(f, text, inferred_domain, confidence, eff)
-            else:
-                if not inferred_domain:
-                    continue
-                # ← FIX 2: Raise root-file threshold from 0.50 to 0.65
-                # Prevents low-confidence false positives like _registry.py (52%)
-                if current_folder is None and confidence < 0.65:
-                    continue
-                if current_folder is not None and confidence < 0.65:
-                    continue
-                target_folder = inferred_domain
-                inference_kind = "domain"
-
-            current_norm = _pl_normalize_domain(current_folder) if current_folder else None
-
-            # Folder-stability override: prevent false positives
-            if (
-                layer != "routers"
-                and current_folder
-                and current_norm
-                and current_norm in known_domains
-                and current_norm != target_folder
-            ):
-                filename_tokens = _pl_tokenize(f.stem, eff)
-                if current_norm in filename_tokens:
-                    target_folder = current_norm
-                    inference_kind = "folder-name-match"
-                elif (
-                    # ← FIX 1: Add "services" and "models" to folder-stable override
-                    # Prevents supplier_profile_service.py -> customer/ (profile is stable token)
-                    # Prevents automation_read_service.py -> ai/ (already in finance/)
-                    layer in {"controllers", "providers", "services", "models"}
-                    and filename_tokens & PLACEMENT_FOLDER_STABLE_TOKENS
-                ):
-                    target_folder = current_norm
-                    inference_kind = "folder-stable"
-
-            # Correct placement
-            if current_folder and current_norm == target_folder:
-                if current_folder != target_folder:
-                    rename_folders.add((layer, current_folder, target_folder))
-                correct_count += 1
-                continue
-
-            kind = "root_move" if current_folder is None else "wrong_folder"
-            source_path = rel(f, repo)
-            target_path = f"backend/{layer}/{target_folder}/{f.name}"
-
-            # ── FIX A5: Don't move multi-domain files into a single domain ──
-            # If the file has signals for 3+ domains, don't suggest a move
-            if current_folder is None and confidence < 0.75:
-                continue
-
-            moves.append({
-                "from": source_path, "to": target_path,
-                "reason": inference_kind, "kind": kind,
-                "domain": target_folder, "target_folder": target_folder,
-                "layer": layer, "confidence": confidence,
-            })
-
-            # ← FIX 3: For wrong_folder moves, include source folder in grouping key
-            # Prevents unrelated files from different folders being grouped together
-            # e.g. wishlist_read_service.py (catalog/) and customer_router_service.py (customer/)
-            if kind == "wrong_folder" and current_folder:
-                key = (layer, target_folder, kind, current_folder)
-            else:
-                key = (layer, target_folder, kind)
-            group_files[key].append(source_path)
-            if key not in group_reasons:
-                group_reasons[key] = reasons
-
-    # Backend-root file placement
-    try:
-        root_py_files = sorted([p for p in backend.glob("*.py") if p.is_file()])
-    except OSError:
-        root_py_files = []
-    for f in root_py_files:
-        if f.name in eff.get("backend_root_allow", set()):
-            continue
-        source_path = rel(f, repo)
-        canonical = eff.get("canonical_home", {}).get(f.name)
-        if canonical:
-            canonical_path = Path(canonical)
-            target_folder = canonical_path.parent.as_posix()
-            target_path = f"backend/{canonical}"
-            reasons = ["canonical_home"]
-        else:
-            text = read_text(f) or ""
-            signals = _pl_extract_signals(f, text, eff)
-            inferred_domain, confidence, reasons = _pl_infer_domain(signals, known_domains, eff)
-            if inferred_domain and confidence >= 0.50:
-                if inferred_domain in {"identity", "configuration"}:
-                    target_folder = "utils"
-                    target_path = f"backend/utils/{f.name}"
-                else:
-                    target_folder = f"services/{inferred_domain}"
-                    target_path = f"backend/services/{inferred_domain}/{f.name}"
-            else:
-                target_folder = "utils"
-                target_path = f"backend/utils/{f.name}"
-        moves.append({
-            "from": source_path, "to": target_path,
-            "reason": "backend-root", "kind": "backend_root",
-            "domain": target_folder, "target_folder": target_folder,
-            "layer": "backend", "confidence": 1.0 if canonical else 0.6,
-        })
-        key = ("backend", target_folder, "backend_root")
-        group_files[key].append(source_path)
-        if key not in group_reasons:
-            group_reasons[key] = reasons
-
-    # ------------------------------------------------------------------
-    # Router flat move suggestions.
-    # Routers must be flat: {surface}_{domain}_{operation}.py
-    # ------------------------------------------------------------------
-    routers_dir = backend / "routers"
-
-    if routers_dir.exists():
-        surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
-        aliases = PLACEMENT_ALIAS_TO_DOMAIN
-
-        def _r_tokens(stem: str) -> list[str]:
-            return [t.lower() for t in re.split(r"[^A-Za-z0-9]+", stem) if t]
-
-        def _r_surface(toks: list[str], hint: str | None = None) -> str | None:
-            if hint and hint in surfaces:
-                return hint
-            for t in toks:
-                if t in surfaces:
-                    return t
-            return None
-
-        def _r_domain(toks: list[str]) -> str | None:
-            for t in toks:
-                d = aliases.get(t)
-                if d:
-                    return d
-            return None
-
-        def _r_flat_target(
-            stem: str,
-            surface: str | None,
-            domain: str | None,
-        ) -> str:
-            new = stem.lower()
-            if surface and not new.startswith(f"{surface}_"):
-                new = f"{surface}_{new}"
-            if domain:
-                parts = new.split("_")
-                first = parts[0] if parts else ""
-                if domain not in parts and aliases.get(first) != domain:
-                    if surface and new.startswith(f"{surface}_"):
-                        rest = new[len(surface) + 1:]
-                        new = f"{surface}_{domain}_{rest}"
-                    else:
-                        new = f"{domain}_{new}"
-            return f"backend/routers/{new}.py"
-
-        try:
-            router_subdirs = [
-                p for p in routers_dir.iterdir()
-                if p.is_dir()
-                and p.name.lower() not in eff.get("ignore_dirs", set())
-                and p.name.lower() != "__pycache__"
-            ]
-        except OSError:
-            router_subdirs = []
-
-        for sd in sorted(router_subdirs):
-            for f in sorted(sd.rglob("*.py")):
-                if f.name == "__init__.py":
-                    continue
-                toks = _r_tokens(f.stem)
-                surface = _r_surface(toks, sd.name.lower())
-                domain = _r_domain(toks)
-                target_path = _r_flat_target(f.stem, surface, domain)
-                moves.append({
-                    "from": rel(f, repo),
-                    "to": target_path,
-                    "reason": "router-flat",
-                    "kind": "router_rename",
-                    "domain": domain or "routers",
-                    "target_folder": "",
-                    "layer": "routers",
-                    "confidence": 0.7,
-                })
-
-    # Emit grouped findings (SINGLE emission loop)
-    for key in sorted(group_files.keys()):
-        # ← FIX 3: Handle both 3-element and 4-element keys
-        if len(key) == 4:
-            layer, target_folder, kind, source_folder = key
-        else:
-            layer, target_folder, kind = key
-            source_folder = None
-
-        files_list = sorted(group_files[key])
-        reasons_list = group_reasons.get(key, [])
-        reason_text = ", ".join(reasons_list[:3]) if reasons_list else "name/content signals"
-
-        if kind == "root_move" and layer == "routers":
-            code = "MV3"
-            message = f"{len(files_list)} router file(s) should be grouped under backend/routers/{target_folder}/"
-            mkdir_path = f"backend/routers/{target_folder}"
-        elif kind == "root_move":
-            code = "MV1"
-            message = f"{len(files_list)} '{target_folder}' domain file(s) at backend/{layer}/ root should be moved to backend/{layer}/{target_folder}/"
-            mkdir_path = f"backend/{layer}/{target_folder}"
-        elif kind == "backend_root":
-            code = "MV2"
-            message = f"{len(files_list)} backend-root file(s) should be moved to backend/{target_folder}/"
-            mkdir_path = f"backend/{target_folder}"
-        else:
-            code = "DOM2"
-            # ← FIX 3: Include source folder in message for clarity
-            if source_folder:
-                message = f"{len(files_list)} file(s) in backend/{layer}/{source_folder}/ are in the wrong sub-folder; detected domain: '{target_folder}'"
-            else:
-                message = f"{len(files_list)} file(s) are in the wrong backend/{layer}/ sub-folder; detected domain: '{target_folder}'"
-            mkdir_path = f"backend/{layer}/{target_folder}"
-
-        intended = f"mkdir -p {mkdir_path}; move: " + ", ".join(files_list[:12])
-        if len(files_list) > 12:
-            intended += f" +{len(files_list) - 12} more"
-        intended += f" (detected from {reason_text})"
-        rep.add(
-            YEL, code, layer,
-            f"backend/{layer}/" if layer != "backend" else "backend/",
-            message, intended=intended,
-        )
-
-    # Emit folder rename suggestions
-    for layer, old_name, new_name in sorted(rename_folders):
-        rep.add(
-            YEL, "DOM7", layer,
-            f"backend/{layer}/{old_name}/",
-            f"non-canonical domain folder '{old_name}/' should be renamed to '{new_name}/'",
-            intended=f"git mv backend/{layer}/{old_name} backend/{layer}/{new_name}",
-        )
-        moves.append({
-            "from": f"backend/{layer}/{old_name}/",
-            "to": f"backend/{layer}/{new_name}/",
-            "reason": "rename-folder", "kind": "folder_rename",
-            "domain": new_name, "target_folder": new_name,
-            "layer": layer, "confidence": 1.0,
-        })
-
-    # Unknown/generic folder detection
-    _pl_check_unknown_folders(repo, rep, eff, known_domains)
-
-    # Positive placement summary
-    if correct_count > 0:
-        rep.add(
-            GRN, "DOM8", "backend", "backend/",
-            f"{correct_count} scanned file(s) are already in the correct domain folder",
-            intended="keep these placements; do not move them",
-        )
-
-    return moves
-
-# ============================================================================
-# SECTION 15: SCAFFOLDING CONTRACT + SURFACE×DOMAIN MATRIX + FRONTEND ROLES
-# ============================================================================
-
-def check_surface_domain_matrix(repo: Path, rep: Report, eff: dict, graph: ModuleGraph,) -> None:
-    """
-    Validate grouping axis:
-
-    - routers/      -> flat, validated by RN1/RN2/RN3
-    - controllers/  -> domain grouping required
-    - services/     -> domain grouping required
-    - models/       -> domain grouping required
-    - providers/    -> domain grouping required
-    - events/       -> domain grouping required
-    - jobs/         -> domain grouping required
-
-    Important:
-    If a folder name is BOTH a surface and a domain, domain wins inside
-    domain layers. This prevents false positives for:
-        services/supplier/
-        services/customer/
-        services/logistics/
-    """
-    backend = repo / "backend"
-
-    surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
-
-    domains: set[str] = set(PLACEMENT_DOMAIN_KEYWORDS.keys())
-    domains |= {str(x).lower() for x in eff.get("domains", {}).keys()}
-
-    if _ACTIVE_REG is not None:
-        domains |= {
-            str(x).lower()
-            for x in getattr(_ACTIVE_REG, "domains", set())
-        }
-
-    # Routers are intentionally flat.
-    # Router sub-folder validation is owned by RN1/RN2/RN3.
-    domain_layers = (
-        "controllers",
-        "services",
-        "models",
-        "providers",
-        "events",
-        "jobs",
-    )
-
-    for layer in domain_layers:
-        layer_dir = backend / layer
-
-        if not layer_dir.exists():
-            continue
-
-        try:
-            entries = list(layer_dir.iterdir())
-        except OSError:
-            continue
-
-        for entry in entries:
-            if not entry.is_dir():
-                continue
-
-            name = entry.name.lower()
-
-            if name in {"__pycache__"}:
-                continue
-
-            # Domain folders are allowed.
-            # Domain wins over surface.
-            if name in domains:
-                continue
-
-            # Surface-only folders are invalid inside domain layers.
-            if name in surfaces:
-                rep.add(
-                    RED,
-                    "DOM3",
-                    layer,
-                    rel(entry, repo),
-                    f"SURFACE folder '{name}/' inside DOMAIN layer {layer}/",
-                    intended=(
-                        f"remove {layer}/{name}/; move its files into the "
-                        f"correct domain folder or rename to a real domain "
-                        f"(finance/orders/catalog/supplier/...)"
-                    ),
-                )
 
 
 def check_frontend_role_pages(repo: Path, rep: Report, eff: dict) -> None:
@@ -6573,17 +5806,29 @@ def compute_debt_score(rep: Report, eff: dict) -> int:
 
 
 def collect_info(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> None:
+    backend = repo / "backend"
+
     def n(sub: str) -> int:
-        d = repo / "backend" / sub
+        d = backend / sub
         if not d.exists():
             return 0
         return sum(1 for x in d.rglob("*.py") if x.is_file())
 
+    new_layers = ["modules", "domains", "rbac", "infrastructure", "kernel",
+                  "providers", "jobs", "middleware"]
+    abolished = ["controllers", "routers", "services", "models", "db", "utils", "core", "dependencies"]
+    new_counts = {l: n(l) for l in new_layers}
+    abolished_counts = {l: n(l) for l in abolished}
+    new_summary = "  ".join(f"{l}={new_counts[l]}" for l in new_layers)
+    abolished_present = [l for l in abolished if abolished_counts[l] > 0]
+    abolished_summary = (
+        "  abolished flat layers still present: " +
+        "  ".join(f"{l}={abolished_counts[l]}" for l in abolished_present)
+        if abolished_present else "  no abolished flat root layers present"
+    )
     rep.add(
         GRN, "I1", "repo", rel(repo, repo),
-        f"backend models={n('models')} routers={n('routers')} "
-        f"controllers={n('controllers')} services={n('services')} "
-        f"middleware={n('middleware')}",
+        f"NEW_STRUCTURE layers -> {new_summary}; {abolished_summary}.",
     )
     src = rules_source_label(eff)
     rep.add(GRN, "I2", "repo", "documents/scope/", f"rules loaded from: {src}")
@@ -6692,97 +5937,116 @@ def collapse_noisy_findings(rep: Report) -> None:
 def generate_ai_placement_contract() -> str:
     """
     Generate a prescriptive placement contract for AI agents.
-    This tells AI where to put NEW files before it creates them.
+
+    This tells AI where to put NEW files BEFORE it creates them, and is the
+    primary anti-cheat guard: it encodes documents/NEW_STRUCTURE.md (three
+    orthogonal axes + seven laws). The abolished flat root layers
+    (controllers/, routers/, services/, models/, db/, utils/, core/,
+    dependencies/) are listed ONLY as forbidden/unlawful targets, never as
+    canonical homes. An AI that emits any of those flat layers is in violation.
     """
     lines = [
-        "## AI File Placement Contract",
+        "## AI File Placement Contract (ZOZI NEW_STRUCTURE.md)",
         "",
-        "> **Rule for AI:** Before creating or moving any backend file, use this contract.",
+        "> **Rule for AI:** Before creating or moving ANY backend file, use this contract.",
+        "> The three axes are: **Module = `modules/` (who)**, **Domain = `domains/` (what)**,",
+        "> **Feature = `rbac/` + `domains/*/features.py` (may)**. Platform = `infrastructure/`,",
+        "> shared kernel = `kernel/`, adapters = `providers/`, workers = `jobs/`,",
+        "> HTTP pipeline = `middleware/`.",
         "",
-        "### Layer rules",
+        "### Canonical layer rules (NEW STRUCTURE)",
         "",
-        "| Layer | Structure | Correct examples |",
+        "| Axis / Layer | Structure | Correct examples |",
         "|---|---|---|",
-        "| `backend/routers/` | **Flat file**: `{surface}_{domain}_{operation}.py` | "
-        "`admin_orders_management.py`, `supplier_orders_fulfillment.py`, "
-        "`customer_orders_tracking.py`, `public_catalog_product_browsing.py` |",
-        "| `backend/controllers/` | Domain folder + surface-prefixed controller file | "
-        "`controllers/orders/admin_order_management_controller.py`, "
-        "`controllers/catalog/supplier_product_management_controller.py` |",
-        "| `backend/services/` | Domain folder | "
-        "`services/orders/order_management_service.py`, "
-        "`services/finance/payment_processing_service.py` |",
-        "| `backend/models/` | Domain folder | "
-        "`models/orders/order_entities.py` |",
-        "| `backend/providers/` | Domain/adapter folder | "
+        "| `backend/modules/{module}/` (AXIS 1) | auth/ + routers/ per actor | "
+        "`modules/admin/auth/`, `modules/admin/routers/finance_ledger_router.py`, "
+        "`modules/customer/routers/checkout_router.py` |",
+        "| `backend/modules/{module}/routers/` | **thin**: auth ctx + `require_feature(...)` + one domain-service call | "
+        "`modules/admin/routers/finance_reports_router.py`, "
+        "`modules/supplier/routers/payouts_router.py` |",
+        "| `backend/domains/{domain}/` (AXIS 2) | services/ models/ schemas/ policies/ events.py subscribers.py features.py | "
+        "`domains/finance/services/ledger_service.py`, "
+        "`domains/finance/models/ledger.py` |",
+        "| `backend/domains/{domain}/services/` | orchestration + transactions (NO HTTP) | "
+        "`domains/orders/services/checkout_service.py` |",
+        "| `backend/domains/{domain}/models/` | ORM only; flat per domain; `__table_args__={'schema': '<domain>'}` | "
+        "`domains/catalog/models/products.py` |",
+        "| `backend/domains/{domain}/features.py` | AXIS 3 seed: permission atoms | "
+        "`domains/finance/features.py` (finance.ledger, finance.reporting, ...) |",
+        "| `backend/rbac/` (AXIS 3) | catalog.py roles.py resolution.py dependencies.py service.py | "
+        "`rbac/catalog.py`, `rbac/dependencies.py` |",
+        "| `backend/infrastructure/` | platform: database redis storage messaging observability security utils | "
+        "`infrastructure/database/database.py`, `infrastructure/utils/money.py` |",
+        "| `backend/kernel/` | business primitives: money numbering country period | "
+        "`kernel/money.py`, `kernel/numbering.py` |",
+        "| `backend/providers/` | 3rd-party/AI adapters; called ONLY by services/ and jobs/ | "
         "`providers/ai/image_analysis_provider.py` |",
-        "| `backend/events/` | Domain folder | "
-        "`events/orders/order_events.py` |",
-        "| `backend/jobs/` | Domain folder | "
-        "`jobs/finance/payout_batch_job.py` |",
+        "| `backend/jobs/` | background workers/consumers (off-request only) | "
+        "`jobs/finance/payout_sweep.py` |",
+        "| `backend/middleware/` | flat HTTP pipeline; orchestrator.py orders it | "
+        "`middleware/orchestrator.py`, `middleware/rate_limit.py` |",
+        "| `backend/_legacy/` | DEPRECATED strangler shims: **re-export ONLY** | "
+        "none — a shim is deleted when its slice is migration-ready |",
         "",
-        "### Admin CRUD handling",
+        "### The seven laws (any violation = report it)",
         "",
-        "Admin is a **surface**, not a domain.",
+        "1. Arrows point DOWN only: `modules → domains → infrastructure`; `jobs → domains → infrastructure`; "
+        "`providers ← services/jobs`; `middleware → infrastructure`; `domains → kernel → (nothing)`. "
+        "Domains NEVER import modules; `rbac` is imported by modules/middleware only (domains enforce policies, not permissions).",
+        "2. Module routers stay THIN: auth ctx + `require_feature(...)` + one domain-service call. No DB writes, no business rules. "
+        "Module routers NEVER import `providers/` directly (the domain service calls the provider).",
+        "3. Cross-domain WRITES only via `events.py`/`subscribers.py`. Cross-domain READS only via the publishing "
+        "domain's `ports.py` (or `read_models/`); direct `from domains.X.(services|models|repositories|schemas|policies)` "
+        "outside `domains/X` is a build failure. `DOMAIN_ALLOWLIST.yaml` tracks the temporary exceptions (must shrink).",
+        "4. Features are single-sourced in `domains/*/features.py`; aggregated by `rbac/catalog.py`. "
+        "Any `require_feature(\"...\")` literal not in the catalog is a build failure.",
+        "5. Country is the orthogonal scope axis (RLS + `country_staff_assignments`); independent of the feature check.",
+        "6. Schema discipline: every table lives in a Postgres schema (`__table_args__={'schema': '<domain>'}`); "
+        "Alembic is the only schema source; snake_case/plural naming lints apply.",
+        "7. Strangler rule: `_legacy/` shims re-export only; deleted when ready; `DOMAIN_ALLOWLIST.yaml` may only shrink.",
         "",
-        "Do not create:",
+        "### ABOLISHED flat root layers — FORBIDDEN (do NOT create; these are violations)",
+        "",
+        "The following root layers are abolished (per NEW_STRUCTURE.md). Creating or leaving a file under any of them "
+        "is a RED violation. Their surviving code must live ONLY under `backend/_legacy/` as "
+        "re-export shims, and even those must be deleted as slices migrate.",
         "",
         "```text",
-        "backend/services/admin/",
-        "backend/controllers/admin/",
-        "backend/routers/admin/",
+        "backend/controllers/      # ABOLISHED — split into modules/*/routers/ + domains/*/services/",
+        "backend/routers/          # ABOLISHED flat — re-home per actor under modules/*/routers/",
+        "backend/services/         # ABOLISHED flat — move into domains/*/services/",
+        "backend/models/           # ABOLISHED flat — move into domains/*/models/",
+        "backend/db/               # ABOLISHED — move into infrastructure/database/",
+        "backend/utils/            # ABOLISHED flat — split into infrastructure/utils/ + kernel/",
+        "backend/core/             # ABOLISHED — move into domains/*/services/ or infrastructure/",
+        "backend/dependencies/     # ABOLISHED — move into domains/*/ or infrastructure/",
         "```",
         "",
-        "Use this instead:",
+        "### Domain keyword routing (→ the NEW home is a domain folder)",
         "",
-        "```text",
-        "backend/routers/admin_orders_management.py",
-        "backend/controllers/orders/admin_order_management_controller.py",
-        "backend/services/orders/order_management_service.py",
-        "```",
-        "",
-        "### Forbidden folders",
-        "",
-        "```text",
-        "backend/routers/admin/",
-        "backend/routers/finance/",
-        "backend/routers/catalog/",
-        "backend/routers/orders/",
-        "backend/controllers/admin/",
-        "backend/services/admin/",
-        "backend/models/admin/",
-        "backend/providers/admin/",
-        "backend/events/admin/",
-        "backend/jobs/admin/",
-        "backend/services/write/",
-        "backend/services/common/",
-        "backend/services/legacy/",
-        "```",
-        "",
-        "### Domain keyword routing",
-        "",
-        "| Domain | Put files here | Keywords |",
+        "| Domain | Put business logic here (AXIS 2) | Keywords |",
         "|---|---|---|",
     ]
     for domain in sorted(PLACEMENT_DOMAIN_KEYWORDS.keys()):
         aliases = sorted(PLACEMENT_DOMAIN_KEYWORDS[domain])
         examples = ", ".join(aliases[:14])
         lines.append(
-            f"| `{domain}` | `backend/services/{domain}/`, "
-            f"`backend/models/{domain}/`, `backend/controllers/{domain}/` "
+            f"| `{domain}` | `backend/domains/{domain}/services/`, "
+            f"`backend/domains/{domain}/models/`, `backend/domains/{domain}/features.py` "
             f"| {examples} |"
         )
     lines.extend([
         "",
         "### If domain is unclear",
         "",
-        "If a file does not clearly belong to a domain:",
+        "If a file does not clearly belong to a domain, create the domain skeleton first:",
         "",
         "```text",
-        "backend/_triage/<file>.py",
+        "backend/domains/<new_domain>/services/  models/  schemas/  policies/  events.py  subscribers.py  features.py",
         "```",
         "",
-        "Then ask for a domain decision before merging.",
+        "Then add the surface where needed under `backend/modules/<module>/routers/`. "
+        "Never drop it into an abolished flat root layer.",
         "",
     ])
     return "\n".join(lines)
@@ -7053,10 +6317,7 @@ def check_dead_symbols(repo: Path, rep: Report, eff: dict,
     FIX A2: Honor __all__ re-exports — symbols re-exported via __all__
     in a package __init__.py are NOT dead.
     """
-    app_layers = {
-        "routers", "controllers", "services", "providers",
-        "middleware", "dependencies", "utils",
-    }
+    app_layers = BACKEND_SCAN_LAYERS
     exempt_names = {"init", "main", "setup", "configure"}
 
     # ── FIX A2: Build set of symbols re-exported via __all__ ──
@@ -7301,27 +6562,20 @@ def check_call_graph_violations(repo: Path, rep: Report, eff: dict,
     layer_order = {
         "main": 0, "lifespan": 0,
         "middleware": 1, "dependencies": 1,
-        "routers": 2,
-        "controllers": 3,
-        "services": 4,
+        # NEW_STRUCTURE.md canonical axes (arrows point DOWN only)
+        "rbac": 1,
+        "modules": 2,
+        "domains": 4,
+        "infrastructure": 8, "kernel": 8,
         "providers": 5,
-        "models": 6,
-        "db": 7,
-        "utils": 8, "data": 8,
         "events": 4, "jobs": 4,
+        "_legacy": 90,
     }
 
     # ── CG2 Exemption Configuration ──
     # These modules legitimately call models/db for cross-cutting concerns.
     # Configurable via YAML: circuit_exempt_modules
-    DEFAULT_CG2_EXEMPT_MODULES: set[str] = {
-        "utils.audit",
-        "utils.audit_log",
-        "utils.security_audit",
-        "utils.schema_audit",
-        "utils.logging_config",
-        "utils.event_logger",
-    }
+    DEFAULT_CG2_EXEMPT_MODULES: set[str] = set()
 
     # Module-name patterns that are exempt from CG2 upward-call checks.
     # Audit, logging, and security utilities inherently need db access.
@@ -7343,28 +6597,63 @@ def check_call_graph_violations(repo: Path, rep: Report, eff: dict,
     if yaml_exempt_patterns:
         CG2_EXEMPT_PATTERNS |= set(yaml_exempt_patterns)
 
-    # Forbidden cross-layer calls (caller_layer, callee_layer)
+    # Forbidden cross-layer calls — NEW_STRUCTURE.md seven-law circuit only
+    # (axes point DOWN: modules→domains→infrastructure, jobs→domains→
+    #  infrastructure, providers←services/jobs, middleware→infrastructure,
+    #  rbac/kernel/infrastructure are leaves). Abolished flat layers
+    # (controllers/routers/services/models/db/utils/core/dependencies) are
+    # reported by NS1-NS4/NS23-NS26, never treated as circuit nodes here.
     forbidden_calls: set[tuple[str, str]] = {
-        ("routers", "db"),
-        ("routers", "providers"),
-        ("routers", "models"),
-        ("controllers", "db"),
-        ("controllers", "middleware"),
-        ("controllers", "dependencies"),
-        ("services", "routers"),
-        ("services", "controllers"),
-        ("services", "middleware"),
-        ("providers", "services"),
-        ("providers", "controllers"),
-        ("providers", "routers"),
-        ("providers", "models"),
-        ("models", "services"),
-        ("models", "controllers"),
-        ("models", "routers"),
-        ("models", "providers"),
-        ("middleware", "services"),
-        ("middleware", "controllers"),
-        ("middleware", "routers"),
+        # ── NEW_STRUCTURE.md seven-law forbidden calls (axes point DOWN only) ──
+        ("domains", "modules"),
+        ("modules", "infrastructure"),
+        ("modules", "providers"),
+        ("modules", "kernel"),
+        ("modules", "jobs"),
+        ("rbac", "domains"),
+        ("rbac", "modules"),
+        ("rbac", "infrastructure"),
+        ("rbac", "providers"),
+        ("rbac", "kernel"),
+        ("rbac", "jobs"),
+        ("rbac", "middleware"),
+        ("infrastructure", "modules"),
+        ("infrastructure", "domains"),
+        ("infrastructure", "rbac"),
+        ("infrastructure", "providers"),
+        ("infrastructure", "kernel"),
+        ("infrastructure", "jobs"),
+        ("infrastructure", "middleware"),
+        ("kernel", "modules"),
+        ("kernel", "domains"),
+        ("kernel", "rbac"),
+        ("kernel", "infrastructure"),
+        ("kernel", "providers"),
+        ("kernel", "jobs"),
+        ("kernel", "middleware"),
+        ("providers", "modules"),
+        ("providers", "rbac"),
+        ("providers", "infrastructure"),
+        ("providers", "kernel"),
+        ("providers", "middleware"),
+        ("jobs", "modules"),
+        ("jobs", "rbac"),
+        ("jobs", "infrastructure"),
+        ("jobs", "kernel"),
+        ("jobs", "middleware"),
+        ("middleware", "modules"),
+        ("middleware", "domains"),
+        ("middleware", "providers"),
+        ("middleware", "kernel"),
+        ("middleware", "jobs"),
+        ("_legacy", "modules"),
+        ("_legacy", "domains"),
+        ("_legacy", "rbac"),
+        ("_legacy", "infrastructure"),
+        ("_legacy", "kernel"),
+        ("_legacy", "providers"),
+        ("_legacy", "jobs"),
+        ("_legacy", "middleware"),
     }
 
     # CG1/CG2: Check layer direction in calls
@@ -7394,8 +6683,10 @@ def check_call_graph_violations(repo: Path, rep: Report, eff: dict,
         if any(pattern in caller_module_lower for pattern in CG2_EXEMPT_PATTERNS):
             continue
 
-        # Upward call violation (calling a higher layer)
-        if callee_order < caller_order and callee_layer not in ("utils", "data"):
+        # Upward call violation (calling a higher layer). The NEW structure's leaves
+        # are infrastructure/ and kernel/ (order 8) — they are never a callee with a
+        # lower order, so this guard is a safety net for any other leaf-like layer.
+        if callee_order < caller_order and callee_layer not in ("infrastructure", "kernel"):
             rep.add(
                 RED, "CG2", "backend",
                 module_path_rel(edge.caller_module, graph, repo),
@@ -7436,155 +6727,11 @@ def check_call_graph_violations(repo: Path, rep: Report, eff: dict,
         rep.add(
             RED, "CG3", "backend", "call-graph",
             f"circular call chain: {path}",
-            intended="break the cycle; extract shared logic to utils/ or events/",
+            intended="break the cycle; extract shared logic to a lower layer "
+                     "(infrastructure/ or kernel/ primitive)",
+            line=None,
         )
 
-
-def check_layer_contracts(repo: Path, rep: Report, eff: dict, graph: ModuleGraph, call_graph: CallGraph) -> None:
-    """
-    LC1/LC2/LC3: Validate explicit layer contracts.
-    CORRECTED:
-    - Removed db.query from LC1 (reads are Q1 advisory, not LC1 violation)
-    - Removed session.execute (can be read or write; too broad)
-    - Added comment/docstring skipping
-    - Only flags WRITE operations in forbidden layers
-    """
-    contracts: dict[str, LayerContract] = {
-        "routers": LayerContract(
-            layer="routers",
-            may_import={"controllers", "dependencies", "utils", "data"},
-            may_not_import={"db", "models", "providers", "middleware"},
-            may_call={"controllers"},
-            may_not_call={"db", "models", "providers"},
-            # CORRECTED: only WRITE operations forbidden; reads are Q1 (YEL)
-            forbidden_operations={"session.add", "session.commit", "session.delete",
-                                  "session.merge", "session.flush"},
-            forbidden_patterns=[r"session\.(add|commit|delete|merge|flush)\("],
-        ),
-        "controllers": LayerContract(
-            layer="controllers",
-            may_import={"services", "utils", "data"},
-            may_not_import={"db", "models", "providers", "routers", "middleware"},
-            may_call={"services"},
-            may_not_call={"db", "models", "providers", "routers"},
-            forbidden_operations={"session.add", "session.commit", "session.delete",
-                                  "session.merge", "session.flush"},
-            forbidden_patterns=[r"session\.(add|commit|delete|merge|flush)\("],
-        ),
-        "services": LayerContract(
-            layer="services",
-            may_import={"models", "providers", "utils", "events", "jobs", "db", "data"},
-            may_not_import={"routers", "controllers", "middleware", "dependencies"},
-            may_call={"models", "providers", "db"},
-            may_not_call={"routers", "controllers"},
-            required_patterns=[],
-            forbidden_patterns=[],
-        ),
-        "providers": LayerContract(
-            layer="providers",
-            may_import={"utils", "data"},
-            may_not_import={"services", "controllers", "routers", "models",
-                            "middleware", "dependencies", "db"},
-            may_call={"utils"},
-            may_not_call={"services", "controllers", "routers", "models"},
-            forbidden_patterns=[],
-        ),
-        "models": LayerContract(
-            layer="models",
-            may_import={"db", "utils"},
-            may_not_import={"services", "controllers", "routers", "providers",
-                            "middleware", "dependencies"},
-            may_call=set(),
-            may_not_call={"services", "controllers", "routers", "providers"},
-            forbidden_patterns=[],
-        ),
-        "middleware": LayerContract(
-            layer="middleware",
-            may_import={"db", "utils", "dependencies", "data"},
-            may_not_import={"services", "controllers", "routers", "models",
-                            "providers"},
-            may_call={"utils"},
-            may_not_call={"services", "controllers", "routers"},
-            forbidden_patterns=[],
-        ),
-        "utils": LayerContract(
-            layer="utils",
-            may_import=set(),
-            may_not_import={"routers", "controllers", "services", "models",
-                            "providers", "middleware", "dependencies", "db"},
-            may_call=set(),
-            may_not_call={"routers", "controllers", "services", "models"},
-            forbidden_patterns=[],
-        ),
-    }
-    # Load contracts from YAML if available
-    if eff.get("layer_contracts"):
-        for layer_name, cfg in eff["layer_contracts"].items():
-            if layer_name in contracts and isinstance(cfg, dict):
-                c = contracts[layer_name]
-                if isinstance(cfg.get("forbidden_operations"), list):
-                    c.forbidden_operations = set(cfg["forbidden_operations"])
-                if isinstance(cfg.get("forbidden_patterns"), list):
-                    c.forbidden_patterns = cfg["forbidden_patterns"]
-
-    backend = repo / "backend"
-    reported = 0
-    for module, f in graph.modules.items():
-        layer = layer_of_module(module)
-        if layer not in contracts:
-            continue
-        contract = contracts[layer]
-        if not contract.forbidden_patterns:
-            continue
-        text = read_text(f)
-        if not text:
-            continue
-
-        # CORRECTED: Use AST to check only actual code, skip comments/docstrings
-        tree = parse_safe(f)
-        if tree is None:
-            continue
-
-        for pattern in contract.forbidden_patterns:
-            try:
-                rx = re.compile(pattern)
-            except re.error:
-                continue
-
-            # Search only non-comment, non-docstring lines
-            in_docstring = False
-            for i, line in enumerate(text.splitlines(), 1):
-                stripped = line.strip()
-
-                # Skip single-line comments
-                if stripped.startswith("#"):
-                    continue
-
-                # Track multi-line docstrings
-                if '"""' in stripped or "'''" in stripped:
-                    quote = '"""' if '"""' in stripped else "'''"
-                    count = stripped.count(quote)
-                    if count == 1:
-                        in_docstring = not in_docstring
-                    # count == 2 means open+close on same line (skip)
-                    continue
-                if in_docstring:
-                    continue
-
-                if rx.search(line):
-                    rep.add(
-                        RED, "LC1", layer,
-                        rel(f, repo),
-                        f"layer contract violation: write operation "
-                        f"'{pattern}' found in {layer}/",
-                        intended=f"{layer} must not perform DB writes; "
-                                 f"move write operations to services/",
-                        line=i,
-                    )
-                    reported += 1
-                    break  # One finding per file per pattern
-            if reported >= 200:
-                return
 
 # ============================================================================
 # SECTION 21: PUBLIC API DETECTION
@@ -7629,14 +6776,21 @@ def check_public_api_stability(repo: Path, rep: Report, eff: dict,
         if reported >= 100:
             return
 
-    # API1: Public symbols without documentation (potential instability)
+    # API1: Public symbols without documentation (potential instability).
+    # NEW_STRUCTURE.md: business surfaces live under domains/<domain>/ and
+    # module routers under modules/<actor>/; the abolished flat layers
+    # (services/controllers) are reported by NS1-NS4, never scanned here.
+    NEW_API1_LAYERS = {
+        "domains", "modules", "providers", "rbac", "kernel",
+        "infrastructure", "jobs", "middleware", "events",
+    }
     for name, symbols in sorted(index.symbols.items()):
         for sym in symbols:
             if (sym.is_public and sym.kind in ("function", "class")
                     and not sym.docstring
                     and not sym.name.startswith("test_")):
                 layer = layer_of_module(sym.module)
-                if layer in ("services", "controllers", "providers"):
+                if layer in NEW_API1_LAYERS:
                     rep.add(
                         GRN, "API1", layer,
                         sym.file_path,
@@ -7896,7 +7050,7 @@ def check_file_content_alignment(repo: Path, rep: Report, eff: dict,
     if not backend.exists():
         return
 
-    app_layers = {"services", "controllers", "routers", "providers"}
+    app_layers = BACKEND_SCAN_LAYERS
     reported = 0
 
     for module, f in graph.modules.items():
@@ -7973,7 +7127,7 @@ def check_split_file_candidates(repo: Path, rep: Report, eff: dict, graph: Modul
     backend = repo / "backend"
     if not backend.exists():
         return
-    app_layers = {"services", "controllers", "providers"}
+    app_layers = BACKEND_SCAN_LAYERS
     aliases = PLACEMENT_ALIAS_TO_DOMAIN
     reported = 0
 
@@ -8071,8 +7225,10 @@ def check_surface_operations(repo: Path, rep: Report, eff: dict,
                              graph: ModuleGraph) -> None:
     """
     CA3: Detect surface-inappropriate operations.
-    Checks function names in router/controller files against
-    surface-exclusive and surface-forbidden operation lists.
+
+    NEW_STRUCTURE.md: thin routers live under modules/<actor>/routers/ (Law 2).
+    The abolished flat layers (routers/ controllers/) are reported by NS1/NS2
+    and are never scanned here.
     """
     backend = repo / "backend"
     if not backend.exists():
@@ -8081,12 +7237,18 @@ def check_surface_operations(repo: Path, rep: Report, eff: dict,
     surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
     reported = 0
 
-    for layer_name in ("routers", "controllers"):
-        layer_dir = backend / layer_name
-        if not layer_dir.exists():
+    modules_dir = backend / "modules"
+    if not modules_dir.is_dir():
+        return
+
+    for actor in modules_dir.iterdir():
+        if not actor.is_dir():
+            continue
+        routers_dir = actor / "routers"
+        if not routers_dir.is_dir():
             continue
 
-        for f in iter_text_files(layer_dir, eff):
+        for f in iter_text_files(routers_dir, eff):
             if f.suffix.lower() != ".py":
                 continue
 
@@ -8096,7 +7258,7 @@ def check_surface_operations(repo: Path, rep: Report, eff: dict,
 
             # Determine surface
             try:
-                parts = [p.lower() for p in f.relative_to(layer_dir).parts]
+                parts = [p.lower() for p in f.relative_to(routers_dir).parts]
             except ValueError:
                 continue
 
@@ -8125,14 +7287,14 @@ def check_surface_operations(repo: Path, rep: Report, eff: dict,
                     violations = func_tokens & forbidden_ops
                     if violations:
                         rep.add(
-                            RED, "CA3", layer_name,
+                            RED, "CA3", "modules/routers",
                             rel(f, repo),
                             f"surface-inappropriate operation '{node.name}' "
-                            f"in {surface} {layer_name} "
+                            f"in {surface} module router "
                             f"(forbidden: {', '.join(sorted(violations))})",
                             intended=f"move '{node.name}' to the appropriate "
                                      f"surface (likely admin) or extract to "
-                                     f"a shared service",
+                                     f"a domains/<domain>/service",
                             line=node.lineno,
                         )
                         reported += 1
@@ -8264,16 +7426,16 @@ def check_middleware_pipeline(repo: Path, rep: Report, eff: dict) -> None:
                         module_name = alias.name
                         break
 
-                if module_name.startswith(("services.", "controllers.",
-                                           "routers.", "models.")):
+                if module_name.startswith(("routers.", "controllers.",
+                                           "services.", "models.", "db.", "utils.", "core.", "dependencies.")):
                     rep.add(
                         RED, "MW3", "backend",
                         rel(f, repo),
                         f"middleware imports from '{module_name}' "
                         f"(circuit violation)",
-                        intended="middleware must not import from "
-                                 "services/controllers/routers/models; "
-                                 "use dependency injection or events",
+                        intended="middleware must import only infrastructure/ "
+                                 "(+ kernel); never application layers "
+                                 "(modules/ domains/ rbac) — use dependency injection or events",
                         line=node.lineno,
                     )
 
@@ -8917,9 +8079,18 @@ def check_advanced_performance(repo: Path, rep: Report, eff: dict,
 
     reported = 0
 
+    # NEW_STRUCTURE.md: thin module routers live under modules/<actor>/routers/
+    # and DB-owning logic lives under domains/<domain>/services/. The abolished
+    # flat layers (routers/controllers/services) are reported by NS1-NS4 and
+    # are never scanned here.
+    NEW_PERF_SCAN_LAYERS = {
+        "modules", "domains", "providers", "jobs", "middleware",
+        "rbac", "kernel", "infrastructure", "events",
+    }
+
     for module, f in graph.modules.items():
         layer = layer_of_module(module)
-        if layer not in ("services", "controllers", "routers"):
+        if layer not in NEW_PERF_SCAN_LAYERS:
             continue
 
         text = read_text(f)
@@ -8932,8 +8103,9 @@ def check_advanced_performance(repo: Path, rep: Report, eff: dict,
 
         rel_path = rel(f, repo)
 
-        # PERF3: Missing pagination on list endpoints
-        if layer == "routers":
+        # PERF3: Missing pagination on list endpoints (module routers are thin;
+        # any list endpoint must be cursor/limit bounded).
+        if layer == "modules":
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     func_name = node.name.lower()
@@ -8958,8 +8130,8 @@ def check_advanced_performance(repo: Path, rep: Report, eff: dict,
                             )
                             reported += 1
 
-        # PERF4: Unbounded query (no limit)
-        if layer in ("services", "controllers"):
+        # PERF4: Unbounded query (no limit) — domain services own DB access.
+        if layer == "domains":
             lines = text.splitlines()
             for i, line in enumerate(lines, 1):
                 if ".query(" in line or ".all()" in line:
@@ -8977,8 +8149,8 @@ def check_advanced_performance(repo: Path, rep: Report, eff: dict,
                         )
                         reported += 1
 
-        # PERF5: Large transaction risk
-        if layer == "services":
+        # PERF5: Large transaction risk — domain services own transactions.
+        if layer == "domains":
             write_count = 0
             first_write_line = 0
             for i, line in enumerate(text.splitlines(), 1):
@@ -9000,8 +8172,8 @@ def check_advanced_performance(repo: Path, rep: Report, eff: dict,
                 )
                 reported += 1
 
-        if reported >= 200:
-            return        
+            if reported >= 200:
+                return
 
 
 # ============================================================================
@@ -9489,12 +8661,12 @@ def check_bounded_contexts(repo: Path, rep: Report, eff: dict,
 # ============================================================================
 
 # ============================================================================
-# SECTION 35B: TARGET ARCHITECTURE (from ARCHITECTURE_DIAGRAM.md) + NEW CHECKS
+# SECTION 35B: TARGET ARCHITECTURE (from NEW_STRUCTURE.md) + NEW CHECKS
 # ============================================================================
 
-def target_architecture_diagrams() -> str:
+def target_new_structure_diagrams() -> str:
     """
-    Build the target-architecture section from ARCHITECTURE_DIAGRAM.md.
+    Build the target-architecture section from NEW_STRUCTURE.md.
     Each mermaid block is assembled separately to avoid triple-quote /
     backtick collisions that break AI-generated output.
 
@@ -9506,7 +8678,7 @@ def target_architecture_diagrams() -> str:
     parts: list[str] = []
 
     # ── header ──────────────────────────────────────────────
-    parts.append("## 2. Target Architecture (should-be, from ARCHITECTURE_DIAGRAM.md)")
+    parts.append("## 2. Target Architecture (should-be, from NEW_STRUCTURE.md)")
     parts.append("")
 
     # ── 2.1 System Context ──────────────────────────────────
@@ -9516,23 +8688,25 @@ def target_architecture_diagrams() -> str:
         'flowchart LR\n'
         '    subgraph FE["FRONTEND — Next.js 15 (frontend/web_app)"]\n'
         '        FEA["App Router (src/app/*)"]\n'
-        '        FEL["API client (src/lib/api/*)"]\n'
+        '        FEL["API client (src/lib/api/*) — fetches /rbac/catalog"]\n'
         '        FES["Zustand stores (cart/currency/wishlist/...)"]\n'
         '    end\n'
         '    subgraph BE["BACKEND — FastAPI (backend/) — N stateless replicas"]\n'
-        '        BEM["Middleware pipeline"]\n'
-        '        BER["Routers (thin, response_model)"]\n'
-        '        BEC["Controllers (orchestration)"]\n'
-        '        BES["Services (business logic + DB access)"]\n'
-        '        BEP["Providers (AI/ML + 3rd-party adapters)"]\n'
-        '        BEJ["Jobs / Events (background)"]\n'
+        '        BEM["middleware/ pipeline (orchestrator.py)"]\n'
+        '        BEMOD["modules/*/routers/ (thin: auth + require_feature + 1 service call)"]\n'
+        '        BEDOM["domains/*/services/ (business logic + DB access)"]\n'
+        '        BEFEAT["rbac/ (catalog · roles · resolution · dependencies)"]\n'
+        '        BEK["kernel/ (money · numbering · country · period)"]\n'
+        '        BEP["providers/ (AI/ML + 3rd-party adapters)"]\n'
+        '        BEJ["jobs/ + events (background consumers)"]\n'
         '    end\n'
-        '    subgraph DB["DATA — PostgreSQL (domain schemas: customer/supplier/logistic/admin/employee/…; no core/platform/identity)"]\n'
+        '    subgraph INF["infrastructure/ (platform — zero business logic)"]\n'
+        '        BEDB["database/ (get_db · RLS enforcer)"]\n'
+        '        RED[(redis: auth cache · catalog cache · sessions · realtime)]\n'
+        '    end\n'
+        '    subgraph DB["DATA — PostgreSQL (domain schemas: finance/catalog/orders/…; one schema per domain)"]\n'
         '        DBE[("Pooled via PgBouncer")]\n'
-        '        DBM[("Models (domain schemas)")]\n'
-        '    end\n'
-        '    subgraph CACHE["Redis tier (shared, required)"]\n'
-        '        RED[(auth cache · catalog cache · sessions · realtime)]\n'
+        '        DBM[("Models — domains/*/models/ (schema per domain)")]\n'
         '    end\n'
         '    subgraph EXT["EXTERNAL"]\n'
         '        PG[(Payment gateway)]\n'
@@ -9541,17 +8715,20 @@ def target_architecture_diagrams() -> str:
         '        CDN[("CDN / static + images")]\n'
         '    end\n'
         '    CDN --> FE\n'
-        '    FEA --> FEL --> BEM --> BER\n'
+        '    FEA --> FEL --> BEM --> BEMOD\n'
         '    FES -. state .- FEA\n'
-        '    BER --> BEC --> BES\n'
-        '    BES --> BEP\n'
-        '    BES --> DBE\n'
-        '    BES --> RED\n'
+        '    BEMOD --> BEFEAT\n'
+        '    BEMOD --> BEDOM\n'
+        '    BEDOM --> BEK\n'
+        '    BEDOM --> BEP\n'
+        '    BEDOM --> BEDB\n'
+        '    BEDOM --> RED\n'
         '    BEP --> AI\n'
         '    BEJ --> DBE\n'
+        '    BEDB --> DBE\n'
         '    DBE --> DBM\n'
-        '    BES --> PG\n'
-        '    BES --> SMTP'
+        '    BEDOM --> PG\n'
+        '    BEDOM --> SMTP'
     )
     parts.append(FENCE)
     parts.append("")
@@ -9572,38 +8749,37 @@ def target_architecture_diagrams() -> str:
         '        L6["6 COMPLIANCE: PCI-DSS (prod only)"]\n'
         '        L1 --> L2 --> L3 --> L4 --> L5 --> L6\n'
         '    end\n'
-        '    subgraph RT["ROUTERS/* — thin; response_model; NO db writes"]\n'
+        '    subgraph MOD["modules/*/routers/ — thin; require_feature gate; NO db writes"]\n'
         '        H["GET /health · /health/deps · /health/ready"]\n'
-        '        R["Domain routers: customer_coupons, customer_wishlist, admin_promotions ..."]\n'
-        '        G["AUTO-GENERATED: public_commerce_coupons (emitted from controller decorators)"]\n'
+        '        R["Module routers: modules/admin/routers/finance_*, modules/customer/routers/checkout_*, ..."]\n'
+        '        G["AUTO-GENERATED public routers (emitted from domain route contracts)"]\n'
         '    end\n'
-        '    subgraph SEC["SECURITY / AUTH (controllers/auth_controller.py)"]\n'
+        '    subgraph SEC["SECURITY / AUTH (modules/{m}/auth/ + rbac/dependencies.py)"]\n'
         '        AUTH["get_current_user<br/>verify_token(JWT jti) → Redis cache → db lookup"]\n'
-        '        ADMIN["get_current_admin → _dict_get_current_user"]\n'
+        '        FEAT["require_feature(finance.ledger.post) → rbac/resolution.py"]\n'
         '    end\n'
-        '    subgraph SVC["CONTROLLERS → SERVICES"]\n'
-        '        C["controllers/* (orchestration only)"]\n'
-        '        S["services/** (owns DB access + transactions)"]\n'
+        '    subgraph SVC["domains/*/services/ → infrastructure"]\n'
+        '        S["domains/finance/services/* (owns DB access + transactions)"]\n'
+        '        K["kernel/ (money · numbering · country · period)"]\n'
         '    end\n'
-        '    subgraph DBL["DATABASE LAYER (db/database.py)"]\n'
+        '    subgraph DBL["infrastructure/database/ (single RLS enforcer)"]\n'
         '        POOL[("Engine + Pool (PgBouncer in front)")]\n'
         '        GETDB["get_db() dep — open → yield → rollback/close"]\n'
         '        KEYS["Keyset pagination (cursor), NEVER OFFSET on hot lists"]\n'
-        '        MODELS[("Models — domain schemas (e.g. schema=customer); each domain owns its user table: customer.user, supplier.user, …")]\n'
+        '        MODELS[("Domains models — one Postgres schema per domain; e.g. schema=finance; each domain owns its tables")]\n'
         '    end\n'
         '    Client --> L1\n'
         '    L6 --> H\n'
         '    L6 --> R\n'
         '    H --> DBL\n'
         '    R --> AUTH\n'
-        '    R --> ADMIN\n'
-        '    AUTH --> GETDB\n'
-        '    ADMIN --> GETDB\n'
-        '    R --> C\n'
+        '    R --> FEAT\n'
         '    G --> AUTH\n'
-        '    G --> ADMIN\n'
-        '    G --> C\n'
-        '    C --> S\n'
+        '    G --> FEAT\n'
+        '    AUTH --> GETDB\n'
+        '    FEAT --> S\n'
+        '    R --> S\n'
+        '    S --> K\n'
         '    S --> GETDB\n'
         '    GETDB --> POOL\n'
         '    POOL --> MODELS\n'
@@ -9617,19 +8793,19 @@ def target_architecture_diagrams() -> str:
     parts.append(FENCE + "mermaid")
     parts.append(
         'flowchart TD\n'
-        '    subgraph DBL["db/database.py — connection + sessions"]\n'
+        '    subgraph DBL["infrastructure/database/ — connection + sessions"]\n'
         '        URL["DATABASE_URL from settings"]\n'
         '        ENGINE["create_engine<br/>AsyncPG (Phase B target) or QueuePool (current sync)"]\n'
         '        POOL["PgBouncer (transaction mode) in front<br/>pool_pre_ping · pool_recycle"]\n'
-        '        SCHEMA["Domain-owned schemas<br/>customer.user · supplier.user · logistic.user · admin.user · employee.user<br/>(no core/platform/identity schemas)"]\n'
+        '        SCHEMA["Domain-owned schemas<br/>finance.* · catalog.* · orders.* · treasury.* · hr.* · logistics.* · media.* · security.* (one schema per domain; no core/platform/identity)"]\n'
         '        GETDB["get_db() — one session source; rollback/close on exit"]\n'
         '        KEYS["Keyset cursor pagination helper (no OFFSET on hot paths)"]\n'
         '        CHK["check_connection_health() → SELECT 1"]\n'
         '    end\n'
         '    subgraph OPS["schema + migration"]\n'
-        '        BASE["db/base.py → Base"]\n'
+        '        BASE["infrastructure/database/base.py → Base"]\n'
         '        MIG["alembic/ migrations (versioned, single source of truth)"]\n'
-        '        SEED["db/seed.py · treasury_seeder.py (idempotent)"]\n'
+        '        SEED["infrastructure/database/seed.py (idempotent)"]\n'
         '    end\n'
         '    subgraph TBL["Tables — domain schemas; no core/platform/identity"]\n'
         '        S1["customer.user · supplier.user · logistic.user · admin.user · employee.user"]\n'
@@ -9662,16 +8838,16 @@ def target_architecture_diagrams() -> str:
         '        CC["CountryContextMiddleware"]\n'
         '        PCI["PCIDSSMiddleware (prod only)"]\n'
         '    end\n'
-        '    subgraph AUTH["Auth deps (controllers/auth_controller.py)"]\n'
+        '    subgraph AUTH["Auth deps (rbac/dependencies.py · modules/{m}/auth)"]\n'
         '        SCHEME["OAuth2PasswordBearer tokenUrl=auth/login"]\n'
         '        GU["get_current_user — verify_token(JWT jti) → Redis → db"]\n'
         '        GOU["get_optional_user"]\n'
         '        GA["get_current_admin"]\n'
         '    end\n'
-        '    subgraph SECUTILS["Security utils"]\n'
-        '        TOK["utils/auth.py — verify_token · cache · get_redis_health_status"]\n'
+        '    subgraph SECUTILS["Security primitives"]\n'
+        '        TOK["infrastructure/security/auth.py — verify_token · cache · get_redis_health_status"]\n'
         '        RED[(Redis — token cache + blacklist)]\n'
-        '        ZT["zero_trust_auth.py"]\n'
+        '        ZT["infrastructure/security/zero_trust_auth.py"]\n'
         '    end\n'
         '    Client --> CORS --> IP --> SH --> IT --> CSRF --> RL --> CC --> PCI\n'
         '    PCI --> GU & GOU & GA\n'
@@ -9697,7 +8873,7 @@ def target_architecture_diagrams() -> str:
         '    end\n'
         '    subgraph PF["Domain sub-packages (swappable adapters)"]\n'
         '        PFPY["payments · logistics · media · hr · finance"]\n'
-        '        PFC["country · configuration · geography · catalog · analytics · ai · legacy"]\n'
+        '        PFC["country · configuration · geography · catalog · analytics · ai · comms"]\n'
         '    end\n'
         '    subgraph INF["Infra"]\n'
         '        AW["async_workers.py (off-request AI)"]\n'
@@ -9707,7 +8883,7 @@ def target_architecture_diagrams() -> str:
         '    BP --> PF --> AW\n'
         '    AW --> EXT[("External AI/ML + 3rd-party APIs")]\n'
         '    subgraph CALLERS["Allowed callers (contract)"]\n'
-        '        SVC["services/**"]\n'
+        '        SVC["domains/*/services/**"]\n'
         '        JOB["jobs/* (mcp_server, seed_all)"]\n'
         '    end\n'
         '    SVC --> PM & PF\n'
@@ -9806,9 +8982,9 @@ def target_architecture_diagrams() -> str:
 
 
 # Keep backward-compatible module-level constant so existing
-# render_markdown() code that references TARGET_ARCHITECTURE_DIAGRAMS
+# render_markdown() code that references TARGET_NEW_STRUCTURE_DIAGRAMS
 # continues to work without any other change.
-TARGET_ARCHITECTURE_DIAGRAMS = target_architecture_diagrams()
+TARGET_NEW_STRUCTURE_DIAGRAMS = target_new_structure_diagrams()
     
 # ============================================================================
 # SECTION 40: DATABASE AUDIT — CONSTANTS & DATA MODELS
@@ -10393,8 +9569,8 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
             parts = []
         if parts and parts[0] not in exempt_top:
             rep.add(RED, "DBA26", "models", m.rel_path,
-                    f"ORM model '{m.name}' table '{m.table}' is outside backend/models/",
-                    intended="move ORM models into backend/models/<domain>/", line=m.line)
+                    f"ORM model '{m.name}' table '{m.table}' is outside domains/*/models/",
+                    intended="move ORM models into domains/<domain>/models/", line=m.line)
 
     # DBA01: Forbidden schemas (core/platform/identity) must not be declared on any model.
     # Domain schemas (customer, supplier, …) are allowed — each owns its `user` table.
@@ -10448,7 +9624,7 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
                 lengths[c.type_args].append(f"{m.table}")
     if len(lengths) > 1:
         detail = "; ".join(f"{k}: {len(v)} tables" for k, v in sorted(lengths.items()))
-        rep.add(YEL, "DBA04", "database", "backend/models/",
+        rep.add(YEL, "DBA04", "database", "backend/domains/",
                 f"country_code width mismatch ({detail})",
                 intended="unify country_code width in one migration")
 
@@ -10520,7 +9696,7 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
 
     # ══════════════════════════════════════════════════════════════
     # DBA07 / DBA08 — FK hygiene only.
-    # DBA06 RETIRED: ARCHITECTURE_DIAGRAM §3 / §10.3 states
+    # DBA06 RETIRED: NEW_STRUCTURE §3 / §10.3 states
     # cross-domain FKs are CORRECT and allowed across domain schemas (e.g. order → customer.user.id)
     # PostgreSQL design.  The old parser bug (treating "table.column"
     # as schema.table) is fixed by dba_parse_fk_target().
@@ -10689,7 +9865,7 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
                 intended="every migration must have a real downgrade path")
     orm_only = sorted(model_tables - minfo.tables_created - {"alembic_version"})
     if orm_only:
-        rep.add(YEL, "DBA13", "migrations", "backend/models/",
+        rep.add(YEL, "DBA13", "migrations", "backend/domains/",
                 f"{len(orm_only)} model tables not in migrations: " + ", ".join(orm_only[:20]),
                 intended="verify migrations exist for all ORM tables")
 
@@ -10716,20 +9892,20 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
     # DBA17: Event tables
     missing_events = sorted(DBA_EXPECTED_EVENT_TABLES - all_tables)
     if missing_events:
-        rep.add(YEL, "DBA17", "database", "backend/models/",
+        rep.add(YEL, "DBA17", "database", "backend/domains/",
                 f"missing event/outbox tables: {', '.join(missing_events)}",
                 intended="implement transactional outbox")
 
     # DBA18: Audit tables
     if "audit_logs" not in all_tables:
-        rep.add(YEL, "DBA18", "database", "backend/models/",
+        rep.add(YEL, "DBA18", "database", "backend/domains/",
                 "audit_logs table not detected",
                 intended="use one append-only partitioned audit_logs table")
 
     # DBA19: Analytics
     has_snapshot = any(t.startswith("mv_") or t.startswith("kpi_") for t in all_tables)
     if not has_snapshot:
-        rep.add(YEL, "DBA19", "analytics", "backend/models/",
+        rep.add(YEL, "DBA19", "analytics", "backend/domains/",
                 "no analytics snapshot tables detected (mv_*/kpi_*)",
                 intended="dashboards should read snapshots, not live aggregates")
 
@@ -10789,14 +9965,14 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
     # DBA29: Canonical tables
     missing_canonical = sorted(DBA_REQUIRED_CANONICAL_TABLES - all_tables)
     if missing_canonical:
-        rep.add(YEL, "DBA29", "database", "backend/models/",
+        rep.add(YEL, "DBA29", "database", "backend/domains/",
                 f"missing canonical tables: {', '.join(missing_canonical)}",
                 intended="create required canonical tables")
 
     # DBA30: Snapshot tables
     missing_snap = sorted(DBA_REQUIRED_SNAPSHOT_TABLES - all_tables)
     if missing_snap:
-        rep.add(YEL, "DBA30", "analytics", "backend/models/",
+        rep.add(YEL, "DBA30", "analytics", "backend/domains/",
                 f"missing analytics snapshot tables: {', '.join(missing_snap[:10])}",
                 intended="dashboards must read snapshots per ADR-008")
 
@@ -10888,7 +10064,7 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
 
     # DBA35: Idempotency
     if "processed_webhook_events" not in all_tables:
-        rep.add(YEL, "DBA35", "database", "backend/models/",
+        rep.add(YEL, "DBA35", "database", "backend/domains/",
                 "processed_webhook_events table not detected",
                 intended="external/write actions must be idempotent")
 
@@ -10938,7 +10114,7 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
     # ── DBA21: AI staging ──
     missing_ai = sorted(DBA_EXPECTED_AI_TABLES - all_tables)
     if missing_ai:
-        rep.add(YEL, "DBA21", "ai", "backend/models/",
+        rep.add(YEL, "DBA21", "ai", "backend/domains/",
                 f"missing AI staging/audit tables: {', '.join(missing_ai)}",
                 intended="AI writes to staging/ai_* tables; commit explicitly with audit")
     if backend_dir.exists():
@@ -11901,7 +11077,7 @@ def _hl_lines_example(lines: list[int], limit: int = 6) -> str:
     return example
 
 def _hl_is_request_path_layer(app_layer: str) -> bool:
-    return app_layer in {"routers", "controllers", "services", "middleware", "dependencies", "providers"}
+    return app_layer in BACKEND_SCAN_LAYERS
 
 def _hl_is_conn_init(call_name: str) -> bool:
     return any(pat in call_name for pat in HL_CONN_INIT_PATTERNS)
@@ -12042,8 +11218,7 @@ def hl_analyze_python(f: Path, text: str, tree: ast.Module | None, repo: Path) -
         return a
 
     # ── Top-level imports ──
-    web_layers = {"routers", "controllers", "services", "main",
-                  "dependencies", "middleware", "providers"}
+    web_layers = BACKEND_SCAN_LAYERS
     for node in tree.body:
         module_names = []
         if isinstance(node, ast.Import):
@@ -12321,13 +11496,12 @@ def hl_run_all_checks(repo: Path, rep: Report, base_url: str | None = None) -> d
 
             # OB101: Collect missing logger
             if (not a["has_logger"]
-                    and a["app_layer"] in {"services", "controllers", "routers",
-                                            "middleware", "providers"}):
+                    and a["app_layer"] in BACKEND_SCAN_LAYERS):
                 ob101_by_layer[a["app_layer"]].append(rp)
 
             # OB102: Collect missing request_id
             if (not a["has_request_id"]
-                    and a["app_layer"] in {"middleware", "routers", "controllers"}):
+                    and a["app_layer"] in BACKEND_SCAN_LAYERS):
                 ob102_by_layer[a["app_layer"]].append(rp)
 
             # HL301: Bare except
@@ -13507,7 +12681,7 @@ def check_async_workers_off_request(repo: Path, rep: Report, eff: dict) -> None:
 
 def check_domain_actor_isolation(repo: Path, rep: Report, models: list, eff: dict) -> None:
     """
-    ARCHITECTURE_DIAGRAM §10.3: domain schemas, each owning its `user` table
+    NEW_STRUCTURE §10.3: domain schemas, each owning its `user` table
     (customer.user, supplier.user, logistic.user, admin.user, employee.user, …).
     The forbidden schemas are core/platform/identity — they must never appear in a
     table or FK reference.
@@ -13561,27 +12735,39 @@ def render_markdown(repo, rep, out, summary, placements, eff, reg, graph) -> Non
         "---", "",
     ]
 
-    # ── §1 Target layer contract ──
+    # ── §1 Target layer contract (NEW_STRUCTURE.md: three axes + seven laws) ──
     L += [
-        "## 1. The Grid Line (Target Layer Contract)", "",
-        "| Layer | May import | Must NOT |",
-        "|---|---|---|",
-        "| main.py | middleware, dependencies, routers, db, utils, lifespan, data | controllers, services, models directly |",
-        "| routers/* | controllers, schemas, auth deps, get_db | raw db.query(...), any db.add/commit (W1), business logic |",
-        "| controllers/* | services, models, get_db, auth deps | db.add/commit (W1), ORM internals |",
-        "| services/** | models, get_db, utils, providers, redis | routers, main |",
-        "| providers/* | providers._base, utils, settings | routers, main |",
-        "| db/database.py | db.base.Base, settings | app layers |",
-        "| middleware/* | utils, settings, db (read-only) | routers, controllers |",
-        "| frontend/src/lib/api/* | backend /api/v1/* only | direct DB; raw fetch from pages |",
+        "## 1. The Grid Line (Target Layer Contract — NEW_STRUCTURE.md)", "",
+        "Three orthogonal axes: (1) **Module** `modules/{actor}/`, "
+        "(2) **Domain** `domains/{domain}/`, (3) **Feature** `rbac/` via `require_feature()`.",
         "",
-        "Cross-domain FKs are **allowed** across domain schemas (e.g. order.employee_id → employee.user.id). Keyset cursors on hot lists (never OFFSET).  ",
-        "One canonical RLS enforcer. create_all() dev-only.",
+        "| Layer (axis) | May import | Must NOT (law) |",
+        "|---|---|---|",
+        "| modules/* (AXIS 1) | domains/*/services, rbac (require_feature), infrastructure(read-only) | other modules (compose, don't reach in); abolished root layers (controllers/ routers/ services/ models/ db/ utils/) |",
+        "| domains/* (AXIS 2) | infrastructure (read-only), kernel, rbac, events, subscribers, ports | modules/* (law 1: arrows point DOWN); other domains except via ports/events (law 3) |",
+        "| rbac/* (AXIS 3) | kernel, infrastructure | modules/*, domains/* business logic (imported BY modules+middleware only) |",
+        "| infrastructure/* | kernel, providers, db(read-only), utils | modules/*, domains/* (law 1: imports nothing above it) |",
+        "| kernel/* | (nothing above) | any app layer |",
+        "| providers/* | providers._base, infrastructure, kernel | modules/*, domains/* |",
+        "| jobs/* | domains/*, infrastructure, providers | routers, main |",
+        "| middleware/* | infrastructure(read-only), kernel, utils, settings | modules/*, domains/*, rbac, routers (law: middleware → infrastructure only) |",
+        "| _legacy/* | re-export shims ONLY | carry real def/class logic (strangler rule) |",
+        "| frontend/src/lib/api/* | backend /api/v1/* only | direct DB; raw fetch from pages; abolished root layers |",
+        "",
+        "**Seven Laws:** (1) modules→domains→infrastructure, arrows down only; "
+        "(2) routers delegate to module services/use-cases; "
+        "(3) cross-domain only via `ports.py`/`events.py`/`subscribers.py`; "
+        "(4) `require_feature()` is the single source of truth for capabilities; "
+        "(5) middleware/providers/infrastructure never import upward; "
+        "(6) domain models declare `__table_args__ = {'schema': '<domain>'}`; "
+        "(7) `_legacy` shims re-export only, never logic.",
+        "Abolished flat root layers (controllers/, routers/, services/, models/, db/, utils/, core/, dependencies/) "
+        "are **violations**, not targets.",
         "", "---", "",
     ]
 
-    # ── §2 Target diagrams from ARCHITECTURE_DIAGRAM.md ──
-    L += [TARGET_ARCHITECTURE_DIAGRAMS, "", "---", ""]
+    # ── §2 Target diagrams from NEW_STRUCTURE.md ──
+    L += [TARGET_NEW_STRUCTURE_DIAGRAMS, "", "---", ""]
 
     # ── §3 AI placement contract ──
     L += ["## 3. AI File Placement Contract", "",
@@ -13724,7 +12910,7 @@ def render_markdown(repo, rep, out, summary, placements, eff, reg, graph) -> Non
                generate_fix_patterns_section(), ""]
 
     L += ["---", "",
-           "> **Single source of truth:** this report validates the codebase against ARCHITECTURE_DIAGRAM.md (target).",
+           "> **Single source of truth:** this report validates the codebase against NEW_STRUCTURE.md (target).",
            "> Fix RED first, then YELLOW. Work file-by-file using §8.", ""]
 
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -13753,13 +12939,53 @@ NEW_ABOLISHED_ROOT_LAYERS = {
     "routers":     "NS2",   # routers must be modules/{actor}/routers/, not flat at root
     "services":    "NS3",   # services must be domains/{domain}/services/, not flat at root
     "models":      "NS4",   # models must be domains/{domain}/models/, not flat at root
+    "db":          "NS23",  # db must be infrastructure/database/
+    "utils":       "NS24",  # utils must be infrastructure/utils/ + kernel/
+    "core":        "NS25",  # core must be domains/*/services/ or infrastructure/
+    "dependencies": "NS26", # dependencies must be domains/*/ or infrastructure/
 }
+
+# Non-canonical backend root dirs. NEW_STRUCTURE.md §1 defines a CLOSED set for
+# backend/ root (main.py, config.py, DOMAIN_ALLOWLIST.yaml, modules/, domains/,
+# rbac/, infrastructure/, providers/, jobs/, middleware/, alembic/, scripts/,
+# tests/, _legacy/). Anything else at backend root is a stray package that the
+# audit must flag — these are NOT abolition targets (they have no prescribed
+# home), they are "this package has no home in the target architecture".
+NEW_NON_CANONICAL_ROOT_LAYERS = {
+    "tasks":       "NS27",  # tasks/ is not a target root layer; background work lives in jobs/
+    "events":      "NS28",  # events/ is not a target root layer; events live per domain (events.py)
+    "uploads":     "NS29",  # uploads/ is not a target root layer; media lives in infrastructure/storage/
+    "var":         "NS30",  # var/ is not a target root layer; runtime state is not a backend package
+    "venv":        "NS31",  # venv/ is not a target root layer; it is tooling, not app structure
+    "tools":       "NS32",  # tools/ is not a target root layer; one-off migration helpers, not app structure
+}
+
+# Prescribed NEW-structure backend layers (documents/NEW_STRUCTURE.md).
+NEW_CANONICAL_BACKEND_LAYERS = {
+    "modules", "domains", "rbac", "infrastructure", "kernel",
+    "providers", "jobs", "middleware",
+}
+# Abolished flat root layers — included in scan sets ONLY so the transitional
+# codebase is still scanned and reported (NS1-NS4). They are violation targets,
+# never canonical homes.
+ABOLISHED_BACKEND_LAYERS = {
+    "controllers", "routers", "services", "models",
+    "db", "utils", "core", "dependencies",
+}
+# Union used by quality/health scans that iterate backend top-level layers.
+BACKEND_SCAN_LAYERS = NEW_CANONICAL_BACKEND_LAYERS | ABOLISHED_BACKEND_LAYERS
 
 NEW_MODULE_ACTORS = {"customer", "supplier", "logistics", "admin", "employee"}
 NEW_DOMAIN_FOLDERS = {
     "finance", "accounts", "catalog", "orders", "payments", "logistics",
     "suppliers", "customers", "hr", "comms", "media", "country", "governance",
-    "treasury", "identity", "commerce",
+}
+
+# Sub-package names that represent a domain's *internal* business logic. Importing
+# another domain's internals directly (instead of via ports.py / events.py) is the
+# cross-domain violation caught by NS8 (law 3).
+_NS_CROSS_DOMAIN_BLOCKED = {
+    "services", "models", "repositories", "schemas", "policies",
 }
 
 # Layers an infrastructure package must NEVER import (law 1).
@@ -13768,10 +12994,63 @@ _NEW_INFRA_FORBIDDEN_IMPORTS = {
     "models", "controllers", "routers", "events",
 }
 
+# kernel/ is a pure shared kernel: domains -> kernel -> (nothing). It may import
+# infrastructure (platform primitives) but nothing above it.
+_NS_KERNEL_FORBIDDEN_IMPORTS = {
+    "modules", "domains", "rbac", "providers", "jobs", "middleware",
+    "controllers", "services", "models", "db", "utils", "core", "dependencies",
+}
+
 
 def _ns_backend_root(repo: Path) -> Path:
     cand = repo / "backend"
     return cand if cand.is_dir() else repo
+
+
+def _ns_norm_allow_pair(item: str) -> tuple[str, str]:
+    """Normalise a DOMAIN_ALLOWLIST entry to a (src, dst) domain pair."""
+    item = item.strip().strip("'\"")
+    for sep in (">>", "->", "=>", ">", ":", " "):
+        if sep in item:
+            a, b = item.split(sep, 1)
+            return (a.strip(), b.strip())
+    return (item.strip(), item.strip())
+
+
+def _ns_load_domain_allowlist(backend: Path) -> set[tuple[str, str]]:
+    """Parse backend/DOMAIN_ALLOWLIST.yaml -> set of (src, dst) domain pairs that
+    are permitted as temporary cross-domain import debt (strangler rule, law 7).
+
+    Dependency-free: handles both flow style (`[a>b, c>d]`) and block style
+    (`- a>b`). The file is optional; an empty/absent file yields an empty set,
+    meaning every cross-domain service/model/repo/schema/policy import is flagged.
+    """
+    allow: set[tuple[str, str]] = set()
+    p = backend / "DOMAIN_ALLOWLIST.yaml"
+    if not p.is_file():
+        return allow
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return allow
+    m = re.search(r"cross_domain_imports:\s*(.*?)(?:\n\S|\Z)", text, re.S)
+    if not m:
+        return allow
+    body = m.group(1)
+    fm = re.match(r"\s*\[(.*)\]\s*$", body.strip())
+    if fm:
+        entries = [e for e in re.split(r",", fm.group(1)) if e.strip()]
+    else:
+        entries = []
+        for line in body.splitlines():
+            s = line.strip()
+            if s.startswith("-"):
+                entries.append(s[1:])
+    for e in entries:
+        e = e.strip().strip("'\"")
+        if e:
+            allow.add(_ns_norm_allow_pair(e))
+    return allow
 
 
 def _ns_iter_py(backend: Path, *subdirs: str):
@@ -13790,6 +13069,320 @@ def _ns_iter_py(backend: Path, *subdirs: str):
             yield p, tree
 
 
+# --- consumer-side import-debt + sys.path cheat helpers (NS12/NS13/NS14) ---
+_NEW_AXIS_IMPORT_TOPS = {"domains", "modules", "rbac", "infrastructure", "kernel"}
+
+
+
+
+
+
+
+
+def _ns_scan_inverted_arrows(backend):
+    hits = []
+    for layer in ("middleware", "providers", "infrastructure"):
+        if not (backend / layer).is_dir():
+            continue
+        for p, tree in _ns_iter_py(backend, layer):
+            for node in ast.walk(tree):
+                mod = None
+                if isinstance(node, ast.ImportFrom):
+                    mod = node.module or ""
+                elif isinstance(node, ast.Import):
+                    mod = node.names[0].name
+                if not mod:
+                    continue
+                top = mod.split(".")[0]
+                if top in ("domains", "modules", "rbac", "services", "controllers", "routers", "models"):
+                    hits.append((p, node.lineno, "layer '" + layer + "' imports upward app layer: '" + mod + "'"))
+    return hits
+
+
+def _ns_scan_country_scope(backend):
+    hits = []
+    dom = backend / "domains"
+    if (dom / "country").is_dir():
+        return hits
+    if dom.is_dir():
+        for p in dom.rglob("*.py"):
+            if set(p.parts) & DEFAULT_IGNORE_DIRS:
+                continue
+            try:
+                text = p.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            if re.search(r"country", text, re.I) and "Column" in text:
+                hits.append((dom, 0, "country-scoped data (country columns) present but no domains/country scoping axis"))
+                break
+    return hits
+
+
+_TABLE_ARGS_RE = re.compile(r"__table_args__\s*=\s*\(")
+_SCHEMA_ARG_RE = re.compile(r"schema\s*=\s*['\"]([^'\"]+)['\"]")
+def _ns_scan_schema_discipline(backend):
+    hits = []
+    dom = backend / "domains"
+    if not dom.is_dir():
+        return hits
+    for p in dom.rglob("*.py"):
+        if set(p.parts) & DEFAULT_IGNORE_DIRS:
+            continue
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if "__tablename__" not in text:
+            continue
+        if not _TABLE_ARGS_RE.search(text):
+            hits.append((p, 0, "model without __table_args__ (schema discipline missing)"))
+        elif not _SCHEMA_ARG_RE.search(text):
+            hits.append((p, 0, "__table_args__ present but lacks schema='<domain>' (Law 6)"))
+    return hits
+
+
+# Abolished flat root layers whose import names still count as abolished-layer
+# import debt (the not-yet-migrated surface of the codebase).
+_NS_ABOLISHED_IMPORT_ROOTS = {
+    "controllers", "routers", "services", "models",
+    "db", "utils", "core", "dependencies",
+}
+_NS_NEW_AXIS_IMPORT_ROOTS = {
+    "modules", "domains", "rbac", "infrastructure",
+    "kernel", "providers", "jobs", "middleware", "events",
+}
+
+
+def _ns_scan_import_debt(backend: Path):
+    """Count import statements binding to abolished flat layers (abolished-layer
+    debt) vs the NEW axis packages (new adoption).
+
+    Returns (abolished_count, new_count, abolished_by_mod, new_by_mod).
+    Only non-_legacy files are scanned, so a hidden _legacy/ tree does not mask
+    the debt from consumers still importing the abolished names.
+    """
+    abolished_count = 0
+    new_count = 0
+    abolished_by_mod: dict[str, int] = {}
+    new_by_mod: dict[str, int] = {}
+
+    ignore = set(DEFAULT_IGNORE_DIRS) | {"_legacy"}
+    # Manual walk so we can skip _legacy/ cleanly.
+    for p in sorted(backend.rglob("*.py")):
+        if "site-packages" in p.parts:
+            continue
+        if any(part in ignore for part in p.parts):
+            continue
+        if p.name == "__init__.py":
+            continue
+        try:
+            tree = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            continue
+        for node in ast.walk(tree):
+            mod = None
+            if isinstance(node, ast.ImportFrom):
+                mod = node.module or ""
+            elif isinstance(node, ast.Import):
+                if node.names:
+                    mod = node.names[0].name
+            if not mod:
+                continue
+            top = mod.split(".")[0]
+            if top in _NS_ABOLISHED_IMPORT_ROOTS:
+                abolished_count += 1
+                abolished_by_mod[mod] = abolished_by_mod.get(mod, 0) + 1
+            elif top in _NS_NEW_AXIS_IMPORT_ROOTS:
+                new_count += 1
+                new_by_mod[mod] = new_by_mod.get(mod, 0) + 1
+
+    return abolished_count, new_count, abolished_by_mod, new_by_mod
+
+
+def _ns_string_values(node: "ast.AST") -> list[str]:
+    """Extract string constants from a list/set/dict literal node."""
+    out: list[str] = []
+    if isinstance(node, (ast.List, ast.Set, ast.Tuple)):
+        for elt in node.elts:
+            if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                out.append(elt.value)
+            else:
+                out.extend(_ns_string_values(elt))
+    elif isinstance(node, ast.Dict):
+        for k in node.keys:
+            if isinstance(k, ast.Constant) and isinstance(k.value, str):
+                out.append(k.value)
+        for v in node.values:
+            if isinstance(v, ast.Constant) and isinstance(v.value, str):
+                out.append(v.value)
+    return out
+
+
+def _ns_detect_syspath_shim_cheat(backend: Path) -> list[tuple[Path, int, str]]:
+    """Detect sys.path manipulation referencing '_legacy' (the false-green cheat
+    that re-exposes abolished flat layers on the import path)."""
+    hits: list[tuple[Path, int, str]] = []
+    cheat_re = re.compile(r"sys\.path|insert\(0|append\(|os\.environ|PYTHONPATH", re.I)
+    shim_re = re.compile(r"['\"]_legacy['\"]")
+    for p in sorted(backend.rglob("*.py")):
+        if "site-packages" in p.parts:
+            continue
+        try:
+            lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for i, line in enumerate(lines, 1):
+            if cheat_re.search(line) and shim_re.search(line):
+                hits.append((p, i, line.strip()))
+    return hits
+
+
+def _ns_collect_feature_atoms(backend: Path):
+    """Collect (required_atoms, defined_atoms).
+
+    required_atoms = atoms referenced by require_feature(...) across the backend.
+    defined_atoms  = atoms registered in any domains/*/features.py (Law 4 SSoT).
+    Returns (set, list) so duplicates across domains can be detected.
+    """
+    required_atoms: set[str] = set()
+    defined_atoms: list[str] = []
+    req_re = re.compile(r"require_feature\(\s*['\"]?([A-Za-z0-9_][A-Za-z0-9_\.]*?)['\"]?\s*[,)]")
+
+    for p in sorted(backend.rglob("*.py")):
+        if "site-packages" in p.parts:
+            continue
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for m in req_re.finditer(text):
+            required_atoms.add(m.group(1))
+
+    domains_dir = backend / "domains"
+    if domains_dir.is_dir():
+        for feat_file in sorted(domains_dir.rglob("features.py")):
+            try:
+                tree = ast.parse(feat_file.read_text(encoding="utf-8", errors="replace"))
+            except Exception:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Assign):
+                    for tgt in node.targets:
+                        name = getattr(tgt, "id", "") or getattr(tgt, "name", "")
+                        if "feature" in name.lower():
+                            defined_atoms.extend(_ns_string_values(node.value))
+    return required_atoms, defined_atoms
+
+
+def _ns_scan_thin_router_violations(backend: Path) -> list[tuple[Path, int, str]]:
+    """Routers must stay THIN (Law 2): auth context + require_feature(...) + ONE
+    domain-service call. They MUST NOT:
+      * import abolished/upward layers (core, db, utils, dependencies,
+        controllers, infrastructure, providers, kernel, middleware, events);
+      * reach past the service layer into domain repositories/models directly;
+      * perform inline DB writes (session.add/commit/delete/merge/flush).
+    NOTE: `from domains.<d>.services` is REQUIRED by NEW_STRUCTURE.md (the router
+    calls exactly one domain service) and is deliberately NOT flagged here — the
+    previous regex flagged it and produced hundreds of false positives on valid
+    thin routers, which an AI could use to discredit the audit.
+    """
+    hits: list[tuple[Path, int, str]] = []
+    leak_re = re.compile(
+        r"^\s*(from|import)\s+(?:backend\.)?(?:"
+        r"(?:core|db|utils|dependencies|controllers|infrastructure|providers|"
+        r"kernel|middleware|events)\b"
+        r"|domains\.\w+\.(repositories|models)\b)"
+    )
+    write_re = re.compile(
+        r"\b(?:session|db|conn|connection)\.(?:add|commit|delete|merge|flush|"
+        r"bulk_insert_mappings|bulk_save_objects|bulk_update_mappings)\s*\("
+    )
+    for p in sorted(backend.rglob("*.py")):
+        if "site-packages" in p.parts or "routers" not in p.parts:
+            continue
+        try:
+            lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for i, line in enumerate(lines, 1):
+            if leak_re.search(line) or write_re.search(line):
+                hits.append((p, i, line.strip()))
+    return hits
+
+
+def _ns_scan_router_feature_gate(backend: Path) -> list[tuple[Path, int, str]]:
+    """Law 4 / Law 2: module routers must gate with rbac.dependencies.require_feature
+    (the Feature axis) — NOT the pre-NEW_STRUCTURE per-module auth helpers (require_admin,
+    require_finance_permission, require_employee, ...). Flag module routers that
+    expose routes behind an abolished per-module gate instead of require_feature/require_module.
+    Public/webhook routers (public_*/webhook) are exempt.
+
+    This closes a real anti-cheat gap: a migration can create modules/*/routers/
+    and domains/*/features.py yet never WIRE require_feature into the routes, so
+    the Feature axis exists on paper but is not enforced. That is a "claimed but
+    not done" migration that directory checks alone cannot catch.
+    """
+    hits: list[tuple[Path, int, str]] = []
+    route_re = re.compile(r"@\w*(router|api)\.(get|post|put|delete|patch|options|head)\(")
+    rbac_gate_re = re.compile(r"require_feature|require_module|rbac\.dependencies")
+    abolished_gate_re = re.compile(
+        r"require_admin|require_finance_permission|require_employee|"
+        r"require_supplier|require_logistics|require_customer|"
+        r"hasAdminPermission|require_permission\b|Depends\(\s*require_"
+    )
+    for p in sorted(backend.rglob("*.py")):
+        if "site-packages" in p.parts or "routers" not in p.parts:
+            continue
+        # Only module routers (modules/<actor>/routers/...).
+        if "modules" not in p.parts:
+            continue
+        name = p.name.lower()
+        if name.startswith("public_") or "webhook" in name:
+            continue
+        try:
+            lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        has_route = False
+        has_rbac_gate = False
+        abolished_gate_line = None
+        for i, line in enumerate(lines, 1):
+            if route_re.search(line):
+                has_route = True
+            if rbac_gate_re.search(line):
+                has_rbac_gate = True
+            if abolished_gate_re.search(line) and abolished_gate_line is None:
+                abolished_gate_line = (i, line.strip())
+        if not has_route or has_rbac_gate:
+            continue
+        if abolished_gate_line is not None:
+            hits.append((p, abolished_gate_line[0], abolished_gate_line[1]))
+        else:
+            hits.append((p, 0, "module router exposes routes with NO require_feature/require_module gate (Feature axis unwired)"))
+    return hits
+
+
+def _ns_scan_module_actor_violations(backend: Path, actors: set[str]) -> list[tuple[Path, int, str]]:
+    """Flag module files whose top actor segment is not a recognised actor (Law 5),
+    or that import _legacy directly instead of going through a port."""
+    hits: list[tuple[Path, int, str]] = []
+    modules_dir = backend / "modules"
+    if not modules_dir.is_dir():
+        return hits
+    for p in sorted(modules_dir.rglob("*.py")):
+        parts = p.relative_to(modules_dir).parts
+        if len(parts) > 1 and parts[0] not in actors:
+            hits.append((p, 0, "module under non-standard actor segment '" + parts[0] + "/'"))
+        try:
+            lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for i, line in enumerate(lines, 1):
+            if re.search(r"(from|import)\s+_legacy", line):
+                hits.append((p, i, line.strip()))
+    return hits
+
+
 def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
     """Verify the repo against documents/NEW_STRUCTURE.md (anti-cheat gate).
 
@@ -13801,6 +13394,9 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
       * cross-domain import bypassing ports/events (NS8)
       * _legacy shim carrying real logic instead of re-exports (NS9)
       * root models/ still canonical while domain models absent (NS11)
+      * consumers still importing abolished flat layers via _legacy (NS12)
+      * sys.path injection of _legacy (the false-green cheat) (NS13)
+       * real new-axis adoption ratio vs abolished-layer import debt (NS14)
     """
     backend = _ns_backend_root(repo)
     if not backend.is_dir():
@@ -13841,6 +13437,35 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
                 intended="backend/kernel/ created when business primitives are extracted",
                 priority="P2")
 
+    # --- NS27-NS31: non-canonical backend root packages ---
+    # NEW_STRUCTURE.md §1 defines a CLOSED set for backend/ root. Any other
+    # directory there is a stray package with no home in the target architecture.
+    for layer, code in NEW_NON_CANONICAL_ROOT_LAYERS.items():
+        d = backend / layer
+        if not d.is_dir():
+            continue
+        has_py = any(d.rglob("*.py"))
+        if not has_py:
+            continue  # empty (e.g. uploads/, var/, venv/) — not an app-structure issue
+        rep.add(
+            RED, code, "backend", "backend/" + layer + "/",
+            f"backend/{layer}/ is NOT a target-architecture root layer. NEW_STRUCTURE.md "
+            f"§1 defines a closed set for backend/ root (main.py, config.py, "
+            f"DOMAIN_ALLOWLIST.yaml, modules/, domains/, rbac/, infrastructure/, "
+            f"providers/, jobs/, middleware/, alembic/, scripts/, tests/, _legacy/).",
+            intended={
+                "tasks": "re-home background-task code into backend/jobs/ (or "
+                         "backend/_legacy/ as a re-export shim until migrated)",
+                "events": "fold into backend/domains/<domain>/events.py per domain",
+                "uploads": "re-home into backend/infrastructure/storage/",
+                "var": "delete — runtime state is not a backend package",
+                "venv": "delete from the repo — it is tooling, not app structure",
+                "tools": "delete or move to scripts/ — one-off migration helpers are "
+                         "not part of the runtime app structure",
+            }[layer],
+            priority="P1",
+        )
+
     # --- NS11: root models/ canonical while domain models absent ---
     root_models = backend / "models"
     dom_models_present = False
@@ -13850,7 +13475,7 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
                 dom_models_present = True
                 break
     if root_models.is_dir() and any(root_models.rglob("*.py")) and not dom_models_present:
-        rep.add(RED, "NS11", "backend", "backend/models/",
+        rep.add(RED, "NS11", "backend", "backend/domains/",
                 "root backend/models/ is still the canonical ORM home while NO domain owns "
                 "models under domains/*/models/. The model migration claimed by NEW_STRUCTURE.md "
                 "has NOT been performed. Refusing 'models placed' claims: content is not actually "
@@ -13859,8 +13484,18 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
                 priority="P0")
 
     # --- NS6 / NS8: inverted arrows + illegal cross-domain imports (AST scan) ---
+    # NOTE: NS8 must ONLY flag a GENUINE cross-domain import (importer domain !=
+    # target domain). A service importing its OWN domain's models/services
+    # (e.g. domains/finance/services/foo.py -> domains/finance/models) is normal
+    # and was previously false-flagged ~thousands of times, which let a "migration
+    # done" claim dismiss the whole audit as noisy. ports.py / events.py / read_models
+    # remain the always-allowed cross-domain paths (they are not in the blocked set).
     if (backend / "domains").is_dir():
+        allow = _ns_load_domain_allowlist(backend)
+        seen_xd: set[tuple[str, str]] = set()
         for p, tree in _ns_iter_py(backend, "domains"):
+            rel_parts = p.relative_to(backend).parts
+            imp_dom = rel_parts[1] if len(rel_parts) > 1 and rel_parts[0] == "domains" else None
             for node in ast.walk(tree):
                 if isinstance(node, ast.ImportFrom) and node.level == 0:
                     mod = node.module or ""
@@ -13871,21 +13506,53 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
                                 "(law 1: arrows point down; domains never import modules).",
                                 intended="move logic into a domain service; modules compose domains",
                                 line=node.lineno, priority="P0")
-                    if top == "domains" and len(mod.split(".")) >= 3:
+                    elif top == "rbac":
+                        rep.add(RED, "NS36", "domains", str(p),
+                                "domain imports rbac layer: 'from " + mod + " import ...' "
+                                "(law 4: rbac is imported by modules/middleware only; domains "
+                                "enforce policies, not permissions).",
+                                intended="domains must not depend on rbac; gating belongs in module routers",
+                                line=node.lineno, priority="P0")
+                    elif top == "domains" and len(mod.split(".")) >= 3:
                         parts = mod.split(".")
-                        if parts[1] in NEW_DOMAIN_FOLDERS and parts[2] in {
-                            "services", "models", "repositories", "schemas", "policies"}:
-                            rep.add(RED, "NS8", "domains", str(p),
-                                    "cross-domain import bypasses ports/events: 'from " + mod +
-                                    " import ...' (law 3).",
-                                    intended="cross-domain reads via domains/<d>/ports.py; writes via events.py/subscribers.py",
-                                    line=node.lineno, priority="P0")
+                        tgt = parts[1]
+                        # ports.py / events.py / read_models/ are the sanctioned
+                        # cross-domain paths (law 3) — never flagged.
+                        if (tgt in NEW_DOMAIN_FOLDERS
+                                and tgt != imp_dom
+                                and any(seg in _NS_CROSS_DOMAIN_BLOCKED for seg in parts[2:])
+                                and not mod.startswith("domains." + tgt + ".ports")
+                                and not mod.startswith("domains." + tgt + ".events")
+                                and not mod.startswith("domains." + tgt + ".read_models")):
+                            seen_xd.add((imp_dom, tgt))
+                            if (imp_dom, tgt) in allow:
+                                rep.add(YEL, "NS8", "domains", str(p),
+                                        "allowlisted cross-domain import (strangler debt): 'from "
+                                        + mod + " import ...' per DOMAIN_ALLOWLIST.yaml (importer='"
+                                        + str(imp_dom) + "'). This debt must shrink to zero.",
+                                        intended="route cross-domain reads via domains/<d>/ports.py",
+                                        line=node.lineno, priority="P2")
+                            else:
+                                rep.add(RED, "NS8", "domains", str(p),
+                                        "cross-domain import bypasses ports/events: 'from " + mod +
+                                        " import ...' (law 3; importer domain='" + str(imp_dom)
+                                        + "').",
+                                        intended="cross-domain reads via domains/<d>/ports.py; writes via events.py/subscribers.py",
+                                        line=node.lineno, priority="P0")
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
                         if alias.name.split(".")[0] == "modules":
                             rep.add(RED, "NS6", "domains", str(p),
                                     "domain imports module layer: 'import " + alias.name + "' (law 1).",
                                     line=node.lineno, priority="P0")
+        # Anti-cheat: an allowlist entry that matches NO real cross-domain import
+        # cannot be silencing the audit — flag it as probable pre-emption.
+        for pair in sorted(allow - seen_xd):
+            rep.add(YEL, "NS37", "backend", "backend/DOMAIN_ALLOWLIST.yaml",
+                    "allowlist entry '" + pair[0] + ">" + pair[1] + "' references no actual "
+                    "cross-domain import in the code (DOMAIN_ALLOWLIST.yaml must track REAL debt "
+                    "and shrink to zero; a phantom entry cannot pre-empt NS8).",
+                    intended="remove phantom entries; only list imports that exist", priority="P2")
 
     # --- NS7: infrastructure imports above it ---
     if (backend / "infrastructure").is_dir():
@@ -13903,11 +13570,52 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
                             intended="infrastructure is platform-only; move business/domain code out",
                             line=node.lineno, priority="P0")
 
+    # --- NS34: kernel/ must import nothing above it (law: domains -> kernel -> nothing) ---
+    if (backend / "kernel").is_dir():
+        for p, tree in _ns_iter_py(backend, "kernel"):
+            for node in ast.walk(tree):
+                mod = None
+                if isinstance(node, ast.ImportFrom):
+                    mod = node.module or ""
+                elif isinstance(node, ast.Import):
+                    mod = node.names[0].name
+                if mod and mod.split(".")[0] in _NS_KERNEL_FORBIDDEN_IMPORTS:
+                    rep.add(RED, "NS34", "kernel", str(p),
+                            "kernel imports above it: 'from " + mod + " import ...' "
+                            "(law: domains -> kernel -> nothing; kernel is a pure shared kernel of "
+                            "business primitives: money/numbering/country/period).",
+                            intended="kernel imports only stdlib + infrastructure platform primitives",
+                            line=node.lineno, priority="P1")
+
+    # --- NS35: modules must not import providers (law 1: providers <- services/jobs) ---
+    if (backend / "modules").is_dir():
+        for p, tree in _ns_iter_py(backend, "modules"):
+            for node in ast.walk(tree):
+                mod = None
+                if isinstance(node, ast.ImportFrom):
+                    mod = node.module or ""
+                elif isinstance(node, ast.Import):
+                    mod = node.names[0].name
+                if mod and mod.split(".")[0] == "providers":
+                    rep.add(RED, "NS35", "modules", str(p),
+                            "module imports providers layer: 'from " + mod + " import ...' "
+                            "(law 1: providers are called only by services/jobs, never by thin "
+                            "module routers).",
+                            intended="call the domain service; let the service call the provider",
+                            line=node.lineno, priority="P0")
+
+    # --- NS37: DOMAIN_ALLOWLIST.yaml must exist (strangler-debt tracker, law 7) ---
+    if not (backend / "DOMAIN_ALLOWLIST.yaml").is_file():
+        rep.add(YEL, "NS37", "backend", "backend/DOMAIN_ALLOWLIST.yaml",
+                "DOMAIN_ALLOWLIST.yaml is MISSING. The strangler-debt tracker (law 7) is required: "
+                "it lists the temporary cross-domain imports still permitted and must only shrink.",
+                intended="create DOMAIN_ALLOWLIST.yaml with cross_domain_imports: []", priority="P2")
+
     # --- NS9: _legacy shim carrying real logic (strangler rule) ---
-    legacy = backend / "_legacy"
-    if legacy.is_dir():
-        logic_files = 0
-        for p in legacy.rglob("*.py"):
+    shim_dir = backend / "_legacy"
+    if shim_dir.is_dir():
+        real_logic = 0
+        for p in shim_dir.rglob("*.py"):
             if set(p.parts) & DEFAULT_IGNORE_DIRS:
                 continue
             try:
@@ -13925,7 +13633,1101 @@ def check_new_structure_compliance(repo: Path, rep: "Report", eff) -> None:
                     intended="backend/_legacy/ contains re-export shims only; delete when slice ready",
                     priority="P1")
 
+    # --- NS12: consumers still import abolished flat layers (import debt) ---
+    abolished_count, new_count, abolished_by_mod, new_by_mod = _ns_scan_import_debt(backend)
+    if abolished_count > 0:
+        top_examples = sorted(abolished_by_mod.items(), key=lambda kv: -kv[1])[:6]
+        examples = ["from " + m + " (x" + str(n) + ")" for m, n in top_examples]
+        rep.add(RED, "NS12", "backend", "backend/",
+                str(abolished_count) + " import statements still bind to abolished flat layers "
+                "(services/ controllers/ routers/ root models) from non-_legacy files. The "
+                "application runtime still depends on abolished-layer code even though those layers were "
+                "hidden under _legacy/. This is hard proof of a FALSE migration claim: directory "
+                "checks pass while the import graph is unchanged.",
+                intended="zero consumers import abolished flat layers; all use domains/*/ or modules/*/",
+                count=abolished_count, examples=examples, priority="P0")
+
+    # --- NS13: sys.path injection of _legacy (the false-green cheat) ---
+    cheat_hits = _ns_detect_syspath_shim_cheat(backend)
+    if cheat_hits:
+        chex = [str(p.relative_to(repo)) + ":" + str(ln) + ": " + txt for p, ln, txt in cheat_hits[:6]]
+        rep.add(RED, "NS13", "backend", "backend/",
+                str(len(cheat_hits)) + " sys.path manipulation(s) reference '_legacy', injecting the "
+                "abolished flat layers onto the import path so 'from services.' / 'from models' "
+                "silently resolve to _legacy/*. This is the exact mechanism that yields a FALSE GREEN "
+                "compliance result. Remove the sys.path hack and migrate the imports.",
+                intended="no sys.path injection of _legacy; imports resolve to domains/ modules/",
+                count=len(cheat_hits), examples=chex, priority="P0")
+
+    # --- NS14: real new-axis adoption ratio vs abolished-layer import debt ---
+    total = abolished_count + new_count
+    if total > 0:
+        ratio = new_count / total
+        pct = round(ratio * 100)
+        if abolished_count == 0:
+            rep.add(GRN, "NS14", "backend", "backend/",
+                    "New-axis adoption " + str(pct) + "% (new=" + str(new_count) +
+                    ", abolished=" + str(abolished_count) + "). No consumers bind to abolished flat layers.",
+                    count=new_count, priority="P2")
+
+        elif ratio < 0.05:
+            rep.add(RED, "NS14", "backend", "backend/",
+                    "New-axis adoption only " + str(pct) + "% (new=" + str(new_count) +
+                    ", abolished=" + str(abolished_count) + "). The codebase is overwhelmingly bound to "
+                    "abolished flat layers via _legacy/ + sys.path injection. Runtime migration is "
+                    "essentially NOT started.",
+                    count=new_count, priority="P0")
+        elif ratio < 0.5:
+            rep.add(YEL, "NS14", "backend", "backend/",
+                    "New-axis adoption " + str(pct) + "% (new=" + str(new_count) +
+                    ", abolished=" + str(abolished_count) + "). Roughly half or fewer imports use the new "
+                    "axes; the abolished-layer surface still dominates.",
+                    count=new_count, priority="P1")
+        else:
+            rep.add(GRN, "NS14", "backend", "backend/",
+                    "New-axis adoption " + str(pct) + "% (new=" + str(new_count) +
+                    ", abolished=" + str(abolished_count) + "). Majority of imports use the new axes; "
+                    "abolished-layer surface is now the minority.",
+                    count=new_count, priority="P2")
+
+    required_atoms, defined_atoms = _ns_collect_feature_atoms(backend)
+    undefined = sorted(required_atoms - set(defined_atoms))
+    if undefined:
+        rep.add(RED, "NS15", "backend", "backend/",
+                str(len(undefined)) + " require_feature() atom(s) used but NOT registered in any "
+                "domains/*/features.py (Law 4: single source of truth). Unregistered atoms cannot be "
+                "enforced by rbac. Examples: " + ", ".join(undefined[:8]),
+                count=len(undefined), priority="P0")
+    src_counts = {}
+    for atom in defined_atoms:
+        src_counts[atom] = src_counts.get(atom, 0) + 1
+    dups = sorted([a for a, c in src_counts.items() if c > 1])
+    if dups:
+        rep.add(YEL, "NS17", "backend", "backend/domains/",
+                str(len(dups)) + " feature-atom key(s) defined in multiple domains/*/features.py "
+                "(ambiguous capability). Examples: " + ", ".join(dups[:8]),
+                count=len(dups), priority="P1")
+    # --- NS16: rbac/catalog.py must AGGREGATE from domains/*/features.py (Law 4) ---
+    # Previously this was a no-op GREEN. Now it actively verifies the catalog is
+    # not hand-maintained (which lets feature atoms drift from their domains).
+    catalog_path = backend / "rbac" / "catalog.py"
+    if catalog_path.is_file():
+        try:
+            _cat_text = catalog_path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            _cat_text = ""
+        _aggregates = bool(re.search(
+            r"\bimport\s+domains\b|\bdomains\.__path__|iter_modules\(\s*domains", _cat_text))
+        if not _aggregates and not re.search(r"features", _cat_text):
+            rep.add(RED, "NS16", "backend", "backend/rbac/catalog.py",
+                    "rbac/catalog.py does NOT aggregate feature atoms from "
+                    "domains/*/features.py (Law 4: single source of truth). It appears "
+                    "hand-maintained, which lets feature atoms drift from domains and lets "
+                    "require_feature() literals go unenforced.",
+                    intended="rbac/catalog.py must import `domains` and package-scan "
+                             "domains/*/features.py (FEATURES)",
+                    priority="P0")
+        elif not _aggregates:
+            rep.add(YEL, "NS16", "backend", "backend/rbac/catalog.py",
+                    "rbac/catalog.py references 'features' but does not appear to "
+                    "package-scan domains/*/features.py; verify it aggregates the domain "
+                    "sources (Law 4 single-source).",
+                    priority="P1")
+        elif defined_atoms and not dups:
+            rep.add(GRN, "NS16", "backend", "backend/domains/",
+                    str(len(defined_atoms)) + " feature atoms registered in domains/*/features.py "
+                    "and aggregated by rbac/catalog.py (single source of truth per domain, "
+                    "no duplicates).",
+                    count=len(defined_atoms), priority="P3")
+    elif (backend / "rbac").is_dir():
+        rep.add(RED, "NS16", "backend", "backend/rbac/",
+                "backend/rbac/ exists but catalog.py is MISSING — there is no single source "
+                "of truth aggregating domains/*/features.py (Law 4). Without it, require_feature() "
+                "gates cannot be validated and the Feature axis is unenforced.",
+                intended="create rbac/catalog.py that package-scans domains/*/features.py",
+                priority="P0")
+
+    router_hits = _ns_scan_thin_router_violations(backend)
+    if router_hits:
+        ex = [str(p.relative_to(repo)) + ":" + str(ln) + ": " + txt for p, ln, txt in router_hits[:6]]
+        rep.add(YEL, "NS18", "backend", "backend/modules/",
+                str(len(router_hits)) + " router module(s) leak business logic — import an abolished/upward "
+                "layer (core/db/utils/dependencies/infrastructure/providers/...) or reach past the service "
+                "layer into domain repositories/models, or perform inline DB writes (Law 2). "
+                "NOTE: `from domains.<d>.services` is allowed and NOT flagged.",
+                count=len(router_hits), examples=ex, priority="P1")
+
+    # --- NS33: module routers gated by pre-NEW_STRUCTURE auth helper, not require_feature ---
+    gate_hits = _ns_scan_router_feature_gate(backend)
+    if gate_hits:
+        ex = [str(p.relative_to(repo)) + ":" + str(ln) + ": " + txt for p, ln, txt in gate_hits[:6]]
+        rep.add(YEL, "NS33", "backend", "backend/modules/",
+                str(len(gate_hits)) + " module router(s) gate with a pre-NEW_STRUCTURE per-module auth helper "
+                "(require_admin / require_finance_permission / ...) instead of rbac.dependencies."
+                "require_feature. The Feature axis (Law 4) is therefore not wired into the routes — "
+                "a 'claimed but not done' RBAC migration that directory checks cannot catch. "
+                "Public/webhook routers are exempt.",
+                count=len(gate_hits), examples=ex, priority="P2")
+
+    actor_hits = _ns_scan_module_actor_violations(backend, NEW_MODULE_ACTORS)
+    if actor_hits:
+        ex = [str(p.relative_to(repo)) + ": " + txt for p, ln, txt in actor_hits[:6]]
+        rep.add(YEL, "NS19", "backend", "backend/modules/",
+                str(len(actor_hits)) + " module-actor discipline issue(s) (non-standard subpackage or "
+                "direct _legacy import instead of a port) (Law 5).",
+                count=len(actor_hits), examples=ex, priority="P1")
+
+    inv_hits = _ns_scan_inverted_arrows(backend)
+    if inv_hits:
+        ex = [str(p.relative_to(repo)) + ":" + str(ln) + ": " + txt for p, ln, txt in inv_hits[:6]]
+        rep.add(RED, "NS20", "backend", "backend/",
+                str(len(inv_hits)) + " inverted dependency arrow(s): middleware/providers/infrastructure "
+                "import upward application layers (Law 1).",
+                count=len(inv_hits), examples=ex, priority="P0")
+
+    country_hits = _ns_scan_country_scope(backend)
+    if country_hits:
+        ex = [str(p.relative_to(repo)) + ": " + txt for p, ln, txt in country_hits]
+        rep.add(YEL, "NS21", "backend", "backend/domains/",
+                "Country-scoped data exists but no domains/country scoping axis (axis 3).",
+                examples=ex, priority="P2")
+
+    schema_hits = _ns_scan_schema_discipline(backend)
+    if schema_hits:
+        rr = [str(p.relative_to(repo)) + ": " + txt for p, ln, txt in schema_hits[:6]]
+        rep.add(YEL, "NS22", "backend", "backend/domains/",
+                str(len(schema_hits)) + " domain model file(s) missing schema discipline: no "
+                "__table_args__ schema='<domain>' (Law 6).",
+                count=len(schema_hits), examples=rr, priority="P1")
+
+
 # ============================================================================
+# ----------------------------------------------------------------------------
+def check_move_suggestions(repo: Path, rep: Report, eff: dict, graph, reg) -> list[dict]:
+    """NEW_STRUCTURE.md move-suggestion engine.
+
+    Detects files still living in ABOLISHED flat root layers
+    (controllers/routers/services/models) plus cross-cutting root helpers
+    (db/dependencies/utils) and suggests their canonical NEW homes:
+      - services/<domain>/* -> domains/<domain>/services/
+      - models/<domain>/*   -> domains/<domain>/models/
+      - routers/*           -> modules/<actor>/routers/
+      - controllers/*       -> split: module routers + domain services
+      - db/dependencies/utils/* -> infrastructure/<layer>/
+    Returns a list of dicts: {from, to, reason, confidence}.
+    Abolished layers are treated ONLY as relocation sources, never as targets.
+    """
+    backend = _ns_backend_root(repo)
+    moves: list[dict] = []
+    if not backend.is_dir():
+        return moves
+
+    known_domains = _pl_known_domains(repo, eff, reg)
+
+    def _py_files(layer_dir: Path):
+        try:
+            for f in sorted(layer_dir.rglob("*.py")):
+                if f.name == "__init__.py":
+                    continue
+                rel_parts = [p.lower() for p in f.relative_to(backend).parts]
+                if any(x in PLACEMENT_SKIP_PARTS for x in rel_parts):
+                    continue
+                yield f
+        except OSError:
+            return
+
+    def _infer(f: Path) -> tuple[str | None, float, list[str]]:
+        text = read_text(f) or ""
+        signals = _pl_extract_signals(f, text, eff)
+        return _pl_infer_domain(signals, known_domains, eff)
+
+    # 1) Abolished domain-layered root layers -> domains/<domain>/<layer>/
+    for layer in ("services", "models"):
+        layer_dir = backend / layer
+        if not layer_dir.is_dir():
+            continue
+        for f in _py_files(layer_dir):
+            sub = f.relative_to(layer_dir)
+            domain = sub.parts[0].lower() if len(sub.parts) > 1 else None
+            if domain:
+                target = f"backend/domains/{domain}/{layer}/{f.name}"
+            else:
+                dom, _conf, _reasons = _infer(f)
+                if not dom:
+                    continue
+                target = f"backend/domains/{dom}/{layer}/{f.name}"
+            moves.append({
+                "from": rel(f, repo),
+                "to": target,
+                "reason": f"abolished-root-{layer}->domains/{domain or '<domain>'}/{layer}",
+                "confidence": 0.7,
+            })
+
+    # 2) Abolished routers/ -> modules/<actor>/routers/
+    routers_dir = backend / "routers"
+    if routers_dir.is_dir():
+        for f in _py_files(routers_dir):
+            sub = f.relative_to(routers_dir)
+            actor = sub.parts[0].lower() if len(sub.parts) > 1 else None
+            if actor in NEW_MODULE_ACTORS:
+                target = f"backend/modules/{actor}/routers/{f.name}"
+            else:
+                target = "backend/modules/<actor>/routers/<file>"
+            moves.append({
+                "from": rel(f, repo),
+                "to": target,
+                "reason": "abolished-root-routers->modules/<actor>/routers",
+                "confidence": 0.65,
+            })
+
+    # 3) Abolished controllers/ -> split into module routers + domain services
+    controllers_dir = backend / "controllers"
+    if controllers_dir.is_dir():
+        for f in _py_files(controllers_dir):
+            dom, _conf, _reasons = _infer(f)
+            target = (
+                f"backend/domains/{dom}/services/{f.name}" if dom
+                else "backend/domains/<domain>/services/<file>"
+            )
+            moves.append({
+                "from": rel(f, repo),
+                "to": target,
+                "reason": "abolished-root-controllers->modules/routers + domains/services",
+                "confidence": 0.6,
+            })
+
+    # 4) Cross-cutting root helpers -> infrastructure/<layer>/
+    for layer in ("db", "dependencies", "utils"):
+        layer_dir = backend / layer
+        if not layer_dir.is_dir():
+            continue
+        for f in _py_files(layer_dir):
+            moves.append({
+                "from": rel(f, repo),
+                "to": f"backend/infrastructure/{layer}/{f.name}",
+                "reason": f"abolished-root-{layer}->infrastructure/{layer}",
+                "confidence": 0.5,
+            })
+
+    return moves
+
+def check_circuit_contract(repo: Path, rep: Report, eff: dict, graph: ModuleGraph) -> None:
+    """
+    Enforce the ZOZI backend circuit from documents/NEW_STRUCTURE.md (Law 1:
+    arrows point down only; Law 2: thin module routers).
+
+    RED CIR1:
+        Import is outside the allowed circuit (e.g. domains -> modules,
+        infrastructure -> domains, module router -> infrastructure/DB).
+
+    YEL CIR2:
+        Import is a migration bypass, for example:
+        modules -> infrastructure (thin-router violation)
+        domains -> modules (upward arrow)
+        infrastructure -> anything above it
+
+    Abolished flat root layers (controllers/ routers/ services/ models/ db/
+    utils/ core/ dependencies/) are NOT in NEW_CIRCUIT_ALLOWED_IMPORTS, so a
+    caller living there is skipped (and reported as NS1-NS4 by
+    check_new_structure_compliance) instead of being validated as a circuit.
+
+    Explicit forbidden edges in DEFAULT_FORBIDDEN_EDGES / layer_rules.yaml
+    are still reported by check_dependency_graph as DG.
+    """
+    allowed = NEW_CIRCUIT_ALLOWED_IMPORTS
+    bypass = NEW_CIRCUIT_BYPASS_IMPORTS
+    edges = eff.get("forbidden_edges", {})
+
+    exempt = set(eff.get("graph_exempt_layers", set())) | {
+        "tests",
+        "scripts",
+        "alembic",
+        "monitoring",
+        "docs",
+    }
+
+    # Data modules may be imported by application layers.
+    # But data itself must not import application layers.
+    target_always_ok = {"data"}
+
+    reported = 0
+
+    for caller in sorted(graph.imports.keys()):
+        caller_layer = layer_of_module(caller)
+
+        if not caller_layer:
+            continue
+
+        if caller_layer in exempt:
+            continue
+
+        if caller_layer not in allowed:
+            continue
+
+        caller_path = module_path_rel(caller, graph, repo)
+        seen: set[tuple[str, str]] = set()
+
+        for mod, line in graph.imports[caller]:
+            target_layer = layer_of_module(mod)
+
+            if not target_layer:
+                continue
+
+            if target_layer in exempt:
+                continue
+
+            if target_layer in target_always_ok:
+                continue
+
+            if target_layer == caller_layer:
+                continue
+
+            # If this is already an explicit forbidden edge, let
+            # check_dependency_graph() report DG to avoid duplicate findings.
+            if any(
+                _module_matches_prefix(mod, prefix)
+                for prefix in edges.get(caller_layer, [])
+            ):
+                continue
+
+            # Allowed by circuit contract.
+            if target_layer in allowed.get(caller_layer, set()):
+                continue
+
+            key = (caller_layer, target_layer)
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            if key in bypass:
+                rep.add(
+                    YEL,
+                    "CIR2",
+                    "backend",
+                    caller_path,
+                    f"circuit bypass: {caller_layer} -> {target_layer} ({mod})",
+                    intended=bypass[key],
+                    line=line,
+                )
+            else:
+                allowed_list = ", ".join(sorted(allowed.get(caller_layer, set()))) or "none"
+
+                rep.add(
+                    RED,
+                    "CIR1",
+                    "backend",
+                    caller_path,
+                    f"circuit violation: {caller_layer} -> {target_layer} ({mod}) "
+                    f"is outside the allowed circuit",
+                    intended=f"{caller_layer} may import only: {allowed_list}",
+                    line=line,
+                )
+
+            reported += 1
+
+            if reported >= 800:
+                return
+
+
+def check_controller_outside(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    P2: detect ABOLISHED controller files anywhere in the backend.
+
+    The `controllers/` layer is abolished by documents/NEW_STRUCTURE.md. Every
+    `*_controller.py` file (whether inside a `controllers/` dir or anywhere else)
+    is a violation: there is no longer a valid "controller" home. Split it:
+
+      * route declarations / request shaping / auth wiring
+            -> modules/{module}/routers/{domain}_router.py  (thin)
+      * orchestration / business logic / DB access
+            -> domains/{domain}/services/{...}_service.py
+
+    Abolished surviving code may only live under backend/_legacy/ as re-export
+    shims (flagged separately by NS9); those are skipped here.
+    """
+    backend = repo / "backend"
+    if not backend.exists():
+        return
+
+    reported = 0
+
+    for f in iter_text_files(backend, eff):
+        if f.suffix.lower() != ".py":
+            continue
+
+        try:
+            parts = [p.lower() for p in f.relative_to(backend).parts]
+        except ValueError:
+            continue
+
+        if not parts:
+            continue
+
+        top = parts[0]
+
+        # A controller that has been re-homed into a VALID NEW_STRUCTURE.md
+        # package (modules/ domains/ rbac/ infrastructure/ kernel/ providers/
+        # jobs/ middleware/) is no longer an abolished-layer violation — it is a
+        # legitimately-placed file even if its basename contains "controller"
+        # (e.g. domains/finance/services/sub_ledger_controller.py, or a module
+        # router named command_center_controller.py). Only STRAY controller
+        # files (outside those homes) or an actual `controllers/` directory are
+        # abolished-layer violations. Flagging valid homes produced hundreds of
+        # false positives that let a "migration done" claim look credible.
+        _VALID_NS_HOMES = {
+            "modules", "domains", "rbac", "infrastructure", "kernel",
+            "providers", "jobs", "middleware",
+        }
+        if top in _VALID_NS_HOMES:
+            continue
+
+        if top in {
+            "tests",
+            "scripts",
+            "alembic",
+            "data",
+            "monitoring",
+            "docs",
+            "_legacy",
+        }:
+            continue
+
+        stem = f.stem.lower()
+
+        # Abolished if the file is named like a controller OR lives under a
+        # (now abolished) controllers/ directory.
+        is_controller = stem.endswith("_controller") or "controllers" in parts
+
+        if not is_controller:
+            continue
+
+        rep.add(
+            RED,
+            "P2",
+            "backend",
+            rel(f, repo),
+            f"abolished controller file '{f.name}' (controllers/ layer is abolished)",
+            intended=(
+                "split it: route declarations -> modules/{module}/routers/{domain}_router.py "
+                "(thin, require_feature gate); business logic/DB access -> "
+                "domains/{domain}/services/. Delete the original once migrated; carry over "
+                "only as a re-export shim under backend/_legacy/."
+            ),
+        )
+
+        reported += 1
+
+        if reported >= 200:
+            return
+
+
+def check_layer_contracts(repo: Path, rep: Report, eff: dict, graph: ModuleGraph, call_graph: CallGraph) -> None:
+    """
+    LC1/LC2/LC3: Validate explicit layer contracts.
+    CORRECTED:
+    - Removed db.query from LC1 (reads are Q1 advisory, not LC1 violation)
+    - Removed session.execute (can be read or write; too broad)
+    - Added comment/docstring skipping
+    - Only flags WRITE operations in forbidden layers
+    """
+    contracts: dict[str, LayerContract] = {
+        "routers": LayerContract(
+            layer="routers",
+            may_import={"controllers", "dependencies", "utils", "data"},
+            may_not_import={"db", "models", "providers", "middleware"},
+            may_call={"controllers"},
+            may_not_call={"db", "models", "providers"},
+            # CORRECTED: only WRITE operations forbidden; reads are Q1 (YEL)
+            forbidden_operations={"session.add", "session.commit", "session.delete",
+                                  "session.merge", "session.flush"},
+            forbidden_patterns=[r"session\.(add|commit|delete|merge|flush)\("],
+        ),
+        "controllers": LayerContract(
+            layer="controllers",
+            may_import={"services", "utils", "data"},
+            may_not_import={"db", "models", "providers", "routers", "middleware"},
+            may_call={"services"},
+            may_not_call={"db", "models", "providers", "routers"},
+            forbidden_operations={"session.add", "session.commit", "session.delete",
+                                  "session.merge", "session.flush"},
+            forbidden_patterns=[r"session\.(add|commit|delete|merge|flush)\("],
+        ),
+        "services": LayerContract(
+            layer="services",
+            may_import={"models", "providers", "utils", "events", "jobs", "db", "data"},
+            may_not_import={"routers", "controllers", "middleware", "dependencies"},
+            may_call={"models", "providers", "db"},
+            may_not_call={"routers", "controllers"},
+            required_patterns=[],
+            forbidden_patterns=[],
+        ),
+        "providers": LayerContract(
+            layer="providers",
+            may_import={"utils", "data"},
+            may_not_import={"services", "controllers", "routers", "models",
+                            "middleware", "dependencies", "db"},
+            may_call={"utils"},
+            may_not_call={"services", "controllers", "routers", "models"},
+            forbidden_patterns=[],
+        ),
+        "models": LayerContract(
+            layer="models",
+            may_import={"db", "utils"},
+            may_not_import={"services", "controllers", "routers", "providers",
+                            "middleware", "dependencies"},
+            may_call=set(),
+            may_not_call={"services", "controllers", "routers", "providers"},
+            forbidden_patterns=[],
+        ),
+        "middleware": LayerContract(
+            layer="middleware",
+            may_import={"db", "utils", "dependencies", "data"},
+            may_not_import={"services", "controllers", "routers", "models",
+                            "providers"},
+            may_call={"utils"},
+            may_not_call={"services", "controllers", "routers"},
+            forbidden_patterns=[],
+        ),
+        "utils": LayerContract(
+            layer="utils",
+            may_import=set(),
+            may_not_import={"routers", "controllers", "services", "models",
+                            "providers", "middleware", "dependencies", "db"},
+            may_call=set(),
+            may_not_call={"routers", "controllers", "services", "models"},
+            forbidden_patterns=[],
+        ),
+    }
+    # Load contracts from YAML if available
+    if eff.get("layer_contracts"):
+        for layer_name, cfg in eff["layer_contracts"].items():
+            if layer_name in contracts and isinstance(cfg, dict):
+                c = contracts[layer_name]
+                if isinstance(cfg.get("forbidden_operations"), list):
+                    c.forbidden_operations = set(cfg["forbidden_operations"])
+                if isinstance(cfg.get("forbidden_patterns"), list):
+                    c.forbidden_patterns = cfg["forbidden_patterns"]
+
+    backend = repo / "backend"
+    reported = 0
+    for module, f in graph.modules.items():
+        layer = layer_of_module(module)
+        if layer not in contracts:
+            continue
+        contract = contracts[layer]
+        if not contract.forbidden_patterns:
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+
+        # CORRECTED: Use AST to check only actual code, skip comments/docstrings
+        tree = parse_safe(f)
+        if tree is None:
+            continue
+
+        for pattern in contract.forbidden_patterns:
+            try:
+                rx = re.compile(pattern)
+            except re.error:
+                continue
+
+            # Search only non-comment, non-docstring lines
+            in_docstring = False
+            for i, line in enumerate(text.splitlines(), 1):
+                stripped = line.strip()
+
+                # Skip single-line comments
+                if stripped.startswith("#"):
+                    continue
+
+                # Track multi-line docstrings
+                if '"""' in stripped or "'''" in stripped:
+                    quote = '"""' if '"""' in stripped else "'''"
+                    count = stripped.count(quote)
+                    if count == 1:
+                        in_docstring = not in_docstring
+                    # count == 2 means open+close on same line (skip)
+                    continue
+                if in_docstring:
+                    continue
+
+                if rx.search(line):
+                    rep.add(
+                        RED, "LC1", layer,
+                        rel(f, repo),
+                        f"layer contract violation: write operation "
+                        f"'{pattern}' found in {layer}/",
+                        intended=f"{layer} must not perform DB writes; "
+                                 f"move write operations to services/",
+                        line=i,
+                    )
+                    reported += 1
+                    break  # One finding per file per pattern
+            if reported >= 200:
+                return
+
+
+def _check_module_router_naming(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    Validate NEW module router placement (documents/NEW_STRUCTURE.md, Axis 1).
+
+    Thin routers live per actor under:
+
+        modules/{module}/routers/{domain}_{operation}_router.py
+
+    The abolished `backend/routers/` layer (pre-NEW_STRUCTURE flat layout) is ABOLISHED and is flagged wherever it
+    still exists (its NEW home is modules/{module}/routers/).
+    """
+    backend = repo / "backend"
+
+    # --- Abolished root routers/ layer (pre-NEW_STRUCTURE flat layout) ---
+    old_routers = backend / "routers"
+    if old_routers.is_dir():
+        for f in sorted(old_routers.rglob("*.py")):
+            if f.name == "__init__.py":
+                continue
+            parts = [p.lower() for p in f.relative_to(backend).parts]
+            if "_legacy" in parts:
+                continue
+            rep.add(
+                RED, "RN4", "routers", rel(f, repo),
+                "router still lives under abolished root backend/routers/ (pre-NEW_STRUCTURE flat layer)",
+                intended="re-home into modules/{module}/routers/{domain}_router.py "
+                         "(thin: require_feature gate + one domain-service call)",
+                line=1,
+            )
+
+    # --- Validate NEW module routers ---
+    modules = backend / "modules"
+    if not modules.is_dir():
+        return
+
+    aliases = PLACEMENT_ALIAS_TO_DOMAIN
+    stop = set(PLACEMENT_STOP_TOKENS)
+
+    def _tokens(stem: str) -> list[str]:
+        return [t.lower() for t in re.split(r"[^A-Za-z0-9]+", stem) if t]
+
+    for actor_dir in sorted(modules.iterdir()):
+        if not actor_dir.is_dir() or actor_dir.name.lower() == "__pycache__":
+            continue
+        routers_dir = actor_dir / "routers"
+        if not routers_dir.is_dir():
+            continue
+        actor = actor_dir.name.lower()
+        for f in sorted(routers_dir.rglob("*.py")):
+            if f.name == "__init__.py":
+                continue
+            rel_parts = [p.lower() for p in f.relative_to(backend).parts]
+            if "_legacy" in rel_parts:
+                continue
+            stem = f.stem.lower()
+            if not stem.endswith("_router"):
+                rep.add(
+                    YEL, "RN1", "routers", rel(f, repo),
+                    f"module router filename '{f.name}' must end with '_router.py'",
+                    intended=f"rename to modules/{actor}/routers/{{domain}}_router.py",
+                    line=1,
+                )
+                continue
+            base = stem[: -len("_router")]
+            if not base:
+                continue
+            toks = _tokens(base)
+            has_domain = any(aliases.get(t) for t in toks) or any(
+                len(t) >= 3 and t not in stop for t in toks
+            )
+            if not has_domain:
+                rep.add(
+                    YEL, "RN1", "routers", rel(f, repo),
+                    f"module router '{f.name}' has no domain/feature token",
+                    intended=f"name as modules/{actor}/routers/{{domain}}_router.py",
+                    line=1,
+                )
+
+
+def check_router_naming_convention(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    Validate router placement against documents/NEW_STRUCTURE.md (three axes).
+
+    Per NEW_STRUCTURE.md the abolished `backend/routers/` layer (pre-NEW_STRUCTURE flat layout) is ABOLISHED. Thin
+    routers are re-homed per actor under:
+
+        modules/{module}/routers/{domain}_{operation}_router.py
+
+    The default `router_layout` is "modules". Any surviving file under the
+    abolished root `backend/routers/` is reported as a violation (the NEW home is
+    modules/{module}/routers/). Legacy "flat"/"surface_dirs" layouts are no longer
+    supported.
+    """
+    backend = repo / "backend"
+    routers = backend / "routers"
+
+    if not routers.exists():
+        return
+
+    surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
+    stop = set(PLACEMENT_STOP_TOKENS)
+    aliases = PLACEMENT_ALIAS_TO_DOMAIN
+    router_layout = str(eff.get("router_layout", "modules")).lower()
+    router_pattern = str(eff.get("router_pattern", "") or "")
+
+    # NEW_STRUCTURE.md: routers belong under modules/{module}/routers/.
+    # The abolished root backend/routers/ layer is abolished — validate the NEW layout
+    # and never re-validate the pre-NEW_STRUCTURE flat/surface_dirs convention.
+    _check_module_router_naming(repo, rep, eff)
+    return
+
+    def _tokens(stem: str) -> list[str]:
+        return [t.lower() for t in re.split(r"[^A-Za-z0-9]+", stem) if t]
+
+    def _surface(toks: list[str], hint: str | None = None) -> str | None:
+        if hint and hint in surfaces:
+            return hint
+
+        for t in toks:
+            if t in surfaces:
+                return t
+
+        return None
+
+    def _domain(toks: list[str]) -> str | None:
+        for t in toks:
+            d = aliases.get(t)
+            if d:
+                return d
+
+        return None
+
+    def _domain_or_feature(toks: list[str], surface: str | None = None) -> str | None:
+        for t in toks:
+            d = aliases.get(t)
+            if d:
+                return d
+        for t in toks:
+            if len(t) < 3:
+                continue
+            if t in stop:
+                continue
+            if surface and t == surface:
+                continue
+            return t
+        return None
+
+    def _has_operation(
+        toks: list[str],
+        surface: str | None,
+        domain: str | None,
+    ) -> bool:
+        """
+        Return True if the filename contains at least one meaningful
+        operation token beyond surface/domain.
+        """
+        for t in toks:
+            if len(t) < 3:
+                continue
+
+            if t in stop:
+                continue
+
+            if surface and t == surface:
+                continue
+
+            if domain and (t == domain or aliases.get(t) == domain):
+                continue
+
+            return True
+
+        return False
+
+    def _surface_dir_target(stem: str, surface: str | None, domain_or_feature: str | None) -> str:
+        if surface:
+            rest = stem.lower()
+            prefix = f"{surface}_"
+            if rest.startswith(prefix):
+                rest = rest[len(prefix):]
+            if not rest:
+                rest = domain_or_feature or stem.lower()
+            return f"backend/routers/{surface}/{rest}.py"
+        return "backend/routers/{surface}/{domain_or_feature}.py"
+
+    def _flat_target(
+        stem: str,
+        surface: str | None,
+        domain: str | None,
+    ) -> str:
+        new = stem.lower()
+
+        if surface and not new.startswith(f"{surface}_"):
+            new = f"{surface}_{new}"
+
+        if domain:
+            parts = new.split("_")
+            first = parts[0] if parts else ""
+
+            if domain not in parts and aliases.get(first) != domain:
+                if surface and new.startswith(f"{surface}_"):
+                    rest = new[len(surface) + 1:]
+                    new = f"{surface}_{domain}_{rest}"
+                else:
+                    new = f"{domain}_{new}"
+
+        return f"backend/routers/{new}.py"
+
+    if router_layout == "surface_dirs":
+        try:
+            subdirs = [
+                p for p in routers.iterdir()
+                if p.is_dir()
+                and p.name.lower() not in eff.get("ignore_dirs", set())
+                and p.name.lower() != "__pycache__"
+                and p.name.lower() not in _AUDIT_ROUTER_TOOLING_SUBDIRS
+            ]
+        except OSError:
+            subdirs = []
+
+        for sd in sorted(subdirs):
+            surface = sd.name.lower()
+            if surface not in surfaces:
+                rep.add(
+                    YEL,
+                    "RN3",
+                    "routers",
+                    rel(sd, repo),
+                    f"router sub-folder '{sd.name}/' is not a configured surface",
+                    intended=(
+                        "use the configured router pattern "
+                        f"`{router_pattern or 'backend/routers/{surface}/{domain_or_feature}.py'}`"
+                    ),
+                )
+                continue
+
+            for f in sorted(sd.rglob("*.py")):
+                if f.name == "__init__.py":
+                    continue
+                try:
+                    parts = f.relative_to(sd).parts
+                except ValueError:
+                    parts = ()
+                if len(parts) > 1:
+                    rep.add(
+                        YEL,
+                        "RN2",
+                        "routers",
+                        rel(f, repo),
+                        "router file is nested deeper than the surface folder contract",
+                        intended=f"move to backend/routers/{surface}/{f.name}",
+                    )
+                    continue
+
+                toks = _tokens(f.stem)
+                domain_or_feature = _domain_or_feature(toks, surface)
+                if not domain_or_feature:
+                    rep.add(
+                        YEL,
+                        "RN1",
+                        "routers",
+                        rel(f, repo),
+                        f"router filename '{f.name}' has no domain/feature token",
+                        intended=f"rename to backend/routers/{surface}/{{domain_or_feature}}.py",
+                    )
+
+        for f in sorted(routers.glob("*.py")):
+            if f.name == "__init__.py":
+                continue
+            toks = _tokens(f.stem)
+            surface = _surface(toks)
+            domain_or_feature = _domain_or_feature(toks, surface)
+            target = _surface_dir_target(f.stem, surface, domain_or_feature)
+            missing = []
+            if not surface:
+                missing.append("surface")
+            if not domain_or_feature:
+                missing.append("domain_or_feature")
+            detail = f"; missing {', '.join(missing)}" if missing else ""
+            rep.add(
+                YEL,
+                "RN1",
+                "routers",
+                rel(f, repo),
+                f"router file is at routers/ root, but contract requires a surface folder{detail}",
+                intended=f"move to {target}",
+            )
+        return
+
+    # ------------------------------------------------------------------
+    # RN3 + RN2: router sub-folders are not allowed.
+    # ------------------------------------------------------------------
+    try:
+        subdirs = [
+            p for p in routers.iterdir()
+            if p.is_dir()
+            and p.name.lower() not in eff.get("ignore_dirs", set())
+            and p.name.lower() != "__pycache__"
+            and p.name.lower() not in _AUDIT_ROUTER_TOOLING_SUBDIRS
+        ]
+    except OSError:
+        subdirs = []
+
+    for sd in sorted(subdirs):
+        rep.add(
+            YEL,
+            "RN3",
+            "routers",
+            rel(sd, repo),
+            f"router sub-folder '{sd.name}/' found; routers/ must be flat",
+            intended=(
+                "move router files to "
+                "backend/routers/{surface}_{domain}_{operation}.py"
+            ),
+        )
+
+        for f in sorted(sd.rglob("*.py")):
+            if f.name == "__init__.py":
+                continue
+
+            toks = _tokens(f.stem)
+            surface = _surface(toks, sd.name.lower())
+            domain = _domain(toks)
+            target = _flat_target(f.stem, surface, domain)
+
+            rep.add(
+                YEL,
+                "RN2",
+                "routers",
+                rel(f, repo),
+                f"router file inside sub-folder '{sd.name}/'",
+                intended=f"move to flat router: {target}",
+            )
+
+    # ------------------------------------------------------------------
+    # RN1: flat router filenames must be comprehensive.
+    # ------------------------------------------------------------------
+    for f in sorted(routers.glob("*.py")):
+        if f.name == "__init__.py":
+            continue
+
+        toks = _tokens(f.stem)
+        # Surface is optional for flat routers; unprefixed routers are treated
+        # as the `internal` surface (already a configured surface name).
+        surface = _surface(toks) or "internal"
+        domain = _domain(toks)
+
+        missing: list[str] = []
+
+        if not domain:
+            missing.append("domain")
+
+        if missing:
+            rep.add(
+                YEL,
+                "RN1",
+                "routers",
+                rel(f, repo),
+                f"flat router filename '{f.name}' is not comprehensive; "
+                f"missing {', '.join(missing)}",
+                intended=(
+                    "name as {surface}_{domain}.py (surface optional, defaults "
+                    "to 'internal'), e.g. admin_orders.py, supplier_orders.py, "
+                    "customer_cart.py, ai.py, finance.py"
+                ),
+            )
+
+
+def check_surface_domain_matrix(repo: Path, rep: Report, eff: dict, graph: ModuleGraph,) -> None:
+    """
+    Validate the grouping axis against documents/NEW_STRUCTURE.md.
+
+    Per NEW_STRUCTURE.md the abolished root layers controllers/ services/ models/
+    events/ are ABOLISHED — they must not exist as root layers. If they survive at
+    backend root they are flagged as abolition targets (NS1-NS4 own the canonical
+    home mapping; here we flag the root-layer presence directly).
+
+    The only legitimately domain-grouped root layer is `domains/`. `providers/`
+    and `jobs/` are valid NEW root layers organised by capability, not by domain,
+    so surface-named sub-folders inside them are allowed.
+    """
+    backend = repo / "backend"
+
+    # Abolished flat root layers (Axis confusion). If present, flag them.
+    _ABOLISHED_ROOT_DOMAIN_LAYERS = {
+        "controllers": "split into modules/*/routers/ (thin) + domains/*/services/",
+        "services":    "move into domains/{domain}/services/",
+        "models":      "move into domains/{domain}/models/",
+        "events":      "move into domains/{domain}/events.py (per-domain file)",
+    }
+    for layer, intended in _ABOLISHED_ROOT_DOMAIN_LAYERS.items():
+        layer_dir = backend / layer
+        if layer_dir.is_dir() and any(layer_dir.rglob("*.py")):
+            rep.add(
+                RED,
+                "DOM3",
+                layer,
+                rel(layer_dir, repo),
+                f"abolished root layer '{layer}/' still present at backend root",
+                intended=intended,
+                line=1,
+            )
+
+    surfaces = {str(x).lower() for x in eff.get("surface_names", set())}
+
+    domains: set[str] = set(PLACEMENT_DOMAIN_KEYWORDS.keys())
+    domains |= {str(x).lower() for x in eff.get("domains", {}).keys()}
+
+    if _ACTIVE_REG is not None:
+        domains |= {
+            str(x).lower()
+            for x in getattr(_ACTIVE_REG, "domains", set())
+        }
+
+    # Only domains/ is a legitimately domain-grouped root layer.
+    domain_layers = ("domains",)
+
+    for layer in domain_layers:
+        layer_dir = backend / layer
+
+        if not layer_dir.exists():
+            continue
+
+        try:
+            entries = list(layer_dir.iterdir())
+        except OSError:
+            continue
+
+        for entry in entries:
+            if not entry.is_dir():
+                continue
+
+            name = entry.name.lower()
+
+            if name in {"__pycache__"}:
+                continue
+
+            # Domain folders are allowed.
+            # Domain wins over surface.
+            if name in domains:
+                continue
+
+            # Surface-only folders are invalid inside domain layers.
+            if name in surfaces:
+                rep.add(
+                    RED,
+                    "DOM3",
+                    layer,
+                    rel(entry, repo),
+                    f"SURFACE folder '{name}/' inside DOMAIN layer {layer}/",
+                    intended=(
+                        f"remove {layer}/{name}/; move its files into the "
+                        f"correct domain folder or rename to a real domain "
+                        f"(finance/orders/catalog/supplier/...)"
+                    ),
+                )
+
+
+
 def main() -> int:
     """ZERO arguments. ZERO flags. Single output: SYSTEM_AUDIT_REPORT.md."""
     repo = find_repo(None)
@@ -14100,4 +14902,3 @@ def main() -> int:
 # ============================================================================
 if __name__ == "__main__":
     sys.exit(main())
-    

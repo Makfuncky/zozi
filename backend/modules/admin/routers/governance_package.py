@@ -15,14 +15,17 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import Employee, EmployeeExpense, EmployeeLeaveLedger
-from services.common.asset_tracking import AssetTrackingService
-from services.audit.compliance_engine import GCCComplianceEngine, get_compliance_engine
-from services.finance.expense_processing import ExpenseProcessingService
-from services.hr.leave_accrual import LeaveAccrualEngine
-from utils.country_rls import get_current_country_scope as get_country_scope
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.governance.models.admin import EmployeeExpense
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeLeaveLedger
+from domains.comms.services.asset_tracking import AssetTrackingService
+from domains.governance.services.compliance_engine import GCCComplianceEngine
+from domains.governance.services.compliance_engine import get_compliance_engine
+from domains.finance.services.expense_processing import ExpenseProcessingService
+from domains.hr.services.leave_accrual import LeaveAccrualEngine
+from domains.country.utils.country_rls import get_current_country_scope as get_country_scope
 
 logger = logging.getLogger(__name__)
 

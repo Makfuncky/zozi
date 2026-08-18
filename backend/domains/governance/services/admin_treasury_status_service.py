@@ -2,15 +2,21 @@
 from fastapi import Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import FinanceAutomationLog, Payout, User
-from db.schemas import PayoutCreate, PayoutOut
-from utils.dependencies import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.datetime_utils import utcnow
-from utils.audit import audit_log, AuditAction
-from services.treasury.auto_payout_scheduler import get_background_job_status as _get_bg_status, start_auto_payout_background_job as _start_bg_job, stop_auto_payout_background_job as _stop_bg_job, run_auto_payout_sweep as _run_supplier_sweep, run_auto_logistics_payout_sweep as _run_logistics_sweep
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.payments.models.payments import Payout
+from infrastructure.database.schemas import PayoutCreate, PayoutOut
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.audit import audit_log, AuditAction
+from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
+from domains.finance.services.auto_payout_scheduler import start_auto_payout_background_job as _start_bg_job
+from domains.finance.services.auto_payout_scheduler import stop_auto_payout_background_job as _stop_bg_job
+from domains.finance.services.auto_payout_scheduler import run_auto_payout_sweep as _run_supplier_sweep
+from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as _run_logistics_sweep
 
 class PayoutVerifyRequest(BaseModel):
     note: str | None = None

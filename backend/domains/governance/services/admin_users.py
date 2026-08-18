@@ -17,20 +17,21 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from services.common.db_read import all_rows, first
+from domains.comms.services.db_read import all_rows
+from domains.comms.services.db_read import first
 
-from _legacy.models import Order, OrderItem, User
+from domains.accounts.models.user import User
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 
-from controllers.customer.users import (
-    _build_user_delete_blocker,
-    _delete_order_records,
-    _hard_delete_user_record,
-    audit_log,
-    AuditAction,
-    force_reset_password_service,
-    get_password_hash,
-    logger,
-)
+from modules.admin.routers import _build_user_delete_blocker
+from modules.admin.routers import _delete_order_records
+from modules.admin.routers import _hard_delete_user_record
+from modules.admin.routers import audit_log
+from modules.admin.routers import AuditAction
+from modules.admin.routers import force_reset_password_service
+from modules.admin.routers import get_password_hash
+from modules.admin.routers import logger
 
 
 def delete_user_admin(user_id: int, current_user: dict, db: Session, delete_orders: bool = False) -> dict:

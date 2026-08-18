@@ -16,11 +16,12 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import User
-from services.admin.users_service import update_user_role, toggle_user_active
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.pagination import paginated_response
+from domains.accounts.models.user import User
+from domains.governance.services.users_service import update_user_role
+from domains.governance.services.users_service import toggle_user_active
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.pagination import paginated_response
 
 
 def _scope(db: Session, country_code: str):
@@ -194,7 +195,7 @@ def set_user_active(db: Session, country_code: str, user_id: int, acting_user: d
 
 
 def force_reset_password(db: Session, country_code: str, user_id: int, new_password: str, acting_user: dict) -> Dict[str, Any]:
-    from utils.auth import get_password_hash
+    from infrastructure.utils.auth import get_password_hash
 
     user = get_user_in_country(db, country_code, user_id)
     user.hashed_password = get_password_hash(new_password)

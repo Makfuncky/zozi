@@ -2,12 +2,17 @@
 from typing import Optional
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import SupplierProfile, User
-from db.schemas import ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin
-from utils.country_rls import enforce_country_access
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import enforce_country_access
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
 
 def _supplier_to_dict(s: SupplierProfile) -> dict:
     return {'id': s.id, 'user_id': s.user_id, 'business_name': s.business_name, 'slug': s.slug, 'business_type': s.business_type, 'country_code': s.country_code, 'phone_business': s.phone_business, 'website': s.website, 'address': s.address, 'city': s.city, 'region': s.region, 'verification_status': s.verification_status, 'verified_at': s.verified_at.isoformat() if s.verified_at else None, 'is_active': s.is_active, 'is_deleted': getattr(s, 'is_deleted', False), 'badge_level': getattr(s, 'badge_level', None), 'created_at': s.created_at.isoformat() if s.created_at else None, 'updated_at': s.updated_at.isoformat() if s.updated_at else None}
@@ -34,7 +39,7 @@ def list_pending_kyc_suppliers(code: str=Path(..., description='ISO country code
     q = db.query(SupplierProfile).filter(SupplierProfile.verification_status.in_(['pending', 'documents_submitted', 'under_review']), SupplierProfile.is_deleted == False)
     if code != '*':
         q = q.filter(SupplierProfile.country_code == code.upper())
-    from utils.pagination import paginated_response
+    from infrastructure.utils.pagination import paginated_response
     return paginated_response(q.order_by(SupplierProfile.updated_at.desc()), page=page, size=size, serializer=_supplier_to_dict)
 
 def get_supplier_by_country(code: str=Path(...), supplier_id: int=Path(...), _: User=Depends(require_admin), db: Session=Depends(get_db)):
@@ -69,7 +74,7 @@ def approve_supplier_kyc(code: str=Path(...), supplier_id: int=Path(...), admin:
     if not s:
         raise HTTPException(404, detail='Supplier not found')
     s.verification_status = 'approved'
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     s.verified_at = utcnow()
     s.verified_by = admin.id if hasattr(s, 'verified_by') else None
     db.commit()
@@ -91,7 +96,7 @@ def suspend_supplier(code: str=Path(...), supplier_id: int=Path(...), _: User=De
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail='Supplier not found')
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 0
@@ -103,7 +108,7 @@ def activate_supplier(code: str=Path(...), supplier_id: int=Path(...), _: User=D
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail='Supplier not found')
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 1
@@ -162,7 +167,7 @@ def bulk_supplier_action(payload: dict, current_user: User=Depends(require_admin
             continue
         if action == 'verify':
             s.verification_status = 'approved'
-            from utils.datetime_utils import utcnow
+            from infrastructure.utils.datetime_utils import utcnow
             if hasattr(s, 'verified_at'):
                 s.verified_at = utcnow()
         elif action == 'reject':

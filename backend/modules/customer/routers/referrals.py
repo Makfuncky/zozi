@@ -4,10 +4,11 @@ import secrets
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.commerce.promotion_controller import get_promotion_config
-from db.database import get_db
-from _legacy.models import Referral, User
-from utils.dependencies import get_current_user
+from domains.orders.services.promotion_controller import get_promotion_config
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import Referral
+from domains.accounts.models.user import User
+from infrastructure.utils.dependencies import get_current_user
 
 router = APIRouter()
 

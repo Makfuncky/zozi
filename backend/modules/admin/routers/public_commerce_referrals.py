@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
+from infrastructure.database.database import get_db
 from typing import Any, Dict
 
-from controllers.commerce.referrals_controller import get_referral_code, get_referral_config
+from domains.orders.services.referrals_controller import get_referral_code
+from domains.orders.services.referrals_controller import get_referral_config
 
 router = APIRouter(prefix="/api/v1")
 

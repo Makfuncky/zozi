@@ -18,7 +18,7 @@ from domains.accounts.services.search_service import (
 from domains.accounts.services.search_service import (
     smart_search as _smart_search,
 )
-from routers.generated.auto_router import get
+from infrastructure.routing.route_contract import get
 
 @get("/search", skip=True)
 def smart_search(

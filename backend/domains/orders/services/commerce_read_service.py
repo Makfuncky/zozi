@@ -8,7 +8,7 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from _legacy.models import Address
+from domains.accounts.models.core import Address
 
 
 def list_user_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0) -> list:

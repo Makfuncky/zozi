@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Any, Optional
 
-from controllers.core.ai_upload_controller import UploadFile, cancel_job, create_job, process_job, publish_job
+from domains.governance.services.ai_upload_controller import UploadFile, cancel_job, create_job, process_job, publish_job
 
 router = APIRouter(prefix="/api/v1")
 

@@ -4864,8 +4864,187 @@ Plan
 
 | sno | module | domains | modules | infrastrcutures | rbac | kernel |
 
+--------------------------------------------
+
+- You are independently code manager and auditor who is developing/changing audit file code. 
+- Make change into the audit file `scripts\system_trackers\system_architecture_audit.py` according to the `documents\NEW_STRUCTURE.md` to determine to stop other AI to cheat and telling lies for implementation.
+- Start/Continue implementation of changes in the audit file carefully according to your findings.
+- There is a range of changes needed according to the `documents\NEW_STRUCTURE.md` and architecture into the `scripts\system_trackers\system_architecture_audit.py`
+- Convert all the OLD and LEGACY architecture and structure audit into NEW architecture and structure audit completely, I don't wanna see any trace of OLD and LEGACY structure into the audit file and result.
+
+--------------------------------------------
+
+- read `scripts\system_trackers\feature_tracking_report.py` now we need to update the tracker according to the `documents\NEW_STRUCTURE.md` to determine which domain and feature is implemented and what is the status of the implementation and percetnage and what the files and everything according to the `modules`.
+- read in detail both file and make changes independently like a codeviewer.
+- convert all the OLD architecture and structure audit into NEW architecture and structure audit completely, I don't wanna see any trace of OLD structure into the audit file and result.
+
+now you have upgrade and improve the `scripts\system_trackers\feature_tracking_report.py` to cehck the content of the files and use the ollama to check what have written into the files.
+break everything hierarchy wise 
+MODUELS
+DOMAINS
+FEATURES
+becasue it is important to understand what is running into the codebase.
+give me voliation alert also of the NEW_STRUCTURE.md
+give the list of files also and feature description in detail by using the ollama.
+
+--------------------------------------------
+
+
+- Read carefully `documents\NEW_STRUCTURE.md` and read the `\backend\db` and what is your suggestion to do with this folder according to the `documents\NEW_STRUCTURE.md`, transfer this folder properly where it should be to go according to the `documents\NEW_STRUCTURE.md`
+
+- Read carefully `documents\NEW_STRUCTURE.md` and read the `\backend\var` and what is your suggestion to do with this folder according to the `documents\NEW_STRUCTURE.md`, transfer this folder properly where it should be to go according to the `documents\NEW_STRUCTURE.md`, also check all the files of the `\backend\var` folder properly for any duplication in the system in detail. and check what are essentially changes need to make according to the `documents\NEW_STRUCTURE.md` and `documents\TECHNOLOGY_USED.md`. our objective to convert everything according to the `documents\NEW_STRUCTURE.md` and clean structure.
+
+
+`documents\TECHNOLOGY_USED.md`
+
+
+- Never touch `git add -A && git commit -m`, `git pull` and any other `git` request. 
+
+- Now continue repairing, wiring, changing in the backend to complete structure accrding to the `documents\NEW_STRUCTURE.md` after verify the new folders hierarchy deployment is correct.
+- do not work and wire antthing with the _lagacy folder becasue _lagacy folder will delete later. 
+- and if I am not wrong `documents\NEW_STRUCTURE.md`  don't have router system. verify it properly.
+- all the folder must be needed aligned as same as define into `documents\NEW_STRUCTURE.md`.
+
+- `scripts/coherence_gate.py` was designed on previous architecture so leave it now. we are not working anymore on _lagacy and OLD architecture.
+- Now start repairing, wiring, changing accrding to the `documents\NEW_STRUCTURE.md` after verify the new folders hierarchy deployment is correct.
+- do not work and wire antthing with the _legacy folder becasue _legacy folder will delete later. 
+- and if I am not wrong `documents\NEW_STRUCTURE.md`  don't have router system. verify it properly.
+- do not work and wire anything with the `backend\_lagacy` folder becasue _lagacy folder will delete later. 
+- all the folder must be needed aligned as same as define into `documents\NEW_STRUCTURE.md`.
 
 
 
+1. Duplicate Order model — both domains/orders/models/orders.py and order_entities.py define class Order (same table) → "Table already defined" + cascading NoReferencedTableError for some FKs.
+2. Some tests (e.g. test_orders_audit.py, test_orders_controller_audit.py) reference already-migrated-away backend/services/… and backend/controllers/… paths → FileNotFoundError.
+3. A few import errors in test_ai_research_router.py, test_auto_router_readiness.py, test_communication_services.py, test_derive.py, test_internal_communication.py.
+
+Want me to tackle routers/ or utils/ next, or do a cleanup pass (e.g., the duplicate _event_publisher singleton in domains/payments/services/payments.py)?
+
+------------------------------------------------------------
+
+Restructure utils/ to match NEW_STRUCTURE
+GOAL
+Resolve the misplaced top-level backend/utils/ package (67 .py files + subfolders) per
+documents/NEW_STRUCTURE.md. Split it into infrastructure/utils/ (technical helpers) and
+kernel/ (cross-cutting primitives); route anything domain-specific into domains/<domain>/...;
+delete duplicates.
+
+REPO: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend
+
+CURRENT STATE (verify first)
+- backend/utils/ holds ~67 top-level .py files plus subfolders (e.g. utils/migrations.py).
+- NEW_STRUCTURE has NO top-level utils/. Canonical homes:
+    * infrastructure/utils/  -> technical/platform utilities (DB helpers, crypto, http, ids, formatting, feature flags, etc.) — this dir ALREADY EXISTS.
+    * kernel/                -> cross-cutting primitives shared by everything (result/types, errors, clock, tenancy/RLS context) — this dir ALREADY EXISTS.
+    * domains/<domain>/...   -> anything that is really business logic for one domain.
+- KNOWN DUPLICATE: backend/utils/migrations.py is legacy and duplicates
+  backend/infrastructure/utils/migrations.py (which lifespan.py uses). The utils/ one should
+  be DELETED, not merged.
+- utils/ is heavily imported across the codebase, so this is import-rewrite heavy.
+
+STEPS
+1. Inventory: Get-ChildItem backend/utils -Recurse -File -Filter *.py. For each file, read its
+   imports/usages and CLASSIFY:
+     A. technical/platform  -> infrastructure/utils/
+     B. cross-cutting kernel primitive -> kernel/
+     C. domain-specific     -> domains/<domain>/utils/ (or domains/<domain>/services/)
+     D. deprecated/duplicate -> delete (e.g. utils/migrations.py; confirm no live importer
+        of `from utils.migrations import` first)
+2. Move files by class (use Copy-Item then remove original; avoid underscore dirs). When
+   moving into infrastructure/utils/ or kernel/, CHECK FOR NAME CLASHES with existing files —
+   do NOT overwrite; rename or merge if the existing one is weaker/empty.
+3. Rewrite imports repo-wide:
+     grep -rl "from utils\." backend  and  grep -rl "import utils\b" backend
+   For each match, change `from utils.<x> import ...` to the new location
+   (`from infrastructure.utils.<x> import ...`, `from kernel.<x> import ...`, or the domain path).
+   Use the bulk replace carefully and re-grep until zero `from utils.` / `import utils` remain
+   (except intentional `infrastructure.utils` / `domains/.../utils`).
+4. Verify nothing still imports the deleted utils/migrations.py; if found, point it at
+   infrastructure.utils.migrations.
+5. Update any CI / script that referenced backend/utils paths.
+
+GUARDRAILS
+- Do NOT create underscore-prefixed directories (environment cleaner deletes them).
+- Merge, don't blindly overwrite: if infrastructure/utils/ or kernel/ already has a file with
+  the same name, reconcile rather than replace.
+- Keep `infrastructure.utils.migrations` as the single source; delete the legacy utils one.
+- One classification pass, then one move+rewrite pass; re-verify between.
+
+VERIFICATION
+- python -m py_compile backend/infrastructure/utils/*.py backend/kernel/*.py and the moved files
+- grep -rl "from utils\." backend  and  grep -rl "import utils\b" backend  -> expect EMPTY
+  (excluding infrastructure/utils and domains/*/utils paths)
+- python -m pytest --collect-only -q in backend/ and confirm the error count does not rise.
+- Confirm backend/utils no longer exists (or only contains files you intentionally left, with a
+  note explaining why).
+
+OUTPUT
+A short report: counts per class (A/B/C/D), files merged vs deleted, and any import you could
+not resolve.
 
 
+------------------------------------------------------------
+
+Restructure modules/ to match NEW_STRUCTURE
+GOAL
+Bring backend/modules/ in line with documents/NEW_STRUCTURE.md (Module axis = actor-facing
+API surface). Thin FastAPI routers under modules/{actor}/routers/ must delegate to domain
+logic in domains/*/services/* — NOT to the deleted controllers/ package.
+
+REPO: D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend
+
+CURRENT STATE (verify with Get-ChildItem first)
+- main.py:_load_routers() already loops modules.{actor}.routers and includes the
+  `routers` and `public_routers` lists exposed by each modules/{actor}/routers/__init__.py.
+  Actor modules today: customer, supplier, logistics, admin, employee (confirm exact set).
+- modules/{actor}/routers/ contains a MIX of:
+  (a) hand-written routers (fine), and
+  (b) ~200 files whose line 1 is:
+        """AUTO-GENERATED - DO NOT EDIT MANUALLY (generated by routers/generated/auto_router.py)"""
+      and which do `from controllers.<x> import ...` / `import controllers.<x>`.
+  controllers/ was DELETED during the migration, so these (b) routers currently FAIL to import
+  and are silently skipped at boot by main._load_routers()'s try/except (routes are dead but
+  the app still boots).
+- The real controller logic now lives in domains/*/services/*_controller*.py (e.g.
+  domains/catalog/services/category_admin_controller__routers.py,
+  domains/finance/services/accounting_controller__routers.py). Those are the modules the
+  generated routers should delegate to.
+
+STEPS
+1. Inventory the broken routers:
+   grep -rl "from controllers" backend/modules  (and "import controllers")
+   Save the list.
+2. For each broken file, find the migrated domain equivalent:
+   - Map the old controller path to its new home. Pattern:
+       controllers.<actor>.<name>_controller  ->  domains/<domain>/services/<name>_controller[_routers].py
+     Confirm the target file exists and that the imported symbols (audit_actions,
+     database_overview, export_users_csv, etc.) are actually defined there (grep the symbol).
+   - If the symbol moved, update ONLY the import line(s); keep the APIRouter(prefix=...) and
+     route definitions intact. Prefer `from domains.<domain>.services.<name>[_routers] import ...`.
+3. If a broken router has NO corresponding domain service yet (logic not migrated), do NOT
+   guess — flag it in a findings list and leave the file, OR (if trivial) inline the logic as a
+   thin wrapper. Do not delete working routes.
+4. Ensure every modules/{actor}/routers/__init__.py aggregates its router modules into
+   `routers` (auth-protected) and `public_routers` (public prefix) lists, matching what
+   main._load_routers() expects. Fix any module that only exports one of the two.
+5. Remove the now-inaccurate AUTO-GENERATED marker line only where you also rewrote the file;
+   otherwise leave it (cosmetic). Do NOT regenerate routers with scripts/retired_auto_router.py
+   (codegen is retired).
+
+GUARDRAILS
+- Do NOT create underscore-prefixed directories (an environment cleaner deletes them).
+- Keep main._load_routers() working; never break the `routers`/`public_routers` contract.
+- One actor module at a time. After each, re-run verification before moving on.
+- Don't touch providers/ (payment providers) — that's a separate allowed top-level package.
+
+VERIFICATION
+- python -m py_compile on every changed modules/{actor}/routers/*.py
+- grep -rl "from controllers" backend/modules  -> expect EMPTY
+- Boot-style check: python -c "import sys; sys.path.insert(0,'.'); import main" (or, if env
+  vars block it, import each modules.{actor}.routers and assert the package imports without
+  error). Confirm no router is skipped in logs.
+- python -m pytest --collect-only -q in backend/ and confirm the error count does not rise.
+
+OUTPUT
+A short report: # files fixed, # still-unmigrated (with reasons), and any symbols you could
+not locate.

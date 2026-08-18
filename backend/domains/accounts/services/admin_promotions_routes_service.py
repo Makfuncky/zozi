@@ -11,7 +11,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.utils.dependencies import require_admin
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 

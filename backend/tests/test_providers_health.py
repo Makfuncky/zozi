@@ -1,7 +1,7 @@
 """Provider-layer health gates (P3 / P4).
 
 Validates that ``providers/`` is import-clean (no BOM / syntax defects such as the
-one remediated in ``core.route_contract``) and that the WhatsApp message provider is
+one remediated in ``infrastructure.routing.route_contract``) and that the WhatsApp message provider is
 correctly wired through ``services.comms.whatsapp_service`` and degrades safely when
 its optional SDK (``twilio``) is absent.
 """

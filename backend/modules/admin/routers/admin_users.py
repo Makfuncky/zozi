@@ -2,24 +2,22 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    delete_user_admin,
-    force_reset_password_admin,
-    hard_delete_entity,
-    restore_entity,
-    toggle_user_active,
-    update_user_role,
-)
-from db.database import get_db
-from db.schemas import ArchiveRequest, BulkActionRequest, UserAdminUpdate, UserOut
-from _legacy.models import User
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin
-from utils.pagination import paginated_response
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.accounts.services.identity_admin_service import delete_user_admin
+from domains.governance.services.admin_users import force_reset_password_admin
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.governance.services.users_service import toggle_user_active
+from domains.governance.services.users_service import update_user_role
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, UserAdminUpdate, UserOut
+from domains.accounts.models.user import User
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.pagination import paginated_response
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

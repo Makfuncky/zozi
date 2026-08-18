@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import VideoRoom
+from domains.accounts.models.core import VideoRoom
 import structlog
 logger = structlog.get_logger(__name__)
 

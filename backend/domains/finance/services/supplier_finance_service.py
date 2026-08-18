@@ -19,16 +19,15 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Order,
-    OrderItem,
-    SupplierBankAccount,
-    SupplierSettlement,
-    Payout,
-    TransactionLedger,
-)
-from utils.pagination import cursor_paginate_desc
-from services.common.write_helpers import add_and_flush, commit_and_refresh
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import SupplierBankAccount
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Payout
+from infrastructure.utils.pagination import cursor_paginate_desc
+from domains.comms.services.write_helpers import add_and_flush
+from domains.comms.services.write_helpers import commit_and_refresh
 import structlog
 logger = structlog.get_logger(__name__)
 

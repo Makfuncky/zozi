@@ -9,9 +9,12 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from _legacy.models.employee_models import Employee, PhysicalIDCard, DynamicQRSession
-from _legacy.models import User, TreasuryAccount
-from services.comms.notification_service import NotificationService
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import PhysicalIDCard
+from domains.hr.models.employee_models import DynamicQRSession
+from domains.accounts.models.user import User
+from domains.finance.models.finance import TreasuryAccount
+from domains.comms.services.notification_service import NotificationService
 
 
 logger = logging.getLogger("zozi.offboarding")

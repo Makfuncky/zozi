@@ -29,7 +29,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
+from infrastructure.database.models import (
     LogisticsPartner,
     LogisticsPartnerServiceArea,
     Product,

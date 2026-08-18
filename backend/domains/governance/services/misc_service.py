@@ -7,13 +7,26 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Product, User, Order, Category, Coupon, Banner, FlashSale,
-    SupplierProfile, LogisticsPartner, CountryConfig, Payout, Shipment,
-    Invoice, SupportTicket, ReturnRequest, SupplierDocument, Review, AuditLog
-)
-from utils.audit import audit_log
-from utils.constants import DEFAULT_COUNTRY
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import Review
+from domains.comms.models.marketing import FlashSale
+from domains.comms.models.suppliers import SupplierProfile
+from domains.comms.models.suppliers import SupplierDocument
+from domains.country.models.countries import CountryConfig
+from domains.finance.models.finance import Invoice
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import ReturnRequest
+from domains.payments.models.payments import Coupon
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Payout
+from infrastructure.utils.audit import audit_log
+from infrastructure.utils.constants import DEFAULT_COUNTRY
 
 
 def soft_delete(db: Session, model: type, record_id: int, acting_user: dict, reason: Optional[str] = None) -> None:

@@ -1,8 +1,8 @@
 """Admin settings router."""
 from fastapi import APIRouter, Depends
-from utils.dependencies import require_admin
-from utils.config import settings
-from _legacy.models import User
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.config import settings
+from domains.accounts.models.user import User
 
 router = APIRouter(prefix="/api/v1/admin")
 

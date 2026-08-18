@@ -20,20 +20,18 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CashPositionSnapshot,
-    PayoutBatch,
-    PayoutBatchItem,
-    SupplierSettlement,
-    TreasuryAccount,
-)
-from _legacy.models.admin import LogisticsCODRemittanceReceipt
-from _legacy.models.payments import Payout
-from services.treasury.treasury_engine import TreasuryEngine
-from utils.constants import CASH_ACCOUNT, PAYABLES_ACCOUNT
+from domains.finance.models.finance import CashPositionSnapshot
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TreasuryAccount
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.payments.models.payments import Payout
+from domains.finance.services.treasury_engine import TreasuryEngine
+from infrastructure.utils.constants import CASH_ACCOUNT, PAYABLES_ACCOUNT
 import structlog
-from utils.audit import audit_log, AuditAction
-from utils.datetime_utils import utcnow
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.datetime_utils import utcnow
 logger = structlog.get_logger(__name__)
 
 logger = logging.getLogger(__name__)
@@ -199,8 +197,8 @@ def record_cod_remittance(
     bank_reference: str,
 ) -> dict:
     """Record a logistics COD remittance receipt and sync the ledger."""
-    from _legacy.models import Shipment as ShipmentModel
-    from _legacy.models.orders import Order as OrderModel
+    from domains.logistics.models.logistics import Shipment as ShipmentModel
+    from domains.orders.models.orders import Order as OrderModel
 
     cc = country_code.upper()
     shipment = db.query(ShipmentModel).filter(ShipmentModel.order_id == order_id).first()
@@ -222,9 +220,7 @@ def record_cod_remittance(
 
     # Keep the double-entry ledger in sync with the reconciliation engine.
     try:
-        from services.finance.general_ledger_service import (
-            post_logistics_cod_remittance_journal,
-        )
+        from domains.finance.services.general_ledger_service import post_logistics_cod_remittance_journal
 
         post_logistics_cod_remittance_journal(db, receipt.id, Decimal(str(amount)), country_code=cc)
     except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as gl_err:  # pragma: no cover - ledger sync is best-effort
@@ -246,8 +242,8 @@ def settle_supplier(
     payout_id: Optional[int] = None,
 ) -> dict:
     """Create a supplier settlement row for a delivered order."""
-    from _legacy.models.countries import CountryConfig
-    from _legacy.models.orders import Order as OrderModel
+    from domains.country.models.countries import CountryConfig
+    from domains.orders.models.orders import Order as OrderModel
 
     cc = country_code.upper()
     gross = gross_amount if gross_amount is not None else net_amount
@@ -289,7 +285,7 @@ def approve_settlement(db: Session, *, country_code: str, settlement_id: int) ->
     db.commit()
 
     try:
-        from services.finance.general_ledger_service import post_supplier_settlement_journal
+        from domains.finance.services.general_ledger_service import post_supplier_settlement_journal
 
         post_supplier_settlement_journal(
             db,

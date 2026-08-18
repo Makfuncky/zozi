@@ -13,15 +13,13 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    AccountGroup,
-    FinancialReport,
-    JournalEntry,
-    JournalEntryLine,
-)
-from utils.money import round_money
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import AccountGroup
+from domains.finance.models.finance import FinancialReport
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from kernel.money import round_money
 
 logger = logging.getLogger(__name__)
 

@@ -26,8 +26,9 @@ from uuid import uuid4
 from fastapi import HTTPException
 from sqlalchemy.orm import Query, Session
 
-from _legacy.models import Product, SupplierProfile
-from utils.slug import generate_slug, generate_slug_hash
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.slug import generate_slug, generate_slug_hash
 import structlog
 logger = structlog.get_logger(__name__)
 

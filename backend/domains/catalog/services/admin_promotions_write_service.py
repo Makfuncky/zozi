@@ -13,13 +13,11 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Banner,
-    Coupon,
-    FlashSale,
-    PromotionEngineConfig,
-    PromotionOrderTier,
-)
+from domains.comms.models.marketing import FlashSale
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionOrderTier
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Coupon
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -283,7 +281,7 @@ def update_banner(
 
 
 def delete_banner(db: Session, *, banner_id: int, admin_id: Optional[int] = None) -> None:
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
 
     banner = db.query(Banner).filter(Banner.id == banner_id).first()
     if not banner:

@@ -7,14 +7,12 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.comms.email_enrichment import (
-    resolve_address,
-    resolve_recipients,
-    scan_content_for_dlp,
-    send_email_notification,
-)
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.comms.services.email_enrichment import resolve_address
+from domains.comms.services.email_enrichment import resolve_recipients
+from domains.comms.services.email_enrichment import scan_content_for_dlp
+from domains.comms.services.email_enrichment import send_email_notification
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

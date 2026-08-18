@@ -20,52 +20,22 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from services.treasury.cash_management_service import (
-    auto_reconcile_bank_transactions as _auto_reconcile_bank_transactions,
-)
-from services.treasury.cash_management_service import (
-    flag_bank_transaction as _flag_bank_transaction,
-)
-from services.treasury.cash_management_service import (
-    import_bank_transactions as _import_bank_transactions,
-)
-from services.treasury.cash_management_service import (
-    log_bank_transaction as _log_bank_transaction,
-)
-from services.treasury.cash_management_service import (
-    process_logistics_payout_batch as _process_logistics_payout_batch,
-)
-from services.treasury.cash_management_service import (
-    process_supplier_payout_batch as _process_supplier_payout_batch,
-)
-from services.treasury.cash_management_service import (
-    reconcile_bank_transaction as _reconcile_bank_transaction,
-)
-from services.treasury.cash_management_service import (
-    record_cod_remittance as _record_cod_remittance,
-)
-from services.treasury.cash_management_service import (
-    record_vat_remittance as _record_vat_remittance,
-)
-from services.treasury.cash_management_service import (
-    reject_cod_remittance_receipt as _reject_cod_remittance_receipt,
-)
-from services.treasury.cash_management_service import (
-    resolve_bank_transaction_exception as _resolve_bank_transaction_exception,
-)
-from services.treasury.cash_management_service import (
-    serialize_cod_remittance_receipt as _serialize_cod_remittance_receipt,
-)
-from services.treasury.cash_management_service import (
-    upsert_finance_bank_settings as _upsert_finance_bank_settings,
-)
-from services.treasury.cash_management_service import (
-    verify_cod_remittance_receipt as _verify_cod_remittance_receipt,
-)
-from services.treasury.payout_dispatch_service import (
-    dispatch_transfer_batch_with_audit as _dispatch_transfer_batch_with_audit,
-)
-from utils.money import to_decimal
+from domains.finance.services.cash_management_service import auto_reconcile_bank_transactions as _auto_reconcile_bank_transactions
+from domains.finance.services.cash_management_service import flag_bank_transaction as _flag_bank_transaction
+from domains.finance.services.cash_management_service import import_bank_transactions as _import_bank_transactions
+from domains.finance.services.cash_management_service import log_bank_transaction as _log_bank_transaction
+from domains.finance.services.cash_management_service import process_logistics_payout_batch as _process_logistics_payout_batch
+from domains.finance.services.cash_management_service import process_supplier_payout_batch as _process_supplier_payout_batch
+from domains.finance.services.cash_management_service import reconcile_bank_transaction as _reconcile_bank_transaction
+from domains.finance.services.cash_management_service import record_cod_remittance as _record_cod_remittance
+from domains.finance.services.cash_management_service import record_vat_remittance as _record_vat_remittance
+from domains.finance.services.cash_management_service import reject_cod_remittance_receipt as _reject_cod_remittance_receipt
+from domains.finance.services.cash_management_service import resolve_bank_transaction_exception as _resolve_bank_transaction_exception
+from domains.finance.services.cash_management_service import serialize_cod_remittance_receipt as _serialize_cod_remittance_receipt
+from domains.finance.services.cash_management_service import upsert_finance_bank_settings as _upsert_finance_bank_settings
+from domains.finance.services.cash_management_service import verify_cod_remittance_receipt as _verify_cod_remittance_receipt
+from domains.finance.services.payout_dispatch_service import dispatch_transfer_batch_with_audit as _dispatch_transfer_batch_with_audit
+from kernel.money import to_decimal
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -88,7 +58,7 @@ def record_badge_billing_payment(
     notes: Optional[str] = None,
 ) -> Any:
     """Record a badge billing payment and commit."""
-    from services.supplier.supplier_badge_service import record_badge_billing_payment as _impl
+    from domains.suppliers.services.supplier_badge_service import record_badge_billing_payment as _impl
 
     record = _impl(
         billing_id=billing_id,

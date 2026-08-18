@@ -8,19 +8,114 @@ from fastapi import Body, Depends, HTTPException, Path, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
-from utils.constants import MAX_BULK_ITEMS
-from db.database import get_db, Base
-from db.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
-from controllers.admin.admin_controller import get_current_admin, get_current_user, require_admin, require_admin_2fa_enabled, require_admin_2fa_verified, require_permission, get_all_users, update_user_role, toggle_user_active, delete_user_admin, bulk_delete_users_admin, force_reset_password_admin, create_staff_account, update_staff_account, bulk_update_staff_accounts, delete_staff_account, get_all_orders, delete_order_admin, update_order_status, refund_order, update_order_tracking, get_all_products, delete_product_admin, restore_product_admin, get_analytics, get_supplier_comparison, get_customer_insights, get_audit_log_page, get_available_audit_actions, get_pending_suppliers, verify_supplier, reject_supplier, get_pending_products, approve_product, reject_product, toggle_product_badge, list_coupons, create_coupon, update_coupon, delete_coupon, list_tickets, get_ticket_detail, reply_to_ticket, update_ticket_status, list_pending_payouts, verify_payout, get_hierarchy_permissions, update_role_permissions, get_analytics_timeseries, get_top_products_analytics, get_user_growth_analytics, get_chatbot_analytics, get_all_suppliers, bulk_update_order_status_admin, bulk_delete_orders_admin, bulk_delete_products_admin, bulk_product_moderation, bulk_supplier_verification, bulk_manage_suppliers, bulk_update_users_role, bulk_toggle_users_active, list_staff_accounts, get_staff_permission_catalog, update_staff_account, list_pending_bank_accounts, delete_bank_account_record, verify_bank_account, get_database_overview
-from services.hierarchy.hierarchy_service import get_authority_level, get_user_chain, get_all_subordinates, get_team_members, is_in_chain, can_manage as hierarchy_can_manage_service, get_org_chart, get_home_org_unit, reassign_manager, backfill_authority_levels
-from services.users.approval_matrix_service import APPROVAL_RULES, can_approve, require_approval, resolve_approvers, get_approval_chain
-from controllers.catalog.banner_controller import get_banners, get_banner_by_id, create_banner, update_banner, delete_banner, BannerCreate, BannerUpdate
+from infrastructure.utils.constants import MAX_BULK_ITEMS
+from infrastructure.database.database import get_db, Base
+from infrastructure.database.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
+from domains.governance.services.admin_controller import get_current_admin
+from domains.governance.services.auth_controller_service import get_current_user
+from infrastructure.utils.dependencies import require_admin
+from domains.governance.services.admin_controller import require_admin_2fa_enabled
+from domains.governance.services.admin_controller import require_admin_2fa_verified
+from domains.governance.services.effective_permissions import require_permission
+from domains.governance.services.users_service import get_all_users
+from domains.governance.services.users_service import update_user_role
+from domains.governance.services.users_service import toggle_user_active
+from domains.accounts.services.identity_admin_service import delete_user_admin
+from domains.governance.services.admin_users import bulk_delete_users_admin
+from domains.governance.services.admin_users import force_reset_password_admin
+from domains.governance.services.users_service import create_staff_account
+from domains.governance.services.users_service import update_staff_account
+from domains.governance.services.users_service import bulk_update_staff_accounts
+from domains.governance.services.users_service import delete_staff_account
+from domains.governance.services.orders_service import get_all_orders
+from domains.governance.services.orders_service import delete_order_admin
+from domains.governance.services.orders_service import update_order_status
+from domains.governance.services.orders_service import refund_order
+from domains.governance.services.orders_service import update_order_tracking
+from domains.governance.services.products_service import get_all_products
+from domains.governance.services.products_service import delete_product_admin
+from domains.governance.services.products_service import restore_product_admin
+from domains.governance.services.analytics_service import get_analytics
+from domains.governance.services.suppliers_service import get_supplier_comparison
+from domains.governance.services.analytics_service import get_customer_insights
+from domains.governance.services.misc_service import get_audit_log_page
+from domains.governance.services.misc_service import get_available_audit_actions
+from domains.governance.services.suppliers_service import get_pending_suppliers
+from domains.governance.services.suppliers_service import verify_supplier
+from domains.governance.services.suppliers_service import reject_supplier
+from domains.governance.services.products_service import get_pending_products
+from domains.accounts.services.admin_products_service import approve_product
+from domains.accounts.services.admin_products_service import reject_product
+from domains.governance.services.products_service import toggle_product_badge
+from domains.accounts.services.customer_coupons_create_service import list_coupons
+from domains.accounts.services.admin_promotions_service import create_coupon
+from domains.orders.services.coupons_write_service import update_coupon
+from domains.accounts.services.customer_coupons_create_service import delete_coupon
+from domains.comms.services.tickets_service import list_tickets
+from domains.governance.services.admin_controller import get_ticket_detail
+from domains.comms.services.tickets_service import reply_to_ticket
+from domains.comms.services.tickets_write_service import update_ticket_status
+from domains.finance.services.payout_approval_read_service import list_pending_payouts
+from domains.accounts.services.logistics_partner_service import verify_payout
+from domains.governance.services.permissions_service import get_hierarchy_permissions
+from domains.governance.services.permissions_service import update_role_permissions
+from domains.governance.services.analytics_service import get_analytics_timeseries
+from domains.governance.services.analytics_service import get_top_products_analytics
+from domains.governance.services.analytics_service import get_user_growth_analytics
+from domains.governance.services.analytics_service import get_chatbot_analytics
+from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.governance.services.orders_service import bulk_update_order_status_admin
+from domains.governance.services.orders_service import bulk_delete_orders_admin
+from domains.governance.services.products_service import bulk_delete_products_admin
+from domains.governance.services.products_service import bulk_product_moderation
+from domains.governance.services.suppliers_service import bulk_supplier_verification
+from domains.governance.services.suppliers_service import bulk_manage_suppliers
+from domains.governance.services.users_service import bulk_update_users_role
+from domains.governance.services.users_service import bulk_toggle_users_active
+from domains.governance.services.users_service import list_staff_accounts
+from domains.governance.services.permissions_service import get_staff_permission_catalog
+from domains.governance.services.users_service import update_staff_account
+from domains.governance.services.users_service import list_pending_bank_accounts
+from domains.governance.services.users_service import delete_bank_account_record
+from domains.accounts.services.payroll_service import verify_bank_account
+from domains.governance.services.database_service import get_database_overview
+from domains.accounts.services.hierarchy_service import get_authority_level
+from domains.accounts.services.hierarchy_service import get_user_chain
+from domains.accounts.services.hierarchy_service import get_all_subordinates
+from domains.accounts.services.hierarchy_service import get_team_members
+from domains.accounts.services.hierarchy_service import is_in_chain
+from domains.accounts.services.hierarchy_service import can_manage as hierarchy_can_manage_service
+from domains.accounts.services.hierarchy_service import get_org_chart
+from domains.accounts.services.hierarchy_service import get_home_org_unit
+from domains.accounts.services.hierarchy_service import reassign_manager
+from domains.accounts.services.hierarchy_service import backfill_authority_levels
+from domains.accounts.services.approval_matrix_service import APPROVAL_RULES
+from domains.accounts.services.approval_matrix_service import can_approve
+from domains.accounts.services.approval_matrix_service import require_approval
+from domains.accounts.services.approval_matrix_service import resolve_approvers
+from domains.accounts.services.approval_matrix_service import get_approval_chain
+from domains.catalog.services.banner_controller import get_banners
+from domains.catalog.services.banner_controller import get_banner_by_id
+from domains.catalog.services.banner_controller import create_banner
+from domains.catalog.services.banner_controller import update_banner
+from domains.catalog.services.banner_controller import delete_banner
+from domains.catalog.services.banner_controller import BannerCreate
+from domains.catalog.services.banner_controller import BannerUpdate
 from controllers.core.export_controller import export_users_csv, export_orders_csv, export_products_csv, export_coupons_csv, export_audit_logs_csv, export_transfer_csv, queue_export_job, download_export_job_result
-from controllers.commerce.promotion_controller import get_promotion_config, update_promotion_config, list_promotion_tiers, create_promotion_tier, update_promotion_tier, delete_promotion_tier, preview_order_tier_discount
-from controllers.orders import disputes_controller
-from utils.backup import get_backup_manager
-from db.schemas import FlashSaleCreate, FlashSaleOut
-from controllers.commerce.flash_sale_controller import get_all_flash_sales, create_flash_sale, update_flash_sale, delete_flash_sale
+from domains.orders.services.promotion_controller import get_promotion_config
+from domains.orders.services.promotion_controller import update_promotion_config
+from domains.orders.services.promotion_controller import list_promotion_tiers
+from domains.orders.services.promotion_controller import create_promotion_tier
+from domains.orders.services.promotion_controller import update_promotion_tier
+from domains.orders.services.promotion_controller import delete_promotion_tier
+from domains.orders.services.promotion_controller import preview_order_tier_discount
+from domains.orders.models.orders import disputes_controller
+from infrastructure.utils.backup import get_backup_manager
+from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
+from domains.orders.services.flash_sale_controller import get_all_flash_sales
+from domains.orders.services.flash_sale_controller import create_flash_sale
+from domains.orders.services.flash_sale_controller import update_flash_sale
+from domains.orders.services.flash_sale_controller import delete_flash_sale
 
 class BulkDeleteUsersBody(BaseModel):
     user_ids: List[int]
@@ -196,7 +291,7 @@ class ResourceApprovalCheckIn(BaseModel):
 
 def verify_payout_route(payout_id: int, data: dict, db: Session=Depends(get_db), current_admin: dict=Depends(require_admin_2fa_verified)):
     require_permission('payouts.verify', current_admin)
-    from _legacy.models import Payout
+    from domains.payments.models.payments import Payout
     payout = db.query(Payout).filter(Payout.id == payout_id).first()
     amount = float(payout.amount) if payout and payout.amount is not None else None
     require_approval(db, current_admin['id'], 'payout', amount=amount)
@@ -206,7 +301,9 @@ def admin_email_stats(db: Session=Depends(get_db), current_admin: dict=Depends(g
     """Real email marketing statistics from the database."""
     require_permission('analytics.view', current_admin)
     from sqlalchemy import func as sqlfunc, case as sql_case
-    from _legacy.models import NewsletterSubscriber, EmailCampaign, CampaignRecipient
+    from domains.comms.models.marketing import NewsletterSubscriber
+    from domains.comms.models.marketing import EmailCampaign
+    from domains.comms.models.marketing import CampaignRecipient
     total_subscribers = db.query(sqlfunc.count(NewsletterSubscriber.id)).filter(NewsletterSubscriber.is_active == True).scalar() or 0
     campaign_stats = db.query(sqlfunc.count(EmailCampaign.id).label('total'), sqlfunc.sum(sql_case((EmailCampaign.status == 'sending', 1), else_=0)).label('active')).first()
     total_sent = db.query(sqlfunc.count(CampaignRecipient.id)).filter(CampaignRecipient.sent_at.isnot(None)).scalar() or 0
@@ -225,7 +322,9 @@ def admin_logistics_overview(db: Session=Depends(get_db), current_admin: dict=De
     """Admin overview of all shipments, carriers, and distribution channels."""
     require_permission('orders.manage', current_admin)
     from sqlalchemy import func as sqlfunc
-    from _legacy.models import Shipment, ShippingCarrier, ShippingZone
+    from domains.governance.models.admin import ShippingCarrier
+    from domains.governance.models.admin import ShippingZone
+    from domains.logistics.models.logistics import Shipment
     shipment_counts = db.query(Shipment.status, sqlfunc.count(Shipment.id).label('count')).group_by(Shipment.status).all()
     channel_counts = db.query(Shipment.distribution_channel, sqlfunc.count(Shipment.id).label('count')).filter(Shipment.distribution_channel.isnot(None)).group_by(Shipment.distribution_channel).all()
     carriers = db.query(ShippingCarrier).filter(ShippingCarrier.is_active == True).all()

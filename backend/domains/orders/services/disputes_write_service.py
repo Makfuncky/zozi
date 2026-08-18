@@ -29,7 +29,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Notification, SupplierDispute, SupplierNotificationPreference
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierNotificationPreference
+from domains.governance.models.admin import SupplierDispute
 import structlog
 logger = structlog.get_logger(__name__)
 

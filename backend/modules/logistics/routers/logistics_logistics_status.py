@@ -6,9 +6,9 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from db.database import get_db
+from infrastructure.database.database import get_db
 from modules.admin.routers.core_auth_routes import get_current_user
-import controllers.orders.logistics_controller as ctrl
+import domains.orders.services.logistics_controller as ctrl
 
 router = APIRouter(prefix="/api/v1/logistics")
 
@@ -122,7 +122,7 @@ async def scan_lookup_shipment(
     """Look up a shipment by tracking number or scan code. Admin only."""
     if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
-    from _legacy.models import Shipment
+    from domains.logistics.models.logistics import Shipment
     shipment = db.query(Shipment).filter(
         (Shipment.tracking_number == code) | (Shipment.id == (int(code) if code.isdigit() else -1))
     ).first()
@@ -152,7 +152,8 @@ async def admin_update_shipment_status(
     """Admin endpoint to update a shipment status directly (bypasses supplier check)."""
     if str(current_user.get("role") or "").lower() not in ("admin", "sub_admin", "moderator", "support"):
         raise HTTPException(status_code=403, detail="Admin access required")
-    from _legacy.models import Shipment, ShipmentEvent
+    from domains.logistics.models.logistics import Shipment
+    from domains.logistics.models.logistics import ShipmentEvent
     from datetime import datetime, timezone
     shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:

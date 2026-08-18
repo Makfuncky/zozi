@@ -9,12 +9,10 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.admin import (
-    PromotionEngineConfig,
-    PromotionLedgerEntry,
-    PromotionOrderTier,
-)
-from utils.soft_delete import soft_delete
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.governance.models.admin import PromotionLedgerEntry
+from domains.governance.models.admin import PromotionOrderTier
+from infrastructure.utils.soft_delete import soft_delete
 import structlog
 logger = structlog.get_logger(__name__)
 

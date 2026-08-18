@@ -7,8 +7,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Employee, EmployeeLeaveLedger
-from utils.datetime_utils import utcnow as _utcnow
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeLeaveLedger
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

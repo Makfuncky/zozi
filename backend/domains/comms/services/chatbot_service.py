@@ -18,8 +18,13 @@ from typing import Any, Optional, cast
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-import services.core.search_service as search_ctrl
-from _legacy.models import ChatbotQueryEvent, Order, OrderItem, Product, User, Wishlist
+import domains.accounts.services as search_ctrl
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Wishlist
+from domains.governance.models.admin import ChatbotQueryEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 
 logger = logging.getLogger(__name__)
 

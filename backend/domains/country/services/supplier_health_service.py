@@ -5,15 +5,15 @@ from fastapi import Depends, HTTPException
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from services.supplier.supplier_health_engine import get_supplier_health_engine
+from domains.suppliers.services.supplier_health_engine import get_supplier_health_engine
 
 def get_supplier_health(supplier_id: int, country_code: str, current_user: dict, db: Session):
     if current_user.get("role") != "admin":
-        from _legacy.models import SupplierProfile
+        from domains.comms.models.suppliers import SupplierProfile
         owns = db.query(SupplierProfile).filter(
             SupplierProfile.id == supplier_id,
             SupplierProfile.user_id == current_user["id"],
@@ -28,7 +28,7 @@ def list_supplier_health(country_code: str, current_user: dict, db: Session):
     arbitrary authenticated users (P0.8)."""
     if current_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
-    from _legacy.models import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
     profiles = db.query(SupplierProfile).all()
     results = []
     for p in profiles:

@@ -36,7 +36,7 @@ _CONFIG_PATHS = [
 ]
 
 try:
-    from utils.config import settings as _ollama_settings
+    from infrastructure.utils.config import settings as _ollama_settings
 
     _OLLAMA_BASE_URL = (
         str(getattr(_ollama_settings, "ollama_base_url", "") or "").strip()

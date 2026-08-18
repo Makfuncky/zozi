@@ -16,9 +16,9 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from services.finance.finance_transfer_service import execute_transfer_batch
-from utils.audit import AuditAction, audit_log
-from db.database import SessionLocal
+from domains.finance.services.finance_transfer_service import execute_transfer_batch
+from infrastructure.utils.audit import AuditAction, audit_log
+from infrastructure.database.database import SessionLocal
 import structlog
 logger = structlog.get_logger(__name__)
 

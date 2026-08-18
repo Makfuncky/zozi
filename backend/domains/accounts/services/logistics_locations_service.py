@@ -9,11 +9,13 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import CountryConfig, LogisticsPartner, LogisticsPartnerLocation
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.logistics.models.logistics import LogisticsPartner
 
 logger = logging.getLogger(__name__)
 

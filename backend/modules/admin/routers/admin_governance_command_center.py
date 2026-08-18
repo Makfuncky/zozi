@@ -3,11 +3,25 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Any
 
-from controllers.governance.command_center_controller import alerts_route, command_center_root_route, comprehensive_dashboard_route, create_news_route, dashboard_route, dashboard_stats_route, delete_news_route, fraud_alerts_route, headlines_route, heartbeat_route, news_route, realtime_metrics_route, resolve_alert_route, system_metrics_route, treasury_metrics_route
+from domains.governance.services.command_center_controller import alerts_route
+from domains.governance.services.command_center_controller import command_center_root_route
+from domains.governance.services.command_center_controller import comprehensive_dashboard_route
+from domains.governance.services.command_center_controller import create_news_route
+from domains.governance.services.command_center_controller import dashboard_route
+from domains.governance.services.command_center_controller import dashboard_stats_route
+from domains.governance.services.command_center_controller import delete_news_route
+from domains.governance.services.command_center_controller import fraud_alerts_route
+from domains.governance.services.command_center_controller import headlines_route
+from domains.governance.services.command_center_controller import heartbeat_route
+from domains.governance.services.command_center_controller import news_route
+from domains.governance.services.command_center_controller import realtime_metrics_route
+from domains.governance.services.command_center_controller import resolve_alert_route
+from domains.governance.services.command_center_controller import system_metrics_route
+from domains.governance.services.command_center_controller import treasury_metrics_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

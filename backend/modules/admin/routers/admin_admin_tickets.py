@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from controllers.admin.tickets_controller import list_tickets_route, reply_ticket, ticket_detail, update_ticket_status_route
+from domains.governance.services.tickets_controller import list_tickets_route, reply_ticket, ticket_detail, update_ticket_status_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

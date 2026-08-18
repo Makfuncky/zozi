@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig
+from domains.country.models.countries import CountryConfig
 import structlog
 logger = structlog.get_logger(__name__)
 

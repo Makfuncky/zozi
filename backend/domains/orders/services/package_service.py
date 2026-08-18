@@ -7,10 +7,16 @@ from fastapi import HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
-from utils.audit import audit_log, AuditAction
-from utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
-from db.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
-from _legacy.models import Address, Category, Order, OrderItem, Product, Review, Wishlist
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from infrastructure.database.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
+from domains.accounts.models.core import Address
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Review
+from domains.catalog.models.products import Wishlist
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 
 
 # ── Wishlist ──────────────────────────────────────────────────────────────────

@@ -24,9 +24,12 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import User, UserPoints, PointsTransaction, PromotionEngineConfig
-from services.commerce.promotion_service import _get_or_create_config as _get_promotion_config
-from utils.money import to_decimal
+from domains.accounts.models.user import User
+from domains.comms.models.marketing import UserPoints
+from domains.comms.models.marketing import PointsTransaction
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.orders.services.promotion_service import _get_or_create_config as _get_promotion_config
+from kernel.money import to_decimal
 
 logger = logging.getLogger(__name__)
 

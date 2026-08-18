@@ -10,8 +10,8 @@ from fastapi.responses import Response
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
-from _legacy.models.products import Product
-from utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
+from domains.catalog.models.products import Product
+from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
 
 # ── Price-range keyword map ────────────────────────────────────────────────
 PRICE_KEYWORDS: list[tuple[re.Pattern, float | None, float | None]] = [

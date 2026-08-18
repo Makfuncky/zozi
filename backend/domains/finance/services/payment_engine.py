@@ -7,10 +7,13 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig, CountryGatewayCredentials
-from services.gateways.base import BasePaymentGateway
-from services.gateways.base_models import ConnectionTestResult, PaymentResult, RefundResult
-from services.gateways.registry import PaymentGatewayRegistry
+from domains.country.models.countries import CountryConfig
+from domains.country.models.countries import CountryGatewayCredentials
+from domains.payments.services.base import BasePaymentGateway
+from domains.payments.services.base_models import ConnectionTestResult
+from domains.payments.services.base_models import PaymentResult
+from domains.payments.services.base_models import RefundResult
+from domains.payments.services.registry import PaymentGatewayRegistry
 
 logger = logging.getLogger(__name__)
 

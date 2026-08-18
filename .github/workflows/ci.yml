@@ -38,10 +38,10 @@ jobs:
         env:
           APP_ENV: test
         run: |
-          HEADS=$(python -m alembic heads 2>&1 | grep -cE "^\w{12} \(head\)")
+          HEADS=$(python -m alembic -c alembic/alembic.ini heads 2>&1 | grep -cE "^\w{12} \(head\)")
           if [ "$HEADS" -ne 1 ]; then
             echo "::error::Alembic has $HEADS heads — expected exactly 1"
-            python -m alembic heads
+            python -m alembic -c alembic/alembic.ini heads
             exit 1
           fi
           echo "✅ Single migration head confirmed"
@@ -51,7 +51,7 @@ jobs:
           APP_ENV: test
         run: |
           rm -f test_zozi.db
-          python -m alembic upgrade head
+          python -m alembic -c alembic/alembic.ini upgrade head
           echo "✅ All migrations applied to fresh database"
 
       # NOTE: This drift check compares ORM metadata against the fresh DB

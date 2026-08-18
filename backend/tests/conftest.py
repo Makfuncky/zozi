@@ -87,22 +87,11 @@ def _TestSession():
     return sessionmaker(bind=_get_legacy_engine(), autoflush=False, autocommit=False)()
 
 
-# Ensure all model modules are imported so that Base.metadata knows about every table
-# before create_all() runs. Import order matters for foreign-key tables.
-import _legacy.models as models  # noqa: E402
-import _legacy.models.user  # noqa: E402
-import domains.catalog.models.products  # noqa: E402
-import _legacy.models.orders  # noqa: E402
-import _legacy.models.payments  # noqa: E402
-import _legacy.models.suppliers  # noqa: E402
-import _legacy.models.logistics  # noqa: E402
-import _legacy.models.countries  # noqa: E402
-import _legacy.models.finance  # noqa: E402
-import _legacy.models.admin  # noqa: E402
-import _legacy.models.commission  # noqa: E402
-import _legacy.models.permissions  # noqa: E402
-import _legacy.models.mixins  # noqa: E402
-import _legacy.models.media_models  # noqa: E402
+# Ensure all model modules are imported so that Base.metadata knows about every
+# table before create_all() runs. `infrastructure.database.models` walks every
+# `domains.<d>.models` package and re-exports all ORM classes (the successor to
+# the old `_legacy.models` aggregator), so importing it registers every table.
+import infrastructure.database.models  # noqa: E402
 
 # The models declare Postgres schemas (e.g. {"schema": "commerce"}). SQLite
 # cannot create ``CREATE TABLE commerce.categories`` ("unknown database"), so
@@ -342,7 +331,7 @@ def app(engine, _seed_default_accounts):
 
 
 def _set_email_verified(email: str) -> None:
-    from _legacy.models import User as _User
+    from infrastructure.database.models import User as _User
 
     sess = _TestSession()
     try:
@@ -381,7 +370,7 @@ def _seed_default_accounts(engine):
     seeding only once per pytest session.
     """
     from infrastructure.database.seed import _ensure_demo_user
-    from _legacy.models import CountryConfig, User as _UserModel
+    from infrastructure.database.models import CountryConfig, User as _UserModel
 
     TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     session = TestingSession()
@@ -457,7 +446,7 @@ def _auth_tokens(engine, _seed_default_accounts) -> dict[str, str]:
         "supplier": "eyJ...", "customer": "eyJ..."}``
     """
     from datetime import timedelta
-    from _legacy.models import User as _User
+    from infrastructure.database.models import User as _User
     from infrastructure.utils.auth import create_access_token as _create_token
 
     _Session = sessionmaker(bind=engine, autoflush=False, autocommit=False)

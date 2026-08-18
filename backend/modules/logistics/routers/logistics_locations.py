@@ -7,9 +7,11 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import CountryConfig, LogisticsPartner, LogisticsPartnerLocation
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.logistics.models.logistics import LogisticsPartner
 
 router = APIRouter(tags=["logistics-locations"])
 logger = logging.getLogger(__name__)

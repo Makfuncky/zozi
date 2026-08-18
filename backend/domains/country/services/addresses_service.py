@@ -1,7 +1,7 @@
 """Auto-migrated service logic from routers/addresses.py."""
 from __future__ import annotations
-from services.commerce.customer_router_service import _serialize_address
-from services.commerce.customer_router_service import _normalize_address_payload
+from domains.orders.services.customer_router_service import _serialize_address
+from domains.orders.services.customer_router_service import _normalize_address_payload
 
 from fastapi import Depends, HTTPException, status
 
@@ -11,20 +11,16 @@ from infrastructure.utils.dependencies import get_current_user
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import Address
+from domains.accounts.models.core import Address
 
-from services.commerce.commerce_write_service import (
-    create_address as create_address_model,
-    update_address as update_address_model,
-    delete_address as delete_address_model,
-    set_default_address as set_default_address_model,
-    unset_other_default_addresses,
-)
+from domains.orders.services.commerce_write_service import create_address as create_address_model
+from domains.orders.services.commerce_write_service import update_address as update_address_model
+from domains.orders.services.commerce_write_service import delete_address as delete_address_model
+from domains.orders.services.commerce_write_service import set_default_address as set_default_address_model
+from domains.orders.services.commerce_write_service import unset_other_default_addresses
 
-from services.commerce.commerce_read_service import (
-    list_user_addresses,
-    get_user_address,
-)
+from domains.orders.services.commerce_read_service import list_user_addresses
+from domains.orders.services.commerce_read_service import get_user_address
 
 
 

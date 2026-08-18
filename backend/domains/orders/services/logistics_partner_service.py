@@ -17,12 +17,44 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
-from utils.audit import AuditAction, audit_log
-from _legacy.models import CityDistanceMatrix, LogisticsCategoryPricingRule, LogisticsCODRemittanceReceipt, LogisticsPartner, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsPartnerPayout, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsSettlement, LogisticsVehicleRule, Notification, Order, OrderLogisticsAllocation, Shipment, ShipmentConfirmation, ShipmentEvent, SupplierProfile, TransactionLedger, User
-from services.treasury.cash_management_service import apply_shipment_vehicle_selection, create_cod_remittance_receipt, deserialize_pricing_breakdown_json, effective_allocation_delivery_amounts, list_cod_remittance_receipts, serialize_cod_remittance_receipt
-from services.finance.finance_transfer_service import build_transfer_reference
-from services.logistics.logistics_partner_pricing import normalize_city_name, normalize_country_code, partner_can_service_order, partner_is_profile_approved, quote_shipping_for_destination, serialize_category_pricing_rule, serialize_pricing_profile, serialize_service_area, serialize_vehicle_rule
-from utils.order_tracking import (
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.accounts.models.core import CityDistanceMatrix
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.governance.models.admin import LogisticsPartnerDocument
+from domains.governance.models.admin import LogisticsSettlement
+from domains.governance.models.admin import ShipmentConfirmation
+from domains.logistics.models.logistics import LogisticsCategoryPricingRule
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartnerServiceArea
+from domains.logistics.models.logistics import LogisticsPricingProfile
+from domains.logistics.models.logistics import LogisticsVehicleRule
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderLogisticsAllocation
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.services.cash_management_service import apply_shipment_vehicle_selection
+from domains.finance.services.cash_management_service import create_cod_remittance_receipt
+from domains.finance.services.cash_management_service import deserialize_pricing_breakdown_json
+from domains.finance.services.cash_management_service import effective_allocation_delivery_amounts
+from domains.finance.services.cash_management_service import list_cod_remittance_receipts
+from domains.finance.services.cash_management_service import serialize_cod_remittance_receipt
+from domains.finance.services.finance_transfer_service import build_transfer_reference
+from domains.logistics.services.logistics_partner_pricing import normalize_city_name
+from domains.logistics.services.logistics_partner_pricing import normalize_country_code
+from domains.logistics.services.logistics_partner_pricing import partner_can_service_order
+from domains.logistics.services.logistics_partner_pricing import partner_is_profile_approved
+from domains.logistics.services.logistics_partner_pricing import quote_shipping_for_destination
+from domains.logistics.services.logistics_partner_pricing import serialize_category_pricing_rule
+from domains.logistics.services.logistics_partner_pricing import serialize_pricing_profile
+from domains.logistics.services.logistics_partner_pricing import serialize_service_area
+from domains.logistics.services.logistics_partner_pricing import serialize_vehicle_rule
+from domains.orders.utils.order_tracking import (
     canonical_scan_code,
     derive_order_financials,
     reconcile_order_status,
@@ -30,8 +62,8 @@ from utils.order_tracking import (
     shipment_scan_codes,
     shipment_status_label,
 )
-from utils.auth import get_password_hash
-from utils.realtime import logistics_realtime_hub
+from infrastructure.utils.auth import get_password_hash
+from infrastructure.utils.realtime import logistics_realtime_hub
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
@@ -3206,7 +3238,7 @@ def update_shipment_status_partner(
         setattr(order, "status", new_order_status)
         if new_order_status == "delivered":
             try:
-                from services.treasury.cash_management_service import create_settlements_on_delivery
+                from domains.finance.services.cash_management_service import create_settlements_on_delivery
 
                 create_settlements_on_delivery(order, db)
             except Exception:
@@ -3218,7 +3250,7 @@ def update_shipment_status_partner(
     db.refresh(event)
     _publish_shipment_update(shipment, event)
     try:
-        from services.comms.transactional_email_service import enqueue_shipment_status_email
+        from domains.comms.services.transactional_email_service import enqueue_shipment_status_email
 
         enqueue_shipment_status_email(cast(int, shipment.id), event_type=cast(str, event.event_type))
     except Exception:
@@ -3566,9 +3598,9 @@ async def upload_partner_cod_remittance_receipt(
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Receipt amount must be positive")
 
-    from services.common.storage import storage as _storage
-    from utils.file_validation import validate_upload_document
-    from utils.constants import MAX_UPLOAD_SIZE_BYTES
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.file_validation import validate_upload_document
+    from infrastructure.utils.constants import MAX_UPLOAD_SIZE_BYTES
 
     safe_name = os.path.basename(file.filename or "cod-receipt.pdf")
     ext = os.path.splitext(safe_name)[1].lower() or ".pdf"
@@ -3616,9 +3648,9 @@ async def upload_partner_document(
     if document_type not in ALLOWED_LP_DOC_TYPES:
         raise HTTPException(status_code=422, detail=f"Invalid document type. Allowed: {ALLOWED_LP_DOC_TYPES}")
 
-    from services.common.storage import storage as _storage
-    from utils.file_validation import validate_upload_document
-    from utils.constants import MAX_UPLOAD_SIZE_BYTES
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.file_validation import validate_upload_document
+    from infrastructure.utils.constants import MAX_UPLOAD_SIZE_BYTES
 
     safe_name = os.path.basename(file.filename or "document.pdf")
     ext = os.path.splitext(safe_name)[1].lower() or ".pdf"

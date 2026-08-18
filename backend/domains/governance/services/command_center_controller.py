@@ -3,7 +3,7 @@
 Wraps ``services.governance.command_center_service`` and exposes the
 administrative command-center endpoints under ``/api/v1/admin/command-center``.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators so the
+HTTP contract declared with ``infrastructure.routing.route_contract`` decorators so the
 router can be auto-generated; the thin hand-written ``routers/command_center_controller.py``
 is retained as the authoritative router (the generator collision-skips these paths).
 """
@@ -13,25 +13,23 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import delete, get, post
+from infrastructure.routing.route_contract import delete, get, post
 
-from services.governance.command_center_service import (
-    create_executive_news,
-    delete_executive_news,
-    get_alerts,
-    get_command_center,
-    get_command_center_headlines,
-    get_comprehensive_dashboard,
-    get_dashboard,
-    get_dashboard_stats,
-    get_executive_news,
-    get_fraud_alerts,
-    get_realtime_metrics,
-    get_system_metrics,
-    get_treasury_metrics,
-    get_command_center_heartbeat,
-    resolve_alert,
-)
+from domains.governance.services.command_center_service import create_executive_news
+from domains.governance.services.command_center_service import delete_executive_news
+from domains.governance.services.command_center_service import get_alerts
+from domains.governance.services.command_center_service import get_command_center
+from domains.governance.services.command_center_service import get_command_center_headlines
+from domains.governance.services.command_center_service import get_comprehensive_dashboard
+from domains.governance.services.command_center_service import get_dashboard
+from domains.governance.services.command_center_service import get_dashboard_stats
+from domains.governance.services.command_center_service import get_executive_news
+from domains.governance.services.command_center_service import get_fraud_alerts
+from domains.governance.services.command_center_service import get_realtime_metrics
+from domains.governance.services.command_center_service import get_system_metrics
+from domains.governance.services.command_center_service import get_treasury_metrics
+from domains.governance.services.command_center_service import get_command_center_heartbeat
+from domains.governance.services.command_center_service import resolve_alert
 
 
 @get("/api/v1/admin/command-center/heartbeat", deps=["db"], tags=["command-center"])

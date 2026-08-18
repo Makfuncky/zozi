@@ -2,23 +2,21 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_category_change,
-    bulk_product_moderation,
-    bulk_restore_entities,
-    hard_delete_entity,
-    restore_entity,
-)
-from controllers.products.products_controller import _bump_product_cache_version
-from db.database import get_db
-from db.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
-from _legacy.models import Product
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin, require_super_admin
-from utils.pagination import paginated_response
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.governance.services.bulk_ops_service import bulk_category_change
+from domains.governance.services.products_service import bulk_product_moderation
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.products_controller import _bump_product_cache_version
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
+from domains.catalog.models.products import Product
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from infrastructure.utils.pagination import paginated_response
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

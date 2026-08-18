@@ -262,21 +262,21 @@ def supplier_list_ledger(skip: int, limit: int, db: Session, current_user: dict)
     return ctrl.supplier_list_ledger_entries(current_user["id"], db, skip=skip, limit=limit)
 
 def logistics_financial_summary(db: Session, current_user: dict):
-    from _legacy.models import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return {"error": "Logistics partner not found"}, 404
     return ctrl.logistics_get_financial_summary(partner.id, db)
 
 def logistics_list_settlements(skip: int, limit: int, status: Optional[str], db: Session, current_user: dict):
-    from _legacy.models import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []
     return ctrl.logistics_list_settlements(partner.id, db, skip=skip, limit=limit, status=status)
 
 def logistics_list_ledger(skip: int, limit: int, db: Session, current_user: dict):
-    from _legacy.models import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []

@@ -21,29 +21,30 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    CashFlowForecast,
-    CashPositionSnapshot,
-    GatewaySettlementSchedule,
-    Invoice,
-    JournalEntry,
-    JournalEntryLine,
-    PayoutBatch,
-    PayoutBatchItem,
-    Shipment,
-    SupplierSettlement,
-    TreasuryAccount,
-    VATRemittance,
-)
-from _legacy.models.admin import LogisticsCODRemittanceReceipt
-from _legacy.models.employee_models import Employee
-from _legacy.models.logistics import LogisticsPartner
-from _legacy.models.orders import Order as OrderModel, OrderItem
-from _legacy.models.payments import LogisticsPartnerPayout, Payment, Payout
-from services.treasury.treasury_engine import TreasuryEngine
-from utils.constants import (
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import CashPositionSnapshot
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import Invoice
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import PayoutBatch
+from domains.finance.models.finance import PayoutBatchItem
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import VATRemittance
+from domains.logistics.models.logistics import Shipment
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order as OrderModel
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout
+from domains.finance.services.treasury_engine import TreasuryEngine
+from infrastructure.utils.constants import (
     CASH_ACCOUNT,
     INPUT_VAT_ACCOUNT,
     MAX_PAGE_SIZE,
@@ -93,7 +94,7 @@ def get_treasury_metrics(db: Session) -> dict:
 
 
 def get_treasury_ledger(db: Session, start_date: date, end_date: date, limit: int) -> list:
-    from utils.constants import DEFAULT_PAGE_SIZE
+    from infrastructure.utils.constants import DEFAULT_PAGE_SIZE
 
     entries = db.execute(
         select(JournalEntry)
@@ -146,7 +147,7 @@ def get_cash_position(db: Session) -> list:
 # ── Payout Batches ────────────────────────────────────────────────────
 
 def get_payout_batches(db: Session) -> list:
-    from _legacy.models.suppliers import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     batches = db.execute(
         select(PayoutBatch)
@@ -173,7 +174,7 @@ def get_payout_batches(db: Session) -> list:
 
 
 def generate_payout_batch(db: Session, country_code: str, cutoff_date: date, current_user: dict) -> dict:
-    from _legacy.models.suppliers import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     pending_payouts = db.execute(
         select(Payout).where(
@@ -794,7 +795,7 @@ def get_country_gateway_summary(db: Session, cc: str) -> list:
 
 
 def get_country_reconciliation_pipeline(db: Session, cc: str, status: Optional[str], limit: int) -> dict:
-    from _legacy.models.suppliers import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -834,7 +835,7 @@ def get_country_reconciliation_pipeline(db: Session, cc: str, status: Optional[s
         commission_preview = None
         if supplier_id:
             try:
-                from services.finance.commission_engine import get_effective_rate
+                from domains.finance.services.commission_engine import get_effective_rate
                 rate = get_effective_rate(supplier_id=supplier_id, product_id=None, db=db)
                 commission_preview = {
                     "rate": float(rate.applied_rate),
@@ -874,7 +875,7 @@ def get_country_reconciliation_pipeline(db: Session, cc: str, status: Optional[s
 def record_cod_remittance(
     db: Session, cc: str, order_id: int, partner_id: int, amount: float, bank_reference: str
 ) -> dict:
-    from _legacy.models.orders import Order as OrderModel
+    from domains.orders.models.orders import Order as OrderModel
 
     shipment = db.query(Shipment).filter(Shipment.order_id == order_id).first()
     receipt = LogisticsCODRemittanceReceipt(
@@ -893,7 +894,7 @@ def record_cod_remittance(
     db.commit()
     db.refresh(receipt)
     try:
-        from services.finance.general_ledger_service import post_logistics_cod_remittance_journal
+        from domains.finance.services.general_ledger_service import post_logistics_cod_remittance_journal
         post_logistics_cod_remittance_journal(db, receipt.id, Decimal(str(amount)), country_code=cc)
     except Exception as gl_err:
         logger.warning(f"COD remittance GL post skipped: {gl_err}")
@@ -905,8 +906,8 @@ def settle_supplier(
     gross_amount: Optional[float], commission_amount: Optional[float],
     currency: Optional[str], payout_id: Optional[int],
 ) -> dict:
-    from _legacy.models.countries import CountryConfig
-    from _legacy.models.orders import Order as OrderModel
+    from domains.country.models.countries import CountryConfig
+    from domains.orders.models.orders import Order as OrderModel
 
     gross = gross_amount if gross_amount is not None else net_amount
     resolved_currency = currency or "USD"
@@ -944,7 +945,7 @@ def approve_settlement(db: Session, cc: str, settlement_id: int) -> dict:
     settlement.status = "paid"
     db.commit()
     try:
-        from services.finance.general_ledger_service import post_supplier_settlement_journal
+        from domains.finance.services.general_ledger_service import post_supplier_settlement_journal
         post_supplier_settlement_journal(
             db,
             settlement.id,
@@ -1028,7 +1029,7 @@ def _shape_supplier_payout(p, s) -> dict:
 
 
 def get_supplier_payouts(db: Session, status: Optional[str]) -> list:
-    from _legacy.models.suppliers import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     query = (
         select(Payout, SupplierProfile)
@@ -1042,7 +1043,7 @@ def get_supplier_payouts(db: Session, status: Optional[str]) -> list:
 
 
 def get_country_supplier_payouts(db: Session, cc: str, status: Optional[str]) -> list:
-    from _legacy.models.suppliers import SupplierProfile
+    from domains.comms.models.suppliers import SupplierProfile
 
     query = (
         select(Payout, SupplierProfile)

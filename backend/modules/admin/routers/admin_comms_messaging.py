@@ -6,14 +6,17 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query, Path, Reques
 from sqlalchemy.orm import Session
 from sqlalchemy import func as sqlfunc
 
-from db.database import get_db
-from _legacy.models import User
-from _legacy.models.core import EntityChatThread, EntityChatMessage
-from services.comms.chat_system import ChatSystem, get_chat_system
-from services.comms.entity_chat_service import EntityChatService, get_chat_service
-from utils.dependencies import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.accounts.models.core import EntityChatThread
+from domains.accounts.models.core import EntityChatMessage
+from domains.comms.services.chat_system import ChatSystem
+from domains.comms.services.chat_system import get_chat_system
+from domains.comms.services.entity_chat_service import EntityChatService
+from domains.comms.services.entity_chat_service import get_chat_service
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 logger = logging.getLogger("zozi.api.admin_chat")
 router = APIRouter(prefix="/api/v1/admin")
@@ -138,7 +141,7 @@ def admin_create_thread(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from services.comms.chat_system import ChatSystem
+        from domains.comms.services.chat_system import ChatSystem
         resolved_type = entity_type or "admin"
         resolved_id = entity_id or 0
         try:
@@ -166,7 +169,7 @@ def admin_create_thread_global(
     get_country_or_404(cc, db)
     set_rls_context({cc}, is_restricted=True)
     try:
-        from services.comms.chat_system import ChatSystem
+        from domains.comms.services.chat_system import ChatSystem
 
         resolved_type = entity_type or "admin"
         resolved_id = entity_id or 0

@@ -8,19 +8,26 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
-from _legacy.models import (
-    GoodsReceiptNote, GoodsReceiptLine,
-    SalesOrder, SalesOrderLine,
-    Warehouse, StockMovement,
-    Vendor, Customer, Product, ProductVariant,
-    APBill, ARInvoice, JournalEntry, Account, JournalEntryLine,
-)
-from _legacy.models.erp import (
-    PurchaseOrder, PurchaseOrderLine,
-)
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from utils.datetime_utils import utcnow as _utcnow
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVariant
+from domains.finance.models.erp import GoodsReceiptNote
+from domains.finance.models.erp import GoodsReceiptLine
+from domains.finance.models.erp import SalesOrder
+from domains.finance.models.erp import SalesOrderLine
+from domains.finance.models.erp import Warehouse
+from domains.finance.models.erp import StockMovement
+from domains.finance.models.finance import Vendor
+from domains.finance.models.finance import Customer
+from domains.finance.models.finance import APBill
+from domains.finance.models.finance import ARInvoice
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.erp import PurchaseOrder
+from domains.finance.models.erp import PurchaseOrderLine
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -516,7 +523,7 @@ def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
             })
             # Send dunning emails
             try:
-                from services.comms.transactional_email_service import enqueue_dunning_email
+                from domains.comms.services.transactional_email_service import enqueue_dunning_email
                 for reminder in reminders:
                     enqueue_dunning_email(inv.id, reminder["type"], reminder["message"])
             except Exception as e:
@@ -762,7 +769,9 @@ def auto_invoice_ecommerce_orders(db: Session, country_code: str = None) -> dict
     Auto-generate AR invoices for delivered e-commerce orders.
     Called daily by the automation scheduler.
     """
-    from _legacy.models import Order, ARInvoice, Account
+    from domains.finance.models.finance import ARInvoice
+    from domains.finance.models.finance import Account
+    from domains.orders.models.orders import Order
 
     results = {"scanned": 0, "invoiced": 0, "skipped": 0, "errors": 0}
 

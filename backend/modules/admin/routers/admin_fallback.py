@@ -15,25 +15,17 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    get_all_suppliers,
-    get_current_admin,
-)
-from db.database import get_db
-from _legacy.models import (
-    Category as CategoryModel,
-)
-from _legacy.models import (
-    CommissionGlobalConfig,
-    Employee,
-    Payment,
-    Shipment,
-    ShippingCarrier,
-    ShippingZone,
-)
-from _legacy.models import (
-    Payout as PayoutModel,
-)
+from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.governance.services.admin_controller import get_current_admin
+from infrastructure.database.database import get_db
+from domains.catalog.models.products import Category as CategoryModel
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import Shipment
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import Payout as PayoutModel
 
 router = APIRouter()
 
@@ -48,8 +40,8 @@ def admin_dashboard_fallback(
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
 
-    from _legacy.models import Order as OrderModel
-    from _legacy.models import User as UserModel
+    from domains.orders.models.orders import Order as OrderModel
+    from domains.accounts.models.user import User as UserModel
 
     total_revenue = (
         db.query(sqlfunc.sum(Payment.amount))
@@ -81,9 +73,9 @@ def admin_stats_fallback(
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
 
-    from _legacy.models import Order as OrderModel
-    from _legacy.models import Product as ProductModel
-    from _legacy.models import User as UserModel
+    from domains.orders.models.orders import Order as OrderModel
+    from domains.catalog.models.products import Product as ProductModel
+    from domains.accounts.models.user import User as UserModel
 
     return {
         "total_users": db.query(sqlfunc.count(UserModel.id)).scalar() or 0,
@@ -192,7 +184,7 @@ def admin_employees_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all employees (no country code required)."""
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = (
         db.query(Employee)
@@ -281,8 +273,8 @@ def admin_treasury_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury summary — redirect to /admin/treasury/metrics if you need full metrics."""
-    from _legacy.models import Account as AccountModel
-    from _legacy.models import AccountBalance as AccountBalanceModel
+    from domains.finance.models.finance import Account as AccountModel
+    from domains.finance.models.finance import AccountBalance as AccountBalanceModel
 
     total_cash = (
         db.query(func.sum(AccountBalanceModel.balance))
@@ -307,8 +299,8 @@ def admin_treasury_metrics_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """Treasury metrics summary (no country code required)."""
-    from _legacy.models import Account as AccountModel
-    from _legacy.models import AccountBalance as AccountBalanceModel
+    from domains.finance.models.finance import Account as AccountModel
+    from domains.finance.models.finance import AccountBalance as AccountBalanceModel
 
     accounts = db.query(AccountModel).all()
     total_cash = (

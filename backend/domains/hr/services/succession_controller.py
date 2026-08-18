@@ -1,7 +1,7 @@
 """controllers.hr.succession_controller (CONTROLLERS layer).
 
 Wraps ``services.hr.succession_service`` and exposes the succession & alumni
-network endpoints. The HTTP contract is declared with ``core.route_contract``
+network endpoints. The HTTP contract is declared with ``infrastructure.routing.route_contract``
 decorators so ``routers/generated/auto_router.py`` can auto-generate the thin
 router — the previous hand-written ``routers/succession.py`` only instantiated
 the services and built the eligibility response inline, which is
@@ -13,7 +13,7 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from core.route_contract import get, post
+from infrastructure.routing.route_contract import get, post
 
 from domains.hr.services.succession_service import (
     get_alumni_network,

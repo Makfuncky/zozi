@@ -1,4 +1,4 @@
-﻿"""Shared constants, helpers, and request models for payment gateways.
+"""Shared constants, helpers, and request models for payment gateways.
 
 Relocated from controllers/payments_controller.py during the refactor that moves
 the complete payment-gateway connection logic into providers/payments.
@@ -23,18 +23,25 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
-    Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
-)
-from events import PaymentConfirmedEvent
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.country.models.countries import CountryConfig
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import PaymentProviderConfig
+from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Coupon
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import PaymentGatewayConnection
+from infrastructure.messaging.events import PaymentConfirmedEvent
 from infrastructure.utils.config import settings
 from infrastructure.utils.currency import (
     convert_from_aed,
     get_currency_context,
     money_to_minor_units_for_currency,
 )
-from events import EventPublisher, _event_publisher
+from infrastructure.messaging.events import EventPublisher, _event_publisher
 import structlog
 logger = structlog.get_logger(__name__)
 

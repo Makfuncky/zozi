@@ -5,17 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.orders.returns_controller import (
-    bulk_update_return_requests,
-    create_return_request,
-    get_return_request,
-    list_return_requests,
-    update_return_request,
-)
-from db.database import get_db
-from db.schemas import ReturnRequestCreate, ReturnRequestOut, ReturnRequestUpdate
-from _legacy.models import ReturnRequest, User
-from utils.dependencies import get_current_user, require_admin
+from domains.orders.services.returns_controller import bulk_update_return_requests
+from domains.orders.services.returns_controller import create_return_request
+from domains.orders.services.returns_controller import get_return_request
+from domains.orders.services.returns_controller import list_return_requests
+from domains.orders.services.returns_controller import update_return_request
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ReturnRequestCreate, ReturnRequestOut, ReturnRequestUpdate
+from domains.accounts.models.user import User
+from domains.orders.models.orders import ReturnRequest
+from infrastructure.utils.dependencies import get_current_user, require_admin
 
 router = APIRouter()
 

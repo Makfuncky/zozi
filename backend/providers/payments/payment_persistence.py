@@ -16,7 +16,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import ProcessedWebhookEvent
+from domains.governance.models.admin import ProcessedWebhookEvent
 
 
 def commit(db: Session) -> None:

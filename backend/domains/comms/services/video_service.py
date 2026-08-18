@@ -9,8 +9,10 @@ from typing import Any, Dict, List, Optional
 from fastapi import UploadFile, HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Product, ProductVideo, VideoAnalytics
-from services.common.media_service import save_product_media
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import ProductVideo
+from domains.catalog.models.products import VideoAnalytics
+from domains.comms.services.media_service import save_product_media
 import structlog
 logger = structlog.get_logger(__name__)
 

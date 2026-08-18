@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from controllers.admin.suppliers_controller import bulk_manage_suppliers_route, bulk_verify_suppliers_route, list_pending_suppliers, list_suppliers, reject_supplier_route, supplier_comparison, verify_supplier_route
+from domains.governance.services.suppliers_controller import bulk_manage_suppliers_route, bulk_verify_suppliers_route, list_pending_suppliers, list_suppliers, reject_supplier_route, supplier_comparison, verify_supplier_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

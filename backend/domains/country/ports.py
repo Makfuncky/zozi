@@ -15,7 +15,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig, CountryCategoryTaxRate
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_enhancements import CountryCategoryTaxRate
 
 
 def get_country_config(db: Session, country_code: str) -> Optional[CountryConfig]:

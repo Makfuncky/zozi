@@ -4,9 +4,9 @@ Logistics Health API Endpoints
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.logistics.logistics_health_engine import get_logistics_health_engine
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.logistics.services.logistics_health_engine import get_logistics_health_engine
 
 router = APIRouter()
 
@@ -28,7 +28,8 @@ def list_logistics_health(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from _legacy.models import LogisticsPartner, LogisticsPartnerProfile
+    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartnerProfile
     profiles = db.query(LogisticsPartnerProfile).all()
     results = []
     for p in profiles:

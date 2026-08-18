@@ -1,15 +1,17 @@
 'Treasury payout status controller.\n\nHolds the read/write logic for admin payout records (list / create / verify /\nprocess). Previously inline in ``routers.admin_treasury_status`` (CG1: ``Payout``\ninstantiation in router, W1: ``db.add``/``db.commit`` in router, DBA32: OFFSET\npagination). Routers now set RLS context, authorize, and delegate here.\n\nLists use keyset (seek) pagination via an opaque ``cursor`` (``created_at`` +\n``id``) instead of ``OFFSET``.\n'
 from __future__ import annotations
 import base64
-from services.common.db_read import query as db_read_query, execute as db_read_execute
+from domains.comms.services.db_read import query as db_read_query
+from domains.comms.services.db_read import execute as db_read_execute
 from datetime import datetime
 from typing import Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from _legacy.models import Payout
-from utils.audit import AuditAction, audit_log
-from services.common.write_helpers import commit_and_refresh, commit_only
-from utils.datetime_utils import utcnow
+from domains.payments.models.payments import Payout
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.comms.services.write_helpers import commit_and_refresh
+from domains.comms.services.write_helpers import commit_only
+from infrastructure.utils.datetime_utils import utcnow
 
 def _encode_cursor(dt: datetime, id_: int) -> str:
     raw = f'{dt.isoformat()}|{id_}'

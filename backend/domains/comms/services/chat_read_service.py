@@ -1,10 +1,15 @@
 """Service methods for WebSocket chat data access."""
 from __future__ import annotations
 from sqlalchemy.orm import Session
-from _legacy.models import User
-from _legacy.models.core import DirectChatRoom, GroupChatRoom, EntityChatThread, EntityChatMessage, DirectChatMessage, GroupChatMessage
-from _legacy.models.comms import GroupChatMember
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.accounts.models.user import User
+from domains.accounts.models.core import DirectChatRoom
+from domains.accounts.models.core import GroupChatRoom
+from domains.accounts.models.core import EntityChatThread
+from domains.accounts.models.core import EntityChatMessage
+from domains.accounts.models.core import DirectChatMessage
+from domains.accounts.models.core import GroupChatMessage
+from domains.accounts.models.core import GroupChatMember
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -59,7 +64,7 @@ def check_room_access(db: Session, room_id: str, user_id: int, role: str = "") -
     thread = get_entity_thread_by_id(db, thread_id)
     if not thread:
         return False, False
-    from utils.constants import STAFF_ROLES
+    from infrastructure.utils.constants import STAFF_ROLES
     return True, role in STAFF_ROLES
 
 

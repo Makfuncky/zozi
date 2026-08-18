@@ -12,57 +12,56 @@ from fastapi import HTTPException
 from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session, selectinload
 
-from db.database import SessionLocal
-from utils.audit import AuditAction, audit_log
-from _legacy.models import (
-    BadgeBillingRecord,
-    BankTransaction,
-    CommissionLedgerEntry,
-    FinanceBankAccount,
-    LogisticsCODRemittanceReceipt,
-    LogisticsPartner,
-    LogisticsSettlement,
-    Order,
-    OrderItem,
-    OrderLogisticsAllocation,
-    PaymentGatewayConnection,
-    Product,
-    RefundLedger,
-    SupplierProfile,
-    SupplierSettlement,
-    TransactionLedger,
-    User,
-    VATRemittance,
-)
-from services.treasury.cash_management_service import (
-    auto_reconcile_bank_transactions,
-    create_refund_ledger_entry,
-    flag_bank_transaction,
-    get_finance_bank_settings,
-    get_financial_summary,
-    get_logistics_financial_summary,
-    get_reconciliation_summary,
-    get_supplier_financial_summary,
-    import_bank_transactions,
-    log_bank_transaction,
-    process_logistics_payout_batch,
-    process_supplier_payout_batch,
-    reconcile_bank_transaction,
-    reject_cod_remittance_receipt,
-    record_cod_remittance,
-    record_vat_remittance,
-    resolve_bank_transaction_exception,
-    deserialize_pricing_breakdown_json,
-    effective_allocation_delivery_amounts,
-    serialize_cod_remittance_receipt,
-    list_vat_remittances,
-    list_cod_remittance_receipts,
-    upsert_finance_bank_settings,
-    verify_cod_remittance_receipt,
-)
-from services.finance.finance_transfer_service import execute_transfer_batch, get_default_transfer_provider, list_transfer_export_providers, test_configured_bank_api_connection
-from utils.money import to_decimal
-from utils.background_jobs import enqueue_job
+from infrastructure.database.database import SessionLocal
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.commission import CommissionLedgerEntry
+from domains.finance.models.finance import BankTransaction
+from domains.finance.models.finance import RefundLedger
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import TransactionLedger
+from domains.finance.models.finance import VATRemittance
+from domains.governance.models.admin import BadgeBillingRecord
+from domains.governance.models.admin import FinanceBankAccount
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.governance.models.admin import LogisticsSettlement
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import OrderLogisticsAllocation
+from domains.payments.models.payments import PaymentGatewayConnection
+from domains.finance.services.cash_management_service import auto_reconcile_bank_transactions
+from domains.finance.services.cash_management_service import create_refund_ledger_entry
+from domains.finance.services.cash_management_service import flag_bank_transaction
+from domains.finance.services.cash_management_service import get_finance_bank_settings
+from domains.finance.services.cash_management_service import get_financial_summary
+from domains.finance.services.cash_management_service import get_logistics_financial_summary
+from domains.finance.services.cash_management_service import get_reconciliation_summary
+from domains.finance.services.cash_management_service import get_supplier_financial_summary
+from domains.finance.services.cash_management_service import import_bank_transactions
+from domains.finance.services.cash_management_service import log_bank_transaction
+from domains.finance.services.cash_management_service import process_logistics_payout_batch
+from domains.finance.services.cash_management_service import process_supplier_payout_batch
+from domains.finance.services.cash_management_service import reconcile_bank_transaction
+from domains.finance.services.cash_management_service import reject_cod_remittance_receipt
+from domains.finance.services.cash_management_service import record_cod_remittance
+from domains.finance.services.cash_management_service import record_vat_remittance
+from domains.finance.services.cash_management_service import resolve_bank_transaction_exception
+from domains.finance.services.cash_management_service import deserialize_pricing_breakdown_json
+from domains.finance.services.cash_management_service import effective_allocation_delivery_amounts
+from domains.finance.services.cash_management_service import serialize_cod_remittance_receipt
+from domains.finance.services.cash_management_service import list_vat_remittances
+from domains.finance.services.cash_management_service import list_cod_remittance_receipts
+from domains.finance.services.cash_management_service import upsert_finance_bank_settings
+from domains.finance.services.cash_management_service import verify_cod_remittance_receipt
+from domains.finance.services.finance_transfer_service import execute_transfer_batch
+from domains.finance.services.finance_transfer_service import get_default_transfer_provider
+from domains.finance.services.finance_transfer_service import list_transfer_export_providers
+from domains.finance.services.finance_transfer_service import test_configured_bank_api_connection
+from kernel.money import to_decimal
+from infrastructure.utils.background_jobs import enqueue_job
 
 logger = logging.getLogger(__name__)
 
@@ -546,7 +545,7 @@ def admin_record_badge_billing_payment(
     transaction_ref: Optional[str] = None,
     notes: Optional[str] = None,
 ) -> dict[str, Any]:
-    import services.supplier.supplier_badge_write_service as supplier_ctrl
+    import domains.suppliers.services.supplier_badge_write_service as supplier_ctrl
 
     return supplier_ctrl.record_badge_billing_payment(
         billing_id=billing_id,

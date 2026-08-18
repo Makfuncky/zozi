@@ -18,7 +18,7 @@ import glob
 import os
 
 BACKEND = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ROUTERS_DIR = os.path.join(BACKEND, "routers")
+ROUTERS_DIR = os.path.join(BACKEND, "modules")
 BASELINE_PATH = os.path.join(BACKEND, "tests", "_router_logic_baseline.txt")
 
 # Unambiguous SQLAlchemy session write operations. ``add`` is narrowed: ``set.add``

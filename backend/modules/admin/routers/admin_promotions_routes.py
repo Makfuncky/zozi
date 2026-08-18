@@ -10,11 +10,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from utils.dependencies import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-import controllers.commerce.promotion_admin_controller as promo_ctrl
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+import domains.orders.services as promo_ctrl
 
 router = APIRouter(prefix="/api/v1/promotions")
 

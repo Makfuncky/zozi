@@ -7,34 +7,26 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from controllers.admin.admin_controller import require_admin
-from services.ai import automation_scheduler as scheduler
-from services.gateways.gateway_reconciliation_service import (
-    match_gateway_settlement,
-    reconcile_cod_deposit,
-    run_gateway_3way_reconciliation,
-)
-from services.ai.ai_automation_service import (
-    run_ai_bank_reconciliation,
-    process_email_inbox,
-    process_email_invoice,
-    process_mobile_scan,
-    batch_categorize_all,
-    categorize_expense_ai,
-)
-from services.treasury.payout_batch_service import (
-    generate_supplier_payout_batches,
-    generate_logistics_payout_batches,
-    get_pending_batches_for_supplier,
-    supplier_approve_batch,
-)
-from services.finance.refund_posting_service import post_refund_automatically
-from services.finance.credit_control_service import (
-    check_customer_credit,
-    enforce_auto_credit_holds,
-    get_customer_credit_summary,
-)
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
+from domains.media.services.ai import automation_scheduler as scheduler
+from domains.payments.services.gateway_reconciliation_service import match_gateway_settlement
+from domains.payments.services.gateway_reconciliation_service import reconcile_cod_deposit
+from domains.payments.services.gateway_reconciliation_service import run_gateway_3way_reconciliation
+from domains.finance.services.ai_automation_service import run_ai_bank_reconciliation
+from domains.finance.services.ai_automation_service import process_email_inbox
+from domains.finance.services.ai_automation_service import process_email_invoice
+from domains.finance.services.ai_automation_service import process_mobile_scan
+from domains.finance.services.ai_automation_service import batch_categorize_all
+from domains.finance.services.ai_automation_service import categorize_expense_ai
+from domains.finance.services.payout_batch_service import generate_supplier_payout_batches
+from domains.finance.services.payout_batch_service import generate_logistics_payout_batches
+from domains.finance.services.payout_batch_service import get_pending_batches_for_supplier
+from domains.finance.services.payout_batch_service import supplier_approve_batch
+from domains.finance.services.refund_posting_service import post_refund_automatically
+from domains.finance.services.credit_control_service import check_customer_credit
+from domains.finance.services.credit_control_service import enforce_auto_credit_holds
+from domains.finance.services.credit_control_service import get_customer_credit_summary
 
 router = APIRouter(prefix="/api/v1/ai")
 

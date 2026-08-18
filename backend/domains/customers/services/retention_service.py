@@ -6,8 +6,12 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import AuditLog, CampaignRecipient, ChatbotQueryEvent, RetentionJobRun, ShipmentEvent
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.core import AuditLog
+from domains.comms.models.marketing import CampaignRecipient
+from domains.governance.models.admin import ChatbotQueryEvent
+from domains.governance.models.admin import RetentionJobRun
+from domains.logistics.models.logistics import ShipmentEvent
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
 _RETENTION_POLICIES = (

@@ -3,15 +3,16 @@ Escalation SLA Telemetry Service
 Auto-escalates unread urgent messages to higher roles after defined SLA windows.
 """
 from __future__ import annotations
-from utils.pagination import SAFE_QUERY_LIMIT
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.core import EscalationSLARule, EscalationSLALog
-from utils.datetime_utils import utcnow as utcnow
+from domains.accounts.models.core import EscalationSLARule
+from domains.accounts.models.core import EscalationSLALog
+from infrastructure.utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

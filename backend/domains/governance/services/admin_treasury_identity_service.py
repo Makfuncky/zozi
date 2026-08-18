@@ -1,12 +1,14 @@
 """Admin cash management router."""
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import CashAccount, CashTransaction, User
-from db.schemas import CashAccountCreate, CashAccountOut, CashTransactionCreate, CashTransactionOut
-from utils.dependencies import require_admin
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.finance.models.finance import CashAccount
+from domains.finance.models.finance import CashTransaction
+from infrastructure.database.schemas import CashAccountCreate, CashAccountOut, CashTransactionCreate, CashTransactionOut
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 from decimal import Decimal
 
 def list_accounts(country_code: str=Path(..., description='ISO country code'), _: User=Depends(require_admin), db: Session=Depends(get_db)):

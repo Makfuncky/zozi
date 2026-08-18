@@ -3,9 +3,20 @@ from __future__ import annotations
 
 from __future__ import annotations
 
-import services.public.auth_service as auth_svc
+import domains.country.services as auth_svc
 
-from services.public.auth_service import LoginRequest, RefreshRequest, _find_user, _record_login_history, bearer_scheme, csrf_token, logger, login, logout, me, refresh, register
+from domains.accounts.services.auth_service import LoginRequest
+from domains.accounts.services.auth_service import RefreshRequest
+from domains.accounts.services.auth_service import _find_user
+from domains.accounts.services.auth_service import _record_login_history
+from domains.accounts.services.auth_service import bearer_scheme
+from domains.accounts.services.auth_service import csrf_token
+from domains.accounts.services.auth_service import logger
+from domains.accounts.services.auth_service import login
+from domains.accounts.services.auth_service import logout
+from domains.accounts.services.auth_service import me
+from domains.accounts.services.auth_service import refresh
+from domains.accounts.services.auth_service import register
 
 import logging
 
@@ -31,7 +42,8 @@ from infrastructure.database.schemas import RegisterRequest, TokenResponse, User
 
 from middleware.csrf_middleware import generate_csrf_token
 
-from _legacy.models import User, UserLoginHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
 
 from infrastructure.utils.audit import AuditAction, audit_log
 

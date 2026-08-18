@@ -12,8 +12,9 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import SupplierProfile, User
-from utils.datetime_utils import utcnow
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

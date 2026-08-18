@@ -11,7 +11,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import PayoutRuleCategory, PayoutRuleProduct
+from domains.country.models.countries import PayoutRuleCategory
+from domains.country.models.countries import PayoutRuleProduct
 import structlog
 logger = structlog.get_logger(__name__)
 

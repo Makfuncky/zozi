@@ -9,12 +9,19 @@ from fastapi import HTTPException
 from sqlalchemy import exists, or_, String
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import Order, OrderItem, Product, AuditLog, Notification, User, Shipment, ShipmentEvent
-from utils.auth import require_permission
-from utils.audit import audit_log, AuditAction
-from utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
-from utils.order_tracking import reconcile_order_status, order_status_label
-from services.gateways.payments import apply_order_status_change
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.auth import require_permission
+from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
+from domains.orders.utils.order_tracking import reconcile_order_status, order_status_label
+from domains.payments.services.payments import apply_order_status_change
 from providers.payments.stripe import refund_payment_intent
 
 
@@ -376,7 +383,7 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
     apply_order_status_change(order, status, db)
     db.commit()
     try:
-        from services.comms.transactional_email_service import enqueue_order_status_email
+        from domains.comms.services.transactional_email_service import enqueue_order_status_email
 
         enqueue_order_status_email(cast(int, order.id), status=status)
     except Exception:
@@ -417,7 +424,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
     if order_status not in allowed_statuses:
         raise HTTPException(status_code=409, detail=f"Cannot refund order in '{order_status}' status")
 
-    from services.gateways.payments import _apply_stripe_runtime_key
+    from domains.payments.services.payments import _apply_stripe_runtime_key
 
     resolved_key = _apply_stripe_runtime_key(db) or os.getenv("STRIPE_SECRET_KEY", "")
     if not resolved_key:
@@ -427,7 +434,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
         refund = refund_payment_intent(payment_intent_id, api_key=resolved_key)
         apply_order_status_change(order, "refunded", db)
         try:
-            from services.treasury.cash_management_service import log_refund_bank_transaction
+            from domains.finance.services.cash_management_service import log_refund_bank_transaction
 
             log_refund_bank_transaction(
                 order,
@@ -450,7 +457,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
         )
         db.commit()
         try:
-            from services.comms.transactional_email_service import enqueue_refund_processed_email
+            from domains.comms.services.transactional_email_service import enqueue_refund_processed_email
 
             enqueue_refund_processed_email(cast(int, order.id), source="admin")
         except Exception:

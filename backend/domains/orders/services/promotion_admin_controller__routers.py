@@ -16,7 +16,7 @@ from domains.orders.services.promotion_admin_write_service import (
     update_promotion_config,
 )
 import structlog
-from core.route_contract import delete, post, put
+from infrastructure.routing.route_contract import delete, post, put
 
 logger = structlog.get_logger(__name__)
 

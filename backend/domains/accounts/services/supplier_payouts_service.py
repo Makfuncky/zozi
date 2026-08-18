@@ -9,7 +9,9 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import PayoutOut
 
-from _legacy.models import Payout, SupplierProfile, User
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from domains.payments.models.payments import Payout
 
 from infrastructure.utils.dependencies import require_supplier
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from ..mixins import TenantMixin
-from _legacy.models.mixins import VersionMixin
+from domains.comms.mixins import VersionMixin
 __all__ = ['FlashSale', 'FlashSaleItem', 'EmailCampaign', 'EmailTemplate', 'NewsletterSubscriber', 'EmailCampaignLog', 'CampaignRecipient', 'EmailDeliveryEvent', 'EmailSuppression', 'EmailRuntimeConfig', 'PointsTransaction', 'UserPoints']
 
 class FlashSale(Base, TenantMixin):

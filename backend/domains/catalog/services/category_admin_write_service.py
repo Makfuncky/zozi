@@ -13,10 +13,10 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Category
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-from utils.category_tree import rebuild_category_paths
+from domains.catalog.models.products import Category
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from domains.catalog.utils.category_tree import rebuild_category_paths
 
 
 def _scope(db: Session, country_code: str) -> str:

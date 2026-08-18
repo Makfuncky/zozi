@@ -6,9 +6,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.geography.country_detection import CountryDetectionService
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.country.services.country_detection import CountryDetectionService
 
 router = APIRouter()
 
@@ -36,7 +36,7 @@ def get_geo_info(
     elif current_user.get("preferred_country"):
         country_code = current_user.get("preferred_country")
     
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     country = db.query(CountryConfig).filter(CountryConfig.code == country_code).first() if country_code else None
     
     return {
@@ -52,7 +52,7 @@ def get_geo_info(
 @router.get("/geo/countries")
 def list_geo_countries(db: Session = Depends(get_db)):
     """List all countries with geo information."""
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     countries = db.query(CountryConfig).filter(CountryConfig.is_active == True).all()
     return [
         {

@@ -5,16 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from controllers.identity.iam_controller import (
-    enroll_biometric,
-    generate_physical_card,
-    generate_qr_token,
-    log_geo_fence_event,
-    revoke_physical_card,
-    validate_geo_fence,
-    validate_qr_token,
-)
-from db.database import get_db
+from rbac import enroll_biometric
+from rbac import generate_physical_card
+from rbac import generate_qr_token
+from rbac import log_geo_fence_event
+from rbac import revoke_physical_card
+from rbac import validate_geo_fence
+from rbac import validate_qr_token
+from infrastructure.database.database import get_db
 
 router = APIRouter()
 

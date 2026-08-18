@@ -7,7 +7,8 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy.orm import Session
 
-from _legacy.models import Notification, SystemSetting
+from domains.comms.models.communication import Notification
+from domains.governance.models.admin import SystemSetting
 import logging
 import structlog
 logger = structlog.get_logger(__name__)
@@ -155,11 +156,11 @@ def _enqueue_notification_delivery(
 ) -> None:
     """Enqueue a background job to deliver a notification via its channel."""
     try:
-        from utils.background_jobs import enqueue_job, JobKind
+        from infrastructure.utils.background_jobs import enqueue_job, JobKind
 
         def _deliver() -> dict:
-            from db.database import SessionLocal
-            from _legacy.models import User
+            from infrastructure.database.database import SessionLocal
+            from domains.accounts.models.user import User
 
             db = SessionLocal()
             try:
@@ -168,7 +169,7 @@ def _enqueue_notification_delivery(
                     return {"status": "skipped", "reason": "user_not_found"}
 
                 if channel == NotificationChannel.EMAIL and user.email:
-                    from utils.email_service import send_email, get_email_sender_address
+                    from infrastructure.utils.email_service import send_email, get_email_sender_address
                     from_addr = get_email_sender_address("notification")
                     send_email(
                         to=user.email,
@@ -180,7 +181,7 @@ def _enqueue_notification_delivery(
                 elif channel == NotificationChannel.IN_APP:
                     pass
 
-                from _legacy.models.comms import Notification as NotificationModel
+                from domains.comms.models.communication import Notification as NotificationModel
                 db.query(NotificationModel).filter(
                     NotificationModel.id == notification_id
                 ).update({"status": "delivered"})

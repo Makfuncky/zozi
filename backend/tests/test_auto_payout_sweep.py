@@ -18,7 +18,7 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
+from infrastructure.database.models import (
     Payout,
     PayoutBatch,
     PayoutBatchItem,
@@ -45,7 +45,7 @@ def test_auto_payout_sweep_creates_payout_and_batch(
     """Create a settlement whose holding period has elapsed, run the sweep,
     and verify Payout + PayoutBatch + settlement.payout_id are all set."""
     # ── 1. Look up the demo supplier ──────────────────────────────────────
-    from _legacy.models import User
+    from infrastructure.database.models import User
 
     supplier = (
         db_session.query(User)
@@ -161,7 +161,7 @@ def test_auto_payout_sweep_skips_future_eligible(
     db_session: Session,
 ) -> None:
     """A settlement with ``eligible_at`` in the future should NOT be picked up."""
-    from _legacy.models import User
+    from infrastructure.database.models import User
 
     supplier = (
         db_session.query(User)
@@ -199,7 +199,7 @@ def test_auto_payout_sweep_dry_run(
     db_session: Session,
 ) -> None:
     """Dry-run mode should count eligible settlements without creating records."""
-    from _legacy.models import User
+    from infrastructure.database.models import User
 
     supplier = (
         db_session.query(User)

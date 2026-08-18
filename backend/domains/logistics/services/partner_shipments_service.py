@@ -10,7 +10,8 @@ from typing import Any, Dict, List
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import LogisticsPartner, Shipment
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.logistics.models.logistics import Shipment
 
 
 def serialize_shipment(shipment: Shipment) -> Dict[str, Any]:

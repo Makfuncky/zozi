@@ -12,8 +12,11 @@ from math import radians, sin, cos, sqrt, atan2
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import User, UserDevice, Employee
-from _legacy.models.employee_models import Office, GeoFenceLog
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserDevice
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import Office
+from domains.hr.models.employee_models import GeoFenceLog
 
 
 class GeoFenceValidator:
@@ -243,8 +246,8 @@ def create_iam_service(db: Session) -> IAMService:
 
 def generate_qr_code(user_id: int, purpose: str = "access") -> str:
     """Generate a QR code token for mobile access."""
-    from _legacy.models.employee_models import DynamicQRSession
-    from utils.datetime_utils import utcnow
+    from domains.hr.models.employee_models import DynamicQRSession
+    from infrastructure.utils.datetime_utils import utcnow
     from datetime import timedelta
     
     qr_token = secrets.token_urlsafe(32)

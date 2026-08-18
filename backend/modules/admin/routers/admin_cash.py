@@ -3,21 +3,21 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import (
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
     CashAccountCreate,
     CashAccountOut,
     CashTransactionCreate,
     CashTransactionOut,
 )
-from _legacy.models import CashAccount, CashTransaction, User
-from services.common.misc_write_service import (
-    create_cash_account as create_cash_account_model,
-    create_cash_transaction as create_cash_transaction_model,
-)
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.accounts.models.user import User
+from domains.finance.models.finance import CashAccount
+from domains.finance.models.finance import CashTransaction
+from domains.comms.services.misc_write_service import create_cash_account as create_cash_account_model
+from domains.comms.services.misc_write_service import create_cash_transaction as create_cash_transaction_model
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

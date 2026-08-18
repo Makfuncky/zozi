@@ -14,7 +14,7 @@ import pytest
 import domains.accounts.services.user_write_ops as ops
 import domains.accounts.services.users_write_service as shim
 import modules.customer.routers.users as users_ctrl
-from _legacy.models import User
+from infrastructure.database.models import User
 
 _RECOVERED_NAMES = [
     "_build_user_delete_blocker",

@@ -11,7 +11,8 @@ from typing import Optional, Set
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryStaffAssignment, User
+from domains.accounts.models.user import User
+from domains.country.models.country_enhancements import CountryStaffAssignment
 
 
 def resolve_user_country_scope(user, db: Session) -> Set[str]:

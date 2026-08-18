@@ -2,25 +2,22 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    restore_entity,
-)
-from db.database import get_db
-from db.schemas import ArchiveRequest, BulkActionRequest
-from _legacy.models import Category, User
-from services.catalog.products_write_service import (
-    create_category as create_category_model,
-    update_category as update_category_model,
-    delete_category as delete_category_model,
-    reorder_categories as reorder_categories_model,
-)
-from utils.category_tree import rebuild_category_paths
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import restore_entity
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Category
+from domains.catalog.services.products_write_service import create_category as create_category_model
+from domains.catalog.services.products_write_service import update_category as update_category_model
+from domains.catalog.services.products_write_service import delete_category as delete_category_model
+from domains.catalog.services.products_write_service import reorder_categories as reorder_categories_model
+from domains.catalog.utils.category_tree import rebuild_category_paths
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

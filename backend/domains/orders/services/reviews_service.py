@@ -9,7 +9,10 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from _legacy.models import Order, OrderItem, Product, Review
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import Review
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
 import structlog
 logger = structlog.get_logger(__name__)
 

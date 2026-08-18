@@ -19,7 +19,7 @@ from modules.treasury.routers.cash_management_controller import (
 )
 from domains.finance.services import cash_management_write_service as write_service
 import structlog
-from routers.generated.auto_router import post, put, delete
+from infrastructure.routing.route_contract import post, put, delete
 
 logger = structlog.get_logger(__name__)
 

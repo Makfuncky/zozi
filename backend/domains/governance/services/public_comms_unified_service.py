@@ -4,11 +4,11 @@ import logging
 from fastapi import Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from db.database import get_db
-from _legacy.models import User
-from utils.dependencies import get_current_user, require_admin
-from utils.audit import AuditAction, audit_log
-from utils.ip_utils import get_ip_for_logging
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.utils.dependencies import get_current_user, require_admin
+from infrastructure.utils.audit import AuditAction, audit_log
+from infrastructure.utils.ip_utils import get_ip_for_logging
 logger = logging.getLogger('zozi.api.comms')
 
 def unified_inbox(lens: str=Query('all'), cursor: str | None=Query(None), limit: int=Query(50, ge=1, le=200), transport: str | None=Query(None), db: Session=Depends(get_db), current_user: dict=Depends(get_current_user)):

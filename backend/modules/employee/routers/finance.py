@@ -13,21 +13,20 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from _legacy.models import (
-    Account,
-    AccountBalance,
-    GatewaySettlementSchedule,
-    JournalEntry,
-    JournalEntryLine,
-    Payout,
-    TreasuryAccount,
-    User,
-)
-from services.treasury.treasury_engine import TreasuryEngine, seed_chart_of_accounts
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import GatewaySettlementSchedule
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import TreasuryAccount
+from domains.payments.models.payments import Payout
+from domains.finance.services.treasury_engine import TreasuryEngine
+from domains.finance.services.treasury_engine import seed_chart_of_accounts
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 
@@ -360,7 +359,7 @@ def supplier_earnings_report(
     current_user: dict = Depends(get_current_user),
 ):
     """Exportable supplier earnings summary."""
-    from _legacy.models import SupplierSettlement
+    from domains.finance.models.finance import SupplierSettlement
     rows = db.execute(
         select(
             SupplierSettlement.supplier_id,

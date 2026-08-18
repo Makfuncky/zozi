@@ -16,8 +16,11 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session, sessionmaker
 from infrastructure.database.session import SessionLocal
 
-from _legacy.models import FraudBlacklist, FraudRule, ManualReviewQueue, IPReputation
-import services.common.db_write as db_write
+from domains.governance.models.fraud import FraudBlacklist
+from domains.governance.models.fraud import FraudRule
+from domains.governance.models.fraud import ManualReviewQueue
+from domains.governance.models.fraud import IPReputation
+import domains.comms.services as db_write
 from infrastructure.database.schemas import ThreatFeedStatus
 
 logger = logging.getLogger(__name__)
@@ -28,7 +31,7 @@ def _q(db: Session, model):
 
 
 def list_fraud_events(db: Session, page: int = 1, size: int = 50, user_id: Optional[int] = None, ip_address: Optional[str] = None, min_score: int = 0) -> list[dict]:
-    from _legacy.models import FraudEvent
+    from domains.governance.models.fraud import FraudEvent
     q = _q(db, FraudEvent)
     if user_id:
         q = q.filter(FraudEvent.user_id == user_id)

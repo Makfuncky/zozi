@@ -122,7 +122,7 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
     """
     global _vault_instance
     from infrastructure.database.database import get_db
-    from _legacy.models import PaymentGatewayConnection
+    from domains.payments.models.payments import PaymentGatewayConnection
     from cryptography.fernet import Fernet
     import json as _json
     

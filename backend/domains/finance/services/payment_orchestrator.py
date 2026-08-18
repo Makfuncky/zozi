@@ -8,8 +8,9 @@ from typing import List, Dict, Any, Optional
 from decimal import Decimal
 from datetime import datetime
 
-from db.database import get_db_context
-from _legacy.models import CountryConfig, PaymentOrchestratorSync
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import PaymentOrchestratorSync
 
 logger = logging.getLogger(__name__)
 

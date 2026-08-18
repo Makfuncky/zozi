@@ -75,7 +75,7 @@ jobs:
       - name: Apply Alembic migrations to test DB
         run: |
           cd backend
-          alembic upgrade head
+          alembic -c alembic/alembic.ini upgrade head
 
       - name: Run Schema Audit (Deployment Gate)
         id: audit

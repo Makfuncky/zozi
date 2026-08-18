@@ -2,7 +2,7 @@
 
 Owns the DB mutations behind admin bulk archive/restore/category-change so the
 controller stays free of ``commit_only`` / ``bulk_soft_delete`` / ``bulk_restore``
-calls. The soft-delete primitives live in ``utils.soft_delete`` (service-layer
+calls. The soft-delete primitives live in ``infrastructure.utils.soft_delete`` (service-layer
 only) and are invoked here.
 """
 from __future__ import annotations
@@ -11,8 +11,9 @@ from typing import Any, List, Optional, Type
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Category, Product
-from utils.soft_delete import bulk_restore, bulk_soft_delete
+from domains.catalog.models.products import Category
+from domains.catalog.models.products import Product
+from infrastructure.utils.soft_delete import bulk_restore, bulk_soft_delete
 import structlog
 logger = structlog.get_logger(__name__)
 

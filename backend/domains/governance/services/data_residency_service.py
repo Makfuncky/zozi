@@ -8,7 +8,8 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 from infrastructure.database.database import get_db_context
-from _legacy.models import CountryConfig, DataResidencyRecord
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import DataResidencyRecord
 
 logger = logging.getLogger(__name__)
 

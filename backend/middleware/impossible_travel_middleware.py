@@ -19,7 +19,9 @@ from infrastructure.utils.auth import verify_token
 from providers.geography.geoip import lookup_coordinates
 
 from sqlalchemy.orm import Session
-from _legacy.models import AuditLog, Employee, User
+from domains.accounts.models.core import AuditLog
+from domains.accounts.models.user import User
+from domains.hr.models.employee_models import Employee
 
 logger = logging.getLogger(__name__)
 

@@ -9,26 +9,24 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
-from services.supplier.legal_contract_service import LegalContractService
+from domains.suppliers.services.legal_contract_service import LegalContractService
 
-from services.audit.audit_trail_service import AuditTrailService
+from domains.governance.services.audit_trail_service import AuditTrailService
 
-from services.geography.country_audit_admin_service import (
-    add_city as svc_add_city,
-    assign_staff as svc_assign_staff,
-    delete_city as svc_delete_city,
-    list_cities as svc_list_cities,
-    list_communications as svc_list_communications,
-    list_staff as svc_list_staff,
-    list_tax_rates as svc_list_tax_rates,
-    mark_communication_read as svc_mark_communication_read,
-    remove_staff as svc_remove_staff,
-    send_country_communication as svc_send_country_communication,
-    set_tax_rate as svc_set_tax_rate,
-    update_city as svc_update_city,
-)
+from domains.country.services.country_audit_admin_service import add_city as svc_add_city
+from domains.country.services.country_audit_admin_service import assign_staff as svc_assign_staff
+from domains.country.services.country_audit_admin_service import delete_city as svc_delete_city
+from domains.country.services.country_audit_admin_service import list_cities as svc_list_cities
+from domains.country.services.country_audit_admin_service import list_communications as svc_list_communications
+from domains.country.services.country_audit_admin_service import list_staff as svc_list_staff
+from domains.country.services.country_audit_admin_service import list_tax_rates as svc_list_tax_rates
+from domains.country.services.country_audit_admin_service import mark_communication_read as svc_mark_communication_read
+from domains.country.services.country_audit_admin_service import remove_staff as svc_remove_staff
+from domains.country.services.country_audit_admin_service import send_country_communication as svc_send_country_communication
+from domains.country.services.country_audit_admin_service import set_tax_rate as svc_set_tax_rate
+from domains.country.services.country_audit_admin_service import update_city as svc_update_city
 
 def generate_legal_contract(country_code: str, template_type: str, db: Session, current_user):
     """Generate a legal contract for a country."""
@@ -90,7 +88,7 @@ def mark_communication_read(comm_id: int, db: Session, current_user):
 
 def get_data_residency(country_code: str, db: Session, current_user):
     """Get data residency tier for a country."""
-    from services.audit.audit_trail_service import DataResidencyService
+    from domains.governance.services.audit_trail_service import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {

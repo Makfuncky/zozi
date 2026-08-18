@@ -11,15 +11,13 @@ from typing import Optional
 from sqlalchemy import func as sqlfunc, case as sql_case
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CampaignRecipient,
-    EmailCampaign,
-    NewsletterSubscriber,
-    Payout,
-    Shipment,
-    ShippingCarrier,
-    ShippingZone,
-)
+from domains.comms.models.marketing import CampaignRecipient
+from domains.comms.models.marketing import EmailCampaign
+from domains.comms.models.marketing import NewsletterSubscriber
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.logistics.models.logistics import Shipment
+from domains.payments.models.payments import Payout
 
 
 def get_payout_amount(db: Session, payout_id: int) -> Optional[float]:

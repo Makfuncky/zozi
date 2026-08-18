@@ -25,7 +25,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
 
-from migration_helpers import safe_add_column, safe_drop_column
+from alembic.migration_helpers import safe_add_column, safe_drop_column
 
 
 revision: str = "20260806_0005"
@@ -44,7 +44,7 @@ def _version_column() -> sa.Column:
 
 
 def _iter_deployed_tables(conn):
-    import _legacy.models as models  # local import: keeps this revision importable in isolation
+    import infrastructure.database.models as models  # local import: keeps this revision importable in isolation
     inspector = inspect(conn)
     for table in models.Base.metadata.tables.values():
         schema = table.schema

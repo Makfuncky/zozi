@@ -6,9 +6,9 @@ from typing import List, Optional
 from fastapi import Depends, File, Form, Query, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from db.database import get_db
-from routers.core_auth_routes import get_current_user
-import controllers.orders.logistics_partner_controller as ctrl
+from infrastructure.database.database import get_db
+from modules.admin.routers import get_current_user
+import domains.orders.services.logistics_partner_controller as ctrl
 
 class BulkPartnerAdminActionRequest(BaseModel):
     partner_ids: List[int]

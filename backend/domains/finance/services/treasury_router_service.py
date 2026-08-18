@@ -10,7 +10,8 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Payout, PayoutBatch
+from domains.finance.models.finance import PayoutBatch
+from domains.payments.models.payments import Payout
 import structlog
 logger = structlog.get_logger(__name__)
 

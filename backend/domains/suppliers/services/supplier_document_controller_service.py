@@ -14,8 +14,11 @@ from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from _legacy.models import SupplierDocument, SupplierProfile, User, Notification
-from utils.audit import AuditAction, audit_log
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.comms.models.suppliers import SupplierDocument
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
@@ -138,9 +141,9 @@ async def upload_and_submit_document(
     if document_type not in ALLOWED_DOC_TYPES:
         raise HTTPException(status_code=422, detail=f"Invalid document type. Allowed: {ALLOWED_DOC_TYPES}")
 
-    from services.common.storage import storage as _storage
-    from utils.file_validation import validate_upload_document
-    from utils.constants import MAX_UPLOAD_SIZE_BYTES
+    from infrastructure.utils.storage import storage as _storage
+    from infrastructure.utils.file_validation import validate_upload_document
+    from infrastructure.utils.constants import MAX_UPLOAD_SIZE_BYTES
 
     safe_name = os.path.basename(file.filename or "document.pdf")
     ext = os.path.splitext(safe_name)[1].lower() or ".pdf"
@@ -309,7 +312,7 @@ def admin_review_document(
     supplier_email = cast(Optional[str], getattr(supplier_user, "email", None)) if supplier_user else None
     if supplier_user and supplier_email and notif_title:
         try:
-            from utils.email_service import send_email
+            from infrastructure.utils.email_service import send_email
             html_body = f"""
             <h2 style="font-family:Arial,sans-serif;color:#1f2937">{notif_title}</h2>
             <p style="font-family:Arial,sans-serif;color:#374151">{notif_msg}</p>

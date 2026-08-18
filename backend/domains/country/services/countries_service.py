@@ -13,11 +13,11 @@ from pydantic import BaseModel, Field
 
 from sqlalchemy.orm import Session
 
-from kernel.geography.routers import country_controller
+from domains.country.services import country_controller
 
 from modules.employee.routers import employees_controller as ctrl
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 
 from infrastructure.database.database import get_db
@@ -362,15 +362,16 @@ def delete_country_feature_flag(code: str, key: str, current_user: dict, db: Ses
 
 async def auto_populate_country(body: AutoPopulateBody, current_user: dict, db: Session):
     """Fetch country data from external APIs and curated profiles."""
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
     return await country_controller.auto_populate_async(body.search_term)
 
 
 def add_country_city(code: str, body: dict, current_user: dict, db: Session):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryCity, CountryConfig
+    from domains.country.models.countries import CountryConfig
+    from domains.country.models.country_enhancements import CountryCity
     country = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not country:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -389,9 +390,9 @@ def add_country_city(code: str, body: dict, current_user: dict, db: Session):
     return {"id": city.id, "name": city.name, "region": city.region, "is_active": city.is_active}
 
 def patch_country_city(code: str, city_id: int, body: dict, current_user: dict, db: Session):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryCity
+    from domains.country.models.country_enhancements import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -402,9 +403,9 @@ def patch_country_city(code: str, city_id: int, body: dict, current_user: dict, 
     return {"id": city.id, "name": city.name}
 
 def delete_country_city(code: str, city_id: int, current_user: dict, db: Session):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryCity
+    from domains.country.models.country_enhancements import CountryCity
     city = db.query(CountryCity).filter(CountryCity.id == city_id, CountryCity.country_code == code.upper()).first()
     if not city:
         raise HTTPException(status_code=404, detail="City not found")
@@ -427,9 +428,9 @@ def delete_country_city(code: str, city_id: int, current_user: dict, db: Session
 
 
 def toggle_country_active(code: str, current_user: dict, db: Session):
-    from controllers.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_admin
     _require_admin(current_user)
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not c:
         raise HTTPException(status_code=404, detail="Country not found")
@@ -438,11 +439,9 @@ def toggle_country_active(code: str, current_user: dict, db: Session):
     return {"message": f"Country {'enabled' if c.is_active else 'disabled'}"}
 
 def archive_country(code: str, payload: ArchivePayload, current_user: dict, db: Session):
-    from controllers.country_controller import (
-        _get_country_or_404,
-        _record_admin_change,
-        _require_full_admin,
-    )
+    from domains.country.services.country_controller import _get_country_or_404
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
     c = _get_country_or_404(code, db)
     c.is_deleted = True
@@ -452,11 +451,9 @@ def archive_country(code: str, payload: ArchivePayload, current_user: dict, db: 
     return {"message": "Country archived"}
 
 def restore_country(code: str, current_user: dict, db: Session):
-    from controllers.country_controller import (
-        _get_country_or_404,
-        _record_admin_change,
-        _require_full_admin,
-    )
+    from domains.country.services.country_controller import _get_country_or_404
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
     c = _get_country_or_404(code, db)
     c.is_deleted = False
@@ -466,9 +463,10 @@ def restore_country(code: str, current_user: dict, db: Session):
     return {"message": "Country restored"}
 
 def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict, db: Session):
-    from controllers.country_controller import _record_admin_change, _require_full_admin
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = True
@@ -478,9 +476,10 @@ def bulk_archive_countries(payload: BulkIdsPayload, current_user: dict, db: Sess
     return {"message": f"{len(rows)} countries archived"}
 
 def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict, db: Session):
-    from controllers.country_controller import _record_admin_change, _require_full_admin
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
-    from _legacy.models import CountryConfig
+    from domains.country.models.countries import CountryConfig
     rows = db.query(CountryConfig).filter(CountryConfig.code.in_(payload.ids)).all()
     for c in rows:
         c.is_deleted = False
@@ -490,7 +489,7 @@ def bulk_restore_countries(payload: BulkIdsPayload, current_user: dict, db: Sess
     return {"message": f"{len(rows)} countries restored"}
 
 def hard_delete_country(code: str, current_user: dict, db: Session):
-    from controllers.country_controller import _require_full_admin
+    from domains.country.services.country_controller import _require_full_admin
     _require_full_admin(current_user)
     c = db.query(CountryConfig).filter(CountryConfig.code == code.upper()).first()
     if not c:
@@ -500,26 +499,25 @@ def hard_delete_country(code: str, current_user: dict, db: Session):
     return Response(status_code=204)
 
 def list_country_commission_rates(code: str, current_user: dict, db: Session):
-    from controllers.country_controller import _require_admin, _require_country_access
+    from domains.country.services.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from _legacy.models import CountryCommissionRate
+    from domains.country.models.country_enhancements import CountryCommissionRate
     rows = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper()
     ).order_by(CountryCommissionRate.supplier_tier, CountryCommissionRate.name).all()
     return [{"supplier_tier": r.supplier_tier, "name": r.name, "commission_percentage": float(r.rate_percent) * 100, "fixed_fee": float(r.fixed_fee) if r.fixed_fee else 0.0} for r in rows]
 
 def create_country_commission_rate(code: str, body: CountryCommissionRateItem, current_user: dict, db: Session):
-    from controllers.country_controller import (
-        _get_country_or_404,
-        _record_admin_change,
-        _require_admin,
-        _require_country_access,
-    )
+    from domains.country.services.country_controller import _get_country_or_404
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
     _get_country_or_404(code, db)
-    from _legacy.models import CountryCommissionRate
+    from domains.country.models.country_enhancements import CountryCommissionRate
     existing = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == body.supplier_tier,
@@ -542,14 +540,12 @@ def create_country_commission_rate(code: str, body: CountryCommissionRateItem, c
     return {"id": rate.id, **body.model_dump()}
 
 def delete_country_commission_rate(code: str, tier: str, name: str, current_user: dict, db: Session):
-    from controllers.country_controller import (
-        _record_admin_change,
-        _require_admin,
-        _require_country_access,
-    )
+    from domains.country.services.country_controller import _record_admin_change
+    from domains.country.services.country_controller import _require_admin
+    from domains.country.services.country_controller import _require_country_access
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from _legacy.models import CountryCommissionRate
+    from domains.country.models.country_enhancements import CountryCommissionRate
     rate = db.query(CountryCommissionRate).filter(
         CountryCommissionRate.country_code == code.upper(),
         CountryCommissionRate.supplier_tier == tier,
@@ -562,52 +558,10 @@ def delete_country_commission_rate(code: str, tier: str, name: str, current_user
     db.commit()
     return {"message": "Commission rate deleted"}
 
-from services.geography.country_service import list_public_countries  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 
 
-from services.admin.admin_geography_configuration_service import get_public_country_config  # [MIGRATION COMPAT] re-export relocated symbol
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from services.admin.admin_geography_configuration_service import list_public_country_employees  # [MIGRATION COMPAT] re-export relocated symbol
-
-
-
-
-
-
-
-
-
-
-
-from services.admin.admin_geography_configuration_service import create_admin_country  # [MIGRATION COMPAT] re-export relocated symbol
-
-
-
-
-
-
-
-
-
-
-
-
-
-from services.admin.admin_geography_configuration_service import get_admin_country  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_geography_configuration_service import get_public_country_config
 
 
 
@@ -622,61 +576,97 @@ from services.admin.admin_geography_configuration_service import get_admin_count
 
 
 
-from services.admin.admin_geography_configuration_service import update_admin_country_identity  # [MIGRATION COMPAT] re-export relocated symbol
-from services.admin.admin_geography_configuration_service import create_tax_draft  # [MIGRATION COMPAT] re-export relocated symbol
+from domains.governance.services.admin_geography_configuration_service import list_public_country_employees
+
+
+
+
+
+
+
+
+
+
+
+from domains.governance.services.admin_geography_configuration_service import create_admin_country
+
+
+
+
+
+
+
+
+
+
+
+
+
+from domains.governance.services.admin_geography_configuration_service import get_admin_country
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from domains.governance.services.admin_geography_configuration_service import update_admin_country_identity
+from domains.governance.services.admin_geography_configuration_service import create_tax_draft
 
 
 # === auto-wiring re-exports (migration repair) ===
-from services.admin.admin_geography_configuration_service import (
-    approve_country_version,
-    create_commission_draft,
-    create_commission_tiers_draft,
-    create_legal_rules_draft,
-    create_logistics_draft,
-    create_logistics_providers_draft,
-    create_ops_draft,
-    create_payment_gateways_draft,
-    create_payout_rule_category,
-    create_payout_rule_product,
-    create_payout_settings_draft,
-    create_regions_draft,
-    create_supplier_requirements_draft,
-    delete_country_promotion,
-    delete_payout_rule_category,
-    delete_payout_rule_product,
-    get_commission_tiers,
-    get_country_feature_flags,
-    get_country_localization,
-    get_legal_rules,
-    get_logistics_providers,
-    get_payment_gateways,
-    get_payout_settings,
-    get_regions,
-    get_supplier_requirements,
-    list_country_cities,
-    list_country_commissions,
-    list_country_delivery_zones,
-    list_country_promotions,
-    list_country_versions,
-    list_cross_country_sessions,
-    list_oman_delivery_zones_compat,
-    list_payout_rules_categories,
-    list_payout_rules_products,
-    preview_country_tax,
-    publish_country_version,
-    rollback_country_to_version,
-    send_communication,
-    test_gateway_connection,
-    unassign_staff,
-    update_country_cities_bulk,
-    update_country_localization
-)
-from services.admin.admin_geography_audit_service import (
-    assign_staff,
-    list_communications,
-    list_staff,
-    mark_communication_read
-)
+from domains.governance.services.admin_geography_configuration_service import approve_country_version
+from domains.governance.services.admin_geography_configuration_service import create_commission_draft
+from domains.governance.services.admin_geography_configuration_service import create_commission_tiers_draft
+from domains.governance.services.admin_geography_configuration_service import create_legal_rules_draft
+from domains.governance.services.admin_geography_configuration_service import create_logistics_draft
+from domains.governance.services.admin_geography_configuration_service import create_logistics_providers_draft
+from domains.governance.services.admin_geography_configuration_service import create_ops_draft
+from domains.governance.services.admin_geography_configuration_service import create_payment_gateways_draft
+from domains.governance.services.admin_geography_configuration_service import create_payout_rule_category
+from domains.governance.services.admin_geography_configuration_service import create_payout_rule_product
+from domains.governance.services.admin_geography_configuration_service import create_payout_settings_draft
+from domains.governance.services.admin_geography_configuration_service import create_regions_draft
+from domains.governance.services.admin_geography_configuration_service import create_supplier_requirements_draft
+from domains.governance.services.admin_geography_configuration_service import delete_country_promotion
+from domains.governance.services.admin_geography_configuration_service import delete_payout_rule_category
+from domains.governance.services.admin_geography_configuration_service import delete_payout_rule_product
+from domains.governance.services.admin_geography_configuration_service import get_commission_tiers
+from domains.governance.services.admin_geography_configuration_service import get_country_feature_flags
+from domains.governance.services.admin_geography_configuration_service import get_country_localization
+from domains.governance.services.admin_geography_configuration_service import get_legal_rules
+from domains.governance.services.admin_geography_configuration_service import get_logistics_providers
+from domains.governance.services.admin_geography_configuration_service import get_payment_gateways
+from domains.governance.services.admin_geography_configuration_service import get_payout_settings
+from domains.governance.services.admin_geography_configuration_service import get_regions
+from domains.governance.services.admin_geography_configuration_service import get_supplier_requirements
+from domains.governance.services.admin_geography_configuration_service import list_country_cities
+from domains.governance.services.admin_geography_configuration_service import list_country_commissions
+from domains.governance.services.admin_geography_configuration_service import list_country_delivery_zones
+from domains.governance.services.admin_geography_configuration_service import list_country_promotions
+from domains.governance.services.admin_geography_configuration_service import list_country_versions
+from domains.governance.services.admin_geography_configuration_service import list_cross_country_sessions
+from domains.governance.services.admin_geography_configuration_service import list_oman_delivery_zones_compat
+from domains.governance.services.admin_geography_configuration_service import list_payout_rules_categories
+from domains.governance.services.admin_geography_configuration_service import list_payout_rules_products
+from domains.governance.services.admin_geography_configuration_service import preview_country_tax
+from domains.governance.services.admin_geography_configuration_service import publish_country_version
+from domains.governance.services.admin_geography_configuration_service import rollback_country_to_version
+from domains.governance.services.admin_geography_configuration_service import send_communication
+from domains.governance.services.admin_geography_configuration_service import test_gateway_connection
+from domains.governance.services.admin_geography_configuration_service import unassign_staff
+from domains.governance.services.admin_geography_configuration_service import update_country_cities_bulk
+from domains.governance.services.admin_geography_configuration_service import update_country_localization
+from domains.governance.services.admin_geography_audit_service import assign_staff
+from domains.governance.services.admin_geography_audit_service import list_communications
+from domains.governance.services.admin_geography_audit_service import list_staff
+from domains.governance.services.admin_geography_audit_service import mark_communication_read
 
-from services.geography.country_service import list_public_countries  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 

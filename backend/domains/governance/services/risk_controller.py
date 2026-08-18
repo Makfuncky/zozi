@@ -3,7 +3,7 @@
 Wraps ``services.security.risk_service`` and exposes the risk-management
 endpoints under both ``/api/v1/admin`` (admin) and ``/api/v1`` (public).
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators
+HTTP contract declared with ``infrastructure.routing.route_contract`` decorators
 (stacked for the admin + public surfaces). The thin hand-written routers
 (``admin_security_health.py`` / ``public_security_health.py``) are retained as
 the authoritative routers and the auto-generator collision-skips these paths.
@@ -14,15 +14,13 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get, post
+from infrastructure.routing.route_contract import get, post
 
-from services.security.risk_service import (
-    detect_ghost_employees as _detect_ghost_employees,
-    detect_impossible_travel as _detect_impossible_travel,
-    get_audit_timeline as _get_audit_timeline,
-    get_team_health_radar as _get_team_health_radar,
-    update_flight_risk_score as _update_flight_risk_score,
-)
+from domains.governance.services.risk_service import detect_ghost_employees as _detect_ghost_employees
+from domains.governance.services.risk_service import detect_impossible_travel as _detect_impossible_travel
+from domains.governance.services.risk_service import get_audit_timeline as _get_audit_timeline
+from domains.governance.services.risk_service import get_team_health_radar as _get_team_health_radar
+from domains.governance.services.risk_service import update_flight_risk_score as _update_flight_risk_score
 
 @get("/api/v1/admin/ghost-employees", deps=["db"], query=["threshold_days"], tags=["security-risk"])
 @get("/api/v1/ghost-employees", deps=["db"], query=["threshold_days"], tags=["security-risk"])

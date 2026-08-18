@@ -7,7 +7,9 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from _legacy.models import User, Order, ReturnRequest
+from domains.accounts.models.user import User
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import ReturnRequest
 
 
 class CustomerHealthEngine:
@@ -120,7 +122,7 @@ def list_customer_health(db: Session, page: int = 1, size: int = 100) -> dict[st
     Behaviour-preserving extraction of the inline handler in
     ``routers.customer_health_list.list_customer_health``.
     """
-    from utils.pagination import paginated_query
+    from infrastructure.utils.pagination import paginated_query
 
     users, total = paginated_query(
         db.query(User).order_by(User.created_at.desc()),

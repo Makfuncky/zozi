@@ -12,11 +12,22 @@ from typing import Any, Optional
 from fastapi import Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import Order, OrderItem, SupplierProfile, User
-from utils.dependencies import require_supplier
-from services.common.storage import storage as _storage
-from services.supplier.supplier_order_service import get_supplier_order, get_supplier_order_for_verify, get_supplier_order_items, get_supplier_order_items_for_verify, get_supplier_profile_by_user_id, list_supplier_order_ids, list_supplier_orders, mark_order_prepared_if_processing, resolve_shipment_info
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.dependencies import require_supplier
+from infrastructure.utils.storage import storage as _storage
+from domains.suppliers.services.supplier_order_service import get_supplier_order
+from domains.suppliers.services.supplier_order_service import get_supplier_order_for_verify
+from domains.suppliers.services.supplier_order_service import get_supplier_order_items
+from domains.suppliers.services.supplier_order_service import get_supplier_order_items_for_verify
+from domains.suppliers.services.supplier_order_service import get_supplier_profile_by_user_id
+from domains.suppliers.services.supplier_order_service import list_supplier_order_ids
+from domains.suppliers.services.supplier_order_service import list_supplier_orders
+from domains.suppliers.services.supplier_order_service import mark_order_prepared_if_processing
+from domains.suppliers.services.supplier_order_service import resolve_shipment_info
 ai_logger = logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
 

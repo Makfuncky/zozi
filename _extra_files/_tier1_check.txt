@@ -1,4 +1,0 @@
-31: | Tier 1 exact duplicates | ✅ Verified | SHA-256 content hash (empty files excluded) |
-78: | Tier 1 | Exact content duplicates | 0 | MERGE | LOW |
-84: **Safe immediate reduction:** 70 files (Tier 0 + Tier 1)
-766: 2. Merge Tier 1 exact duplicates: 0 pairs

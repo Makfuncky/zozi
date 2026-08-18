@@ -4,12 +4,10 @@ Supplier Health API Endpoints
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from controllers.security.auth_controller import get_current_user
-from services.supplier.supplier_health_service import (
-    get_supplier_health_for_user,
-    list_supplier_health_for_admin,
-)
+from infrastructure.database.database import get_db
+from rbac import get_current_user
+from domains.suppliers.services.supplier_health_service import get_supplier_health_for_user
+from domains.suppliers.services.supplier_health_service import list_supplier_health_for_admin
 
 router = APIRouter(prefix="/api/v1/supplier")
 

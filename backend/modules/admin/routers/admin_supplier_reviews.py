@@ -4,18 +4,17 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import SupplierProfile, User
-from db.schemas import ArchiveRequest, BulkActionRequest
-from utils.dependencies import require_admin
-from utils.country_rls import enforce_country_access
-from controllers.admin.admin_controller import (
-    archive_entity,
-    restore_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    hard_delete_entity,
-)
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import enforce_country_access
+from domains.governance.services.misc_service import archive_entity
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import hard_delete_entity
 
 router = APIRouter(prefix="/api/v1/admin")
 
@@ -91,7 +90,7 @@ def list_pending_kyc_suppliers(
     )
     if code != "*":
         q = q.filter(SupplierProfile.country_code == code.upper())
-    from utils.pagination import paginated_response
+    from infrastructure.utils.pagination import paginated_response
     return paginated_response(
         q.order_by(SupplierProfile.updated_at.desc()),
         page=page,
@@ -155,7 +154,7 @@ def approve_supplier_kyc(
     if not s:
         raise HTTPException(404, detail="Supplier not found")
     s.verification_status = "approved"
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     s.verified_at = utcnow()
     s.verified_by = admin.id if hasattr(s, "verified_by") else None
     db.commit()
@@ -192,7 +191,7 @@ def suspend_supplier(
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 0
@@ -211,7 +210,7 @@ def activate_supplier(
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from _legacy.models import User as UserModel
+    from domains.accounts.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 1
@@ -376,7 +375,7 @@ def bulk_supplier_action(
             continue
         if action == "verify":
             s.verification_status = "approved"
-            from utils.datetime_utils import utcnow
+            from infrastructure.utils.datetime_utils import utcnow
             if hasattr(s, "verified_at"):
                 s.verified_at = utcnow()
         elif action == "reject":
@@ -466,7 +465,7 @@ def list_supplier_documents_frontend(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    import controllers.supplier.supplier_document_controller as doc_ctrl
+    import domains.suppliers.services as doc_ctrl
     return doc_ctrl.admin_list_documents(
         {"id": 0, "role": "admin"},
         db,
@@ -485,7 +484,7 @@ def review_supplier_document_frontend(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    import controllers.supplier.supplier_document_controller as doc_ctrl
+    import domains.suppliers.services as doc_ctrl
     return doc_ctrl.admin_review_document(doc_id, data, {"id": 0, "role": "admin"}, db)
 
 

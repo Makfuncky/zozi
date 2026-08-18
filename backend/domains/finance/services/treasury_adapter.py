@@ -7,10 +7,14 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import TreasuryAccount, JournalEntry, AuditLog, Account, FinanceAuditLog
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.core import AuditLog
+from domains.finance.models.finance import TreasuryAccount
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import FinanceAuditLog
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

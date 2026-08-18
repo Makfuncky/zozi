@@ -2,8 +2,9 @@
 from __future__ import annotations
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from _legacy.models.core import EntityChatThread, EntityChatMessage
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.accounts.models.core import EntityChatThread
+from domains.accounts.models.core import EntityChatMessage
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -12,7 +13,7 @@ class EntityChatService:
     """Service for managing entity-attached chat threads and messages."""
 
     def __init__(self, db: Session = None):
-        from db.database import get_service_session
+        from infrastructure.database.database import get_service_session
         self.db = db or get_service_session()
 
     def create_or_get_thread(

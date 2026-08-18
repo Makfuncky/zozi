@@ -36,7 +36,7 @@ class GeoFenceService:
         if not office_id:
             return True
         
-        from _legacy.models import Office
+        from domains.hr.models.employee_models import Office
         office = self.db.query(Office).filter(Office.id == office_id).first()
         if not office:
             return True
@@ -52,7 +52,7 @@ class GeoFenceService:
         if not country_code:
             return True
         
-        from _legacy.models import CountryConfig
+        from domains.country.models.countries import CountryConfig
         country = self.db.query(CountryConfig).filter(CountryConfig.code == country_code).first()
         if not country:
             return True
@@ -82,7 +82,7 @@ class GeoFenceService:
         timestamp: Optional[float] = None,
     ) -> bool:
         """Detect if user's location changed impossibly fast."""
-        from _legacy.models import AuditLog
+        from domains.accounts.models.core import AuditLog
         import time
         
         check_time = timestamp or time.time()

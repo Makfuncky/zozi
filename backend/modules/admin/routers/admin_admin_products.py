@@ -3,11 +3,16 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Body, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from controllers.admin.products_controller import approve_product_route, bulk_delete_products_route, list_pending_products, reject_product_route, toggle_product_badge_route, unarchive_product_route
+from domains.catalog.services.products_controller import approve_product_route
+from domains.catalog.services.products_controller import bulk_delete_products_route
+from domains.catalog.services.products_controller import list_pending_products
+from domains.catalog.services.products_controller import reject_product_route
+from domains.catalog.services.products_controller import toggle_product_badge_route
+from domains.catalog.services.products_controller import unarchive_product_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

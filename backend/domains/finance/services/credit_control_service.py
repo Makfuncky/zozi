@@ -20,13 +20,11 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from _legacy.models import (
-    Customer,
-    ARInvoice,
-    FinanceAutomationLog,
-    FinanceAuditLog,
-)
-from utils.datetime_utils import utcnow as _utcnow
+from domains.finance.models.finance import Customer
+from domains.finance.models.finance import ARInvoice
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

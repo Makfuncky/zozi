@@ -6,7 +6,10 @@ from typing import Any, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Banner, Coupon, FlashSale, PromotionEngineConfig
+from domains.comms.models.marketing import FlashSale
+from domains.governance.models.admin import PromotionEngineConfig
+from domains.payments.models.payments import Banner
+from domains.payments.models.payments import Coupon
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -290,7 +293,7 @@ def delete_banner(db: Session, *, banner_id: int, admin_id: Any = None) -> dict:
     if hasattr(banner, "deleted_by_id"):
         banner.deleted_by_id = admin_id
     if hasattr(banner, "deleted_at"):
-        from utils.datetime_utils import utcnow
+        from infrastructure.utils.datetime_utils import utcnow
 
         banner.deleted_at = utcnow()
     db.commit()

@@ -14,7 +14,8 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import SupplierProfile, User
+from domains.accounts.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
 
 
 def _supplier_to_dict(s: SupplierProfile) -> dict:
@@ -97,7 +98,7 @@ def list_suppliers_by_country(
 
 
 def list_pending_kyc_suppliers(db: Session, code: str, page: int, size: int) -> dict:
-    from utils.pagination import paginated_response
+    from infrastructure.utils.pagination import paginated_response
 
     q = db.query(SupplierProfile).filter(
         SupplierProfile.verification_status.in_(["pending", "documents_submitted", "under_review"]),
@@ -146,7 +147,7 @@ def update_supplier_by_country(
 def approve_supplier_kyc(db: Session, code: str, supplier_id: int, admin_id: int) -> dict:
     s = _get_owned_supplier(db, code, supplier_id)
     s.verification_status = "approved"
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
     s.verified_at = utcnow()
     s.verified_by = admin_id if hasattr(s, "verified_by") else None
     db.commit()
@@ -249,7 +250,7 @@ def bulk_supplier_action(db: Session, payload: dict) -> dict:
             continue
         if action == "verify":
             s.verification_status = "approved"
-            from utils.datetime_utils import utcnow
+            from infrastructure.utils.datetime_utils import utcnow
             if hasattr(s, "verified_at"):
                 s.verified_at = utcnow()
         elif action == "reject":

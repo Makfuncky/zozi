@@ -8,20 +8,24 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
-from _legacy.models import (
-    LandedCostAllocation,
-    CustomsEntry, ImportCostTemplate,
-    Warehouse, Vendor, Product,
-    Account, AccountGroup, AccountBalance,
-    JournalEntry, JournalEntryLine,
-)
-from _legacy.models.erp import (
-    ImportShipment, ImportShipmentLine,
-    PurchaseOrder, PurchaseOrderLine,
-)
-from db.schemas import JournalEntryCreate, JournalLineInput
-from services.finance import general_ledger_service as gl
-from utils.datetime_utils import utcnow as _utcnow
+from domains.catalog.models.products import Product
+from domains.finance.models.erp import LandedCostAllocation
+from domains.finance.models.erp import CustomsEntry
+from domains.finance.models.erp import ImportCostTemplate
+from domains.finance.models.erp import Warehouse
+from domains.finance.models.finance import Vendor
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountGroup
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.erp import ImportShipment
+from domains.finance.models.erp import ImportShipmentLine
+from domains.finance.models.erp import PurchaseOrder
+from domains.finance.models.erp import PurchaseOrderLine
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

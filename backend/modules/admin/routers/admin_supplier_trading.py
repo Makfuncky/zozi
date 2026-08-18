@@ -8,9 +8,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from controllers.admin.admin_controller import require_admin
-from services.finance import trading_service as trading
+from infrastructure.database.database import get_db
+from infrastructure.utils.dependencies import require_admin
+from domains.finance.services.finance import trading_service as trading
 
 router = APIRouter(prefix="/api/v1/admin")
 

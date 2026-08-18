@@ -15,12 +15,10 @@ from fastapi import HTTPException
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CountryCategoryTaxRate,
-    CountryCity,
-    CountryCommunication,
-    CountryStaffAssignment,
-)
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.country_enhancements import CountryCategoryTaxRate
+from domains.country.models.country_enhancements import CountryCity
+from domains.country.models.country_enhancements import CountryStaffAssignment
 
 
 # ── Internal Communications ────────────────────────────────────────────────────

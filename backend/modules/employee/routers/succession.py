@@ -6,12 +6,10 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.hr.succession_service import (
-    get_alumni_network,
-    get_succession_matrix,
-)
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.hr.services.succession_service import get_alumni_network
+from domains.hr.services.succession_service import get_succession_matrix
 
 router = APIRouter()
 

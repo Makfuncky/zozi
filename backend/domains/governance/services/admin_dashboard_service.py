@@ -13,28 +13,24 @@ from typing import Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Account as AccountModel,
-    AccountBalance as AccountBalanceModel,
-    Category as CategoryModel,
-    CommissionGlobalConfig,
-    Employee,
-    Payout as PayoutModel,
-    Payment,
-    Product as ProductModel,
-    Shipment,
-    ShippingCarrier,
-    ShippingZone,
-    User as UserModel,
-)
-from services.common.db_read import (
-    all_rows,
-    count,
-    first,
-    scalar,
-    scalar_sum,
-    scalar_with_filters,
-)
+from domains.accounts.models.user import User as UserModel
+from domains.catalog.models.products import Category as CategoryModel
+from domains.catalog.models.products import Product as ProductModel
+from domains.finance.models.finance import Account as AccountModel
+from domains.finance.models.finance import AccountBalance as AccountBalanceModel
+from domains.governance.models.admin import CommissionGlobalConfig
+from domains.governance.models.admin import ShippingCarrier
+from domains.governance.models.admin import ShippingZone
+from domains.hr.models.employee_models import Employee
+from domains.logistics.models.logistics import Shipment
+from domains.payments.models.payments import Payout as PayoutModel
+from domains.payments.models.payments import Payment
+from domains.comms.services.db_read import all_rows
+from domains.comms.services.db_read import count
+from domains.comms.services.db_read import first
+from domains.comms.services.db_read import scalar
+from domains.comms.services.db_read import scalar_sum
+from domains.comms.services.db_read import scalar_with_filters
 
 
 def admin_dashboard_fallback(db: Session) -> dict:

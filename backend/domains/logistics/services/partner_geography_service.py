@@ -9,7 +9,7 @@ from __future__ import annotations
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import LogisticsPartner
+from domains.logistics.models.logistics import LogisticsPartner
 import structlog
 logger = structlog.get_logger(__name__)
 

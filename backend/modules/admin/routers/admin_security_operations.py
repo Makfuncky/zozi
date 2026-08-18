@@ -5,10 +5,12 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from _legacy.models import IncidentWarRoom, User
-from services.security.incident_service import get_incident_service, IncidentService
-from db.database import get_db
-from controllers.security.auth_controller import get_current_user
+from domains.accounts.models.user import User
+from domains.governance.models.incident import IncidentWarRoom
+from domains.accounts.services.incident_service import get_incident_service
+from domains.accounts.services.incident_service import IncidentService
+from infrastructure.database.database import get_db
+from rbac import get_current_user
 
 router = APIRouter(prefix="/api/v1/admin")
 

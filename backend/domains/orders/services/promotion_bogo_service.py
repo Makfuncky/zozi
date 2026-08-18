@@ -22,8 +22,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import BOGOPromotion
-from utils.datetime_utils import utcnow
+from domains.catalog.models.promotions import BOGOPromotion
+from infrastructure.utils.datetime_utils import utcnow
 
 logger = logging.getLogger(__name__)
 

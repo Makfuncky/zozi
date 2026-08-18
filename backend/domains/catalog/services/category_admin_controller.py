@@ -5,7 +5,7 @@ RLS context and delegates persistence to
 services.catalog.category_admin_{read,write}_service and the shared
 controllers.admin.admin_controller archive helpers.
 
-The HTTP contract is declared with ``routers.generated.auto_router`` decorators
+The HTTP contract is declared with ``infrastructure.routing.route_contract`` decorators
 so the auto-router emits ``routers/admin_catalog_category_admin.py``.
 """
 from __future__ import annotations
@@ -15,25 +15,21 @@ from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from db.schemas import ArchiveRequest, BulkActionRequest
-from routers.generated.auto_router import delete, get, post, put
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.routing.route_contract import delete, get, post, put
 
-from utils.country_rls import get_country_or_404
-from utils.rls_interceptor import set_rls_context, clear_rls_context
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
-from controllers.admin.admin_controller import (
-    archive_entity,
-    bulk_archive_entities,
-    bulk_restore_entities,
-    restore_entity,
-)
-from services.catalog.category_admin_read_service import list_categories_paginated
-from services.catalog.category_admin_write_service import (
-    create_category as svc_create_category,
-    delete_category as svc_delete_category,
-    reorder_categories as svc_reorder_categories,
-    update_category as svc_update_category,
-)
+from domains.governance.services.misc_service import archive_entity
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.governance.services.misc_service import restore_entity
+from domains.catalog.services.category_admin_read_service import list_categories_paginated
+from domains.catalog.services.category_admin_write_service import create_category as svc_create_category
+from domains.catalog.services.category_admin_write_service import delete_category as svc_delete_category
+from domains.catalog.services.category_admin_write_service import reorder_categories as svc_reorder_categories
+from domains.catalog.services.category_admin_write_service import update_category as svc_update_category
 
 
 def _actor(current_user) -> dict:

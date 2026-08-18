@@ -2,9 +2,11 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
 
-from db.database import get_db
-from _legacy.models import SupportTicket, TicketMessage, User
-from utils.dependencies import get_current_user
+from infrastructure.database.database import get_db
+from domains.accounts.models.core import SupportTicket
+from domains.accounts.models.user import User
+from domains.comms.models.communication import TicketMessage
+from infrastructure.utils.dependencies import get_current_user
 
 router = APIRouter()
 __router_prefix__ = "/tickets"

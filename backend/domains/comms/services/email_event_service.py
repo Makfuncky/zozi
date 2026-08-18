@@ -10,9 +10,13 @@ from typing import Any, Mapping
 
 from sqlalchemy.orm import Session
 
-from db.database import SessionLocal
-from _legacy.models import CampaignRecipient, EmailDeliveryEvent, EmailProviderConfig, EmailSuppression, ProcessedWebhookEvent
-from utils.config import settings
+from infrastructure.database.database import SessionLocal
+from domains.comms.models.marketing import CampaignRecipient
+from domains.comms.models.marketing import EmailDeliveryEvent
+from domains.comms.models.marketing import EmailSuppression
+from domains.governance.models.admin import EmailProviderConfig
+from domains.governance.models.admin import ProcessedWebhookEvent
+from infrastructure.utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -121,7 +125,7 @@ def is_email_suppressed(email: str) -> bool:
     normalized = normalize_email_address(email)
     if not normalized or not db_side_effects_enabled():
         return False
-    from db.database import get_service_session
+    from infrastructure.database.database import get_service_session
     try:
         with get_service_session() as db:
             return get_active_email_suppression(normalized, db) is not None

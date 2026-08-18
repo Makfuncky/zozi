@@ -6,13 +6,11 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from _legacy.models.comms import (
-    ExternalContactMasking,
-    ProxyChannel,
-    ProxySession,
-    ProxyMessage,
-    ProxyCallLog,
-)
+from domains.comms.models.communication import ExternalContactMasking
+from domains.comms.models.communication import ProxyChannel
+from domains.comms.models.communication import ProxySession
+from domains.comms.models.communication import ProxyMessage
+from domains.comms.models.communication import ProxyCallLog
 import structlog
 logger = structlog.get_logger(__name__)
 

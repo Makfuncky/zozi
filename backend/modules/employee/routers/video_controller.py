@@ -5,10 +5,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import User
-from services.comms.video_conferencing import get_video_conference
-from utils.dependencies import require_admin
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.comms.services.video_conferencing import get_video_conference
+from infrastructure.utils.dependencies import require_admin
 
 logger = logging.getLogger("zozi.api.video")
 router = APIRouter()

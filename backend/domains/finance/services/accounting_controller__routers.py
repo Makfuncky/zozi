@@ -1,6 +1,6 @@
 """Accounting Controller — wraps general_ledger_service for API consumption.
 
-HTTP contract declared with ``routers.generated.auto_router`` decorators. Paths
+HTTP contract declared with ``infrastructure.routing.route_contract`` decorators. Paths
 match ``routers/admin_finance_creation.py`` so auto-generation skips them (no
 duplicate live routes).
 """
@@ -14,10 +14,10 @@ from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get, post
+from infrastructure.routing.route_contract import get, post
 
 from infrastructure.utils.audit import AuditAction, audit_log
-from _legacy.models import User
+from domains.accounts.models.user import User
 from infrastructure.database.schemas import (
     JournalEntryCreate,
     JournalLineInput,

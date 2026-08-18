@@ -29,7 +29,8 @@ from infrastructure.database.schemas import RegisterRequest, TokenResponse, User
 
 from middleware.csrf_middleware import generate_csrf_token
 
-from _legacy.models import User, UserLoginHistory
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
 
 from infrastructure.utils.audit import AuditAction, audit_log
 

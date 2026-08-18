@@ -7,11 +7,11 @@ import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from _legacy.models import User
-from services.common.storage import storage as _storage
-from utils.config import settings
-from utils.dependencies import get_current_user
-from utils.file_validation import validate_upload_document, validate_upload_image
+from domains.accounts.models.user import User
+from infrastructure.utils.storage import storage as _storage
+from infrastructure.utils.config import settings
+from infrastructure.utils.dependencies import get_current_user
+from infrastructure.utils.file_validation import validate_upload_document, validate_upload_image
 
 router = APIRouter()
 

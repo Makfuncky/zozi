@@ -13,8 +13,9 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session, selectinload
 
-from _legacy.models import Product, WishlistItem
-from utils.pagination import SAFE_QUERY_LIMIT
+from domains.catalog.models.products import Product
+from domains.catalog.models.products import WishlistItem
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)
 

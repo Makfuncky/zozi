@@ -6,8 +6,9 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 
-from _legacy.models.employee_models import Employee, EmployeeShiftRoster
-from _legacy.models import EmployeeLeaveLedger
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeShiftRoster
+from domains.hr.models.employee_models import EmployeeLeaveLedger
 
 
 def create_shift_roster(employee_id: int, shift_date: date, shift_name: str, start_time: str, end_time: str, db: Session) -> dict:

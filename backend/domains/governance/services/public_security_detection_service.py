@@ -3,12 +3,19 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue, IPReputation, DeviceFingerprint, User
-from db.schemas import FraudScoreRequest, FraudScoreResponse, FraudEventOut, FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut, ManualReviewOut, ManualReviewAssign, ManualReviewResolve, IPReputationOut, DeviceFingerprintOut, ThreatFeedStatus, FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck, ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
-from services.security.fraud_detection_service import FraudScoringEngine, ThreatFeedUpdater
-from utils.dependencies import require_admin
-from utils.redis_client import get_redis
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from domains.governance.models.fraud import FraudEvent
+from domains.governance.models.fraud import FraudBlacklist
+from domains.governance.models.fraud import FraudRule
+from domains.governance.models.fraud import ManualReviewQueue
+from domains.governance.models.fraud import IPReputation
+from domains.governance.models.fraud import DeviceFingerprint
+from infrastructure.database.schemas import FraudScoreRequest, FraudScoreResponse, FraudEventOut, FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut, ManualReviewOut, ManualReviewAssign, ManualReviewResolve, IPReputationOut, DeviceFingerprintOut, ThreatFeedStatus, FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck, ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
+from domains.governance.services.fraud_detection_service import FraudScoringEngine
+from domains.governance.services.fraud_detection_service import ThreatFeedUpdater
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.redis_client import get_redis
 import json
 
 def list_fraud_events(page: int=Query(1, ge=1), size: int=Query(50, ge=1, le=100), user_id: Optional[int]=None, ip_address: Optional[str]=None, min_score: int=Query(0, ge=0, le=100), _: User=Depends(require_admin), db: Session=Depends(get_db)):

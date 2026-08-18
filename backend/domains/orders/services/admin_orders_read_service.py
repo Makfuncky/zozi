@@ -10,7 +10,7 @@ import math
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import Order
+from domains.orders.models.orders import Order
 
 
 def list_orders_paginated(

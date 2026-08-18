@@ -17,19 +17,17 @@ from fastapi import HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CommissionAgreement,
-    CommissionBadgeTier,
-    CommissionCategoryRate,
-    CommissionGlobalConfig,
-    CommissionLedgerEntry,
-    ProductCommissionOverride,
-    SupplierProfile,
-    User,
-    Product,
-)
-from utils.audit import AuditAction, audit_log
-from services.finance import commission_engine
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
+from domains.finance.models.commission import CommissionAgreement
+from domains.finance.models.commission import CommissionCategoryRate
+from domains.finance.models.commission import CommissionLedgerEntry
+from domains.finance.models.commission import ProductCommissionOverride
+from domains.governance.models.admin import CommissionBadgeTier
+from domains.governance.models.admin import CommissionGlobalConfig
+from infrastructure.utils.audit import AuditAction, audit_log
+from domains.finance.services.finance import commission_engine
 
 
 def _build_list_page_payload(items: list[Any], total: int, *, offset: int = 0, page_size: Optional[int] = None) -> dict[str, Any]:

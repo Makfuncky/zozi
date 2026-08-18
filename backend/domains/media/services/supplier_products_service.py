@@ -13,9 +13,10 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import Product, SupplierProfile
+from domains.catalog.models.products import Product
+from domains.comms.models.suppliers import SupplierProfile
 
-from services.common.storage import storage as _storage
+from infrastructure.utils.storage import storage as _storage
 
 from infrastructure.utils.config import settings
 

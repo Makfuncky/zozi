@@ -1,4 +1,4 @@
-﻿"""Payment gateway provider: stripe.
+"""Payment gateway provider: stripe.
 
 Relocated from controllers/payments_controller.py.
 """
@@ -22,11 +22,18 @@ from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    Coupon, Order, OrderItem, Payment, PaymentGatewayConnection, PaymentProviderConfig,
-    Product, Notification, ProcessedWebhookEvent, TransactionLedger, CountryConfig,
-)
-from events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
+from domains.catalog.models.products import Product
+from domains.comms.models.communication import Notification
+from domains.country.models.countries import CountryConfig
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import PaymentProviderConfig
+from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.payments.models.payments import Coupon
+from domains.payments.models.payments import Payment
+from domains.payments.models.payments import PaymentGatewayConnection
+from infrastructure.messaging.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from infrastructure.utils.config import settings
 from infrastructure.utils.currency import (
     convert_from_aed,

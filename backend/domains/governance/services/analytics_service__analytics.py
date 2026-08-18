@@ -9,25 +9,24 @@ from typing import Any, cast
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    AdminAnalyticsSnapshot,
-    ChatbotQueryEvent,
-    Order,
-    OrderItem,
-    Product,
-    User,
-)
-from services.analytics.admin_analytics_service import (
-    compute_analytics_overview,
-    compute_analytics_timeseries_payload,
-    compute_top_products_payload,
-    compute_user_growth_payload,
-    store_admin_analytics_snapshot,
-)
-from services.common.db_read import aggregate_rows, all_rows, count, first
-from utils.admin_shared import ALLOWED_BANK_ACCOUNT_KINDS, VALID_USER_ROLES
-from utils.cache import build_versioned_cache_key, cache_get_json, cache_set_json
-from utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from domains.governance.models.admin import AdminAnalyticsSnapshot
+from domains.governance.models.admin import ChatbotQueryEvent
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.governance.services.admin_analytics_service import compute_analytics_overview
+from domains.governance.services.admin_analytics_service import compute_analytics_timeseries_payload
+from domains.governance.services.admin_analytics_service import compute_top_products_payload
+from domains.governance.services.admin_analytics_service import compute_user_growth_payload
+from domains.governance.services.admin_analytics_service import store_admin_analytics_snapshot
+from domains.comms.services.db_read import aggregate_rows
+from domains.comms.services.db_read import all_rows
+from domains.comms.services.db_read import count
+from domains.comms.services.db_read import first
+from infrastructure.utils.admin_shared import ALLOWED_BANK_ACCOUNT_KINDS, VALID_USER_ROLES
+from infrastructure.utils.cache import build_versioned_cache_key, cache_get_json, cache_set_json
+from infrastructure.utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -330,4 +329,4 @@ def _safe_load_chatbot_filters(filters_json: str | None) -> dict:
 
 
 # Admin: Recipient Bank Account Verification
-# ALLOWED_BANK_ACCOUNT_KINDS is provided by utils.admin_shared (imported above).
+# ALLOWED_BANK_ACCOUNT_KINDS is provided by infrastructure.utils.admin_shared (imported above).

@@ -12,10 +12,11 @@ from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import controllers.treasury.cash_management_controller as ctrl
-from controllers.admin.admin_controller import require_admin, require_permission
-from db.database import get_db
-from db.schemas import (
+import domains.finance.services.cash_management_controller as ctrl
+from infrastructure.utils.dependencies import require_admin
+from domains.governance.services.effective_permissions import require_permission
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
     BadgeBillingOut,
     BankTransactionCreate,
     BankTransactionImportItem,
@@ -521,7 +522,7 @@ def logistics_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from _legacy.models import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return {"error": "Logistics partner not found"}, 404
@@ -536,7 +537,7 @@ def logistics_list_settlements(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from _legacy.models import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []
@@ -550,7 +551,7 @@ def logistics_list_ledger(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from _legacy.models import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []

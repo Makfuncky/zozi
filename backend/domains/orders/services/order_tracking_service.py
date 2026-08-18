@@ -27,9 +27,15 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from fastapi import HTTPException
-from _legacy.models import Order, OrderItem, Shipment, ShipmentEvent, User, LogisticsPartner, Notification
-from utils.config import settings
-from utils.datetime_utils import utcnow as _utcnow
+from domains.accounts.models.user import User
+from domains.comms.models.communication import Notification
+from domains.logistics.models.logistics import Shipment
+from domains.logistics.models.logistics import ShipmentEvent
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from infrastructure.utils.config import settings
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

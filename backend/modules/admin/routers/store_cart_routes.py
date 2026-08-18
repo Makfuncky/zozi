@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import controllers.commerce.cart_controller as _ctrl
+    import domains.orders.services as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:

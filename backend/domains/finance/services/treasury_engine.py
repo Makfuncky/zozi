@@ -13,12 +13,14 @@ from contextlib import contextmanager
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
-from _legacy.models import (
-    Account, AccountGroup, JournalEntry, JournalEntryLine,
-    AccountBalance, PendingJournalEntry,
-)
-from services.finance.general_ledger_service import seed_chart_of_accounts as gl_seed_chart_of_accounts
-from services.finance.general_ledger_service import get_trial_balance as gl_get_trial_balance
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountGroup
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import PendingJournalEntry
+from domains.finance.services.general_ledger_service import seed_chart_of_accounts as gl_seed_chart_of_accounts
+from domains.finance.services.general_ledger_service import get_trial_balance as gl_get_trial_balance
 
 logger = logging.getLogger(__name__)
 
@@ -373,7 +375,7 @@ class TreasuryEngine:
         Flags any delivered/paid order that lacks a corresponding
         JournalEntry with matching reference_type/reference_id.
         """
-        from _legacy.models.orders import Order
+        from domains.orders.models.orders import Order
 
         alerts = []
 

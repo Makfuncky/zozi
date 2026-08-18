@@ -6,7 +6,7 @@ no models, keeping the controller layer a thin pass-through (fixes W1/Q1 at the
 router boundary and avoids router->controller imports).
 
 The HTTP contract is declared with the stackable decorators from
-``routers.generated.auto_router`` (``@get`` + composable ``@deps``/``@query``/
+``infrastructure.routing.route_contract`` (``@get`` + composable ``@deps``/``@query``/
 ``@tags``/``@summary``/``@query`` as keyword arguments on the route decorator. See
 ``routers/generated/auto_router.py`` for the contract and the generator that turns
 these declarations into the mounted surface router.
@@ -17,7 +17,7 @@ from typing import Any, Dict
 
 from sqlalchemy.orm import Session
 
-from routers.generated.auto_router import get
+from infrastructure.routing.route_contract import get
 
 from domains.orders.services.referrals_service import (
     get_or_create_referral_code as svc_get_or_create_referral_code,

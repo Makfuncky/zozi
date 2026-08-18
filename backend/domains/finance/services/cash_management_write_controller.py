@@ -13,13 +13,11 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from controllers.treasury.cash_management_controller import (
-    _serialize_finance_bank_settings,
-    admin_queue_dispatch_transfer_batch,
-)
-from services.finance import cash_management_write_service as write_service
+from domains.finance.services.cash_management_controller import _serialize_finance_bank_settings
+from domains.finance.services.cash_management_controller import admin_queue_dispatch_transfer_batch
+from domains.finance.services.finance import cash_management_write_service as write_service
 import structlog
-from routers.generated.auto_router import post, put, delete
+from infrastructure.routing.route_contract import post, put, delete
 
 logger = structlog.get_logger(__name__)
 

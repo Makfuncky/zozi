@@ -51,7 +51,7 @@ def _make_missing(name: str) -> Callable:
 
 def _soft_delete_by_product(db: Session, model, product_id: int) -> int:
     """Soft-delete every (non-deleted) row of *model* for *product_id*."""
-    from utils.datetime_utils import utcnow
+    from infrastructure.utils.datetime_utils import utcnow
 
     updated = (
         db.query(model)
@@ -67,21 +67,21 @@ def _soft_delete_by_product(db: Session, model, product_id: int) -> int:
 
 def clear_product_carts(db: Session, product_id: int) -> int:
     """Remove (soft-delete) all cart items for a product during cascade delete."""
-    from _legacy.models import CartItem
+    from domains.accounts.models.core import CartItem
 
     return _soft_delete_by_product(db, CartItem, product_id)
 
 
 def clear_product_wishlists(db: Session, product_id: int) -> int:
     """Remove (soft-delete) all wishlist items for a product during cascade delete."""
-    from _legacy.models import WishlistItem
+    from domains.catalog.models.products import WishlistItem
 
     return _soft_delete_by_product(db, WishlistItem, product_id)
 
 
 def archive_product_reviews(db: Session, product_id: int) -> int:
     """Soft-delete a product's reviews, preserving the data history."""
-    from _legacy.models import Review
+    from domains.catalog.models.products import Review
 
     return _soft_delete_by_product(db, Review, product_id)
 
@@ -90,7 +90,7 @@ def archive_product_reviews(db: Session, product_id: int) -> int:
 
 def purge_product_cart_items(db: Session, product_id: int) -> int:
     """Remove every cart row referencing *product_id*. Caller commits."""
-    from _legacy.models import CartItem
+    from domains.accounts.models.core import CartItem
 
     return (
         db.query(CartItem)
@@ -101,7 +101,7 @@ def purge_product_cart_items(db: Session, product_id: int) -> int:
 
 def purge_product_wishlist_items(db: Session, product_id: int) -> int:
     """Remove every wishlist row referencing *product_id*. Caller commits."""
-    from _legacy.models import Wishlist
+    from domains.catalog.models.products import Wishlist
 
     return (
         db.query(Wishlist)
@@ -112,7 +112,7 @@ def purge_product_wishlist_items(db: Session, product_id: int) -> int:
 
 def soft_delete_product_reviews(db: Session, product_id: int) -> int:
     """Flag a product's live reviews as deleted. Caller commits."""
-    from _legacy.models import Review
+    from domains.catalog.models.products import Review
 
     return (
         db.query(Review)
@@ -138,7 +138,7 @@ def create_product_verification(
     notes: Optional[str] = None,
 ):
     """Persist a new :class:`ProductVerification` row and return it."""
-    from _legacy.models import ProductVerification
+    from domains.governance.models.admin import ProductVerification
 
     verification = ProductVerification(
         product_id=product_id,

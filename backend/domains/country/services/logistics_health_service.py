@@ -5,18 +5,19 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from rbac.routers.auth_controller import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from services.logistics.logistics_health_engine import get_logistics_health_engine
+from domains.logistics.services.logistics_health_engine import get_logistics_health_engine
 
 def get_logistics_health(partner_id: int, country_code: str, current_user: dict, db: Session):
     engine = get_logistics_health_engine(db)
     return engine.calculate_health_score(partner_id, country_code)
 
 def list_logistics_health(country_code: str, current_user: dict, db: Session):
-    from _legacy.models import LogisticsPartner, LogisticsPartnerProfile
+    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartnerProfile
     profiles = db.query(LogisticsPartnerProfile).all()
     results = []
     for p in profiles:

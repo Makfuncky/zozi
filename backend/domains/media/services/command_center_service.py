@@ -8,12 +8,18 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    User, LogisticsPartner, Order, CountryConfig,
-    SystemHealthEvent, FraudAlert, NewsSource, NewsArticle,
-    InternalNotice, PredictiveSimulation, AlertEscalationRule,
-    ExecutiveNews
-)
+from domains.accounts.models.core import SystemHealthEvent
+from domains.accounts.models.core import NewsSource
+from domains.accounts.models.core import NewsArticle
+from domains.accounts.models.core import InternalNotice
+from domains.accounts.models.core import PredictiveSimulation
+from domains.accounts.models.core import AlertEscalationRule
+from domains.accounts.models.core import ExecutiveNews
+from domains.accounts.models.user import User
+from domains.country.models.countries import CountryConfig
+from domains.governance.models.fraud import FraudAlert
+from domains.logistics.models.logistics import LogisticsPartner
+from domains.orders.models.orders import Order
 from domains.hr.models.employee_models import Employee
 from infrastructure.utils.config import settings
 from infrastructure.utils.redis_client import redis_client

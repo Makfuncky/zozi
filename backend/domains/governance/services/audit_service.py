@@ -6,7 +6,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
-from _legacy.models import AuditLog
+from domains.accounts.models.core import AuditLog
 
 
 class AuditService:

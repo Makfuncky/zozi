@@ -33,8 +33,11 @@ from typing import Optional, List, Dict, Any, Set
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import Employee, OrgUnit, User, EmployeeRole
-from _legacy.models.employee_models import EmployeeRelation
+from domains.accounts.models.user import User
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import OrgUnit
+from domains.hr.models.employee_models import EmployeeRole
+from domains.hr.models.employee_models import EmployeeRelation
 
 
 def _employee_links(db: Session) -> Dict[int, Any]:

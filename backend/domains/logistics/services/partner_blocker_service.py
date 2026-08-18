@@ -11,16 +11,14 @@ from typing import Any, Optional
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    LogisticsCODRemittanceReceipt,
-    LogisticsPartnerBankAccount,
-    LogisticsPartnerPayout,
-    LogisticsSettlement,
-    Order,
-    OrderLogisticsAllocation,
-    Shipment,
-    TransactionLedger,
-)
+from domains.finance.models.finance import TransactionLedger
+from domains.governance.models.admin import LogisticsCODRemittanceReceipt
+from domains.governance.models.admin import LogisticsPartnerBankAccount
+from domains.governance.models.admin import LogisticsSettlement
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderLogisticsAllocation
+from domains.payments.models.payments import LogisticsPartnerPayout
 import structlog
 logger = structlog.get_logger(__name__)
 

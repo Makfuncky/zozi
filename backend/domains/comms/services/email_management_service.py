@@ -6,23 +6,19 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import desc, func as sqlfunc, case as sql_case
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    EmailCampaign,
-    EmailRuntimeConfig,
-    EmailSuppression,
-    EmailTemplate,
-    NewsletterSubscriber,
-    CampaignRecipient,
-)
-from db.database import get_service_session
-from services.common.write_helpers import (
-    add_and_flush,
-    commit_and_refresh,
-    commit_only,
-    delete_only,
-    flush_only,
-)
-from utils.datetime_utils import utcnow as utcnow
+from domains.comms.models.marketing import EmailCampaign
+from domains.comms.models.marketing import EmailRuntimeConfig
+from domains.comms.models.marketing import EmailSuppression
+from domains.comms.models.marketing import EmailTemplate
+from domains.comms.models.marketing import NewsletterSubscriber
+from domains.comms.models.marketing import CampaignRecipient
+from infrastructure.database.database import get_service_session
+from domains.comms.services.write_helpers import add_and_flush
+from domains.comms.services.write_helpers import commit_and_refresh
+from domains.comms.services.write_helpers import commit_only
+from domains.comms.services.write_helpers import delete_only
+from domains.comms.services.write_helpers import flush_only
+from infrastructure.utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 

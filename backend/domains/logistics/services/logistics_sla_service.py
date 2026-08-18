@@ -7,8 +7,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 
-from db.database import get_db_context
-from _legacy.models import CountryConfig
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class LogisticsSLAService:
 
 def run_treasury_sync():
     """Cron job to sync treasury settings from CountryConfig."""
-    from services.treasury.treasury_service import TreasuryService
+    from domains.finance.services.treasury_service import TreasuryService
     
     with get_db_context() as db:
         countries = db.query(CountryConfig).filter(CountryConfig.is_active == True).all()

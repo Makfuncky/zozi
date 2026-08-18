@@ -11,7 +11,9 @@ from sqlalchemy import case as sql_case
 from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
-from _legacy.models import CampaignRecipient, EmailCampaign, NewsletterSubscriber
+from domains.comms.models.marketing import CampaignRecipient
+from domains.comms.models.marketing import EmailCampaign
+from domains.comms.models.marketing import NewsletterSubscriber
 import structlog
 logger = structlog.get_logger(__name__)
 

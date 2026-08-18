@@ -1,11 +1,23 @@
+"""CLI entry point: initialize the ZOZI database (create tables, optional seed).
+
+Importing this module as library code is a no-op with respect to sys.path.
+Previously the ``sys.path.insert`` ran at import time, which polluted the
+path so a later ``import database`` resolved to this package's own empty
+``__init__.py`` instead of ``backend/database.py``. Only script execution
+mutates sys.path now, and only before the module-level imports that depend
+on it.
+"""
 from __future__ import annotations
 
 import argparse
 from pathlib import Path
 import sys
 
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+if __name__ == "__main__":
+    # Standalone execution: the backend root must be on sys.path so the
+    # ``infrastructure`` package is importable when this file is invoked
+    # directly rather than as ``python -m infrastructure.database.init_db``.
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
@@ -29,7 +41,7 @@ def _reset_sqlite_database() -> bool:
 
 
 def _create_tables() -> None:
-    from _legacy.models import Base as ModelsBase
+    from infrastructure.database.base import Base as ModelsBase
     ModelsBase.metadata.create_all(bind=engine)
     print("Database tables created successfully.")
 
@@ -59,5 +71,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

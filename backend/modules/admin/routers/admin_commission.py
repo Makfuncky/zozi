@@ -2,21 +2,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from db.schemas import (
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
     CommissionBadgeTierCreate,
     CommissionBadgeTierOut,
     CommissionCategoryRateCreate,
     CommissionCategoryRateOut,
 )
-from _legacy.models import (
-    CommissionBadgeTier,
-    CommissionCategoryRate,
-    User,
-)
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin
-from utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.accounts.models.user import User
+from domains.finance.models.commission import CommissionCategoryRate
+from domains.governance.models.admin import CommissionBadgeTier
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 router = APIRouter()
 

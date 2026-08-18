@@ -31,7 +31,8 @@ class CrossBorderDetectionMiddleware:
         if source == target:
             return None
         
-        from _legacy.models import CountryConfig, CrossCountryCustomerSession
+        from domains.country.models.countries import CountryConfig
+        from domains.country.models.country_enhancements import CrossCountryCustomerSession
         
         existing = self.db.query(CrossCountryCustomerSession).filter(
             CrossCountryCustomerSession.user_id == user_id,
@@ -64,7 +65,8 @@ class CrossBorderDetectionMiddleware:
     
     def get_cross_border_summary(self, country_code: str) -> Dict:
         """Get cross-border activity summary for a country."""
-        from _legacy.models import CrossCountryCustomerSession, CountryConfig
+        from domains.country.models.countries import CountryConfig
+        from domains.country.models.country_enhancements import CrossCountryCustomerSession
         
         country = self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper()
@@ -99,7 +101,7 @@ class LocalizationService:
     
     def get_localized_content(self, country_code: str, locale: str = None) -> Dict:
         """Get localized content for a country."""
-        from _legacy.models import CountryConfig
+        from domains.country.models.countries import CountryConfig
 
         country = self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper()
@@ -126,7 +128,7 @@ class LocalizationService:
     
     def format_currency(self, amount: float, country_code: str) -> str:
         """Format currency for a specific country."""
-        from _legacy.models import CountryConfig
+        from domains.country.models.countries import CountryConfig
         
         country = self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper()
@@ -140,7 +142,7 @@ class LocalizationService:
     
     def format_date(self, date, country_code: str) -> str:
         """Format date according to country's locale."""
-        from _legacy.models import CountryConfig
+        from domains.country.models.countries import CountryConfig
         
         country = self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper()

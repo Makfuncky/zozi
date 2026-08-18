@@ -13,7 +13,8 @@ from __future__ import annotations
 
 from typing import Any, List, Optional
 
-from services.common.db_read import first, all_rows
+from domains.comms.services.db_read import first
+from domains.comms.services.db_read import all_rows
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -23,7 +24,7 @@ __all__ = ["get_account_by_code", "list_accounts_paged"]
 
 def get_account_by_code(db: Any, code: str) -> Optional[Any]:
     """Return the account row matching ``code`` (or ``None``)."""
-    from _legacy.models import Account
+    from domains.finance.models.finance import Account
 
     return first(db, Account, filters=[Account.code == code])
 
@@ -35,7 +36,7 @@ def list_accounts_paged(
     country_code: Optional[str] = None,
 ) -> List[Any]:
     """Return a page of account rows, optionally filtered by ``country_code``."""
-    from _legacy.models import Account
+    from domains.finance.models.finance import Account
 
     filters = []
     if country_code is not None:

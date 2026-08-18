@@ -7,11 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models import User
-from utils.audit import AuditAction, audit_log
-from utils.dependencies import get_current_user, require_admin
-from utils.ip_utils import get_ip_for_logging
+from infrastructure.database.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.utils.audit import AuditAction, audit_log
+from infrastructure.utils.dependencies import get_current_user, require_admin
+from infrastructure.utils.ip_utils import get_ip_for_logging
 
 logger = logging.getLogger("zozi.api.comms")
 

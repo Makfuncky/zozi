@@ -10,8 +10,10 @@ from typing import List, Optional, Dict
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from _legacy.models.employee_models import Employee, EmployeeAttendance, EmployeeWorkLog
-from _legacy.models import User
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeAttendance
+from domains.hr.models.employee_models import EmployeeWorkLog
+from domains.accounts.models.user import User
 
 logger = logging.getLogger("zozi.compliance")
 

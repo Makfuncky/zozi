@@ -13,21 +13,17 @@ from pydantic import BaseModel
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from controllers.admin.admin_controller import require_roles
-from db.database import get_db
-from _legacy.models.marketing import (
-    EmailCampaign,
-    EmailRuntimeConfig,
-    EmailSuppression,
-    EmailTemplate,
-)
-from services.comms.email_gateway import EmailGateway
-from services.comms.transactional_email_service import (
-    enqueue_invoice_email,
-    enqueue_low_stock_alert_email,
-    enqueue_order_created_email,
-)
-from utils.datetime_utils import utcnow as _utcnow
+from domains.governance.services.admin_controller import require_roles
+from infrastructure.database.database import get_db
+from domains.comms.models.marketing import EmailCampaign
+from domains.comms.models.marketing import EmailRuntimeConfig
+from domains.comms.models.marketing import EmailSuppression
+from domains.comms.models.marketing import EmailTemplate
+from domains.comms.services.email_gateway import EmailGateway
+from domains.comms.services.transactional_email_service import enqueue_invoice_email
+from domains.comms.services.transactional_email_service import enqueue_low_stock_alert_email
+from domains.comms.services.transactional_email_service import enqueue_order_created_email
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +144,7 @@ def list_templates(current_user: AdminUser, db: Session = Depends(get_db)):
 
 @router.get("/campaigns")
 def list_campaigns(current_user: AdminUser, db: Session = Depends(get_db)):
-    from _legacy.models.marketing import EmailCampaign
+    from domains.comms.models.marketing import EmailCampaign
     campaigns = db.query(EmailCampaign).order_by(desc(EmailCampaign.created_at)).all()
     return [
         {
@@ -424,7 +420,7 @@ def test_send_email(
 async def track_open(email_id: str = Query(...), user_id: int = Query(None)):
     """Tracking pixel for email open detection."""
     try:
-        from utils.email_service import record_email_delivery_event
+        from infrastructure.utils.email_service import record_email_delivery_event
         record_email_delivery_event(email_id=email_id, user_id=user_id, event_type="open")
     except Exception:
         pass
@@ -472,7 +468,7 @@ def get_my_inbox(
     db: Session = Depends(get_db),
 ):
     """Get internal emails for the current admin/staff user."""
-    from services.employee_communication_service import get_inbox
+    from domains.hr.services.employee_communication_service import get_inbox
     employee_id = current_user.get("id") if isinstance(current_user, dict) else 0
     return get_inbox(db, employee_id=employee_id, folder=folder, limit=limit, offset=offset)
 

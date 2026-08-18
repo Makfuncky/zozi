@@ -25,9 +25,10 @@ from infrastructure.database.schemas import (
     OrderStatusUpdate,
 )
 
-from _legacy.models import Order, User
+from domains.accounts.models.user import User
+from domains.orders.models.orders import Order
 
-from infrastructure.utils.country_rls import get_country_or_404
+from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 

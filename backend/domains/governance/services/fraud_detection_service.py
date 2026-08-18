@@ -17,14 +17,27 @@ from redis.exceptions import ConnectionError, ResponseError
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    FraudEvent, FraudBlacklist, FraudRule, ManualReviewQueue,
-    IPReputation, DeviceFingerprint, User, Order,
-    OrderItem, ReturnRequest, PaymentReconciliationRun, SupplierBankAccount,
-    UserLoginHistory, CreditCardBin, ReturnAbusePattern,
-    SupplierFraudIndicator, LogisticsFraudIndicator, FraudAlert,
-    IPAccountLinkage, Shipment, UserDevice
-)
+from domains.accounts.models.user import User
+from domains.accounts.models.user import UserLoginHistory
+from domains.accounts.models.user import UserDevice
+from domains.governance.models.admin import SupplierBankAccount
+from domains.governance.models.fraud import FraudEvent
+from domains.governance.models.fraud import FraudBlacklist
+from domains.governance.models.fraud import FraudRule
+from domains.governance.models.fraud import ManualReviewQueue
+from domains.governance.models.fraud import IPReputation
+from domains.governance.models.fraud import DeviceFingerprint
+from domains.governance.models.fraud import CreditCardBin
+from domains.governance.models.fraud import ReturnAbusePattern
+from domains.governance.models.fraud import SupplierFraudIndicator
+from domains.governance.models.fraud import LogisticsFraudIndicator
+from domains.governance.models.fraud import FraudAlert
+from domains.governance.models.fraud import IPAccountLinkage
+from domains.logistics.models.logistics import Shipment
+from domains.orders.models.orders import Order
+from domains.orders.models.orders import OrderItem
+from domains.orders.models.orders import ReturnRequest
+from domains.payments.models.payments import PaymentReconciliationRun
 from infrastructure.utils.redis_client import get_redis
 
 logger = logging.getLogger(__name__)
@@ -386,7 +399,7 @@ class GraphAnalysisService:
     
     def check_session_anomaly(self, user_id: int, ip_address: str) -> dict[str, Any]:
         """Check for session anomalies like impossible travel."""
-        from _legacy.models import UserLoginHistory
+        from domains.accounts.models.user import UserLoginHistory
         last_login = self.db.query(UserLoginHistory).filter(
             UserLoginHistory.user_id == user_id
         ).order_by(UserLoginHistory.timestamp.desc()).first()
@@ -579,7 +592,7 @@ class FraudScoringEngine:
     
     def check_impossible_travel(self, user_id: int, ip_address: str) -> dict[str, Any]:
         """Check if user has logged in from geographically impossible locations."""
-        from _legacy.models import UserLoginHistory
+        from domains.accounts.models.user import UserLoginHistory
         last_login = self.db.query(UserLoginHistory).filter(
             UserLoginHistory.user_id == user_id
         ).order_by(UserLoginHistory.timestamp.desc()).first()

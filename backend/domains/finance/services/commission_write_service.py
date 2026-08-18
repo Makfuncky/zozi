@@ -3,21 +3,19 @@
 Implements the commission domain write surface. Previously stubbed with
 ``_missing_symbol`` placeholders after a refactor; now contains the real
 DB-write logic, consistent with the platform contract (``data.models``,
-soft-delete via ``utils.soft_delete``).
+soft-delete via ``infrastructure.utils.soft_delete``).
 """
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import (
-    CommissionAgreement,
-    CommissionBadgeTier,
-    CommissionCategoryRate,
-    CommissionGlobalConfig,
-    CommissionLedgerEntry,
-    ProductCommissionOverride,
-)
-from utils.soft_delete import soft_delete
+from domains.finance.models.commission import CommissionAgreement
+from domains.finance.models.commission import CommissionCategoryRate
+from domains.finance.models.commission import CommissionLedgerEntry
+from domains.finance.models.commission import ProductCommissionOverride
+from domains.governance.models.admin import CommissionBadgeTier
+from domains.governance.models.admin import CommissionGlobalConfig
+from infrastructure.utils.soft_delete import soft_delete
 import structlog
 logger = structlog.get_logger(__name__)
 

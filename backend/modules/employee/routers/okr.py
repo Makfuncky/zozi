@@ -7,9 +7,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
-from services.hr.okr_engine import get_okr_engine
+from rbac import get_current_user
+from infrastructure.database.database import get_db
+from domains.hr.services.okr_engine import get_okr_engine
 
 router = APIRouter()
 

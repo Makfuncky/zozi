@@ -18,7 +18,7 @@ from typing import Any, Dict
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from _legacy.models import ReturnRequest
+from domains.orders.models.orders import ReturnRequest
 import structlog
 logger = structlog.get_logger(__name__)
 

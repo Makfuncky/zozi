@@ -9,8 +9,8 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from _legacy.models.employee_models import Employee
+from infrastructure.database.database import get_db
+from domains.hr.models.employee_models import Employee
 
 router = APIRouter()
 

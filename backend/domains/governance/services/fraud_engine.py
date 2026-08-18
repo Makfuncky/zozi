@@ -9,26 +9,22 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from services.security.fraud_detection_service import (
-    FraudScoringEngine,
-    ThreatFeedUpdater,
-)
+from domains.governance.services.fraud_detection_service import FraudScoringEngine
+from domains.governance.services.fraud_detection_service import ThreatFeedUpdater
 from infrastructure.utils.redis_client import get_redis
 
 
 
 
 
-from services.admin.admin_security_detection_service import get_fraud_engine  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 # --- auto-wiring re-exports (added by fix_modules) ---
-from services.admin.admin_security_detection_service import get_threat_updater
+from domains.governance.services.admin_security_detection_service import get_threat_updater
 
 
 
 
 
 
-from services.admin.admin_security_detection_service import get_fraud_engine  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 

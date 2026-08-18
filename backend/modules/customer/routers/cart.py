@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
 
-import controllers.commerce.cart_controller as cart_ctrl
-from controllers.products.products_controller import resolve_product_variant
-from db.database import get_db
-from db.schemas import CartItemCreate
-from _legacy.models import CartItem, Product, User
-from utils.dependencies import get_current_user
+import domains.orders.services as cart_ctrl
+from domains.catalog.services.products_controller import resolve_product_variant
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import CartItemCreate
+from domains.accounts.models.core import CartItem
+from domains.accounts.models.user import User
+from domains.catalog.models.products import Product
+from infrastructure.utils.dependencies import get_current_user
 
 router = APIRouter()
 

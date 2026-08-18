@@ -9,8 +9,11 @@ from typing import List, Optional
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
-from _legacy.models.employee_models import Employee, EmployeeWorkLog, EmployeeAttendance
-from _legacy.models import User, TreasuryAccount
+from domains.hr.models.employee_models import Employee
+from domains.hr.models.employee_models import EmployeeWorkLog
+from domains.hr.models.employee_models import EmployeeAttendance
+from domains.accounts.models.user import User
+from domains.finance.models.finance import TreasuryAccount
 
 logger = logging.getLogger("zozi.ghost_watchdog")
 

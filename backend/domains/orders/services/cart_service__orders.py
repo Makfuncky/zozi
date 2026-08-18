@@ -16,7 +16,7 @@ from typing import Any, List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from db.schemas import (
+from infrastructure.database.schemas import (
     CartItemCreate,
     CartItemIn,
     CartItemViewOut,
@@ -24,17 +24,15 @@ from db.schemas import (
     CartViewOut,
     ProductCartViewOut,
 )
-from _legacy.models.comms.core import CartItem
-from _legacy.models.products import Product
-from services.orders.cart_write_service import (
-    create_cart_item,
-    delete_cart_items_by_user,
-    get_active_product_by_id,
-    get_cart_item_by_variant,
-    get_products_by_ids,
-    load_cart_items,
-    update_cart_item as write_update_cart_item,
-)
+from domains.accounts.models.core import CartItem
+from domains.catalog.models.products import Product
+from domains.orders.services.cart_write_service import create_cart_item
+from domains.orders.services.cart_write_service import delete_cart_items_by_user
+from domains.orders.services.cart_write_service import get_active_product_by_id
+from domains.orders.services.cart_write_service import get_cart_item_by_variant
+from domains.orders.services.cart_write_service import get_products_by_ids
+from domains.orders.services.cart_write_service import load_cart_items
+from domains.orders.services.cart_write_service import update_cart_item as write_update_cart_item
 import structlog
 logger = structlog.get_logger(__name__)
 

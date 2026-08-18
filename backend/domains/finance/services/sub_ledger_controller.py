@@ -8,16 +8,14 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from services.finance.sub_ledger_service import (
-    get_ar_summary,
-    post_ar_invoice,
-    post_ar_payment,
-    get_ap_summary,
-    post_ap_payable,
-    post_ap_payment,
-)
-from routers.generated.auto_router import get, post
-from utils.audit import AuditAction, audit_log
+from domains.finance.services.sub_ledger_service import get_ar_summary
+from domains.finance.services.sub_ledger_service import post_ar_invoice
+from domains.finance.services.sub_ledger_service import post_ar_payment
+from domains.finance.services.sub_ledger_service import get_ap_summary
+from domains.finance.services.sub_ledger_service import post_ap_payable
+from domains.finance.services.sub_ledger_service import post_ap_payment
+from infrastructure.routing.route_contract import get, post
+from infrastructure.utils.audit import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 

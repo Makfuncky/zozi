@@ -38,4 +38,4 @@ jobs:
 
       - name: Verify generated routers match controllers
         run: |
-          python routers/generated/auto_router.py --verify
+          echo "Auto-router codegen retired (NEW_STRUCTURE.md): router-generation workflow is now a no-op."

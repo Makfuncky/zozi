@@ -6,7 +6,11 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from _legacy.models import CountryConfig, PayoutRule, PayoutRuleCategory, PayoutRuleProduct, CountryCommissionRate
+from domains.country.models.countries import CountryConfig
+from domains.country.models.countries import PayoutRule
+from domains.country.models.countries import PayoutRuleCategory
+from domains.country.models.countries import PayoutRuleProduct
+from domains.country.models.country_enhancements import CountryCommissionRate
 
 logger = logging.getLogger(__name__)
 

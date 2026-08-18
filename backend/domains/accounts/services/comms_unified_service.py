@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from _legacy.models import User
+from domains.accounts.models.user import User
 
 from infrastructure.utils.audit import AuditAction, audit_log
 
@@ -178,13 +178,11 @@ def unified_inbox(lens: str, cursor: str | None, limit: int, transport: str | No
 
     return {"items": items, "nextCursor": next_cursor, "hasMore": has_more}
 
-from services.comms.unified_inbox_service import reset_unified_inbox  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 
 
 
 
 
-from services.comms.unified_inbox_service import reset_unified_inbox  # [MIGRATION COMPAT] re-export relocated symbol (see ARCHITECTURE_MIGRATION_REPORT.md)
 
 

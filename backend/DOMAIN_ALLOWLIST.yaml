@@ -1,0 +1,7 @@
+﻿# DOMAIN_ALLOWLIST.yaml
+# Strangler-debt tracker (spec Phase 1). Lists temporary cross-domain imports
+# still permitted. This list MUST only shrink over time.
+cross_domain_imports: []
+notes: >
+  Populated as domains are migrated. Starts empty; entries are added only for
+  legacy cross-domain reads not yet routed through domains/<d>/ports.py.

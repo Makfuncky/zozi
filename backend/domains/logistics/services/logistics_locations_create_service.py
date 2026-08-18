@@ -5,9 +5,11 @@ import logging
 from typing import List, Optional
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
-from db.database import get_db
-from _legacy.models import LogisticsPartnerLocation, CountryConfig, LogisticsPartner
-from controllers.security.auth_controller import get_current_user
+from infrastructure.database.database import get_db
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.logistics.models.logistics import LogisticsPartner
+from rbac import get_current_user
 logger = logging.getLogger(__name__)
 
 def list_logistics_partner_locations(country_code: str=Path(...), partner_id: Optional[int]=Query(None), is_active: Optional[bool]=Query(None), db: Session=Depends(get_db), current_user=Depends(get_current_user)):

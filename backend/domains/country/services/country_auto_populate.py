@@ -24,19 +24,21 @@ from providers.geography import country_http
 
 
 
-from utils.config import settings
+from infrastructure.utils.config import settings
 
-from utils.circuit_breaker import CircuitBreakerWithRetry, retry
+from infrastructure.utils.circuit_breaker import CircuitBreakerWithRetry, retry
 
-from services.supplier.legal_contract_service import generate_all_legal_documents
+from domains.suppliers.services.legal_contract_service import generate_all_legal_documents
 
-from services.geography.country_curated import get_curated_country, get_curated_macro
+from domains.country.services.country_curated import get_curated_country
+from domains.country.services.country_curated import get_curated_macro
 
-from services.geography.curated_cities import get_cities as get_curated_cities
+from domains.country.services.curated_cities import get_cities as get_curated_cities
 
-from services.geography.vat_rates import get_vat_rate, get_legal_defaults
+from domains.finance.services.vat_rates import get_vat_rate
+from domains.finance.services.vat_rates import get_legal_defaults
 
-from services.geography.category_tax_profiles import get_category_tax_profile
+from domains.country.services.category_tax_profiles import get_category_tax_profile
 
 
 
@@ -71,7 +73,7 @@ api_breaker = CircuitBreakerWithRetry(
 
 
 def _get_redis():
-    from utils.redis_client import redis_client
+    from infrastructure.utils.redis_client import redis_client
 
     client = redis_client()
     try:
