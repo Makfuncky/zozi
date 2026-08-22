@@ -19,12 +19,12 @@ from providers.comms.twilio import (
     create_twilio_client,
 )
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.comms.models.communication import ProxyChannel
 from domains.comms.models.communication import ProxySession
 from domains.comms.models.communication import ProxyMessage
 from domains.comms.models.communication import ProxyCallLog
-from domains.orders.models.orders import Order
+from domains.orders.ports import Order
 from infrastructure.database.database import get_service_session
 from infrastructure.utils.config import settings
 

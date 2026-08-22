@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import AuditLog
+from domains.accounts.ports import AuditLog
 from domains.finance.models.finance import TreasuryAccount
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import Account

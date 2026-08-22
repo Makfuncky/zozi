@@ -12,8 +12,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from domains.comms.models.communication import Notification
-from domains.governance.models.admin import PushNotificationToken
-from domains.hr.models.employee_models import Employee
+from domains.governance.ports import PushNotificationToken
+from domains.hr.ports import Employee
 from domains.hr.services.attendance_service import AttendanceService
 from domains.finance.services.expense_processing import ExpenseProcessingService
 from domains.hr.services.leave_accrual import LeaveAccrualEngine

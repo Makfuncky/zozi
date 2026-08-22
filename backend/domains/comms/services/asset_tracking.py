@@ -6,8 +6,8 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import AuditLog
-from domains.hr.models.employee_models import EmployeeAsset
+from domains.accounts.ports import AuditLog
+from domains.hr.ports import EmployeeAsset
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

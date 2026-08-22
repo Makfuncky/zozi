@@ -7,12 +7,12 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import DirectChatRoom
-from domains.accounts.models.core import DirectChatMessage
-from domains.accounts.models.core import GroupChatRoom
-from domains.accounts.models.core import GroupChatMember
-from domains.accounts.models.core import GroupChatMessage
-from domains.accounts.models.user import User
+from domains.accounts.ports import DirectChatRoom
+from domains.accounts.ports import DirectChatMessage
+from domains.accounts.ports import GroupChatRoom
+from domains.accounts.ports import GroupChatMember
+from domains.accounts.ports import GroupChatMessage
+from domains.accounts.ports import User
 from domains.comms.models.communication import ChatAttachment
 from infrastructure.utils.storage import storage as _storage
 

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.user import User
+from domains.accounts.ports import SupportTicket
+from domains.accounts.ports import User
 from domains.comms.models.communication import TicketMessage
 
 from infrastructure.utils.dependencies import get_current_user

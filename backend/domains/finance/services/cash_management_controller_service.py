@@ -14,8 +14,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from infrastructure.database.database import SessionLocal
 from infrastructure.utils.audit import AuditAction, audit_log
-from domains.accounts.models.user import User
-from domains.catalog.models.products import Product
+from domains.accounts.ports import User
+from domains.catalog.ports import Product
 from domains.comms.models.suppliers import SupplierProfile
 from domains.finance.models.commission import CommissionLedgerEntry
 from domains.finance.models.finance import BankTransaction

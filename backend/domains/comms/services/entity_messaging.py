@@ -7,8 +7,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from infrastructure.database.database import get_db
-from domains.country.models.countries import Message
-from domains.country.models.country_control import ShiftHandoverLog
+from domains.country.ports import Message
+from domains.country.ports import ShiftHandoverLog
 import structlog
 logger = structlog.get_logger(__name__)
 

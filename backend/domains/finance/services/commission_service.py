@@ -17,8 +17,8 @@ from fastapi import HTTPException
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
-from domains.catalog.models.products import Product
+from domains.accounts.ports import User
+from domains.catalog.ports import Product
 from domains.comms.models.suppliers import SupplierProfile
 from domains.finance.models.commission import CommissionAgreement
 from domains.finance.models.commission import CommissionCategoryRate

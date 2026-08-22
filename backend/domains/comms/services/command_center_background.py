@@ -22,17 +22,17 @@ from providers.automation.scheduler import IntervalTrigger
 from providers.automation.scheduler import create_scheduler
 from infrastructure.database.database import get_service_session
 
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.core import NewsSource
-from domains.accounts.models.core import SystemHealthEvent
-from domains.accounts.models.user import User
-from domains.country.models.countries import CountryConfig
-from domains.governance.models.fraud import FraudAlert
-from domains.hr.models.employee_models import Employee
-from domains.logistics.models.logistics import LogisticsPartner
-from domains.logistics.models.logistics import Shipment
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import ReturnRequest
+from domains.accounts.ports import SupportTicket
+from domains.accounts.ports import NewsSource
+from domains.accounts.ports import SystemHealthEvent
+from domains.accounts.ports import User
+from domains.country.ports import CountryConfig
+from domains.governance.ports import FraudAlert
+from domains.hr.ports import Employee
+from domains.logistics.ports import LogisticsPartner
+from domains.logistics.ports import Shipment
+from domains.orders.ports import Order
+from domains.orders.ports import ReturnRequest
 
 from infrastructure.utils.config import settings
 

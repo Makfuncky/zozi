@@ -24,12 +24,12 @@ from typing import Any, Optional
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
-from domains.catalog.models.products import ProductVariant
-from domains.media.models.ai_upload import AIGenerationLog
-from domains.media.models.ai_upload import AIStagingProduct
-from domains.media.models.ai_upload import AIStagingVariant
-from domains.media.models.ai_upload import AIUploadJob
+from domains.catalog.ports import Product
+from domains.catalog.ports import ProductVariant
+from domains.media.ports import AIGenerationLog
+from domains.media.ports import AIStagingProduct
+from domains.media.ports import AIStagingVariant
+from domains.media.ports import AIUploadJob
 from infrastructure.utils.variant_key import compute_variant_key
 import structlog
 logger = structlog.get_logger(__name__)
@@ -71,7 +71,7 @@ def enrich_one(
     image_url: str,
 ) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     """Run AI enrichment for a single image. Returns staging product, its variants, and logs."""
-    from domains.media.services.ai import ai_service
+    from domains.media.ports import ai_service
 
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)

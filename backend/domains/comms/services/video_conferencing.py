@@ -11,9 +11,9 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import VideoRoom
-from domains.accounts.models.core import VideoRoomParticipant
-from domains.accounts.models.core import VideoRoomRecording
+from domains.accounts.ports import VideoRoom
+from domains.accounts.ports import VideoRoomParticipant
+from domains.accounts.ports import VideoRoomRecording
 from infrastructure.utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)

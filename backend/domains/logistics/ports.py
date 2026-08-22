@@ -1,0 +1,139 @@
+"""logistics domain - sanctioned cross-domain READ surface (ports).
+
+Per NEW_STRUCTURE.md Law 3, cross-domain *reads* may ONLY happen through a
+publishing domain's ``ports.py``. Other domains import these functions instead
+of importing ``domains.logistics.models`` or ``domains.logistics.services`` directly.
+
+These are pure read helpers: no writes, no business decisions, no permission
+checks (callers remain responsible for feature gating via ``rbac``).
+"""
+
+from __future__ import annotations
+
+from typing import List, Optional
+
+from sqlalchemy.orm import Session
+
+from infrastructure.utils.pagination import (
+    CursorPage,
+    MAX_PAGE_SIZE,
+    cursor_paginate_asc,
+)
+
+# --- Keyset (cursor) pagination helpers (diagram §6: NEVER OFFSET on hot lists) ---
+# The existing ``list_*`` functions keep their public contract (a plain ``List``)
+# so cross-domain consumers are unaffected, but they are now sourced via keyset
+# (stable ``id`` order, no OFFSET). The ``*_page`` companions return a ``CursorPage``
+# for scale-ready cursor paging (the 100Ks-concurrent-user path).
+
+def _keyset_list(model, db: Session, limit: int = 100) -> list:
+    """Backward-compatible plain list sourced via keyset (no OFFSET)."""
+    return cursor_paginate_asc(db.query(model), page_size=limit).items
+
+
+def _keyset_page(model, db: Session, cursor: Optional[str] = None,
+                 page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page over ``model`` (scale-ready, no OFFSET)."""
+    return cursor_paginate_asc(db.query(model), cursor=cursor, page_size=page_size)
+
+from domains.logistics.models.logistics import LogisticsCategoryPricingRule, LogisticsPartner, LogisticsPartnerProfile, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsVehicleRule, Shipment, ShipmentEvent
+from domains.logistics.models.logistics_schema_models import CityDistanceMatrix  # A3: sanctioned ports surface for accounts hub
+
+
+def get_logistics_partner_by_id(db: Session, id_: int) -> Optional[LogisticsPartner]:
+    """Return LogisticsPartner by primary key (or None)."""
+    return db.get(LogisticsPartner, id_)
+
+def list_logistics_partners(db: Session, limit: int = 100) -> List[LogisticsPartner]:
+    """Return up to ``limit`` LogisticsPartner rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(LogisticsPartner, db, limit)
+
+def list_logistics_partners_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of LogisticsPartner rows (scale-ready)."""
+    return _keyset_page(LogisticsPartner, db, cursor, page_size)
+
+def get_logistics_partner_profile_by_id(db: Session, id_: int) -> Optional[LogisticsPartnerProfile]:
+    """Return LogisticsPartnerProfile by primary key (or None)."""
+    return db.get(LogisticsPartnerProfile, id_)
+
+def list_logistics_partner_profiles(db: Session, limit: int = 100) -> List[LogisticsPartnerProfile]:
+    """Return up to ``limit`` LogisticsPartnerProfile rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(LogisticsPartnerProfile, db, limit)
+
+def list_logistics_partner_profiles_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of LogisticsPartnerProfile rows (scale-ready)."""
+    return _keyset_page(LogisticsPartnerProfile, db, cursor, page_size)
+
+def get_logistics_partner_service_area_by_id(db: Session, id_: int) -> Optional[LogisticsPartnerServiceArea]:
+    """Return LogisticsPartnerServiceArea by primary key (or None)."""
+    return db.get(LogisticsPartnerServiceArea, id_)
+
+def list_logistics_partner_service_areas(db: Session, limit: int = 100) -> List[LogisticsPartnerServiceArea]:
+    """Return up to ``limit`` LogisticsPartnerServiceArea rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(LogisticsPartnerServiceArea, db, limit)
+
+def list_logistics_partner_service_areas_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of LogisticsPartnerServiceArea rows (scale-ready)."""
+    return _keyset_page(LogisticsPartnerServiceArea, db, cursor, page_size)
+
+def get_logistics_pricing_profile_by_id(db: Session, id_: int) -> Optional[LogisticsPricingProfile]:
+    """Return LogisticsPricingProfile by primary key (or None)."""
+    return db.get(LogisticsPricingProfile, id_)
+
+def list_logistics_pricing_profiles(db: Session, limit: int = 100) -> List[LogisticsPricingProfile]:
+    """Return up to ``limit`` LogisticsPricingProfile rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(LogisticsPricingProfile, db, limit)
+
+def list_logistics_pricing_profiles_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of LogisticsPricingProfile rows (scale-ready)."""
+    return _keyset_page(LogisticsPricingProfile, db, cursor, page_size)
+
+def get_logistics_vehicle_rule_by_id(db: Session, id_: int) -> Optional[LogisticsVehicleRule]:
+    """Return LogisticsVehicleRule by primary key (or None)."""
+    return db.get(LogisticsVehicleRule, id_)
+
+def list_logistics_vehicle_rules(db: Session, limit: int = 100) -> List[LogisticsVehicleRule]:
+    """Return up to ``limit`` LogisticsVehicleRule rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(LogisticsVehicleRule, db, limit)
+
+def list_logistics_vehicle_rules_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of LogisticsVehicleRule rows (scale-ready)."""
+    return _keyset_page(LogisticsVehicleRule, db, cursor, page_size)
+
+def get_logistics_category_pricing_rule_by_id(db: Session, id_: int) -> Optional[LogisticsCategoryPricingRule]:
+    """Return LogisticsCategoryPricingRule by primary key (or None)."""
+    return db.get(LogisticsCategoryPricingRule, id_)
+
+def list_logistics_category_pricing_rules(db: Session, limit: int = 100) -> List[LogisticsCategoryPricingRule]:
+    """Return up to ``limit`` LogisticsCategoryPricingRule rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(LogisticsCategoryPricingRule, db, limit)
+
+def list_logistics_category_pricing_rules_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of LogisticsCategoryPricingRule rows (scale-ready)."""
+    return _keyset_page(LogisticsCategoryPricingRule, db, cursor, page_size)
+
+def get_shipment_by_id(db: Session, id_: int) -> Optional[Shipment]:
+    """Return Shipment by primary key (or None)."""
+    return db.get(Shipment, id_)
+
+def list_shipments(db: Session, limit: int = 100) -> List[Shipment]:
+    """Return up to ``limit`` Shipment rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(Shipment, db, limit)
+
+def list_shipments_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of Shipment rows (scale-ready)."""
+    return _keyset_page(Shipment, db, cursor, page_size)
+
+def get_shipment_event_by_id(db: Session, id_: int) -> Optional[ShipmentEvent]:
+    """Return ShipmentEvent by primary key (or None)."""
+    return db.get(ShipmentEvent, id_)
+
+def list_shipment_events(db: Session, limit: int = 100) -> List[ShipmentEvent]:
+    """Return up to ``limit`` ShipmentEvent rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(ShipmentEvent, db, limit)
+
+def list_shipment_events_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+    """Keyset-cursor page of ShipmentEvent rows (scale-ready)."""
+    return _keyset_page(ShipmentEvent, db, cursor, page_size)
+
+

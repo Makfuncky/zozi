@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from domains.comms.models.communication import EmailFolder
 from domains.comms.models.communication import InternalEmail
 from domains.comms.models.marketing import EmailCampaign
-from domains.hr.models.employee_models import Employee
-from domains.accounts.models.user import User
+from domains.hr.ports import Employee
+from domains.accounts.ports import User
 from sqlalchemy import func, desc
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 from infrastructure.utils.datetime_utils import utcnow as _utcnow

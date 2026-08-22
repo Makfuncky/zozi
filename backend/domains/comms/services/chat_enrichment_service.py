@@ -15,7 +15,7 @@ from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 
 from domains.comms.services.chat_enrichment import add_reaction
 from domains.comms.services.chat_enrichment import apply_legal_hold

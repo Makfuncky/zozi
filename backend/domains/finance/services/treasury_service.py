@@ -195,7 +195,7 @@ def create_journal_entry(
 
 def get_payroll_summary(country_code: str, db: Session) -> dict:
     """Get payroll summary for a country."""
-    from domains.hr.models.employee_models import Employee
+    from domains.hr.ports import Employee
     result = db.execute(text("""
         SELECT 
             COUNT(*) as employee_count,

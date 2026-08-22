@@ -1,0 +1,4 @@
+# Routers embedding business logic (import `models` or perform DB writes).
+# Baseline frozen by the architecture gate; the count must only DECREASE.
+# Regenerate with tests/_gen_router_baseline.py after an intentional migration.
+

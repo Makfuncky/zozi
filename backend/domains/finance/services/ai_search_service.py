@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Set
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
+from domains.catalog.ports import Product
 
 
 class AISearchService:

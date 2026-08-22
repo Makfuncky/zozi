@@ -355,28 +355,13 @@ class EnhancedGeoBlockingMiddleware(BaseHTTPMiddleware):
         return country_code in BACKUP_OPERATIONS_COUNTRIES
 
 # --- Merged from rls_dependency.py ---
-class CountryAccessScope:
-    def __init__(self, country_codes: list[str]):
-        self.country_codes = country_codes
-    
-    def has_access(self, country_code: str) -> bool:
-        return country_code.upper() in [c.upper() for c in self.country_codes]
-
-
-def get_country_access_scope(current_user: Optional[dict] = Depends(None)) -> CountryAccessScope:
-    if not current_user:
-        return CountryAccessScope([])
-    
-    role = str(current_user.get("role") or "").lower()
-    if role == "admin":
-        return CountryAccessScope(["ALL"])
-    
-    codes = current_user.get("staff_country_codes", [])
-    return CountryAccessScope(codes or [])
-
-
-def get_country_scope(current_user: Optional[dict] = Depends(None)) -> CountryAccessScope:
-    return get_country_access_scope(current_user)
+# Canonical home is infrastructure.security.country_access (Law 5 country scope).
+# Re-exported here so existing middleware importers keep resolving.
+from infrastructure.security.country_access import (  # noqa: F401
+    CountryAccessScope,
+    get_country_access_scope,
+    get_country_scope,
+)
 
 
 def check_coi_before_approval(

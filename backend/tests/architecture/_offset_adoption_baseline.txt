@@ -1,0 +1,21 @@
+# SQL OFFSET pagination calls in the adoption layer (B6 / R6 keyset sweep).
+# Baseline frozen by the architecture gate; the count per file must only DECREASE.
+# Regenerate with tests/_gen_offset_adoption_baseline.py after an intentional migration.
+# Excludes ports.py (enforced by test_all_domain_ports_are_offset_free)
+# and the keyset engine (infrastructure/utils/pagination.py).
+domains/_parked/admin_categories_service.py 1
+domains/_parked/admin_promotion_service.py 3
+domains/_parked/admin_promotions_write_service.py 2
+domains/_parked/categories_service.py 2
+domains/_parked/orders_package_service.py 3
+domains/_parked/promotion_points_service.py 1
+domains/catalog/services/banner_service.py 1
+domains/catalog/services/flash_sale_controller_service.py 1
+domains/comms/services/db_read.py 1
+domains/governance/services/orders_service.py 1
+domains/media/services/db_read.py 1
+domains/orders/services/returns_controller_service.py 1
+domains/suppliers/services/supplier_service.py 1
+infrastructure/utils/db_read.py 1
+infrastructure/utils/middleware_helpers.py 1
+middleware/router_helpers.py 1

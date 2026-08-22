@@ -9,7 +9,7 @@ from typing import List
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from domains.hr.models.employee_models import Employee
+from domains.hr.ports import Employee
 from domains.finance.models.finance import TreasuryAccount
 from domains.finance.models.finance import TreasuryTransaction
 

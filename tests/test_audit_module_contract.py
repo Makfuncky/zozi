@@ -4,7 +4,11 @@ Regression test for the audit-module consolidation (W3 fix).
 Guarantees:
 * `controllers/audit_controller.py` no longer exists (it was a facade).
 * No backend module imports `controllers.audit_controller` (upward call W3).
-* `utils/audit.py` is the canonical module exposing the required public API.
+* The audit WRITE primitive (`AuditAction` / `audit_log`) lives in the canonical
+  single implementation `infrastructure/observability/audit.py` (importable from
+  every layer via the `infrastructure.utils.audit` re-export shim).
+* Audit READ queries live in `domains/governance/services/audit_query_service.py`
+  per the circuit contract (DB reads belong in services, not in a controller/facade).
 
 This test uses AST parsing only and does NOT import backend `models`, so it
 runs even when `models/products.py` has its unrelated pre-existing import error.
@@ -14,14 +18,15 @@ import ast
 import os
 
 BACKEND = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
-UTILS_AUDIT = os.path.join(BACKEND, "utils", "audit.py")
-AUDIT_QUERY = os.path.join(BACKEND, "services", "audit", "audit_query_service.py")
+# Canonical single implementation of the audit WRITE primitive (AuditAction / audit_log).
+UTILS_AUDIT = os.path.join(BACKEND, "infrastructure", "observability", "audit.py")
+# Canonical audit READ service (get_audit_logs / get_unique_actions).
+AUDIT_QUERY = os.path.join(BACKEND, "domains", "governance", "services", "audit_query_service.py")
 FACADE = os.path.join(BACKEND, "controllers", "audit_controller.py")
 
-# `utils/audit.py` is the canonical WRITE primitive (importable from every layer).
+# `infrastructure/observability/audit.py` is the canonical WRITE primitive.
 UTILS_AUDIT_API = {"audit_log", "AuditAction"}
-# Audit READ queries live in `services/audit/audit_query_service.py` per the
-# circuit contract (DB reads belong in services, not in the utils leaf layer).
+# Audit READ queries live in `domains/governance/services/audit_query_service.py`.
 AUDIT_QUERY_API = {"get_audit_logs", "get_unique_actions"}
 
 
@@ -80,19 +85,19 @@ def test_no_controller_audit_controller_imports():
 
 
 def test_utils_audit_exposes_canonical_api():
-    assert os.path.exists(UTILS_AUDIT), "utils/audit.py must exist as canonical module"
+    assert os.path.exists(UTILS_AUDIT), "infrastructure/observability/audit.py must exist as canonical module"
     tree = ast.parse(open(UTILS_AUDIT, encoding="utf-8").read(), filename=UTILS_AUDIT)
     defined = set()
     for node in tree.body:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             defined.add(node.name)
     missing = UTILS_AUDIT_API - defined
-    assert not missing, f"utils/audit.py missing public API: {sorted(missing)}"
+    assert not missing, f"infrastructure/observability/audit.py missing public API: {sorted(missing)}"
 
 
 def test_audit_query_service_exposes_read_api():
     assert os.path.exists(AUDIT_QUERY), (
-        "services/audit/audit_query_service.py must exist for audit reads"
+        "domains/governance/services/audit_query_service.py must exist for audit reads"
     )
     tree = ast.parse(open(AUDIT_QUERY, encoding="utf-8").read(), filename=AUDIT_QUERY)
     defined = set()

@@ -5,12 +5,12 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.admin import PushNotificationToken
+from domains.governance.ports import PushNotificationToken
 from domains.comms.models.communication import MaskedMessage
 from domains.comms.models.communication import Notification
-from domains.accounts.models.core import EntityChatThread
-from domains.accounts.models.core import VideoRoom
-from domains.governance.models.incident import IncidentWarRoom
+from domains.accounts.ports import EntityChatThread
+from domains.accounts.ports import VideoRoom
+from domains.governance.ports import IncidentWarRoom
 import structlog
 logger = structlog.get_logger(__name__)
 

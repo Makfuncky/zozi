@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
-from providers.auth.jwt import JWTError, jwt
+from infrastructure.security.auth import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
 from domains.accounts.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
 from domains.accounts.models.core import SupportTicket

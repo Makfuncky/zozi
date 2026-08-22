@@ -1,6 +1,6 @@
 from __future__ import annotations
 from domains.finance.models.finance import Invoice
-from domains.orders.models.orders import Order
+from domains.orders.ports import Order
 from typing import Any, List
 """Tickets write service — DB write operations for ticket entities."""
 
@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from domains.comms.models.communication import Notification
 from domains.comms.models.communication import TicketMessage
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.core import TicketAttachment
+from domains.accounts.ports import SupportTicket
+from domains.accounts.ports import TicketAttachment
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import text, table, column, select, update, delete
 
-from domains.hr.models.employee_models import Employee
+from domains.hr.ports import Employee
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 from infrastructure.utils.websocket_manager import ws_manager
 import structlog

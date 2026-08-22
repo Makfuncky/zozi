@@ -9,12 +9,12 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
-from domains.catalog.models.products import ProductVariant
-from domains.media.models.ai_upload import AIGenerationLog
-from domains.media.models.ai_upload import AIStagingProduct
-from domains.media.models.ai_upload import AIStagingVariant
-from domains.media.models.ai_upload import AIUploadJob
+from domains.catalog.ports import Product
+from domains.catalog.ports import ProductVariant
+from domains.media.ports import AIGenerationLog
+from domains.media.ports import AIStagingProduct
+from domains.media.ports import AIStagingVariant
+from domains.media.ports import AIUploadJob
 from infrastructure.utils.storage import storage as _storage
 from infrastructure.utils.variant_key import compute_variant_key
 

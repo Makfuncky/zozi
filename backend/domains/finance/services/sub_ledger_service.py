@@ -14,7 +14,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.finance.models.finance import ARLedgerEntry
 from domains.finance.models.finance import APLedger
 from domains.finance.models.finance import Account

@@ -19,12 +19,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import domains.accounts.services as search_ctrl
-from domains.accounts.models.user import User
-from domains.catalog.models.products import Product
-from domains.catalog.models.products import Wishlist
-from domains.governance.models.admin import ChatbotQueryEvent
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
+from domains.accounts.ports import User
+from domains.catalog.ports import Product
+from domains.catalog.ports import Wishlist
+from domains.governance.ports import ChatbotQueryEvent
+from domains.orders.ports import Order
+from domains.orders.ports import OrderItem
 
 logger = logging.getLogger(__name__)
 

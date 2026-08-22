@@ -20,7 +20,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
+from domains.catalog.ports import Product
 from domains.finance.models.finance import BankTransaction
 from domains.finance.models.finance import RefundLedger
 from domains.finance.models.finance import SupplierSettlement

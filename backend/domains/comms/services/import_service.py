@@ -8,7 +8,7 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 
-from domains.catalog.models.products import Product
+from domains.catalog.ports import Product
 from domains.finance.models.erp import LandedCostAllocation
 from domains.finance.models.erp import CustomsEntry
 from domains.finance.models.erp import ImportCostTemplate

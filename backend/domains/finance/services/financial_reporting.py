@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import AuditLog
+from domains.accounts.ports import AuditLog
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import TreasuryAccount
 from infrastructure.utils.datetime_utils import utcnow as _utcnow

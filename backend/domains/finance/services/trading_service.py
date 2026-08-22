@@ -8,8 +8,8 @@ from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, and_
 
-from domains.catalog.models.products import Product
-from domains.catalog.models.products import ProductVariant
+from domains.catalog.ports import Product
+from domains.catalog.ports import ProductVariant
 from domains.finance.models.erp import GoodsReceiptNote
 from domains.finance.models.erp import GoodsReceiptLine
 from domains.finance.models.erp import SalesOrder

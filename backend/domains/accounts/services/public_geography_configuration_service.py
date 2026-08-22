@@ -25,7 +25,7 @@ from domains.country.services.country_config_admin_service import patch_country_
 from domains.country.services.country_config_admin_service import restore_country as svc_restore_country
 from domains.country.services.country_config_admin_service import toggle_country_active as svc_toggle_country_active
 from domains.country.services.country_config_admin_service import update_feature_flag as svc_update_feature_flag
-from middleware.country_context import get_country_scope as _get_country_scope
+from infrastructure.security.country_access import get_country_scope as _get_country_scope
 
 
 class TaxDraftBody(BaseModel):

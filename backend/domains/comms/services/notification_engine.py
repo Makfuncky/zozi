@@ -8,7 +8,7 @@ from enum import Enum
 from sqlalchemy.orm import Session
 
 from domains.comms.models.communication import Notification
-from domains.governance.models.admin import SystemSetting
+from domains.governance.ports import SystemSetting
 import logging
 import structlog
 logger = structlog.get_logger(__name__)

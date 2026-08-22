@@ -41,7 +41,7 @@ from domains.finance.models.finance import VATRemittance
 
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
 
-from domains.hr.models.employee_models import Employee
+from domains.hr.ports import Employee
 
 from domains.logistics.models.logistics import LogisticsPartner
 
@@ -1087,7 +1087,7 @@ def country_payment_transactions(country_code: str = Path(..., description='ISO 
 
 def admin_supplier_payouts(status: Optional[str] = Query(None), db: Session = Depends(get_db), current_user: dict = Depends(require_treasury_access)):
 
-    from domains.suppliers.models.suppliers import SupplierProfile
+    from domains.suppliers.ports import SupplierProfile
     query = (
         select(Payout, SupplierProfile)
         .outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id)
@@ -1117,7 +1117,7 @@ def country_supplier_payouts(country_code: str = Path(..., description='ISO coun
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from domains.suppliers.models.suppliers import SupplierProfile
+        from domains.suppliers.ports import SupplierProfile
         query = (
             select(Payout, SupplierProfile)
             .outerjoin(SupplierProfile, Payout.supplier_id == SupplierProfile.id)

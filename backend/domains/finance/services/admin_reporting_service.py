@@ -36,7 +36,7 @@ from domains.finance.models.finance import TreasuryAccount
 from domains.finance.models.finance import VATRemittance
 from domains.logistics.models.logistics import Shipment
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.hr.models.employee_models import Employee
+from domains.hr.ports import Employee
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.orders.models.orders import OrderItem

@@ -30,7 +30,7 @@ class AdminAnalyticsSnapshot(Base):
     __table_args__ = (
         UniqueConstraint("snapshot_key", name="uq_admin_analytics_snapshots_key"),
         Index("ix_admin_analytics_snapshots_group_computed", "snapshot_group", "computed_at"),
-        Index("ix_admin_analytics_snapshots_expires", "expires_at"), {"schema": "audit"})
+        Index("ix_admin_analytics_snapshots_expires", "expires_at"), {"schema": "governance"})
     id = Column(Integer, primary_key=True, index=True)
     snapshot_key = Column(String(120), nullable=False, index=True)
     snapshot_group = Column(String(80), nullable=False, index=True)
@@ -68,7 +68,7 @@ class SystemAlert(Base):
 
 class AdminChangeAuditLog(Base):
     __tablename__ = "admin_change_audit_logs"
-    __table_args__ = ({"schema": "audit"},)
+    __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
     admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     action = Column(String, nullable=False)
@@ -85,7 +85,7 @@ class AdminChangeAuditLog(Base):
 
 class AdminActivityLog(Base):
     __tablename__ = "admin_activity_logs"
-    __table_args__ = ({"schema": "audit"},)
+    __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
     admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     action = Column(String, nullable=False)
@@ -525,7 +525,7 @@ class ChatbotQueryEvent(Base):
         Index("ix_chatbot_events_clicked_product_id", "clicked_product_id"),
         Index("ix_chatbot_events_created_at", "created_at"),
         Index("ix_chatbot_events_normalized_query", "normalized_query"),
-        Index("ix_chatbot_events_session_id", "session_id"), {"schema": "audit"})
+        Index("ix_chatbot_events_session_id", "session_id"), {"schema": "governance"})
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -716,7 +716,7 @@ class SupplierCountryCommission(Base):
 
 class RetentionJobRun(Base):
     __tablename__ = "retention_job_runs"
-    __table_args__ = ({"schema": "audit"},)
+    __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
     job_type = Column(String(50), nullable=True)
     target_table = Column(String(100), nullable=True)

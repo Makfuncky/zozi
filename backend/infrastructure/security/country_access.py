@@ -8,7 +8,37 @@ instead. Routers may still call the module copy; both must stay behaviour-identi
 
 from __future__ import annotations
 
-from fastapi import HTTPException
+from typing import Optional
+
+from fastapi import Depends, HTTPException
+
+
+class CountryAccessScope:
+    """Orthogonal country scope (Law 5): the set of country codes an actor may act on."""
+
+    def __init__(self, country_codes: list[str]):
+        self.country_codes = country_codes
+
+    def has_access(self, country_code: str) -> bool:
+        return country_code.upper() in [c.upper() for c in self.country_codes]
+
+
+def get_country_access_scope(current_user: Optional[dict] = Depends(None)) -> CountryAccessScope:
+    """Resolve the caller's country scope (admin → ALL, else staff_country_codes)."""
+    if not current_user:
+        return CountryAccessScope([])
+
+    role = str(current_user.get("role") or "").lower()
+    if role == "admin":
+        return CountryAccessScope(["ALL"])
+
+    codes = current_user.get("staff_country_codes", [])
+    return CountryAccessScope(codes or [])
+
+
+def get_country_scope(current_user: Optional[dict] = Depends(None)) -> CountryAccessScope:
+    """Backward-compatible alias for ``get_country_access_scope``."""
+    return get_country_access_scope(current_user)
 
 
 def require_country_access(country_code: str, current_user) -> None:

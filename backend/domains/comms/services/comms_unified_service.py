@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 
 from infrastructure.utils.audit import AuditAction, audit_log
 

@@ -8,7 +8,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.finance.models.commission import CommissionLedgerEntry
 from domains.finance.models.finance import Account
 from domains.finance.models.finance import AccountBalance

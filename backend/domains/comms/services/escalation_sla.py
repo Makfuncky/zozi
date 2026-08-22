@@ -10,8 +10,8 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import EscalationSLARule
-from domains.accounts.models.core import EscalationSLALog
+from domains.accounts.ports import EscalationSLARule
+from domains.accounts.ports import EscalationSLALog
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)

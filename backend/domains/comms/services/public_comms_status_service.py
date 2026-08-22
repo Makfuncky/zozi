@@ -8,11 +8,11 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 from providers.auth.jwt import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
-from domains.accounts.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.user import User
+from domains.accounts.ports import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
+from domains.accounts.ports import SupportTicket
+from domains.accounts.ports import User
 from domains.comms.models.communication import Notification
-from domains.governance.models.admin import TicketReply
+from domains.governance.ports import TicketReply
 from infrastructure.utils.config import settings
 from domains.comms.services.connection_manager_base import UserConnectionManagerBase
 logger = logging.getLogger(__name__)

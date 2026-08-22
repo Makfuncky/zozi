@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 from infrastructure.database.session import get_db
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import Account
@@ -34,7 +34,7 @@ from domains.payments.models.payments import Payment
 from domains.payments.models.payments import LogisticsPartnerPayout
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
-from domains.hr.models.employee_models import Employee
+from domains.hr.ports import Employee
 from domains.finance.services.treasury_engine import TreasuryEngine
 from domains.comms.services.write_helpers import commit_only
 from domains.country.utils.country_rls import get_country_or_404

@@ -1,7 +1,0 @@
-# Frozen list of services that currently import an external
-# third-party SDK directly (provider concern that belongs in
-# providers/**). Count must only DECREASE. Regenerate after an
-# intentional relocation: python tests/_gen_service_provider_baseline.py
-# Format: one repo-root-relative path per line.
-services/gateways/payments.py
-services/mcp/zozi_mcp.py

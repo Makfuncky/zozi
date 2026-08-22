@@ -18,7 +18,7 @@ from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.config import settings
 from infrastructure.utils.dependencies import get_current_user
 from infrastructure.utils.ip_utils import get_request_ip
-from middleware.csrf_middleware import generate_csrf_token
+from infrastructure.security.csrf import generate_csrf_token
 logger = logging.getLogger(__name__)
 bearer_scheme = HTTPBearer(auto_error=False)
 

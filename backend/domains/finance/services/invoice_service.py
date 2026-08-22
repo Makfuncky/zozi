@@ -13,8 +13,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from domains.accounts.models.user import User
-from domains.catalog.models.products import Product
+from domains.accounts.ports import User
+from domains.catalog.ports import Product
 from domains.finance.models.finance import Invoice
 from domains.finance.models.finance import InvoiceItem
 from domains.logistics.models.logistics import Shipment

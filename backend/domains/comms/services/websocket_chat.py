@@ -12,12 +12,12 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import EntityChatThread
-from domains.accounts.models.core import EntityChatMessage
-from domains.accounts.models.core import DirectChatRoom
-from domains.accounts.models.core import DirectChatMessage
-from domains.accounts.models.core import GroupChatRoom
-from domains.accounts.models.core import GroupChatMember
+from domains.accounts.ports import EntityChatThread
+from domains.accounts.ports import EntityChatMessage
+from domains.accounts.ports import DirectChatRoom
+from domains.accounts.ports import DirectChatMessage
+from domains.accounts.ports import GroupChatRoom
+from domains.accounts.ports import GroupChatMember
 from infrastructure.database.database import get_service_session
 from domains.comms.services.write_helpers import add_and_flush
 from domains.comms.services.write_helpers import commit_and_refresh

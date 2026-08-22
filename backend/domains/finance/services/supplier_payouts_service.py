@@ -9,7 +9,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import PayoutOut
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.comms.models.suppliers import SupplierProfile
 from domains.payments.models.payments import Payout
 

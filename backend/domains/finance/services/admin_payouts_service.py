@@ -12,7 +12,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.payments.models.payments import Payout
 

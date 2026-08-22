@@ -521,26 +521,24 @@ def generate_cash_flow_statement(
             cc_p = {"cc": country_code} if country_code else {}
             opening_balance = round_money(
                 Decimal(
-                    db.execute(text(f"""
+                    db.execute(text("""
                         SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)
                         FROM journal_entry_lines jel
                         JOIN journal_entries je ON jel.entry_id = je.id
                         WHERE jel.account_id = :aid
                           AND je.entry_date < :ps
-                          {cc_where if country_code else ''}
-                    """), {"aid": cash_acct.id, "ps": period_start, **cc_p}).scalar() or 0
+                    """ + (cc_where if country_code else '')), {"aid": cash_acct.id, "ps": period_start, **cc_p}).scalar() or 0
                 )
             )
             opening_balance = round_money(closing_balance - (
-                db.execute(text(f"""
+                db.execute(text("""
                     SELECT COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0)
                     FROM journal_entry_lines jel
                     JOIN journal_entries je ON jel.entry_id = je.id
                     WHERE jel.account_id = :aid
                       AND je.entry_date >= :ps
                       AND je.entry_date <= :pe
-                      {cc_where if country_code else ''}
-                """), {"aid": cash_acct.id, "ps": period_start, "pe": period_end, **cc_p}).scalar() or 0
+                """ + (cc_where if country_code else '')), {"aid": cash_acct.id, "ps": period_start, "pe": period_end, **cc_p}).scalar() or 0
             ))
 
     operating_codes = {
@@ -577,12 +575,12 @@ def generate_cash_flow_statement(
         params = {f"aid{i}": aid for i, aid in enumerate(acct_ids)}
         params.update({"ps": period_start, "pe": period_end, **cc_p})
         change_rows = db.execute(
-            text(f"""
+            text("""
                 SELECT jel.account_id,
                        COALESCE(SUM(CASE WHEN jel.side = 'debit' THEN jel.amount ELSE -jel.amount END), 0) as change
                 FROM journal_entry_lines jel
                 JOIN journal_entries je ON jel.entry_id = je.id
-                WHERE jel.account_id IN ({placeholders})
+                WHERE jel.account_id IN (""" + placeholders + """)
                   AND je.entry_date >= :ps
                   AND je.entry_date <= :pe
             """ + cc_where),

@@ -17,7 +17,7 @@ from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import TreasuryAccount
 from domains.finance.models.finance import TreasuryTransaction
-from domains.hr.models.employee_models import Employee
+from domains.hr.ports import Employee
 from infrastructure.utils.audit import AuditAction, audit_log
 from domains.comms.services.write_helpers import add_and_flush
 from domains.comms.services.write_helpers import commit_and_refresh

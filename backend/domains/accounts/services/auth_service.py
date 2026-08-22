@@ -27,7 +27,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import RegisterRequest, TokenResponse, UserOut
 
-from middleware.csrf_middleware import generate_csrf_token
+from infrastructure.security.csrf import generate_csrf_token
 
 from domains.accounts.models.user import User
 from domains.accounts.models.user import UserLoginHistory

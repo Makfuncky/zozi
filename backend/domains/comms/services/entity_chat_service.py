@@ -2,8 +2,8 @@
 from __future__ import annotations
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from domains.accounts.models.core import EntityChatThread
-from domains.accounts.models.core import EntityChatMessage
+from domains.accounts.ports import EntityChatThread
+from domains.accounts.ports import EntityChatMessage
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
 logger = structlog.get_logger(__name__)

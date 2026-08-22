@@ -14,8 +14,8 @@ from infrastructure.database.database import SessionLocal
 from domains.comms.models.marketing import CampaignRecipient
 from domains.comms.models.marketing import EmailDeliveryEvent
 from domains.comms.models.marketing import EmailSuppression
-from domains.governance.models.admin import EmailProviderConfig
-from domains.governance.models.admin import ProcessedWebhookEvent
+from domains.governance.ports import EmailProviderConfig
+from domains.governance.ports import ProcessedWebhookEvent
 from infrastructure.utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)

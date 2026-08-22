@@ -5,11 +5,11 @@ from typing import Any, Iterable, cast
 from sqlalchemy.orm import selectinload
 
 from infrastructure.database.database import get_service_session
-from domains.accounts.models.user import User
-from domains.logistics.models.logistics import Shipment
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.orders.models.orders import ReturnRequest
+from domains.accounts.ports import User
+from domains.logistics.ports import Shipment
+from domains.orders.ports import Order
+from domains.orders.ports import OrderItem
+from domains.orders.ports import ReturnRequest
 from infrastructure.utils.background_jobs import enqueue_job
 from infrastructure.utils.config import settings
 from infrastructure.utils.email_service import send_email

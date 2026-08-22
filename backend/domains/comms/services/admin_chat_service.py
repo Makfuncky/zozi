@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 
-from domains.accounts.models.core import EntityChatMessage, EntityChatThread
+from domains.accounts.ports import EntityChatMessage, EntityChatThread
 
 from domains.comms.services.chat_system import get_chat_system
 

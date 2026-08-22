@@ -4,7 +4,7 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import AuditLog
+from domains.accounts.ports import AuditLog
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)

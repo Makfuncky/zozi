@@ -11,7 +11,7 @@ from typing import Any, cast
 
 from sqlalchemy.orm import Session, joinedload
 
-from domains.accounts.models.user import User
+from domains.accounts.ports import User
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
