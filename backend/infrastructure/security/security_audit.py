@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from domains.accounts.ports import AuditLog
+from domains.governance.ports import AuditLog
 
 logger = logging.getLogger(__name__)
 

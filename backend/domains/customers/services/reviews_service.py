@@ -7,14 +7,13 @@ from __future__ import annotations
 
 from typing import List, Optional
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from domains.catalog.ports import Product
-from domains.catalog.ports import Review
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.orders import ports
+from domains.catalog.models.products import Product, Review
+from domains.orders.models.orders import Order, OrderItem
 import structlog
+
 logger = structlog.get_logger(__name__)
 
 
@@ -68,7 +67,17 @@ def get_review_by_id(db: Session, review_id: int) -> Optional[Review]:
 
 
 def has_verified_purchase(db: Session, user_id: int, product_id: int) -> bool:
-    return ports.has_verified_purchase(db, user_id, product_id)
+    return (
+        db.query(OrderItem)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(
+            Order.user_id == user_id,
+            OrderItem.product_id == product_id,
+            Order.status.in_(["delivered", "completed"]),
+        )
+        .first()
+        is not None
+    )
 
 
 def create_review(
@@ -84,7 +93,7 @@ def create_review(
     country_code: Optional[str] = None,
 ) -> Review:
     if not 1 <= int(rating) <= 5:
-        raise ValueError("rating must be between 1 and 5")
+        raise HTTPException(status_code=422, detail="rating must be between 1 and 5")
     review = Review(
         product_id=product_id,
         user_id=user_id,
@@ -108,37 +117,11 @@ def soft_delete_review(db: Session, review: Review) -> None:
     db.commit()
 
 
-def delete_review(db: Session, review: Review) -> None:
-    """Soft-delete a single review. Authorization is enforced by the caller
-    (router), not here."""
-    soft_delete_review(db, review)
-
-
-def list_reviews(
-    db: Session, limit: int = 50, cursor: Optional[int] = None
-) -> List[Review]:
-    """Keyset (cursor) pagination over all reviews (not scoped to a product).
-
-    ``cursor`` is the ``id`` of the last review seen by the caller; the next page
-    returns reviews with a strictly smaller ``id`` (combined with a stable
-    ``(created_at DESC, id DESC)`` sort), avoiding position-based skip scans.
-    """
-    query = (
-        db.query(Review)
-        .options(joinedload(Review.user))
-        .filter(Review.is_deleted.is_(False))
-    )
-    if cursor is not None:
-        query = query.filter(Review.id < int(cursor))
-    return (
-        query.order_by(Review.created_at.desc(), Review.id.desc())
-        .limit(min(max(1, limit), 200))
-        .all()
-    )
-
-
 def update_review(db: Session, review: Review, updates: dict) -> Review:
+    allowed_fields = {"rating", "title", "comment", "image_url", "is_verified_purchase"}
     for key, value in updates.items():
+        if key not in allowed_fields:
+            continue
         setattr(review, key, value)
     db.add(review)
     db.commit()

@@ -25,7 +25,7 @@ from infrastructure.database.schemas import (
     OrderStatusUpdate,
 )
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.orders.models.orders import Order
 
 from domains.country.utils.country_rls import get_country_or_404

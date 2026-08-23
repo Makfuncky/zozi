@@ -11,9 +11,9 @@ from fastapi import WebSocket
 from sqlalchemy import and_, event, inspect as sa_inspect
 from sqlalchemy.orm import Session as OrmSession
 
-from domains.accounts.models.core import AuditLog
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.user import User
+from domains.governance.models.core import AuditLog
+from domains.governance.models.core import SupportTicket
+from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.comms.models.communication import InternalEmail

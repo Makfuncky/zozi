@@ -1,11 +1,11 @@
 """hr-schema ORM models that were historically defined inside the accounts
-God-domain (``domains.accounts.models.core``) but belong to the ``hr`` bounded
+God-domain (``domains.governance.models.core``) but belong to the ``hr`` bounded
 context.
 
 A3 (RESOLVER.md §26 ACC-01): re-home non-``accounts`` tables out of
 ``domains/accounts/models`` into their owning domain. ``shift_handover_tasks``
 lives under the ``hr`` schema, so its canonical definition now resides here.
-``domains.accounts.models.core`` keeps a re-export so legacy imports keep
+``domains.governance.models.core`` keeps a re-export so legacy imports keep
 resolving (no-delete rule).
 """
 
@@ -20,7 +20,7 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 class ShiftHandoverTask(Base):
     __tablename__ = "shift_handover_tasks"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = ({"extend_existing": True, "schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("customer.shift_handover_sessions.id"), nullable=False)
     description = Column(Text, nullable=False)

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from infrastructure.database.schemas import AddressCreate, AddressOut, AddressUpdate, CategoryCreate, CategorySchema, ReviewCreate
-from domains.accounts.models.core import Address
+from domains.governance.models.core import Address
 from domains.catalog.models.products import Category
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import Review

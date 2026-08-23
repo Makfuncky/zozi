@@ -1,4 +1,4 @@
-"""
+﻿"""
 Orders Controller — order creation, retrieval, and cancellation business logic.
 
 Totals are computed entirely server-side:
@@ -31,7 +31,7 @@ from domains.payments.services.payments import build_order_payment_snapshot
 from domains.payments.services.payments import confirm_cash_on_delivery_order
 from domains.payments.services.payments import is_checkout_payment_method_allowed
 from domains.payments.services.payments import normalize_checkout_payment_method
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile
@@ -49,8 +49,8 @@ from domains.logistics.services.logistics_partner_pricing import normalize_count
 from domains.logistics.services.logistics_partner_pricing import normalize_pricing_breakdown_payload
 from domains.logistics.services.logistics_partner_pricing import parse_dimensions_to_volume_cm3
 from domains.logistics.services.logistics_partner_pricing import quote_shipping_for_destination
-from domains.finance.services.tax_service import calculate_tax
-from domains.finance.services.tax_service import get_country_config
+from domains.finance.services.tax.tax_service import calculate_tax
+from domains.finance.services.tax.tax_service import get_country_config
 from infrastructure.utils.config import settings
 from infrastructure.utils.constants import STAFF_ROLES
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -1426,7 +1426,7 @@ def respond_to_shipment_confirmation(
             # ── Cash Management: create settlements when order is delivered ──
             if new_order_status == "delivered":
                 try:
-                    from domains.finance.services.cash_management_service import create_settlements_on_delivery
+                    from domains.finance.services.treasury.cash_management_service import create_settlements_on_delivery
                     create_settlements_on_delivery(order, db)
                 except Exception:
                     logger.exception("Failed to create settlements for delivered order %s", order.id)

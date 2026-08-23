@@ -28,7 +28,7 @@ from infrastructure.database.schemas import (
     CartViewOut,
     ProductCartViewOut,
 )
-from domains.accounts.ports import CartItem
+from domains.governance.ports import CartItem
 from domains.catalog.ports import Product
 from domains.orders.services.cart_write_service import create_cart_item
 from domains.orders.services.cart_write_service import delete_cart_items_by_user

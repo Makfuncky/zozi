@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from domains.orders.models.orders import Order
 from domains.payments.models.payments import Payment
 from infrastructure.messaging.events import PaymentConfirmedEvent
-from domains.comms.services.notification_service import NotificationService
+from domains.comms.services.notification.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 

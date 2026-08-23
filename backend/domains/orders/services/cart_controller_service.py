@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 import domains.orders.services.orders_service as orders_ctrl
-from domains.accounts.models.core import CartItem
+from domains.governance.models.core import CartItem
 from domains.catalog.models.products import Product
 from infrastructure.database.schemas import OrderCreate
 from domains.catalog.services.products_service import resolve_product_variant

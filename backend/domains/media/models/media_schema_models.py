@@ -17,8 +17,8 @@ from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 # Canonical home for ``media``-schema tables that lived in the old
-# ``domains.accounts.models.core`` / ``onboarding`` God-modules (A3 / RESOLVER §26
-# ACC-01). ``domains.accounts.models.core`` / ``onboarding`` keep re-exports so
+# ``domains.governance.models.core`` / ``onboarding`` God-modules (A3 / RESOLVER §26
+# ACC-01). ``domains.governance.models.core`` / ``onboarding`` keep re-exports so
 # legacy imports resolve.
 
 __all__ = ["VideoRoomRecording", "OCRResult"]

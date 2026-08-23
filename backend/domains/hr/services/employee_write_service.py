@@ -90,7 +90,7 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 from infrastructure.utils.soft_delete import soft_delete
 
-from domains.accounts.models.user import RevokedToken
+from domains.governance.models.user import RevokedToken
 from domains.hr.models.employee_models import EmployeeAttendance
 from domains.hr.models.employee_models import EmployeeWorkLog
 from domains.hr.models.employee_models import EmployeeDocument

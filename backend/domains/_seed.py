@@ -9,7 +9,7 @@ from typing import Any, Callable
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import Session
 from infrastructure.database.database import engine
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Category
 from domains.catalog.models.products import Product
 from domains.comms.models.marketing import EmailTemplate

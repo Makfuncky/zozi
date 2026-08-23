@@ -15,7 +15,7 @@ from infrastructure.security.dependencies import get_current_user
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.ports import Address
+from domains.governance.ports import Address
 
 from domains.orders.services.commerce_write_service import create_address as create_address_model
 from domains.orders.services.commerce_write_service import update_address as update_address_model

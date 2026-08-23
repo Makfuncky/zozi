@@ -6,7 +6,7 @@ of importing ``domains.security.models`` directly.
 
 A3 / RESOLVER §26 ACC-01 — re-export the security-schema ORM classes the
 accounts god-module hub used to own, so cross-domain readers resolve them via
-this sanctioned ports surface (Law 3) instead of ``domains.accounts.models``.
+this sanctioned ports surface (Law 3) instead of ``domains.governance.models``.
 """
 
 from __future__ import annotations

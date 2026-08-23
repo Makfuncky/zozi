@@ -38,7 +38,7 @@ def test_comms_router_has_no_direct_db_writes():
 def test_comms_router_does_not_reference_models_directly():
     src = _read(ROUTER_PATH)
     assert "from models" not in src, "Router still imports `models` directly (CG1)"
-    assert "from domains.accounts.models.core import" not in src
+    assert "from domains.governance.models.core import" not in src
 
 
 def test_comms_router_delegates_to_canonical_controller():

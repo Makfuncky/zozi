@@ -7,11 +7,11 @@ from sqlalchemy import func as sqlfunc
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
-from domains.accounts.models.core import EntityChatMessage
-from domains.accounts.models.core import EntityChatThread
-from domains.comms.services.chat_system import get_chat_system
-from domains.comms.services.entity_chat_service import EntityChatService
+from domains.governance.models.user import User
+from domains.governance.models.core import EntityChatMessage
+from domains.governance.models.core import EntityChatThread
+from domains.comms.services.chat.chat_system import get_chat_system
+from domains.comms.services.chat.entity_chat_service import EntityChatService
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context

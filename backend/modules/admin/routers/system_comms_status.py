@@ -14,10 +14,10 @@ from jose import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
 from infrastructure.utils.config import settings
 
-from domains.comms.services.chat_write_controller import get_user_display_name
-from domains.comms.services.chat_write_controller import get_user_role
-from domains.comms.services.chat_write_controller import persist_message
-from domains.comms.services.chat_write_controller import mark_messages_read
+from domains.comms.services.chat.chat_write_controller import get_user_display_name
+from domains.comms.services.chat.chat_write_controller import get_user_role
+from domains.comms.services.chat.chat_write_controller import persist_message
+from domains.comms.services.chat.chat_write_controller import mark_messages_read
 
 logger = logging.getLogger(__name__)
 

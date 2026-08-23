@@ -1,3 +1,12 @@
 from infrastructure.database.base import Base  # noqa: F401
-__all__ = ["Base"]
 
+from domains.customers.models.customer_schema_models import (  # noqa: F401
+    SystemHealthEvent,
+    UserSession,
+)
+
+__all__ = [
+    "Base",
+    "SystemHealthEvent",
+    "UserSession",
+]

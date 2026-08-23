@@ -13,9 +13,9 @@ class AuditMixin:
     __abstract__ = True
 
     created_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
-    created_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True, index=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
-    updated_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True, index=True)
+    updated_by_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True, index=True)
 
     created_by = relationship("User", foreign_keys=[created_by_id])
     updated_by = relationship("User", foreign_keys=[updated_by_id])
@@ -27,7 +27,7 @@ class SoftDeleteMixin:
 
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)
-    deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    deleted_by_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True)
 
     deleted_by = relationship("User", foreign_keys=[deleted_by_id])
 

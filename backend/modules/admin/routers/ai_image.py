@@ -1,7 +1,7 @@
 """AI image router — product image analysis."""
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.config import settings
 from infrastructure.utils.dependencies import require_supplier
 

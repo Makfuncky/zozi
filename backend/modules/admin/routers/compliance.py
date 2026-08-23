@@ -11,9 +11,9 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from domains.comms.services.asset_tracking import AssetTrackingService
-from domains.governance.services.compliance_engine import get_compliance_engine
-from domains.finance.services.expense_processing import ExpenseProcessingService
+from domains.comms.services.admin.asset_tracking import AssetTrackingService
+from domains.governance.services.audit.compliance_engine import get_compliance_engine
+from domains.finance.services.ledger.expense_processing import ExpenseProcessingService
 from domains.hr.services.leave_accrual import LeaveAccrualEngine
 from domains.country.utils.country_rls import get_current_country_scope as get_country_scope
 from infrastructure.utils.dependencies import get_db

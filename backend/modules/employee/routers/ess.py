@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.hr.models.employee_models import Employee
 from domains.hr.services.employee_activity_logger import log_activity
 

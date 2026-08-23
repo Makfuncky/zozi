@@ -24,7 +24,7 @@ class Warehouse(Base):
     __tablename__ = 'warehouses'
     __table_args__ = (
                          Index("ix_warehouses_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
@@ -45,7 +45,7 @@ class PurchaseOrder(Base):
     __tablename__ = 'purchase_orders'
     __table_args__ = (
                          Index("ix_purchase_orders_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     po_number = Column(String(40), nullable=False, unique=True, index=True)
@@ -53,7 +53,7 @@ class PurchaseOrder(Base):
     supplier_name = Column(String(200), nullable=True)
     order_date = Column(DateTime, default=_utcnow)
     expected_delivery_date = Column(DateTime, nullable=True)
-    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     currency = Column(String(3), default='OMR')
     notes = Column(Text, nullable=True)
     terms = Column(Text, nullable=True)
@@ -81,10 +81,10 @@ class PurchaseOrderLine(Base):
     __tablename__ = 'purchase_order_lines'
     __table_args__ = (
                          Index("ix_purchase_order_lines_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    po_id = Column(Integer, ForeignKey('logistics.purchase_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    po_id = Column(Integer, ForeignKey('finance.purchase_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -113,14 +113,14 @@ class GoodsReceiptNote(Base):
     __tablename__ = 'goods_receipt_notes'
     __table_args__ = (
                          Index("ix_goods_receipt_notes_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     grn_number = Column(String(40), nullable=False, unique=True, index=True)
-    po_id = Column(Integer, ForeignKey('logistics.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
+    po_id = Column(Integer, ForeignKey('finance.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier_id = Column(Integer, ForeignKey('finance.vendors.id', ondelete='RESTRICT'), nullable=True, index=True)
     receipt_date = Column(DateTime, default=_utcnow)
-    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     status = Column(String(20), default='confirmed')
     notes = Column(Text, nullable=True)
     received_by = Column(Integer, ForeignKey('core.users.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -139,11 +139,11 @@ class GoodsReceiptLine(Base):
     __tablename__ = 'goods_receipt_lines'
     __table_args__ = (
                          Index("ix_goods_receipt_lines_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    grn_id = Column(Integer, ForeignKey('logistics.goods_receipt_notes.id', ondelete='RESTRICT'), nullable=False, index=True)
-    po_line_id = Column(Integer, ForeignKey('logistics.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
+    grn_id = Column(Integer, ForeignKey('finance.goods_receipt_notes.id', ondelete='RESTRICT'), nullable=False, index=True)
+    po_line_id = Column(Integer, ForeignKey('finance.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -167,7 +167,7 @@ class SalesOrder(Base):
     __tablename__ = 'sales_orders'
     __table_args__ = (
                          Index("ix_sales_orders_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     so_number = Column(String(40), nullable=False, unique=True, index=True)
@@ -176,7 +176,7 @@ class SalesOrder(Base):
     customer_po_number = Column(String(80), nullable=True)
     order_date = Column(DateTime, default=_utcnow)
     expected_delivery_date = Column(DateTime, nullable=True)
-    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     currency = Column(String(3), default='OMR')
     shipping_address = Column(Text, nullable=True)
     billing_address = Column(Text, nullable=True)
@@ -204,10 +204,10 @@ class SalesOrderLine(Base):
     __tablename__ = 'sales_order_lines'
     __table_args__ = (
                          Index("ix_sales_order_lines_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    so_id = Column(Integer, ForeignKey('logistics.sales_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
+    so_id = Column(Integer, ForeignKey('finance.sales_orders.id', ondelete='RESTRICT'), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -235,11 +235,11 @@ class StockMovement(Base):
     __tablename__ = 'stock_movements'
     __table_args__ = (
                          Index("ix_stock_movements_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=True, index=True)
-    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     movement_type = Column(String(20), nullable=True)
     reference_type = Column(String(30), nullable=True)
     reference_id = Column(Integer, nullable=True)
@@ -261,11 +261,11 @@ class ImportShipment(Base):
     __tablename__ = 'import_shipments'
     __table_args__ = (
                          Index("ix_import_shipments_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     shipment_ref = Column(String(40), nullable=False, unique=True, index=True)
-    po_id = Column(Integer, ForeignKey('logistics.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
+    po_id = Column(Integer, ForeignKey('finance.purchase_orders.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier_id = Column(Integer, ForeignKey('finance.vendors.id', ondelete='RESTRICT'), nullable=True, index=True)
     supplier_name = Column(String(200), nullable=True)
     origin_country = Column(String(10), nullable=True)
@@ -279,7 +279,7 @@ class ImportShipment(Base):
     actual_arrival = Column(DateTime, nullable=True)
     currency = Column(String(3), default='OMR')
     exchange_rate = Column(Numeric(14, 6), default=1)
-    warehouse_id = Column(Integer, ForeignKey('logistics.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
+    warehouse_id = Column(Integer, ForeignKey('finance.warehouses.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(3), nullable=True, index=True)
     notes = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey('core.users.id', ondelete='RESTRICT'), nullable=True, index=True)
@@ -307,11 +307,11 @@ class ImportShipmentLine(Base):
     __tablename__ = 'import_shipment_lines'
     __table_args__ = (
                          Index("ix_import_shipment_lines_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('logistics.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
-    po_line_id = Column(Integer, ForeignKey('logistics.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
+    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
+    po_line_id = Column(Integer, ForeignKey('finance.purchase_order_lines.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=True, index=True)
     product_name = Column(String(200), nullable=True)
     sku = Column(String(80), nullable=True)
@@ -342,10 +342,10 @@ class LandedCostAllocation(Base):
     __tablename__ = 'landed_cost_allocations'
     __table_args__ = (
                          Index("ix_landed_cost_allocations_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('logistics.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
+    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
     cost_type = Column(String(30), nullable=True)
     description = Column(Text, nullable=True)
     total_amount = Column(Numeric(14, 2), default=0)
@@ -367,10 +367,10 @@ class CustomsEntry(Base):
     __tablename__ = 'customs_entries'
     __table_args__ = (
                          Index("ix_customs_entries_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, ForeignKey('logistics.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
+    shipment_id = Column(Integer, ForeignKey('finance.import_shipments.id', ondelete='RESTRICT'), nullable=False, index=True)
     customs_declaration_number = Column(String(80), nullable=True)
     customs_broker = Column(String(160), nullable=True)
     entry_date = Column(DateTime, default=_utcnow)
@@ -395,7 +395,7 @@ class ImportCostTemplate(Base):
     __tablename__ = 'import_cost_templates'
     __table_args__ = (
                          Index("ix_import_cost_templates_country_created", "country_code", "created_at"),
-                         {'schema': 'logistics'},
+                         {'schema': 'finance'},
                      )
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(160), nullable=False)
@@ -409,5 +409,7 @@ class ImportCostTemplate(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
 
 

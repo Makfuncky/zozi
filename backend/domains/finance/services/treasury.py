@@ -1,18 +1,34 @@
-# AUTO-GENERATED controller delegator (routers -> controllers -> services).
-"""Lazy re-export delegator for ``domains.finance.services``.
+"""Lazy re-export delegator for ``domains.finance.services`` (treasury alias).
 
-Importing a name from this module (e.g.
-``from domains.finance.services.treasury import admin_reporting_service``) resolves
-to the sibling module ``domains.finance.services.<name>`` on demand. Resolving
-lazily avoids the import cycles that a top-level re-export would create.
+Some routers import ``from ...services.treasury import X``. This alias resolves
+names from the services tree (root or any sub-domain).
 """
+from __future__ import annotations
+
 import importlib
+import sys
 
 _PACKAGE = "domains.finance.services"
+_SUBDOMAINS = [
+    "ledger", "accounts", "treasury", "payments", "tax",
+    "reporting", "country", "commission", "shared",
+]
 
 
 def __getattr__(name: str):
     if name.startswith("__") and name.endswith("__"):
         raise AttributeError(name)
-    module = importlib.import_module(f"{_PACKAGE}.{name}")
-    return getattr(module, name)
+    try:
+        module = importlib.import_module(f"{_PACKAGE}.{name}")
+        setattr(sys.modules[__name__], name, module)
+        return module
+    except ModuleNotFoundError:
+        pass
+    for sub in _SUBDOMAINS:
+        try:
+            module = importlib.import_module(f"{_PACKAGE}.{sub}.{name}")
+            setattr(sys.modules[__name__], name, module)
+            return module
+        except ModuleNotFoundError:
+            continue
+    raise AttributeError(f"module {_PACKAGE!r} has no attribute {name!r}")

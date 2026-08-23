@@ -1,4 +1,4 @@
-"""
+﻿"""
 Supplier Router — route declarations only (HTTP layer).
 All business logic lives in controllers/supplier_controller.py.
 """
@@ -148,8 +148,8 @@ async def analyze_async(current_user: dict=Depends(require_roles('supplier', 'ad
 
     def _run_analysis() -> dict:
         import asyncio
-        from domains.finance.services.bg_removal_service import remove_background
-        from domains.finance.services.ai_variant_config import analyze_product_image
+        from domains.finance.services.shared.bg_removal_service import remove_background
+        from domains.finance.services.shared.ai_variant_config import analyze_product_image
         from infrastructure.utils.storage import storage as _store
         bg_result = remove_background(raw, strategy='general', fast_mode=True)
         ai_result = asyncio.run(analyze_product_image(raw, filename=image.filename or '', generate_copy=True))
@@ -177,15 +177,15 @@ async def remove_background(current_user: dict=Depends(require_roles('supplier',
     _storage.save(image_key, raw, content_type=image.content_type or 'image/jpeg')
 
     def _run_remove_background() -> dict:
-        from domains.finance.services.bg_removal_service import remove_background_model
-        from domains.finance.services.bg_removal_service import AVAILABLE_MODELS
-        from domains.finance.services.bg_removal_service import VALID_STRATEGIES
+        from domains.finance.services.shared.bg_removal_service import remove_background_model
+        from domains.finance.services.shared.bg_removal_service import AVAILABLE_MODELS
+        from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
         from infrastructure.utils.storage import storage as _store
         if model and model in AVAILABLE_MODELS:
             processed = remove_background_model(raw, model, fast_mode=fast_mode)
         else:
             preset_effective = preset if preset in VALID_STRATEGIES else 'general'
-            from domains.finance.services.bg_removal_service import remove_background
+            from domains.finance.services.shared.bg_removal_service import remove_background
             processed = remove_background(raw, strategy=preset_effective, fast_mode=fast_mode)
         out_key = f'supplier_uploads/{uuid.uuid4().hex}_nobg.png'
         out_url = _store.save(out_key, processed, content_type='image/png')
@@ -207,9 +207,9 @@ async def nlp_extract(current_user: dict=Depends(require_roles('supplier', 'admi
     if not transcript.strip():
         raise HTTPException(status_code=400, detail='Empty transcript')
     import json, re
-    from domains.finance.services.ai_variant_config import _ollama_chat
-    from domains.finance.services.ai_variant_config import _OLLAMA_TEXT_MODEL
-    from domains.finance.services.ai_variant_config import _extract_json
+    from domains.finance.services.shared.ai_variant_config import _ollama_chat
+    from domains.finance.services.shared.ai_variant_config import _OLLAMA_TEXT_MODEL
+    from domains.finance.services.shared.ai_variant_config import _extract_json
     canonical_list = 'Clothing, Electronics, Home & Kitchen, Beauty, Sports, Books, Toys, Automotive, Grocery, Health, Jewelry, Office, Pet Supplies, Shoes, Bags, Furniture'
     en_prompt = f'You are a product data extraction assistant for an Oman/GCC marketplace.\nGiven the voice transcript below, extract structured product data.\nChoose the category from exactly this list: {canonical_list}.\nTRANSCRIPT: ' + transcript + '\n\nReply ONLY with valid JSON (double quotes, no markdown, no commentary).\n{\n  "product_name": "best guess product name (REQUIRED)",\n  "category": "one from the list or null",\n  "subcategory": "subcategory or null",\n  "colors": ["extracted colors"],\n  "fabric": "fabric type or null",\n  "print_text": "any print/pattern text or null",\n  "description": "2-3 sentence auto-generated product description",\n  "suggested_tags": ["8-12 lowercase SEO tags"],\n  "variants": {"color": ["Blue","Black"], "size": ["S","M","L"]},\n  "stock_hints": {"Blue": {"S": 0, "M": 0, "L": 0}},\n  "quantity": null,\n  "price": null\n}'
     try:

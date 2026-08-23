@@ -8,8 +8,6 @@ _module_names = [
     "addresses",
     "cart",
     "coupons",
-    "customer_coupons_create",
-    "customer_coupons_mgmt",
     "customer_health",
     "customer_health_list",
     "customer_orders",

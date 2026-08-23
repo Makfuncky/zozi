@@ -1,4 +1,4 @@
-"""
+﻿"""
 Finance Domain — payroll, treasury, expense routing, contractor milestones.
 
 Legacy hand-written router (thin HTTP layer). All business logic and DB access
@@ -19,12 +19,12 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.audit import AuditAction, audit_log
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.finance.services.contractor_milestone_read_service import list_contractor_milestones
-from domains.finance.services.expense_routing import ExpenseRoutingEngine
-from domains.finance.services.expense_routing import get_expense_router
-from domains.finance.services.financial_reporting import FinancialReportingService
+from domains.finance.services.accounts.contractor_milestone_read_service import list_contractor_milestones
+from domains.finance.services.ledger.expense_routing import ExpenseRoutingEngine
+from domains.finance.services.ledger.expense_routing import get_expense_router
+from domains.finance.services.reporting.financial_reporting import FinancialReportingService
 from domains.hr.services.payroll_engine import PayrollEngine
-from domains.finance.services.treasury_adapter import TreasuryAdapter
+from domains.finance.services.treasury.treasury_adapter import TreasuryAdapter
 
 logger = logging.getLogger(__name__)
 

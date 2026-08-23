@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import SupplierProfileCreate, SupplierProfileOut, SupplierProfileUpdate
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 from infrastructure.utils.dependencies import get_current_user, require_supplier
 from infrastructure.utils.slug import generate_slug

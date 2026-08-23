@@ -4,31 +4,31 @@ NEW_STRUCTURE migration. Each name resolves to its real domain/infra home.
 """
 from __future__ import annotations
 
-from domains.comms.services.tickets_service import (
+from domains.comms.services.shared.ticket.tickets_service import (
     list_tickets,
     reply_to_ticket,
 )
 
-from domains.comms.services.tickets_write_service import (
+from domains.comms.services.shared.ticket.tickets_write_service import (
     update_ticket_status,
 )
 
-from domains.governance.services.admin_catalog_operations_service import (
+from domains.governance.services.products.flat_admin_catalog_operations_service import (
     approve_product,
     reject_product,
 )
 
-from domains.governance.services.admin_commerce_configuration_service import (
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import (
     create_coupon,
     list_coupons,
 )
 
-from domains.governance.services.admin_treasury_status_service import (
+from domains.governance.services.treasury.flat_admin_treasury_status_service import (
     list_pending_payouts,
     verify_payout,
 )
 
-from domains.governance.services.analytics_service import (
+from domains.governance.services.analytics.flat_analytics_service import (
     get_analytics,
     get_analytics_timeseries,
     get_chatbot_analytics,
@@ -37,21 +37,21 @@ from domains.governance.services.analytics_service import (
     get_user_growth_analytics,
 )
 
-from domains.governance.services.bulk_ops_service import (
+from domains.governance.services.core.flat_bulk_ops_service import (
     bulk_archive_entities,
     bulk_category_change,
     bulk_restore_entities,
 )
 
-from domains.governance.services.database_service import (
+from domains.governance.services.settings.flat_database_service import (
     get_database_overview,
 )
 
-from domains.governance.services.effective_permissions import (
+from domains.governance.services.permissions.flat_effective_permissions import (
     require_permission,
 )
 
-from domains.governance.services.misc_service import (
+from domains.governance.services.settings.misc_service import (
     archive_entity,
     get_audit_log_page,
     get_available_audit_actions,
@@ -59,7 +59,7 @@ from domains.governance.services.misc_service import (
     restore_entity,
 )
 
-from domains.governance.services.orders_service import (
+from domains.governance.services.orders.flat_orders_service import (
     bulk_delete_orders_admin,
     bulk_update_order_status_admin,
     delete_order_admin,
@@ -69,13 +69,13 @@ from domains.governance.services.orders_service import (
     update_order_tracking,
 )
 
-from domains.governance.services.permissions_service import (
+from domains.governance.services.permissions.permissions_service import (
     get_hierarchy_permissions,
     get_staff_permission_catalog,
     update_role_permissions,
 )
 
-from domains.governance.services.products_service import (
+from domains.governance.services.products.flat_products_service import (
     bulk_delete_products_admin,
     bulk_product_moderation,
     delete_product_admin,
@@ -85,11 +85,11 @@ from domains.governance.services.products_service import (
     toggle_product_badge,
 )
 
-from domains.governance.services.public_commerce_validation_service import (
+from domains.governance.services.commerce.flat_public_commerce_validation_service import (
     delete_coupon,
 )
 
-from domains.governance.services.suppliers_service import (
+from domains.governance.services.suppliers.suppliers_service import (
     bulk_manage_suppliers,
     bulk_supplier_verification,
     get_all_suppliers,
@@ -99,7 +99,7 @@ from domains.governance.services.suppliers_service import (
     verify_supplier,
 )
 
-from domains.governance.services.users_service import (
+from domains.governance.services.users.flat_users_service import (
     bulk_delete_users_admin,
     bulk_toggle_users_active,
     bulk_update_staff_accounts,
@@ -137,4 +137,4 @@ get_current_admin = get_current_user
 require_roles = require_admin
 require_admin_2fa_enabled = require_admin
 require_admin_2fa_verified = require_admin
-from domains.comms.services.tickets_write_service import get_ticket_with_details as get_ticket_detail
+from domains.comms.services.shared.ticket.tickets_write_service import get_ticket_with_details as get_ticket_detail

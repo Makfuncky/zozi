@@ -13,7 +13,7 @@ from fastapi import Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem

@@ -19,10 +19,10 @@ from domains.comms.models.marketing import EmailCampaign
 from domains.comms.models.marketing import EmailRuntimeConfig
 from domains.comms.models.marketing import EmailSuppression
 from domains.comms.models.marketing import EmailTemplate
-from domains.comms.services.email_gateway import EmailGateway
-from domains.comms.services.transactional_email_service import enqueue_invoice_email
-from domains.comms.services.transactional_email_service import enqueue_low_stock_alert_email
-from domains.comms.services.transactional_email_service import enqueue_order_created_email
+from domains.comms.services.email.email_gateway import EmailGateway
+from domains.comms.services.email.transactional_email_service import enqueue_invoice_email
+from domains.comms.services.email.transactional_email_service import enqueue_low_stock_alert_email
+from domains.comms.services.email.transactional_email_service import enqueue_order_created_email
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

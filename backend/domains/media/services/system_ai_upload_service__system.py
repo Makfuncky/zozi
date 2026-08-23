@@ -32,7 +32,7 @@ from fastapi import BackgroundTasks, Depends, File, Form, HTTPException, UploadF
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.governance.services.admin_controller import require_roles
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import ProductVariant
 from domains.media.models.ai_upload import AIUploadJob

@@ -1,4 +1,4 @@
-"""Tests for ai_research.py router endpoints."""
+﻿"""Tests for ai_research.py router endpoints."""
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
@@ -65,7 +65,7 @@ class TestGetAIResearchJob:
         assert response.status_code == 404
 
     def test_get_job_returns_queued_status(self):
-        from domains.finance.services.ai_research_jobs import enqueue_job
+        from domains.finance.services.shared.ai_research_jobs import enqueue_job
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")
         assert response.status_code == 200
@@ -75,7 +75,7 @@ class TestGetAIResearchJob:
         assert data["country_code"] == "IN"
 
     def test_get_job_returns_completed_status_with_result(self):
-        from domains.finance.services.ai_research_jobs import enqueue_job, mark_job_completed
+        from domains.finance.services.shared.ai_research_jobs import enqueue_job, mark_job_completed
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         mark_job_completed(job["job_id"], {"module_01_country_identity": {"official_name": "India"}}, ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")
@@ -85,7 +85,7 @@ class TestGetAIResearchJob:
         assert data["result"] is not None
 
     def test_get_job_returns_failed_status(self):
-        from domains.finance.services.ai_research_jobs import enqueue_job, mark_job_failed
+        from domains.finance.services.shared.ai_research_jobs import enqueue_job, mark_job_failed
         job = enqueue_job("IN", {"country_code": "IN"}, ttl_seconds=3600)
         mark_job_failed(job["job_id"], "Test error", ttl_seconds=3600)
         response = client.get(f"/country-research/ai/{job['job_id']}")

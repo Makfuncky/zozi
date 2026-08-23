@@ -25,7 +25,7 @@ class FinancialReport(Base):
     consumers read it through ``domains.analytics.ports``.
     """
     __tablename__ = "financial_reports"
-    __table_args__ = ({"schema": "analytics"},)
+    __table_args__ = ({"extend_existing": True, "schema": "analytics"},)
     id = Column(Integer, primary_key=True, index=True)
     report_type = Column(String, nullable=False)
     period_start = Column(DateTime, nullable=False)
@@ -45,7 +45,7 @@ class ExecutiveNews(Base):
     __tablename__ = "executive_news"
     __table_args__ = (
         Index("ix_executive_news_country_created", "country_code", "created_at"),  # DBA31
-        {"schema": "analytics"},
+        {"extend_existing": True, "schema": "analytics"},
     )
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
@@ -75,7 +75,7 @@ class PredictiveSimulation(Base):
     __tablename__ = "predictive_simulations"
     __table_args__ = (
         Index("ix_predictive_simulations_country_created", "country_code", "created_at"),  # DBA31
-        {"schema": "ai"},
+        {"extend_existing": True, "schema": "ai"},
     )
     id = Column(Integer, primary_key=True, index=True)
     simulation_type = Column(String(50), nullable=False)

@@ -30,7 +30,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from domains.comms.ports import Notification
-from domains.comms.ports import SupplierNotificationPreference
+from domains.suppliers.ports import SupplierNotificationPreference
 from domains.governance.ports import SupplierDispute
 import structlog
 logger = structlog.get_logger(__name__)

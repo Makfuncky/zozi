@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import PayoutOut
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 from domains.payments.models.payments import Payout
 from infrastructure.utils.dependencies import require_supplier

@@ -37,7 +37,7 @@ def _staff_payload(row: CountryStaffAssignment, user_map: dict[int, Any]) -> dic
 
 
 def _user_map(db: Session, rows: list[CountryStaffAssignment]) -> dict[int, Any]:
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
     user_ids = [r.user_id for r in rows]
     if not user_ids:
         return {}
@@ -79,7 +79,7 @@ def assign_staff_to_country(
     """Assign a user to a country with a role."""
     from fastapi import HTTPException
     from infrastructure.database.database import get_db_context
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
     user_id = int(getattr(body, "user_id", 0))
     role_in_country = getattr(body, "role_in_country", "country_manager") or "country_manager"
     notes = getattr(body, "notes", None)
@@ -190,3 +190,33 @@ def list_all_staff_assignments(
         rows = q.order_by(CountryStaffAssignment.created_at.desc()).limit(limit).all()
         user_map = _user_map(db, rows)
         return [_staff_payload(r, user_map) for r in rows]
+
+# === Merged from accounts/services/country_staff_service.py ===
+
+class StaffAssignBody(BaseModel):
+
+    user_id: int
+
+    role_in_country: str = Field(
+
+        default="country_manager",
+
+        description="One of: country_head, country_manager, country_finance, country_moderator"
+
+    )
+
+    notes: Optional[str] = None
+
+
+
+
+class StaffUpdateBody(BaseModel):
+
+    role_in_country: Optional[str] = None
+
+    is_active: Optional[bool] = None
+
+    notes: Optional[str] = None
+
+
+

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Admin Fallback Router — non-country-scoped route aliases.
 
 The dedicated admin_*.py routers define routes WITH a {country_code} path
@@ -18,8 +18,8 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from domains.governance.services.admin_controller import get_current_admin
-from domains.governance.services.suppliers_service import get_all_suppliers
-from domains.finance.services.payout_approval_read_service import list_pending_payouts
+from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
+from domains.finance.services.payments.payout_approval_read_service import list_pending_payouts
 from domains.catalog.models.products import Category as CategoryModel
 from domains.governance.models.admin import CommissionGlobalConfig
 from domains.governance.models.admin import ShippingCarrier
@@ -41,7 +41,7 @@ def admin_dashboard_fallback(
 ):
     """Simple admin dashboard stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
 
@@ -74,7 +74,7 @@ def admin_stats_fallback(
 ):
     """Simple aggregate stats — works without country_code."""
     from sqlalchemy import func as sqlfunc
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
     from domains.catalog.models.products import Product as ProductModel
     from domains.orders.models.orders import Order as OrderModel
 
@@ -185,7 +185,7 @@ def admin_employees_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all employees (no country code required)."""
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = (
         db.query(Employee)

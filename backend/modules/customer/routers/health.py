@@ -9,7 +9,7 @@ prefix (RESOLVER §27 CD3, fixes CUST-D2/D3).
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from modules.customer.auth import get_current_user
+from infrastructure.utils.dependencies import get_current_user
 from rbac.dependencies import require_feature
 from infrastructure.database.database import get_db
 from domains.customers.services.customer_health_engine import get_customer_health_engine

@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
 from domains.governance.services.admin_controller import get_current_admin
 from infrastructure.database.database import get_db
 from domains.catalog.models.products import Category as CategoryModel
@@ -27,13 +27,13 @@ from domains.hr.models.employee_models import Employee
 from domains.logistics.models.logistics import Shipment
 from domains.payments.models.payments import Payment
 from domains.payments.models.payments import Payout as PayoutModel
-from domains.accounts.models.user import User as UserModel
-from domains.comms.services.db_read import all_rows
-from domains.comms.services.db_read import count
-from domains.comms.services.db_read import first
-from domains.comms.services.db_read import scalar
-from domains.comms.services.db_read import scalar_sum
-from domains.comms.services.db_read import scalar_with_filters
+from domains.governance.models.user import User as UserModel
+from domains.comms.services.utility.db_read import all_rows
+from domains.comms.services.utility.db_read import count
+from domains.comms.services.utility.db_read import first
+from domains.comms.services.utility.db_read import scalar
+from domains.comms.services.utility.db_read import scalar_sum
+from domains.comms.services.utility.db_read import scalar_with_filters
 import structlog
 logger = structlog.get_logger(__name__)
 

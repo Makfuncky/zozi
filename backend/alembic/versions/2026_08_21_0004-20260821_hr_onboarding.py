@@ -2,9 +2,9 @@
 
 A3 (RESOLVER.md §26 ACC-01): the ``onboarding_pipelines`` and ``onboarding_steps``
 tables (schema ``hr``) were defined inside the accounts God-domain module
-(``domains.accounts.models.onboarding``) but belong to the ``hr`` bounded context.
+(``domains.governance.models.onboarding``) but belong to the ``hr`` bounded context.
 Their canonical ORM definitions are now in ``domains.hr.models.hr_schema_models``;
-``domains.accounts.models.onboarding`` keeps re-exports for legacy imports.
+``domains.governance.models.onboarding`` keeps re-exports for legacy imports.
 
 This is a pure code relocation. The physical tables already exist under the ``hr``
 schema in both environments -- SQLite (dev) via ``create_all`` and PostgreSQL

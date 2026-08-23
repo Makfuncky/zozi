@@ -96,3 +96,51 @@ def get_categories_dropdown(
             },
         )
         return build_cursor_pagination_payload(result.items, result.next_cursor, result.page_size)
+
+
+# === Merged from accounts/services/country_dropdown_service.py ===
+
+class CategoryResponse(BaseModel):
+
+    id: int
+
+    name: str
+
+    slug: str
+
+    parent_id: Optional[int]
+
+
+
+
+class CityResponse(BaseModel):
+
+    id: int
+
+    name: str
+
+    region: Optional[str]
+
+    latitude: Optional[float]
+
+    longitude: Optional[float]
+
+    population: Optional[int]
+
+
+
+
+class CountryDropdownResponse(BaseModel):
+
+    code: str
+
+    name: str
+
+    currency: str
+
+    currency_symbol: Optional[str]
+
+    phone_code: Optional[str]
+
+
+

@@ -46,7 +46,7 @@ def _build_registry():
     """Lazy import so that circular imports are avoided."""
     if _ENCRYPTED_COLUMNS:
         return
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
     from domains.suppliers.models import SupplierProfile
     from domains.logistics.models.logistics import Shipment
     from domains.logistics.models.logistics import ShipmentEvent

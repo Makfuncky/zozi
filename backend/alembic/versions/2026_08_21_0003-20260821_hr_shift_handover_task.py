@@ -2,9 +2,9 @@
 
 A3 (RESOLVER.md §26 ACC-01): the ``shift_handover_tasks`` table (schema ``hr``)
 was defined inside the accounts God-domain module
-(``domains.accounts.models.core``) but belongs to the ``hr`` bounded context.
+(``domains.governance.models.core``) but belongs to the ``hr`` bounded context.
 Its canonical ORM definition is now ``domains.hr.models.hr_schema_models``;
-``domains.accounts.models.core`` keeps a re-export for legacy imports.
+``domains.governance.models.core`` keeps a re-export for legacy imports.
 
 This is a pure code relocation. The physical table already exists under the
 ``hr`` schema in both environments -- SQLite (dev) via ``create_all`` and

@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.auth import decode_token
 
 logger = logging.getLogger(__name__)
@@ -134,7 +134,7 @@ def require_permissions(slugs: list):
     instance or a JWT ``dict``.
     """
     from fastapi import Depends, HTTPException
-    from domains.governance.services.effective_permissions import check_permission
+    from domains.governance.services.permissions.effective_permissions import check_permission
 
     def _extract(user, key, default):
         if isinstance(user, dict):

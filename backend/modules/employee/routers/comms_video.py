@@ -12,8 +12,8 @@ from fastapi import APIRouter, Body, Depends
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.comms.services.video_conferencing import VideoConferenceRoom
-from domains.comms.services.video_conferencing import get_video_conference
+from domains.comms.services.video.video_conferencing import VideoConferenceRoom
+from domains.comms.services.video.video_conferencing import get_video_conference
 
 logger = logging.getLogger("zozi.api.video")
 router = APIRouter()

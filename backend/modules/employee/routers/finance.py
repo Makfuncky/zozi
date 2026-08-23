@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.finance import Account
 from domains.finance.models.finance import AccountBalance
 from domains.finance.models.finance import GatewaySettlementSchedule
@@ -23,8 +23,8 @@ from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import TreasuryAccount
 from domains.payments.models.payments import Payout
-from domains.finance.services.treasury_engine import TreasuryEngine
-from domains.finance.services.treasury_engine import seed_chart_of_accounts
+from domains.finance.services.treasury.treasury_engine import TreasuryEngine
+from domains.finance.services.treasury.treasury_engine import seed_chart_of_accounts
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 

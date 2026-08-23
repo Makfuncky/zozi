@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.governance.services.suppliers_service import get_all_suppliers
+from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
 from domains.governance.services.admin_controller import get_current_admin
 from infrastructure.database.database import get_db
 from domains.catalog.models.products import Category as CategoryModel
@@ -41,7 +41,7 @@ def admin_dashboard_fallback(
     from sqlalchemy import func as sqlfunc
 
     from domains.orders.models.orders import Order as OrderModel
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
 
     total_revenue = (
         db.query(sqlfunc.sum(Payment.amount))
@@ -75,7 +75,7 @@ def admin_stats_fallback(
 
     from domains.orders.models.orders import Order as OrderModel
     from domains.catalog.models.products import Product as ProductModel
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
 
     return {
         "total_users": db.query(sqlfunc.count(UserModel.id)).scalar() or 0,
@@ -184,7 +184,7 @@ def admin_employees_fallback(
     current_admin: dict = Depends(get_current_admin),
 ):
     """List all employees (no country code required)."""
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
     skip = (page - 1) * page_size
     items = (
         db.query(Employee)

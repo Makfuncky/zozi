@@ -20,7 +20,7 @@ import importlib
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import CityDistanceMatrix
+from domains.governance.models.core import CityDistanceMatrix
 from domains.comms.models.communication import Notification
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_control import LogisticsPartnerLocation

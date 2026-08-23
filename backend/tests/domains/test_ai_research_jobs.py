@@ -1,8 +1,8 @@
-"""Tests for ai_research_jobs.py — Redis-backed job tracker."""
+﻿"""Tests for ai_research_jobs.py — Redis-backed job tracker."""
 import pytest
 from unittest.mock import MagicMock
 
-from domains.finance.services.ai_research_jobs import (
+from domains.finance.services.shared.ai_research_jobs import (
     enqueue_job,
     get_job,
     mark_job_running,

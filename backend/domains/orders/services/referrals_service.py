@@ -36,7 +36,7 @@ from sqlalchemy.orm import Session
 
 
 
-from domains.accounts.models.user import Referral
+from domains.governance.models.user import Referral
 from domains.governance.models.admin import PromotionEngineConfig
 
 import structlog

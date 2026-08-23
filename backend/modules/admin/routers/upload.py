@@ -7,7 +7,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.storage import storage as _storage
 from infrastructure.utils.config import settings
 from infrastructure.utils.dependencies import get_current_user

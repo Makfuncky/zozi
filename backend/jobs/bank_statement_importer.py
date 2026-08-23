@@ -1,6 +1,6 @@
 """Canonical Celery worker: bank statement import.
 
-Wires to ``domains.finance.services.finance_automation.import_bank_statement``.
+Wires to ``domains.finance.services.ledger.finance_automation.import_bank_statement``.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def import_bank_statement_task(
         from datetime import datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.finance_automation import import_bank_statement
+        from domains.finance.services.ledger.finance_automation import import_bank_statement
 
         db = SessionLocal()
         try:

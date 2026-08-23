@@ -20,10 +20,10 @@ from infrastructure.database.database import get_db
 from domains.governance.models.admin import EmployeeExpense
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeLeaveLedger
-from domains.comms.services.asset_tracking import AssetTrackingService
-from domains.governance.services.compliance_engine import GCCComplianceEngine
-from domains.governance.services.compliance_engine import get_compliance_engine
-from domains.finance.services.expense_processing import ExpenseProcessingService
+from domains.comms.services.admin.asset_tracking import AssetTrackingService
+from domains.governance.services.audit.compliance_engine import GCCComplianceEngine
+from domains.governance.services.audit.compliance_engine import get_compliance_engine
+from domains.finance.services.ledger.expense_processing import ExpenseProcessingService
 from domains.hr.services.leave_accrual import LeaveAccrualEngine
 from domains.country.utils.country_rls import get_current_country_scope as get_country_scope
 

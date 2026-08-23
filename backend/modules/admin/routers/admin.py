@@ -11,72 +11,72 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
 
 from domains.orders.models.orders import disputes_controller
-from domains.accounts.services.admin_products_service import approve_product
-from domains.governance.services.orders_service import bulk_delete_orders_admin
-from domains.governance.services.products_service import bulk_delete_products_admin
-from domains.governance.services.admin_users import bulk_delete_users_admin
-from domains.governance.services.suppliers_service import bulk_manage_suppliers
-from domains.governance.services.products_service import bulk_product_moderation
-from domains.governance.services.suppliers_service import bulk_supplier_verification
-from domains.governance.services.users_service import bulk_toggle_users_active
-from domains.governance.services.orders_service import bulk_update_order_status_admin
-from domains.governance.services.users_service import bulk_update_staff_accounts
-from domains.governance.services.users_service import bulk_update_users_role
-from domains.accounts.services.admin_promotions_service import create_coupon
-from domains.governance.services.users_service import create_staff_account
-from domains.governance.services.users_service import delete_bank_account_record
-from domains.accounts.services.customer_coupons_create_service import delete_coupon
-from domains.governance.services.orders_service import delete_order_admin
-from domains.governance.services.products_service import delete_product_admin
-from domains.governance.services.users_service import delete_staff_account
-from domains.accounts.services.identity_admin_service import delete_user_admin
-from domains.governance.services.admin_users import force_reset_password_admin
-from domains.governance.services.orders_service import get_all_orders
-from domains.governance.services.products_service import get_all_products
-from domains.governance.services.suppliers_service import get_all_suppliers
-from domains.governance.services.users_service import get_all_users
-from domains.governance.services.analytics_service import get_analytics
-from domains.governance.services.analytics_service import get_analytics_timeseries
-from domains.governance.services.misc_service import get_audit_log_page
-from domains.governance.services.misc_service import get_available_audit_actions
-from domains.governance.services.analytics_service import get_chatbot_analytics
+from domains.catalog.admin_products_service import approve_product
+from domains.governance.services.orders.orders_service import bulk_delete_orders_admin
+from domains.governance.services.products.products_service import bulk_delete_products_admin
+from domains.governance.services.users.admin_users import bulk_delete_users_admin
+from domains.governance.services.suppliers.suppliers_service import bulk_manage_suppliers
+from domains.governance.services.products.products_service import bulk_product_moderation
+from domains.governance.services.suppliers.suppliers_service import bulk_supplier_verification
+from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
+from domains.governance.services.orders.orders_service import bulk_update_order_status_admin
+from domains.governance.services.users.users_service_accounts import bulk_update_staff_accounts
+from domains.governance.services.users.users_service_accounts import bulk_update_users_role
+from domains.catalog.admin_promotions_service import create_coupon
+from domains.governance.services.users.users_service_accounts import create_staff_account
+from domains.governance.services.users.users_service_accounts import delete_bank_account_record
+from domains.orders.customer_coupons_create_service import delete_coupon
+from domains.governance.services.orders.orders_service import delete_order_admin
+from domains.governance.services.products.products_service import delete_product_admin
+from domains.governance.services.users.users_service_accounts import delete_staff_account
+from domains.governance.services.user.identity_admin_service import delete_user_admin
+from domains.governance.services.users.admin_users import force_reset_password_admin
+from domains.governance.services.orders.orders_service import get_all_orders
+from domains.governance.services.products.products_service import get_all_products
+from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
+from domains.governance.services.users.users_service_accounts import get_all_users
+from domains.governance.services.analytics.analytics_service import get_analytics
+from domains.governance.services.analytics.analytics_service import get_analytics_timeseries
+from domains.governance.services.settings.misc_service import get_audit_log_page
+from domains.governance.services.settings.misc_service import get_available_audit_actions
+from domains.governance.services.analytics.analytics_service import get_chatbot_analytics
 from domains.governance.services.admin_controller import get_current_admin
-from domains.governance.services.auth_controller_service import get_current_user
-from domains.governance.services.analytics_service import get_customer_insights
-from domains.governance.services.database_service import get_database_overview
-from domains.governance.services.permissions_service import get_hierarchy_permissions
-from domains.governance.services.products_service import get_pending_products
-from domains.governance.services.suppliers_service import get_pending_suppliers
-from domains.governance.services.permissions_service import get_staff_permission_catalog
-from domains.governance.services.suppliers_service import get_supplier_comparison
+from domains.governance.services.auth.auth_controller_service import get_current_user
+from domains.governance.services.analytics.analytics_service import get_customer_insights
+from domains.governance.services.settings.database_service import get_database_overview
+from domains.governance.services.permissions.permissions_service import get_hierarchy_permissions
+from domains.governance.services.products.products_service import get_pending_products
+from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
+from domains.governance.services.permissions.permissions_service import get_staff_permission_catalog
+from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
 from domains.governance.services.admin_controller import get_ticket_detail
-from domains.governance.services.analytics_service import get_top_products_analytics
-from domains.governance.services.analytics_service import get_user_growth_analytics
-from domains.accounts.services.customer_coupons_create_service import list_coupons
-from domains.governance.services.users_service import list_pending_bank_accounts
+from domains.governance.services.analytics.analytics_service import get_top_products_analytics
+from domains.governance.services.analytics.analytics_service import get_user_growth_analytics
+from domains.orders.customer_coupons_create_service import list_coupons
+from domains.governance.services.users.users_service_accounts import list_pending_bank_accounts
 from domains.finance.services.payout_approval_read_service import list_pending_payouts
-from domains.governance.services.users_service import list_staff_accounts
-from domains.comms.services.tickets_service import list_tickets
-from domains.governance.services.orders_service import refund_order
-from domains.accounts.services.admin_products_service import reject_product
-from domains.governance.services.suppliers_service import reject_supplier
-from domains.comms.services.tickets_service import reply_to_ticket
+from domains.governance.services.users.users_service_accounts import list_staff_accounts
+from domains.comms.services.ticket.tickets_service import list_tickets
+from domains.governance.services.orders.orders_service import refund_order
+from domains.catalog.admin_products_service import reject_product
+from domains.governance.services.suppliers.suppliers_service import reject_supplier
+from domains.comms.services.ticket.tickets_service import reply_to_ticket
 from infrastructure.utils.dependencies import require_admin
 from domains.governance.services.admin_controller import require_admin_2fa_verified
-from domains.governance.services.effective_permissions import require_permission
-from domains.governance.services.products_service import restore_product_admin
-from domains.governance.services.products_service import toggle_product_badge
-from domains.governance.services.users_service import toggle_user_active
+from domains.governance.services.permissions.effective_permissions import require_permission
+from domains.governance.services.products.products_service import restore_product_admin
+from domains.governance.services.products.products_service import toggle_product_badge
+from domains.governance.services.users.users_service_accounts import toggle_user_active
 from domains.orders.services.coupons_write_service import update_coupon
-from domains.governance.services.orders_service import update_order_status
-from domains.governance.services.orders_service import update_order_tracking
-from domains.governance.services.permissions_service import update_role_permissions
-from domains.governance.services.users_service import update_staff_account
-from domains.comms.services.tickets_write_service import update_ticket_status
-from domains.governance.services.users_service import update_user_role
-from domains.accounts.services.payroll_service import verify_bank_account
-from domains.accounts.services.logistics_partner_service import verify_payout
-from domains.governance.services.suppliers_service import verify_supplier
+from domains.governance.services.orders.orders_service import update_order_status
+from domains.governance.services.orders.orders_service import update_order_tracking
+from domains.governance.services.permissions.permissions_service import update_role_permissions
+from domains.governance.services.users.users_service_accounts import update_staff_account
+from domains.comms.services.ticket.tickets_write_service import update_ticket_status
+from domains.governance.services.users.users_service_accounts import update_user_role
+from domains.hr.payroll_service import verify_bank_account
+from domains.logistics.logistics_partner_service import verify_payout
+from domains.governance.services.suppliers.suppliers_service import verify_supplier
 from domains.catalog.services.banner_controller import BannerCreate
 from domains.catalog.services.banner_controller import BannerUpdate
 from domains.catalog.services.banner_controller import create_banner
@@ -115,21 +115,21 @@ from infrastructure.database.schemas import (
 from infrastructure.database.schemas import (
     Product as ProductSchema,
 )
-from domains.accounts.services.approval_matrix_service import APPROVAL_RULES
-from domains.accounts.services.approval_matrix_service import can_approve
-from domains.accounts.services.approval_matrix_service import get_approval_chain
-from domains.accounts.services.approval_matrix_service import require_approval
-from domains.accounts.services.approval_matrix_service import resolve_approvers
-from domains.accounts.services.hierarchy_service import backfill_authority_levels
-from domains.accounts.services.hierarchy_service import get_all_subordinates
-from domains.accounts.services.hierarchy_service import get_authority_level
-from domains.accounts.services.hierarchy_service import get_org_chart
-from domains.accounts.services.hierarchy_service import get_team_members
-from domains.accounts.services.hierarchy_service import get_user_chain
-from domains.accounts.services.hierarchy_service import is_in_chain
-from domains.accounts.services.hierarchy_service import reassign_manager
-from domains.accounts.services.hierarchy_service import can_manage as hierarchy_can_manage_service
-from domains.comms.services.misc_write_service import reset_demo_data
+from domains.governance.core.approval_matrix_service import APPROVAL_RULES
+from domains.governance.core.approval_matrix_service import can_approve
+from domains.governance.core.approval_matrix_service import get_approval_chain
+from domains.governance.core.approval_matrix_service import require_approval
+from domains.governance.core.approval_matrix_service import resolve_approvers
+from domains.hr.hierarchy_service import backfill_authority_levels
+from domains.hr.hierarchy_service import get_all_subordinates
+from domains.hr.hierarchy_service import get_authority_level
+from domains.hr.hierarchy_service import get_org_chart
+from domains.hr.hierarchy_service import get_team_members
+from domains.hr.hierarchy_service import get_user_chain
+from domains.hr.hierarchy_service import is_in_chain
+from domains.hr.hierarchy_service import reassign_manager
+from domains.hr.hierarchy_service import can_manage as hierarchy_can_manage_service
+from domains.comms.services.utility.misc_write_service import reset_demo_data
 from infrastructure.utils.backup import get_backup_manager
 from infrastructure.utils.constants import MAX_BULK_ITEMS
 
@@ -1492,7 +1492,7 @@ def admin_invoices_overview(
 ):
     """Admin overview of supply chain invoices."""
     require_permission("orders.manage", current_admin)
-    import domains.finance.services.invoice_controller as _ic
+    import domains.finance.services.ledger.invoice_controller as _ic
     return _ic.get_invoice_overview(db)
 
 
@@ -1988,7 +1988,7 @@ def get_country_audit_trail(
 ):
     """Get audit trail for a country's financial changes."""
     require_permission("audit.read", current_admin)
-    from domains.governance.services.audit_trail_service import AuditTrailService
+    from domains.governance.services.audit.audit_trail_service import AuditTrailService
     
     return AuditTrailService.get_audit_trail(
         country_code,

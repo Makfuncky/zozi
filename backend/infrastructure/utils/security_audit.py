@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from domains.accounts.models.core import AuditLog
+from domains.governance.models.core import AuditLog
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import os
@@ -21,7 +21,7 @@ from domains.country.models.country_enhancements import OmanDeliveryZone
 from domains.governance.models.admin import AdminChangeAuditLog
 from domains.governance.models.admin import SupplierCountryCommission
 from domains.logistics.services.logistics_partner_pricing import normalize_country_code
-from domains.finance.services.tax_service import calculate_tax
+from domains.finance.services.tax.tax_service import calculate_tax
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 _country_scope_var: ContextVar[Set[str]] = ContextVar('country_scope', default=set())
@@ -1373,7 +1373,7 @@ def get_commission_tiers(code: str, current_user: dict, db: Session) -> list[dic
 def test_gateway_connection(code: str, gateway_id: str, environment: str, current_user: dict, db: Session) -> dict[str, Any]:
     _require_admin(current_user)
     _require_country_access(code, current_user)
-    from domains.finance.services.payment_engine import PaymentEngine
+    from domains.finance.services.payments.payment_engine import PaymentEngine
 
     engine = PaymentEngine(db)
     result = engine.test_gateway_connection(country_code=code, gateway_id=gateway_id, environment=environment)
@@ -1437,7 +1437,7 @@ def list_country_cities(
         }
 
     # 2. Fallback: CITY_SUGGESTIONS + open-meteo (for seeding new countries)
-    from domains.finance.services.vat_rates import CITY_SUGGESTIONS
+    from domains.finance.services.tax.vat_rates import CITY_SUGGESTIONS
 
     cities = list(CITY_SUGGESTIONS.get(cc, []))
     if not cities:
@@ -1464,7 +1464,7 @@ def list_country_cities(
 
 def assign_staff_to_country(country_code: str, user_id: int, role_in_country: str, current_user: dict, db: Session) -> dict:
     _require_full_admin(current_user)
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -1495,7 +1495,7 @@ def list_country_staff(country_code: str, current_user: dict, db: Session) -> li
         CountryStaffAssignment.country_code == country_code.upper(),
         CountryStaffAssignment.is_active == True,
     ).order_by(CountryStaffAssignment.created_at.desc()).all()
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
     user_ids = [r.user_id for r in rows]
     users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     return [

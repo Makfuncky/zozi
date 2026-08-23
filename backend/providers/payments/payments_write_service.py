@@ -8,7 +8,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.governance.models.admin import PaymentProviderConfig
 from domains.governance.models.admin import ProcessedWebhookEvent

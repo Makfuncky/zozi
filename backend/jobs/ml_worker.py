@@ -1,4 +1,4 @@
-"""
+﻿"""
 Dedicated ML worker process.
 
 Runs in a separate container (``ml_worker`` in ``docker-compose.prod.yml``)
@@ -41,7 +41,7 @@ def _warmup_models() -> None:
     """Pre-load common ML models on startup so the first request doesn't pay a
     cold-start penalty."""
     try:
-        from domains.finance.services.bg_removal_service import remove_background
+        from domains.finance.services.shared.bg_removal_service import remove_background
 
         logger.info("Warming up background-removal model (u2net)...")
         dummy = b""

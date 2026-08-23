@@ -1,4 +1,4 @@
-"""admin commission routes router.
+﻿"""admin commission routes router.
 
 Business logic lives in `controllers/commission_controller.py`;
 wire endpoints here as needed. A `/status` endpoint lists the
@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import domains.finance.services.commission_controller as _ctrl
+    import domains.finance.services.commission.commission_controller as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:

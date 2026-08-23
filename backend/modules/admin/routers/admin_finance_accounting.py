@@ -8,15 +8,15 @@ from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 from datetime import date
 
-from domains.finance.services.accounting_controller import JournalEntryBody
-from domains.finance.services.accounting_controller import create_journal_entry
-from domains.finance.services.accounting_controller import get_account
-from domains.finance.services.accounting_controller import get_account_balance
-from domains.finance.services.accounting_controller import get_journal_entry
-from domains.finance.services.accounting_controller import get_trial_balance
-from domains.finance.services.accounting_controller import list_accounts
-from domains.finance.services.accounting_controller import list_journal_entries
-from domains.finance.services.accounting_controller import seed_chart_of_accounts
+from domains.finance.services.ledger.accounting_controller import JournalEntryBody
+from domains.finance.services.ledger.accounting_controller import create_journal_entry
+from domains.finance.services.ledger.accounting_controller import get_account
+from domains.finance.services.ledger.accounting_controller import get_account_balance
+from domains.finance.services.ledger.accounting_controller import get_journal_entry
+from domains.finance.services.ledger.accounting_controller import get_trial_balance
+from domains.finance.services.ledger.accounting_controller import list_accounts
+from domains.finance.services.ledger.accounting_controller import list_journal_entries
+from domains.finance.services.ledger.accounting_controller import seed_chart_of_accounts
 
 router = APIRouter(prefix="/api/v1/admin")
 

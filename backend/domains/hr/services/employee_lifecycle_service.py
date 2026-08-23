@@ -48,7 +48,7 @@ from sqlalchemy import and_
 
 
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeAsset
@@ -1007,7 +1007,7 @@ def _handle_background_check_step(
 
     from domains.hr.models.employee_models import Employee
 
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
 
 
 

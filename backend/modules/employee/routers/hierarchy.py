@@ -15,23 +15,23 @@ from domains.country.models.country_enhancements import CountryHolidayCalendar
 from domains.country.models.country_enhancements import CountryStaffAssignment
 from domains.hr.models.employee_models import OrgUnit
 from domains.country.models.country_enhancements import CountryLocalization
-from domains.accounts.services.hierarchy_service import assign_matrix_manager
-from domains.accounts.services.hierarchy_service import backfill_authority_levels
-from domains.accounts.services.hierarchy_service import can_manage
-from domains.accounts.services.hierarchy_service import detect_circular_reporting
-from domains.accounts.services.hierarchy_service import get_all_subordinates
-from domains.accounts.services.hierarchy_service import get_approval_chain
-from domains.accounts.services.hierarchy_service import get_employees_in_subtree
-from domains.accounts.services.hierarchy_service import get_matrix_managers
-from domains.accounts.services.hierarchy_service import get_matrix_subordinates
-from domains.accounts.services.hierarchy_service import get_org_chart
-from domains.accounts.services.hierarchy_service import get_org_unit_path
-from domains.accounts.services.hierarchy_service import get_org_unit_subtree
-from domains.accounts.services.hierarchy_service import get_team_members
-from domains.accounts.services.hierarchy_service import get_user_chain
-from domains.accounts.services.hierarchy_service import reassign_manager
-from domains.accounts.services.hierarchy_service import rebuild_paths
-from domains.accounts.services.hierarchy_service import remove_matrix_manager
+from domains.hr.hierarchy_service import assign_matrix_manager
+from domains.hr.hierarchy_service import backfill_authority_levels
+from domains.hr.hierarchy_service import can_manage
+from domains.hr.hierarchy_service import detect_circular_reporting
+from domains.hr.hierarchy_service import get_all_subordinates
+from domains.hr.hierarchy_service import get_approval_chain
+from domains.hr.hierarchy_service import get_employees_in_subtree
+from domains.hr.hierarchy_service import get_matrix_managers
+from domains.hr.hierarchy_service import get_matrix_subordinates
+from domains.hr.hierarchy_service import get_org_chart
+from domains.hr.hierarchy_service import get_org_unit_path
+from domains.hr.hierarchy_service import get_org_unit_subtree
+from domains.hr.hierarchy_service import get_team_members
+from domains.hr.hierarchy_service import get_user_chain
+from domains.hr.hierarchy_service import reassign_manager
+from domains.hr.hierarchy_service import rebuild_paths
+from domains.hr.hierarchy_service import remove_matrix_manager
 
 logger = logging.getLogger(__name__)
 

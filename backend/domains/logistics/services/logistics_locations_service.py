@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.auth_controller_service import get_current_user
+from domains.governance.services.auth.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 

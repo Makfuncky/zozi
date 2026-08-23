@@ -11,7 +11,7 @@ from domains.catalog.services.banner_controller import create_banner as create_b
 from domains.catalog.services.banner_controller import delete_banner as delete_banner_controller
 from domains.catalog.services.banner_controller import update_banner as update_banner_controller
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context

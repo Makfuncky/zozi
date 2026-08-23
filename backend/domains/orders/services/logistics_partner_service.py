@@ -18,8 +18,8 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
 from infrastructure.utils.audit import AuditAction, audit_log
-from domains.accounts.models.core import CityDistanceMatrix
-from domains.accounts.models.user import User
+from domains.governance.models.core import CityDistanceMatrix
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile
 from domains.finance.models.finance import TransactionLedger
@@ -38,13 +38,13 @@ from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderLogisticsAllocation
 from domains.payments.models.payments import LogisticsPartnerPayout
-from domains.finance.services.cash_management_service import apply_shipment_vehicle_selection
-from domains.finance.services.cash_management_service import create_cod_remittance_receipt
-from domains.finance.services.cash_management_service import deserialize_pricing_breakdown_json
-from domains.finance.services.cash_management_service import effective_allocation_delivery_amounts
-from domains.finance.services.cash_management_service import list_cod_remittance_receipts
-from domains.finance.services.cash_management_service import serialize_cod_remittance_receipt
-from domains.finance.services.finance_transfer_service import build_transfer_reference
+from domains.finance.services.treasury.cash_management_service import apply_shipment_vehicle_selection
+from domains.finance.services.treasury.cash_management_service import create_cod_remittance_receipt
+from domains.finance.services.treasury.cash_management_service import deserialize_pricing_breakdown_json
+from domains.finance.services.treasury.cash_management_service import effective_allocation_delivery_amounts
+from domains.finance.services.treasury.cash_management_service import list_cod_remittance_receipts
+from domains.finance.services.treasury.cash_management_service import serialize_cod_remittance_receipt
+from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
 from domains.logistics.services.logistics_partner_pricing import normalize_city_name
 from domains.logistics.services.logistics_partner_pricing import normalize_country_code
 from domains.logistics.services.logistics_partner_pricing import partner_can_service_order
@@ -3238,7 +3238,7 @@ def update_shipment_status_partner(
         setattr(order, "status", new_order_status)
         if new_order_status == "delivered":
             try:
-                from domains.finance.services.cash_management_service import create_settlements_on_delivery
+                from domains.finance.services.treasury.cash_management_service import create_settlements_on_delivery
 
                 create_settlements_on_delivery(order, db)
             except Exception:

@@ -15,9 +15,8 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import SupplierDocumentOut
 
-from domains.accounts.ports import User
-from domains.comms.ports import SupplierDocument
-from domains.comms.ports import SupplierProfile
+from domains.governance.ports import User
+from domains.suppliers.ports import SupplierDocument, SupplierProfile
 
 from infrastructure.utils.dependencies import require_admin, require_supplier
 

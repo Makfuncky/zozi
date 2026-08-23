@@ -12,10 +12,10 @@ from typing import Optional
 from fastapi import Response
 from sqlalchemy.orm import Session
 
-from domains.accounts.services.search_service import (
+from domains.governance.services.search_service import (
     get_recommendations as _get_recommendations,
 )
-from domains.accounts.services.search_service import (
+from domains.governance.services.search_service import (
     smart_search as _smart_search,
 )
 from infrastructure.routing.route_contract import get

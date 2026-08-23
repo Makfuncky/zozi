@@ -11,6 +11,7 @@ from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
 from domains.catalog.models.products import Product
+from infrastructure.database.schemas import _normalize_image_path
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
 
 # ── Price-range keyword map ────────────────────────────────────────────────
@@ -247,8 +248,8 @@ def _serialize_product(product: Product) -> dict[str, Any]:
     return {
         "id": product.id,
         "name": product.name,
-        "price": product.price,
-        "rating": product.rating,
+        "price": float(product.price) if product.price is not None else 0.0,
+        "rating": float(product.rating) if product.rating is not None else 0.0,
         "brand": getattr(product, "brand", None),
         "image_url": _normalize_image_path(image_url),
         "category": product.category,
@@ -263,8 +264,8 @@ def _serialize_recommendation_product(product: Product) -> dict[str, Any]:
     return {
         "id": product.id,
         "name": product.name,
-        "price": product.price,
-        "rating": product.rating,
+        "price": float(product.price) if product.price is not None else 0.0,
+        "rating": float(product.rating) if product.rating is not None else 0.0,
         "image_url": _normalize_image_path(image_url),
         "category": product.category,
         "stock": product.stock,

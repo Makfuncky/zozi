@@ -682,7 +682,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
     # Auto-create invoice for this shipment if one doesn't exist yet (non-blocking)
     try:
         from domains.finance.models.finance import Invoice
-        from domains.finance.services.invoice_service import create_invoice_from_order
+        from domains.finance.services.ledger.invoice_service import create_invoice_from_order
         has_invoice = db.query(Invoice).filter(
             Invoice.order_id == order_id,
             Invoice.supplier_id == supplier_id,

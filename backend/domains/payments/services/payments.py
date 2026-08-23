@@ -1,4 +1,4 @@
-"""
+﻿"""
 
 Payments Service — Stripe and Tap Payments business logic.
 
@@ -4203,7 +4203,7 @@ def apply_order_status_change(order: Order, target_status: str, db: Session) -> 
 
         try:
 
-            from domains.finance.services.cash_management_service import create_refund_ledger_entry
+            from domains.finance.services.treasury.cash_management_service import create_refund_ledger_entry
 
             reason = "cancellation" if target_status == "cancelled" else "refund"
 
@@ -4299,7 +4299,7 @@ def _confirm_order(
 
     try:
 
-        from domains.finance.services.cash_management_service import create_ledger_entries_for_order, log_card_payment_received
+        from domains.finance.services.treasury.cash_management_service import create_ledger_entries_for_order, log_card_payment_received
         create_ledger_entries_for_order(order, db)
 
         # Log card payment into bank transaction ledger
@@ -4366,7 +4366,7 @@ def _apply_successful_payment(order: Order, confirmation_message: str, db: Sessi
 
     try:
 
-        from domains.finance.services.general_ledger_service import post_order_payment_journal
+        from domains.finance.services.ledger.general_ledger_service import post_order_payment_journal
 
         post_order_payment_journal(db, order.id, total_amount)
 
@@ -5332,8 +5332,8 @@ async def handle_stripe_webhook(request: Request, db: Session) -> dict:
 
                 try:
 
-                    from domains.finance.services.cash_management_service import log_refund_bank_transaction
-                    from domains.finance.services.cash_management_service import log_refund_bank_transaction
+                    from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
+                    from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
 
                     refund_items = obj.get("refunds", {}).get("data", [])
 
@@ -5759,8 +5759,8 @@ def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db
 
             try:
 
-                from domains.finance.services.cash_management_service import log_refund_bank_transaction
-                from domains.finance.services.cash_management_service import log_refund_bank_transaction
+                from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
+                from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
 
                 log_refund_bank_transaction(
 
@@ -7150,7 +7150,7 @@ async def handle_paypal_webhook(request: Request, db: Session) -> dict:
 
             try:
 
-                from domains.finance.services.cash_management_service import log_refund_bank_transaction
+                from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
 
                 log_refund_bank_transaction(
 
@@ -8983,11 +8983,11 @@ def confirm_generic_gateway_payment(body: ConfirmGenericGatewayRequest, current_
 
 
 
-from domains.finance.services.payments_gateway_service import event_publisher
+from domains.finance.services.payments.payments_gateway_service import event_publisher
 
 
 
 
 
 
-from domains.finance.services.payments_gateway_service import event_publisher
+from domains.finance.services.payments.payments_gateway_service import event_publisher

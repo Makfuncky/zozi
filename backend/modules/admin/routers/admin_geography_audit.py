@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from rbac import get_current_user
 from domains.suppliers.services.legal_contract_service import LegalContractService
-from domains.governance.services.audit_trail_service import AuditTrailService
+from domains.governance.services.audit.audit_trail_service import AuditTrailService
 from domains.country.services.country_audit_admin_service import add_city as svc_add_city
 from domains.country.services.country_audit_admin_service import assign_staff as svc_assign_staff
 from domains.country.services.country_audit_admin_service import delete_city as svc_delete_city
@@ -152,7 +152,7 @@ def get_data_residency(
     current_user = Depends(get_current_user)
 ):
     """Get data residency tier for a country."""
-    from domains.governance.services.audit_trail_service import DataResidencyService
+    from domains.governance.services.audit.audit_trail_service import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {

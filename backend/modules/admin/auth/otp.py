@@ -1,14 +1,14 @@
 """OTP / MFA challenge endpoints for the admin auth surface.
 
-Router is thin: all challenge logic lives in ``domains.accounts.services.otp_service``.
+Router is thin: all challenge logic lives in ``domains.governance.services.otp_service``.
 """
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from domains.accounts.ports import User
-from domains.accounts.services.otp_service import start_otp, verify_otp
+from domains.governance.ports import User
+from domains.governance.services.auth.otp_service import start_otp, verify_otp
 from infrastructure.database.database import get_db
 from infrastructure.security.dependencies import get_current_user
 from modules.admin.auth.schemas import OtpRequest

@@ -1,6 +1,6 @@
 """Canonical Celery worker: finance reconciliation cron.
 
-Wires to ``domains.finance.services.cash_management_service.run_scheduled_reconciliation_cycle``.
+Wires to ``domains.finance.services.treasury.cash_management_service.run_scheduled_reconciliation_cycle``.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def run_reconciliation_cron(self) -> dict[str, Any]:
         from datetime import datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.cash_management_service import (
+        from domains.finance.services.treasury.cash_management_service import (
             run_scheduled_reconciliation_cycle,
         )
 

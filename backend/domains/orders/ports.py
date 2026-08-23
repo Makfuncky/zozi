@@ -55,6 +55,38 @@ def order_query(db: Session) -> object:
     return db.query(Order)
 
 
+def order_item_query(db: Session) -> object:
+    """Return a base ``OrderItem`` query for sanctioned cross-domain delegation."""
+    return db.query(OrderItem)
+
+
+def return_request_query(db: Session) -> object:
+    """Return a base ``ReturnRequest`` query for sanctioned cross-domain delegation."""
+    return db.query(ReturnRequest)
+
+
+def order_logistics_allocation_query(db: Session) -> object:
+    """Return a base ``OrderLogisticsAllocation`` query for sanctioned cross-domain delegation."""
+    return db.query(OrderLogisticsAllocation)
+
+
+# --- Model class references (for column access in cross-domain filters) ---
+
+def order_model() -> type:
+    """Return the ``Order`` model class (for column reference only)."""
+    return Order
+
+
+def order_item_model() -> type:
+    """Return the ``OrderItem`` model class (for column reference only)."""
+    return OrderItem
+
+
+def return_request_model() -> type:
+    """Return the ``ReturnRequest`` model class (for column reference only)."""
+    return ReturnRequest
+
+
 def list_orders(
     db: Session,
     *,
@@ -1475,7 +1507,7 @@ def aggregate_supplier_revenue_window(
 
 def sum_supplier_total_revenue(db: Session) -> float:
     """Total revenue across all supplier OrderItems (OrderItem->Product->User)."""
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
     from domains.catalog.models.products import Product
 
     return (
@@ -1496,3 +1528,12 @@ from domains.country.services.cross_border_detection import (
 
 # --- COMMS-IMPORT: sanctioned model/utils surface consumed by comms (Law 3) ---
 from domains.orders.utils.order_tracking import order_status_label, shipment_status_label
+from domains.orders.services.promotion_service import get_promotion_config, list_promotion_tiers, preview_order_tier_discount
+from domains.orders.services.flash_sale_controller import get_all_flash_sales
+from domains.orders.services.flash_sale_controller_service import get_all_flash_sales
+from domains.orders.services.coupons_write_service import update_coupon
+from domains.orders.services.flash_sale_controller import create_flash_sale, update_flash_sale, delete_flash_sale
+from domains.orders.services.flash_sale_controller_service import create_flash_sale, delete_flash_sale, update_flash_sale
+from domains.orders.services.promotion_controller import update_promotion_config, create_promotion_tier, update_promotion_tier, delete_promotion_tier
+from domains.orders.services.promotion_service import create_promotion_tier, delete_promotion_tier, update_promotion_config, update_promotion_tier
+from domains.orders.services.disputes_controller import disputes_controller

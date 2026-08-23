@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import EmailCampaignCreate, EmailCampaignOut
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.marketing import CampaignRecipient
 from domains.comms.models.marketing import EmailCampaign
 from domains.comms.models.marketing import NewsletterSubscriber

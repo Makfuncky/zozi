@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.finance.services.treasury_service import get_treasury_metrics
-from domains.finance.services.treasury_service import get_cash_position
-from domains.finance.services.treasury_service import get_vat_liability
-from domains.finance.services.treasury_service import get_supplier_payables
+from domains.finance.services.treasury.treasury_service import get_treasury_metrics
+from domains.finance.services.treasury.treasury_service import get_cash_position
+from domains.finance.services.treasury.treasury_service import get_vat_liability
+from domains.finance.services.treasury.treasury_service import get_supplier_payables
 from rbac import get_current_user
 from infrastructure.utils.audit import AuditAction, audit_log
 

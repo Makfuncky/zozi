@@ -6,14 +6,14 @@ from fastapi import APIRouter, Body, Depends, Path, Request
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
-from domains.accounts.models.core import VideoRoom
-from domains.comms.services.video_conferencing import get_video_conference
-from domains.comms.services.video_room_service import ensure_video_room_country
-from domains.comms.services.video_room_service import list_all_video_rooms
-from domains.comms.services.video_room_service import list_video_rooms
-from domains.comms.services.video_room_service import list_video_rooms_for_country
-from domains.comms.services.video_room_service import video_room_metrics
+from domains.governance.models.user import User
+from domains.governance.models.core import VideoRoom
+from domains.comms.services.video.video_conferencing import get_video_conference
+from domains.comms.services.video.video_room_service import ensure_video_room_country
+from domains.comms.services.video.video_room_service import list_all_video_rooms
+from domains.comms.services.video.video_room_service import list_video_rooms
+from domains.comms.services.video.video_room_service import list_video_rooms_for_country
+from domains.comms.services.video.video_room_service import video_room_metrics
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context

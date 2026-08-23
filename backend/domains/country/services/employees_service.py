@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from modules.employee.routers import employees_controller as ctrl
 
-from domains.governance.services.auth_controller_service import get_current_user
+from domains.governance.services.auth.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
@@ -175,7 +175,7 @@ def list_employee_documents(code: str, employee_id: int, current_user: dict, db:
     return ctrl.list_employee_documents(employee_id, db)
 
 def list_employee_addresses(employee_id: int, current_user: dict, db: Session):
-    from domains.accounts.models.core import Address
+    from domains.governance.models.core import Address
 
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if not employee:

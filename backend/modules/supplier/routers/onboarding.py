@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.suppliers.services.onboarding_pipeline import get_onboarding_service
 
 router = APIRouter()

@@ -4,11 +4,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query, WebSocket
 from sqlalchemy.orm import Session
 
-from domains.comms.services.comm_controller import create_chat_thread
-from domains.comms.services.comm_controller import create_incident_room
-from domains.comms.services.comm_controller import create_video_room
-from domains.comms.services.comm_controller import get_command_center_metrics
-from domains.comms.services.comm_controller import send_masked_message
+from domains.comms.services.admin.comm_controller import create_chat_thread
+from domains.comms.services.admin.comm_controller import create_incident_room
+from domains.comms.services.admin.comm_controller import create_video_room
+from domains.comms.services.admin.comm_controller import get_command_center_metrics
+from domains.comms.services.admin.comm_controller import send_masked_message
 from infrastructure.database.database import get_db
 from infrastructure.utils.websocket_manager import manager
 

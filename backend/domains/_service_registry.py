@@ -1,4 +1,4 @@
-"""Service module registry (import side-effects only).
+﻿"""Service module registry (import side-effects only).
 
 
 
@@ -28,13 +28,13 @@ from __future__ import annotations
 
 import domains.media.services.automation_scheduler
 
-import domains.finance.services.financial_reports_service
+import domains.finance.services.reporting.financial_reports_service
 
 import domains.governance.services.audit_trail_service
 
 import domains.governance.services.worm_audit
 
-import domains.finance.services.bank_transaction_service
+import domains.finance.services.ledger.bank_transaction_service
 
 import domains.catalog.services.advanced_filter_service
 
@@ -48,51 +48,49 @@ import domains.customers.services.customer_health_engine
 
 import domains.orders.services
 
-import domains.customers.services.retention_service
+import domains.governance.services.retention_service
 
 import domains.orders.services
 
-import domains.comms.services.chat_enrichment
+import domains.comms.services.messaging.chat.chat_enrichment
 
-import domains.comms.services.communication_audit
+import domains.comms.services.shared.admin.communication_audit
 
-import domains.comms.services.content_service
+import domains.comms.services.shared.admin.content_service
 
-import domains.comms.services.email_enrichment
+import domains.comms.services.marketing.email_enrichment
+import domains.comms.services.marketing.email_event_service
+import domains.comms.services.marketing.email_reputation
 
-import domains.comms.services.email_event_service
+import domains.comms.services.messaging.chat.entity_messaging
 
-import domains.comms.services.email_reputation
+import domains.comms.services.shared.ticket.escalation_sla
 
-import domains.comms.services.entity_messaging
+import domains.comms.services.shared.security.external_contact
 
-import domains.comms.services.escalation_sla
+import domains.comms.services.messaging.channel.internal_communication
 
-import domains.comms.services.external_contact
+import domains.comms.services.shared.notification.notification_engine
 
-import domains.comms.services.internal_communication
+import domains.comms.services.shared.notification.notification_worker
 
-import domains.comms.services.notification_engine
+import domains.comms.services.shared.notification.payout_notification_service
 
-import domains.comms.services.notification_worker
+import domains.comms.services.shared.utility.translation_service
 
-import domains.comms.services.payout_notification_service
+import domains.comms.services.messaging.video.video_service
 
-import domains.comms.services.translation_service
+import domains.comms.services.messaging.realtime.websocket_manager
 
-import domains.comms.services.video_service
+import domains.governance.services
 
-import domains.comms.services.websocket_manager
-
-import domains.accounts.services
-
-import domains.comms.services.chat_system
+import domains.comms.services.messaging.chat.chat_system
 
 # REMOVED: registry referenced 'services.core.health_service' but no such module exists in the codebase
 
-import domains.accounts.services
+import domains.governance.services
 
-import domains.accounts.services
+import domains.governance.services
 
 import domains.governance.services
 
@@ -122,23 +120,23 @@ import domains.logistics.services.map_service
 
 # REMOVED: registry referenced 'services.finance.base_models' but no such module exists in the codebase
 
-import domains.finance.services.financial_reporting
+import domains.finance.services.reporting.financial_reporting
 
 # REMOVED: registry referenced 'services.finance.ghost_order_detector' but no such module exists in the codebase
 
 # REMOVED: registry referenced 'services.finance.invoice_service' but no such module exists in the codebase
 
-import domains.finance.services.invoice_write_service
+import domains.finance.services.ledger.invoice_write_service
 
 # REMOVED: registry referenced 'services.finance.orphan_detector_service' but no such module exists in the codebase
 
-import domains.finance.services.payment_orchestrator
+import domains.finance.services.payments.payment_orchestrator
 
 # REMOVED: registry referenced 'services.treasury.payouts_write_service' but no such module exists in the codebase
 
-import domains.finance.services.sub_ledger_service
+import domains.finance.services.ledger.sub_ledger_service
 
-import domains.finance.services.tax_service
+import domains.finance.services.tax.tax_service
 
 import domains.comms.services
 
@@ -156,11 +154,11 @@ import domains.hr.services.employee_activity_logger
 
 import domains.hr.services.employee_communication_service
 
-import domains.finance.services.expense_processing
+import domains.finance.services.ledger.expense_processing
 
-import domains.finance.services.expense_routing
+import domains.finance.services.ledger.expense_routing
 
-import domains.accounts.services
+import domains.governance.services
 
 import domains.hr.services.hse_manager
 

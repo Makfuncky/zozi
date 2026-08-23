@@ -10,7 +10,7 @@ from infrastructure.utils.dependencies import require_admin
 from rbac import get_current_user
 from infrastructure.database.database import get_db
 from domains.comms.models.communication import ProxyChannel
-from domains.comms.services.proxy_communication import get_proxy_service
+from domains.comms.services.security.proxy_communication import get_proxy_service
 
 router = APIRouter()
 

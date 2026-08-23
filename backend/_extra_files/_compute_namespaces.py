@@ -1,7 +1,7 @@
 import os, ast, sys
 sys.path.insert(0, r"D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend")
 from rbac.catalog import FEATURE_CATALOG, all_features
-from domains.governance.services.effective_permissions import HR_PERMISSION_MAP
+from domains.governance.services.permissions.effective_permissions import HR_PERMISSION_MAP
 
 def _is_rf(node):
     if not isinstance(node, ast.Call): return False

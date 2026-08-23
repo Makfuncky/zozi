@@ -1,4 +1,4 @@
-"""
+﻿"""
 Commission Router — admin endpoints for managing the full commission engine.
 All endpoints require admin role.
 """
@@ -298,7 +298,7 @@ def get_effective_rate(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
-    from domains.finance.services.commission_engine import get_effective_rate as _engine_rate
+    from domains.finance.services.commission.commission_engine import get_effective_rate as _engine_rate
     result = _engine_rate(supplier_id=supplier_id, product_id=product_id,
                           category_slug=category_slug, db=db)
     return {

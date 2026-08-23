@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 
-from domains.governance.services.users_admin_controller import CreateStaffAccount, UpdateStaffAccount, bulk_delete_users_route, bulk_toggle_users_active_route, bulk_update_staff_accounts_route, bulk_update_users_role_route, create_staff_account_route, delete_staff_account_route, list_staff, update_staff_account_route, update_user_role_route
+from domains.governance.services.users.users_admin_controller import CreateStaffAccount, UpdateStaffAccount, bulk_delete_users_route, bulk_toggle_users_active_route, bulk_update_staff_accounts_route, bulk_update_users_role_route, create_staff_account_route, delete_staff_account_route, list_staff, update_staff_account_route, update_user_role_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

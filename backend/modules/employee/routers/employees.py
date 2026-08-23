@@ -249,7 +249,7 @@ def list_employee_addresses(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from domains.accounts.models.core import Address
+    from domains.governance.models.core import Address
 
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if not employee:

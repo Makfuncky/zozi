@@ -12,9 +12,9 @@ from sqlalchemy import text
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import PhysicalIDCard
 from domains.hr.models.employee_models import DynamicQRSession
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.finance import TreasuryAccount
-from domains.comms.services.notification_service import NotificationService
+from domains.comms.services.notification.notification_service import NotificationService
 
 
 logger = logging.getLogger("zozi.offboarding")

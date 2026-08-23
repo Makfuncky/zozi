@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.comms.services.communication_audit import get_communication_audit_service
+from domains.comms.services.admin.communication_audit import get_communication_audit_service
 
 logger = logging.getLogger("zozi.api.audit")
 router = APIRouter()

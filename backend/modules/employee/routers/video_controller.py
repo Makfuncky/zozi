@@ -6,8 +6,8 @@ from fastapi import APIRouter, Body, Depends, Query
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
-from domains.comms.services.video_conferencing import get_video_conference
+from domains.governance.models.user import User
+from domains.comms.services.video.video_conferencing import get_video_conference
 from infrastructure.utils.dependencies import require_admin
 
 logger = logging.getLogger("zozi.api.video")

@@ -27,7 +27,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from fastapi import HTTPException
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent

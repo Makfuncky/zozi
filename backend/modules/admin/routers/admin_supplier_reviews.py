@@ -5,16 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import enforce_country_access
-from domains.governance.services.misc_service import archive_entity
-from domains.governance.services.misc_service import restore_entity
+from domains.governance.services.settings.misc_service import archive_entity
+from domains.governance.services.settings.misc_service import restore_entity
 from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
 from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
-from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.settings.misc_service import hard_delete_entity
 
 router = APIRouter(prefix="/api/v1/admin")
 
@@ -191,7 +191,7 @@ def suspend_supplier(
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 0
@@ -210,7 +210,7 @@ def activate_supplier(
     s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
     if not s:
         raise HTTPException(404, detail="Supplier not found")
-    from domains.accounts.models.user import User as UserModel
+    from domains.governance.models.user import User as UserModel
     user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
     if user:
         user.is_active = 1

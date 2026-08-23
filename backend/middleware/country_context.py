@@ -1,4 +1,4 @@
-﻿"""
+"""
 Country Context Middleware
 Sets the RLS country scope for every request based on:
 1. JWT token country_scope claim (for staff users)
@@ -37,7 +37,7 @@ from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_cont
 from infrastructure.utils.redis_client import redis_client
 from infrastructure.utils.ip_utils import get_request_ip
 from domains.hr.services.coi_service import check_approval_blocked
-from domains.governance.services.country_context_service import (
+from domains.governance.services.country.country_context_service import (
     get_user_by_id,
     resolve_user_country_scope,
 )

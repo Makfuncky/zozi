@@ -137,3 +137,37 @@ def list_shipment_events_page(db: Session, cursor: Optional[str] = None, page_si
     return _keyset_page(ShipmentEvent, db, cursor, page_size)
 
 
+# --- Query delegation (Law 3 sanctioned cross-domain query surface) ---
+
+def logistics_partner_query(db: Session) -> object:
+    """Return a base ``LogisticsPartner`` query for sanctioned cross-domain delegation."""
+    return db.query(LogisticsPartner)
+
+def shipment_query(db: Session) -> object:
+    """Return a base ``Shipment`` query for sanctioned cross-domain delegation."""
+    return db.query(Shipment)
+
+def logistics_partner_service_area_query(db: Session) -> object:
+    """Return a base ``LogisticsPartnerServiceArea`` query for sanctioned cross-domain delegation."""
+    return db.query(LogisticsPartnerServiceArea)
+
+
+# --- Model class references (for column access in cross-domain filters) ---
+# These return the model class itself so cross-domain services can reference
+# columns (e.g., ``logistics_partner_model.id == X``) without importing the model.
+
+def logistics_partner_model() -> type:
+    """Return the ``LogisticsPartner`` model class (for column reference only)."""
+    return LogisticsPartner
+
+
+def shipment_model() -> type:
+    """Return the ``Shipment`` model class (for column reference only)."""
+    return Shipment
+
+
+def logistics_partner_service_area_model() -> type:
+    """Return the ``LogisticsPartnerServiceArea`` model class (for column reference only)."""
+    return LogisticsPartnerServiceArea
+from domains.logistics.services.partner.partner_geography_service import list_partners
+from domains.logistics.services.partner.partner_geography_service import approve_partner, reject_partner, toggle_partner_active

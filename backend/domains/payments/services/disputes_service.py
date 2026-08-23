@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.comms.ports import Notification
-from domains.comms.ports import SupplierNotificationPreference
+from domains.suppliers.ports import SupplierNotificationPreference
 from domains.governance.ports import SupplierDispute
 from infrastructure.utils.pagination import keyset_paginate
 

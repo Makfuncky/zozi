@@ -1,6 +1,6 @@
 """Canonical Celery worker: payroll batch processing.
 
-Wires to ``domains.accounts.services.payroll_service.process_payroll_batch``.
+Wires to ``domains.governance.services.payroll_service.process_payroll_batch``.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ def run_payroll_batch(
         from datetime import datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.accounts.services.payroll_service import process_payroll_batch
+        from domains.hr.payroll_service import process_payroll_batch
 
         db = SessionLocal()
         try:

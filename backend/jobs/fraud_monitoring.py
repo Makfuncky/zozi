@@ -1,11 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 
 
 from infrastructure.database.database import SessionLocal
-from domains.governance.services.fraud_detection import FraudDetectionService
-from domains.comms.services.notification_service import NotificationService
+from domains.governance.services.fraud.fraud_detection import FraudDetectionService
+from domains.comms.services.notification.notification_service import NotificationService
 import structlog
 logger = structlog.get_logger(__name__)
 

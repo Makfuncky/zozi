@@ -13,10 +13,10 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session, selectinload
 
-from domains.catalog.ports import Product
-from domains.catalog.ports import WishlistItem
+from domains.catalog.models.products import Product, WishlistItem
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
+
 logger = structlog.get_logger(__name__)
 
 

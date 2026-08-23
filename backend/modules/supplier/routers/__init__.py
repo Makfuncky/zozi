@@ -30,9 +30,6 @@ _module_names = [
     "supplier_products_upload",
     "supplier_profile",
     "supplier_profile_create",
-    "supplier_supplier_supplier_health",
-    "supplier_supplier_sync",
-    "supplier_supplier_upload",
 ]
 
 for _n in _module_names:

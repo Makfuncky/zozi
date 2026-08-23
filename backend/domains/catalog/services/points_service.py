@@ -29,7 +29,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.ports import User
+from domains.governance.ports import User
 from domains.comms.ports import UserPoints
 from domains.comms.ports import PointsTransaction
 from domains.governance.ports import PromotionEngineConfig

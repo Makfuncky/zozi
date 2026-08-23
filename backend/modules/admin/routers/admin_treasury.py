@@ -35,7 +35,7 @@ from domains.orders.models.orders import Order as OrderModel
 from domains.payments.models.payments import LogisticsPartnerPayout
 from domains.payments.models.payments import Payment
 from domains.payments.models.payments import Payout
-from domains.finance.services.treasury_engine import TreasuryEngine
+from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from infrastructure.utils.constants import (
     CASH_ACCOUNT,
     DEFAULT_PAGE_SIZE,
@@ -1098,7 +1098,7 @@ def admin_record_cod_remittance(
         db.refresh(receipt)
         # Keep the double-entry ledger in sync with the reconciliation engine.
         try:
-            from domains.finance.services.general_ledger_service import post_logistics_cod_remittance_journal
+            from domains.finance.services.ledger.general_ledger_service import post_logistics_cod_remittance_journal
             post_logistics_cod_remittance_journal(db, receipt.id, Decimal(str(amount)), country_code=cc)
         except Exception as gl_err:
             logger.warning(f"COD remittance GL post skipped: {gl_err}")
@@ -1173,7 +1173,7 @@ def admin_approve_settlement(
         settlement.status = "paid"
         db.commit()
         try:
-            from domains.finance.services.general_ledger_service import post_supplier_settlement_journal
+            from domains.finance.services.ledger.general_ledger_service import post_supplier_settlement_journal
             post_supplier_settlement_journal(
                 db,
                 settlement.id,

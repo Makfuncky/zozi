@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import PayoutOut
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.dependencies import require_supplier
 from domains.suppliers.services.supplier_payout_service import create_supplier_payout
 from domains.suppliers.services.supplier_payout_service import list_supplier_payouts

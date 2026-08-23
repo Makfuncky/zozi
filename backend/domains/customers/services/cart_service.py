@@ -10,7 +10,6 @@ service layer stays free of cross-controller dependencies (avoids W4/DG cycles).
 from __future__ import annotations
 
 import json
-import logging
 from typing import Any, List, Optional
 
 from fastapi import HTTPException
@@ -24,8 +23,8 @@ from infrastructure.database.schemas import (
     CartViewOut,
     ProductCartViewOut,
 )
-from domains.accounts.ports import CartItem
-from domains.catalog.ports import Product
+from domains.governance.models.core import CartItem
+from domains.catalog.models.products import Product
 from domains.customers.services.cart_write_service import create_cart_item
 from domains.customers.services.cart_write_service import delete_cart_items_by_user
 from domains.customers.services.cart_write_service import get_active_product_by_id
@@ -34,9 +33,8 @@ from domains.customers.services.cart_write_service import get_products_by_ids
 from domains.customers.services.cart_write_service import load_cart_items
 from domains.customers.services.cart_write_service import update_cart_item as write_update_cart_item
 import structlog
-logger = structlog.get_logger(__name__)
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # ── Variant resolution (local pure helper; no controller import) ───────────────
@@ -75,7 +73,6 @@ def _resolve_variant(product: Product, selected_size: Optional[str], selected_co
         variant_color = _normalize_variant_selector(getattr(variant, "color", None))
         variant_title = _normalize_variant_selector(getattr(variant, "title", None))
         attribute_values = _attribute_values(variant)
-
         color_matches = not normalized_color or normalized_color == variant_color or normalized_color in attribute_values
         size_matches = not normalized_size or normalized_size in {variant_size, variant_title} or normalized_size in attribute_values
         if color_matches and size_matches:
@@ -131,7 +128,7 @@ def _serialize_cart_item(item: CartItem) -> dict:
         "product_id": item.product_id,
         "product_name": product.name if product else "",
         "image_url": product.image_url if product else None,
-        "price": float(product.price) if product else 0.0,
+        "price": float(product.price) if product and product.price is not None else 0.0,
         "quantity": item.quantity,
         "selected_size": selected_size,
         "selected_color": item.selected_color,
@@ -141,7 +138,7 @@ def _serialize_cart_item(item: CartItem) -> dict:
         "product": {
             "id": product.id,
             "name": product.name,
-            "price": float(product.price),
+            "price": float(product.price) if product.price is not None else 0.0,
             "image_url": product.image_url,
         } if product else None,
     }
@@ -257,7 +254,6 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> CartViewOut:
         key = _variant_key(existing.product_id, existing.selected_size, existing.selected_color)
         if key not in incoming_keys:
             db.delete(existing)
-            db.commit()
 
     for variant_key, item in normalized_items.items():
         if item.product_id not in products:
@@ -265,8 +261,11 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> CartViewOut:
         qty = max(1, min(item.quantity, 999))
         _, selected_size, selected_color = variant_key
         variant = _resolve_variant_or_raise(products[item.product_id], selected_size, selected_color)
-        available_stock = int(getattr(variant, "stock", products[item.product_id].stock))
+        variant_stock = getattr(variant, "stock", None)
+        product_stock = getattr(products[item.product_id], "stock", None)
+        available_stock = int(variant_stock if variant_stock is not None else product_stock if product_stock is not None else 0)
         if available_stock < qty:
+            db.rollback()
             raise HTTPException(status_code=409, detail="Insufficient stock for one of the selected products")
         existing = existing_by_key.get(variant_key)
         if existing:
@@ -282,4 +281,15 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> CartViewOut:
                 selected_color=selected_color,
             )
 
+    db.commit()
     return get_cart(user_id, db)
+
+
+# Cross-domain re-export: shipping quotes are sourced from the orders domain
+# (which owns the logistics pricing integration). Re-exported here so the
+# customer module routers gate on customers.cart.* features while the
+# logistics integration stays in its canonical home.
+from domains.orders.services.cart_controller_service import (  # noqa: F401
+    CartShippingQuoteRequest,
+    get_cart_shipping_quote,
+)

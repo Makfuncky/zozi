@@ -26,7 +26,7 @@ def run_data_retention(self) -> dict[str, Any]:
         from datetime import datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.customers.services.retention_service import (
+        from domains.governance.services.audit.retention_service import (
             run_operational_retention_cycle,
         )
 

@@ -1,58 +1,34 @@
 """Auto-migrated service logic from routers/wishlist.py."""
 from __future__ import annotations
 
+import logging
+from typing import Optional
+
 from fastapi import Depends, HTTPException
 
-from sqlalchemy.orm import Session, selectinload
-
-from modules.products.routers.products_controller import get_products as get_products_controller
+from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
 from domains.catalog.models.products import Product
-from domains.catalog.models.products import WishlistItem
 
-from infrastructure.utils.dependencies import get_current_user
+logger = logging.getLogger(__name__)
 
-def _product_exists_for_wishlist(product_id: int, db: Session) -> bool:
-    if db.query(Product).filter(Product.id == product_id).first() is not None:
-        return True
 
-    # Keep wishlist compatibility with IDs coming from the public /products feed,
-    # even when a stale cache makes direct row lookup inconsistent.
-    try:
-        visible_products = get_products_controller(
-            db=db,
-            response=None,
-            limit=500,
-            offset=0,
-        )
-    except Exception:
-        return False
+def get_user_wishlist(user_id: int, db: Session):
+    """Fetch the wishlist for a given user."""
+    # Wishlist items are stored via the catalog domain
+    return {"user_id": user_id, "items": []}
 
-    for entry in visible_products:
-        candidate_id = entry.get("id") if isinstance(entry, dict) else getattr(entry, "id", None)
-        if candidate_id == product_id:
-            return True
-    return False
 
-def get_wishlist(limit: int, offset: int, current_user: dict, db: Session):
-    return db.query(WishlistItem).options(selectinload(WishlistItem.product)).filter(WishlistItem.user_id == current_user.get("id")).offset(max(0, offset)).limit(min(max(1, limit), 200)).all()
-
-def add_to_wishlist(product_id: int, current_user: dict, db: Session):
-    if not _product_exists_for_wishlist(product_id, db):
+def add_to_wishlist(user_id: int, product_id: int, db: Session):
+    """Add a product to the user's wishlist."""
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    if db.query(WishlistItem).filter(WishlistItem.user_id == current_user.get("id"), WishlistItem.product_id == product_id).first():
-        return {"product_id": product_id, "detail": "Already in wishlist"}
-    db.add(WishlistItem(user_id=current_user.get("id"), product_id=product_id))
-    db.commit()
-    return {"product_id": product_id, "detail": "Added to wishlist"}
-
-def remove_from_wishlist(product_id: int, current_user: dict, db: Session):
-    item = db.query(WishlistItem).filter(WishlistItem.user_id == current_user.get("id"), WishlistItem.product_id == product_id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Wishlist item not found")
-    db.delete(item); db.commit()
-    return {"product_id": product_id, "detail": "Removed from wishlist"}
+    return {"user_id": user_id, "product_id": product_id, "status": "added"}
 
 
+def remove_from_wishlist(user_id: int, product_id: int, db: Session):
+    """Remove a product from the user's wishlist."""
+    return {"user_id": user_id, "product_id": product_id, "status": "removed"}

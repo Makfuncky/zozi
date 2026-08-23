@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
-from domains.comms.services.entity_chat_service import get_chat_service
+from domains.governance.models.user import User
+from domains.comms.services.chat.entity_chat_service import get_chat_service
 
 router = APIRouter()
 

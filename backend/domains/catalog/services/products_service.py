@@ -17,8 +17,8 @@ from fastapi.responses import Response
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from domains.accounts.models.core import CartItem
-from domains.accounts.models.user import User
+from domains.governance.models.core import CartItem
+from domains.governance.models.user import User
 from domains.catalog.models.products import Category
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import ProductVariant
@@ -900,7 +900,7 @@ def patch_product_stock(
     supplier_id = cast(int | None, getattr(product, "supplier_id"))
     if new_stock <= _LOW_STOCK_THRESHOLD and supplier_id:
         try:
-            from domains.accounts.models.user import User as UserModel
+            from domains.governance.models.user import User as UserModel
             from infrastructure.utils.email_service import send_email
             supplier = db.query(UserModel).filter(UserModel.id == supplier_id).first()
             supplier_email = cast(str | None, getattr(supplier, "email")) if supplier else None

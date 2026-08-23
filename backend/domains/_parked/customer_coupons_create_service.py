@@ -17,9 +17,9 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.ports import list_coupons as ctrl_list, validate_coupon as ctrl_validate
-from domains.accounts.services.admin_promotions_service import create_coupon as ctrl_create
-from domains.accounts.services.customer_coupons_create_service import delete_coupon as ctrl_delete
+from domains.governance.ports import list_coupons as ctrl_list, validate_coupon as ctrl_validate
+from domains.catalog.admin_promotions_service import create_coupon as ctrl_create
+from domains.orders.customer_coupons_create_service import delete_coupon as ctrl_delete
 
 from infrastructure.database.schemas import CouponCreate
 

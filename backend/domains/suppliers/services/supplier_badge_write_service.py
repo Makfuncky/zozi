@@ -30,7 +30,7 @@ from domains.governance.models.admin import BadgeBillingRecord
 
 from domains.finance.models.finance import BankTransaction
 
-from domains.finance.services.cash_management_service import log_bank_transaction
+from domains.finance.services.treasury.cash_management_service import log_bank_transaction
 
 import structlog
 

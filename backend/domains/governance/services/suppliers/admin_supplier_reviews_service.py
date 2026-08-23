@@ -1,0 +1,236 @@
+﻿"""Admin suppliers router — country-scoped."""
+from typing import Optional
+from fastapi import Depends, HTTPException, Path, Query
+from sqlalchemy.orm import Session
+from infrastructure.database.database import get_db
+from domains.governance.models.user import User
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import enforce_country_access
+from domains.governance.services.settings.misc_service import archive_entity
+from domains.governance.services.settings.misc_service import restore_entity
+from domains.catalog.ports import bulk_archive_entities
+from domains.catalog.ports import bulk_restore_entities
+from domains.governance.services.settings.misc_service import hard_delete_entity
+
+def _supplier_to_dict(s: SupplierProfile) -> dict:
+    return {'id': s.id, 'user_id': s.user_id, 'business_name': s.business_name, 'slug': s.slug, 'business_type': s.business_type, 'country_code': s.country_code, 'phone_business': s.phone_business, 'website': s.website, 'address': s.address, 'city': s.city, 'region': s.region, 'verification_status': s.verification_status, 'verified_at': s.verified_at.isoformat() if s.verified_at else None, 'is_active': s.is_active, 'is_deleted': getattr(s, 'is_deleted', False), 'badge_level': getattr(s, 'badge_level', None), 'created_at': s.created_at.isoformat() if s.created_at else None, 'updated_at': s.updated_at.isoformat() if s.updated_at else None}
+
+def list_suppliers_by_country(code: str=Path(..., description="ISO country code, or '*' for all"), include_deleted: bool=Query(False), q: Optional[str]=Query(None, description='Search by business name'), page: int=Query(1, ge=1), page_size: int=Query(50, ge=1, le=200), status: Optional[str]=Query(None), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """List suppliers scoped to a country code. Use '*' for global view."""
+    enforce_country_access(code, db=db)
+    query = db.query(SupplierProfile)
+    if code != '*':
+        query = query.filter(SupplierProfile.country_code == code.upper())
+    if not include_deleted:
+        query = query.filter(SupplierProfile.is_deleted == False)
+    if q:
+        query = query.filter(SupplierProfile.business_name.ilike(f'%{q}%'))
+    if status:
+        query = query.filter(SupplierProfile.verification_status == status)
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return {'items': [_supplier_to_dict(s) for s in items], 'total': total, 'page': page, 'page_size': page_size, 'summary': {'pending_suppliers': db.query(SupplierProfile).filter(SupplierProfile.verification_status == 'pending', *([] if code == '*' else [SupplierProfile.country_code == code.upper()])).count(), 'active_suppliers': db.query(SupplierProfile).filter(SupplierProfile.is_active == True, *([] if code == '*' else [SupplierProfile.country_code == code.upper()])).count(), 'suspended_suppliers': db.query(SupplierProfile).filter(SupplierProfile.is_active == False, *([] if code == '*' else [SupplierProfile.country_code == code.upper()])).count()}}
+
+def list_pending_kyc_suppliers(code: str=Path(..., description='ISO country code'), page: int=1, size: int=50, _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """Return suppliers awaiting KYC review for a country."""
+    enforce_country_access(code, db=db)
+    q = db.query(SupplierProfile).filter(SupplierProfile.verification_status.in_(['pending', 'documents_submitted', 'under_review']), SupplierProfile.is_deleted == False)
+    if code != '*':
+        q = q.filter(SupplierProfile.country_code == code.upper())
+    from infrastructure.utils.pagination import paginated_response
+    return paginated_response(q.order_by(SupplierProfile.updated_at.desc()), page=page, size=size, serializer=_supplier_to_dict)
+
+def get_supplier_by_country(code: str=Path(...), supplier_id: int=Path(...), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    enforce_country_access(code, db=db)
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, detail='Supplier not found')
+    if code != '*' and s.country_code and (s.country_code.upper() != code.upper()):
+        raise HTTPException(403, detail='Supplier does not belong to this country')
+    return _supplier_to_dict(s)
+
+def update_supplier_by_country(code: str=Path(...), supplier_id: int=Path(...), business_name: Optional[str]=None, verification_status: Optional[str]=None, badge_level: Optional[str]=None, _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    enforce_country_access(code, db=db)
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, detail='Supplier not found')
+    if code != '*' and s.country_code and (s.country_code.upper() != code.upper()):
+        raise HTTPException(403, detail='Supplier does not belong to this country')
+    if business_name is not None:
+        s.business_name = business_name
+    if verification_status is not None:
+        s.verification_status = verification_status
+    if badge_level is not None and hasattr(s, 'badge_level'):
+        s.badge_level = badge_level
+    db.commit()
+    db.refresh(s)
+    return _supplier_to_dict(s)
+
+def approve_supplier_kyc(code: str=Path(...), supplier_id: int=Path(...), admin: User=Depends(require_admin), db: Session=Depends(get_db)):
+    enforce_country_access(code, db=db)
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, detail='Supplier not found')
+    s.verification_status = 'approved'
+    from infrastructure.utils.datetime_utils import utcnow
+    s.verified_at = utcnow()
+    s.verified_by = admin.id if hasattr(s, 'verified_by') else None
+    db.commit()
+    return {'message': 'Supplier KYC approved'}
+
+def reject_supplier_kyc(code: str=Path(...), supplier_id: int=Path(...), reason: Optional[str]=None, _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    enforce_country_access(code, db=db)
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, detail='Supplier not found')
+    s.verification_status = 'rejected'
+    if hasattr(s, 'verification_note'):
+        s.verification_note = reason
+    db.commit()
+    return {'message': 'Supplier KYC rejected', 'reason': reason}
+
+def suspend_supplier(code: str=Path(...), supplier_id: int=Path(...), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    enforce_country_access(code, db=db)
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, detail='Supplier not found')
+    from domains.governance.models.user import User as UserModel
+    user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
+    if user:
+        user.is_active = 0
+    db.commit()
+    return {'message': 'Supplier suspended'}
+
+def activate_supplier(code: str=Path(...), supplier_id: int=Path(...), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    enforce_country_access(code, db=db)
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, detail='Supplier not found')
+    from domains.governance.models.user import User as UserModel
+    user = db.query(UserModel).filter(UserModel.id == s.user_id).first()
+    if user:
+        user.is_active = 1
+    db.commit()
+    return {'message': 'Supplier activated'}
+
+def list_suppliers_global(include_deleted: bool=False, _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """Global supplier list (no country filter) — legacy."""
+    q = db.query(SupplierProfile)
+    if not include_deleted:
+        q = q.filter(SupplierProfile.is_deleted == False)
+    return [_supplier_to_dict(s) for s in q.all()]
+
+def list_all_suppliers(include_deleted: bool=False, country: Optional[str]=Query(None), status: Optional[str]=Query(None), q: Optional[str]=Query(None), page: int=Query(1, ge=1), page_size: int=Query(50, ge=1, le=200), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """Legacy paginated supplier list with optional country filter."""
+    query = db.query(SupplierProfile)
+    if not include_deleted:
+        query = query.filter(SupplierProfile.is_deleted == False)
+    if country and country != '*':
+        query = query.filter(SupplierProfile.country_code == country.upper())
+    if status:
+        query = query.filter(SupplierProfile.verification_status == status)
+    if q:
+        query = query.filter(SupplierProfile.business_name.ilike(f'%{q}%'))
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return {'items': [_supplier_to_dict(s) for s in items], 'total': total, 'page': page, 'page_size': page_size, 'summary': {'pending_suppliers': db.query(SupplierProfile).filter(SupplierProfile.verification_status == 'pending').count(), 'active_suppliers': db.query(SupplierProfile).filter(SupplierProfile.is_active == True).count(), 'suspended_suppliers': db.query(SupplierProfile).filter(SupplierProfile.is_active == False).count(), 'total_revenue': 0}}
+
+def list_all_suppliers_frontend(include_deleted: bool=False, country: Optional[str]=Query(None), status: Optional[str]=Query(None), q: Optional[str]=Query(None), page: int=Query(1, ge=1), page_size: int=Query(50, ge=1, le=200), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """Paginated supplier list used by the admin Suppliers page."""
+    query = db.query(SupplierProfile)
+    if not include_deleted:
+        query = query.filter(SupplierProfile.is_deleted == False)
+    if country and country != '*':
+        query = query.filter(SupplierProfile.country_code == country.upper())
+    if status:
+        query = query.filter(SupplierProfile.verification_status == status)
+    if q:
+        query = query.filter(SupplierProfile.business_name.ilike(f'%{q}%'))
+    total = query.count()
+    items = query.offset((page - 1) * page_size).limit(page_size).all()
+    return {'items': [_supplier_to_dict(s) for s in items], 'total': total, 'page': page, 'page_size': page_size, 'summary': {'pending_suppliers': db.query(SupplierProfile).filter(SupplierProfile.verification_status == 'pending').count(), 'active_suppliers': db.query(SupplierProfile).filter(SupplierProfile.is_active == True).count(), 'suspended_suppliers': db.query(SupplierProfile).filter(SupplierProfile.is_active == False).count(), 'total_revenue': 0}}
+
+def bulk_supplier_action(payload: dict, current_user: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """Bulk action across multiple suppliers (verify/reject/suspend/activate/delete/badge)."""
+    ids = payload.get('supplier_ids') or []
+    action = (payload.get('action') or '').lower()
+    note = payload.get('note')
+    badge_level = payload.get('badge_level')
+    if not isinstance(ids, list) or not ids:
+        raise HTTPException(status_code=422, detail='supplier_ids is required')
+    processed = 0
+    for sid in ids:
+        s = db.query(SupplierProfile).filter(SupplierProfile.id == sid).first()
+        if not s:
+            continue
+        if action == 'verify':
+            s.verification_status = 'approved'
+            from infrastructure.utils.datetime_utils import utcnow
+            if hasattr(s, 'verified_at'):
+                s.verified_at = utcnow()
+        elif action == 'reject':
+            s.verification_status = 'rejected'
+        elif action == 'suspend':
+            s.is_active = False
+            if s.user_id:
+                u = db.query(User).filter(User.id == s.user_id).first()
+                if u:
+                    u.is_active = 0
+        elif action == 'activate':
+            s.is_active = True
+            if s.user_id:
+                u = db.query(User).filter(User.id == s.user_id).first()
+                if u:
+                    u.is_active = 1
+        elif action == 'delete':
+            if hasattr(s, 'is_deleted'):
+                s.is_deleted = True
+            s.is_active = False
+        elif action == 'badge':
+            if badge_level is not None and hasattr(s, 'badge_level'):
+                s.badge_level = badge_level
+        processed += 1
+    db.commit()
+    return {'processed': processed, 'action': action}
+
+def bulk_restore_suppliers(payload: dict, current_user: User=Depends(require_admin), db: Session=Depends(get_db)):
+    ids = payload.get('supplier_ids') or []
+    if not isinstance(ids, list) or not ids:
+        raise HTTPException(status_code=422, detail='supplier_ids is required')
+    processed = 0
+    for sid in ids:
+        s = db.query(SupplierProfile).filter(SupplierProfile.id == sid).first()
+        if not s:
+            continue
+        if hasattr(s, 'is_deleted'):
+            s.is_deleted = False
+        s.is_active = True
+        processed += 1
+    db.commit()
+    return {'processed': processed}
+
+def restore_supplier_frontend(supplier_id: int, current_user: User=Depends(require_admin), db: Session=Depends(get_db)):
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail='Supplier not found')
+    if hasattr(s, 'is_deleted'):
+        s.is_deleted = False
+    s.is_active = True
+    db.commit()
+    return {'message': 'Supplier restored', 'id': supplier_id}
+
+def refresh_supplier_badge(supplier_id: int, current_user: User=Depends(require_admin), db: Session=Depends(get_db)):
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail='Supplier not found')
+    if not hasattr(s, 'badge_level'):
+        raise HTTPException(status_code=400, detail='Supplier does not support badge levels')
+    return {'id': s.id, 'badge_level': s.badge_level}
+
+def supplier_comparison_frontend(_: User=Depends(require_admin), db: Session=Depends(get_db)):
+    """Lightweight supplier comparison view (revenue / orders / badges)."""
+    rows = db.query(SupplierProfile).filter(SupplierProfile.is_deleted == False).order_by(SupplierProfile.id.asc()).limit(200).all()
+    data = [{'id': s.id, 'business_name': s.business_name, 'country_code': s.country_code, 'verification_status': s.verification_status, 'badge_level': getattr(s, 'badge_level', None), 'is_active': s.is_active, 'revenue': 0, 'order_count': getattr(s, 'order_count', 0), 'product_count': getattr(s, 'product_count', 0)} for s in rows]
+    return {'data': data, 'total': len(data), 'page': 1, 'page_size': len(data) or 1}

@@ -15,8 +15,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
-from domains.accounts.models.user import UserLoginHistory
+from domains.governance.models.user import User
+from domains.governance.models.user import UserLoginHistory
 from infrastructure.database.schemas import RegisterRequest, TokenResponse, UserOut
 from infrastructure.utils.auth import (
     blacklist_token,

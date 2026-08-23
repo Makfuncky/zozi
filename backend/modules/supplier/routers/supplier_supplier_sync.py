@@ -1,4 +1,4 @@
-"""
+﻿"""
 Supplier Router — route declarations only (HTTP layer).
 All business logic lives in controllers/supplier_controller.py.
 """
@@ -601,8 +601,8 @@ async def analyze_async(
 
     def _run_analysis() -> dict:
         import asyncio
-        from domains.finance.services.bg_removal_service import remove_background
-        from domains.finance.services.ai_variant_config import analyze_product_image
+        from domains.finance.services.shared.bg_removal_service import remove_background
+        from domains.finance.services.shared.ai_variant_config import analyze_product_image
         from infrastructure.utils.storage import storage as _store
 
         bg_result = remove_background(raw, strategy="general", fast_mode=True)
@@ -691,16 +691,16 @@ async def remove_background(
     _storage.save(image_key, raw, content_type=image.content_type or "image/jpeg")
 
     def _run_remove_background() -> dict:
-        from domains.finance.services.bg_removal_service import remove_background_model
-        from domains.finance.services.bg_removal_service import AVAILABLE_MODELS
-        from domains.finance.services.bg_removal_service import VALID_STRATEGIES
+        from domains.finance.services.shared.bg_removal_service import remove_background_model
+        from domains.finance.services.shared.bg_removal_service import AVAILABLE_MODELS
+        from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
         from infrastructure.utils.storage import storage as _store
 
         if model and model in AVAILABLE_MODELS:
             processed = remove_background_model(raw, model, fast_mode=fast_mode)
         else:
             preset_effective = preset if preset in VALID_STRATEGIES else "general"
-            from domains.finance.services.bg_removal_service import remove_background
+            from domains.finance.services.shared.bg_removal_service import remove_background
             processed = remove_background(raw, strategy=preset_effective, fast_mode=fast_mode)
 
         out_key = f"supplier_uploads/{uuid.uuid4().hex}_nobg.png"
@@ -734,13 +734,13 @@ async def ai_analyze(
     raw = await image.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Empty image file")
-    from domains.finance.services.ai_variant_config import analyze_product_image
+    from domains.finance.services.shared.ai_variant_config import analyze_product_image
     # Instant, photo-derived heuristic result (colours from the actual pixels,
     # category/name from the filename + config). Real vision understanding runs
     # in the background job below and the frontend polls it to refine the form.
     result = await analyze_product_image(raw, filename=image.filename or "", generate_copy=False)
     if generate_copy:
-        from domains.finance.services.ai_copy_jobs import enqueue_copy_job
+        from domains.finance.services.shared.ai_copy_jobs import enqueue_copy_job
         result["copy_job_id"] = enqueue_copy_job(raw, filename=image.filename or "")
     return result
 
@@ -785,9 +785,9 @@ async def nlp_extract(
     import json, re
 
     # Try structured extraction via direct Ollama call
-    from domains.finance.services.ai_variant_config import _ollama_chat
-    from domains.finance.services.ai_variant_config import _OLLAMA_TEXT_MODEL
-    from domains.finance.services.ai_variant_config import _extract_json
+    from domains.finance.services.shared.ai_variant_config import _ollama_chat
+    from domains.finance.services.shared.ai_variant_config import _OLLAMA_TEXT_MODEL
+    from domains.finance.services.shared.ai_variant_config import _extract_json
 
     canonical_list = "Clothing, Electronics, Home & Kitchen, Beauty, Sports, Books, Toys, Automotive, Grocery, Health, Jewelry, Office, Pet Supplies, Shoes, Bags, Furniture"
     en_prompt = (
@@ -858,7 +858,7 @@ async def ai_copy_status(
     Returns ``{status: pending|done|error, result?}``. ``result`` carries the
     full EN/AR marketing copy once ``status == "done"``.
     """
-    from domains.finance.services.ai_copy_jobs import get_job
+    from domains.finance.services.shared.ai_copy_jobs import get_job
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Unknown or expired copy job")

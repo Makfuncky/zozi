@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Sequence, cast
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.finance import RefundLedger
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import ShipmentConfirmation

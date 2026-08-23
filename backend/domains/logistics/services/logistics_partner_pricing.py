@@ -6,7 +6,7 @@ from typing import Any, Optional, cast
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import CityDistanceMatrix
+from domains.governance.models.core import CityDistanceMatrix
 from domains.country.models.countries import CountryConfig
 from domains.logistics.models.logistics import LogisticsCategoryPricingRule
 from domains.logistics.models.logistics import LogisticsPartner

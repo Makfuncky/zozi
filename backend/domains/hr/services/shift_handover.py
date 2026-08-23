@@ -8,8 +8,8 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import ShiftHandoverSession
-from domains.accounts.models.core import ShiftHandoverTask
+from domains.governance.models.core import ShiftHandoverSession
+from domains.governance.models.core import ShiftHandoverTask
 from domains.hr.models.employee_models import Employee
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 

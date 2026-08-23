@@ -19,14 +19,14 @@ from domains.catalog.services.banner_controller import update_banner as update_b
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
 from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin
 
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
-from domains.governance.services.admin_commerce_geography_service import _admin_context
+from domains.governance.services.commerce.flat_admin_commerce_geography_service import _admin_context
 
 
 
@@ -36,7 +36,7 @@ from domains.governance.services.admin_commerce_geography_service import _admin_
 
 
 
-from domains.accounts.services.banners_service import list_all_banners
+from domains.catalog.banners_service import list_all_banners
 
 
 
@@ -59,7 +59,7 @@ from domains.accounts.services.banners_service import list_all_banners
 
 
 
-from domains.accounts.services.banners_service import create_banner
+from domains.catalog.banners_service import create_banner
 
 
 
@@ -74,7 +74,7 @@ from domains.accounts.services.banners_service import create_banner
 
 
 
-from domains.accounts.services.banners_service import update_banner
+from domains.catalog.banners_service import update_banner
 
 
 
@@ -86,7 +86,7 @@ from domains.accounts.services.banners_service import update_banner
 
 
 
-from domains.accounts.services.banners_service import upload_image
+from domains.catalog.banners_service import upload_image
 
 
 
@@ -100,7 +100,7 @@ from domains.accounts.services.banners_service import upload_image
 
 
 
-from domains.accounts.services.banners_service import delete_banner
+from domains.catalog.banners_service import delete_banner
 
 
 

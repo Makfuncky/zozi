@@ -25,7 +25,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
 from domains.finance.models.finance import SupplierSettlement

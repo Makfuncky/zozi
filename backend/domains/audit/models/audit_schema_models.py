@@ -11,7 +11,7 @@ __all__ = ["AuditLog", "CommandCenterView"]
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
-    __table_args__ = ({"schema": "audit"},)
+    __table_args__ = ({"extend_existing": True, "schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     action = Column(String, nullable=False)
     entity_type = Column(String, nullable=False)
@@ -26,7 +26,7 @@ class AuditLog(Base):
 
 class CommandCenterView(Base):
     __tablename__ = "command_center_views"
-    __table_args__ = ({"schema": "audit"},)
+    __table_args__ = ({"extend_existing": True, "schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
     view_name = Column(String(100), nullable=False)

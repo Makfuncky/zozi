@@ -22,10 +22,10 @@ from domains.catalog.services.banner_controller import update_banner as update_b
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
 from infrastructure.utils.dependencies import require_admin
-from domains.governance.services.admin_commerce_geography_service import _admin_context
+from domains.governance.services.commerce.flat_admin_commerce_geography_service import _admin_context
 
 
 def list_banners(request: Request, position: Optional[str], db: Session):

@@ -1,0 +1,13 @@
+# AUTO-GENERATED controller delegator (routers -> controllers -> services).
+"""services.security.effective_permissions re-exports for HTTP routers."""
+from domains.governance.services.permissions.flat_effective_permissions import COUNTRY_ROLE_PERMISSION_MAP
+from domains.governance.services.permissions.flat_effective_permissions import HR_PERMISSION_MAP
+from domains.governance.services.permissions.flat_effective_permissions import MAKER_CHECKER_PERMISSIONS
+from domains.governance.services.permissions.flat_effective_permissions import approve_permission_change
+from domains.governance.services.permissions.flat_effective_permissions import check_permission as resolve_check_perm
+from domains.governance.services.permissions.flat_effective_permissions import get_effective_permissions as resolve_effective_perms
+from domains.governance.services.permissions.flat_effective_permissions import invalidate_permission_cache
+from domains.governance.services.permissions.flat_effective_permissions import request_permission_change
+
+from domains.governance.services.permissions.flat_effective_permissions import check_permission
+from domains.governance.services.permissions.flat_effective_permissions import get_effective_permissions

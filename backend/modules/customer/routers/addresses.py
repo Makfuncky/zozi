@@ -4,16 +4,16 @@ from sqlalchemy.orm import Session
 
 from infrastructure.utils.dependencies import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.models.core import Address
-from domains.orders.services.commerce_write_service import create_address as create_address_model
-from domains.orders.services.commerce_write_service import update_address as update_address_model
-from domains.orders.services.commerce_write_service import delete_address as delete_address_model
-from domains.orders.services.commerce_write_service import set_default_address as set_default_address_model
-from domains.orders.services.commerce_write_service import unset_other_default_addresses
-from domains.orders.services.commerce_read_service import list_user_addresses
-from domains.orders.services.commerce_read_service import get_user_address
+from domains.governance.models.core import Address
+from domains.customers.services.commerce_write_service import create_address as create_address_model
+from domains.customers.services.commerce_write_service import update_address as update_address_model
+from domains.customers.services.commerce_write_service import delete_address as delete_address_model
+from domains.customers.services.commerce_write_service import set_default_address as set_default_address_model
+from domains.customers.services.commerce_write_service import unset_other_default_addresses
+from domains.customers.services.commerce_read_service import list_user_addresses
+from domains.customers.services.commerce_read_service import get_user_address
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/customer/addresses")
 
 
 def _normalize_address_payload(payload: dict, *, partial: bool = False) -> dict:

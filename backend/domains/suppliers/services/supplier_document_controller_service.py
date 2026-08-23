@@ -14,7 +14,7 @@ from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierDocument
 from domains.comms.models.suppliers import SupplierProfile

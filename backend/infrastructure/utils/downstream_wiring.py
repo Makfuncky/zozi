@@ -1,4 +1,4 @@
-"""Downstream System Auto-Wiring Service.
+﻿"""Downstream System Auto-Wiring Service.
 
 This service integrates country configuration with downstream systems:
 - Payment Orchestrator: Gateway selection per country
@@ -18,8 +18,8 @@ from sqlalchemy.orm import Session
 from domains.catalog.models.products import Product
 from domains.country.models.countries import CountryConfig
 from domains.orders.models.orders import Order
-from domains.finance.services.tax_service import calculate_tax
-from domains.finance.services.tax_service import get_country_config
+from domains.finance.services.tax.tax_service import calculate_tax
+from domains.finance.services.tax.tax_service import get_country_config
 from kernel.money import to_decimal
 
 logger = logging.getLogger(__name__)

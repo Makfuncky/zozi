@@ -2,16 +2,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.orders.models.orders import Order
 from infrastructure.database.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
 from infrastructure.utils.dependencies import require_admin, require_super_admin
-from domains.governance.services.misc_service import archive_entity
-from domains.governance.services.misc_service import restore_entity
+from domains.governance.services.settings.misc_service import archive_entity
+from domains.governance.services.settings.misc_service import restore_entity
 from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
 from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
-from domains.governance.services.misc_service import hard_delete_entity
-from domains.governance.services.orders_service import update_order_status
+from domains.governance.services.settings.misc_service import hard_delete_entity
+from domains.governance.services.orders.orders_service import update_order_status
 from infrastructure.utils.audit import audit_log
 from domains.country.utils.country_rls import enforce_country_access, get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context

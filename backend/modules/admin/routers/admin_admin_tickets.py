@@ -7,7 +7,7 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from domains.governance.services.tickets_controller import list_tickets_route, reply_ticket, ticket_detail, update_ticket_status_route
+from domains.governance.services.comms.tickets_controller import list_tickets_route, reply_ticket, ticket_detail, update_ticket_status_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

@@ -4,7 +4,7 @@ Thin controller layer that exposes product business logic backed by
 ``services.products.products_service``. Routers delegate product operations to
 this module via the import path ``controllers.products.products_controller``.
 """
-from domains.catalog.models import products_service as _products_service
+from domains.catalog.services import products_service as _products_service
 
 # Re-export the public service API so this controller mirrors it (the hollow
 # product routers enumerate dir() to report available functions).

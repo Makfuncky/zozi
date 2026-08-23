@@ -27,7 +27,7 @@ from sqlalchemy import text
 from infrastructure.database.database import SessionLocal
 from domains.finance.models.commission import CommissionCategoryRate
 from domains.governance.models.admin import CommissionBadgeTier
-from domains.accounts.models.core import (
+from domains.governance.models.core import (
     DirectChatMessage,
     DirectChatRoom,
     EntityChatMessage,
@@ -40,8 +40,8 @@ from domains.hr.models.employee_models import Employee
 from domains.comms.models.communication import EmailFolder, InternalEmail
 from domains.orders.models import Order, OrderItem
 from domains.catalog.models.products import Category, Product, Review
-from domains.accounts.models.user import User
-from domains.finance.services.commission_engine import get_global_config, seed_defaults
+from domains.governance.models.user import User
+from domains.finance.services.commission.commission_engine import get_global_config, seed_defaults
 from infrastructure.utils.auth import get_password_hash
 import structlog
 logger = structlog.get_logger(__name__)

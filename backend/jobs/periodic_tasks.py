@@ -1,4 +1,4 @@
-"""Celery periodic tasks (replacing APScheduler)."""
+﻿"""Celery periodic tasks (replacing APScheduler)."""
 from __future__ import annotations
 
 import logging
@@ -24,7 +24,7 @@ def run_auto_payout_sweep(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.auto_payout_scheduler import run_auto_payout_sweep as run_sweep
+        from domains.finance.services.payments.auto_payout_scheduler import run_auto_payout_sweep as run_sweep
         
         db = SessionLocal()
         try:
@@ -32,7 +32,7 @@ def run_auto_payout_sweep(self) -> dict[str, Any]:
             supplier_result = run_sweep(db)
             
             # Logistics sweep
-            from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as run_logistics_sweep
+            from domains.finance.services.payments.auto_payout_scheduler import run_auto_logistics_payout_sweep as run_logistics_sweep
             logistics_result = run_logistics_sweep(db)
             
             # Combine results
@@ -71,7 +71,7 @@ def run_finance_reconciliation(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.cash_management_service import execute_finance_reconciliation_pass
+        from domains.finance.services.treasury.cash_management_service import execute_finance_reconciliation_pass
         
         db = SessionLocal()
         try:
@@ -100,7 +100,7 @@ def compute_vat_remittance(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone, timedelta
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.automation_scheduler import compute_vat_remittance as compute_vat
+        from domains.finance.services.shared.automation_scheduler import compute_vat_remittance as compute_vat
         
         # Previous month
         now = datetime.now(timezone.utc)
@@ -140,7 +140,7 @@ def generate_supplier_statements(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone, timedelta
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.automation_scheduler import generate_supplier_statements as gen_supplier
+        from domains.finance.services.shared.automation_scheduler import generate_supplier_statements as gen_supplier
         
         # Previous month
         now = datetime.now(timezone.utc)
@@ -180,7 +180,7 @@ def generate_distributor_statements(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone, timedelta
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.automation_scheduler import generate_distributor_statements as gen_distributor
+        from domains.finance.services.shared.automation_scheduler import generate_distributor_statements as gen_distributor
         
         # Previous month
         now = datetime.now(timezone.utc)
@@ -220,7 +220,7 @@ def run_alert_engine(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.automation_scheduler import run_alert_engine as run_alerts
+        from domains.finance.services.shared.automation_scheduler import run_alert_engine as run_alerts
         
         db = SessionLocal()
         try:

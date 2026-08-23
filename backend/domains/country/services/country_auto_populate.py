@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 
 
@@ -35,8 +35,8 @@ from domains.country.services.country_curated import get_curated_macro
 
 from domains.country.services.curated_cities import get_cities as get_curated_cities
 
-from domains.finance.services.vat_rates import get_vat_rate
-from domains.finance.services.vat_rates import get_legal_defaults
+from domains.finance.services.tax.vat_rates import get_vat_rate
+from domains.finance.services.tax.vat_rates import get_legal_defaults
 
 from domains.country.services.category_tax_profiles import get_category_tax_profile
 

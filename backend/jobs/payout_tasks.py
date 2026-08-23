@@ -37,7 +37,7 @@ def dispatch_payout_batch(
     """
     try:
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.cash_management_service import dispatch_payout_batch as do_dispatch
+        from domains.finance.services.treasury.cash_management_service import dispatch_payout_batch as do_dispatch
         
         db = SessionLocal()
         try:
@@ -82,7 +82,7 @@ def process_individual_payout(
     """
     try:
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.cash_management_service import process_payout as do_process
+        from domains.finance.services.treasury.cash_management_service import process_payout as do_process
         
         db = SessionLocal()
         try:

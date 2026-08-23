@@ -19,7 +19,7 @@ from domains.hr.models.employee_models import EmployeeShiftRoster
 from domains.hr.models.employee_models import EmployeeLeaveRequest
 from domains.hr.models.employee_models import DynamicQRSession
 from domains.hr.models.employee_models import EmployeeRole
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
@@ -80,7 +80,7 @@ def list_employees(code: str, db: Session, department: Optional[str] = None,
     if status and status != "all":
         q = q.filter(Employee.employment_status == status)
     if query:
-        from domains.accounts.models.user import User
+        from domains.governance.models.user import User
         q = q.join(Employee.user).filter(
             Employee.employee_code.ilike(f"%{query}%") |
             Employee.position.ilike(f"%{query}%") |
@@ -336,7 +336,7 @@ def create_shift_roster(employee_id: int, data: dict, current_user: dict, db: Se
 
 
 def kill_switch(employee_id: int, current_user: dict, db: Session) -> dict:
-    from domains.accounts.models.user import RevokedToken
+    from domains.governance.models.user import RevokedToken
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")

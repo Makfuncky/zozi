@@ -1,8 +1,8 @@
-"""Tests for country_ai_research.py — async AI enrichment service."""
+﻿"""Tests for country_ai_research.py — async AI enrichment service."""
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from domains.finance.services.country_ai_research import (
+from domains.finance.services.country.country_ai_research import (
     CountryAIResearchService,
     AI_SCHEMA,
     QUAL_MODULES,

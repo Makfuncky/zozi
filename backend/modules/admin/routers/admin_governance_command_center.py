@@ -7,21 +7,21 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Any
 
-from domains.governance.services.command_center_controller import alerts_route
-from domains.governance.services.command_center_controller import command_center_root_route
-from domains.governance.services.command_center_controller import comprehensive_dashboard_route
-from domains.governance.services.command_center_controller import create_news_route
-from domains.governance.services.command_center_controller import dashboard_route
-from domains.governance.services.command_center_controller import dashboard_stats_route
-from domains.governance.services.command_center_controller import delete_news_route
-from domains.governance.services.command_center_controller import fraud_alerts_route
-from domains.governance.services.command_center_controller import headlines_route
-from domains.governance.services.command_center_controller import heartbeat_route
-from domains.governance.services.command_center_controller import news_route
-from domains.governance.services.command_center_controller import realtime_metrics_route
-from domains.governance.services.command_center_controller import resolve_alert_route
-from domains.governance.services.command_center_controller import system_metrics_route
-from domains.governance.services.command_center_controller import treasury_metrics_route
+from domains.governance.services.command_center.command_center_controller import alerts_route
+from domains.governance.services.command_center.command_center_controller import command_center_root_route
+from domains.governance.services.command_center.command_center_controller import comprehensive_dashboard_route
+from domains.governance.services.command_center.command_center_controller import create_news_route
+from domains.governance.services.command_center.command_center_controller import dashboard_route
+from domains.governance.services.command_center.command_center_controller import dashboard_stats_route
+from domains.governance.services.command_center.command_center_controller import delete_news_route
+from domains.governance.services.command_center.command_center_controller import fraud_alerts_route
+from domains.governance.services.command_center.command_center_controller import headlines_route
+from domains.governance.services.command_center.command_center_controller import heartbeat_route
+from domains.governance.services.command_center.command_center_controller import news_route
+from domains.governance.services.command_center.command_center_controller import realtime_metrics_route
+from domains.governance.services.command_center.command_center_controller import resolve_alert_route
+from domains.governance.services.command_center.command_center_controller import system_metrics_route
+from domains.governance.services.command_center.command_center_controller import treasury_metrics_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

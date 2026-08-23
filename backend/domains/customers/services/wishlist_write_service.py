@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from domains.catalog.ports import WishlistItem
+from domains.catalog.models.products import WishlistItem
 import structlog
+
 logger = structlog.get_logger(__name__)
 
 

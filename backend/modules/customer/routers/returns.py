@@ -12,11 +12,11 @@ from domains.orders.services.returns_controller import list_return_requests
 from domains.orders.services.returns_controller import update_return_request
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import ReturnRequestCreate, ReturnRequestOut, ReturnRequestUpdate
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.orders.models.orders import ReturnRequest
 from infrastructure.utils.dependencies import get_current_user, require_admin
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/customer/returns")
 
 
 class BulkReturnStatusUpdateBody(BaseModel):

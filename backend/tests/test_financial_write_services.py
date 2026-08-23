@@ -1,4 +1,4 @@
-"""Regression tests for the implemented financial write services.
+﻿"""Regression tests for the implemented financial write services.
 
 Guards the remediation that replaced ``_missing_symbol`` stubs in
 ``commission_write_service``, ``payments_write_service`` and
@@ -11,9 +11,9 @@ from decimal import Decimal
 
 import pytest
 
-import domains.finance.services.commission_write_service as commission
+import domains.finance.services.commission.commission_write_service as commission
 import domains.payments.services.payments_write_service as payments
-import domains.finance.services.invoice_write_service as invoice
+import domains.finance.services.ledger.invoice_write_service as invoice
 from infrastructure.database.models import (
     CommissionAgreement,
     CommissionBadgeTier,

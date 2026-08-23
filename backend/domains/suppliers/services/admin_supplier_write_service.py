@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.suppliers import SupplierProfile
 from infrastructure.utils.datetime_utils import utcnow
 import structlog

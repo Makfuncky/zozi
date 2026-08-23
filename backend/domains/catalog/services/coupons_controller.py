@@ -47,23 +47,23 @@ def update_coupon_route(country_code, coupon_id, current_user, db, **fields):
 
 # === migration bridge (architecture realignment): write now calls owning accounts service directly (ports is read-only) ===
 def create_coupon(*args, **kwargs):
-    from domains.accounts.services.admin_promotions_service import create_coupon as _impl
+    from domains.catalog.admin_promotions_service import create_coupon as _impl
     return _impl(*args, **kwargs)
 
 
 # === migration bridge (architecture realignment): write now calls owning accounts service directly (ports is read-only) ===
 def delete_coupon(*args, **kwargs):
-    from domains.accounts.services.customer_coupons_create_service import delete_coupon as _impl
+    from domains.orders.customer_coupons_create_service import delete_coupon as _impl
     return _impl(*args, **kwargs)
 
 
-# === migration bridge (architecture realignment): re-export from domains.accounts.services.customer_coupons_create_service ===
+# === migration bridge (architecture realignment): re-export from domains.governance.services.customer_coupons_create_service ===
 def list_coupons(*args, **kwargs):
-    from domains.accounts.ports import list_coupons as _impl
+    from domains.governance.ports import list_coupons as _impl
     return _impl(*args, **kwargs)
 
 
-# === migration bridge (architecture realignment): re-export from domains.accounts.services.customer_coupons_mgmt_service ===
+# === migration bridge (architecture realignment): re-export from domains.governance.services.customer_coupons_mgmt_service ===
 def validate_coupon(*args, **kwargs):
-    from domains.accounts.ports import validate_coupon as _impl
+    from domains.governance.ports import validate_coupon as _impl
     return _impl(*args, **kwargs)

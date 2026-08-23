@@ -44,7 +44,7 @@ from sqlalchemy import text, and_
 
 
 
-from domains.accounts.models.core import AuditLog
+from domains.governance.models.core import AuditLog
 from domains.hr.models.employee_models import Employee
 
 from infrastructure.utils.datetime_utils import utcnow as _utcnow

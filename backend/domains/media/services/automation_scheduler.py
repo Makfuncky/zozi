@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 from datetime import datetime, date, timedelta
@@ -30,19 +30,19 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 from domains.finance.services.finance import general_ledger_service as gl
-from domains.finance.services.finance_automation import run_daily_automation as run_finance_daily
-from domains.finance.services.financial_reports_service import generate_income_statement
-from domains.finance.services.financial_reports_service import generate_balance_sheet
-from domains.finance.services.financial_reports_service import generate_cash_flow_statement
-from domains.finance.services.financial_reports_service import save_report
+from domains.finance.services.ledger.finance_automation import run_daily_automation as run_finance_daily
+from domains.finance.services.reporting.financial_reports_service import generate_income_statement
+from domains.finance.services.reporting.financial_reports_service import generate_balance_sheet
+from domains.finance.services.reporting.financial_reports_service import generate_cash_flow_statement
+from domains.finance.services.reporting.financial_reports_service import save_report
 from domains.payments.services.gateway_reconciliation_service import run_gateway_3way_reconciliation
-from domains.finance.services.payout_batch_service import generate_supplier_payout_batches
-from domains.finance.services.payout_batch_service import generate_logistics_payout_batches
-from domains.finance.services.credit_control_service import enforce_auto_credit_holds
-from domains.finance.services.ai_automation_service import run_ai_bank_reconciliation
-from domains.finance.services.ai_automation_service import process_email_inbox
-from domains.finance.services.ai_automation_service import batch_categorize_all
-from domains.finance.services.period_close_service import close_period
+from domains.finance.services.payments.payout_batch_service import generate_supplier_payout_batches
+from domains.finance.services.payments.payout_batch_service import generate_logistics_payout_batches
+from domains.finance.services.accounts.credit_control_service import enforce_auto_credit_holds
+from domains.finance.services.shared.ai_automation_service import run_ai_bank_reconciliation
+from domains.finance.services.shared.ai_automation_service import process_email_inbox
+from domains.finance.services.shared.ai_automation_service import batch_categorize_all
+from domains.finance.services.ledger.period_close_service import close_period
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 from infrastructure.utils.config import settings
@@ -421,7 +421,7 @@ def _check_fx_exposure(db: Session, country_code: str = None) -> list[dict]:
 
 def _check_orphan_journals(db: Session, country_code: str = None) -> list[dict]:
     alerts = []
-    from domains.finance.services.treasury_engine import TreasuryEngine
+    from domains.finance.services.treasury.treasury_engine import TreasuryEngine
     try:
         orphans = TreasuryEngine(db).run_orphan_detector()
         if orphans:
@@ -490,7 +490,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # 3-way match scan (#10) - daily for unmatched POs
     try:
-        from domains.finance.services.trading_service import scan_unmatched_pos
+        from domains.finance.services.accounts.trading_service import scan_unmatched_pos
         results["three_way_match"] = scan_unmatched_pos(db, country_code=country_code)
     except Exception as e:
         logger.warning("3-way match scan failed: %s", e)
@@ -499,7 +499,7 @@ def run_full_automation(db: Session, country_code: str = None,
     # Dunning engine (#12) - weekly on Mondays
     if today.weekday() == 0:  # Monday
         try:
-            from domains.finance.services.trading_service import run_dunning_engine
+            from domains.finance.services.accounts.trading_service import run_dunning_engine
             results["dunning"] = run_dunning_engine(db)
         except Exception as e:
             logger.warning("Dunning engine failed: %s", e)
@@ -507,7 +507,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # E-commerce auto-invoice on delivery (#11) - daily
     try:
-        from domains.finance.services.trading_service import auto_invoice_ecommerce_orders
+        from domains.finance.services.accounts.trading_service import auto_invoice_ecommerce_orders
         results["ecommerce_invoice"] = auto_invoice_ecommerce_orders(db, country_code=country_code)
     except Exception as e:
         logger.warning("E-commerce auto-invoice failed: %s", e)
@@ -552,7 +552,7 @@ def run_full_automation(db: Session, country_code: str = None,
         
         # Period close (#28) - auto-close previous period on month-end
         try:
-            from domains.finance.services.period_close_service import close_period
+            from domains.finance.services.ledger.period_close_service import close_period
             from domains.finance.models.finance import FiscalPeriod
             prev_period = db.query(FiscalPeriod).filter(
                 FiscalPeriod.period_year == prev.year,

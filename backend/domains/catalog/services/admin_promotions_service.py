@@ -18,7 +18,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.marketing import FlashSale
 from domains.governance.models.admin import PromotionEngineConfig
 from domains.governance.models.admin import PromotionOrderTier
@@ -28,8 +28,8 @@ from domains.payments.models.payments import Coupon
 from domains.country.utils.country_rls import enforce_country_access
 
 from infrastructure.utils.dependencies import require_admin
-from domains.governance.services.admin_commerce_configuration_service import _banner_to_dict
-from domains.governance.services.admin_commerce_configuration_service import _user_ctx
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import _banner_to_dict
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import _user_ctx
 
 
 
@@ -90,7 +90,7 @@ def create_coupon(code: str, discount_type: str, discount_value: float, minimum_
 
 
 
-from domains.governance.services.admin_commerce_configuration_service import get_promotion_config
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import get_promotion_config
 
 
 
@@ -104,7 +104,7 @@ from domains.governance.services.admin_commerce_configuration_service import get
 
 
 
-from domains.governance.services.admin_commerce_configuration_service import update_promotion_config
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import update_promotion_config
 
 
 
@@ -115,20 +115,7 @@ from domains.governance.services.admin_commerce_configuration_service import upd
 
 
 
-from domains.governance.services.admin_commerce_configuration_service import list_coupons
-
-
-
-
-
-
-
-
-
-
-
-
-from domains.governance.services.admin_commerce_configuration_service import archive_coupon
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_coupons
 
 
 
@@ -141,36 +128,49 @@ from domains.governance.services.admin_commerce_configuration_service import arc
 
 
 
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import archive_coupon
 
 
-from domains.governance.services.admin_commerce_configuration_service import restore_coupon
-from domains.governance.services.admin_commerce_configuration_service import bulk_archive_coupons
+
+
+
+
+
+
+
+
+
+
+
+
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import restore_coupon
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import bulk_archive_coupons
 
 
 # === auto-wiring re-exports (migration repair) ===
-from domains.governance.services.admin_commerce_configuration_service import archive_banner
-from domains.governance.services.admin_commerce_configuration_service import archive_flash_sale
-from domains.governance.services.admin_commerce_configuration_service import bulk_archive_banners
-from domains.governance.services.admin_commerce_configuration_service import bulk_archive_flash_sales
-from domains.governance.services.admin_commerce_configuration_service import bulk_restore_banners
-from domains.governance.services.admin_commerce_configuration_service import bulk_restore_coupons
-from domains.governance.services.admin_commerce_configuration_service import bulk_restore_flash_sales
-from domains.governance.services.admin_commerce_configuration_service import create_banner_by_country
-from domains.governance.services.admin_commerce_configuration_service import create_banner_promotion
-from domains.governance.services.admin_commerce_configuration_service import create_coupon_by_country
-from domains.governance.services.admin_commerce_configuration_service import create_flash_sale
-from domains.governance.services.admin_commerce_configuration_service import delete_banner_by_country
-from domains.governance.services.admin_commerce_configuration_service import delete_banner_promotion
-from domains.governance.services.admin_commerce_configuration_service import list_banners_by_country
-from domains.governance.services.admin_commerce_configuration_service import list_banners_promotions
-from domains.governance.services.admin_commerce_configuration_service import list_coupons_by_country
-from domains.governance.services.admin_commerce_configuration_service import list_flash_sales
-from domains.governance.services.admin_commerce_configuration_service import list_flash_sales_by_country
-from domains.governance.services.admin_commerce_configuration_service import list_promotion_tiers
-from domains.governance.services.admin_commerce_configuration_service import restore_banner
-from domains.governance.services.admin_commerce_configuration_service import restore_flash_sale
-from domains.governance.services.admin_commerce_configuration_service import update_banner_by_country
-from domains.governance.services.admin_commerce_configuration_service import update_banner_promotion
-from domains.governance.services.admin_commerce_configuration_service import update_flash_sale
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import archive_banner
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import archive_flash_sale
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import bulk_archive_banners
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import bulk_archive_flash_sales
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import bulk_restore_banners
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import bulk_restore_coupons
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import bulk_restore_flash_sales
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import create_banner_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import create_banner_promotion
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import create_coupon_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import create_flash_sale
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import delete_banner_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import delete_banner_promotion
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_banners_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_banners_promotions
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_coupons_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_flash_sales
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_flash_sales_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import list_promotion_tiers
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import restore_banner
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import restore_flash_sale
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import update_banner_by_country
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import update_banner_promotion
+from domains.governance.services.commerce.flat_admin_commerce_configuration_service import update_flash_sale
 
 

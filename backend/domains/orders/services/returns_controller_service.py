@@ -11,7 +11,7 @@ from providers.payments.stripe import refund_payment_intent
 from providers.payments.tap import refund_tap_charge
 from sqlalchemy.orm import Session, selectinload
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.logistics.models.logistics import Shipment
@@ -417,7 +417,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                     try:
                         apply_order_status_change(order, "refunded", db)
                         try:
-                            from domains.finance.services.cash_management_service import log_refund_bank_transaction
+                            from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
 
                             log_refund_bank_transaction(
                                 order,
@@ -460,7 +460,7 @@ def update_return_request(return_id: int, payload: ReturnRequestUpdate, current_
                         if tap_data.get("status") in ("REFUNDED", "CAPTURED"):
                             apply_order_status_change(order, "refunded", db)
                             try:
-                                from domains.finance.services.cash_management_service import log_refund_bank_transaction
+                                from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
 
                                 log_refund_bank_transaction(
                                     order,

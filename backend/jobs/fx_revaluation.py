@@ -29,7 +29,7 @@ def run_fx_revaluation_task(
         from datetime import date, datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.comms.services.import_service import run_fx_revaluation
+        from domains.comms.services.shared.admin.import_service import run_fx_revaluation
 
         as_of_date = (
             datetime.fromisoformat(as_of).date() if as_of else date.today()

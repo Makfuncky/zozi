@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.comms.services.notification_engine import NotificationChannel
-from domains.comms.services.notification_engine import NotificationPriority
-from domains.comms.services.notification_engine import get_notification_engine
+from domains.comms.services.notification.notification_engine import NotificationChannel
+from domains.comms.services.notification.notification_engine import NotificationPriority
+from domains.comms.services.notification.notification_engine import get_notification_engine
 
 router = APIRouter()
 

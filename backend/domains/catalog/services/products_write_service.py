@@ -67,7 +67,7 @@ def _soft_delete_by_product(db: Session, model, product_id: int) -> int:
 
 def clear_product_carts(db: Session, product_id: int) -> int:
     """Remove (soft-delete) all cart items for a product during cascade delete."""
-    from domains.accounts.models.core import CartItem
+    from domains.governance.models.core import CartItem
 
     return _soft_delete_by_product(db, CartItem, product_id)
 
@@ -90,7 +90,7 @@ def archive_product_reviews(db: Session, product_id: int) -> int:
 
 def purge_product_cart_items(db: Session, product_id: int) -> int:
     """Remove every cart row referencing *product_id*. Caller commits."""
-    from domains.accounts.models.core import CartItem
+    from domains.governance.models.core import CartItem
 
     return (
         db.query(CartItem)

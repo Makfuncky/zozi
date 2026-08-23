@@ -1,6 +1,6 @@
 """Canonical Celery worker: accrual reversal.
 
-Wires to ``domains.finance.services.finance_automation.reverse_accrual``.
+Wires to ``domains.finance.services.ledger.finance_automation.reverse_accrual``.
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def reverse_accrual_task(
         from datetime import datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.finance_automation import reverse_accrual
+        from domains.finance.services.ledger.finance_automation import reverse_accrual
 
         db = SessionLocal()
         try:

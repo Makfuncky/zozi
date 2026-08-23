@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 # A3 / RESOLVER §26 ACC-01 — re-export the customer-schema ORM classes the
 # accounts god-module hub used to own, so cross-domain readers resolve them via
-# this sanctioned ports surface (Law 3) instead of ``domains.accounts.models``.
-from domains.customers.models.customer_schema_models import Cart, Referral
-
+# this sanctioned ports surface (Law 3) instead of ``domains.governance.models``.
+from domains.governance.models.core import Cart
+from domains.governance.models.user import Referral
+from infrastructure.utils.export_read_service import db_product_all_2, db_order_all_1, db_auditlog_query_4, MAX_EXPORT_ROWS, db_coupon_all_3, db_user_all_0

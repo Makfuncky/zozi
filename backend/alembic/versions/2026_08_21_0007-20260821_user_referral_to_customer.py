@@ -1,7 +1,7 @@
 """re-home user Referral tables to customer domain
 
 Re-homes ``Referral`` / ``ReferralPointEvent`` (``customer`` schema) out of
-``domains.accounts.models.user`` into ``domains.customers.models`` (A3 /
+``domains.governance.models.user`` into ``domains.customers.models`` (A3 /
 §26 ACC-01). Pure code move — no physical schema change — so this revision is
 a no-op.
 

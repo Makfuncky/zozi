@@ -56,7 +56,7 @@ from sqlalchemy import text, or_, and_
 
 
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
 from domains.hr.models.employee_models import Employee
 
@@ -772,7 +772,7 @@ def send_internal_email(
 
     """
 
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
 
     from domains.comms.models.communication import InternalEmail
     from domains.comms.models.communication import EmailFolder

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import Any, Generator
 
 from infrastructure.database.database import SessionLocal
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 logger = logging.getLogger(__name__)

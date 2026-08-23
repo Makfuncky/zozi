@@ -2,16 +2,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
-from domains.governance.services.misc_service import archive_entity
-from domains.governance.services.misc_service import restore_entity
+from domains.governance.services.settings.misc_service import archive_entity
+from domains.governance.services.settings.misc_service import restore_entity
 from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
 from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
-from domains.governance.services.misc_service import hard_delete_entity
+from domains.governance.services.settings.misc_service import hard_delete_entity
 from domains.logistics.services.partner_geography_service import approve_partner
 from domains.logistics.services.partner_geography_service import list_partners
 from domains.logistics.services.partner_geography_service import reject_partner

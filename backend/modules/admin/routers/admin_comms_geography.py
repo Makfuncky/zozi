@@ -3,16 +3,16 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.database.schemas import EmailCampaignCreate, EmailCampaignOut
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
-from domains.comms.services.campaign_geography_service import create_campaign
-from domains.comms.services.campaign_geography_service import delete_campaign
-from domains.comms.services.campaign_geography_service import email_metrics
-from domains.comms.services.campaign_geography_service import list_all_campaigns
-from domains.comms.services.campaign_geography_service import list_campaigns
+from domains.comms.services.marketing.campaign_geography_service import create_campaign
+from domains.comms.services.marketing.campaign_geography_service import delete_campaign
+from domains.comms.services.marketing.campaign_geography_service import email_metrics
+from domains.comms.services.marketing.campaign_geography_service import list_all_campaigns
+from domains.comms.services.marketing.campaign_geography_service import list_campaigns
 
 router = APIRouter(prefix="/api/v1/admin")
 

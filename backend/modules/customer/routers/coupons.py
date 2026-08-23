@@ -11,7 +11,7 @@ from domains.governance.models.admin import CouponUsage
 from domains.payments.models.payments import Coupon
 from infrastructure.utils.datetime_utils import utcnow
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/customer/coupons")
 
 
 def _normalize_discount_type(value: object) -> str | None:

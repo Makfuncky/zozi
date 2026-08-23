@@ -230,3 +230,8 @@ from domains.catalog.services.admin_promotions_write_service import get_promotio
 # Read helper reused by cross-domain consumers (orders). Writes were moved out of
 # ports so this module is a pure read surface; consumers import write services directly.
 from domains.catalog.services.products_service import resolve_product_variant
+from domains.catalog.services.products.products_service import _bump_product_cache_version
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities, bulk_restore_entities
+from domains.catalog.services.banners.banner_controller import create_banner, update_banner, delete_banner, get_banner_by_id, get_banners, get_banners_page, BannerCreate, BannerUpdate, upload_banner_image
+from domains.catalog.services.banners.banner_service import create_banner, update_banner, delete_banner, get_banner_by_id, BannerCreate, BannerUpdate
+from domains.catalog.services.categories.category_service import rebuild_category_paths

@@ -1,4 +1,4 @@
-"""Async AI country research endpoints."""
+﻿"""Async AI country research endpoints."""
 from __future__ import annotations
 
 import logging
@@ -7,14 +7,14 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from domains.finance.services.ai_research_jobs import decrement_running_jobs
-from domains.finance.services.ai_research_jobs import enqueue_job
-from domains.finance.services.ai_research_jobs import get_completed_result
-from domains.finance.services.ai_research_jobs import get_job
-from domains.finance.services.ai_research_jobs import increment_running_jobs
-from domains.finance.services.ai_research_jobs import mark_job_failed
-from domains.finance.services.ai_research_jobs import mark_job_running
-from domains.finance.services.country_ai_research import CountryAIResearchService
+from domains.finance.services.shared.ai_research_jobs import decrement_running_jobs
+from domains.finance.services.shared.ai_research_jobs import enqueue_job
+from domains.finance.services.shared.ai_research_jobs import get_completed_result
+from domains.finance.services.shared.ai_research_jobs import get_job
+from domains.finance.services.shared.ai_research_jobs import increment_running_jobs
+from domains.finance.services.shared.ai_research_jobs import mark_job_failed
+from domains.finance.services.shared.ai_research_jobs import mark_job_running
+from domains.finance.services.country.country_ai_research import CountryAIResearchService
 from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)

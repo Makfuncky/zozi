@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.services.workflow_engine import get_workflow_engine
+from domains.infrastructure.utils.workflow_engine import get_workflow_engine
 
 router = APIRouter()
 

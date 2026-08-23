@@ -8,18 +8,18 @@ from fastapi import HTTPException
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile as SP
 from domains.comms.models.suppliers import SupplierProfile
 from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import Order
-from domains.comms.services.db_read import aggregate_rows
-from domains.comms.services.db_read import all_rows
-from domains.comms.services.db_read import count
-from domains.comms.services.db_read import first
-from domains.comms.services.db_read import scalar_with_filters
+from domains.comms.services.utility.db_read import aggregate_rows
+from domains.comms.services.utility.db_read import all_rows
+from domains.comms.services.utility.db_read import count
+from domains.comms.services.utility.db_read import first
+from domains.comms.services.utility.db_read import scalar_with_filters
 from domains.suppliers.services.suppliers_write_service import add_and_flush
 from domains.suppliers.services.suppliers_write_service import add_to_session
 from domains.suppliers.services.suppliers_write_service import commit_only

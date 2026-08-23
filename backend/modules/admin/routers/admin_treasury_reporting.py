@@ -1,4 +1,4 @@
-"""Admin Treasury Router — bridges frontend /admin/treasury/* calls to TreasuryEngine."""
+﻿"""Admin Treasury Router — bridges frontend /admin/treasury/* calls to TreasuryEngine."""
 from __future__ import annotations
 import json
 import logging
@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import Account
@@ -36,7 +36,7 @@ from domains.payments.models.payments import LogisticsPartnerPayout
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.hr.models.employee_models import Employee
-from domains.finance.services.treasury_engine import TreasuryEngine
+from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from rbac import get_current_user
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
@@ -965,7 +965,7 @@ def admin_reconciliation_pipeline(
         from domains.payments.models.payments import Payout
         from domains.logistics.models.logistics import LogisticsPartner
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-        from domains.finance.services.commission_engine import get_effective_rate
+        from domains.finance.services.commission.commission_engine import get_effective_rate
 
         pipeline = []
         orders = db.query(OrderModel).filter(
@@ -1102,7 +1102,7 @@ def admin_record_cod_remittance(
         db.refresh(receipt)
         # Keep the double-entry ledger in sync with the reconciliation engine.
         try:
-            from domains.finance.services.general_ledger_service import post_logistics_cod_remittance_journal
+            from domains.finance.services.ledger.general_ledger_service import post_logistics_cod_remittance_journal
             post_logistics_cod_remittance_journal(db, receipt.id, Decimal(str(amount)), country_code=cc)
         except Exception as gl_err:
             logger.warning(f"COD remittance GL post skipped: {gl_err}")
@@ -1177,7 +1177,7 @@ def admin_approve_settlement(
         settlement.status = "paid"
         db.commit()
         try:
-            from domains.finance.services.general_ledger_service import post_supplier_settlement_journal
+            from domains.finance.services.ledger.general_ledger_service import post_supplier_settlement_journal
             post_supplier_settlement_journal(
                 db,
                 settlement.id,

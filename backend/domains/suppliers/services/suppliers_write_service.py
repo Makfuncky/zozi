@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierDocument
 from domains.comms.models.suppliers import SupplierProfile
@@ -34,8 +34,8 @@ from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
 from domains.payments.models.payments import Payout
 
-from domains.comms.services.write_helpers import add_and_flush
-from domains.comms.services.write_helpers import commit_only
+from domains.comms.services.utility.write_helpers import add_and_flush
+from domains.comms.services.utility.write_helpers import commit_only
 
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -413,7 +413,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
     try:
 
-        from domains.finance.services.invoice_service import create_invoice_from_order
+        from domains.finance.services.ledger.invoice_service import create_invoice_from_order
 
         from domains.finance.models.finance import Invoice
 
@@ -441,8 +441,7 @@ async def create_shipment(data: dict, current_user: dict, db: Session) -> dict:
 
             logger.info("Auto-invoice created for order %d supplier %d", order_id, supplier_id)
 
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
-
+    except (ValueError, TypeError, KeyError, AttributeError, RuntimeError, ImportError) as exc:
         logger.warning("Auto-invoice creation failed (non-fatal): %s", exc)
 
 

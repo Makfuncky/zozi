@@ -1,13 +1,13 @@
 """FastAPI auth dependencies: resolve the current user from the bearer token.
 
-Re-export shim -> canonical ``domains.accounts.services.security_dependencies``
+Re-export shim -> canonical ``domains.governance.services.security_dependencies``
 (P6 merge/shim, no-delete policy). The real implementation now lives in the
 ``domains`` layer so the infrastructure layer no longer imports ``domains`` at
 call sites. This shim keeps every existing importer (including
 ``infrastructure.utils.dependencies``) resolving with zero edits.
 """
-from domains.accounts.services.security_dependencies import *  # noqa: F401,F403
-from domains.accounts.services.security_dependencies import (  # noqa: F401
+from domains.governance.services.security_dependencies import *  # noqa: F401,F403
+from domains.governance.services.security_dependencies import (  # noqa: F401
     logger,
     bearer_scheme,
     _load_user,

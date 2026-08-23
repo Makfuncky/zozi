@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeWorkLog
 from domains.hr.models.employee_models import EmployeeAttendance
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.finance import TreasuryAccount
 
 logger = logging.getLogger("zozi.ghost_watchdog")

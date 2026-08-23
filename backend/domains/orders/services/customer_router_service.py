@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
-from domains.accounts.models.core import Address
+from domains.governance.models.core import Address
 import structlog
 logger = structlog.get_logger(__name__)
 

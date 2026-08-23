@@ -17,7 +17,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import CategoryCreate, CategoryOut, CategoryUpdate, MessageResponse
 
-from domains.accounts.ports import User
+from domains.governance.ports import User
 from domains.catalog.ports import Category
 
 from infrastructure.utils.dependencies import require_admin

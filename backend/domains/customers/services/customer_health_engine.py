@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import ReturnRequest
 
@@ -73,11 +73,11 @@ class CustomerHealthEngine:
         ).all()
     
     def _calculate_lifetime_value(self, orders) -> Decimal:
-        return sum(Decimal(str(o.total_amount)) for o in orders)
+        return sum(Decimal(str(o.total_amount or 0)) for o in orders)
     
     def _calculate_fraud_risk(self, user) -> float:
         risk = 0.0
-        if user.email_verified == False:
+        if not getattr(user, "email_verified", None):
             risk += 0.3
         if user.phone is None:
             risk += 0.2
@@ -98,9 +98,14 @@ class CustomerHealthEngine:
     def _calculate_purchase_frequency(self, orders) -> float:
         if len(orders) < 2:
             return float(len(orders))
-        sorted_orders = sorted(orders, key=lambda x: x.created_at)
+        sorted_orders = sorted(
+            (o for o in orders if o.created_at is not None),
+            key=lambda x: x.created_at,
+        )
+        if len(sorted_orders) < 2:
+            return float(len(sorted_orders))
         days = (sorted_orders[-1].created_at - sorted_orders[0].created_at).days
-        return len(orders) / max(days, 1) * 30
+        return len(sorted_orders) / max(days, 1) * 30
     
     def _get_status(self, score: float) -> str:
         if score >= 0.8:

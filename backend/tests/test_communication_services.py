@@ -19,8 +19,8 @@ from domains.hr.services.employee_communication_service import (
     get_employee_directory,
     _resolve_attachments,
 )
-from domains.comms.services.email_gateway import EmailGateway
-from domains.comms.services.communication_audit import get_communication_audit_service
+from domains.comms.services.email.email_gateway import EmailGateway
+from domains.comms.services.admin.communication_audit import get_communication_audit_service
 
 
 @pytest.fixture

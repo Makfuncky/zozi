@@ -1,4 +1,4 @@
-"""Celery tasks for AI/ML processing (background removal, image analysis, angle generation)."""
+﻿"""Celery tasks for AI/ML processing (background removal, image analysis, angle generation)."""
 from __future__ import annotations
 
 import base64
@@ -46,7 +46,7 @@ def remove_background_task(
         # Import inside task to avoid loading ML libraries in web workers
         import numpy as np
         from PIL import Image
-        from domains.finance.services.bg_removal_service import remove_background, remove_background_model
+        from domains.finance.services.shared.bg_removal_service import remove_background, remove_background_model
         from domains.media.services.storage import storage as _store
         
         # Decode base64 image
@@ -111,7 +111,7 @@ def analyze_product_image_task(
     """
     try:
         import asyncio
-        from domains.finance.services.ai_variant_config import analyze_product_image
+        from domains.finance.services.shared.ai_variant_config import analyze_product_image
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)
@@ -218,7 +218,7 @@ def nlp_extract_task(
     try:
         import json
         import re
-        from domains.finance.services.ai_variant_config import _ollama_chat, _OLLAMA_TEXT_MODEL, _extract_json
+        from domains.finance.services.shared.ai_variant_config import _ollama_chat, _OLLAMA_TEXT_MODEL, _extract_json
         
         canonical_list = 'Clothing, Electronics, Home & Kitchen, Beauty, Sports, Books, Toys, Automotive, Grocery, Health, Jewelry, Office, Pet Supplies, Shoes, Bags, Furniture'
         en_prompt = f'You are a product data extraction assistant for an Oman/GCC marketplace.\nGiven the voice transcript below, extract structured product data.\nChoose the category from exactly this list: {canonical_list}.\nTRANSCRIPT: ' + transcript + '\n\nReply ONLY with valid JSON (double quotes, no markdown, no commentary).\n{\n  "product_name": "best guess product name (REQUIRED)",\n  "category": "one from the list or null",\n  "subcategory": "subcategory or null",\n  "colors": ["extracted colors"],\n  "fabric": "fabric type or null",\n  "print_text": "any print/pattern text or null",\n  "description": "2-3 sentence auto-generated product description",\n  "suggested_tags": ["8-12 lowercase SEO tags"],\n  "variants": {"color": ["Blue","Black"], "size": ["S","M","L"]},\n  "stock_hints": {"Blue": {"S": 0, "M": 0, "L": 0}},\n  "quantity": null,\n  "price": null\n}'

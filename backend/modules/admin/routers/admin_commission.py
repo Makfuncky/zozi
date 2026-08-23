@@ -9,7 +9,7 @@ from infrastructure.database.schemas import (
     CommissionCategoryRateCreate,
     CommissionCategoryRateOut,
 )
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.finance.models.commission import CommissionCategoryRate
 from domains.governance.models.admin import CommissionBadgeTier
 from domains.country.utils.country_rls import get_country_or_404

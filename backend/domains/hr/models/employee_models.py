@@ -18,7 +18,7 @@ __all__ = [
     "EmployeeAddress", "EmployeeDependent", "EmployeeAsset",
     "EmployeeCertification", "EmployeeDocument", "EmployeeRelation",
     "COIReport", "TravelRequest", "AlumniNetwork", "DisciplinaryCase", "OffboardingCase",
-    "OrgUnit", "EmployeeActivityLog"
+    "OrgUnit", "EmployeeActivityLog", "ShiftHandoverSession", "ShiftHandoverTask"
 ]
 
 
@@ -536,4 +536,36 @@ class EmployeeActivityLog(Base):
     created_at = Column(DateTime, default=_utcnow)
 
     employee = relationship("Employee", foreign_keys=[actor_employee_id])
+
+
+class ShiftHandoverSession(Base):
+    __tablename__ = "shift_handover_sessions"
+    __table_args__ = (
+        Index("ix_handover_outgoing", "outgoing_employee_id"),
+        Index("ix_handover_incoming", "incoming_employee_id"),
+        Index("ix_handover_status", "status"), {"schema": "customer"})
+    id = Column(Integer, primary_key=True, index=True)
+    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    outgoing_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    incoming_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    shift_date = Column(DateTime, nullable=False)
+    notes = Column(Text, nullable=True)
+    status = Column(String(20), default="pending")
+    acknowledged_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+
+    tasks = relationship("ShiftHandoverTask", back_populates="session", cascade="all, delete-orphan")
+
+
+class ShiftHandoverTask(Base):
+    __tablename__ = "shift_handover_tasks"
+    __table_args__ = ({"schema": "hr"},)
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("shift_handover_sessions.id"), nullable=False)
+    description = Column(Text, nullable=False)
+    priority = Column(String(20), default="normal")
+    status = Column(String(20), default="open")
+    assigned_to = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    created_at = Column(DateTime, default=_utcnow)
+    session = relationship("ShiftHandoverSession", back_populates="tasks")
 

@@ -79,3 +79,15 @@ def list_active_country_codes(db: Session) -> list[str]:
         .order_by(CountryConfig.name.asc())
         .all()
     ]
+
+
+# --- Query delegation (Law 3 sanctioned cross-domain query surface) ---
+
+def country_config_query(db: Session) -> object:
+    """Return a base ``CountryConfig`` query for sanctioned cross-domain delegation."""
+    return db.query(CountryConfig)
+
+
+from domains.country.services.country_config_admin_service import add_country_city, archive_country, bulk_archive_countries, bulk_restore_countries, create_country_commission_rate, create_feature_flag, delete_country_commission_rate, delete_country_city, delete_feature_flag, hard_delete_country, list_country_commission_rates, patch_country_city, restore_country, toggle_country_active, update_feature_flag
+from domains.country.services.country_audit_admin_service import add_city, assign_staff, delete_city, list_cities, list_communications, list_staff, list_tax_rates, mark_communication_read, remove_staff, send_country_communication, set_tax_rate, update_city
+from domains.country.utils.country_rls import get_country_or_404

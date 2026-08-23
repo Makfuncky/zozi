@@ -1,16 +1,20 @@
-"""Cart write service — DB write operations for cart items."""
+"""Cart write service — DB write operations for cart items.
+
+Single source of truth for cart-item persistence. Imported by the cart
+service layer; routers and controllers never touch the ORM session directly
+for cart writes.
+"""
 from __future__ import annotations
-import logging
-logger = logging.getLogger(__name__)
 
 from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from domains.accounts.ports import CartItem
-from domains.catalog.ports import Product
+from domains.governance.models.core import CartItem
+from domains.catalog.models.products import Product
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog
+
 logger = structlog.get_logger(__name__)
 
 

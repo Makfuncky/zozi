@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from infrastructure.utils.dependencies import require_supplier
 from infrastructure.utils.config import settings
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
 router = APIRouter(prefix="/api/v1/ai")
 

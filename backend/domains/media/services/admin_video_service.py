@@ -1,6 +1,6 @@
 """Auto-migrated service logic from routers/admin_video.py."""
 from __future__ import annotations
-from domains.governance.services.admin_media_geography_service import _serialize_room
+from domains.governance.services.media.flat_admin_media_geography_service import _serialize_room
 
 import logging
 
@@ -14,18 +14,18 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
-from domains.accounts.models.core import VideoRoom
+from domains.governance.models.core import VideoRoom
 
-from domains.comms.services.video_conferencing import get_video_conference
+from domains.comms.services.video.video_conferencing import get_video_conference
 
 from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin
 
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
-from domains.governance.services.admin_comms_messaging_service import _resolve_country
+from domains.governance.services.comms.admin_comms_messaging_service import _resolve_country
 
 logger = logging.getLogger("zozi.api.admin_video")
 

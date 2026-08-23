@@ -1,7 +1,7 @@
 """Admin settings router."""
 from fastapi import APIRouter, Depends
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.config import settings
 from infrastructure.utils.dependencies import require_admin
 

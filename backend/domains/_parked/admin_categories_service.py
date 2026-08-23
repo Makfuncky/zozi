@@ -20,7 +20,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from domains.accounts.ports import User
+from domains.governance.ports import User
 from domains.catalog.ports import Category
 
 from domains.catalog.services.products_write_service import create_category as create_category_model, update_category as update_category_model, delete_category as delete_category_model, reorder_categories as reorder_categories_model

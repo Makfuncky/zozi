@@ -14,7 +14,7 @@ __all__ = ["AlertEscalationRule", "DocumentVerification", "KYCVerification"]
 
 class AlertEscalationRule(Base):
     __tablename__ = "alert_escalation_rules"
-    __table_args__ = ({"schema": "security"},)
+    __table_args__ = ({"extend_existing": True, "schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     alert_type = Column(String(50), nullable=False)
     severity = Column(String(20), default="medium")
@@ -26,7 +26,7 @@ class AlertEscalationRule(Base):
 
 class DocumentVerification(Base):
     __tablename__ = "document_verifications"
-    __table_args__ = ({"schema": "security"},)
+    __table_args__ = ({"extend_existing": True, "schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     pipeline_id = Column(Integer, ForeignKey("hr.onboarding_pipelines.id"), nullable=False)
     document_type = Column(String, nullable=False)
@@ -40,7 +40,7 @@ class DocumentVerification(Base):
 
 class KYCVerification(Base):
     __tablename__ = "kyc_verifications"
-    __table_args__ = ({"schema": "security"},)
+    __table_args__ = ({"extend_existing": True, "schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False, index=True)
     status = Column(String, default="pending")

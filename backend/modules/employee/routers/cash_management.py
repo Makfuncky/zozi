@@ -12,9 +12,9 @@ from fastapi import APIRouter, Body, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import domains.finance.services.cash_management_controller as ctrl
+import domains.finance.services.treasury.cash_management_controller as ctrl
 from infrastructure.utils.dependencies import require_admin
-from domains.governance.services.effective_permissions import require_permission
+from domains.governance.services.permissions.effective_permissions import require_permission
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import (
     BadgeBillingOut,

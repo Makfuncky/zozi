@@ -123,6 +123,53 @@ def list_logistics_partner_payouts_page(db: Session, cursor: Optional[str] = Non
     """Keyset-cursor page of LogisticsPartnerPayout rows (scale-ready)."""
     return _keyset_page(LogisticsPartnerPayout, db, cursor, page_size)
 
+
+# --- Query delegation (Law 3 sanctioned cross-domain query surface) ---
+# Other domains call these instead of importing models directly.
+
+def payout_query(db: Session) -> object:
+    """Return a base ``Payout`` query for sanctioned cross-domain delegation."""
+    return db.query(Payout)
+
+def payment_query(db: Session) -> object:
+    """Return a base ``Payment`` query for sanctioned cross-domain delegation."""
+    return db.query(Payment)
+
+def logistics_partner_payout_query(db: Session) -> object:
+    """Return a base ``LogisticsPartnerPayout`` query for sanctioned cross-domain delegation."""
+    return db.query(LogisticsPartnerPayout)
+
+def payment_gateway_connection_query(db: Session) -> object:
+    """Return a base ``PaymentGatewayConnection`` query for sanctioned cross-domain delegation."""
+    return db.query(PaymentGatewayConnection)
+
+def payment_reconciliation_run_query(db: Session) -> object:
+    """Return a base ``PaymentReconciliationRun`` query for sanctioned cross-domain delegation."""
+    return db.query(PaymentReconciliationRun)
+
+
+# --- Model class references (for column access in cross-domain filters) ---
+
+def payout_model() -> type:
+    """Return the ``Payout`` model class (for column reference only)."""
+    return Payout
+
+
+def payment_model() -> type:
+    """Return the ``Payment`` model class (for column reference only)."""
+    return Payment
+
+
+def logistics_partner_payout_model() -> type:
+    """Return the ``LogisticsPartnerPayout`` model class (for column reference only)."""
+    return LogisticsPartnerPayout
+
+
+def payment_gateway_connection_model() -> type:
+    """Return the ``PaymentGatewayConnection`` model class (for column reference only)."""
+    return PaymentGatewayConnection
+
+
 # --- P11 re-exports (Law 3 sanctioned read/behavior surface) ---
 from domains.payments.models.payments import Banner, Coupon, LogisticsPartnerPayout, Payment
 # --- P11.5 re-exports (orders cross-domain repointing) ---
@@ -134,3 +181,4 @@ from domains.payments.services.payments import (
     normalize_checkout_payment_method,
     _order_holds_inventory,
 )
+from domains.payments.services.payments import _apply_stripe_runtime_key

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.database.database import get_db
-from domains.governance.services.ediscovery import get_ediscovery_service
+from domains.governance.services.audit.ediscovery import get_ediscovery_service
 
 router = APIRouter()
 

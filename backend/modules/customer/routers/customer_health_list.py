@@ -29,7 +29,7 @@ def list_customer_health(
     size: int = 100,
 ):
     from infrastructure.utils.pagination import paginated_query
-    from domains.accounts.models.user import User
+    from domains.governance.models.user import User
 
     users, total = paginated_query(
         db.query(User).order_by(User.created_at.desc()),

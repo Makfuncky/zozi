@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from fastapi import Body, Depends, Request, status
 
-from domains.governance.services.auth_controller_service import get_current_user
+from domains.governance.services.auth.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 

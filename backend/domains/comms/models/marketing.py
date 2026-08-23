@@ -22,7 +22,7 @@ class FlashSale(Base, TenantMixin):
     __table_args__ = (
         Index('ix_flash_sales_product_ids_gin', 'product_ids', postgresql_using='gin'),
         Index('ix_flash_sales_country_created', 'country_code', 'created_at'),
-        {'schema': 'commerce'},
+        {'schema': 'comms'},
     )
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
@@ -50,7 +50,7 @@ class FlashSaleItem(Base, TenantMixin):
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (
         Index('ix_flash_sale_items_country_created', 'country_code', 'created_at'),
-        {'schema': 'commerce'},
+        {'schema': 'comms'},
     )
     id = Column(Integer, primary_key=True, index=True)
     flash_sale_id = Column(Integer, ForeignKey('commerce.flash_sales.id', ondelete='RESTRICT'), nullable=False, index=True)
@@ -71,7 +71,7 @@ class EmailCampaign(Base, TenantMixin):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_email_campaigns_country_created', 'country_code', 'created_at'), {'schema': 'communication'})
+    __table_args__ = (Index('ix_email_campaigns_country_created', 'country_code', 'created_at'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     subject = Column(String, nullable=False)
@@ -97,7 +97,7 @@ class EmailTemplate(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'communication'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), unique=True, index=True, nullable=False)
     subject = Column(String(500), nullable=False)
@@ -117,7 +117,7 @@ class NewsletterSubscriber(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'communication'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     created_at = Column(DateTime, default=utcnow)
@@ -133,7 +133,7 @@ class EmailCampaignLog(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'communication'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey('communication.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
     recipient_email = Column(String, nullable=False)
@@ -153,7 +153,7 @@ class CampaignRecipient(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'communication'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey('communication.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
     user_id = Column(Integer, nullable=False)
@@ -178,7 +178,7 @@ class EmailDeliveryEvent(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_email_delivery_events_details_gin', 'details', postgresql_using='gin'), {'schema': 'communication'})
+    __table_args__ = (Index('ix_email_delivery_events_details_gin', 'details', postgresql_using='gin'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String, nullable=False)
     recipient_email = Column(String, nullable=False)
@@ -197,7 +197,7 @@ class EmailSuppression(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'communication'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False, index=True)
     reason = Column(String, nullable=False)
@@ -219,7 +219,7 @@ class EmailRuntimeConfig(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'configuration'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String(50), default='environment')
     resend_api_key = Column(String, nullable=True)
@@ -251,7 +251,7 @@ class PointsTransaction(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'commerce'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('core.users.id', ondelete='RESTRICT'), nullable=False, index=True)
     points = Column(Numeric(12, 2), nullable=False, default=0)
@@ -272,7 +272,7 @@ class UserPoints(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'commerce'},)
+    __table_args__ = ({'schema': 'comms'},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('core.users.id', ondelete='RESTRICT'), nullable=False, unique=True, index=True)
     points = Column(Numeric(12, 2), nullable=False, default=0)

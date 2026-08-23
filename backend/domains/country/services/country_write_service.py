@@ -5,8 +5,8 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import EmailVerificationToken
-from domains.accounts.models.user import PasswordResetToken
+from domains.governance.models.user import EmailVerificationToken
+from domains.governance.models.user import PasswordResetToken
 from domains.country.models.countries import CountryConfig
 from domains.country.models.countries import CountryCommunication
 from domains.country.models.country_enhancements import CountryCity

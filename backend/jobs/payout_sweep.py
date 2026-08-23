@@ -1,6 +1,6 @@
-"""Canonical Celery worker: automated payout sweep (supplier + logistics).
+﻿"""Canonical Celery worker: automated payout sweep (supplier + logistics).
 
-Wires to ``domains.finance.services.auto_payout_scheduler``.
+Wires to ``domains.finance.services.payments.auto_payout_scheduler``.
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ def run_payout_sweep(
         from datetime import datetime, timezone
 
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.auto_payout_scheduler import (
+        from domains.finance.services.payments.auto_payout_scheduler import (
             run_auto_logistics_payout_sweep,
             run_auto_payout_sweep,
         )

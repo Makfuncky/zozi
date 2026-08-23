@@ -7,12 +7,12 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from domains.finance.services.sub_ledger_controller import controller_get_ap_summary
-from domains.finance.services.sub_ledger_controller import controller_get_ar_summary
-from domains.finance.services.sub_ledger_controller import controller_post_ap_payable
-from domains.finance.services.sub_ledger_controller import controller_post_ap_payment
-from domains.finance.services.sub_ledger_controller import controller_post_ar_invoice
-from domains.finance.services.sub_ledger_controller import controller_post_ar_payment
+from domains.finance.services.ledger.sub_ledger_controller import controller_get_ap_summary
+from domains.finance.services.ledger.sub_ledger_controller import controller_get_ar_summary
+from domains.finance.services.ledger.sub_ledger_controller import controller_post_ap_payable
+from domains.finance.services.ledger.sub_ledger_controller import controller_post_ap_payment
+from domains.finance.services.ledger.sub_ledger_controller import controller_post_ar_invoice
+from domains.finance.services.ledger.sub_ledger_controller import controller_post_ar_payment
 
 router = APIRouter(prefix="/api/v1")
 

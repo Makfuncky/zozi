@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from modules.admin.routers.auth import require_admin
-from domains.governance.services.auth_controller_service import get_current_user
+from domains.governance.services.auth.auth_controller_service import get_current_user
 from infrastructure.database.database import get_db
 from infrastructure.database import permission_service as svc
 
@@ -43,27 +43,27 @@ class UserPermissionOverrideBody(BaseModel):
     is_granted: bool = True
     country_code: Optional[str] = None
     expires_at: Optional[str] = None
-from domains.governance.services.permission_service import list_categories
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
-from domains.accounts.services.admin_categories_service import create_category
+from domains.governance.services.permissions.flat_permission_service import list_categories
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
+from domains.catalog.categories_service import create_category
 
 def __getattr__(name):
     _LAZY = {'COUNTRY_ROLE_PERMISSION_MAP': 'services.security.effective_permissions', 'HR_PERMISSION_MAP': 'services.security.effective_permissions', 'MAKER_CHECKER_PERMISSIONS': 'services.security.effective_permissions', 'approve_permission_change': 'services.security.effective_permissions', 'check_permission': 'services.security.effective_permissions', 'get_effective_permissions': 'services.security.effective_permissions', 'invalidate_permission_cache': 'services.security.effective_permissions', 'request_permission_change': 'services.security.effective_permissions'}
@@ -73,7 +73,7 @@ def __getattr__(name):
     raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
 
-from domains.accounts.services.admin_categories_service import update_category
+from domains.catalog.categories_service import update_category
 
 
 
@@ -88,7 +88,7 @@ from domains.accounts.services.admin_categories_service import update_category
 
 
 
-from domains.accounts.services.admin_categories_service import delete_category
+from domains.catalog.categories_service import delete_category
 
 
 
@@ -100,21 +100,7 @@ from domains.accounts.services.admin_categories_service import delete_category
 
 
 
-from domains.governance.services.admin_permissions_validation_service import list_permissions
-
-
-
-
-
-
-
-
-
-
-
-
-
-from domains.governance.services.admin_permissions_validation_service import create_permission
+from domains.governance.services.users.flat_admin_permissions_validation_service import list_permissions
 
 
 
@@ -128,21 +114,35 @@ from domains.governance.services.admin_permissions_validation_service import cre
 
 
 
+from domains.governance.services.users.flat_admin_permissions_validation_service import create_permission
 
-from domains.governance.services.admin_permissions_validation_service import delete_permission
-from domains.governance.services.admin_permissions_validation_service import get_role_permissions
+
+
+
+
+
+
+
+
+
+
+
+
+
+from domains.governance.services.users.flat_admin_permissions_validation_service import delete_permission
+from domains.governance.services.users.flat_admin_permissions_validation_service import get_role_permissions
 
 
 # === auto-wiring re-exports (migration repair) ===
-from domains.governance.services.admin_permissions_validation_service import assign_permission_to_role
-from domains.governance.services.admin_permissions_validation_service import check_effective_permission
-from domains.governance.services.admin_permissions_validation_service import check_permission
-from domains.governance.services.admin_permissions_validation_service import effective_permissions
-from domains.governance.services.admin_permissions_validation_service import invalidate_cache
-from domains.governance.services.admin_permissions_validation_service import maker_checker_approve
-from domains.governance.services.admin_permissions_validation_service import maker_checker_request
-from domains.governance.services.admin_permissions_validation_service import permission_catalog
-from domains.governance.services.admin_permissions_validation_service import revoke_permission_from_role
-from domains.governance.services.admin_permissions_validation_service import set_user_permission_override
+from domains.governance.services.users.flat_admin_permissions_validation_service import assign_permission_to_role
+from domains.governance.services.users.flat_admin_permissions_validation_service import check_effective_permission
+from domains.governance.services.users.flat_admin_permissions_validation_service import check_permission
+from domains.governance.services.users.flat_admin_permissions_validation_service import effective_permissions
+from domains.governance.services.users.flat_admin_permissions_validation_service import invalidate_cache
+from domains.governance.services.users.flat_admin_permissions_validation_service import maker_checker_approve
+from domains.governance.services.users.flat_admin_permissions_validation_service import maker_checker_request
+from domains.governance.services.users.flat_admin_permissions_validation_service import permission_catalog
+from domains.governance.services.users.flat_admin_permissions_validation_service import revoke_permission_from_role
+from domains.governance.services.users.flat_admin_permissions_validation_service import set_user_permission_override
 
 

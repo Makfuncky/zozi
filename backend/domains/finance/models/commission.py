@@ -10,10 +10,10 @@ __all__ = ["CommissionAgreement", "ProductCommissionOverride", "CommissionLedger
 
 class CommissionAgreement(Base):
     __tablename__ = "commission_agreements"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(3), nullable=True)
     tier = Column(String(20), nullable=False)
     rate = Column(Numeric(5, 4), nullable=False)
     set_by_admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
@@ -26,7 +26,7 @@ class CommissionAgreement(Base):
 
 class ProductCommissionOverride(Base):
     __tablename__ = "product_commission_overrides"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
@@ -39,7 +39,7 @@ class ProductCommissionOverride(Base):
 
 class CommissionLedgerEntry(Base):
     __tablename__ = "commission_ledger_entries"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
@@ -73,7 +73,7 @@ class CommissionLedgerEntry(Base):
 class CommissionCategoryRate(Base):
     __tablename__ = 'commission_category_rates'
     __table_args__ = (
-        UniqueConstraint('category_id', 'category_slug', name='uq_commission_category_rate'), {"schema": "commerce"})
+        UniqueConstraint('category_id', 'category_slug', name='uq_commission_category_rate'), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey('commerce.categories.id'), nullable=True)
     category_slug = Column(String(100), nullable=True)

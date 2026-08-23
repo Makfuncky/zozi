@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import SupplierDocumentOut
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.suppliers import SupplierDocument
 from domains.comms.models.suppliers import SupplierProfile
 from infrastructure.utils.dependencies import require_admin, require_supplier

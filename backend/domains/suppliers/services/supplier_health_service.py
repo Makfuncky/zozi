@@ -48,3 +48,13 @@ def list_supplier_health_for_admin(db: Session, current_user: dict, country_code
         results.append(health)
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
     return {"suppliers": results[:50]}
+
+
+def get_supplier_health(supplier_id: int, country_code: str, current_user: dict, db: Session):
+    """Compatibility wrapper (accounts migration). See get_supplier_health_for_user."""
+    return get_supplier_health_for_user(db, current_user, supplier_id, country_code)
+
+
+def list_supplier_health(country_code: str, current_user: dict, db: Session):
+    """Compatibility wrapper (accounts migration). See list_supplier_health_for_admin."""
+    return list_supplier_health_for_admin(db, current_user, country_code)

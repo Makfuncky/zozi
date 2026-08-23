@@ -8,10 +8,10 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
-import domains.finance.services.invoice_controller as ctrl
+import domains.finance.services.ledger.invoice_controller as ctrl
 from infrastructure.database.database import get_db
 from modules.admin.routers.auth import get_current_user
-from domains.accounts.utils.invoice_html import generate_invoice_html, generate_invoice_pdf_bytes
+from infrastructure.utils.invoice_html import generate_invoice_html, generate_invoice_pdf_bytes
 
 router = APIRouter()
 

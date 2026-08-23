@@ -7,7 +7,7 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from domains.governance.services.payouts_controller import list_pending_payouts_route, verify_payout_route
+from domains.governance.services.treasury.payouts_controller import list_pending_payouts_route, verify_payout_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

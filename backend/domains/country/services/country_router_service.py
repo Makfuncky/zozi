@@ -17,11 +17,11 @@ from domains.country.models.countries import PayoutRuleProduct
 from domains.country.models.country_enhancements import CountryCity
 from domains.country.models.country_enhancements import CountryCommissionRate
 from domains.country.models.country_enhancements import SupplierKYCRequirement
-from domains.comms.services.write_helpers import add_and_flush
-from domains.comms.services.write_helpers import commit_only
-from domains.comms.services.write_helpers import flush_only
-from domains.comms.services.write_helpers import commit_and_refresh
-from domains.comms.services.write_helpers import delete_only
+from domains.comms.services.utility.write_helpers import add_and_flush
+from domains.comms.services.utility.write_helpers import commit_only
+from domains.comms.services.utility.write_helpers import flush_only
+from domains.comms.services.utility.write_helpers import commit_and_refresh
+from domains.comms.services.utility.write_helpers import delete_only
 from infrastructure.utils.metrics import time_it
 from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload

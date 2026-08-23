@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.dependencies import require_admin
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_enhancements import CountryStaffAssignment
 from infrastructure.utils.datetime_utils import utcnow as _utcnow

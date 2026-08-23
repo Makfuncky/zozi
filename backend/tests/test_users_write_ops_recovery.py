@@ -2,17 +2,15 @@
 
 These guard the remediation that restored 9 functions (lost when commit
 3d1f49a replaced their real implementations with ``_missing_symbol`` stubs)
-into ``services.users.user_write_ops`` and re-exported them from the
-``services.users.users_write_service`` shim. The tests assert that the symbols are
-real implementations (not stubs), that the shim resolves them, and that the
-core deletion/protection logic behaves correctly.
+into ``services.user.user_write_ops``. The tests assert that the symbols are
+real implementations (not stubs) and that the core deletion/protection logic
+behaves correctly.
 """
 from __future__ import annotations
 
 import pytest
 
-import domains.accounts.services.user_write_ops as ops
-import domains.accounts.services.users_write_service as shim
+import domains.governance.services.user.user_write_ops as ops
 import modules.customer.routers.users as users_ctrl
 from infrastructure.database.models import User
 
@@ -28,7 +26,7 @@ _RECOVERED_NAMES = [
     "update_user_browsing_history",
 ]
 
-_LAZY_SHIM_NAMES = [
+_LAZY_CTRL_NAMES = [
     "delete_bank_account_record",
     "toggle_user_active",
     "update_user_role",
@@ -45,25 +43,18 @@ def test_recovered_symbol_is_real_function(name):
     assert "_missing_symbol" not in getattr(obj, "__qualname__", "")
 
 
-def test_shim_reexports_recovered_symbols():
-    for name in _RECOVERED_NAMES:
-        assert getattr(shim, name) is getattr(ops, name), (
-            f"shim.{name} must resolve to the recovered impl in user_write_ops"
-        )
-
-
-@pytest.mark.parametrize("name", _LAZY_SHIM_NAMES)
-def test_shim_lazy_reexports_controller_functions(name):
-    assert getattr(shim, name) is getattr(users_ctrl, name), (
-        f"shim.{name} must lazily resolve to controllers.customer.users.{name}"
+@pytest.mark.parametrize("name", _LAZY_CTRL_NAMES)
+def test_controller_function_is_real(name):
+    assert getattr(users_ctrl, name) is not None, (
+        f"users_ctrl.{name} must resolve to the canonical impl"
     )
 
 
-def test_shim_has_no_missing_symbol_stub():
-    assert not hasattr(shim, "_missing_symbol")
-    for name in _RECOVERED_NAMES + _LAZY_SHIM_NAMES:
-        assert "_missing_symbol" not in getattr(shim, name).__qualname__, (
-            f"shim.{name} must not be a _missing_symbol stub"
+def test_no_missing_symbol_stub():
+    assert not hasattr(ops, "_missing_symbol")
+    for name in _RECOVERED_NAMES:
+        assert "_missing_symbol" not in getattr(ops, name).__qualname__, (
+            f"ops.{name} must not be a _missing_symbol stub"
         )
 
 
@@ -75,7 +66,7 @@ class _FakeUser:
 
 def test_build_user_delete_blocker_blocks_protected_email(db_session):
     protected = _FakeUser(1, "admin@zozi.com")
-    result = build_user_delete_blocker._build_user_delete_blocker(
+    result = ops._build_user_delete_blocker(
         protected, {"id": 2}, db_session, delete_orders=True
     )
     assert result is not None
@@ -85,7 +76,7 @@ def test_build_user_delete_blocker_blocks_protected_email(db_session):
 
 def test_build_user_delete_blocker_blocks_self_delete(db_session):
     actor = _FakeUser(7, "editor@zozi.com")
-    result = build_user_delete_blocker._build_user_delete_blocker(
+    result = ops._build_user_delete_blocker(
         actor, {"id": 7}, db_session, delete_orders=True
     )
     assert result is not None
@@ -95,7 +86,7 @@ def test_build_user_delete_blocker_blocks_self_delete(db_session):
 
 def test_build_user_delete_blocker_allows_delete(db_session):
     target = _FakeUser(8, "target@zozi.com")
-    assert build_user_delete_blocker._build_user_delete_blocker(
+    assert ops._build_user_delete_blocker(
         target, {"id": 2}, db_session, delete_orders=True
     ) is None
 

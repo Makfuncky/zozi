@@ -56,3 +56,15 @@ def list_logistics_health(
 
     results.sort(key=lambda item: item.get("trust_score", 0), reverse=True)
     return {"logistics_partners": results[:LIST_LIMIT]}
+
+
+# === Merged from accounts/services/logistics_health_service.py ===
+
+def get_logistics_health(partner_id: int, country_code: str, current_user: dict, db: Session):
+
+    engine = get_logistics_health_engine(db)
+
+    return engine.calculate_health_score(partner_id, country_code)
+
+
+

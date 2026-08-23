@@ -38,7 +38,7 @@ def _keyset_page(model, db: Session, cursor: Optional[str] = None,
 
 from domains.comms.models.communication import Announcement, ChatAttachment, ChatReadReceipt, CommunicationAuditTrail, EmailFolder, EmployeeCommunicationThread, ExternalContactMasking, FAQ, HelpCategory, InternalChannel, InternalChannelMember, InternalEmail, InternalMessage, MaskedMessage, Notification, ProxyCallLog, ProxyChannel, ProxyMessage, ProxySession, TicketMessage
 from domains.comms.models.marketing import CampaignRecipient, EmailCampaign, EmailCampaignLog, EmailDeliveryEvent, EmailRuntimeConfig, EmailSuppression, EmailTemplate, FlashSale, FlashSaleItem, NewsletterSubscriber, PointsTransaction, UserPoints
-from domains.suppliers.models import SupplierBadge, SupplierBadgeBillingHistory, SupplierBadgeCatalog, SupplierDocument, SupplierNotificationPreference, SupplierProfile
+from domains.comms.models.suppliers import SupplierBadge, SupplierBadgeBillingHistory, SupplierBadgeCatalog, SupplierDocument, SupplierNotificationPreference, SupplierProfile
 from domains.comms.models.communication_schema_models import SupportTicketReply  # A3: sanctioned ports surface for accounts hub
 
 
@@ -498,7 +498,20 @@ def list_supplier_badge_billing_historys_page(db: Session, cursor: Optional[str]
     """Keyset-cursor page of SupplierBadgeBillingHistory rows (scale-ready)."""
     return _keyset_page(SupplierBadgeBillingHistory, db, cursor, page_size)
 
-# --- sanctioned READ surface (Law 3): cross-domain *reads* only. No writes. ---
+
+# ── sanctioned READ surface re-exports (Law 3) ─────────────────────────────
+# Cross-domain consumers import these from ``domains.comms.ports`` instead of
+# from the model modules directly.  Read-only; no service logic re-exported.
+
 from domains.comms.models.communication import Notification
-from domains.comms.models.marketing import CampaignRecipient, EmailCampaign, FlashSale, FlashSaleItem, NewsletterSubscriber, PointsTransaction, UserPoints
-from domains.suppliers.models import SupplierDocument, SupplierNotificationPreference, SupplierProfile
+from domains.comms.models.marketing import (
+    CampaignRecipient,
+    EmailCampaign,
+    FlashSale,
+    FlashSaleItem,
+    NewsletterSubscriber,
+    PointsTransaction,
+    UserPoints,
+)
+
+

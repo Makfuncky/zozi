@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.audit import AuditAction, audit_log
 from infrastructure.utils.dependencies import get_current_user, require_admin
 from infrastructure.utils.ip_utils import get_ip_for_logging

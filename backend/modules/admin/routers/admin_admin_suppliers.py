@@ -7,7 +7,7 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from domains.governance.services.suppliers_controller import bulk_manage_suppliers_route, bulk_verify_suppliers_route, list_pending_suppliers, list_suppliers, reject_supplier_route, supplier_comparison, verify_supplier_route
+from domains.governance.services.suppliers.suppliers_controller import bulk_manage_suppliers_route, bulk_verify_suppliers_route, list_pending_suppliers, list_suppliers, reject_supplier_route, supplier_comparison, verify_supplier_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

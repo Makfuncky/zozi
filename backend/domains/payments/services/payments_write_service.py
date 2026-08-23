@@ -4,12 +4,12 @@ Implements the payments domain write surface. Previously stubbed with
 ``_missing_symbol`` placeholders; now contains real DB-write logic.
 """
 from __future__ import annotations
-from domains.finance.services.invoice_write_service import _apply_changes
+from domains.finance.services.ledger.invoice_write_service import _apply_changes
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.governance.models.admin import PaymentProviderConfig
 from domains.governance.models.admin import ProcessedWebhookEvent

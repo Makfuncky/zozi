@@ -16,7 +16,7 @@ from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Category
 
 from domains.catalog.services.products_write_service import (

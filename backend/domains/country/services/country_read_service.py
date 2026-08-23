@@ -17,7 +17,7 @@ from typing import List, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.country.models.countries import CountryCommunication
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_enhancements import CountryConfigVersion

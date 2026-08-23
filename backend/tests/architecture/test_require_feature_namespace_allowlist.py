@@ -1,4 +1,4 @@
-﻿"""B4 / R5 follow-up - namespace-wildcard change-control for require_feature.
+"""B4 / R5 follow-up - namespace-wildcard change-control for require_feature.
 
 The bare catch-all ban lives in test_require_feature_no_star.py. This test adds
 the *second* half of B4/R5: any NAMESPACE wildcard used in require_feature
@@ -128,7 +128,7 @@ def _known_atoms():
     except Exception:
         pass
     try:
-        from domains.governance.services.effective_permissions import HR_PERMISSION_MAP
+        from domains.governance.services.permissions.effective_permissions import HR_PERMISSION_MAP
         atoms.update(HR_PERMISSION_MAP.keys())
     except Exception:
         pass

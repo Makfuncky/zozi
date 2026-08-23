@@ -1,4 +1,4 @@
-"""
+﻿"""
 Free / open-source image processing tools for supplier product uploads.
 
 All tools use MIT / BSD licensed libraries:
@@ -167,7 +167,7 @@ def magic_erase(data: bytes, max_dim: int = MAX_DIMENSION) -> bytes:
     unavailable. Never raises — returns ``data`` unchanged on failure.
     """
     try:
-        from domains.finance.services.bg_removal_service import magic_erase as _svc_magic_erase
+        from domains.finance.services.shared.bg_removal_service import magic_erase as _svc_magic_erase
         return _svc_magic_erase(data)
     except Exception as exc:
         logger.warning("magic_erase: service unavailable (%s), using local path", exc)

@@ -777,3 +777,81 @@ def list_war_room_templates_page(db: Session, cursor: Optional[str] = None, page
 # Reads/models are re-exported from owning models; writes were removed and their
 # consumers now call the owning governance service directly (ports is read-only).
 from domains.governance.models.admin import CouponUsage, LogisticsCODRemittanceReceipt, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsSettlement, PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier, ShipmentConfirmation, ShippingCarrier, ShippingZone, SupplierDispute
+
+# Service-function re-exports are resolved lazily to break an import cycle:
+# catalog.ports -> governance.services.commerce -> catalog.ports. Consumers
+# (``from domains.governance.ports import get_current_user``) keep working, but
+# the symbol is only fetched on first access, after the interpreter has finished
+# initializing both modules.
+_LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
+    "get_current_user": ("domains.governance.services.auth.auth_controller_service", "get_current_user"),
+    "archive_entity": ("domains.governance.services.settings.misc_service", "archive_entity"),
+    "restore_entity": ("domains.governance.services.settings.misc_service", "restore_entity"),
+    "bulk_archive_entities": ("domains.governance.services.core.bulk_ops_service", "bulk_archive_entities"),
+    "bulk_restore_entities": ("domains.governance.services.core.bulk_ops_service", "bulk_restore_entities"),
+    "_banner_to_dict": ("domains.governance.services.commerce.admin_commerce_configuration_service", "_banner_to_dict"),
+    "get_promotion_config": ("domains.governance.services.commerce.admin_commerce_configuration_service", "get_promotion_config"),
+    "update_user_role": ("domains.governance.services.users.users_service", "update_user_role"),
+    "toggle_user_active": ("domains.governance.services.users.users_service", "toggle_user_active"),
+    "update_profile": ("domains.governance.services.users.admin_identity_operations_api_service", "update_profile"),
+    "get_incident_service": ("domains.governance.services.incident.incident_service", "get_incident_service"),
+}
+
+import importlib as _importlib
+
+def __getattr__(name: str):
+    if name in _LAZY_SERVICE_EXPORTS:
+        module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
+        mod = _importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# --- Query delegation (Law 3 sanctioned cross-domain query surface) ---
+
+def badge_billing_record_query(db: Session) -> object:
+    """Return a base ``BadgeBillingRecord`` query for sanctioned cross-domain delegation."""
+    return db.query(BadgeBillingRecord)
+
+def finance_bank_account_query(db: Session) -> object:
+    """Return a base ``FinanceBankAccount`` query for sanctioned cross-domain delegation."""
+    return db.query(FinanceBankAccount)
+
+def logistics_cod_remittance_receipt_query(db: Session) -> object:
+    """Return a base ``LogisticsCODRemittanceReceipt`` query for sanctioned cross-domain delegation."""
+    return db.query(LogisticsCODRemittanceReceipt)
+
+def logistics_settlement_query(db: Session) -> object:
+    """Return a base ``LogisticsSettlement`` query for sanctioned cross-domain delegation."""
+    return db.query(LogisticsSettlement)
+
+def processed_webhook_event_query(db: Session) -> object:
+    """Return a base ``ProcessedWebhookEvent`` query for sanctioned cross-domain delegation."""
+    return db.query(ProcessedWebhookEvent)
+
+
+# === Merged from accounts/ports.py ===
+
+
+from domains.governance.services.auth.iam_service_accounts import _QR_SECRET_KEY, validate_geo_fence, validate_qr_token, enroll_biometric, generate_physical_card, generate_qr_token, log_geo_fence_event, revoke_physical_card, generate_qr_code
+from domains.hr.services.hierarchy_service import get_all_subordinates, get_authority_level, get_user_chain, can_manage, get_org_chart, get_team_members, get_home_org_unit, reassign_manager, backfill_authority_levels, is_in_chain
+from domains.governance.services.core.approval_matrix_service import APPROVAL_RULES, can_approve, require_approval, resolve_approvers, get_approval_chain
+from domains.hr.services.payroll_service import verify_bank_account
+from domains.governance.services.users.identity_admin_service import delete_user_admin, set_user_role
+from domains.governance.services.users.user_write_ops import force_reset_password
+from domains.governance.services.users.user_write_ops import build_user_delete_blocker, delete_order_records, hard_delete_user_record
+
+# Private-name aliases re-exported for legacy imports.
+_build_user_delete_blocker = build_user_delete_blocker
+_delete_order_records = delete_order_records
+_hard_delete_user_record = hard_delete_user_record
+from domains.governance.services.products.products_service import approve_product, reject_product
+from domains.governance.services.commerce.admin_commerce_configuration_service import create_coupon
+from domains.governance.services.commerce.admin_commerce_configuration_service import list_coupons
+from domains.governance.services.commerce.public_commerce_validation_service import delete_coupon
+from domains.governance.services.treasury.payouts_service import verify_payout
+from domains.governance.incident.incident_service import get_incident_service, IncidentService, get_war_room_summary
+from domains.governance.services.country.country_admin_service import list_staff
+from domains.governance.services.core.export_service import export_audit_logs_csv,export_coupons_csv,export_orders_csv,export_products_csv,export_transfer_csv,export_users_csv,download_export_job_result,queue_export_job

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from rbac import get_current_user
 from infrastructure.database.database import get_db
 from domains.hr.models.employee_models import EmployeeDocument
-from domains.governance.services.effective_permissions import check_permission
+from domains.governance.services.permissions.effective_permissions import check_permission
 from domains.hr.services.payroll_engine import PayrollEngine
 
 logger = logging.getLogger(__name__)

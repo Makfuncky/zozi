@@ -5,10 +5,10 @@ from typing import Optional, Dict, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.governance.models.incident import IncidentWarRoom
-from domains.accounts.services.incident_service import get_incident_service
-from domains.accounts.services.incident_service import IncidentService
+from domains.governance.incident.incident_service import get_incident_service
+from domains.governance.incident.incident_service import IncidentService
 from infrastructure.database.database import get_db
 from rbac import get_current_user
 

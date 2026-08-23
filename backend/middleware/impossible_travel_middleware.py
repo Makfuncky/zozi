@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import hashlib
 import json
@@ -19,8 +19,8 @@ from infrastructure.utils.auth import verify_token
 from providers.geography.geoip import lookup_coordinates
 
 from sqlalchemy.orm import Session
-from domains.accounts.models.core import AuditLog
-from domains.accounts.models.user import User
+from domains.governance.models.core import AuditLog
+from domains.governance.models.user import User
 from domains.hr.models.employee_models import Employee
 
 logger = logging.getLogger(__name__)
@@ -153,7 +153,7 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
         except Exception:
             pass
         try:
-            from domains.governance.services.impossible_travel_write_service import log_impossible_travel_lock
+            from domains.governance.services.security.impossible_travel_write_service import log_impossible_travel_lock
             log_impossible_travel_lock(
                 user_id=user_id,
                 ip_address=ip,
@@ -346,7 +346,7 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
 
         try:
             from infrastructure.database.database import get_service_session
-            from domains.governance.services.fraud_detection_service import FraudScoringEngine
+            from domains.governance.services.fraud.fraud_detection_service import FraudScoringEngine
 
             with get_service_session() as db:
                 engine = FraudScoringEngine(db, self.redis)

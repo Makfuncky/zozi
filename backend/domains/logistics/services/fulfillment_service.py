@@ -13,7 +13,7 @@ from domains.orders.ports import Order
 from domains.orders import ports
 from domains.payments.ports import Payment
 from infrastructure.messaging.events import PaymentConfirmedEvent
-from domains.comms.ports import NotificationService
+from domains.comms.services.notification.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 

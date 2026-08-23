@@ -8,14 +8,14 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.core import SystemHealthEvent
-from domains.accounts.models.core import NewsSource
-from domains.accounts.models.core import NewsArticle
-from domains.accounts.models.core import InternalNotice
-from domains.accounts.models.core import PredictiveSimulation
-from domains.accounts.models.core import AlertEscalationRule
-from domains.accounts.models.core import ExecutiveNews
-from domains.accounts.models.user import User
+from domains.governance.models.core import SystemHealthEvent
+from domains.governance.models.core import NewsSource
+from domains.governance.models.core import NewsArticle
+from domains.governance.models.core import InternalNotice
+from domains.governance.models.core import PredictiveSimulation
+from domains.governance.models.core import AlertEscalationRule
+from domains.governance.models.core import ExecutiveNews
+from domains.governance.models.user import User
 from domains.country.models.countries import CountryConfig
 from domains.governance.models.fraud import FraudAlert
 from domains.logistics.models.logistics import LogisticsPartner

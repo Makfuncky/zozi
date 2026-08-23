@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from infrastructure.utils.dependencies import require_supplier
 from domains.suppliers.services.supplier_finance_service import get_order_payment_status
 from domains.suppliers.services.supplier_finance_service import get_supplier_bank_account

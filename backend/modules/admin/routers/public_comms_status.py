@@ -12,14 +12,14 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
 from infrastructure.database.database import get_db, get_db_session
-from domains.accounts.models.core import DirectChatRoom
-from domains.accounts.models.core import DirectChatMessage
-from domains.accounts.models.core import GroupChatRoom
-from domains.accounts.models.core import GroupChatMessage
-from domains.accounts.models.core import EntityChatThread
-from domains.accounts.models.core import EntityChatMessage
-from domains.accounts.models.core import SupportTicket
-from domains.accounts.models.user import User
+from domains.governance.models.core import DirectChatRoom
+from domains.governance.models.core import DirectChatMessage
+from domains.governance.models.core import GroupChatRoom
+from domains.governance.models.core import GroupChatMessage
+from domains.governance.models.core import EntityChatThread
+from domains.governance.models.core import EntityChatMessage
+from domains.governance.models.core import SupportTicket
+from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.governance.models.admin import TicketReply
 from infrastructure.utils.config import settings

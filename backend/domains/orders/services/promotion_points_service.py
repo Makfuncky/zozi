@@ -24,7 +24,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.comms.models.marketing import UserPoints
 from domains.comms.models.marketing import PointsTransaction
 from domains.governance.models.admin import PromotionEngineConfig

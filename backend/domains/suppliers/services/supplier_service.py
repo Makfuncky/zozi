@@ -1,4 +1,4 @@
-"""
+﻿"""
 Supplier Controller â€” all supplier portal business logic:
 orders, products, analytics, inventory, profile, payouts, bulk operations.
 """
@@ -26,7 +26,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import String, func, or_
 from sqlalchemy.orm import Session, selectinload
 
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import ProductVariant
 from domains.comms.models.communication import Notification
@@ -43,7 +43,7 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.payments.models.payments import Payout
 from domains.media.services.ai import ai_service
-from domains.finance.services.finance_transfer_service import build_transfer_reference
+from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
 from domains.logistics.services.logistics_partner_pricing import normalize_country_code
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
@@ -1558,7 +1558,7 @@ def _process_image_with_tools(data: bytes, tools: dict, bg_preset: Optional[str]
         return data
     if bg_preset:
         try:
-            from domains.finance.services.bg_removal_service import remove_background
+            from domains.finance.services.shared.bg_removal_service import remove_background
             data = remove_background(data, strategy=bg_preset)
         except Exception as exc:
             logger.warning("bg_preset application failed, using original: %s", exc)
@@ -3744,7 +3744,7 @@ def record_badge_billing_payment(
 
     paid_at = utcnow()
     if _round_badge_amount(record.amount) > 0 and not record.bank_transaction_id:
-        from domains.finance.services.cash_management_service import log_bank_transaction
+        from domains.finance.services.treasury.cash_management_service import log_bank_transaction
 
         txn = log_bank_transaction(
             source="badge_billing",

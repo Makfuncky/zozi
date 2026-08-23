@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeRelation
 from domains.hr.models.employee_models import COIReport
-from domains.accounts.models.user import User
+from domains.governance.models.user import User
 
 logger = logging.getLogger("zozi.coi")
 
