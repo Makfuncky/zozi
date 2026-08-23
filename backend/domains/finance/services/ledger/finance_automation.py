@@ -23,6 +23,7 @@ immutable, double-entry ledger and audit trail remain the single source of truth
 """
 
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 
 
 
@@ -118,7 +119,7 @@ def post_scanned_expense(
 
     """
 
-    expense_date = expense_date or datetime.utcnow()
+    expense_date = expense_date or utcnow()
 
     net_amount = round_money(amount - tax_amount)
 
@@ -838,7 +839,7 @@ def _post_gl(
 
     entry = gl.create_journal_entry(db, JournalEntryCreate(
 
-        entry_date=datetime.utcnow(),
+        entry_date=utcnow(),
 
         reference_type=reference_type,
 

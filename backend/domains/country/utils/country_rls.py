@@ -10,9 +10,18 @@ from infrastructure.database.database import get_db
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_enhancements import CountryStaffAssignment
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
-from domains.logistics.services.logistics_partner_pricing import normalize_country_code
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_country_code(code: str) -> str:
+    """Normalize a country code to uppercase 3-letter format."""
+    if not code:
+        return ""
+    return str(code).strip().upper()
+
+
+normalize_country_code = _normalize_country_code
 
 
 def get_country_scope_from_db(user_id: int, db: Session) -> Optional[set[str]]:

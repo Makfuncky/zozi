@@ -108,7 +108,6 @@ import domains.country.services.country_heuristic_engine
 
 import domains.country.services.country_research
 
-import domains.country.services.country_rls_service
 
 import domains.country.services.cross_border_detection
 
@@ -132,7 +131,7 @@ import domains.finance.services.ledger.invoice_write_service
 
 # REMOVED: registry referenced 'services.finance.orphan_detector_service' but no such module exists in the codebase
 
-import domains.finance.services.payments.payment_orchestrator
+import domains.finance.services.payouts.payment_orchestrator
 
 # REMOVED: registry referenced 'services.treasury.payouts_write_service' but no such module exists in the codebase
 

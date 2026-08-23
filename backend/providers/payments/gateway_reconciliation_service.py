@@ -11,7 +11,7 @@ from domains.finance.models.finance import BankStatementLine
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import FinanceAuditLog
 from domains.orders.models.orders import Order
-from domains.payments.models.payments import PaymentGatewayConnection
+from domains.finance.models.payments import PaymentGatewayConnection
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 from domains.finance.services.finance import general_ledger_service as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow

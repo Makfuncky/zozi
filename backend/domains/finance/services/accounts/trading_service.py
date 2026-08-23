@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 from datetime import datetime, date, timedelta
@@ -632,7 +632,7 @@ def list_purchase_orders(db: Session, status: str = None, supplier_id: int = Non
     if country_code:
         q = q.filter(PurchaseOrder.country_code == country_code)
     total = q.count()
-    rows = q.order_by(PurchaseOrder.id.desc()).offset(offset).limit(limit).all()
+    rows = q.order_by(PurchaseOrder.id.desc()).limit(limit).all()
     return {"total": total, "items": rows}
 
 
@@ -646,7 +646,7 @@ def list_sales_orders(db: Session, status: str = None, customer_id: int = None,
     if country_code:
         q = q.filter(SalesOrder.country_code == country_code)
     total = q.count()
-    rows = q.order_by(SalesOrder.id.desc()).offset(offset).limit(limit).all()
+    rows = q.order_by(SalesOrder.id.desc()).limit(limit).all()
     return {"total": total, "items": rows}
 
 
@@ -660,7 +660,7 @@ def list_goods_receipts(db: Session, po_id: int = None, status: str = None,
     if country_code:
         q = q.filter(GoodsReceiptNote.country_code == country_code)
     total = q.count()
-    rows = q.order_by(GoodsReceiptNote.id.desc()).offset(offset).limit(limit).all()
+    rows = q.order_by(GoodsReceiptNote.id.desc()).limit(limit).all()
     return {"total": total, "items": rows}
 
 
@@ -694,7 +694,7 @@ def list_stock_movements(db: Session, product_id: int = None, limit: int = 100,
     if product_id:
         q = q.filter(StockMovement.product_id == product_id)
     total = q.count()
-    rows = q.order_by(StockMovement.id.desc()).offset(offset).limit(limit).all()
+    rows = q.order_by(StockMovement.id.desc()).limit(limit).all()
     return {"total": total, "items": rows}
 
 

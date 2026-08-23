@@ -17,7 +17,7 @@ from domains.comms.models.marketing import NewsletterSubscriber
 from domains.governance.models.admin import ShippingCarrier
 from domains.governance.models.admin import ShippingZone
 from domains.logistics.models.logistics import Shipment
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 
 
 def get_payout_amount(db: Session, payout_id: int) -> Optional[float]:

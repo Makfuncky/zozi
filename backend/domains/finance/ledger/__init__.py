@@ -1,2 +1,2 @@
-"""finance domain sub-capability: ledger (GL, journal entries, chart of accounts)."""
+"""finance domain — ledger sub-package."""
 from __future__ import annotations

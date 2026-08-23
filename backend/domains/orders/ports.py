@@ -1520,7 +1520,7 @@ def sum_supplier_total_revenue(db: Session) -> float:
 )
 
 # --- P11.5 re-exports (country cross-domain repointing) ---
-from domains.country.services.cross_border_detection import (
+from domains.country.services.cross_border.cross_border_detection import (
     CrossBorderDetectionMiddleware,
     LocalizationService,
 )

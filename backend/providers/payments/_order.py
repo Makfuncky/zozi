@@ -15,8 +15,8 @@ from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Coupon
-from domains.payments.models.payments import Payment
+from domains.catalog.models.promotions import Coupon
+from domains.finance.models.payments import Payment
 from infrastructure.messaging.events import (
     PaymentConfirmedEvent,
     PaymentFailedEvent,

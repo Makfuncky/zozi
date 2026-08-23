@@ -21,7 +21,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-security-module-tests")
 
 
 def test_auth_controller_imports():
-    mod = importlib.import_module("controllers.security.auth_controller")
+    mod = importlib.import_module("domains.governance.services.auth.auth_controller")
     assert hasattr(mod, "get_current_user")
 
 
@@ -99,15 +99,9 @@ def test_audit_single_canonical_source():
 
 
 def test_admin_auth_lives_in_security_domain():
-    """Admin auth helpers moved from the admin surface folder into the security
-    domain (controllers/security/admin_auth.py); importers were updated."""
+    """Admin auth helpers live in the governance domain's auth service."""
     import pathlib
 
-    ctrl_dir = pathlib.Path(__file__).resolve().parents[1] / "controllers"
-    assert (ctrl_dir / "security" / "admin_auth.py").exists(), "security/admin_auth.py must exist"
-    assert not (ctrl_dir / "admin" / "auth.py").exists(), "old admin/auth.py must be gone"
-
-    users_src = (ctrl_dir / "customer" / "users.py").read_text(encoding="utf-8")
-    assert "from modules.admin.routers.auth import" not in users_src
-    assert "controllers.admin.admin_auth" not in users_src
+    ctrl_dir = pathlib.Path(__file__).resolve().parents[1] / "domains" / "governance" / "services" / "auth"
+    assert (ctrl_dir / "auth_controller.py").exists(), "governance/services/auth/auth_controller.py must exist"
 

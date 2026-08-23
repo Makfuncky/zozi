@@ -439,6 +439,10 @@ def list_active_org_units(
     if country_code:
         query = query.filter(OrgUnit.country_code == country_code)
     return query.order_by(OrgUnit.path, OrgUnit.name).all()
-from domains.hr.services.hierarchy_service import can_manage
-from domains.hr.services.hierarchy_service import backfill_authority_levels, reassign_manager
+
+# NOTE: The following imports were removed because the functions don't exist:
+# - can_manage, backfill_authority_levels, reassign_manager
+# These were undefined in hierarchy_service (pre-existing bug).
+# from domains.hr.services.hierarchy_service import can_manage
+# from domains.hr.services.hierarchy_service import backfill_authority_levels, reassign_manager
 from domains.hr.services.leave_accrual import LeaveAccrualEngine

@@ -24,7 +24,7 @@ def run_auto_payout_sweep(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone
         from infrastructure.database.database import SessionLocal
-        from domains.finance.services.payments.auto_payout_scheduler import run_auto_payout_sweep as run_sweep
+        from domains.finance.services.payouts.auto_payout_scheduler import run_auto_payout_sweep as run_sweep
         
         db = SessionLocal()
         try:
@@ -32,7 +32,7 @@ def run_auto_payout_sweep(self) -> dict[str, Any]:
             supplier_result = run_sweep(db)
             
             # Logistics sweep
-            from domains.finance.services.payments.auto_payout_scheduler import run_auto_logistics_payout_sweep as run_logistics_sweep
+            from domains.finance.services.payouts.auto_payout_scheduler import run_auto_logistics_payout_sweep as run_logistics_sweep
             logistics_result = run_logistics_sweep(db)
             
             # Combine results

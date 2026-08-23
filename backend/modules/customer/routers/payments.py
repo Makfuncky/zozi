@@ -52,7 +52,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.payments.models.payments import Payment
+from domains.finance.models.payments import Payment
 
 router = APIRouter()
 public_router = APIRouter()

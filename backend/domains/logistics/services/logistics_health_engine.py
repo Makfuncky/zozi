@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from domains.logistics.models.logistics import LogisticsPartnerProfile
 from domains.logistics.models.logistics import Shipment
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import LogisticsPartnerPayout
 
 
 class LogisticsHealthEngine:

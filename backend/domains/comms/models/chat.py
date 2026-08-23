@@ -26,14 +26,14 @@ class EntityChatThread(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("EntityChatMessage", back_populates="thread", cascade="all, delete-orphan")
-    __table_args__ = (Index("idx_entity_thread", "entity_type", "entity_id"), {"schema": "customer"})
+    __table_args__ = (Index("ix_entity_thread", "entity_type", "entity_id"), {"schema": "comms"})
 
 
 class VideoRoom(Base):
     __tablename__ = "video_rooms"
     __table_args__ = (
         Index("ix_video_room_status", "status"),
-        Index("ix_video_room_created", "created_at"), {"schema": "customer"})
+        Index("ix_video_room_created", "created_at"), {"schema": "comms"})
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(String(64), unique=True, nullable=False, index=True)
     room_uuid = Column(String(32), unique=True, nullable=True)
@@ -58,9 +58,9 @@ class VideoRoom(Base):
 class VideoRoomParticipant(Base):
     __tablename__ = "video_room_participants"
     __table_args__ = (
-        UniqueConstraint("room_id", "user_id", name="uq_video_participant"), {"schema": "customer"})
+        UniqueConstraint("room_id", "user_id", name="uq_video_participant"), {"schema": "comms"})
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("customer.video_rooms.id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.video_rooms.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
     role = Column(String(20), default="participant")
     joined_at = Column(DateTime, default=_utcnow)
@@ -81,12 +81,12 @@ class DirectChatRoom(Base):
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     messages = relationship("DirectChatMessage", back_populates="room", cascade="all, delete-orphan")
-    __table_args__ = (UniqueConstraint("participant_one", "participant_two", name="uq_direct_chat_pair"), {"schema": "customer"})
+    __table_args__ = (UniqueConstraint("participant_one", "participant_two", name="uq_direct_chat_pair"), {"schema": "comms"})
 
 
 class GroupChatMember(Base):
     __tablename__ = "group_chat_members"
-    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_group_member"), {"schema": "customer"})
+    __table_args__ = (UniqueConstraint("room_id", "user_id", name="uq_group_member"), {"schema": "comms"})
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
@@ -100,7 +100,7 @@ class EscalationSLALog(Base):
     __tablename__ = "escalation_sla_logs"
     __table_args__ = (
         Index("ix_escalation_message", "message_id"),
-        Index("ix_escalation_status", "status"), {"schema": "customer"})
+        Index("ix_escalation_status", "status"), {"schema": "comms"})
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, nullable=False)
     message_type = Column(String(30), nullable=False)
@@ -117,9 +117,9 @@ class EscalationSLALog(Base):
 
 class EntityChatMessage(Base):
     __tablename__ = "entity_chat_messages"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    thread_id = Column(Integer, ForeignKey("entity_chat_threads.id"), nullable=False)
+    thread_id = Column(Integer, ForeignKey("comms.entity_chat_threads.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
@@ -131,9 +131,9 @@ class EntityChatMessage(Base):
 
 class VideoRoomRecording(Base):
     __tablename__ = "video_room_recordings"
-    __table_args__ = ({"schema": "media"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("customer.video_rooms.id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.video_rooms.id"), nullable=False)
     started_by = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
     recording_url = Column(String(500), nullable=True)
     duration_seconds = Column(Integer, default=0)
@@ -146,9 +146,9 @@ class VideoRoomRecording(Base):
 
 class DirectChatMessage(Base):
     __tablename__ = "direct_chat_messages"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("customer.direct_chat_rooms.id"), nullable=False)
+    room_id = Column(Integer, ForeignKey("comms.direct_chat_rooms.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
     message = Column(Text, nullable=False)
     message_type = Column(String(20), default="text")
@@ -160,7 +160,7 @@ class DirectChatMessage(Base):
 
 class GroupChatRoom(Base):
     __tablename__ = "group_chat_rooms"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(String(64), unique=True, nullable=False, index=True)
     name = Column(String(200), nullable=False)
@@ -176,7 +176,7 @@ class GroupChatRoom(Base):
 
 class GroupChatMessage(Base):
     __tablename__ = "group_chat_messages"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
     room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id"), nullable=False)
     sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)

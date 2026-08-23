@@ -32,7 +32,7 @@ from domains.finance.models.finance import SupplierSettlement
 from domains.governance.models.admin import SupplierBankAccount
 from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 
 from domains.comms.services.utility.write_helpers import add_and_flush
 from domains.comms.services.utility.write_helpers import commit_only

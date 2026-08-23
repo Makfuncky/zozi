@@ -5,15 +5,17 @@ free of ``db.query``/``db.add``/``db.commit``.
 """
 from __future__ import annotations
 
-from typing import Optional
-
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.finance.models.commission import CommissionCategoryRate
 from domains.governance.models.admin import CommissionBadgeTier
 import structlog
 logger = structlog.get_logger(__name__)
+
+
+class FinanceDomainError(Exception):
+    """Domain-level error for finance operations. Routers map this to HTTP responses."""
+    pass
 
 
 def build_category_rate(payload, country_code: str) -> CommissionCategoryRate:
@@ -42,7 +44,7 @@ def build_badge_tier(payload, country_code: str) -> CommissionBadgeTier:
 def list_category_rates(db: Session, country_code: str, page: int, page_size: int) -> dict:
     q = db.query(CommissionCategoryRate).filter(CommissionCategoryRate.country_code == country_code.upper())
     total = q.count()
-    rows = q.offset((page - 1) * page_size).limit(page_size).all()
+    rows = q.order_by(CommissionCategoryRate.id.desc()).limit(page_size).all()
     return {"data": rows, "total": total, "page": page, "page_size": page_size}
 
 
@@ -61,7 +63,7 @@ def update_category_rate(db: Session, rate_id: int, country_code: str, payload) 
         .first()
     )
     if not r:
-        raise HTTPException(status_code=404, detail="Category rate not found")
+        raise FinanceDomainError("Category rate not found")
     data = payload.model_dump() if payload else {}
     r.category_id = data.get("category_id", r.category_id)
     r.category_slug = data.get("category_slug", r.category_slug)
@@ -77,7 +79,7 @@ def update_category_rate(db: Session, rate_id: int, country_code: str, payload) 
 def list_badge_tiers(db: Session, country_code: str, page: int, page_size: int) -> dict:
     q = db.query(CommissionBadgeTier).filter(CommissionBadgeTier.country_code == country_code.upper())
     total = q.count()
-    rows = q.offset((page - 1) * page_size).limit(page_size).all()
+    rows = q.order_by(CommissionBadgeTier.sort_order.asc()).limit(page_size).all()
     return {"data": rows, "total": total, "page": page, "page_size": page_size}
 
 
@@ -96,7 +98,7 @@ def update_badge_tier(db: Session, tier_id: int, country_code: str, payload) -> 
         .first()
     )
     if not t:
-        raise HTTPException(status_code=404, detail="Badge tier not found")
+        raise FinanceDomainError("Badge tier not found")
     data = payload.model_dump() if payload else {}
     t.badge_level = data.get("badge_level", t.badge_level)
     t.commission_rate = data.get("commission_rate", t.commission_rate)

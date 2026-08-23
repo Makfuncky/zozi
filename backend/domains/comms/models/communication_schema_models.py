@@ -1,3 +1,8 @@
+"""comms domain — communication schema models.
+
+Canonical definitions for support tickets, news sources, internal notices,
+and escalation SLA rules. Chat-related models are re-exported from chat.py.
+"""
 from __future__ import annotations
 
 from sqlalchemy import (
@@ -5,20 +10,21 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
-    Index,
     Integer,
-    JSON,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
-# Canonical home for ``communication``-schema tables that lived in the old
-# ``domains.governance.models.core`` God-module (A3 / RESOLVER §26 ACC-01).
-# ``domains.governance.models.core`` keeps re-exports so legacy imports resolve.
+# Re-export chat models from canonical location (chat.py)
+from domains.comms.models.chat import (  # noqa: F401
+    EntityChatMessage,
+    DirectChatMessage,
+    GroupChatRoom,
+    GroupChatMessage,
+)
 
 __all__ = [
     "SupportTicket", "SupportTicketReply", "TicketAttachment", "NewsSource",
@@ -93,64 +99,6 @@ class InternalNotice(Base):
     valid_from = Column(DateTime, nullable=True)
     valid_to = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-
-
-class EntityChatMessage(Base):
-    __tablename__ = "entity_chat_messages"
-    __table_args__ = ({"schema": "comms"},)
-    id = Column(Integer, primary_key=True, index=True)
-    thread_id = Column(Integer, ForeignKey("customer.entity_chat_threads.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
-    message = Column(Text, nullable=False)
-    message_type = Column(String(20), default="text")
-    read_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    thread = relationship("EntityChatThread", back_populates="messages")
-    sender = relationship("User")
-
-
-class DirectChatMessage(Base):
-    __tablename__ = "direct_chat_messages"
-    __table_args__ = ({"schema": "comms"},)
-    id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("customer.direct_chat_rooms.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
-    message = Column(Text, nullable=False)
-    message_type = Column(String(20), default="text")
-    read_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    room = relationship("DirectChatRoom", back_populates="messages")
-    sender = relationship("User", foreign_keys=[sender_id])
-
-
-class GroupChatRoom(Base):
-    __tablename__ = "group_chat_rooms"
-    __table_args__ = ({"schema": "comms"},)
-    id = Column(Integer, primary_key=True, index=True)
-    chat_id = Column(String(64), unique=True, nullable=False, index=True)
-    name = Column(String(200), nullable=False)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
-    is_encrypted = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=True)
-    created_by = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    members = relationship("GroupChatMember", back_populates="room", cascade="all, delete-orphan")
-    messages = relationship("GroupChatMessage", back_populates="room", cascade="all, delete-orphan")
-
-
-class GroupChatMessage(Base):
-    __tablename__ = "group_chat_messages"
-    __table_args__ = ({"schema": "comms"},)
-    id = Column(Integer, primary_key=True, index=True)
-    room_id = Column(Integer, ForeignKey("comms.group_chat_rooms.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
-    message = Column(Text, nullable=False)
-    message_type = Column(String(20), default="text")
-    read_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    room = relationship("GroupChatRoom", back_populates="messages")
-    sender = relationship("User", foreign_keys=[sender_id])
 
 
 class EscalationSLARule(Base):

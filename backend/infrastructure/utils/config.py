@@ -132,6 +132,7 @@ class Settings:
         "hsts_enabled": True,
         "cookie_secure": True,
         "rate_limit_enabled": True,
+        "trusted_proxy_ips": os.getenv("TRUSTED_PROXY_IPS", ""),
         "country_ai_enabled": str(os.getenv("COUNTRY_AI_ENABLED", "true")).lower() in {"1", "true", "yes", "on"},
         "country_ai_ollama_model": os.getenv("COUNTRY_AI_OLLAMA_MODEL", "llama3.1"),
         "country_ai_cache_ttl_seconds": int(os.getenv("COUNTRY_AI_CACHE_TTL_SECONDS", "86400")),

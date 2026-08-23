@@ -169,5 +169,31 @@ def shipment_model() -> type:
 def logistics_partner_service_area_model() -> type:
     """Return the ``LogisticsPartnerServiceArea`` model class (for column reference only)."""
     return LogisticsPartnerServiceArea
-from domains.logistics.services.partner.partner_geography_service import list_partners
-from domains.logistics.services.partner.partner_geography_service import approve_partner, reject_partner, toggle_partner_active
+
+
+# --- Country domain cross-domain helpers (Law 3 compliant) ---
+
+def get_partner_locations(db: Session, country_code: str) -> list[dict]:
+    """Return active logistics partner locations for a country."""
+    from domains.country.models.country_control import LogisticsPartnerLocation
+    from domains.logistics.models.logistics import LogisticsPartner
+    locations = (
+        db.query(LogisticsPartnerLocation)
+        .join(LogisticsPartner)
+        .filter(
+            LogisticsPartnerLocation.country_code == country_code.upper(),
+            LogisticsPartnerLocation.is_active.is_(True),
+        )
+        .all()
+    )
+    return [
+        {
+            "id": loc.id,
+            "partner_id": loc.partner_id,
+            "location_type": loc.location_type,
+            "latitude": loc.latitude,
+            "longitude": loc.longitude,
+            "address": loc.address,
+        }
+        for loc in locations
+    ]

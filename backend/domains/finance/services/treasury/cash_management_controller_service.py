@@ -31,7 +31,7 @@ from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import OrderLogisticsAllocation
-from domains.payments.models.payments import PaymentGatewayConnection
+from domains.finance.models.payments import PaymentGatewayConnection
 from domains.finance.services.treasury.cash_management_service import auto_reconcile_bank_transactions
 from domains.finance.services.treasury.cash_management_service import create_refund_ledger_entry
 from domains.finance.services.treasury.cash_management_service import flag_bank_transaction
@@ -472,7 +472,7 @@ def admin_list_ledger_entries(
             ),
         )
 
-    entries = q.order_by(desc(TransactionLedger.created_at)).offset(skip).limit(limit).all()
+    entries = q.order_by(desc(TransactionLedger.created_at)).limit(limit).all()
     if not entries:
         return []
 
@@ -533,7 +533,7 @@ def admin_list_badge_billing_records(
         q = q.filter(BadgeBillingRecord.badge_level == badge_level)
     if charge_type:
         q = q.filter(BadgeBillingRecord.charge_type == charge_type)
-    rows = q.order_by(desc(BadgeBillingRecord.created_at)).offset(skip).limit(limit).all()
+    rows = q.order_by(desc(BadgeBillingRecord.created_at)).limit(limit).all()
     return [_decorate_badge_billing(row) for row in rows]
 
 
@@ -570,7 +570,7 @@ def admin_list_supplier_settlements(
         q = q.filter(SupplierSettlement.supplier_id == supplier_id)
     if status:
         q = q.filter(SupplierSettlement.status == status)
-    settlements = q.order_by(desc(SupplierSettlement.created_at)).offset(skip).limit(limit).all()
+    settlements = q.order_by(desc(SupplierSettlement.created_at)).limit(limit).all()
     return [_decorate_supplier_settlement(settlement, db) for settlement in settlements]
 
 
@@ -587,7 +587,7 @@ def admin_list_logistics_settlements(
         q = q.filter(LogisticsSettlement.partner_id == partner_id)
     if status:
         q = q.filter(LogisticsSettlement.status == status)
-    settlements = q.order_by(desc(LogisticsSettlement.created_at)).offset(skip).limit(limit).all()
+    settlements = q.order_by(desc(LogisticsSettlement.created_at)).limit(limit).all()
     return [_decorate_logistics_settlement(settlement, db) for settlement in settlements]
 
 
@@ -610,7 +610,7 @@ def admin_list_bank_transactions(
         q = q.filter(BankTransaction.reconciled == reconciled)
     if flagged is not None:
         q = q.filter(BankTransaction.flagged == flagged)
-    return q.order_by(desc(BankTransaction.transaction_date)).offset(skip).limit(limit).all()
+    return q.order_by(desc(BankTransaction.transaction_date)).limit(limit).all()
 
 
 def admin_list_refunds(
@@ -623,7 +623,7 @@ def admin_list_refunds(
     q = db.query(RefundLedger)
     if status:
         q = q.filter(RefundLedger.status == status)
-    refunds = q.order_by(desc(RefundLedger.created_at)).offset(skip).limit(limit).all()
+    refunds = q.order_by(desc(RefundLedger.created_at)).limit(limit).all()
     return [_decorate_refund(refund, db) for refund in refunds]
 
 
@@ -929,7 +929,7 @@ def supplier_list_settlements(
     q = db.query(SupplierSettlement).filter(SupplierSettlement.supplier_id == supplier_id)
     if status:
         q = q.filter(SupplierSettlement.status == status)
-    settlements = q.order_by(desc(SupplierSettlement.created_at)).offset(skip).limit(limit).all()
+    settlements = q.order_by(desc(SupplierSettlement.created_at)).limit(limit).all()
     return [_decorate_supplier_settlement(settlement, db) for settlement in settlements]
 
 
@@ -944,7 +944,7 @@ def supplier_list_ledger_entries(
         db.query(TransactionLedger)
         .filter(TransactionLedger.supplier_id == supplier_id)
         .order_by(desc(TransactionLedger.created_at))
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )
@@ -968,7 +968,7 @@ def logistics_list_settlements(
     q = db.query(LogisticsSettlement).filter(LogisticsSettlement.partner_id == partner_id)
     if status:
         q = q.filter(LogisticsSettlement.status == status)
-    settlements = q.order_by(desc(LogisticsSettlement.created_at)).offset(skip).limit(limit).all()
+    settlements = q.order_by(desc(LogisticsSettlement.created_at)).limit(limit).all()
     return [_decorate_logistics_settlement(settlement, db) for settlement in settlements]
 
 
@@ -983,7 +983,7 @@ def logistics_list_ledger_entries(
         db.query(TransactionLedger)
         .filter(TransactionLedger.logistics_partner_id == partner_id)
         .order_by(desc(TransactionLedger.created_at))
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )

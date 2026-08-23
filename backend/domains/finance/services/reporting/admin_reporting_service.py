@@ -10,6 +10,7 @@ wrapping in the router; these service functions assume the RLS context is
 already set by the caller when required.
 """
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 
 import logging
 from collections import defaultdict
@@ -40,9 +41,9 @@ from domains.hr.ports import Employee
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import LogisticsPartnerPayout
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout
 from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from infrastructure.utils.constants import (
     CASH_ACCOUNT,
@@ -189,7 +190,7 @@ def generate_payout_batch(db: Session, country_code: str, cutoff_date: date, cur
 
     total = sum(p.amount for p in pending_payouts)
     batch = PayoutBatch(
-        batch_number=f"PB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+        batch_number=f"PB-{utcnow().strftime('%Y%m%d%H%M%S')}",
         country_code=country_code,
         total_amount=total,
         item_count=len(pending_payouts),
@@ -264,7 +265,7 @@ def dispatch_payout_batch(db: Session, batch_id: int, current_user: dict) -> dic
     )
 
     batch.status = "dispatched"
-    batch.dispatched_at = datetime.utcnow()
+    batch.dispatched_at = utcnow()
     db.commit()
 
     return {
@@ -413,7 +414,7 @@ def snapshot_cash_position(db: Session) -> dict:
         select(TreasuryAccount).where(TreasuryAccount.is_active == True)
     ).scalars().all()
 
-    now = datetime.utcnow()
+    now = utcnow()
     for a in accounts:
         snap = CashPositionSnapshot(
             snapshot_time=now,
@@ -481,7 +482,7 @@ def get_consolidated_ledger(db: Session, limit: int) -> list:
 def get_consolidated_trial_balance(db: Session, page: int, page_size: int) -> dict:
     query = db.query(Account).filter(Account.is_active == True)
     total = query.count()
-    accounts = query.order_by(Account.code).offset((page - 1) * page_size).limit(page_size).all()
+    accounts = query.order_by(Account.code) * page_size).limit(page_size).all()
     return {
         "data": [
             {
@@ -503,7 +504,7 @@ def get_consolidated_trial_balance(db: Session, page: int, page_size: int) -> di
 def get_consolidated_cash_position(db: Session, page: int, page_size: int) -> dict:
     query = db.query(TreasuryAccount).filter(TreasuryAccount.is_active == True)
     total = query.count()
-    accounts = query.offset((page - 1) * page_size).limit(page_size).all()
+    accounts = query * page_size).limit(page_size).all()
     total_balance = float(db.query(func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {
         "accounts": [

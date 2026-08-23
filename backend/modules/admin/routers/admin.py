@@ -1305,7 +1305,7 @@ def verify_payout_route(
     current_admin: dict = Depends(require_admin_2fa_verified),
 ):
     require_permission("payouts.verify", current_admin)
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payout
     payout = db.query(Payout).filter(Payout.id == payout_id).first()
     amount = float(payout.amount) if payout and payout.amount is not None else None
     require_approval(db, current_admin["id"], "payout", amount=amount)

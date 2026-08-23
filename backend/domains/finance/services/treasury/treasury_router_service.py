@@ -1,4 +1,4 @@
-"""Treasury payout-approval / routing service.
+﻿"""Treasury payout-approval / routing service.
 
 Backs the payout-approval controller. Kept minimal so the routers ->
 controllers -> services circuit (CIR2) is preserved for payout approvals and
@@ -11,7 +11,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from domains.finance.models.finance import PayoutBatch
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -21,7 +21,7 @@ def get_pending_payouts(db: Session, skip: int = 0, limit: int = 50, **kwargs: A
         db.query(Payout)
         .filter(Payout.status == "pending")
         .order_by(Payout.id.desc())
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )

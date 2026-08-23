@@ -23,8 +23,8 @@ from domains.governance.models.admin import FinanceBankAccount
 from domains.governance.models.admin import LogisticsPartnerBankAccount
 from domains.governance.models.admin import LogisticsSettlement
 from domains.governance.models.admin import SupplierBankAccount
-from domains.payments.models.payments import LogisticsPartnerPayout
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payout
 from infrastructure.utils.config import settings
 from kernel.money import round_money, to_decimal
 

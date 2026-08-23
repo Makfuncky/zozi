@@ -22,9 +22,9 @@ from domains.logistics.models.logistics import LogisticsPartner
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import ReturnRequest
-from domains.payments.models.payments import Coupon
-from domains.payments.models.payments import Banner
-from domains.payments.models.payments import Payout
+from domains.catalog.models.promotions import Coupon
+from domains.catalog.models.promotions import Banner
+from domains.finance.models.payments import Payout
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.constants import DEFAULT_COUNTRY
 

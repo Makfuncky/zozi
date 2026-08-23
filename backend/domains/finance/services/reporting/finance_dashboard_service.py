@@ -1,9 +1,9 @@
-"""finance domain - dashboard / reporting read service.
+﻿"""finance domain - dashboard / reporting read service.
 
 Consolidates the read-heavy finance dashboard and report queries that used to
 live inline in ``modules/employee/routers/finance.py`` (ED1). All finance-domain
 models are queried directly here because they belong to this domain. The only
-cross-domain read (``Payout``) goes through ``domains.payments.ports`` per
+cross-domain read (``Payout``) goes through ``domains.finance.ports`` per
 NEW_STRUCTURE.md Law 3.
 """
 
@@ -26,7 +26,7 @@ from domains.finance.models.finance import (
     SupplierSettlement,
     TreasuryAccount,
 )
-from domains.payments.ports import list_payouts
+from domains.finance.ports import list_payouts
 
 
 class FinanceDashboardService:

@@ -21,7 +21,7 @@ from domains.finance.models.finance import VATRemittance
 from domains.finance.models.finance import TreasuryAccount
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from infrastructure.database.schemas import (
     AccountBalanceOut,
     AccountOut,
@@ -31,6 +31,7 @@ from infrastructure.database.schemas import (
     JournalLineInput,
     TrialBalanceOut,
 )
+from infrastructure.utils.datetime_utils import utcnow
 from kernel.money import round_money
 
 
@@ -306,8 +307,8 @@ def _update_account_balance(
         bal.balance = round_money(bal.balance - amount)
 
     bal.last_entry_id = entry_id
-    bal.last_entry_at = datetime.utcnow()
-    bal.updated_at = datetime.utcnow()
+    bal.last_entry_at = utcnow()
+    bal.updated_at = utcnow()
     if country_code:
         bal.country_code = country_code
 
@@ -473,7 +474,7 @@ def list_journal_entries(
         q = q.filter(JournalEntry.reference_id == reference_id)
     if country_code:
         q = q.filter(JournalEntry.country_code == country_code)
-    entries = q.order_by(JournalEntry.entry_date.desc()).offset(offset).limit(limit).all()
+    entries = q.order_by(JournalEntry.id.desc()).limit(limit).all()
     if not entries:
         return []
 
@@ -567,7 +568,7 @@ def post_order_payment_journal(db: Session, order_id: int, total_amount: Decimal
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="order_payment",
             reference_id=order_id,
             description=f"Customer payment for order {order.order_number or order_id}",
@@ -693,7 +694,7 @@ def post_refund_journal(db: Session, refund_ledger: RefundLedger) -> JournalEntr
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="order_refund",
             reference_id=refund_ledger.id,
             description=f"Refund reversal for order {order.order_number or refund_ledger.order_id}",
@@ -770,7 +771,7 @@ def post_payout_journal(db: Session, payout: Payout, amount: Decimal) -> Journal
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="supplier_payout",
             reference_id=payout.id,
             description=f"Payout to supplier for order {payout.id}",
@@ -812,7 +813,7 @@ def post_gateway_fee_journal(db: Session, order_id: int, fee_amount: Decimal, ga
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="gateway_fee",
             reference_id=order_id,
             description=f"Payment gateway fee {gateway_code} #{transaction_id}",
@@ -851,7 +852,7 @@ def post_vat_remittance_journal(db: Session, vat_remittance: VATRemittance) -> J
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="vat_remittance",
             reference_id=vat_remittance.id,
             description=f"VAT remittance to government for period ending {vat_remittance.period_end}",
@@ -893,7 +894,7 @@ def post_badge_fee_journal(db: Session, user_id: int, badge_fee_amount: Decimal,
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="badge_fee",
             reference_id=badge_id,
             description=f"Badge fee for user {user_id}",
@@ -935,7 +936,7 @@ def post_logistics_cod_remittance_journal(
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="cod_remittance",
             reference_id=logistics_settlement_id,
             description=f"COD remittance from logistics for settlement {logistics_settlement_id}",
@@ -982,7 +983,7 @@ def post_supplier_settlement_journal(
     return create_journal_entry(
         db,
         JournalEntryCreate(
-            entry_date=datetime.utcnow(),
+            entry_date=utcnow(),
             reference_type="supplier_settlement",
             reference_id=settlement_id,
             description=f"Supplier settlement payment for settlement {settlement_id}",
@@ -1080,7 +1081,7 @@ def get_trial_balance(
         )
 
     return TrialBalanceOut(
-        as_of=as_of_date or datetime.utcnow(),
+        as_of=as_of_date or utcnow(),
         accounts=accounts_out,
         total_debit_balances=round_money(total_debit),
         total_credit_balances=round_money(total_credit),

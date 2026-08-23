@@ -1,3 +1,2 @@
-﻿from __future__ import annotations
-
-# Sub-domain package — import directly from .module_name
+"""finance domain — services tax sub-package."""
+from __future__ import annotations

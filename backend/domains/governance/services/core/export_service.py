@@ -25,9 +25,10 @@ from domains.governance.models.core import AuditLog
 from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
-from domains.payments.models.payments import Coupon
-from domains.customers.ports import (
-    MAX_EXPORT_ROWS,
+from domains.catalog.models.promotions import Coupon
+# NOTE: These functions were moved here because they don't exist in customers.ports
+MAX_EXPORT_ROWS = 10000
+from domains.governance.services.core.export_read_service import (
     db_auditlog_query_4,
     db_coupon_all_3,
     db_order_all_1,

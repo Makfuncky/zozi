@@ -18,7 +18,7 @@ from domains.governance.models.admin import LogisticsSettlement
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderLogisticsAllocation
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import LogisticsPartnerPayout
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -12,8 +12,8 @@ from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
 from domains.governance.models.admin import PaymentProviderConfig
 from domains.governance.models.admin import ProcessedWebhookEvent
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import PaymentGatewayConnection
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import PaymentGatewayConnection
 import structlog
 logger = structlog.get_logger(__name__)
 

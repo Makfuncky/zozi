@@ -1,10 +1,11 @@
-"""Sub-Ledger Service — per-customer (AR) and per-supplier (AP) tracking.
+﻿"""Sub-Ledger Service — per-customer (AR) and per-supplier (AP) tracking.
 
 Bridges GL account balances to entity-level outstanding amounts.
 Allows drill-down from GL account 1030 (AR) and 2010 (AP) to individual
 customer/supplier sub-ledger entries.
 """
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 
 import logging
 from datetime import datetime
@@ -14,7 +15,16 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from domains.governance.ports import User
+# User imported lazily to avoid circular import
+_User_model = None
+
+def _get_User():
+    global _User_model
+    if _User_model is None:
+        from domains.governance.ports import User as _U
+        _User_model = _U
+    return _User_model
+
 from domains.finance.models.finance import ARLedgerEntry
 from domains.finance.models.finance import APLedger
 from domains.finance.models.finance import Account
@@ -91,7 +101,7 @@ def post_ar_payment(
         balance_after=round_money(current_balance - amount),
         currency=currency,
         status="paid",
-        settled_at=datetime.utcnow(),
+        settled_at=utcnow(),
         description=description or f"Payment from customer #{customer_id}",
         created_by=created_by,
         country_code=country_code,
@@ -186,7 +196,7 @@ def _update_ar_invoice_status(db: Session, invoice_id: int) -> None:
         db.query(ARLedgerEntry).filter(
             ARLedgerEntry.invoice_id == invoice_id,
             ARLedgerEntry.entry_type == "invoice",
-        ).update({"status": "paid", "settled_at": datetime.utcnow()})
+        ).update({"status": "paid", "settled_at": utcnow()})
         db.commit()
 
 
@@ -255,7 +265,7 @@ def post_ap_payment(
         balance_after=round_money(current_balance - amount),
         currency=currency,
         status="closed",
-        paid_at=datetime.utcnow(),
+        paid_at=utcnow(),
         description=description or f"Payment to supplier #{supplier_id}",
         created_by=created_by,
         country_code=country_code,
@@ -267,7 +277,7 @@ def post_ap_payment(
     if settlement_id:
         db.query(SupplierSettlement).filter(
             SupplierSettlement.id == settlement_id
-        ).update({"status": "paid", "settled_at": datetime.utcnow()})
+        ).update({"status": "paid", "settled_at": utcnow()})
         db.commit()
     return entry
 

@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.audit import audit_log, AuditAction
 from domains.catalog.ports import Product
 from domains.governance.ports import CouponUsage
-from domains.payments.ports import Coupon
+from domains.finance.ports import Coupon
 from infrastructure.database.schemas import CouponValidate, OrderItemBase
 from infrastructure.utils.datetime_utils import utcnow
 from kernel.money import round_money, to_decimal

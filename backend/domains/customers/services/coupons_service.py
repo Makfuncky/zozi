@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 logger = logging.getLogger(__name__)
 
 from domains.governance.models.admin import CouponUsage
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 from domains.catalog.models.products import Product
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.database.schemas import CouponValidate, OrderItemBase
@@ -38,7 +38,7 @@ def _get_coupon_by_code(code: str, db: Session) -> Coupon:
 def _validate_coupon_for_total(coupon: Coupon, order_total: Decimal) -> None:
     if coupon.expires_at and coupon.expires_at < utcnow():
         raise HTTPException(status_code=410, detail="Coupon has expired")
-    if coupon.usage_limit is not None and coupon.usage_count >= coupon.usage_limit:
+    if coupon.usage_limit is not None and (coupon.usage_count or 0) >= coupon.usage_limit:
         raise HTTPException(status_code=410, detail="Coupon has reached max uses")
     if order_total < to_decimal(coupon.minimum_order):
         raise HTTPException(

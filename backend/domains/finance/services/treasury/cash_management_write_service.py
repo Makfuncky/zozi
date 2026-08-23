@@ -34,7 +34,7 @@ from domains.finance.services.treasury.cash_management_service import resolve_ba
 from domains.finance.services.treasury.cash_management_service import serialize_cod_remittance_receipt as _serialize_cod_remittance_receipt
 from domains.finance.services.treasury.cash_management_service import upsert_finance_bank_settings as _upsert_finance_bank_settings
 from domains.finance.services.treasury.cash_management_service import verify_cod_remittance_receipt as _verify_cod_remittance_receipt
-from domains.finance.services.payments.payout_dispatch_service import dispatch_transfer_batch_with_audit as _dispatch_transfer_batch_with_audit
+from domains.finance.services.payouts.payout_dispatch_service import dispatch_transfer_batch_with_audit as _dispatch_transfer_batch_with_audit
 from kernel.money import to_decimal
 import structlog
 logger = structlog.get_logger(__name__)

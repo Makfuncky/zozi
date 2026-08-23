@@ -114,7 +114,7 @@ def _startup_register_services() -> None:
 
 def _startup_register_event_listeners() -> None:
     try:
-        from domains.payments.services.payments import _event_publisher
+        from domains.finance.services.payments.payments import _event_publisher
         from infrastructure.messaging.events import PaymentConfirmedEvent
         from domains.logistics.services.fulfillment_service import FulfillmentService
 

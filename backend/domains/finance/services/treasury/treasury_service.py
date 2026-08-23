@@ -1,5 +1,6 @@
-"""Treasury Controller for EOSB, Payroll, and Double-Entry Accounting."""
+﻿"""Treasury Controller for EOSB, Payroll, and Double-Entry Accounting."""
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
@@ -92,7 +93,7 @@ def create_treasury_transaction(
         currency=currency,
         reference=reference,
         description=description,
-        posted_at=datetime.utcnow()
+        posted_at=utcnow()
     )
     db.add(transaction)
     db.commit()
@@ -154,7 +155,7 @@ def create_journal_entry(
         description=description,
         source=source,
         country_code=country_code,
-        entry_date=datetime.utcnow(),
+        entry_date=utcnow(),
     )
     db.add(entry)
     db.commit()

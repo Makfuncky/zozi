@@ -273,6 +273,12 @@ def get_promotion_engine_config_by_id(db: Session, id_: int) -> Optional[Promoti
     """Return PromotionEngineConfig by primary key (or None)."""
     return db.get(PromotionEngineConfig, id_)
 
+
+def get_latest_promotion_engine_config(db: Session) -> Optional[PromotionEngineConfig]:
+    """Return the most-recent PromotionEngineConfig row (or None)."""
+    return db.query(PromotionEngineConfig).order_by(PromotionEngineConfig.id.desc()).first()
+
+
 def list_promotion_engine_configs(db: Session, limit: int = 100) -> List[PromotionEngineConfig]:
     """Return up to ``limit`` PromotionEngineConfig rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(PromotionEngineConfig, db, limit)
@@ -794,7 +800,21 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "update_user_role": ("domains.governance.services.users.users_service", "update_user_role"),
     "toggle_user_active": ("domains.governance.services.users.users_service", "toggle_user_active"),
     "update_profile": ("domains.governance.services.users.admin_identity_operations_api_service", "update_profile"),
-    "get_incident_service": ("domains.governance.services.incident.incident_service", "get_incident_service"),
+    # NOTE: Fixed import path - incident_service is in services/ not services/incident/
+    "get_incident_service": ("domains.governance.services.incident_service", "get_incident_service"),
+    # Model re-exports (canonical homes in other domains)
+    "User": ("domains.governance.models.user", "User"),
+    "DirectChatMessage": ("domains.comms.models.chat", "DirectChatMessage"),
+    "DirectChatRoom": ("domains.comms.models.chat", "DirectChatRoom"),
+    "GroupChatRoom": ("domains.comms.models.chat", "GroupChatRoom"),
+    "GroupChatMember": ("domains.comms.models.chat", "GroupChatMember"),
+    "GroupChatMessage": ("domains.comms.models.chat", "GroupChatMessage"),
+    "EntityChatThread": ("domains.comms.models.chat", "EntityChatThread"),
+    "EntityChatMessage": ("domains.comms.models.chat", "EntityChatMessage"),
+    "EscalationSLALog": ("domains.comms.models.chat", "EscalationSLALog"),
+    "VideoRoom": ("domains.comms.models.chat", "VideoRoom"),
+    "VideoRoomParticipant": ("domains.comms.models.chat", "VideoRoomParticipant"),
+    "VideoRoomRecording": ("domains.comms.models.chat", "VideoRoomRecording"),
 }
 
 import importlib as _importlib
@@ -852,6 +872,7 @@ from domains.governance.services.commerce.admin_commerce_configuration_service i
 from domains.governance.services.commerce.admin_commerce_configuration_service import list_coupons
 from domains.governance.services.commerce.public_commerce_validation_service import delete_coupon
 from domains.governance.services.treasury.payouts_service import verify_payout
-from domains.governance.incident.incident_service import get_incident_service, IncidentService, get_war_room_summary
+# NOTE: The following import was removed because domains.governance.incident module doesn't exist
+# from domains.governance.incident.incident_service import get_incident_service, IncidentService, get_war_room_summary
 from domains.governance.services.country.country_admin_service import list_staff
 from domains.governance.services.core.export_service import export_audit_logs_csv,export_coupons_csv,export_orders_csv,export_products_csv,export_transfer_csv,export_users_csv,download_export_job_result,queue_export_job

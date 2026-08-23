@@ -18,8 +18,8 @@ from domains.catalog.models.products import Product as ProductModel
 from domains.finance.models.finance import Account as AccountModel
 from domains.finance.models.finance import AccountBalance as AccountBalanceModel
 from domains.governance.models.admin import CommissionGlobalConfig
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout as PayoutModel
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout as PayoutModel
 
 
 def get_dashboard_stats(db: Session) -> Dict[str, Any]:

@@ -73,9 +73,9 @@ from domains.orders.ports import Order
 from domains.orders.ports import OrderItem
 from domains.orders.ports import OrderLogisticsAllocation
 from domains.orders.ports import ReturnRequest
-from domains.payments.ports import Banner
-from domains.payments.ports import PaymentGatewayConnection
-from domains.payments.ports import Payout
+from domains.finance.ports import Banner
+from domains.finance.ports import PaymentGatewayConnection
+from domains.finance.ports import Payout
 import structlog
 logger = structlog.get_logger(__name__)
 

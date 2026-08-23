@@ -1,4 +1,4 @@
-"""Cash Flow Forecast Engine — predicts future cash position.
+﻿"""Cash Flow Forecast Engine — predicts future cash position.
 
 Uses historical patterns, pending payouts, and expected settlements
 to project daily cash balances.
@@ -53,7 +53,7 @@ def generate_forecast(
     if bal:
         current_balance = bal.balance
 
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Historical average daily net flow (last 90 days)
     historical_start = today - timedelta(days=90)
@@ -119,7 +119,7 @@ def generate_forecast(
         })
 
     result = {
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": utcnow().isoformat(),
         "currency": currency,
         "current_balance": float(current_balance),
         "historical_avg_daily_net": float(avg_daily_net),

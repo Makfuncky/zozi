@@ -1,8 +1,8 @@
-"""Q1 rescue test for the payments router.
+﻿"""Q1 rescue test for the payments router.
 
 Guards the Q1 architecture rule: routers must never touch the ORM session
 directly through ``db.query()`` / ``db.execute()``. All access is delegated to
-the shared payments service ``domains.payments.services.payments``.
+the shared payments service ``domains.finance.services.payments.payments``.
 """
 from __future__ import annotations
 
@@ -55,18 +55,18 @@ def test_router_has_no_direct_db_reads(router_src: str) -> None:
     findings = _find_direct_db_reads(router_src)
     assert findings == [], (
         f"{_ROUTER_NAME} router must not call db.query()/db.execute() directly; "
-        f"delegate to domains.payments.services.payments. Found: {findings}"
+        f"delegate to domains.finance.services.payments.payments. Found: {findings}"
     )
 
 
 def test_router_delegates_to_service(router_src: str) -> None:
     tree = ast.parse(router_src)
     imports_service = any(
-        isinstance(node, ast.ImportFrom) and node.module == "domains.payments.services.payments"
+        isinstance(node, ast.ImportFrom) and node.module == "domains.finance.services.payments.payments"
         for node in ast.walk(tree)
     )
     assert imports_service, (
-        f"{_ROUTER_NAME} router should delegate to domains.payments.services.payments"
+        f"{_ROUTER_NAME} router should delegate to domains.finance.services.payments.payments"
     )
 
 

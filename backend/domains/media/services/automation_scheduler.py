@@ -35,9 +35,9 @@ from domains.finance.services.reporting.financial_reports_service import generat
 from domains.finance.services.reporting.financial_reports_service import generate_balance_sheet
 from domains.finance.services.reporting.financial_reports_service import generate_cash_flow_statement
 from domains.finance.services.reporting.financial_reports_service import save_report
-from domains.payments.services.gateway_reconciliation_service import run_gateway_3way_reconciliation
-from domains.finance.services.payments.payout_batch_service import generate_supplier_payout_batches
-from domains.finance.services.payments.payout_batch_service import generate_logistics_payout_batches
+from domains.finance.services.payments.gateway_reconciliation_service import run_gateway_3way_reconciliation
+from domains.finance.services.payouts.payout_batch_service import generate_supplier_payout_batches
+from domains.finance.services.payouts.payout_batch_service import generate_logistics_payout_batches
 from domains.finance.services.accounts.credit_control_service import enforce_auto_credit_holds
 from domains.finance.services.shared.ai_automation_service import run_ai_bank_reconciliation
 from domains.finance.services.shared.ai_automation_service import process_email_inbox
@@ -515,7 +515,7 @@ def run_full_automation(db: Session, country_code: str = None,
     
     # COD batch reconciliation (#5) - daily
     try:
-        from domains.payments.services.gateway_reconciliation_service import reconcile_all_cod_deposits
+        from domains.finance.services.payments.gateway_reconciliation_service import reconcile_all_cod_deposits
         results["cod_reconciliation"] = reconcile_all_cod_deposits(db, country_code=country_code)
     except Exception as e:
         logger.warning("COD reconciliation failed: %s", e)

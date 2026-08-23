@@ -20,8 +20,8 @@ from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import ReturnRequest
 from infrastructure.database.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
 from infrastructure.utils.audit import audit_log, AuditAction
-from domains.payments.services.payments import _order_holds_inventory
-from domains.payments.services.payments import apply_order_status_change
+from domains.finance.services.payments.payments import _order_holds_inventory
+from domains.finance.services.payments.payments import apply_order_status_change
 from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)

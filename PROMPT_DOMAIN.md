@@ -1,5 +1,3 @@
-
-
   ## Production Standard (non-negotiable):
   - We are at GO-TO-PRODUCTION level. Every fix must be PROFESSIONAL, ACCURATE, and COMPLETE. There is ZERO tolerance for drifting, loopholes, stubs, shortcuts, leftover TODOs, or any mistake that would fail in production.
   - Every change must leave the code SMOOTHER, FASTER, and PROPERLY WIRED than before — never slower, never loosely connected, never half-working.

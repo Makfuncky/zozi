@@ -34,6 +34,7 @@ from domains.comms.services.marketing.transactional_email_service import enqueue
 from domains.comms.services.marketing.transactional_email_service import enqueue_order_created_email
 
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from domains.governance.services.auth.security_dependencies import require_roles
 
 logger = logging.getLogger(__name__)
 

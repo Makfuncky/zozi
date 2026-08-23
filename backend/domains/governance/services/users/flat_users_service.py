@@ -65,9 +65,9 @@ from domains.orders.models.orders import OrderLogisticsAllocation
 from domains.orders.models.orders import ReturnRequest
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Banner
-from domains.payments.models.payments import PaymentGatewayConnection
-from domains.payments.models.payments import Payout
+from domains.catalog.models.promotions import Banner
+from domains.finance.models.payments import PaymentGatewayConnection
+from domains.finance.models.payments import Payout
 from infrastructure.utils.auth import get_password_hash, require_permission
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.constants import STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE

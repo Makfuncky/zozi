@@ -18,11 +18,8 @@ from typing import Any, Optional, cast
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-import domains.governance.services as search_ctrl
-from domains.governance.ports import User
 from domains.catalog.ports import Product
 from domains.catalog.ports import Wishlist
-from domains.governance.ports import ChatbotQueryEvent
 from domains.orders.ports import Order
 from domains.orders.ports import OrderItem
 

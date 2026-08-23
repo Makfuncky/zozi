@@ -13,11 +13,11 @@ from domains.comms.models.marketing import EmailTemplate
 from domains.comms.models.marketing import NewsletterSubscriber
 from domains.comms.models.marketing import CampaignRecipient
 from infrastructure.database.database import get_service_session
-from domains.comms.services.utility.write_helpers import add_and_flush
-from domains.comms.services.utility.write_helpers import commit_and_refresh
-from domains.comms.services.utility.write_helpers import commit_only
-from domains.comms.services.utility.write_helpers import delete_only
-from domains.comms.services.utility.write_helpers import flush_only
+from domains.comms.services.shared.utility.write_helpers import add_and_flush
+from domains.comms.services.shared.utility.write_helpers import commit_and_refresh
+from domains.comms.services.shared.utility.write_helpers import commit_only
+from domains.comms.services.shared.utility.write_helpers import delete_only
+from domains.comms.services.shared.utility.write_helpers import flush_only
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)

@@ -1,4 +1,4 @@
-"""Service methods for finance automation rules read operations."""
+﻿"""Service methods for finance automation rules read operations."""
 from __future__ import annotations
 from infrastructure.utils.pagination import windowed_iterate, SAFE_QUERY_LIMIT
 from typing import List
@@ -22,7 +22,7 @@ def get_automation_rules(db: Session, skip: int = 0, limit: int = 20) -> list[Au
         db.query(AutomationRule)
         .filter(AutomationRule.is_active == True)
         .order_by(AutomationRule.created_at.desc())
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )
@@ -45,7 +45,7 @@ def get_automation_logs(db: Session, rule_id: int, skip: int = 0, limit: int = 5
         db.query(AutomationLog)
         .filter(AutomationLog.rule_id == rule_id)
         .order_by(AutomationLog.created_at.desc())
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )
@@ -85,7 +85,7 @@ def list_bank_mapping_rules(
             (BankMappingRule.country_code == country_code)
             | (BankMappingRule.country_code.is_(None))
         )
-    return q.order_by(BankMappingRule.priority.asc()).offset(skip).limit(limit).all()
+    return q.order_by(BankMappingRule.priority.asc()).limit(limit).all()
 
 
 def list_scanned_expenses(
@@ -112,7 +112,7 @@ def list_fixed_assets(
         q = q.filter(
             (FixedAsset.country_code == country_code) | (FixedAsset.country_code.is_(None))
         )
-    return q.order_by(FixedAsset.id.desc()).offset(skip).limit(limit).all()
+    return q.order_by(FixedAsset.id.desc()).limit(limit).all()
 
 
 def list_accruals(
@@ -127,4 +127,4 @@ def list_accruals(
         q = q.filter(
             (Accrual.country_code == country_code) | (Accrual.country_code.is_(None))
         )
-    return q.order_by(Accrual.id.desc()).offset(skip).limit(limit).all()
+    return q.order_by(Accrual.id.desc()).limit(limit).all()

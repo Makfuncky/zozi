@@ -18,7 +18,7 @@ from decimal import Decimal
 from sqlalchemy import text
 
 from domains.orders.ports import Order, OrderItem
-from domains.payments.models.payments import Payment
+from domains.finance.models.payments import Payment
 
 
 def _make_order(db, **kw) -> Order:

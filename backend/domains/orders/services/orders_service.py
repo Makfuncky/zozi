@@ -26,11 +26,11 @@ from domains.orders.services.coupons_service import build_coupon_quote
 from domains.orders.services.promotion_service import calculate_order_tier_discount
 from domains.orders.services.promotion_service import record_order_tier_ledger
 from domains.catalog.services.products_service import resolve_product_variant
-from domains.payments.services.payments import apply_order_status_change
-from domains.payments.services.payments import build_order_payment_snapshot
-from domains.payments.services.payments import confirm_cash_on_delivery_order
-from domains.payments.services.payments import is_checkout_payment_method_allowed
-from domains.payments.services.payments import normalize_checkout_payment_method
+from domains.finance.services.payments.payments import apply_order_status_change
+from domains.finance.services.payments.payments import build_order_payment_snapshot
+from domains.finance.services.payments.payments import confirm_cash_on_delivery_order
+from domains.finance.services.payments.payments import is_checkout_payment_method_allowed
+from domains.finance.services.payments.payments import normalize_checkout_payment_method
 from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
@@ -621,7 +621,7 @@ def _calculate_order_amounts(
     currency = str(current_user.get("preferred_currency") or settings.default_currency)
 
     try:
-        from domains.country.services.cross_border_detection import CrossBorderDetectionMiddleware
+        from domains.country.services.cross_border.cross_border_detection import CrossBorderDetectionMiddleware
         cb = CrossBorderDetectionMiddleware(db)
         user_id = current_user.get("id")
         home_country = current_user.get("country_code") or country_code

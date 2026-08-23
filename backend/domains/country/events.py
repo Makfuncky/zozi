@@ -29,13 +29,6 @@ class CountryConfigPublished(CountryEvent):
 
 
 @dataclass
-class CountryConfigDraftCreated(CountryEvent):
-    country_code: str = ""
-    config_type: str = ""
-    draft_by: int | None = None
-
-
-@dataclass
 class CountryStaffAssigned(CountryEvent):
     country_code: str = ""
     user_id: int = 0

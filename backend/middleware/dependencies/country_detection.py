@@ -20,7 +20,7 @@ _service = None
 def _get_service():
     global _service
     if _service is None:
-        from domains.country.services.country_detection import CountryDetectionService
+        from domains.country.services.geo.country_detection import CountryDetectionService
         _service = CountryDetectionService()
     return _service
 

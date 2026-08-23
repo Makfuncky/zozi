@@ -70,29 +70,30 @@ def list_fraud_events(
     ]
 
 
-def list_blacklist(db: Session, entity_type: Optional[str] = None, status: str = "active") -> list:
+def list_blacklist(db: Session, identifier_type: Optional[str] = None, status: str = "active") -> list:
     q = db.query(FraudBlacklist)
-    if entity_type:
-        q = q.filter(FraudBlacklist.entity_type == entity_type)
+    if identifier_type:
+        q = q.filter(FraudBlacklist.identifier_type == identifier_type)
     q = q.filter(FraudBlacklist.status == status)
     return q.order_by(FraudBlacklist.created_at.desc()).all()
 
 
-def add_to_blacklist(db: Session, entity_type: str, entity_value: str, reason: Optional[str], expires_at=None) -> FraudBlacklist:
-    value_hash = hashlib.sha256(entity_value.encode()).hexdigest()
+def add_to_blacklist(db: Session, identifier_type: str, identifier_value: str, reason: Optional[str], expires_at=None) -> FraudBlacklist:
+    value_hash = hashlib.sha256(identifier_value.encode()).hexdigest()
     existing = (
         db.query(FraudBlacklist)
         .filter(
-            FraudBlacklist.entity_type == entity_type,
-            FraudBlacklist.entity_value_hash == value_hash,
+            FraudBlacklist.identifier_type == identifier_type,
+            FraudBlacklist.identifier_value_hash == value_hash,
         )
         .first()
     )
     if existing:
         raise HTTPException(400, "Entity already blacklisted")
     entry = FraudBlacklist(
-        entity_type=entity_type,
-        entity_value_hash=value_hash,
+        identifier_type=identifier_type,
+        identifier_value=identifier_value,
+        identifier_value_hash=value_hash,
         reason=reason,
         expires_at=expires_at,
     )

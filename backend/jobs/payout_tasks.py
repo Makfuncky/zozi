@@ -113,7 +113,7 @@ def retry_failed_payouts(self) -> dict[str, Any]:
     try:
         from datetime import datetime, timezone, timedelta
         from infrastructure.database.database import SessionLocal
-        from domains.payments.models.payments import Payout
+        from domains.finance.models.payments import Payout
         
         db = SessionLocal()
         try:

@@ -20,8 +20,8 @@ from sqlalchemy.orm import Session
 from domains.comms.models.marketing import FlashSale
 from domains.governance.models.admin import PromotionEngineConfig
 from domains.governance.models.admin import PromotionOrderTier
-from domains.payments.models.payments import Banner
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Banner
+from domains.catalog.models.promotions import Coupon
 
 
 def _banner_to_dict(b: Banner) -> dict:

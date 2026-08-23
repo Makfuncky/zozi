@@ -52,3 +52,4 @@ class KYCVerification(Base):
     reviewer_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True)
     user = relationship("User", foreign_keys=[user_id])
     reviewer = relationship("User", foreign_keys=[reviewer_id])
+

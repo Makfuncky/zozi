@@ -10,12 +10,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from domains.finance.services.payments.payments_gateway_service import build_order_payment_snapshot
-from domains.finance.services.payments.payments_gateway_service import confirm_cash_on_delivery_order
-from domains.finance.services.payments.payments_gateway_service import is_checkout_payment_method_allowed
-from domains.finance.services.payments.payments_gateway_service import normalize_checkout_payment_method
-from domains.finance.services.payments.payments_gateway_service import event_publisher as _event_publisher
-from domains.finance.services.payments.payments_gateway_service import order_holds_inventory as _order_holds_inventory
+from domains.finance.services.payouts.payments_gateway_service import build_order_payment_snapshot
+from domains.finance.services.payouts.payments_gateway_service import confirm_cash_on_delivery_order
+from domains.finance.services.payouts.payments_gateway_service import is_checkout_payment_method_allowed
+from domains.finance.services.payouts.payments_gateway_service import normalize_checkout_payment_method
+from domains.finance.services.payouts.payments_gateway_service import event_publisher as _event_publisher
+from domains.finance.services.payouts.payments_gateway_service import order_holds_inventory as _order_holds_inventory
 import structlog
 logger = structlog.get_logger(__name__)
 

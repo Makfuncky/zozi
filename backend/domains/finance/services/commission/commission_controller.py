@@ -1,6 +1,7 @@
 ﻿"""controllers.finance.commission_controller controller.
 
 Business logic is delegated to services.finance.commission_service (routers -> controllers -> services)."""
+from __future__ import annotations
 
 from domains.finance.services.commission.commission_service import _build_list_page_payload
 from domains.finance.services.commission.commission_service import _category_to_slug

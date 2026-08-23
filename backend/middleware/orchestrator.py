@@ -55,6 +55,7 @@ from middleware.request_id_middleware import RequestIDMiddleware
 from middleware.csrf_middleware import CSRFMiddleware
 from middleware.logging_middleware import RequestLoggingMiddleware
 from middleware.api_version_middleware import ApiVersionMiddleware
+from middleware.authentication_middleware import AuthenticationMiddleware
 
 from infrastructure.utils.config import settings
 
@@ -73,32 +74,32 @@ _FOUNDATION: list[type] = [
 ]
 
 # ──────────────────────────────────────────────
-# Layer 2: Security (original positions 4-5)
+# Layer 2: Authentication — Resolve user from JWT
+# MUST run BEFORE Geo & Country so that RLS scope can be
+# derived from the authenticated user's identity
 # ──────────────────────────────────────────────
 
-_SECURITY: list[type] = [
-    EnhancedSecurityHeadersMiddleware,  # Original pos 4 — CSP, HSTS, etc.
-    ImpossibleTravelMiddleware,         # Original pos 5 — geo-impossible travel
-    FraudDetectionMiddleware,           # fraud_prevention — impossible-travel / ghost-employee
-    FraudScoringMiddleware,             # fraud_scoring — velocity & rule scoring
-
-    CSRFMiddleware,
+_AUTHENTICATION: list[type] = [
+    AuthenticationMiddleware,  # Resolve user from JWT, populate request.state
 ]
 
 # ──────────────────────────────────────────────
-# Layer 3: Rate Limiting (original position 6)
+# Layer 3: Rate Limiting — EARLY DoS protection
+# MUST run BEFORE expensive security/DB operations
 # ──────────────────────────────────────────────
 
 _RATE_LIMITING: list[type] = [
-    RateLimitMiddleware,  # Original pos 6 — sliding-window per-path limiter
+    RateLimitMiddleware,  # Sliding-window per-path limiter
 ]
 
 # ──────────────────────────────────────────────
-# Layer 4: Geo & Country (original position 7)
+# Layer 4: Geo & Country — Set RLS scope
+# MUST run AFTER Authentication so request.state.user is populated
+# MUST run BEFORE any middleware that opens DB sessions
 # ──────────────────────────────────────────────
 
 _GEO_COUNTRY: list[type] = [
-    CountryContextMiddleware,  # Original pos 7 — resolve country code
+    CountryContextMiddleware,  # Resolve country code and set RLS scope
 
     # NOTE — EnhancedGeoBlockingMiddleware was NOT previously registered.
     # It makes external API calls to ipapi.co for geolocation.  Activate
@@ -115,11 +116,23 @@ _OBSERVABILITY: list[type] = [
 ]
 
 # ──────────────────────────────────────────────
-# Layer 6: PCI Compliance (original position 8, production only)
+# Layer 6: PCI Compliance (production only)
 # ──────────────────────────────────────────────
 
 _COMPLIANCE: list[type] = [
-    PCIDSSMiddleware,  # Original pos 8 — PCI-DSS audit & HTTPS enforcement
+    PCIDSSMiddleware,  # PCI-DSS audit & HTTPS enforcement
+]
+
+# ──────────────────────────────────────────────
+# Layer 7: Security (runs WITH proper RLS scope + user context)
+# ──────────────────────────────────────────────
+
+_SECURITY: list[type] = [
+    EnhancedSecurityHeadersMiddleware,  # CSP, HSTS, etc.
+    ImpossibleTravelMiddleware,         # Geo-impossible travel
+    FraudDetectionMiddleware,           # Fraud detection
+    FraudScoringMiddleware,             # Fraud scoring
+    CSRFMiddleware,                     # CSRF protection
 ]
 
 
@@ -133,14 +146,19 @@ def setup_middleware(app: FastAPI) -> None:
     pipeline is therefore registered in **reverse**.
 
     Documented execution order (outermost first, i.e. closest to the client):
-        FOUNDATION → SECURITY → RATE LIMITING → GEO & COUNTRY
-        → OBSERVABILITY → COMPLIANCE (production only)
+        FOUNDATION → AUTHENTICATION → RATE LIMITING → GEO & COUNTRY
+        → SECURITY → OBSERVABILITY → COMPLIANCE (production only)
+
+    Authentication MUST run before Geo & Country so that CountryContextMiddleware
+    can read request.state.user (populated by AuthenticationMiddleware) to
+    resolve the RLS country scope from the authenticated user's identity.
     """
     pipeline: list[type] = [
         *_FOUNDATION,
-        *_SECURITY,
+        *_AUTHENTICATION,
         *_RATE_LIMITING,
         *_GEO_COUNTRY,
+        *_SECURITY,
         *_OBSERVABILITY,
     ]
 
@@ -199,15 +217,15 @@ def _resolve_kwargs(mw_class: type) -> dict:
 
 def _layer_count() -> int:
     """Number of non-empty layers."""
-    layers = [_FOUNDATION, _SECURITY, _RATE_LIMITING,
-              _GEO_COUNTRY, _OBSERVABILITY, _COMPLIANCE]
+    layers = [_FOUNDATION, _AUTHENTICATION, _RATE_LIMITING, _GEO_COUNTRY,
+              _SECURITY, _OBSERVABILITY, _COMPLIANCE]
     return sum(1 for layer in layers if layer)
 
 
 def _total_middleware() -> int:
     """Total middleware classes across all layers."""
-    layers = [_FOUNDATION, _SECURITY, _RATE_LIMITING,
-              _GEO_COUNTRY, _OBSERVABILITY, _COMPLIANCE]
+    layers = [_FOUNDATION, _AUTHENTICATION, _RATE_LIMITING, _GEO_COUNTRY,
+              _SECURITY, _OBSERVABILITY, _COMPLIANCE]
     return sum(len(layer) for layer in layers)
 
 

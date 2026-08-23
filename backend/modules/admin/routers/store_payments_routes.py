@@ -1,4 +1,4 @@
-"""store payments routes router.
+﻿"""store payments routes router.
 
 Business logic lives in `controllers/payments_engine.py`;
 wire endpoints here as needed. A `/status` endpoint lists the
@@ -16,7 +16,7 @@ def health():
 
 
 try:
-    import domains.payments.models as _ctrl
+    import domains.finance.models.payments as _ctrl
     _HAS_CTRL = True
     _CTRL_PUBLIC = [n for n in dir(_ctrl) if not n.startswith("_") and callable(getattr(_ctrl, n))]
 except Exception:

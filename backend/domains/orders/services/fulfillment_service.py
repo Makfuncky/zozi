@@ -10,7 +10,7 @@ from typing import List
 from sqlalchemy.orm import Session
 
 from domains.orders.models.orders import Order
-from domains.payments.models.payments import Payment
+from domains.finance.models.payments import Payment
 from infrastructure.messaging.events import PaymentConfirmedEvent
 from domains.comms.services.notification.notification_service import NotificationService
 

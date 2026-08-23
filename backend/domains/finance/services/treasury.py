@@ -10,7 +10,7 @@ import sys
 
 _PACKAGE = "domains.finance.services"
 _SUBDOMAINS = [
-    "ledger", "accounts", "treasury", "payments", "tax",
+    "ledger", "accounts", "treasury", "payouts", "tax",
     "reporting", "country", "commission", "shared",
 ]
 

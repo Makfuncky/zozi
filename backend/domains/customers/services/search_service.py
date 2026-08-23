@@ -10,9 +10,10 @@ from fastapi.responses import Response
 from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
+from domains.catalog.models.products import Product, Wishlist
+from domains.orders.models.orders import Order, OrderItem
 from infrastructure.database.schemas import _normalize_image_path
-from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_or_compute, cache_set_json, get_cache_version
+from infrastructure.utils.cache import cache_or_compute
 
 # ── Price-range keyword map ────────────────────────────────────────────────
 PRICE_KEYWORDS: list[tuple[re.Pattern, float | None, float | None]] = [
@@ -217,9 +218,9 @@ def _resolve_brand_from_catalog(parsed: dict[str, Any], db: Session) -> dict[str
         brand_rows = (
             db.query(Product.brand)
             .filter(
-                Product.is_deleted == False,  # noqa: E712
-                Product.is_active == True,  # noqa: E712
-                Product.is_approved == True,  # noqa: E712
+                Product.is_deleted.is_(False),  # noqa: E712
+                Product.is_active.is_(True),  # noqa: E712
+                Product.is_approved.is_(True),  # noqa: E712
                 Product.stock > 0,
                 Product.brand.isnot(None),
             )
@@ -494,7 +495,7 @@ def smart_search_from_parsed(
     parsed = _resolve_brand_from_catalog(parsed, db)
 
     query = db.query(Product).filter(
-        Product.is_deleted == False,
+        Product.is_deleted.is_(False),
         Product.is_active.isnot(False),
         Product.is_approved.isnot(False),
         Product.stock > 0,
@@ -632,7 +633,7 @@ def get_recommendations(
 
     if user_id is None:
         query = db.query(Product).filter(
-            Product.is_deleted == False,   # noqa: E712
+            Product.is_deleted.is_(False),   # noqa: E712
             Product.is_active.isnot(False),
             Product.is_approved.isnot(False),
             Product.stock > 0,
@@ -645,9 +646,9 @@ def get_recommendations(
             recommended = (
                 db.query(Product)
                 .filter(
-                    Product.is_deleted == False,   # noqa: E712
-                    Product.is_active == True,     # noqa: E712
-                    Product.is_approved == True,   # noqa: E712
+                    Product.is_deleted.is_(False),   # noqa: E712
+                    Product.is_active.is_(True),     # noqa: E712
+                    Product.is_approved.is_(True),   # noqa: E712
                     Product.stock > 0,
                 )
                 .order_by(Product.sales_count.desc(), Product.rating.desc())
@@ -673,9 +674,9 @@ def get_recommendations(
             .join(Order, Order.id == OrderItem.order_id)
             .filter(
                 Order.user_id == user_id,
-                Product.is_deleted == False,  # noqa: E712
-                Product.is_active == True,    # noqa: E712
-                Product.is_approved == True,  # noqa: E712
+                Product.is_deleted.is_(False),  # noqa: E712
+                Product.is_active.is_(True),    # noqa: E712
+                Product.is_approved.is_(True),  # noqa: E712
             )
             .group_by(Product.category)
             .order_by(desc(func.sum(OrderItem.quantity)))
@@ -692,8 +693,8 @@ def get_recommendations(
             .join(Wishlist, Wishlist.product_id == Product.id)
             .filter(
                 Wishlist.user_id == user_id,
-                Product.is_deleted == False,  # noqa: E712
-                Product.is_active == True,    # noqa: E712
+                Product.is_deleted.is_(False),  # noqa: E712
+                Product.is_active.is_(True),    # noqa: E712
             )
             .all()
         )
@@ -738,9 +739,9 @@ def get_recommendations(
             .filter(
                 OrderItem.order_id.in_(co_order_ids_subq),
                 Product.id.notin_(user_product_ids_subq),
-                Product.is_deleted == False,  # noqa: E712
-                Product.is_active == True,    # noqa: E712
-                Product.is_approved == True,  # noqa: E712
+                Product.is_deleted.is_(False),  # noqa: E712
+                Product.is_active.is_(True),    # noqa: E712
+                Product.is_approved.is_(True),  # noqa: E712
             )
             .group_by(Product.category)
             .limit(50)
@@ -787,9 +788,9 @@ def get_recommendations(
         }
 
         query = db.query(Product).filter(
-            Product.is_deleted == False,   # noqa: E712
-            Product.is_active == True,     # noqa: E712
-            Product.is_approved == True,   # noqa: E712
+            Product.is_deleted.is_(False),   # noqa: E712
+            Product.is_active.is_(True),     # noqa: E712
+            Product.is_approved.is_(True),   # noqa: E712
             Product.stock > 0,
         )
         if purchased_product_ids:
@@ -801,9 +802,9 @@ def get_recommendations(
         if not recommended:
             # Fallback to global best products when category affinity is sparse.
             fallback_query = db.query(Product).filter(
-                Product.is_deleted == False,   # noqa: E712
-                Product.is_active == True,     # noqa: E712
-                Product.is_approved == True,   # noqa: E712
+                Product.is_deleted.is_(False),   # noqa: E712
+                Product.is_active.is_(True),     # noqa: E712
+                Product.is_approved.is_(True),   # noqa: E712
                 Product.stock > 0,
             )
             if purchased_product_ids:

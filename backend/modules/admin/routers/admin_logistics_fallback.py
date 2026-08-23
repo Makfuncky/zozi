@@ -19,15 +19,15 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.governance.services.admin_controller import get_current_admin
 from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
-from domains.finance.services.payments.payout_approval_read_service import list_pending_payouts
+from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
 from domains.catalog.models.products import Category as CategoryModel
 from domains.governance.models.admin import CommissionGlobalConfig
 from domains.governance.models.admin import ShippingCarrier
 from domains.governance.models.admin import ShippingZone
 from domains.hr.models.employee_models import Employee
 from domains.logistics.models.logistics import Shipment
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout as PayoutModel
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout as PayoutModel
 
 router = APIRouter(prefix="/api/v1/admin")
 

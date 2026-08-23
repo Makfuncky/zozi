@@ -6,66 +6,25 @@ emails, escalations). They are the ONLY sanctioned path for cross-domain
 **writes** into the comms domain — no other domain may call comms services
 directly.
 
-Each handler:
-  * receives the event payload (a ``dict`` as produced by
-    ``CommsEvent.serialize()`` or the originating domain's equivalent),
-  * performs its side effect via the comms services layer,
-  * catches and logs exceptions (never lets a subscriber crash the bus).
+Handlers are registered on the canonical event bus via ``subscribe()``.
 """
 
 from __future__ import annotations
 
+import logging
+from typing import Any, Dict, List
+
 import structlog
-from typing import Any, Callable, Dict, List, Type
 
 from domains.comms.events import (
     CommsEvent,
-    EmailCampaignCreated,
-    EscalationTriggered,
-    NotificationCreated,
-    TicketStatusChanged,
-    CommsEvent,
+    EVENT_NOTIFICATION_CREATED,
+    EVENT_TICKET_REPLIED,
+    EVENT_TICKET_STATUS_CHANGED,
+    EVENT_ESCALATION_TRIGGERED,
 )
 
 logger = structlog.get_logger(__name__)
-
-
-# ── handler registry ──────────────────────────────────────────────────────
-
-_HANDLERS: Dict[str, List[Callable[[Dict[str, Any]], None]]] = {}
-
-
-def register(event_type: str) -> Callable:
-    """Decorator that registers a handler for ``event_type``."""
-
-    def decorator(fn: Callable[[Dict[str, Any]], None]) -> Callable[[Dict[str, Any]], None]:
-        _HANDLERS.setdefault(event_type, []).append(fn)
-        return fn
-
-    return decorator
-
-
-def dispatch(event: CommsEvent) -> None:
-    """Dispatch an event to all registered handlers.
-
-    Called by ``infrastructure.messaging.event_bus``. Handlers must not
-    raise — every exception is caught and logged so the bus keeps running.
-    """
-    payload = event.serialize()
-    for handler in _HANDLERS.get(event.event_type, []):
-        try:
-            handler(payload)
-        except Exception:
-            logger.exception(
-                "comms subscriber failed",
-                event_type=event.event_type,
-                handler=handler.__name__,
-            )
-
-
-def subscribed_types() -> List[str]:
-    """Return all event types that have at least one subscriber."""
-    return sorted(_HANDLERS.keys())
 
 
 # ── internal send helper ───────────────────────────────────────────────────
@@ -108,11 +67,9 @@ def _send_notification(
 # ── comms-domain event subscribers ────────────────────────────────────────
 
 
-@register("comms.ticket.status_changed")
 def _on_ticket_status_changed(payload: Dict[str, Any]) -> None:
     """Notify the ticket owner when their ticket status changes."""
-    # TicketStatusChanged carries ticket_id, new_status, changed_by
-    from domains.comms.services.ticket.tickets_service import (
+    from domains.comms.services.shared.ticket.tickets_service import (
         get_ticket_by_id_safe,
     )
 
@@ -126,15 +83,14 @@ def _on_ticket_status_changed(payload: Dict[str, Any]) -> None:
         user_id=ticket.user_id,
         type_="ticket_update",
         title="Ticket updated",
-        message=f"Your ticket #{ticket_id} is now {payload.get('new_status', 'updated')}.",
-        link=f"/tickets/{ticket_id}",
+        message="Your ticket #{} is now {}.".format(ticket_id, payload.get("new_status", "updated")),
+        link="/tickets/{}".format(ticket_id),
     )
 
 
-@register("comms.ticket.replied")
 def _on_ticket_replied(payload: Dict[str, Any]) -> None:
     """Notify the ticket owner when a staff member replies."""
-    from domains.comms.services.ticket.tickets_service import (
+    from domains.comms.services.shared.ticket.tickets_service import (
         get_ticket_by_id_safe,
     )
 
@@ -150,12 +106,11 @@ def _on_ticket_replied(payload: Dict[str, Any]) -> None:
             user_id=ticket.user_id,
             type_="ticket_reply",
             title="New reply on your ticket",
-            message=f"Staff replied to ticket #{ticket_id}.",
-            link=f"/tickets/{ticket_id}",
+            message="Staff replied to ticket #{}.".format(ticket_id),
+            link="/tickets/{}".format(ticket_id),
         )
 
 
-@register("comms.notification.created")
 def _on_notification_created(payload: Dict[str, Any]) -> None:
     """Hook for downstream notification delivery (push, email, SMS)."""
     channel = payload.get("channel", "in_app")
@@ -167,7 +122,6 @@ def _on_notification_created(payload: Dict[str, Any]) -> None:
         )
 
 
-@register("comms.escalation.triggered")
 def _on_escalation_triggered(payload: Dict[str, Any]) -> None:
     """Log escalation events and notify the escalated-to role."""
     logger.info(
@@ -183,7 +137,6 @@ def _on_escalation_triggered(payload: Dict[str, Any]) -> None:
 # and create comms-side effects (notifications, transactional emails).
 
 
-@register("orders.order_created")
 def _on_order_created(payload: Dict[str, Any]) -> None:
     """Send an order-confirmation notification."""
     user_id = payload.get("user_id")
@@ -193,12 +146,11 @@ def _on_order_created(payload: Dict[str, Any]) -> None:
             user_id=user_id,
             type_="order_created",
             title="Order placed",
-            message=f"Your order #{order_id} has been received.",
-            link=f"/orders/{order_id}",
+            message="Your order #{} has been received.".format(order_id),
+            link="/orders/{}".format(order_id),
         )
 
 
-@register("orders.order_status_changed")
 def _on_order_status_changed(payload: Dict[str, Any]) -> None:
     """Notify the customer when their order status changes."""
     user_id = payload.get("user_id")
@@ -209,12 +161,11 @@ def _on_order_status_changed(payload: Dict[str, Any]) -> None:
             user_id=user_id,
             type_="order_update",
             title="Order update",
-            message=f"Order #{order_id} is now {new_status}.",
-            link=f"/orders/{order_id}",
+            message="Order #{} is now {}.".format(order_id, new_status),
+            link="/orders/{}".format(order_id),
         )
 
 
-@register("accounts.user_registered")
 def _on_user_registered(payload: Dict[str, Any]) -> None:
     """Send a welcome notification to newly registered users."""
     user_id = payload.get("user_id")
@@ -228,9 +179,50 @@ def _on_user_registered(payload: Dict[str, Any]) -> None:
         )
 
 
+# ── register handlers on canonical event bus ──────────────────────────────
+
+def _register_handlers() -> None:
+    """Register all comms event handlers on the canonical event bus."""
+    try:
+        from infrastructure.utils.event_bus import subscribe
+
+        # Comms-domain events
+        subscribe(EVENT_TICKET_STATUS_CHANGED, _on_ticket_status_changed)
+        subscribe(EVENT_TICKET_REPLIED, _on_ticket_replied)
+        subscribe(EVENT_NOTIFICATION_CREATED, _on_notification_created)
+        subscribe(EVENT_ESCALATION_TRIGGERED, _on_escalation_triggered)
+
+        # Cross-domain events (using canonical event type strings)
+        subscribe("order.status_changed", _on_order_status_changed)
+        subscribe("account.registered", _on_user_registered)
+    except Exception:
+        logger.debug("Event bus not available, handlers not registered")
+
+
+# Register handlers on module import
+_register_handlers()
+
+
+def subscribed_types() -> List[str]:
+    """Return all event types that have at least one subscriber."""
+    return sorted([
+        EVENT_TICKET_STATUS_CHANGED,
+        EVENT_TICKET_REPLIED,
+        EVENT_NOTIFICATION_CREATED,
+        EVENT_ESCALATION_TRIGGERED,
+        "order.status_changed",
+        "account.registered",
+    ])
+
+
 __all__ = [
-    "dispatch",
-    "register",
     "subscribed_types",
     "_send_notification",
+    "_on_ticket_status_changed",
+    "_on_ticket_replied",
+    "_on_notification_created",
+    "_on_escalation_triggered",
+    "_on_order_created",
+    "_on_order_status_changed",
+    "_on_user_registered",
 ]

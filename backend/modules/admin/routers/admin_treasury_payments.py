@@ -33,8 +33,8 @@ from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
 from domains.finance.models.finance import SupplierSettlement
 from domains.logistics.models.logistics import LogisticsPartner
-from domains.payments.models.payments import LogisticsPartnerPayout
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payout
 from infrastructure.utils.dependencies import require_admin
 from domains.finance.services.payments.payout_approval_controller import approve_payout as approve_payout_action
 from domains.finance.services.payments.payout_approval_controller import reject_payout as reject_payout_action

@@ -443,8 +443,3 @@ class MaskedMessage(Base, TenantMixin):
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=utcnow)
     sender = relationship('User', primaryjoin='foreign(MaskedMessage.sender_id) == User.id')
-Index('ix_notifications_variables', text('(variables::jsonb)'), postgresql_using='gin')
-Index('ix_proxy_channels_participants', text('(participants::jsonb)'), postgresql_using='gin')
-Index('ix_proxy_sessions_session_metadata', text('(session_metadata::jsonb)'), postgresql_using='gin')
-Index('ix_communication_audit_trail_metadata_json', text('(metadata_json::jsonb)'), postgresql_using='gin')
-Index('ix_internal_channels_allowed_roles', text('(allowed_roles::jsonb)'), postgresql_using='gin')

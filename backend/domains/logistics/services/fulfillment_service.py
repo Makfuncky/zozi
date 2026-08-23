@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from domains.orders.ports import Order
 from domains.orders import ports
-from domains.payments.ports import Payment
+from domains.finance.ports import Payment
 from infrastructure.messaging.events import PaymentConfirmedEvent
 from domains.comms.services.notification.notification_service import NotificationService
 

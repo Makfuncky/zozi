@@ -1,4 +1,4 @@
-"""
+﻿"""
 Commission Controller — admin-managed supplier and product-level commission rates.
 
 Combined lookup flow:
@@ -14,6 +14,7 @@ from decimal import Decimal
 from typing import Any, Optional, cast
 
 from fastapi import HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -391,7 +392,6 @@ def list_all_supplier_commissions(
     total = query.count()
     suppliers = (
         query.order_by(User.full_name, User.username, User.id)
-        .offset(max(0, offset))
         .limit(resolved_limit)
         .all()
     )
@@ -819,7 +819,7 @@ def list_ledger_entries(
     if order_id:
         q = q.filter(CommissionLedgerEntry.order_id == order_id)
     total = q.count()
-    rows = q.order_by(CommissionLedgerEntry.created_at.desc()).offset(skip).limit(limit).all()
+    rows = q.order_by(CommissionLedgerEntry.created_at.desc()).limit(limit).all()
     return {"total": total, "items": [_serialize_ledger_entry(e) for e in rows]}
 
 

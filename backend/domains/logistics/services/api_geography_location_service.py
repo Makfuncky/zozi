@@ -11,8 +11,8 @@ from __future__ import annotations
 from fastapi import Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from domains.country.services.geo_resolver import resolve_ip_location
-from domains.country.services.geo_resolver import reverse_geocode
+from domains.country.services.geo.geo_resolver import resolve_ip_location
+from domains.country.services.geo.geo_resolver import reverse_geocode
 
 class ReverseRequest(BaseModel):
     lat: float

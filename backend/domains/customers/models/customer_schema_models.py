@@ -1,45 +1,62 @@
+"""customers domain models — canonical home for customer-schema ORM entities.
+
+Per ARCHITECTURE_DIAGRAM.md Law 3, cross-domain reads happen only through
+``ports.py``; models/ holds only this domain's own schema entities. The
+``customer``-schema tables live here; tables whose canonical home is another
+domain are imported only via ``customers.ports`` (never re-exported here).
+"""
 from __future__ import annotations
 
-# Canonical home for customer-schema tables that do not live in any other
-# domain's models. The following tables were relocated OUT of this file to
-# their owning domains; they are re-exported below so legacy imports resolve:
-#   - NewsArticle, EntityChatThread, VideoRoom, VideoRoomParticipant,
-#     DirectChatRoom, GroupChatMember, EscalationSLALog -> domains.comms.models
-#   - ShiftHandoverSession -> domains.hr.models
-#   - Address, Cart, CartItem, SystemHealthEvent, UserSession -> domains.governance.models.core (legacy home)
-#   - Referral, ReferralPointEvent -> domains.governance.models.user (legacy home)
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy.orm import relationship
+
+from infrastructure.database.base import Base
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 __all__ = [
-    # re-exports (relocated to owning domains / legacy homes)
-    "SystemHealthEvent",
-    "UserSession",
-    "NewsArticle",
-    "EntityChatThread",
-    "VideoRoom",
-    "VideoRoomParticipant",
-    "DirectChatRoom",
-    "GroupChatMember",
-    "ShiftHandoverSession",
-    "EscalationSLALog",
+    "Referral",
+    "ReferralPointEvent",
 ]
 
 
-# ---------------------------------------------------------------------------
-# Relocated models: canonical definitions now live in their owning domains.
-# These re-exports keep legacy imports resolving until every caller is migrated.
-# ---------------------------------------------------------------------------
+class Referral(Base):
+    __tablename__ = "referrals"
+    __table_args__ = (
+        Index("ix_referrals_referrer", "referrer_id"),
+        Index("ix_referrals_referred", "referred_id"),
+        Index("ix_referrals_code", "referral_code"),
+        {"schema": "customer"},
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    referrer_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    referred_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, unique=True)
+    referral_code = Column(String(64), unique=True, nullable=True)
+    status = Column(String, default="pending")
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    country_code = Column(String(10), nullable=True, index=True)
 
-from domains.governance.models.core import (  # noqa: F401
-    SystemHealthEvent as SystemHealthEvent,
-    UserSession as UserSession,
-)
-from domains.comms.models.chat import (  # noqa: F401
-    DirectChatRoom as DirectChatRoom,
-    EntityChatThread as EntityChatThread,
-    EscalationSLALog as EscalationSLALog,
-    GroupChatMember as GroupChatMember,
-    VideoRoom as VideoRoom,
-    VideoRoomParticipant as VideoRoomParticipant,
-)
-from domains.comms.models.news import NewsArticle as NewsArticle  # noqa: F401,F811
-from domains.hr.models.employee_models import ShiftHandoverSession as ShiftHandoverSession  # noqa: F401,F811
+    referrer = relationship("User", foreign_keys=[referrer_id], back_populates="referrals_given")
+    referred = relationship("User", foreign_keys=[referred_id], back_populates="referred_by")
+
+
+class ReferralPointEvent(Base):
+    __tablename__ = "referral_point_events"
+    __table_args__ = (
+        Index("ix_referral_point_events_user", "user_id"),
+        Index("ix_referral_point_events_type", "event_type"),
+        {"schema": "customer"},
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    event_type = Column(String(40), nullable=False)
+    points = Column(Integer, nullable=False)
+    referred_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    country_code = Column(String(10), nullable=True, index=True)
+
+    user = relationship("User", foreign_keys=[user_id])
+    referred_user = relationship("User", foreign_keys=[referred_user_id])

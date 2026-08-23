@@ -1,4 +1,4 @@
-"""
+﻿"""
 Invoice Controller — supply chain invoice management.
 Covers the full lifecycle: supplier → logistics → customer receipt.
 """
@@ -99,7 +99,7 @@ def list_invoices(
         q = q.filter(Invoice.order_id == order_id)
 
     total = q.count()
-    items = q.order_by(desc(Invoice.created_at)).offset((page - 1) * page_size).limit(page_size).all()
+    items = q.order_by(desc(Invoice.created_at)) * page_size).limit(page_size).all()
 
     return {
         "total": total,

@@ -10,7 +10,7 @@ from typing import List
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import Address
+from domains.accounts.models.core import Address
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -64,15 +64,16 @@ def _get_user_address(address_id: int, user_id: int, db: Session) -> Address:
     return address
 
 
-def list_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0) -> List[dict]:
-    rows = (
+def list_addresses(db: Session, user_id: int, limit: int = 100, cursor: int | None = None) -> List[dict]:
+    """Keyset (cursor) pagination over a user's addresses."""
+    query = (
         db.query(Address)
         .filter(Address.user_id == user_id)
         .order_by(Address.is_default.desc(), Address.created_at.asc())
-        .offset(max(0, offset))
-        .limit(min(max(1, limit), 100))
-        .all()
     )
+    if cursor is not None:
+        query = query.filter(Address.id < int(cursor))
+    rows = query.limit(min(max(1, limit), 100)).all()
     return [_serialize_address(row) for row in rows]
 
 
@@ -85,20 +86,6 @@ def create_address(db: Session, user_id: int, payload: dict) -> dict:
     normalized = _normalize_address_payload(payload)
     if normalized.get("is_default"):
         unset_other_default_addresses(db, user_id)
-    address = Address(
-        user_id=user_id,
-        full_name="Customer",
-        address_line1=normalized.get("street", ""),
-        city=normalized.get("city", ""),
-        state=normalized.get("state"),
-        postal_code=normalized.get("postal_code"),
-        country=normalized.get("country", "US"),
-        is_default=normalized.get("is_default", False),
-    )
-    if normalized.get("label"):
-        address.label = normalized["label"]
-    if normalized.get("phone"):
-        address.phone = normalized["phone"]
     return _serialize_address(create_address_db(db, **{
         "user_id": user_id,
         "full_name": "Customer",

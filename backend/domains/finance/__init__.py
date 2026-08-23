@@ -1,2 +1,2 @@
-from infrastructure.database.base import Base  # noqa: F401
-__all__ = ["Base"]
+"""finance domain — root package."""
+from __future__ import annotations

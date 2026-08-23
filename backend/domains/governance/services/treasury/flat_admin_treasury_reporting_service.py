@@ -26,9 +26,9 @@ from domains.finance.models.finance import Invoice
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.payments.models.payments import Payout
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payout
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.hr.models.employee_models import Employee
@@ -92,7 +92,7 @@ def admin_payout_batches(db: Session=Depends(get_db), current_user: dict=Depends
     return [{'id': b.id, 'batch_number': b.batch_number, 'country_code': b.country_code, 'total_amount': float(b.total_amount), 'status': b.status, 'created_at': b.created_at.isoformat(), 'created_by': b.created_by, 'created_by_name': b.creator.full_name if b.creator else None, 'approved_by': b.approved_by, 'approved_by_name': b.approver.full_name if b.approver else None} for b in batches]
 
 def admin_generate_payout_batch(country_code: str=FastAPIBody(...), cutoff_date: date=FastAPIBody(...), db: Session=Depends(get_db), current_user: dict=Depends(require_treasury_access)):
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payout
     from domains.comms.models.suppliers import SupplierProfile
     pending_payouts = db.execute(select(Payout).where(Payout.country_code == country_code, Payout.status == 'pending', Payout.created_at <= cutoff_date)).scalars().all()
     if not pending_payouts:
@@ -223,8 +223,8 @@ def consolidated_cash_forecasts(db: Session=Depends(get_db), current_user: dict=
 
 def consolidated_reconciliation_pipeline(limit: int=Query(50, ge=1, le=200), db: Session=Depends(get_db), current_user: dict=Depends(require_treasury_access)):
     from domains.orders.models.orders import Order as OrderModel
-    from domains.payments.models.payments import Payment as PaymentModel
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payment as PaymentModel
+    from domains.finance.models.payments import Payout
     pipeline = []
     orders = db.query(OrderModel).filter(OrderModel.status.in_(['shipped', 'delivered', 'completed', 'dispatched'])).order_by(OrderModel.updated_at.desc()).limit(limit).all()
     for order in orders:
@@ -298,8 +298,8 @@ def admin_reconciliation_pipeline(country_code: str=Path(..., description='ISO c
     try:
         from domains.orders.models.orders import Order as OrderModel
         from domains.orders.models.orders import OrderItem
-        from domains.payments.models.payments import Payment as PaymentModel
-        from domains.payments.models.payments import Payout
+        from domains.finance.models.payments import Payment as PaymentModel
+        from domains.finance.models.payments import Payout
         from domains.logistics.models.logistics import LogisticsPartner
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
         from domains.finance.services.commission.commission_engine import get_effective_rate

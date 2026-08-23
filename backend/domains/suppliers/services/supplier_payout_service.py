@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 import structlog
 logger = structlog.get_logger(__name__)
 

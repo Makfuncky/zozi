@@ -19,7 +19,7 @@ from domains.governance.models.core import AuditLog
 from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 
 MAX_EXPORT_ROWS: int = 5000
 

@@ -28,3 +28,7 @@ __all__ = [
     "get_admin_dispute", "get_supplier_dispute", "get_supplier_notification_preferences", "list_admin_disputes", "list_supplier_disputes", "update_admin_dispute",
     "update_supplier_notification_preferences"
 ]
+
+# Stub for legacy imports expecting a ``disputes_controller`` symbol.
+# This is a placeholder; the actual dispute functionality is in the service functions above.
+disputes_controller = None

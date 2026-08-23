@@ -40,8 +40,11 @@ def update_user(country_code: str=Path(..., description='ISO country code'), use
         u = db.query(User).filter(User.id == user_id, User.country_code == country_code.upper()).first()
         if not u:
             raise HTTPException(404)
+        # SECURITY FIX: Use allowlist to prevent mass assignment attacks
+        ALLOWED_FIELDS = {'full_name', 'email', 'phone', 'is_active', 'is_verified'}
         for (k, v) in payload.model_dump(exclude_unset=True).items():
-            setattr(u, k, v)
+            if k in ALLOWED_FIELDS:
+                setattr(u, k, v)
         db.commit()
         db.refresh(u)
         return u

@@ -1,5 +1,6 @@
 ﻿"""Business logic extracted from routers/admin_treasury.py."""
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 
 """Admin Treasury Router — bridges frontend /admin/treasury/* calls to TreasuryEngine."""
 
@@ -47,7 +48,7 @@ from domains.logistics.models.logistics import LogisticsPartner
 
 from domains.orders.models import Order as OrderModel
 
-from domains.payments.models.payments import LogisticsPartnerPayout, Payment, Payout
+from domains.finance.models.payments import LogisticsPartnerPayout, Payment, Payout
 
 from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 
@@ -187,7 +188,7 @@ def admin_payout_batches(db: Session = Depends(get_db), current_user: dict = Dep
 
 def admin_generate_payout_batch(country_code: str = FastAPIBody(...), cutoff_date: date = FastAPIBody(...), db: Session = Depends(get_db), current_user: dict = Depends(require_treasury_access)):
 
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payout
 
     pending_payouts = db.execute(
         select(Payout).where(
@@ -202,7 +203,7 @@ def admin_generate_payout_batch(country_code: str = FastAPIBody(...), cutoff_dat
 
     total = sum(p.amount for p in pending_payouts)
     batch = PayoutBatch(
-        batch_number=f"PB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+        batch_number=f"PB-{utcnow().strftime('%Y%m%d%H%M%S')}",
         country_code=country_code,
         total_amount=total,
         item_count=len(pending_payouts),
@@ -277,7 +278,7 @@ def admin_dispatch_payout_batch(batch_id: int = Path(...), db: Session = Depends
     )
 
     batch.status = "dispatched"
-    batch.dispatched_at = datetime.utcnow()
+    batch.dispatched_at = utcnow()
     db.commit()
 
     return {
@@ -375,7 +376,7 @@ def admin_snapshot_cash_position(db: Session = Depends(get_db), current_user: di
         select(TreasuryAccount).where(TreasuryAccount.is_active == True)
     ).scalars().all()
 
-    now = datetime.utcnow()
+    now = utcnow()
     for a in accounts:
         snap = CashPositionSnapshot(
             snapshot_time=now,
@@ -439,7 +440,7 @@ def consolidated_trial_balance(db: Session = Depends(get_db), current_user: dict
 
     query = db.query(Account).filter(Account.is_active == True)
     total = query.count()
-    accounts = query.order_by(Account.code).offset((page - 1) * page_size).limit(page_size).all()
+    accounts = query.order_by(Account.code) * page_size).limit(page_size).all()
     return {
         "data": [
             {
@@ -461,7 +462,7 @@ def consolidated_cash_position(db: Session = Depends(get_db), current_user: dict
 
     query = db.query(TreasuryAccount).filter(TreasuryAccount.is_active == True)
     total = query.count()
-    accounts = query.offset((page - 1) * page_size).limit(page_size).all()
+    accounts = query * page_size).limit(page_size).all()
     total_balance = float(db.query(func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {
         "accounts": [
@@ -566,8 +567,8 @@ def consolidated_cash_forecasts(db: Session = Depends(get_db), current_user: dic
 
 def consolidated_reconciliation_pipeline(limit: int = Query(50, ge=1, le=200), db: Session = Depends(get_db), current_user: dict = Depends(require_treasury_access)):
 
-    from domains.payments.models.payments import Payment as PaymentModel
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payment as PaymentModel
+    from domains.finance.models.payments import Payout
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -778,8 +779,8 @@ def admin_reconciliation_pipeline(country_code: str = Path(..., description='ISO
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
         from domains.orders.models import Order as OrderModel
         from domains.orders.models import OrderItem
-        from domains.payments.models.payments import Payment as PaymentModel
-        from domains.payments.models.payments import Payout
+        from domains.finance.models.payments import Payment as PaymentModel
+        from domains.finance.models.payments import Payout
         from domains.finance.services.commission.commission_engine import get_effective_rate
 
         pipeline = []

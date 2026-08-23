@@ -11,7 +11,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import Address
+from domains.accounts.models.core import Address
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -28,7 +28,6 @@ def unset_other_default_addresses(
     query = db.query(Address).filter(
         Address.user_id == user_id,
         Address.is_default.is_(True),
-        Address.is_deleted.is_(False),
     )
     if address_id is not None:
         query = query.filter(Address.id != address_id)
@@ -47,7 +46,7 @@ def unset_default_addresses(db: Session, user_id: int) -> int:
     """
     return (
         db.query(Address)
-        .filter(Address.user_id == user_id, Address.is_default == True)  # noqa: E712
+        .filter(Address.user_id == user_id, Address.is_default.is_(True))
         .update({"is_default": False})
     )
 

@@ -4,6 +4,7 @@ Canonical model definitions live in:
   - ``domains.finance.models.general_ledger`` — ledger, invoices, treasury, etc.
   - ``domains.finance.models.commission`` — commission agreements & rates
   - ``domains.finance.models.erp`` — ERP/logistics-trading documents
+  - ``domains.finance.models.payments`` — payments, payouts, gateway connections
 
 SQLAlchemy mappers must be registered exactly *once* per ``__tablename__``, so
 this module is a pure re-export shim: existing importers
@@ -14,6 +15,7 @@ from __future__ import annotations
 
 from domains.finance.models.general_ledger import *  # noqa: F401,F403
 from domains.finance.models.commission import *  # noqa: F401,F403
+from domains.finance.models.payments import *  # noqa: F401,F403
 
 from domains.finance.models.general_ledger import (
     Accrual,
@@ -68,6 +70,13 @@ from domains.finance.models.commission import (
     CommissionLedgerEntry,
     ProductCommissionOverride,
 )
+from domains.finance.models.payments import (
+    LogisticsPartnerPayout,
+    Payment,
+    PaymentGatewayConnection,
+    PaymentReconciliationRun,
+    Payout,
+)
 
 __all__ = [
     "Accrual", "Account", "AccountBalance", "AccountGroup",
@@ -90,3 +99,4 @@ __all__ = [
     "CommissionAgreement", "CommissionCategoryRate",
     "CommissionLedgerEntry", "ProductCommissionOverride",
 ]
+

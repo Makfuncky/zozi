@@ -8,18 +8,20 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import Address
+from domains.accounts.models.core import Address
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 
 
-def list_user_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0) -> list:
-    return (
+def list_user_addresses(db: Session, user_id: int, limit: int = SAFE_QUERY_LIMIT, cursor: int | None = None) -> list:
+    """Keyset (cursor) pagination over a user's addresses, default-first then newest."""
+    query = (
         db.query(Address)
         .filter(Address.user_id == int(user_id))
         .order_by(Address.is_default.desc(), Address.created_at.asc())
-        .offset(max(0, offset))
-        .limit(min(max(1, limit), 100))
-        .all()
     )
+    if cursor is not None:
+        query = query.filter(Address.id < int(cursor))
+    return query.limit(min(max(1, limit), SAFE_QUERY_LIMIT)).all()
 
 
 def get_user_address(db: Session, address_id: int, user_id: int) -> Address:

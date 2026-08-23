@@ -1,4 +1,4 @@
-"""Admin treasury read service (Treasury domain).
+﻿"""Admin treasury read service (Treasury domain).
 
 Owns the DB reads (Q1) that were previously inline in ``routers.admin_treasury_governance``.
 The router keeps building ``select()`` statements and column-expression filters
@@ -38,9 +38,9 @@ from domains.hr.ports import Employee
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import LogisticsPartnerPayout
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout
 from domains.comms.models.suppliers import SupplierProfile
 import structlog
 logger = structlog.get_logger(__name__)
@@ -82,7 +82,7 @@ def list_model(
     if order_by is not None:
         q = q.order_by(order_by)
     if offset is not None:
-        q = q.offset(offset)
+        q = q
     if limit is not None:
         q = q.limit(limit)
     return q.all()

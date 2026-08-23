@@ -10,7 +10,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from domains.governance.models.core import CartItem
+from domains.accounts.models.core import CartItem
 from domains.catalog.models.products import Product
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog

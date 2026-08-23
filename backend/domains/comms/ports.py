@@ -36,6 +36,15 @@ def _keyset_page(model, db: Session, cursor: Optional[str] = None,
     """Keyset-cursor page over ``model`` (scale-ready, no OFFSET)."""
     return cursor_paginate_asc(db.query(model), cursor=cursor, page_size=page_size)
 
+from domains.comms.models.chat import (
+    DirectChatRoom, DirectChatMessage, EntityChatThread, EntityChatMessage,
+    EscalationSLALog, GroupChatMember, GroupChatRoom, GroupChatMessage,
+    VideoRoom, VideoRoomParticipant,
+)
+from domains.comms.models.communication_schema_models import (
+    SupportTicket, TicketAttachment, NewsSource, InternalNotice, EscalationSLARule,
+)
+from domains.comms.models.news import NewsArticle
 from domains.comms.models.communication import Announcement, ChatAttachment, ChatReadReceipt, CommunicationAuditTrail, EmailFolder, EmployeeCommunicationThread, ExternalContactMasking, FAQ, HelpCategory, InternalChannel, InternalChannelMember, InternalEmail, InternalMessage, MaskedMessage, Notification, ProxyCallLog, ProxyChannel, ProxyMessage, ProxySession, TicketMessage
 from domains.comms.models.marketing import CampaignRecipient, EmailCampaign, EmailCampaignLog, EmailDeliveryEvent, EmailRuntimeConfig, EmailSuppression, EmailTemplate, FlashSale, FlashSaleItem, NewsletterSubscriber, PointsTransaction, UserPoints
 from domains.comms.models.suppliers import SupplierBadge, SupplierBadgeBillingHistory, SupplierBadgeCatalog, SupplierDocument, SupplierNotificationPreference, SupplierProfile
@@ -503,6 +512,15 @@ def list_supplier_badge_billing_historys_page(db: Session, cursor: Optional[str]
 # Cross-domain consumers import these from ``domains.comms.ports`` instead of
 # from the model modules directly.  Read-only; no service logic re-exported.
 
+from domains.comms.models.chat import (
+    DirectChatRoom, DirectChatMessage, EntityChatThread, EntityChatMessage,
+    EscalationSLALog, GroupChatMember, GroupChatRoom, GroupChatMessage,
+    VideoRoom, VideoRoomParticipant,
+)
+from domains.comms.models.communication_schema_models import (
+    SupportTicket, TicketAttachment, NewsSource, InternalNotice, EscalationSLARule,
+)
+from domains.comms.models.news import NewsArticle
 from domains.comms.models.communication import Notification
 from domains.comms.models.marketing import (
     CampaignRecipient,
@@ -515,3 +533,32 @@ from domains.comms.models.marketing import (
 )
 
 
+# Sanctioned cross-domain READ surface
+__all__ = [
+    # Models from communication.py
+    "Announcement", "ChatAttachment", "ChatReadReceipt", "CommunicationAuditTrail",
+    "EmailFolder", "EmployeeCommunicationThread", "ExternalContactMasking", "FAQ",
+    "HelpCategory", "InternalChannel", "InternalChannelMember", "InternalEmail",
+    "InternalMessage", "MaskedMessage", "Notification", "ProxyCallLog", "ProxyChannel",
+    "ProxyMessage", "ProxySession", "TicketMessage",
+    # Models from marketing.py
+    "CampaignRecipient", "EmailCampaign", "EmailCampaignLog", "EmailDeliveryEvent",
+    "EmailRuntimeConfig", "EmailSuppression", "EmailTemplate", "FlashSale",
+    "FlashSaleItem", "NewsletterSubscriber", "PointsTransaction", "UserPoints",
+    # Models from suppliers.py
+    "SupplierBadge", "SupplierBadgeBillingHistory", "SupplierBadgeCatalog",
+    "SupplierDocument", "SupplierNotificationPreference", "SupplierProfile",
+    # Models from communication_schema_models.py
+    "SupportTicket", "SupportTicketReply", "TicketAttachment", "NewsSource",
+    "InternalNotice", "EscalationSLARule",
+    # Models from chat.py
+    "DirectChatRoom", "DirectChatMessage", "EntityChatThread", "EntityChatMessage",
+    "EscalationSLALog", "GroupChatMember", "GroupChatRoom", "GroupChatMessage",
+    "VideoRoom", "VideoRoomParticipant",
+    # Models from news.py
+    "NewsArticle",
+    # Functions
+    "get_notification_by_id", "list_notifications", "list_notifications_page",
+    "get_ticket_message_by_id", "list_ticket_messages",
+    "get_announcement_by_id", "list_announcements",
+]

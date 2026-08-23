@@ -1,9 +1,10 @@
-"""Journal Entry Reversal Service — formal reversal/correction of posted JEs.
+﻿"""Journal Entry Reversal Service — formal reversal/correction of posted JEs.
 
 Allows reversing a journal entry by creating a mirror entry with opposite
 sides, referencing the original via `reversal_of_id`.
 """
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 
 import logging
 from datetime import datetime
@@ -72,7 +73,7 @@ def reverse_journal_entry(
 
     ref = f"REV-{original.reference_number or original_entry_id}"
     entry_data = JournalEntryCreate(
-        entry_date=reversal_date or datetime.utcnow(),
+        entry_date=reversal_date or utcnow(),
         reference_type="reversal",
         reference_id=original_entry_id,
         reference_number=ref,
@@ -93,7 +94,7 @@ def reverse_journal_entry(
         "reversal_entry_id": new_entry.id,
         "reference_number": ref,
         "reason": reason,
-        "reversal_date": (reversal_date or datetime.utcnow()).isoformat(),
+        "reversal_date": (reversal_date or utcnow()).isoformat(),
         "lines_reversed": len(reversed_lines),
     }
 

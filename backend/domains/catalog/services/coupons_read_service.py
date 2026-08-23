@@ -15,7 +15,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from domains.governance.ports import CouponUsage
-from domains.payments.ports import Coupon
+from domains.finance.ports import Coupon
 from infrastructure.utils.datetime_utils import utcnow
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 import structlog

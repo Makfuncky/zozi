@@ -23,8 +23,8 @@ from domains.governance.models.admin import ShippingZone
 from domains.hr.models.employee_models import Employee
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order as OrderModel
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout as PayoutModel
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout as PayoutModel
 
 
 def get_dashboard_stats(db: Session) -> dict:

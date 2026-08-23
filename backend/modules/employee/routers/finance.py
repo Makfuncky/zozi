@@ -22,7 +22,7 @@ from domains.finance.models.finance import GatewaySettlementSchedule
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import TreasuryAccount
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from domains.finance.services.treasury.treasury_engine import seed_chart_of_accounts
 from domains.country.utils.country_rls import get_country_or_404

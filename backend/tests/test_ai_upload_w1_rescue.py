@@ -91,9 +91,9 @@ def test_router_delegates_to_controller(router_src: str) -> None:
 
 
 def test_modules_import() -> None:
-    importlib.import_module("routers.public_ai_upload_access")
-    importlib.import_module("controllers.core.ai_upload_controller")
-    mod = importlib.import_module("services.ai.ai_upload_write_service")
+    importlib.import_module("modules.admin.routers.public_ai_upload_access")
+    importlib.import_module("domains.governance.services.core.ai_upload_controller")
+    mod = importlib.import_module("domains.governance.services.ai.ai_upload_write_service")
     for fn in (
         "create_ai_upload_job",
         "run_ai_upload_job",

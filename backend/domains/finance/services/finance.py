@@ -1,7 +1,7 @@
 """Lazy re-export delegator for ``domains.finance.services``.
 
 Importing a name from this module resolves to the matching submodule on demand.
-With sub-domain folders (ledger/, treasury/, payments/, ...), the delegator
+With sub-domain folders (ledger/, treasury/, payouts/, ...), the delegator
 first checks the root, then falls back to each sub-domain.
 """
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sys
 
 _PACKAGE = "domains.finance.services"
 _SUBDOMAINS = [
-    "ledger", "accounts", "treasury", "payments", "tax",
+    "ledger", "accounts", "treasury", "payouts", "tax",
     "reporting", "country", "commission", "shared",
 ]
 

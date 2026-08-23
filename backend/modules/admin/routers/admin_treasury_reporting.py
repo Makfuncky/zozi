@@ -30,9 +30,9 @@ from domains.finance.models.finance import Invoice
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.payments.models.payments import Payout
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payout
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.hr.models.employee_models import Employee
@@ -211,7 +211,7 @@ def admin_generate_payout_batch(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payout
     from domains.comms.models.suppliers import SupplierProfile
 
     pending_payouts = db.execute(
@@ -691,8 +691,8 @@ def consolidated_reconciliation_pipeline(
     current_user: dict = Depends(require_treasury_access),
 ):
     from domains.orders.models.orders import Order as OrderModel
-    from domains.payments.models.payments import Payment as PaymentModel
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payment as PaymentModel
+    from domains.finance.models.payments import Payout
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -961,8 +961,8 @@ def admin_reconciliation_pipeline(
     try:
         from domains.orders.models.orders import Order as OrderModel
         from domains.orders.models.orders import OrderItem
-        from domains.payments.models.payments import Payment as PaymentModel
-        from domains.payments.models.payments import Payout
+        from domains.finance.models.payments import Payment as PaymentModel
+        from domains.finance.models.payments import Payout
         from domains.logistics.models.logistics import LogisticsPartner
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
         from domains.finance.services.commission.commission_engine import get_effective_rate

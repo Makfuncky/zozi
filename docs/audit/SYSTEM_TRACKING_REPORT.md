@@ -12,20 +12,20 @@
 
 What is actually written in the codebase (``ast``-parsed classes/functions, not folder counts):
 
-- **Modules** (access surfaces): 329 files, 291 classes, 2761 functions, 0 ORM models.
-- **Domains** (business logic): 935 files, 1120 classes, 7245 functions, 404 ORM models.
-- **Platform layers** (infrastructure/kernel/providers/jobs/middleware/...): 452 files.
-- **Features**: 9 atoms, 9 backed, 0 gated, 0 unknown gates.
+- **Modules** (access surfaces): 364 files, 253 classes, 2235 functions, 0 ORM models.
+- **Domains** (business logic): 1219 files, 1174 classes, 8412 functions, 300 ORM models.
+- **Platform layers** (infrastructure/kernel/providers/jobs/middleware/...): 553 files.
+- **Features**: 120 atoms, 120 backed, 0 gated, 1 unknown gates.
 
 > Read top-to-bottom: **Modules** (section 1) show the actor surfaces, **Domains** (section 2) show what each business capability actually implements, **Features** (section 3) show what may be done. **Violations** (section 6) flag anything that breaks the NEW_STRUCTURE.md shape.
 
 ## Executive summary
 
-- **Modules (Axis 1):** 5/5 active (329 module files scanned).
-- **Domains (Axis 2):** 13 domains (0 Implemented / 1 Partial); 935 domain files scanned.
-- **Features (Axis 3):** 9 feature atoms defined across domains; **9 backed** by domain code, **0 gated** by ``require_feature(...)``.
-- **Feature catalog:** ``backend/rbac/catalog.py`` present = True; aggregates 9 atoms. Unknown gates (not in catalog): 0.
-- **Law violations:** 149 total, **84 HIGH-severity**.
+- **Modules (Axis 1):** 5/5 active (364 module files scanned).
+- **Domains (Axis 2):** 18 domains (0 Implemented / 5 Partial); 1219 domain files scanned.
+- **Features (Axis 3):** 120 feature atoms defined across domains; **120 backed** by domain code, **0 gated** by ``require_feature(...)``.
+- **Feature catalog:** ``backend/rbac/catalog.py`` present = True; aggregates 120 atoms. Unknown gates (not in catalog): 1.
+- **Law violations:** 171 total, **81 HIGH-severity**.
 
 > **Completion %** = content-present core layers (models/services/schemas/events × 20%) + features (20% only when atoms exist) + bonuses policies(+8)/subscribers(+8)/ports(+4)/read_models(+4)/repositories(+4), capped at 100. Status: Implemented ≥80 · Partial ≥45 · Scaffold <45. A layer counts as *present* only when it contains real classes/functions.
 
@@ -47,70 +47,65 @@ Modules are the system's entry points — each ``backend/modules/{m}/`` exposes 
 ### Hierarchy: Modules → Domains they compose
 
 - **admin** — Admin console (MFA/TOTP, moderation, payouts, command center, RBAC).
-  - status: **Active** · routers: 226 · auth files: 0 · serializers: 0
-- content: router content (226 files, 208 classes, 1844 functions, 34062 LOC): BulkDeleteUsersBody, BulkToggleActiveBody, BulkUserRoleBody, ResetPasswordBody, BulkOrderStatusBody, BulkOrderDeleteBody
-
-
-  - composes domains: accounts, catalog, comms, country, finance, governance, hr, logistics, media, orders, payments, suppliers
-  - feature gates wired: 0 · thin routers: 105/226 (46%) · thick routers (Law 2): 121
+  - status: **Active** · routers: 251 · auth files: 3 · serializers: 1
+- content: router content (251 files, 181 classes, 1507 functions, 52077 LOC): CategoryCreate, CategoryUpdate, PermissionCreate, RolePermissionAssignBody, UserPermissionOverrideBody, BulkDeleteUsersBody
+- content: auth content (3 files, 4 classes, 3 functions, 106 LOC): OtpRequest, DeviceBindingRequest, SocialLoginRequest, SessionRevokeRequest
+- content: serializer content (1 files, 11 LOC) — no classes/functions detected
+  - composes domains: accounts, analytics, audit, catalog, comms, country, customers, finance, governance, hr, infrastructure, logistics, media, orders, payments, security, suppliers
+  - feature gates wired: 0 · thin routers: 111/251 (44%) · thick routers (Law 2): 140
+    - ⚠ _permissions_validation_endpoints.py: contains DB writes / model instantiation (Law 2)
     - ⚠ admin.py: contains DB writes / model instantiation (Law 2)
     - ⚠ admin_admin_analytics.py: contains DB writes / model instantiation (Law 2)
     - ⚠ admin_admin_audit.py: contains DB writes / model instantiation (Law 2)
     - ⚠ admin_admin_bank_accounts.py: contains DB writes / model instantiation (Law 2)
-    - ⚠ admin_admin_coupons.py: contains DB writes / model instantiation (Law 2)
-  - **LLM description:** The 'admin' module exposes a comprehensive set of administrative functionalities including user management, analytics, audit logs, bank account handling, coupon management, and miscellaneous admin tasks. It provides RESTful APIs for various administrative operations through multiple sub-modules like `admin_admin_analytics`, `admin_admin_audit`, and `admin_admin_bank_accounts`.
 - **customer** — Customer storefront (catalog, checkout, tracking, wishlist).
-  - status: **Active** · routers: 14 · auth files: 0 · serializers: 0
-- content: router content (14 files, 5 classes, 110 functions, 1608 LOC): CartItemUpdate, CouponValidateBody, CouponValidateView, CouponView, BulkReturnStatusUpdateBody
+  - status: **Active** · routers: 15 · auth files: 1 · serializers: 0
+- content: router content (15 files, 5 classes, 111 functions, 1609 LOC): CartItemUpdate, CouponValidateBody, CouponValidateView, CouponView, BulkReturnStatusUpdateBody
+- content: auth content (1 files, 2 classes, 8 functions, 323 LOC): LoginRequest, RefreshRequest
 
-
-  - composes domains: accounts, catalog, customers, governance, orders, payments
-  - feature gates wired: 0 · thin routers: 2/14 (14%) · thick routers (Law 2): 12
+  - composes domains: catalog, customers, governance, orders, payments
+  - feature gates wired: 1 · thin routers: 3/15 (20%) · thick routers (Law 2): 12
     - ⚠ addresses.py: contains DB writes / model instantiation (Law 2)
     - ⚠ cart.py: contains DB writes / model instantiation (Law 2)
     - ⚠ coupons.py: contains DB writes / model instantiation (Law 2)
     - ⚠ customer_coupons_create.py: contains DB writes / model instantiation (Law 2)
     - ⚠ customer_coupons_mgmt.py: contains DB writes / model instantiation (Law 2)
-  - **LLM description:** The `customer` module in the modular monolith provides APIs for managing customer-related functionalities such as addresses, carts, coupons, orders, payments, and health checks. It includes routers for handling various customer interactions like creating and managing coupons, listing and updating addresses, and processing orders and returns.
 - **employee** — Employee self-service (payslip, leave, expenses, attendance).
   - status: **Active** · routers: 49 · auth files: 0 · serializers: 0
-- content: router content (49 files, 62 classes, 375 functions, 7151 LOC): ReportPeriod, ClosePeriodBody, ReversalBody, ARInvoiceBody, ARPaymentBody, APPayableBody
+- content: router content (49 files, 53 classes, 340 functions, 7151 LOC): FlagRequest, CodRemittanceRequest, BadgeBillingPaymentRequest, PayoutProcessRequest, ReceiptReviewRequest, ChatRequest
 
 
-  - composes domains: accounts, comms, country, finance, governance, hr, logistics, payments
+  - composes domains: comms, country, finance, governance, hr, logistics, payments
   - feature gates wired: 0 · thin routers: 14/49 (29%) · thick routers (Law 2): 35
     - ⚠ accounting.py: contains DB writes / model instantiation (Law 2)
     - ⚠ cash_management.py: contains DB writes / model instantiation (Law 2)
     - ⚠ chat_enrichment.py: contains DB writes / model instantiation (Law 2)
     - ⚠ chatbot.py: contains DB writes / model instantiation (Law 2)
     - ⚠ comm.py: contains DB writes / model instantiation (Law 2)
-  - **LLM description:** The `employee` module in the modular monolith primarily handles employee-related functionalities and communications. It exposes various routers for tasks such as accounting, cash management, chat interactions, and HR operations, integrating with multiple domains including finance, communication, and human resources.
 - **logistics** — Logistics partner (pickups, shipments, settlements, COD remittance).
   - status: **Active** · routers: 12 · auth files: 0 · serializers: 0
 - content: router content (12 files, 8 classes, 175 functions, 2365 LOC): ScanReceiveRequest, UpdateTransitRequest, DeliverRequest, CancelPickupRequest, BulkPartnerAdminActionRequest, BulkShipmentStatusRequest
 
 
-  - composes domains: accounts, country, logistics, orders
+  - composes domains: country, governance, logistics, orders
   - feature gates wired: 0 · thin routers: 4/12 (33%) · thick routers (Law 2): 8
     - ⚠ logistics.py: contains DB writes / model instantiation (Law 2)
     - ⚠ logistics_locations.py: contains DB writes / model instantiation (Law 2)
     - ⚠ logistics_locations_create.py: contains DB writes / model instantiation (Law 2)
     - ⚠ logistics_logistics_status.py: contains DB writes / model instantiation (Law 2)
     - ⚠ logistics_orders_v2.py: contains DB writes / model instantiation (Law 2)
-  - **LLM description:** The 'logistics' module exposes APIs for managing logistics operations such as carrier management, location handling, order tracking, and shipment fulfillment. It includes endpoints for health checks, partner locations, and detailed logistics summaries, providing a comprehensive interface for logistics-related functionalities within the monolith.
 - **supplier** — Supplier portal (onboarding, products, orders, payouts, finance).
-  - status: **Active** · routers: 28 · auth files: 0 · serializers: 0
-- content: router content (28 files, 8 classes, 257 functions, 6211 LOC): CommissionRateBody, GlobalConfigBody, CategoryRateBody, BadgeTierBody, LedgerAdjustmentBody, PreviewBody
+  - status: **Active** · routers: 30 · auth files: 1 · serializers: 0
+- content: router content (30 files, 0 classes, 90 functions, 6233 LOC): 
+- content: auth content (1 files, 10 LOC) — no classes/functions detected
 
-
-  - composes domains: accounts, catalog, comms, finance, governance, logistics, orders, payments, suppliers
-  - feature gates wired: 0 · thin routers: 10/28 (36%) · thick routers (Law 2): 18
+  - composes domains: analytics, catalog, comms, finance, governance, logistics, orders, payments, suppliers
+  - feature gates wired: 0 · thin routers: 12/30 (40%) · thick routers (Law 2): 18
     - ⚠ commission.py: contains DB writes / model instantiation (Law 2)
     - ⚠ onboarding.py: contains DB writes / model instantiation (Law 2)
     - ⚠ products.py: contains DB writes / model instantiation (Law 2)
     - ⚠ supplier.py: contains DB writes / model instantiation (Law 2)
     - ⚠ supplier_documents.py: contains DB writes / model instantiation (Law 2)
-  - **LLM description:** The 'supplier' module in the modular monolith provides a comprehensive set of APIs for managing supplier-related functionalities such as onboarding, commission management, product listings, and financial operations. It includes multiple routers like `commission.py`, `onboarding.py`, and `products.py` that handle various aspects of supplier interactions within the system.
 
 ## 2 — Domains (Axis 2: what the business does) & Features (Axis 3: what may be done)
 
@@ -120,33 +115,72 @@ Each **domain** owns a slice of business logic. Where a domain defines **feature
 
 | Domain | Status | Completion % | Models | Services | Schemas | Policies | Events | Subscribers | Features (atoms) | Ports | ReadModels | Repos |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| accounts | Scaffold | 40% | 3 (45 orm) | 90 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| catalog | Scaffold | 40% | 2 (11 orm) | 38 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| comms | Scaffold | 40% | 4 (70 orm) | 93 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| country | Partial | 48% | 7 (41 orm) | 76 | 0 | 1 | 0 | 0 | 0 (9) | 0 | 0 | 0 |
-| customers | Scaffold | 20% | 0 (0 orm) | 33 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| finance | Scaffold | 40% | 4 (105 orm) | 123 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| governance | Scaffold | 40% | 3 (61 orm) | 129 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| hr | Scaffold | 40% | 1 (29 orm) | 49 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| logistics | Scaffold | 40% | 2 (16 orm) | 43 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| media | Scaffold | 40% | 3 (7 orm) | 49 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| orders | Scaffold | 40% | 2 (9 orm) | 84 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| payments | Scaffold | 40% | 1 (7 orm) | 10 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
-| suppliers | Scaffold | 20% | 1 (0 orm) | 43 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| _parked | Scaffold | 20% | 0 (0 orm) | 21 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| accounts | Scaffold | 40% | 5 (11 orm) | 95 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| analytics | Scaffold | 40% | 1 (3 orm) | 3 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| audit | Scaffold | 20% | 1 (2 orm) | 0 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| catalog | Scaffold | 40% | 2 (11 orm) | 84 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| comms | Partial | 72% | 6 (54 orm) | 84 | 5 | 4 | 0 | 0 | 0 (0) | 0 | 1 | 0 |
+| country | Partial | 72% | 7 (41 orm) | 123 | 3 | 1 | 0 | 0 | 0 (9) | 0 | 1 | 0 |
+| customers | Scaffold | 20% | 1 (0 orm) | 18 | 0 | 0 | 0 | 0 | 0 (8) | 0 | 0 | 0 |
+| finance | Partial | 68% | 4 (17 orm) | 103 | 1 | 1 | 0 | 0 | 0 (30) | 0 | 0 | 0 |
+| governance | Partial | 72% | 9 (74 orm) | 215 | 2 | 2 | 0 | 0 | 0 (61) | 0 | 2 | 0 |
+| hr | Scaffold | 40% | 2 (34 orm) | 54 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| infrastructure | Scaffold | 20% | 0 (0 orm) | 2 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| logistics | Scaffold | 40% | 3 (17 orm) | 67 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| media | Scaffold | 40% | 4 (9 orm) | 50 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| orders | Scaffold | 40% | 2 (5 orm) | 88 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| payments | Scaffold | 40% | 1 (7 orm) | 15 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| security | Scaffold | 40% | 1 (3 orm) | 4 | 0 | 0 | 0 | 0 | 0 (0) | 0 | 0 | 0 |
+| suppliers | Partial | 60% | 1 (6 orm) | 48 | 1 | 0 | 0 | 0 | 0 (12) | 0 | 0 | 0 |
+
+### _parked — Scaffold (20%)
+
+—
+
+- content: _parked/services (21 files, 3 classes, 155 functions, 3877 LOC): CouponValidateBody, CouponValidateView, CouponView
+
+- Cross-domain dependencies: orders (32), governance (21), catalog (12), comms (8), payments (8), country (1), suppliers (1)
+
+- **Features:** none defined yet (`features.py` is empty).
 
 ### accounts — Scaffold (40%)
 
 AR/AP sub-ledgers, invoices, reconciliation.
 
-**LLM implementation review:** The `accounts` domain in the modular-monolith e-commerce backend primarily manages user accounts, addresses, and onboarding processes. Currently, it lacks defined feature atoms, indicating that specific functionalities or microservices have not yet been identified or implemented for this domain.
-
-- content: accounts/services (90 files, 112 classes, 726 functions, 13502 LOC): PayoutVerifyRequest, LoginRequest, RefreshRequest, FlagRequest, CodRemittanceRequest, BadgeBillingPaymentRequest
-- content: accounts/models (3 files, 45 classes, 0 functions, 744 LOC): Address, Cart, CartItem, AuditLog, SupportTicket, SupportTicketReply
+- content: accounts/services (95 files, 0 classes, 18 functions, 14225 LOC): 
+- content: accounts/models (5 files, 11 classes, 1 functions, 440 LOC): Address, Cart, CartItem, User, UserLoginHistory, UserDevice
 - content: accounts/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: accounts/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: accounts/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: accounts/ports.py (1 files, 625 LOC) — no classes/functions detected
 
-- Cross-domain dependencies: governance (309), comms (47), finance (45), catalog (37), country (36), orders (24), logistics (23), hr (17), payments (13), customers (9), media (4), suppliers (2)
+- Cross-domain dependencies: governance (310), country (56), comms (51), finance (45), catalog (38), logistics (24), orders (24), hr (20), payments (13), customers (10), media (5), security (2), suppliers (2), audit (1), analytics (1)
+
+- **Features:** none defined yet (`features.py` is empty).
+
+### analytics — Scaffold (40%)
+
+—
+
+- content: analytics/services (3 files, 4 classes, 75 functions, 1629 LOC): NewsAggregatorService, CommandCenterService
+- content: analytics/models (1 files, 3 classes, 1 functions, 95 LOC): FinancialReport, ExecutiveNews, PredictiveSimulation
+- content: analytics/events.py (1 files, 0 classes, 3 functions, 43 LOC): 
+- content: analytics/subscribers.py (1 files, 0 classes, 1 functions, 34 LOC): 
+- content: analytics/features.py (1 files, 10 LOC) — no classes/functions detected
+- content: analytics/ports.py (1 files, 0 classes, 4 functions, 67 LOC): 
+
+- Cross-domain dependencies: governance (14), logistics (3), orders (3), country (2), hr (2), finance (2)
+
+- **Features:** none defined yet (`features.py` is empty).
+
+### audit — Scaffold (20%)
+
+—
+
+- content: audit/models (1 files, 2 classes, 0 functions, 36 LOC): AuditLog, CommandCenterView
+- content: audit/features.py (1 files, 10 LOC) — no classes/functions detected
+- content: audit/ports.py (1 files, 14 LOC) — no classes/functions detected
 
 - **Features:** none defined yet (`features.py` is empty).
 
@@ -154,49 +188,50 @@ AR/AP sub-ledgers, invoices, reconciliation.
 
 Products, variants, categories, coupons, reviews, moderation.
 
-**LLM implementation review:** The `catalog` domain in the modular-monolith e-commerce backend manages core product-related functionalities including categories, products, reviews, and wishlists. Currently, no specific feature atoms have been defined for this domain, indicating that while basic CRUD operations and related models are implemented, more granular or specialized features are yet to be added.
-
-- content: catalog/services (38 files, 6 classes, 291 functions, 7596 LOC): AdvancedFilterService, BannerCreate, BannerUpdate
+- content: catalog/services (84 files, 12 classes, 694 functions, 18250 LOC): AdvancedFilterService, BannerCreate, BannerUpdate, BannerCreate, BannerUpdate, AdvancedFilterService
 - content: catalog/models (2 files, 11 classes, 0 functions, 285 LOC): Category, Product, Review, WishlistItem, Wishlist, ProductVariant
 - content: catalog/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: catalog/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: catalog/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: catalog/ports.py (1 files, 0 classes, 36 functions, 237 LOC): 
 
-- Cross-domain dependencies: governance (44), accounts (15), comms (8), payments (8), country (3), logistics (3), orders (3)
+- Cross-domain dependencies: governance (87), country (25), comms (20), payments (16), orders (8), logistics (6)
 
 - **Features:** none defined yet (`features.py` is empty).
 
-### comms — Scaffold (40%)
+### comms — Partial (72%)
 
 Chat, email, campaigns, notifications, escalation.
 
-**LLM implementation review:** The `comms` domain in the modular-monolith e-commerce backend primarily handles communication-related functionalities such as notifications, tickets, announcements, FAQs, and help categories. Currently, it does not define any specific feature atoms, indicating that its current implementation focuses on providing foundational components rather than complex, specialized features.
+- content: comms/services (84 files, 53 classes, 786 functions, 17578 LOC): EmailManagementService, SendEmailPayload, SendTransactionalPayload, InternalEmailPayload, ExternalEmailPayload, InternalCommunicationService
+- content: comms/models (6 files, 54 classes, 0 functions, 1169 LOC): EntityChatThread, VideoRoom, VideoRoomParticipant, DirectChatRoom, GroupChatMember, EscalationSLALog
+- content: comms/schemas (5 files, 23 classes, 0 functions, 202 LOC): ChannelCreate, ChannelResponse, ChannelMemberAdd, ChatMessageCreate, ChatMessageResponse, ChatThreadCreate
+- content: comms/policies (4 files, 4 classes, 14 functions, 116 LOC): 
+- content: comms/read_models (1 files, 3 classes, 3 functions, 91 LOC): 
+- content: comms/events.py (1 files, 7 classes, 1 functions, 93 LOC): CommsEvent
+- content: comms/subscribers.py (1 files, 0 classes, 12 functions, 236 LOC): 
+- content: comms/features.py (1 files, 1 classes, 0 functions, 254 LOC): 
+- content: comms/ports.py (1 files, 0 classes, 116 functions, 517 LOC): 
 
-- content: comms/services (93 files, 50 classes, 784 functions, 17544 LOC): AssetTrackingService, NewsAggregatorService, CommandCenterService, CommunicationAuditService, EmailManagementService, SendEmailPayload
-- content: comms/models (4 files, 70 classes, 0 functions, 1602 LOC): Notification, TicketMessage, Announcement, FAQ, HelpCategory, ProxyChannel
-- content: comms/events.py (1 files, 0 LOC) — no classes/functions detected
-- content: comms/subscribers.py (1 files, 0 LOC) — no classes/functions detected
-- content: comms/features.py (1 files, 0 LOC) — no classes/functions detected
-
-- Cross-domain dependencies: accounts (109), governance (27), finance (25), hr (15), orders (11), catalog (8), country (6), logistics (5), media (4), payments (1)
+- Cross-domain dependencies: governance (120), finance (22), hr (15), catalog (9), orders (9), country (6), media (4), suppliers (2), logistics (2), payments (2), audit (1)
 
 - **Features:** none defined yet (`features.py` is empty).
 
-### country — Partial (48%)
+### country — Partial (72%)
 
 Country configs, tax rates, staff assignments, RLS scope axis.
 
-**LLM implementation review:** The `country` domain in the modular-monolith e-commerce backend manages configurations, staff assignments, tax management, communication, versioning, and localization for different countries. It includes comprehensive features such as assigning country staff, managing tax rules, sending communications, and approving versions, but lacks explicit feature atoms for cross-border logistics and payouts management, which are noted as `Cross-Border Customer Session` and `Manage Country Payout Rules`, respectively.
-
-- content: country/services (76 files, 100 classes, 842 functions, 15943 LOC): FlagRequest, CodRemittanceRequest, BadgeBillingPaymentRequest, PayoutProcessRequest, ReceiptReviewRequest, CommissionRateBody
+- content: country/services (123 files, 202 classes, 1179 functions, 27434 LOC): FlagRequest, CodRemittanceRequest, BadgeBillingPaymentRequest, PayoutProcessRequest, ReceiptReviewRequest, TaxDraftBody
 - content: country/models (7 files, 41 classes, 0 functions, 1111 LOC): CountryConfig, CountryCommunication, CountryGatewayCredentials, PayoutRule, TaxRule, ShippingRule
+- content: country/schemas (3 files, 6 classes, 0 functions, 72 LOC): CountryConfigCreate, CountryConfigUpdate, CountryStaffAssignmentCreate, CountryStaffAssignmentUpdate, CountryTaxRateCreate, CountryTaxRateUpdate
 - content: country/policies (1 files, 0 classes, 4 functions, 76 LOC): 
+- content: country/read_models (1 files, 2 classes, 1 functions, 66 LOC): CountryDashboardProjection, CountryTaxRateProjection
 - content: country/events.py (1 files, 5 classes, 0 functions, 50 LOC): CountryEvent
 - content: country/subscribers.py (1 files, 0 classes, 4 functions, 55 LOC): 
 - content: country/features.py (1 files, 0 classes, 2 functions, 83 LOC): 
-- content: country/ports.py (1 files, 0 classes, 5 functions, 81 LOC): 
+- content: country/ports.py (1 files, 0 classes, 6 functions, 93 LOC): 
 
-- Cross-domain dependencies: governance (240), accounts (165), comms (28), finance (24), logistics (18), orders (14), hr (14), catalog (9), customers (7), payments (4), suppliers (3)
+- Cross-domain dependencies: governance (354), hr (50), catalog (31), comms (28), finance (24), logistics (21), orders (14), infrastructure (6), payments (4), suppliers (3), customers (1)
 
 - **Features (9 atoms — 9 backed, 0 gated):**
 
@@ -204,8 +239,8 @@ Country configs, tax rates, staff assignments, RLS scope axis.
     - provided description: Manage country config: identity, tax, logistics, commissions, payments, legal, regions, suppliers, payouts.
     - **LLM description:** This feature 'country.configure' allows for the configuration of country-specific settings within the application, including reading, writing, and approving changes. Given its high-risk designation, it involves direct manipulation of core domain logic and must be carefully managed to avoid potential data inconsistencies or security vulnerabilities.
   - **country.staff.assign** — *Assign Country Staff* · risk: high · actions: read, assign, unassign · **Implemented** (backed=yes, gated=no)
+    - related files: country_staff_assignment.py
     - provided description: Assign/unassign users to a country with a country-scoped role (maker-checker required).
-    - **LLM description:** This feature, 'country.staff.assign', allows the assignment and unassignment of staff to countries within the system. Given its high-risk designation, it involves critical operations that could affect multiple country records and associated staff members, necessitating robust validation and transactional integrity checks during implementation. The feature is currently implemented in domain logic without any conditional gating based on active features, which means it will be available for use as soon as it is deployed.
   - **country.reports.view** — *View Country Reports* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
     - provided description: Read country-scoped analytics and operational reports.
     - **LLM description:** This feature 'country.reports.view' allows users to view reports specific to different countries. Given its medium-risk classification, it primarily involves reading operations on country-specific data, which could potentially expose sensitive information if not properly secured, hence the need for careful implementation and possibly future feature gating.
@@ -235,58 +270,283 @@ Country configs, tax rates, staff assignments, RLS scope axis.
 
 Addresses, referrals, badge tiers, wishlists.
 
-**LLM implementation review:** The `customers` domain in the modular-monolith e-commerce backend primarily handles customer-related functionalities such as authentication, coupon management, and possibly health checks for customers. Currently, it lacks defined feature atoms, indicating that specific customer-centric features like detailed profile management or order history are not yet implemented.
+- content: customers/services (18 files, 1 classes, 137 functions, 2738 LOC): 
+- content: customers/models (1 files, 45 LOC) — no classes/functions detected
+- content: customers/events.py (1 files, 0 classes, 8 functions, 74 LOC): 
+- content: customers/subscribers.py (1 files, 0 classes, 2 functions, 36 LOC): 
+- content: customers/features.py (1 files, 0 classes, 2 functions, 78 LOC): 
+- content: customers/ports.py (1 files, 22 LOC) — no classes/functions detected
 
-- content: customers/services (33 files, 49 classes, 288 functions, 5869 LOC): LoginRequest, RefreshRequest, CouponValidateBody, CouponValidateView, CouponView, ReportPeriod
-- content: customers/events.py (1 files, 0 LOC) — no classes/functions detected
-- content: customers/subscribers.py (1 files, 0 LOC) — no classes/functions detected
-- content: customers/features.py (1 files, 0 LOC) — no classes/functions detected
+- Cross-domain dependencies: governance (16), catalog (8), orders (4), payments (3), comms (2), hr (1)
 
-- Cross-domain dependencies: accounts (44), governance (31), finance (29), orders (26), country (18), payments (11), catalog (7), logistics (6), comms (5), media (4), suppliers (2), hr (1)
+- **Features (8 atoms — 8 backed, 0 gated):**
 
-- **Features:** none defined yet (`features.py` is empty).
+  - **customers.address.manage** — *Manage Customer Addresses* · risk: low · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Create, update, delete, and set default shipping addresses for the authenticated customer.
+  - **customers.cart.manage** — *Manage Cart* · risk: low · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Add, update, remove, clear, and sync server-side cart items.
+  - **customers.wishlist.manage** — *Manage Wishlist* · risk: low · actions: read, create, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Add and remove wishlist items; clear the wishlist.
+  - **customers.referral.manage** — *Manage Referrals* · risk: medium · actions: read, create · **Implemented** (backed=yes, gated=no)
+    - provided description: View referral config and get/create the authenticated customer's referral code.
+  - **customers.reviews.write** — *Write Reviews* · risk: low · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - related files: cart_write_service.py, commerce_write_service.py, coupons_write_service.py, wishlist_write_service.py
+    - provided description: Create, update, and soft-delete product reviews; read product review listings.
+  - **customers.returns.request** — *Request Returns* · risk: medium · actions: read, create · **Implemented** (backed=yes, gated=no)
+    - provided description: List return requests and create a new return request for an order.
+  - **customers.profile.manage** — *Manage Customer Profile* · risk: low · actions: read, update · **Implemented** (backed=yes, gated=no)
+    - provided description: Read and update the authenticated customer's profile.
+  - **customers.health.view** — *View Customer Health* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: reviews_service.py
+    - provided description: View customer health scores and the ranked health list (admin).
 
-### finance — Scaffold (40%)
+### finance — Partial (68%)
 
 Ledger, treasury, reporting, payouts, VAT, cash forecast.
 
-**LLM implementation review:** The 'finance' domain in the modular-monolith e-commerce backend manages financial transactions, ledger entries, and accounting processes such as commission agreements, supplier settlements, journal entries, and fiscal periods. Currently, no specific feature atoms have been defined for this domain, indicating that its implementation is still in a foundational stage or that detailed business logic has not yet been specified.
+- content: finance/services (103 files, 46 classes, 581 functions, 35171 LOC): CountryAIResearchService, JournalEntryBody, ExpenseProcessingService, FinanceDashboardService
+- content: finance/models (4 files, 17 classes, 0 functions, 1794 LOC): CommissionAgreement, ProductCommissionOverride, CommissionLedgerEntry, CommissionCategoryRate, Warehouse, PurchaseOrder
+- content: finance/schemas (1 files, 4 classes, 0 functions, 32 LOC): InvoiceCreate, InvoiceResponse, PaymentCreate, PayoutCreate
+- content: finance/policies (1 files, 1 classes, 3 functions, 21 LOC): 
+- content: finance/events.py (1 files, 12 classes, 0 functions, 163 LOC): FinanceEvent
+- content: finance/subscribers.py (1 files, 0 classes, 4 functions, 77 LOC): 
+- content: finance/features.py (1 files, 52 LOC) — no classes/functions detected
+- content: finance/ports.py (1 files, 811 LOC) — no classes/functions detected
 
-- content: finance/services (123 files, 62 classes, 1176 functions, 35524 LOC): JournalEntryBody, JournalEntryBody, PayoutVerifyRequest, AISearchService, CountryAIResearchService, ExpenseProcessingService
-- content: finance/models (4 files, 105 classes, 0 functions, 2595 LOC): CommissionAgreement, ProductCommissionOverride, CommissionLedgerEntry, CommissionCategoryRate, Warehouse, PurchaseOrder
-- content: finance/events.py (1 files, 0 LOC) — no classes/functions detected
-- content: finance/subscribers.py (1 files, 0 LOC) — no classes/functions detected
-- content: finance/features.py (1 files, 0 LOC) — no classes/functions detected
+- Cross-domain dependencies: governance (127), payments (59), orders (46), logistics (46), comms (41), country (25), catalog (16), hr (12), media (9), suppliers (6)
 
-- Cross-domain dependencies: governance (60), payments (60), logistics (48), orders (43), comms (39), accounts (16), country (16), catalog (12), hr (9), media (9), suppliers (6), customers (2)
+- **Features (30 atoms — 30 backed, 0 gated):**
 
-- **Features:** none defined yet (`features.py` is empty).
+  - **finance.ledger.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.ledger.post** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: refund_posting_service.py
+  - **finance.ledger.reverse** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.invoice.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.invoice.create** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.payout.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.payout.create** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.payout.approve** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.payout.dispatch** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: payout_dispatch_service.py
+  - **finance.commission.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.commission.manage** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller.py, cash_management_controller_service.py, cash_management_service.py, cash_management_write_controller.py, cash_management_write_service.py
+  - **finance.treasury.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.treasury.manage** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller.py, cash_management_controller_service.py, cash_management_service.py, cash_management_write_controller.py, cash_management_write_service.py
+  - **finance.treasury.forecast** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_flow_forecast_service.py
+  - **finance.period.close** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: period_close_service.py
+  - **finance.period.manage** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller.py, cash_management_controller_service.py, cash_management_service.py, cash_management_write_controller.py, cash_management_write_service.py
+  - **finance.reporting.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.reporting.generate** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.subledger.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.subledger.post** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: refund_posting_service.py
+  - **finance.erp.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.erp.manage** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller.py, cash_management_controller_service.py, cash_management_service.py, cash_management_write_controller.py, cash_management_write_service.py
+  - **finance.bank.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.bank.reconcile** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.bank.mapping** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+  - **finance.credit.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.credit.manage** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller.py, cash_management_controller_service.py, cash_management_service.py, cash_management_write_controller.py, cash_management_write_service.py
+  - **finance.automation.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
+  - **finance.automation.manage** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller.py, cash_management_controller_service.py, cash_management_service.py, cash_management_write_controller.py, cash_management_write_service.py
+  - **finance.audit.read** — *no label* · risk: — · actions: — · **Implemented** (backed=yes, gated=no)
+    - related files: contractor_milestone_read_service.py, trading_read_service.py, admin_logistics_fallback_read_service.py, payout_approval_read_service.py, payout_read_service.py, admin_treasury_read_service.py, admin_treasury_reporting_read_service.py, finance_read_service.py
 
-### governance — Scaffold (40%)
+### governance — Partial (72%)
 
 Audit logs, fraud, manual review, command center, system health.
 
-- content: governance/services (129 files, 208 classes, 986 functions, 23650 LOC): ReportPeriod, ClosePeriodBody, ReversalBody, ARInvoiceBody, ARPaymentBody, APPayableBody
-- content: governance/models (3 files, 61 classes, 1 functions, 1175 LOC): AdminAnalyticsSnapshot, RolePermissionSetting, SystemAlert, AdminChangeAuditLog, AdminActivityLog, SystemSetting
-- content: governance/events.py (1 files, 0 LOC) — no classes/functions detected
-- content: governance/subscribers.py (1 files, 0 LOC) — no classes/functions detected
-- content: governance/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: governance/services (215 files, 238 classes, 1529 functions, 41530 LOC): AuditService, AuditTrailService, DataResidencyService, DataResidencyService, SovereignEncryptionService, DataResidencyService
+- content: governance/models (9 files, 74 classes, 5 functions, 1567 LOC): AdminAnalyticsSnapshot, RolePermissionSetting, SystemAlert, AdminChangeAuditLog, AdminActivityLog, SystemSetting
+- content: governance/schemas (2 files, 32 classes, 0 functions, 268 LOC): PermissionCreate, PermissionResponse, RolePermissionUpdate, RolePermissionResponse, UserCreate, UserUpdate
+- content: governance/policies (2 files, 10 classes, 33 functions, 226 LOC): 
+- content: governance/read_models (2 files, 13 classes, 0 functions, 159 LOC): 
+- content: governance/events.py (1 files, 15 classes, 33 functions, 595 LOC): AccountsEvent
+- content: governance/subscribers.py (1 files, 0 classes, 41 functions, 452 LOC): 
+- content: governance/features.py (1 files, 0 classes, 4 functions, 431 LOC): 
+- content: governance/ports.py (1 files, 0 classes, 195 functions, 957 LOC): 
 
-- Cross-domain dependencies: accounts (168), finance (102), comms (77), country (58), catalog (56), orders (51), payments (39), logistics (37), hr (32), customers (6), suppliers (1)
+- Cross-domain dependencies: catalog (156), comms (137), finance (137), country (129), orders (126), logistics (79), payments (76), hr (72), customers (8), suppliers (7), infrastructure (6), accounts (2), analytics (1)
 
-- **Features:** none defined yet (`features.py` is empty).
+- **Features (61 atoms — 61 backed, 0 gated):**
+
+  - **governance.permission.create** — *Create Permission* · risk: critical · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Create a new permission atom and assign it to a category.
+  - **governance.permission.read** — *View Permissions* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View permission catalog, categories, and role assignments.
+  - **governance.permission.update** — *Update Permission* · risk: critical · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update permission metadata and role-permission mappings.
+  - **governance.permission.delete** — *Delete Permission* · risk: critical · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Remove a permission atom from the catalog.
+  - **governance.role.assign** — *Assign Role* · risk: critical · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Assign or change a user's role and staff permissions.
+  - **governance.role.permissions.update** — *Update Role Permissions* · risk: critical · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Modify the permission set assigned to a role.
+  - **governance.user.create** — *Create User* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Register a new user account and assign an initial role.
+  - **governance.user.read** — *View User* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View user account details, profile, and activity.
+  - **governance.user.update** — *Update User* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update user account fields, role, and active status.
+  - **governance.user.delete** — *Delete User* · risk: high · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Soft-delete or hard-delete a user account.
+  - **governance.user.toggle_active** — *Toggle User Active* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Activate or deactivate a user account.
+  - **governance.user.bulk_manage** — *Bulk Manage Users* · risk: critical · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Perform bulk operations on multiple user accounts.
+  - **governance.user.force_reset_password** — *Force Password Reset* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Forcefully reset a user's password.
+  - **governance.staff.create** — *Create Staff Account* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Create a new staff account with role assignments.
+  - **governance.staff.update** — *Update Staff Account* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update staff account details and permissions.
+  - **governance.staff.delete** — *Delete Staff Account* · risk: high · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Remove a staff account from the system.
+  - **governance.staff.bulk_update** — *Bulk Update Staff* · risk: critical · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update multiple staff accounts in bulk.
+  - **governance.supplier.verify** — *Verify Supplier* · risk: high · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Verify a supplier account and grant marketplace access.
+  - **governance.supplier.reject** — *Reject Supplier* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Reject a supplier's verification request.
+  - **governance.supplier.manage** — *Manage Suppliers* · risk: high · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Manage supplier accounts, status, and trading permissions.
+  - **governance.supplier.bulk_verify** — *Bulk Verify Suppliers* · risk: critical · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Verify or reject multiple suppliers in bulk.
+  - **governance.order.status_update** — *Update Order Status* · risk: medium · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Change the status of an existing order.
+  - **governance.order.refund** — *Refund Order* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Issue a refund for an order.
+  - **governance.order.delete** — *Delete Order* · risk: high · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Remove an order from the system.
+  - **governance.order.bulk_status_update** — *Bulk Update Orders* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update status or refund multiple orders in bulk.
+  - **governance.order.tracking_update** — *Update Tracking* · risk: low · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update shipment tracking information for an order.
+  - **governance.product.approve** — *Approve Product* · risk: medium · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Approve a product for marketplace listing.
+  - **governance.product.reject** — *Reject Product* · risk: medium · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Reject a product listing request.
+  - **governance.product.delete** — *Delete Product* · risk: high · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Remove a product from the marketplace.
+  - **governance.product.restore** — *Restore Product* · risk: medium · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Restore a previously deleted product.
+  - **governance.product.bulk_moderation** — *Bulk Moderate Products* · risk: high · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Approve or reject multiple products in bulk.
+  - **governance.product.toggle_badge** — *Toggle Product Badge* · risk: low · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Toggle featured or verification badges on a product.
+  - **governance.treasury.read** — *View Treasury* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View treasury reports and financial summaries.
+  - **governance.treasury.verify_payout** — *Verify Payout* · risk: high · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Verify and approve a pending payout.
+  - **governance.treasury.record_remittance** — *Record Remittance* · risk: medium · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Record a COD remittance or settlement.
+  - **governance.fraud.read** — *View Fraud Events* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View fraud detection events and risk scores.
+  - **governance.fraud.manage** — *Manage Fraud Cases* · risk: high · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Manage fraud cases, whitelist, and blacklist entries.
+  - **governance.security.incident.read** — *View Security Incidents* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View security incidents and war-room entries.
+  - **governance.security.incident.manage** — *Manage Security Incidents* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Create, update, and resolve security incidents.
+  - **governance.risk.read** — *View Risk Scores* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View risk scores and threat intelligence data.
+  - **governance.risk.manage** — *Manage Risk* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Manage risk thresholds and automated response rules.
+  - **governance.audit.read** — *View Audit Trail* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View admin activity logs and audit trails.
+  - **governance.compliance.read** — *View Compliance* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View compliance status and data residency information.
+  - **governance.retention.manage** — *Manage Data Retention* · risk: high · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Configure and execute data retention policies.
+  - **governance.analytics.read** — *View Analytics* · risk: low · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View governance dashboards and analytics reports.
+  - **governance.export.read** — *Export Data* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: Export governance data and reports.
+  - **governance.geography.read** — *View Geography Config* · risk: low · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View country and geographic configuration.
+  - **governance.geography.manage** — *Manage Geography* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Manage country settings, zones, and restrictions.
+  - **governance.system.health** — *View System Health* · risk: low · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: admin_security_health_service.py, flat_admin_security_health_service.py, public_security_health_service.py
+    - provided description: View database health and system status.
+  - **governance.database.manage** — *Manage Database* · risk: critical · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Perform database maintenance and management operations.
+  - **accounts.user.create** — *Create User* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Register a new user account and assign an initial role.
+  - **accounts.user.read** — *View User* · risk: medium · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: governance_read_models.py, user_read_models.py, export_read_service.py, incident_admin_read_service.py, risk_score_read_service.py, user_read_service.py, user_read_service.py, user_read_service_accounts.py
+    - provided description: View user account details and profile.
+  - **accounts.user.update** — *Update User* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Update user account fields, role, and active status.
+  - **accounts.user.delete** — *Delete User* · risk: high · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Soft-delete or hard-delete a user account.
+  - **accounts.user.toggle_active** — *Toggle User Active* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Activate or deactivate a user account.
+  - **accounts.role.assign** — *Assign Role* · risk: critical · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Assign or change a user's role and staff permissions.
+  - **accounts.auth.login** — *Authenticate* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Perform login, token refresh, and logout operations.
+  - **accounts.auth.mfa.manage** — *Manage MFA* · risk: high · actions: read, write · **Implemented** (backed=yes, gated=no)
+    - provided description: Enable, disable, and enforce multi-factor authentication.
+  - **accounts.identity.verify** — *Verify Identity* · risk: high · actions: read, write, approve · **Implemented** (backed=yes, gated=no)
+    - provided description: Verify user identity, email, and linked social identities.
+  - **accounts.session.manage** — *Manage Sessions* · risk: medium · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: View and revoke active user sessions and tokens.
+  - **accounts.address.manage** — *Manage Addresses* · risk: low · actions: read, write, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Manage a user's saved delivery addresses.
 
 ### hr — Scaffold (40%)
 
 Employees, org units, attendance, shifts, leave, biometrics, payroll.
 
-- content: hr/services (49 files, 26 classes, 355 functions, 11584 LOC): AttendanceService, AttendanceService, COIService, ObjectiveCreate, KpiEvaluate, ShiftHandoverService
-- content: hr/models (1 files, 29 classes, 0 functions, 539 LOC): Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog, EmployeeRole
+- content: hr/services (54 files, 61 classes, 457 functions, 12726 LOC): AssetTrackingService, AttendanceService, AttendanceService, COIService, EmployeeService, OfficeCreate
+- content: hr/models (2 files, 34 classes, 0 functions, 634 LOC): Office, PhysicalIDCard, DynamicQRSession, EmployeeBiometric, GeoFenceLog, EmployeeRole
 - content: hr/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: hr/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: hr/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: hr/ports.py (1 files, 0 classes, 93 functions, 448 LOC): 
 
-- Cross-domain dependencies: accounts (42), comms (3), governance (1), finance (1)
+- Cross-domain dependencies: governance (39), country (8), comms (3), finance (1)
+
+- **Features:** none defined yet (`features.py` is empty).
+
+### infrastructure — Scaffold (20%)
+
+—
+
+- content: infrastructure/services (2 files, 2 classes, 8 functions, 144 LOC): 
+
+- Cross-domain dependencies: governance (2)
 
 - **Features:** none defined yet (`features.py` is empty).
 
@@ -294,15 +554,14 @@ Employees, org units, attendance, shifts, leave, biometrics, payroll.
 
 Partners, shipments, tracking, settlements, distance matrix.
 
-**LLM implementation review:** The `logistics` domain in the modular-monolith e-commerce backend manages logistics partners and their service areas, including pricing profiles and vehicle rules. Currently, it lacks defined feature atoms, which could provide more granular functionality or business logic specific to logistics operations.
-
-- content: logistics/services (43 files, 18 classes, 253 functions, 4647 LOC): ReverseRequest, ResolveRequest, GeoFenceService, LiveTrackingService, ScanReceiveRequest, UpdateTransitRequest
-- content: logistics/models (2 files, 16 classes, 0 functions, 541 LOC): LogisticsPartner, LogisticsPartnerProfile, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsVehicleRule, LogisticsCategoryPricingRule
+- content: logistics/services (67 files, 28 classes, 464 functions, 8749 LOC): ReverseRequest, ResolveRequest, FulfillmentService, GeoFenceService, MapService, GeoFenceService
+- content: logistics/models (3 files, 17 classes, 0 functions, 579 LOC): LogisticsPartner, LogisticsPartnerProfile, LogisticsPartnerServiceArea, LogisticsPricingProfile, LogisticsVehicleRule, LogisticsCategoryPricingRule
 - content: logistics/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: logistics/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: logistics/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: logistics/ports.py (1 files, 0 classes, 33 functions, 199 LOC): 
 
-- Cross-domain dependencies: country (81), governance (14), orders (12), accounts (6), comms (4), payments (4), finance (3), hr (1)
+- Cross-domain dependencies: country (96), governance (28), orders (18), comms (8), payments (7), finance (3), hr (2)
 
 - **Features:** none defined yet (`features.py` is empty).
 
@@ -310,15 +569,14 @@ Partners, shipments, tracking, settlements, distance matrix.
 
 Media assets, product videos, video rooms, AI upload jobs.
 
-**LLM implementation review:** The 'media' domain in the modular-monolith e-commerce backend primarily handles media asset management, including AI-driven uploads and processing. Currently, it lacks defined feature atoms, indicating that specific functionalities or modules within the domain have not yet been granularly delineated into distinct components.
-
-- content: media/services (49 files, 48 classes, 497 functions, 14158 LOC): AISearchService, AssetTrackingService, NewsAggregatorService, CommandCenterService, CountryAIResearchService, MediaStorageService
-- content: media/models (3 files, 7 classes, 0 functions, 280 LOC): AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, MediaAsset, MediaUploadSession
+- content: media/services (50 files, 44 classes, 448 functions, 14422 LOC): AISearchService, AssetTrackingService, NewsAggregatorService, CommandCenterService, CountryAIResearchService, MediaStorageService
+- content: media/models (4 files, 9 classes, 0 functions, 331 LOC): AIUploadJob, AIStagingProduct, AIStagingVariant, AIGenerationLog, MediaAsset, MediaUploadSession
 - content: media/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: media/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: media/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: media/ports.py (1 files, 0 classes, 23 functions, 128 LOC): 
 
-- Cross-domain dependencies: finance (116), accounts (18), catalog (10), comms (9), governance (7), orders (7), hr (4), country (4), payments (3), logistics (3)
+- Cross-domain dependencies: finance (116), governance (25), catalog (10), comms (9), orders (7), country (5), hr (4), payments (3), logistics (3)
 
 - **Features:** none defined yet (`features.py` is empty).
 
@@ -326,15 +584,14 @@ Media assets, product videos, video rooms, AI upload jobs.
 
 Orders, items, carts, returns, disputes, lifecycle.
 
-**LLM implementation review:** The `orders` domain in the modular-monolith e-commerce backend manages core order-related entities such as `Order`, `OrderItem`, and logistics details like `OrderLogisticsAllocation`. Currently, it lacks defined feature atoms, indicating that specific functionalities or services for these entities have not yet been implemented.
-
-- content: orders/services (84 files, 12 classes, 626 functions, 17751 LOC): CartItemIn, CartSyncRequest, CartShippingQuoteRequest, CouponValidateBody, CouponValidateView, CouponView
-- content: orders/models (2 files, 9 classes, 0 functions, 351 LOC): Order, OrderItem, OrderLogisticsAllocation, ReturnRequest, OrderNotification, Order
+- content: orders/services (88 files, 14 classes, 623 functions, 18166 LOC): CartItemIn, CartSyncRequest, CartShippingQuoteRequest, CouponValidateBody, CouponValidateView, CouponView
+- content: orders/models (2 files, 5 classes, 1 functions, 224 LOC): Order, OrderItem, OrderLogisticsAllocation, ReturnRequest, OrderNotification
 - content: orders/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: orders/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: orders/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: orders/ports.py (1 files, 0 classes, 99 functions, 1539 LOC): 
 
-- Cross-domain dependencies: catalog (36), comms (33), logistics (31), governance (30), accounts (20), payments (20), finance (17), hr (3), country (2)
+- Cross-domain dependencies: governance (56), catalog (47), comms (33), logistics (33), payments (21), finance (19), country (6), hr (3)
 
 - **Features:** none defined yet (`features.py` is empty).
 
@@ -342,31 +599,81 @@ Orders, items, carts, returns, disputes, lifecycle.
 
 Gateway connections, webhook events, settlement schedules.
 
-- content: payments/services (10 files, 13 classes, 53 functions, 10336 LOC): ConnectionTestResult, PaymentResult, RefundResult, GatewayAutoEnableService, _BaseWebhookEvent, ZoziPaymentEvent
+- content: payments/services (15 files, 13 classes, 86 functions, 11074 LOC): ConnectionTestResult, PaymentResult, RefundResult, GatewayAutoEnableService, _BaseWebhookEvent, ZoziPaymentEvent
 - content: payments/models (1 files, 7 classes, 1 functions, 211 LOC): Payment, PaymentReconciliationRun, Coupon, Banner, PaymentGatewayConnection, Payout
 - content: payments/events.py (1 files, 0 LOC) — no classes/functions detected
 - content: payments/subscribers.py (1 files, 0 LOC) — no classes/functions detected
 - content: payments/features.py (1 files, 0 LOC) — no classes/functions detected
+- content: payments/ports.py (1 files, 0 classes, 32 functions, 184 LOC): 
 
-- Cross-domain dependencies: finance (19), comms (17), governance (6), country (4), orders (4), catalog (1), accounts (1)
+- Cross-domain dependencies: comms (19), finance (19), governance (11), country (4), orders (4), suppliers (2), catalog (1)
 
 - **Features:** none defined yet (`features.py` is empty).
 
-### suppliers — Scaffold (20%)
+### security — Scaffold (40%)
+
+—
+
+- content: security/services (4 files, 2 classes, 28 functions, 520 LOC): LoginRequest, RefreshRequest
+- content: security/models (1 files, 3 classes, 0 functions, 55 LOC): AlertEscalationRule, DocumentVerification, KYCVerification
+- content: security/features.py (1 files, 10 LOC) — no classes/functions detected
+- content: security/ports.py (1 files, 18 LOC) — no classes/functions detected
+
+- Cross-domain dependencies: governance (14), hr (2)
+
+- **Features:** none defined yet (`features.py` is empty).
+
+### suppliers — Partial (60%)
 
 Profiles, documents, KYC, onboarding.
 
-**LLM implementation review:** The `suppliers` domain in the modular-monolith e-commerce backend manages the lifecycle of suppliers, including onboarding through an automated pipeline and legal contract management. Currently, it lacks defined feature atoms, indicating that specific functional components or microservices have not been delineated within this domain.
+- content: suppliers/services (48 files, 6 classes, 236 functions, 11853 LOC): LegalContractService, OnboardingPipelineService, SupplierOnboardingService
+- content: suppliers/models (1 files, 6 classes, 0 functions, 208 LOC): SupplierProfile, SupplierDocument, SupplierNotificationPreference, SupplierBadgeCatalog, SupplierBadge, SupplierBadgeBillingHistory
+- content: suppliers/schemas (1 files, 5 classes, 0 functions, 84 LOC): SupplierProfileSchema, SupplierSummarySchema, SupplierVerificationRequest, SupplierBulkVerificationRequest, SupplierStatusFilter
+- content: suppliers/events.py (1 files, 0 classes, 13 functions, 176 LOC): 
+- content: suppliers/subscribers.py (1 files, 0 classes, 4 functions, 51 LOC): 
+- content: suppliers/features.py (1 files, 0 classes, 2 functions, 105 LOC): 
+- content: suppliers/ports.py (1 files, 0 classes, 2 functions, 63 LOC): 
 
-- content: suppliers/services (43 files, 6 classes, 348 functions, 11215 LOC): LegalContractService, OnboardingPipelineService, SupplierOnboardingService
-- content: suppliers/models (1 files, 7 LOC) — no classes/functions detected
-- content: suppliers/events.py (1 files, 0 LOC) — no classes/functions detected
-- content: suppliers/subscribers.py (1 files, 0 LOC) — no classes/functions detected
-- content: suppliers/features.py (1 files, 0 LOC) — no classes/functions detected
+- Cross-domain dependencies: comms (63), governance (37), finance (30), orders (19), catalog (14), logistics (10), country (8), payments (5), media (2)
 
-- Cross-domain dependencies: comms (61), finance (30), accounts (21), orders (18), catalog (13), governance (12), logistics (9), country (6), payments (4), media (2)
+- **Features (12 atoms — 12 backed, 0 gated):**
 
-- **Features:** none defined yet (`features.py` is empty).
+  - **suppliers.registration.manage** — *Manage Supplier Registration* · risk: high · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Register new suppliers and manage onboarding pipeline state.
+  - **suppliers.verification.manage** — *Manage Supplier Verification* · risk: high · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Verify, reject, suspend, and reactivate supplier accounts (admin).
+  - **suppliers.profile.manage** — *Manage Supplier Profile* · risk: medium · actions: read, create, update · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Create and update supplier business profiles and storefront settings.
+  - **suppliers.products.manage** — *Manage Supplier Products* · risk: medium · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Create, update, delete, and bulk-upload supplier product listings.
+  - **suppliers.orders.manage** — *Manage Supplier Orders* · risk: medium · actions: read, update · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: View and update status of orders containing supplier products.
+  - **suppliers.documents.manage** — *Manage Supplier Documents* · risk: medium · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Upload, list, and review supplier verification documents.
+  - **suppliers.badges.manage** — *Manage Supplier Badges* · risk: medium · actions: read, create, update, delete · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Assign, update, and revoke supplier badge tiers and billing.
+  - **suppliers.analytics.view** — *View Supplier Analytics* · risk: low · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: admin_supplier_review_service.py
+    - provided description: View supplier sales, revenue, and performance analytics.
+  - **suppliers.payouts.manage** — *Manage Supplier Payouts* · risk: high · actions: read, create, update · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Request, approve, and process supplier payouts and settlements.
+  - **suppliers.health.view** — *View Supplier Health* · risk: low · actions: read · **Implemented** (backed=yes, gated=no)
+    - related files: admin_supplier_review_service.py
+    - provided description: View supplier health scores and trust indicators.
+  - **suppliers.contracts.manage** — *Manage Supplier Legal Contracts* · risk: high · actions: read, create · **Implemented** (backed=yes, gated=no)
+    - related files: cash_management_controller_service.py
+    - provided description: Generate and manage supplier legal contracts and terms.
+  - **suppliers.bulk.operations** — *Execute Bulk Supplier Operations* · risk: high · actions: create, update, delete · **Implemented** (backed=yes, gated=no)
+    - provided description: Execute bulk verify, reject, badge, and lifecycle operations on suppliers.
 
 ## 3 — Feature catalog (Axis 3: what may be done — consolidated across all domains)
 
@@ -383,50 +690,162 @@ Quick reference of every feature atom in the system, grouped by domain. Full LLM
 | country | country.payouts.manage | high | read, create, delete | yes | no | Implemented |
 | country | country.localization.manage | low | read, write | yes | no | Implemented |
 | country | country.cross_border.view | low | read | yes | no | Implemented |
+| customers | customers.address.manage | low | read, create, update, delete | yes | no | Implemented |
+| customers | customers.cart.manage | low | read, create, update, delete | yes | no | Implemented |
+| customers | customers.wishlist.manage | low | read, create, delete | yes | no | Implemented |
+| customers | customers.referral.manage | medium | read, create | yes | no | Implemented |
+| customers | customers.reviews.write | low | read, create, update, delete | yes | no | Implemented |
+| customers | customers.returns.request | medium | read, create | yes | no | Implemented |
+| customers | customers.profile.manage | low | read, update | yes | no | Implemented |
+| customers | customers.health.view | medium | read | yes | no | Implemented |
+| finance | finance.ledger.read | — | — | yes | no | Implemented |
+| finance | finance.ledger.post | — | — | yes | no | Implemented |
+| finance | finance.ledger.reverse | — | — | yes | no | Implemented |
+| finance | finance.invoice.read | — | — | yes | no | Implemented |
+| finance | finance.invoice.create | — | — | yes | no | Implemented |
+| finance | finance.payout.read | — | — | yes | no | Implemented |
+| finance | finance.payout.create | — | — | yes | no | Implemented |
+| finance | finance.payout.approve | — | — | yes | no | Implemented |
+| finance | finance.payout.dispatch | — | — | yes | no | Implemented |
+| finance | finance.commission.read | — | — | yes | no | Implemented |
+| finance | finance.commission.manage | — | — | yes | no | Implemented |
+| finance | finance.treasury.read | — | — | yes | no | Implemented |
+| finance | finance.treasury.manage | — | — | yes | no | Implemented |
+| finance | finance.treasury.forecast | — | — | yes | no | Implemented |
+| finance | finance.period.close | — | — | yes | no | Implemented |
+| finance | finance.period.manage | — | — | yes | no | Implemented |
+| finance | finance.reporting.read | — | — | yes | no | Implemented |
+| finance | finance.reporting.generate | — | — | yes | no | Implemented |
+| finance | finance.subledger.read | — | — | yes | no | Implemented |
+| finance | finance.subledger.post | — | — | yes | no | Implemented |
+| finance | finance.erp.read | — | — | yes | no | Implemented |
+| finance | finance.erp.manage | — | — | yes | no | Implemented |
+| finance | finance.bank.read | — | — | yes | no | Implemented |
+| finance | finance.bank.reconcile | — | — | yes | no | Implemented |
+| finance | finance.bank.mapping | — | — | yes | no | Implemented |
+| finance | finance.credit.read | — | — | yes | no | Implemented |
+| finance | finance.credit.manage | — | — | yes | no | Implemented |
+| finance | finance.automation.read | — | — | yes | no | Implemented |
+| finance | finance.automation.manage | — | — | yes | no | Implemented |
+| finance | finance.audit.read | — | — | yes | no | Implemented |
+| governance | governance.permission.create | critical | read, write | yes | no | Implemented |
+| governance | governance.permission.read | medium | read | yes | no | Implemented |
+| governance | governance.permission.update | critical | read, write | yes | no | Implemented |
+| governance | governance.permission.delete | critical | read, write, delete | yes | no | Implemented |
+| governance | governance.role.assign | critical | read, write, approve | yes | no | Implemented |
+| governance | governance.role.permissions.update | critical | read, write | yes | no | Implemented |
+| governance | governance.user.create | high | read, write | yes | no | Implemented |
+| governance | governance.user.read | medium | read | yes | no | Implemented |
+| governance | governance.user.update | high | read, write | yes | no | Implemented |
+| governance | governance.user.delete | high | read, write, delete | yes | no | Implemented |
+| governance | governance.user.toggle_active | high | read, write | yes | no | Implemented |
+| governance | governance.user.bulk_manage | critical | read, write, delete | yes | no | Implemented |
+| governance | governance.user.force_reset_password | high | read, write | yes | no | Implemented |
+| governance | governance.staff.create | high | read, write | yes | no | Implemented |
+| governance | governance.staff.update | high | read, write | yes | no | Implemented |
+| governance | governance.staff.delete | high | read, write, delete | yes | no | Implemented |
+| governance | governance.staff.bulk_update | critical | read, write | yes | no | Implemented |
+| governance | governance.supplier.verify | high | read, write, approve | yes | no | Implemented |
+| governance | governance.supplier.reject | high | read, write | yes | no | Implemented |
+| governance | governance.supplier.manage | high | read, write, approve | yes | no | Implemented |
+| governance | governance.supplier.bulk_verify | critical | read, write, approve | yes | no | Implemented |
+| governance | governance.order.status_update | medium | read, write | yes | no | Implemented |
+| governance | governance.order.refund | high | read, write | yes | no | Implemented |
+| governance | governance.order.delete | high | read, write, delete | yes | no | Implemented |
+| governance | governance.order.bulk_status_update | high | read, write | yes | no | Implemented |
+| governance | governance.order.tracking_update | low | read, write | yes | no | Implemented |
+| governance | governance.product.approve | medium | read, write, approve | yes | no | Implemented |
+| governance | governance.product.reject | medium | read, write | yes | no | Implemented |
+| governance | governance.product.delete | high | read, write, delete | yes | no | Implemented |
+| governance | governance.product.restore | medium | read, write | yes | no | Implemented |
+| governance | governance.product.bulk_moderation | high | read, write, approve | yes | no | Implemented |
+| governance | governance.product.toggle_badge | low | read, write | yes | no | Implemented |
+| governance | governance.treasury.read | medium | read | yes | no | Implemented |
+| governance | governance.treasury.verify_payout | high | read, write, approve | yes | no | Implemented |
+| governance | governance.treasury.record_remittance | medium | read, write | yes | no | Implemented |
+| governance | governance.fraud.read | medium | read | yes | no | Implemented |
+| governance | governance.fraud.manage | high | read, write, approve | yes | no | Implemented |
+| governance | governance.security.incident.read | medium | read | yes | no | Implemented |
+| governance | governance.security.incident.manage | high | read, write | yes | no | Implemented |
+| governance | governance.risk.read | medium | read | yes | no | Implemented |
+| governance | governance.risk.manage | high | read, write | yes | no | Implemented |
+| governance | governance.audit.read | medium | read | yes | no | Implemented |
+| governance | governance.compliance.read | medium | read | yes | no | Implemented |
+| governance | governance.retention.manage | high | read, write, delete | yes | no | Implemented |
+| governance | governance.analytics.read | low | read | yes | no | Implemented |
+| governance | governance.export.read | medium | read | yes | no | Implemented |
+| governance | governance.geography.read | low | read | yes | no | Implemented |
+| governance | governance.geography.manage | high | read, write | yes | no | Implemented |
+| governance | governance.system.health | low | read | yes | no | Implemented |
+| governance | governance.database.manage | critical | read, write | yes | no | Implemented |
+| governance | accounts.user.create | high | read, write | yes | no | Implemented |
+| governance | accounts.user.read | medium | read | yes | no | Implemented |
+| governance | accounts.user.update | high | read, write | yes | no | Implemented |
+| governance | accounts.user.delete | high | read, write, delete | yes | no | Implemented |
+| governance | accounts.user.toggle_active | high | read, write | yes | no | Implemented |
+| governance | accounts.role.assign | critical | read, write, approve | yes | no | Implemented |
+| governance | accounts.auth.login | high | read, write | yes | no | Implemented |
+| governance | accounts.auth.mfa.manage | high | read, write | yes | no | Implemented |
+| governance | accounts.identity.verify | high | read, write, approve | yes | no | Implemented |
+| governance | accounts.session.manage | medium | read, write, delete | yes | no | Implemented |
+| governance | accounts.address.manage | low | read, write, delete | yes | no | Implemented |
+| suppliers | suppliers.registration.manage | high | read, create, update, delete | yes | no | Implemented |
+| suppliers | suppliers.verification.manage | high | read, create, update, delete | yes | no | Implemented |
+| suppliers | suppliers.profile.manage | medium | read, create, update | yes | no | Implemented |
+| suppliers | suppliers.products.manage | medium | read, create, update, delete | yes | no | Implemented |
+| suppliers | suppliers.orders.manage | medium | read, update | yes | no | Implemented |
+| suppliers | suppliers.documents.manage | medium | read, create, update, delete | yes | no | Implemented |
+| suppliers | suppliers.badges.manage | medium | read, create, update, delete | yes | no | Implemented |
+| suppliers | suppliers.analytics.view | low | read | yes | no | Implemented |
+| suppliers | suppliers.payouts.manage | high | read, create, update | yes | no | Implemented |
+| suppliers | suppliers.health.view | low | read | yes | no | Implemented |
+| suppliers | suppliers.contracts.manage | high | read, create | yes | no | Implemented |
+| suppliers | suppliers.bulk.operations | high | create, update, delete | yes | no | Implemented |
 
 ## 4 — Cross-axis — Module → Domain composition
 
 | Module | # Domains | Domains composed |
 | --- | --- | --- |
-| admin | 12 | accounts, catalog, comms, country, finance, governance, hr, logistics, media, orders, payments, suppliers |
-| customer | 6 | accounts, catalog, customers, governance, orders, payments |
-| employee | 8 | accounts, comms, country, finance, governance, hr, logistics, payments |
-| logistics | 4 | accounts, country, logistics, orders |
-| supplier | 9 | accounts, catalog, comms, finance, governance, logistics, orders, payments, suppliers |
+| admin | 17 | accounts, analytics, audit, catalog, comms, country, customers, finance, governance, hr, infrastructure, logistics, media, orders, payments, security, suppliers |
+| customer | 5 | catalog, customers, governance, orders, payments |
+| employee | 7 | comms, country, finance, governance, hr, logistics, payments |
+| logistics | 4 | country, governance, logistics, orders |
+| supplier | 9 | analytics, catalog, comms, finance, governance, logistics, orders, payments, suppliers |
 
 ### Reverse — Domain exposed by which modules
 
 | Domain | Modules composing it |
 | --- | --- |
-| accounts | admin, customer, employee, logistics, supplier |
+| _parked | — (not composed by any module yet) |
+| accounts | admin |
+| analytics | admin, supplier |
+| audit | admin |
 | catalog | admin, customer, supplier |
 | comms | admin, employee, supplier |
 | country | admin, employee, logistics |
-| customers | customer |
+| customers | admin, customer |
 | finance | admin, employee, supplier |
-| governance | admin, customer, employee, supplier |
+| governance | admin, customer, employee, logistics, supplier |
 | hr | admin, employee |
+| infrastructure | admin |
 | logistics | admin, employee, logistics, supplier |
 | media | admin |
 | orders | admin, customer, logistics, supplier |
 | payments | admin, customer, employee, supplier |
+| security | admin |
 | suppliers | admin, supplier |
 
 ## 5 — Platform layers (context — what else is running)
 
 | Layer | Files | Has __init__ |
 | --- | --- | --- |
-| infrastructure | 111 | no |
-| kernel | 5 | yes |
-| providers | 75 | yes |
-| jobs | 7 | yes |
-| middleware | 18 | yes |
-| events | 2 | yes |
-| dependencies | 4 | no |
-| db | 11 | yes |
-| utils | 66 | yes |
-| tests | 102 | no |
-| scripts | 51 | no |
+| infrastructure | 150 | yes |
+| kernel | 7 | yes |
+| providers | 76 | yes |
+| jobs | 20 | yes |
+| middleware | 26 | yes |
+| tests | 214 | yes |
+| scripts | 60 | no |
 
 ## 6 — Violation register — NEW_STRUCTURE.md laws
 
@@ -434,26 +853,6 @@ Every breach of the seven laws is raised here. Severity: **HIGH** blocks the tar
 
 | Law | Severity | Area | Finding | Recommended action |
 | --- | --- | --- | --- | --- |
-| Law 1 | HIGH | direction | domain/suppliers imports a module: domains/suppliers/services/admin_suppliers_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/admin_orders_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/admin_products_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/admin_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/cash_management_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/commission_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/countries_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/employees_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/hr_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/permissions_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/finance imports a module: domains/finance/services/cash_management_write_controller__routers.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/finance imports rbac: domains/finance/services/finance_package_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/orders imports a module: domains/orders/services/admin_categories_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/orders imports a module: domains/orders/services/admin_orders_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/orders imports a module: domains/orders/services/customer_coupons_create_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/logistics imports rbac: domains/logistics/services/logistics_health_list_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/logistics imports rbac: domains/logistics/services/logistics_locations_create_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/logistics imports a module: domains/logistics/services/logistics_logistics_status_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/logistics imports a module: domains/logistics/services/logistics_partner_verify_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/hr imports a module: domains/hr/services/hierarchy_controller.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/accounts imports a module: domains/accounts/services/admin_categories_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/accounts imports a module: domains/accounts/services/admin_orders_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/accounts imports a module: domains/accounts/services/admin_products_service.py | Remove the upward import; modules compose domains, never the reverse. |
@@ -475,66 +874,91 @@ Every breach of the seven laws is raised here. Severity: **HIGH** blocks the tar
 | Law 1 | HIGH | direction | domain/accounts imports a module: domains/accounts/services/system_ai_upload_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/accounts imports a module: domains/accounts/services/system_comms_status_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/accounts imports a module: domains/accounts/services/wishlist_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/admin_suppliers_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports rbac: domains/customers/services/customer_health_list_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/public_finance_creation_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/public_geography_configuration_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/public_permissions_validation_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/system_ai_upload_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/system_comms_status_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/customers imports a module: domains/customers/services/wishlist_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/admin_geography_configuration_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/admin_geography_configuration_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/admin_logistics_geography_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/admin_permissions_validation_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/admin_security_health_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/admin_security_operations_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/admin_treasury_reporting_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/admin_users.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/admin_users_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/analytics_controller.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/auth_controller_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/effective_permissions.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/governance_package_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/permission_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/permissions_controller.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/public_commerce_validation_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/public_geography_configuration_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/public_geography_configuration_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/public_permissions_validation_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/public_security_health_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/public_security_operations_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/suppliers_controller.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/tickets_controller.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/users_admin_controller.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/catalog imports a module: domains/catalog/services/admin_categories_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/catalog imports a module: domains/catalog/services/admin_orders_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/catalog imports a module: domains/catalog/services/admin_products_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/catalog imports a module: domains/catalog/services/admin_promotions_service.py | Remove the upward import; modules compose domains, never the reverse. |
 | Law 1 | HIGH | direction | domain/catalog imports a module: domains/catalog/services/category_admin_controller__routers.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/comms imports a module: domains/comms/services/email_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | direction | domain/comms imports a module: domains/comms/services/system_comms_status_service.py | Remove the upward import; modules compose domains, never the reverse. |
-| Law 1 | HIGH | residual | 25 files bypass the module→domain composition rule by importing from the deprecated controllers layer (e.g. domains/accounts/services/user_read_service.py, domains/country/services/user_read_service.py, domains/customers/services/user_read_service.py). | Route logic must live in module routers; business logic must live in domain services. |
-| Law 2 | HIGH | thin-router | 194 module routers carry business logic / DB writes (e.g. logistics/logistics.py; logistics/logistics_locations.py; logistics/logistics_locations_create.py; logistics/logistics_logistics_status.py; logistics/logistics_orders_v2.py). | Push logic into domain services; routers keep only auth + require_feature + one call. |
-| Law 2 | HIGH | thin-router | 116 module routers have no feature/auth gate at all (e.g. logistics/parcel_tracking.py; employee/chat.py; employee/chat_api.py; employee/email_controller.py; employee/expense_controller.py). | Every router endpoint must include require_feature(...) or equivalent auth dependency. |
-| Law 3 | HIGH | cross-domain | 3291 cross-domain imports bypass the sanctioned ports/events path (e.g. suppliers → comms (suppliers.py), suppliers → comms (suppliers.py), suppliers → accounts (admin_supplier_review_service.py)). Allowlist entries: 0. | Route cross-domain reads through the target domain's ports.py or read_models/; route cross-domain writes through events.py/subscribers.py only. |
-| Law 4 | HIGH | features | 12/13 domains have an empty features.py (no atoms): suppliers, payments, finance, orders, logistics, hr, accounts, customers, governance, catalog, comms, media. | Seed each domain's feature atoms so the rbac catalog is complete and single-sourced. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/admin_orders_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/admin_products_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/admin_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/cash_management_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/commission_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/countries_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/employees_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/hr_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/permissions_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/country imports a module: domains/country/services/public_geography_configuration_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/admin_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/analytics/analytics_controller.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/auth/auth_controller_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/commerce/flat_public_commerce_validation_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/comms/tickets_controller.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/country/flat_admin_geography_configuration_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/country/flat_admin_geography_configuration_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/logistics/flat_admin_logistics_geography_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/permissions/flat_effective_permissions.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/permissions/flat_permission_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/permissions/flat_public_permissions_validation_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/permissions/permissions_controller.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/permissions/public_permissions_validation_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/permissions_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/security/flat_admin_security_health_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/security/flat_admin_security_operations_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/security/public_security_health_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/security/public_security_operations_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/settings/flat_governance_package_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/settings/public_geography_configuration_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/settings/public_geography_configuration_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/suppliers/suppliers_controller.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/treasury/flat_admin_treasury_reporting_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports rbac: domains/governance/services/users/flat_admin_permissions_validation_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/users/flat_admin_users.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/users/flat_admin_users_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/governance imports a module: domains/governance/services/users/users_admin_controller.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/suppliers imports a module: domains/suppliers/services/admin_suppliers_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/hr imports a module: domains/hr/services/employees_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/hr imports a module: domains/hr/services/hierarchy_controller.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/hr imports a module: domains/hr/services/hr_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/hr imports rbac: domains/hr/services/risk_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/orders imports a module: domains/orders/services/admin_categories_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/orders imports a module: domains/orders/services/admin_orders_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/orders imports a module: domains/orders/services/customer_coupons_create_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/logistics imports rbac: domains/logistics/services/logistics_health_list_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/logistics imports rbac: domains/logistics/services/logistics_locations_create_service.py | Domains enforce policies, not permissions; rbac is imported only by modules/middleware. |
+| Law 1 | HIGH | direction | domain/logistics imports a module: domains/logistics/services/logistics_logistics_status_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | direction | domain/logistics imports a module: domains/logistics/services/logistics_partner_verify_service.py | Remove the upward import; modules compose domains, never the reverse. |
+| Law 1 | HIGH | residual | 27 files bypass the module→domain composition rule by importing from the deprecated controllers layer (e.g. domains/accounts/services/user_read_service.py, domains/country/services/user_read_service.py, domains/customers/services/user_read_service.py). | Route logic must live in module routers; business logic must live in domain services. |
+| Law 2 | HIGH | thin-router | 213 module routers carry business logic / DB writes (e.g. customer/addresses.py; customer/cart.py; customer/coupons.py; customer/customer_coupons_create.py; customer/customer_coupons_mgmt.py). | Push logic into domain services; routers keep only auth + require_feature + one call. |
+| Law 2 | HIGH | thin-router | 117 module routers have no feature/auth gate at all (e.g. logistics/parcel_tracking.py; supplier/product_moderation.py; supplier/product_verification.py; supplier/product_videos.py; supplier/supplier_bg_ab_test.py). | Every router endpoint must include require_feature(...) or equivalent auth dependency. |
+| Law 3 | HIGH | cross-domain | 3822 cross-domain imports bypass the sanctioned ports/events path (e.g. accounts → audit (core.py), accounts → comms (core.py), accounts → comms (core.py)). Allowlist entries: 27. | Route cross-domain reads through the target domain's ports.py or read_models/; route cross-domain writes through events.py/subscribers.py only. |
+| Law 4 | HIGH | features | 13/18 domains have an empty features.py (no atoms): accounts, catalog, infrastructure, media, hr, orders, analytics, payments, security, logistics, _parked, comms, audit. | Seed each domain's feature atoms so the rbac catalog is complete and single-sourced. |
+| Law 4 | HIGH | features | 1 require_feature(...) literals are NOT in any domain features.py (e.g. customers.customer.read). | Add the missing atom to the owning domain's features.py or fix the literal (CI must fail). |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/database/permission_service.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/database/seed.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/database/treasury_seeder.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/lifespan.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/observability/audit.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/search/routers/search_controller.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/security/dependencies.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/security/key_rotation.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/security/qr_service.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/security/security_audit.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/security/vault.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/asset_tracking.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/async_workers.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/audit.py | Platform layers must import nothing above them. |
-| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/category_tree.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/command_center_background.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/command_center_service.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/common_asset_tracking.py | Platform layers must import nothing above them. |
-| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/country_access.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/country_detection_middleware.py | Platform layers must import nothing above them. |
-| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/country_rls.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/dependencies.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/downstream_hooks.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/downstream_wiring.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/email_service.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/email_service_stubs.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/entity_messaging.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/export_read_service.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/free_image_tools.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/import_service.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/key_rotation.py | Platform layers must import nothing above them. |
@@ -542,15 +966,16 @@ Every breach of the seven laws is raised here. Severity: **HIGH** blocks the tar
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/media_storage.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/misc_write_service.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/ml_worker.py | Platform layers must import nothing above them. |
-| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/order_tracking.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/qr_service.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/realtime.py | Platform layers must import nothing above them. |
-| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/rls_context.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/rls_middleware.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/security_audit.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/upload_job_service.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/user_context.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/vault.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/workflow_engine.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/infrastructure imports an upper layer: infrastructure/utils/write_help.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/kernel imports an upper layer: kernel/rls_context.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/providers imports an upper layer: providers/ai/text.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/providers imports an upper layer: providers/payments/_common.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/providers imports an upper layer: providers/payments/_order.py | Platform layers must import nothing above them. |
@@ -570,18 +995,34 @@ Every breach of the seven laws is raised here. Severity: **HIGH** blocks the tar
 | Law 1 | MED | direction | platform/providers imports an upper layer: providers/payments/thawani.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/providers imports an upper layer: providers/payments/webhook_processor.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/providers imports an upper layer: providers/payments/webhooks.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/accrual_reversal.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/ai_tasks.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/background_tasks.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/bank_statement_importer.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/data_retention.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/fraud_monitoring.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/fx_revaluation.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/ghost_order_detector.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/ml_worker.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/payout_sweep.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/payout_tasks.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/payroll_run.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/periodic_tasks.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/reconciliation_cron.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/jobs imports an upper layer: jobs/seed_all.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/coi_middleware.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/country_context.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/dependencies/coi_dependency.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/dependencies/country_detection.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/dependencies/country_rls.py | Platform layers must import nothing above them. |
+| Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/dependencies/fraud_events.py | Platform layers must import nothing above them. |
 | Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/impossible_travel_middleware.py | Platform layers must import nothing above them. |
-| Law 6 | MED | schema | 8 ORM model classes omit an explicit Postgres schema in __table_args__ (e.g. finance.py::PayoutBatch, employee_models.py::EmployeeRiskScore, employee_models.py::PayrollRecord, employee_models.py::TrainingModule, employee_models.py::EmployeeTraining). | Declare __table_args__ = {'schema': '<domain>'} so each domain owns one DB schema. |
-| Law 6 | MED | naming | 390 ORM model classes have a non-plural snake_case table name (e.g. countries.py::CountryConfig, countries.py::CountryCommunication, countries.py::PayoutRule, countries.py::TaxRule, countries.py::ShippingRule). | Rename to plural snake_case (e.g. CountryConfig → country_configs). |
-| Law 6 | MED | naming | 84 ORM model classes omit the country_code column (e.g. country_basics.py::CountryBasics, country_enhancements.py::OmanDeliveryZone, order_entities.py::OrderNotification, employee_models.py::TrainingModule, employee_models.py::EmployeeTraining). | Add country_code as an independent RLS scope axis on every business table. |
-| Law 6 | MED | naming | 148 ORM model classes omit created_at/updated_at (e.g. country_control.py::ShiftHandoverLog, country_control.py::ShopWarehouseLocation, country_control.py::LogisticsPartnerLocation, country_control.py::ParcelLocationTracker, payments.py::Payment). | Add created_at and updated_at to every business table. |
-| Law 6 | MED | naming | 213 ORM model classes omit is_deleted (e.g. country_control.py::ShiftHandoverLog, country_control.py::PaymentOrchestratorSync, country_control.py::SupplierOnboardingSync, country_control.py::LegalContractTemplate, country_control.py::DataResidencyRecord). | Add is_deleted to every business table for soft-delete compliance. |
+| Law 1 | MED | direction | platform/middleware imports an upper layer: middleware/rls_middleware.py | Platform layers must import nothing above them. |
+| Law 6 | MED | schema | 7 ORM model classes omit an explicit Postgres schema in __table_args__ (e.g. promotions.py::BOGOPromotion, media_models.py::MediaUploadSession, employee_models.py::EmployeeRiskScore, employee_models.py::PayrollRecord, employee_models.py::TrainingModule). | Declare __table_args__ = {'schema': '<domain>'} so each domain owns one DB schema. |
+| Law 6 | MED | naming | 285 ORM model classes have a non-plural snake_case table name (e.g. core.py::Cart, core.py::CartItem, user.py::User, user.py::UserLoginHistory, user.py::UserDevice). | Rename to plural snake_case (e.g. CountryConfig → country_configs). |
+| Law 6 | MED | naming | 76 ORM model classes omit the country_code column (e.g. user.py::SocialIdentity, country_basics.py::CountryBasics, country_enhancements.py::OmanDeliveryZone, core.py::UserBrowsingHistory, core.py::SystemHealthEvent). | Add country_code as an independent RLS scope axis on every business table. |
+| Law 6 | MED | naming | 131 ORM model classes omit created_at/updated_at (e.g. core.py::Address, core.py::CartItem, user.py::UserLoginHistory, user.py::UserDevice, user.py::PasswordResetToken). | Add created_at and updated_at to every business table. |
+| Law 6 | MED | naming | 184 ORM model classes omit is_deleted (e.g. core.py::Address, core.py::Cart, core.py::CartItem, user.py::UserLoginHistory, user.py::UserDevice). | Add is_deleted to every business table for soft-delete compliance. |
 | Law 7 | INFO | strangler | _legacy/ folder absent — no deprecated shims tracked. | Keep DOMAIN_ALLOWLIST.yaml shrinking to zero. |
 
 ## 7 — File inventory (hierarchy-wise)
@@ -590,11 +1031,12 @@ Every file is grouped by its NEW_STRUCTURE.md layer so the anatomy of each modul
 
 ### Modules — files by layer
 
-<details><summary><b>modules/admin</b> — 226 files (226 routers, 105 thin, 121 thick, 0 auth)</summary>
+<details><summary><b>modules/admin</b> — 256 files (251 routers, 111 thin, 140 thick, 3 auth)</summary>
 
-**routers** (226):
+**routers** (251):
 
 ```
+modules/admin/routers/_permissions_validation_endpoints.py
 modules/admin/routers/admin.py
 modules/admin/routers/admin_admin_analytics.py
 modules/admin/routers/admin_admin_audit.py
@@ -609,8 +1051,11 @@ modules/admin/routers/admin_admin_suppliers.py
 modules/admin/routers/admin_admin_tickets.py
 modules/admin/routers/admin_admin_users_admin.py
 modules/admin/routers/admin_analytics_fallback_dashboard.py
+modules/admin/routers/admin_analytics_router.py
 modules/admin/routers/admin_analytics_routes.py
+modules/admin/routers/admin_audit_router.py
 modules/admin/routers/admin_banners.py
+modules/admin/routers/admin_banners_router.py
 modules/admin/routers/admin_banners_routes.py
 modules/admin/routers/admin_cash.py
 modules/admin/routers/admin_cash_routes.py
@@ -630,37 +1075,51 @@ modules/admin/routers/admin_comms_geography.py
 modules/admin/routers/admin_comms_messaging.py
 modules/admin/routers/admin_comms_unified.py
 modules/admin/routers/admin_configuration_operations.py
+modules/admin/routers/admin_controller.py
 modules/admin/routers/admin_core_routes.py
+modules/admin/routers/admin_coupons_router.py
+modules/admin/routers/admin_customers_router.py
+modules/admin/routers/admin_disputes_router.py
 modules/admin/routers/admin_email.py
+modules/admin/routers/admin_email_router.py
 modules/admin/routers/admin_email_routes.py
+modules/admin/routers/admin_export_router.py
 modules/admin/routers/admin_fallback.py
 modules/admin/routers/admin_fallback_routes.py
 modules/admin/routers/admin_finance_accounting.py
 modules/admin/routers/admin_finance_creation.py
 modules/admin/routers/admin_finance_geography.py
 modules/admin/routers/admin_finance_sub_ledger.py
+modules/admin/routers/admin_flash_sales_router.py
 modules/admin/routers/admin_geography_audit.py
 modules/admin/routers/admin_geography_configuration.py
 modules/admin/routers/admin_geography_country_versioning.py
 modules/admin/routers/admin_governance_command_center.py
+modules/admin/routers/admin_hierarchy_router.py
 modules/admin/routers/admin_identity_operations.py
 modules/admin/routers/admin_identity_operations_api.py
+modules/admin/routers/admin_invoices_router.py
 modules/admin/routers/admin_logistics.py
 modules/admin/routers/admin_logistics_fallback.py
 modules/admin/routers/admin_logistics_geography.py
 modules/admin/routers/admin_logistics_imports.py
 modules/admin/routers/admin_logistics_operations.py
+modules/admin/routers/admin_logistics_router.py
 modules/admin/routers/admin_logistics_routes.py
 modules/admin/routers/admin_media_geography.py
 modules/admin/routers/admin_orders.py
+modules/admin/routers/admin_orders_router.py
 modules/admin/routers/admin_orders_routes.py
 modules/admin/routers/admin_orders_status.py
 modules/admin/routers/admin_payouts.py
+modules/admin/routers/admin_payouts_router.py
 modules/admin/routers/admin_payouts_routes.py
 modules/admin/routers/admin_permissions_validation.py
 modules/admin/routers/admin_products.py
+modules/admin/routers/admin_products_router.py
 modules/admin/routers/admin_products_routes.py
 modules/admin/routers/admin_promotions.py
+modules/admin/routers/admin_promotions_router.py
 modules/admin/routers/admin_promotions_routes.py
 modules/admin/routers/admin_security_detection.py
 modules/admin/routers/admin_security_health.py
@@ -668,10 +1127,14 @@ modules/admin/routers/admin_security_operations.py
 modules/admin/routers/admin_security_registration.py
 modules/admin/routers/admin_settings.py
 modules/admin/routers/admin_settings_routes.py
+modules/admin/routers/admin_staff_router.py
 modules/admin/routers/admin_supplier_reviews.py
 modules/admin/routers/admin_supplier_trading.py
 modules/admin/routers/admin_suppliers.py
+modules/admin/routers/admin_suppliers_router.py
 modules/admin/routers/admin_suppliers_routes.py
+modules/admin/routers/admin_system_router.py
+modules/admin/routers/admin_tickets_router.py
 modules/admin/routers/admin_treasury.py
 modules/admin/routers/admin_treasury_cash_management_write.py
 modules/admin/routers/admin_treasury_cash_position.py
@@ -682,6 +1145,7 @@ modules/admin/routers/admin_treasury_reporting.py
 modules/admin/routers/admin_treasury_routes.py
 modules/admin/routers/admin_treasury_status.py
 modules/admin/routers/admin_users.py
+modules/admin/routers/admin_users_router.py
 modules/admin/routers/admin_users_routes.py
 modules/admin/routers/admin_video.py
 modules/admin/routers/admin_video_routes.py
@@ -696,6 +1160,7 @@ modules/admin/routers/automation.py
 modules/admin/routers/banners.py
 modules/admin/routers/batch_upload.py
 modules/admin/routers/categories.py
+modules/admin/routers/category_admin_controller.py
 modules/admin/routers/command_center.py
 modules/admin/routers/command_center_api.py
 modules/admin/routers/command_center_controller.py
@@ -755,6 +1220,7 @@ modules/admin/routers/cross_border.py
 modules/admin/routers/csp_reporting.py
 modules/admin/routers/currency.py
 modules/admin/routers/ediscovery.py
+modules/admin/routers/email_service_migrated.py
 modules/admin/routers/escalation.py
 modules/admin/routers/export.py
 modules/admin/routers/flash_sales.py
@@ -823,11 +1289,31 @@ modules/admin/routers/users.py
 modules/admin/routers/workflows.py
 ```
 
+**auth** (3):
+
+```
+modules/admin/auth/otp.py
+modules/admin/auth/schemas.py
+modules/admin/auth/social.py
+```
+
+**serializers** (1):
+
+```
+modules/admin/serializers/auth.py
+```
+
+**other** (1):
+
+```
+modules/admin/shared.py
+```
+
 </details>
 
-<details><summary><b>modules/customer</b> — 14 files (14 routers, 2 thin, 12 thick, 0 auth)</summary>
+<details><summary><b>modules/customer</b> — 16 files (15 routers, 3 thin, 12 thick, 1 auth)</summary>
 
-**routers** (14):
+**routers** (15):
 
 ```
 modules/customer/routers/addresses.py
@@ -838,12 +1324,19 @@ modules/customer/routers/customer_coupons_mgmt.py
 modules/customer/routers/customer_health.py
 modules/customer/routers/customer_health_list.py
 modules/customer/routers/customer_orders.py
+modules/customer/routers/health.py
 modules/customer/routers/orders.py
 modules/customer/routers/payments.py
 modules/customer/routers/referrals.py
 modules/customer/routers/returns.py
 modules/customer/routers/reviews.py
 modules/customer/routers/wishlist.py
+```
+
+**auth** (1):
+
+```
+modules/customer/auth/auth_service.py
 ```
 
 </details>
@@ -927,9 +1420,9 @@ modules/logistics/routers/shipments.py
 
 </details>
 
-<details><summary><b>modules/supplier</b> — 28 files (28 routers, 10 thin, 18 thick, 0 auth)</summary>
+<details><summary><b>modules/supplier</b> — 31 files (30 routers, 12 thin, 18 thick, 1 auth)</summary>
 
-**routers** (28):
+**routers** (30):
 
 ```
 modules/supplier/routers/commission.py
@@ -960,15 +1453,61 @@ modules/supplier/routers/supplier_profile_create.py
 modules/supplier/routers/supplier_supplier_supplier_health.py
 modules/supplier/routers/supplier_supplier_sync.py
 modules/supplier/routers/supplier_supplier_upload.py
+modules/supplier/routers/supplier_sync.py
+modules/supplier/routers/supplier_upload.py
+```
+
+**auth** (1):
+
+```
+modules/supplier/auth/dependencies.py
 ```
 
 </details>
 
 ### Domains — files by layer
 
-<details><summary><b>domains/accounts</b> — 96 files (Scaffold, 40%, 45 ORM models)</summary>
+<details><summary><b>domains/_parked</b> — 24 files (Scaffold, 20%, 0 ORM models)</summary>
 
-**services** (90):
+**services** (21):
+
+```
+domains/_parked/addresses_service.py
+domains/_parked/admin_categories_service.py
+domains/_parked/admin_promotion_service.py
+domains/_parked/admin_promotions_write_service.py
+domains/_parked/banner_write_service.py
+domains/_parked/categories_service.py
+domains/_parked/commerce_coupons_read_service.py
+domains/_parked/commerce_coupons_write_service.py
+domains/_parked/coupons_legacy_write_service.py
+domains/_parked/customer_coupons_create_service.py
+domains/_parked/customer_coupons_mgmt_service.py
+domains/_parked/flash_sale_service.py
+domains/_parked/flash_sale_write_service.py
+domains/_parked/orders_package_service.py
+domains/_parked/promotion_admin_write_service.py
+domains/_parked/promotion_bogo_service.py
+domains/_parked/promotion_engine_service.py
+domains/_parked/promotion_points_service.py
+domains/_parked/promotions_write_service.py
+domains/_parked/search_service.py
+domains/_parked/supplier_documents_service.py
+```
+
+**unclassified** (3):
+
+```
+domains/_parked/cart_controller_service__orders.py
+domains/_parked/cart_service__orders.py
+domains/_parked/referrals_controller__routers.py
+```
+
+</details>
+
+<details><summary><b>domains/accounts</b> — 105 files (Scaffold, 40%, 11 ORM models)</summary>
+
+**services** (95):
 
 ```
 domains/accounts/services/addresses_service.py
@@ -990,6 +1529,7 @@ domains/accounts/services/admin_treasury_service.py
 domains/accounts/services/admin_users_service.py
 domains/accounts/services/admin_video_service.py
 domains/accounts/services/approval_matrix_service.py
+domains/accounts/services/audit_service.py
 domains/accounts/services/auth_service.py
 domains/accounts/services/banners_service.py
 domains/accounts/services/cash_management_service.py
@@ -1024,6 +1564,7 @@ domains/accounts/services/logistics_health_service.py
 domains/accounts/services/logistics_locations_service.py
 domains/accounts/services/logistics_partner_service.py
 domains/accounts/services/logistics_service.py
+domains/accounts/services/otp_service.py
 domains/accounts/services/payroll_service.py
 domains/accounts/services/performance_service.py
 domains/accounts/services/permissions_service.py
@@ -1041,7 +1582,10 @@ domains/accounts/services/public_security_registration_service.py
 domains/accounts/services/public_treasury_payments_service.py
 domains/accounts/services/rbac_service.py
 domains/accounts/services/search_service.py
+domains/accounts/services/security_dependencies.py
+domains/accounts/services/session_service.py
 domains/accounts/services/shipments_service.py
+domains/accounts/services/social_service.py
 domains/accounts/services/supplier_documents_service.py
 domains/accounts/services/supplier_finance_service.py
 domains/accounts/services/supplier_health_controller.py
@@ -1063,11 +1607,13 @@ domains/accounts/services/wishlist_service.py
 domains/accounts/services/workflow_engine.py
 ```
 
-**models** (3):
+**models** (5):
 
 ```
 domains/accounts/models/core.py
 domains/accounts/models/onboarding.py
+domains/accounts/models/otp.py
+domains/accounts/models/social.py
 domains/accounts/models/user.py
 ```
 
@@ -1089,15 +1635,92 @@ domains/accounts/subscribers.py
 domains/accounts/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/accounts/ports.py
+```
+
+**unclassified** (1):
+
+```
+domains/accounts/utils/invoice_html.py
+```
+
 </details>
 
-<details><summary><b>domains/catalog</b> — 43 files (Scaffold, 40%, 11 ORM models)</summary>
+<details><summary><b>domains/analytics</b> — 8 files (Scaffold, 40%, 3 ORM models)</summary>
 
-**services** (38):
+**services** (3):
+
+```
+domains/analytics/services/command_center_background.py
+domains/analytics/services/command_center_query_service.py
+domains/analytics/services/command_center_service.py
+```
+
+**models** (1):
+
+```
+domains/analytics/models/analytics_schema_models.py
+```
+
+**events.py** (1):
+
+```
+domains/analytics/events.py
+```
+
+**subscribers.py** (1):
+
+```
+domains/analytics/subscribers.py
+```
+
+**features.py** (1):
+
+```
+domains/analytics/features.py
+```
+
+**ports.py** (1):
+
+```
+domains/analytics/ports.py
+```
+
+</details>
+
+<details><summary><b>domains/audit</b> — 3 files (Scaffold, 20%, 2 ORM models)</summary>
+
+**models** (1):
+
+```
+domains/audit/models/audit_schema_models.py
+```
+
+**features.py** (1):
+
+```
+domains/audit/features.py
+```
+
+**ports.py** (1):
+
+```
+domains/audit/ports.py
+```
+
+</details>
+
+<details><summary><b>domains/catalog</b> — 91 files (Scaffold, 40%, 11 ORM models)</summary>
+
+**services** (84):
 
 ```
 domains/catalog/services/admin_banners_service.py
 domains/catalog/services/admin_categories_service.py
+domains/catalog/services/admin_orders_service.py
 domains/catalog/services/admin_products_service.py
 domains/catalog/services/admin_promotions_routes_service.py
 domains/catalog/services/admin_promotions_service.py
@@ -1107,11 +1730,17 @@ domains/catalog/services/advanced_search_engine.py
 domains/catalog/services/banner_controller.py
 domains/catalog/services/banner_service.py
 domains/catalog/services/banner_write_service.py
+domains/catalog/services/banners/banner_controller.py
+domains/catalog/services/banners/banner_service.py
 domains/catalog/services/banners_service.py
+domains/catalog/services/bogo_service.py
 domains/catalog/services/bulk_ops_write_service.py
 domains/catalog/services/catalog_product_admin_read_service.py
 domains/catalog/services/catalog_product_admin_write_service.py
 domains/catalog/services/catalog_variant_config_service.py
+domains/catalog/services/categories/category_admin_read_service.py
+domains/catalog/services/categories/category_admin_write_service.py
+domains/catalog/services/categories/category_service.py
 domains/catalog/services/categories_controller.py
 domains/catalog/services/categories_service.py
 domains/catalog/services/category_admin_controller.py
@@ -1119,20 +1748,59 @@ domains/catalog/services/category_admin_controller__routers.py
 domains/catalog/services/category_admin_read_service.py
 domains/catalog/services/category_admin_write_service.py
 domains/catalog/services/category_service.py
+domains/catalog/services/country_dropdown_service.py
+domains/catalog/services/coupons/coupons_service.py
+domains/catalog/services/coupons_controller.py
+domains/catalog/services/coupons_controller__routers.py
+domains/catalog/services/coupons_read_service.py
+domains/catalog/services/coupons_service.py
+domains/catalog/services/coupons_write_service.py
+domains/catalog/services/flash_sale_controller.py
+domains/catalog/services/flash_sale_controller__routers.py
+domains/catalog/services/flash_sale_controller_service.py
+domains/catalog/services/points_service.py
 domains/catalog/services/product_admin_read_service.py
 domains/catalog/services/product_admin_write_service.py
 domains/catalog/services/product_moderation_service.py
 domains/catalog/services/product_service.py
 domains/catalog/services/product_verification_service.py
 domains/catalog/services/product_verification_write_service.py
+domains/catalog/services/products/admin_products_service.py
+domains/catalog/services/products/bulk_ops_write_service.py
+domains/catalog/services/products/country_dropdown_service.py
+domains/catalog/services/products/product_admin_read_service.py
+domains/catalog/services/products/product_admin_write_service.py
+domains/catalog/services/products/product_moderation_service.py
+domains/catalog/services/products/product_service.py
+domains/catalog/services/products/product_verification_service.py
+domains/catalog/services/products/product_verification_write_service.py
+domains/catalog/services/products/products_controller.py
+domains/catalog/services/products/products_service.py
+domains/catalog/services/products/products_write_service.py
+domains/catalog/services/products/supplier_products_service.py
 domains/catalog/services/products_controller.py
 domains/catalog/services/products_controller__routers.py
 domains/catalog/services/products_service.py
 domains/catalog/services/products_write_service.py
+domains/catalog/services/promotion_admin_controller.py
+domains/catalog/services/promotion_admin_controller__routers.py
 domains/catalog/services/promotion_admin_write_service.py
+domains/catalog/services/promotion_controller.py
+domains/catalog/services/promotion_controller__routers.py
+domains/catalog/services/promotion_service.py
+domains/catalog/services/promotions/admin_promotions_write_service.py
+domains/catalog/services/promotions/bogo_service.py
+domains/catalog/services/promotions/flash_sale_controller_service.py
+domains/catalog/services/promotions/points_service.py
+domains/catalog/services/promotions/promotion_service.py
+domains/catalog/services/search/advanced_filter_service.py
+domains/catalog/services/search/advanced_search_engine.py
+domains/catalog/services/search/search_service.py
+domains/catalog/services/search/visual_search_service.py
 domains/catalog/services/search_service.py
 domains/catalog/services/supplier_products_service.py
 domains/catalog/services/variant_config_service.py
+domains/catalog/services/variants/variant_config_service.py
 domains/catalog/services/visual_search_service.py
 ```
 
@@ -1161,115 +1829,145 @@ domains/catalog/subscribers.py
 domains/catalog/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/catalog/ports.py
+```
+
+**unclassified** (1):
+
+```
+domains/catalog/utils/category_tree.py
+```
+
 </details>
 
-<details><summary><b>domains/comms</b> — 101 files (Scaffold, 40%, 70 ORM models)</summary>
+<details><summary><b>domains/comms</b> — 105 files (Partial, 72%, 54 ORM models)</summary>
 
-**services** (93):
-
-```
-domains/comms/services/admin_chat_service.py
-domains/comms/services/admin_email_service.py
-domains/comms/services/asset_tracking.py
-domains/comms/services/campaign_geography_service.py
-domains/comms/services/chat_enrichment.py
-domains/comms/services/chat_enrichment_service.py
-domains/comms/services/chat_read_service.py
-domains/comms/services/chat_system.py
-domains/comms/services/chat_write_controller.py
-domains/comms/services/chat_write_controller__routers.py
-domains/comms/services/chat_write_service.py
-domains/comms/services/chatbot_controller.py
-domains/comms/services/chatbot_controller__routers.py
-domains/comms/services/chatbot_service.py
-domains/comms/services/comm_controller.py
-domains/comms/services/comm_controller__routers.py
-domains/comms/services/comm_service.py
-domains/comms/services/comm_write_service.py
-domains/comms/services/command_center_background.py
-domains/comms/services/command_center_query_service.py
-domains/comms/services/command_center_service.py
-domains/comms/services/comms_campaign_geography_service.py
-domains/comms/services/comms_chat_system.py
-domains/comms/services/comms_content_service.py
-domains/comms/services/comms_entity_chat_service.py
-domains/comms/services/comms_internal_communication.py
-domains/comms/services/comms_realtime_chat_service.py
-domains/comms/services/comms_unified_inbox_service.py
-domains/comms/services/comms_unified_service.py
-domains/comms/services/comms_video_conferencing.py
-domains/comms/services/comms_video_room_service.py
-domains/comms/services/communication_audit.py
-domains/comms/services/communication_audit_controller.py
-domains/comms/services/communication_package_service.py
-domains/comms/services/communication_read_service.py
-domains/comms/services/communication_write_service.py
-domains/comms/services/connection_manager_base.py
-domains/comms/services/content_service.py
-domains/comms/services/db_read.py
-domains/comms/services/db_write.py
-domains/comms/services/downstream_hooks.py
-domains/comms/services/downstream_wiring.py
-domains/comms/services/email_enrichment.py
-domains/comms/services/email_event_service.py
-domains/comms/services/email_gateway.py
-domains/comms/services/email_management_service.py
-domains/comms/services/email_reputation.py
-domains/comms/services/email_service.py
-domains/comms/services/email_write_service.py
-domains/comms/services/entity_chat_service.py
-domains/comms/services/entity_messaging.py
-domains/comms/services/escalation_sla.py
-domains/comms/services/event_bus.py
-domains/comms/services/external_contact.py
-domains/comms/services/fix_chat.py
-domains/comms/services/free_image_tools.py
-domains/comms/services/image_ai_service.py
-domains/comms/services/import_service.py
-domains/comms/services/internal_channels_service.py
-domains/comms/services/internal_communication.py
-domains/comms/services/media_service.py
-domains/comms/services/media_storage.py
-domains/comms/services/misc_write_service.py
-domains/comms/services/notification_controller.py
-domains/comms/services/notification_engine.py
-domains/comms/services/notification_service.py
-domains/comms/services/notification_worker.py
-domains/comms/services/package_service.py
-domains/comms/services/payout_notification_service.py
-domains/comms/services/proxy_communication.py
-domains/comms/services/public_comms_status_service.py
-domains/comms/services/push_notifications_service.py
-domains/comms/services/qr_service.py
-domains/comms/services/realtime_chat_service.py
-domains/comms/services/storage.py
-domains/comms/services/system_comms_status_service.py
-domains/comms/services/tickets_service.py
-domains/comms/services/tickets_write_service.py
-domains/comms/services/transactional_email_service.py
-domains/comms/services/translation_service.py
-domains/comms/services/unified_inbox_service.py
-domains/comms/services/upload_job_service.py
-domains/comms/services/video_conferencing.py
-domains/comms/services/video_room_service.py
-domains/comms/services/video_room_write_service.py
-domains/comms/services/video_service.py
-domains/comms/services/websocket_chat.py
-domains/comms/services/websocket_manager.py
-domains/comms/services/whatsapp_service.py
-domains/comms/services/write_chat.py
-domains/comms/services/write_files_script.py
-domains/comms/services/write_help.py
-domains/comms/services/write_helpers.py
-```
-
-**models** (4):
+**services** (84):
 
 ```
+domains/comms/services/autobot/chatbot_controller.py
+domains/comms/services/autobot/chatbot_controller__routers.py
+domains/comms/services/autobot/chatbot_service.py
+domains/comms/services/channel/internal_comms_channels_service.py
+domains/comms/services/marketing/admin_email_service.py
+domains/comms/services/marketing/campaign_geography_service.py
+domains/comms/services/marketing/email_enrichment.py
+domains/comms/services/marketing/email_event_service.py
+domains/comms/services/marketing/email_gateway.py
+domains/comms/services/marketing/email_management_service.py
+domains/comms/services/marketing/email_reputation.py
+domains/comms/services/marketing/email_service.py
+domains/comms/services/marketing/email_write_service.py
+domains/comms/services/marketing/transactional_email.py
+domains/comms/services/marketing/transactional_email_service.py
+domains/comms/services/marketing/whatsapp_service.py
+domains/comms/services/messaging/channel/internal_channels_service.py
+domains/comms/services/messaging/channel/internal_communication.py
+domains/comms/services/messaging/chat/_attachments.py
+domains/comms/services/messaging/chat/_message_ops.py
+domains/comms/services/messaging/chat/_thread.py
+domains/comms/services/messaging/chat/chat_enrichment.py
+domains/comms/services/messaging/chat/chat_enrichment_service.py
+domains/comms/services/messaging/chat/chat_read_service.py
+domains/comms/services/messaging/chat/chat_system.py
+domains/comms/services/messaging/chat/chat_write_controller.py
+domains/comms/services/messaging/chat/chat_write_controller__routers.py
+domains/comms/services/messaging/chat/chat_write_service.py
+domains/comms/services/messaging/chat/entity_chat_service.py
+domains/comms/services/messaging/chat/entity_messaging.py
+domains/comms/services/messaging/realtime/realtime.py
+domains/comms/services/messaging/realtime/realtime_chat_service.py
+domains/comms/services/messaging/realtime/websocket_chat.py
+domains/comms/services/messaging/realtime/websocket_manager.py
+domains/comms/services/messaging/video/_models.py
+domains/comms/services/messaging/video/video_conferencing.py
+domains/comms/services/messaging/video/video_room_service.py
+domains/comms/services/messaging/video/video_room_write_service.py
+domains/comms/services/messaging/video/video_service.py
+domains/comms/services/shared/admin/admin_email_service.py
+domains/comms/services/shared/admin/admin_video_service.py
+domains/comms/services/shared/admin/asset_tracking.py
+domains/comms/services/shared/admin/comm_controller.py
+domains/comms/services/shared/admin/comm_controller__routers.py
+domains/comms/services/shared/admin/comm_service.py
+domains/comms/services/shared/admin/comms_unified_service.py
+domains/comms/services/shared/admin/communication_audit.py
+domains/comms/services/shared/admin/communication_audit_controller.py
+domains/comms/services/shared/admin/communication_read_service.py
+domains/comms/services/shared/admin/communication_write_service.py
+domains/comms/services/shared/admin/connection_manager_base.py
+domains/comms/services/shared/admin/content_service.py
+domains/comms/services/shared/admin/downstream_hooks.py
+domains/comms/services/shared/admin/downstream_wiring.py
+domains/comms/services/shared/admin/import_service.py
+domains/comms/services/shared/admin/package_service.py
+domains/comms/services/shared/admin/public_comms_status_service.py
+domains/comms/services/shared/admin/public_comms_unified_service.py
+domains/comms/services/shared/admin/system_comms_status_service.py
+domains/comms/services/shared/admin/unified_inbox_service.py
+domains/comms/services/shared/media/free_image_tools.py
+domains/comms/services/shared/media/image_ai_service.py
+domains/comms/services/shared/media/media_service.py
+domains/comms/services/shared/media/media_storage.py
+domains/comms/services/shared/media/storage.py
+domains/comms/services/shared/notification/notification_controller.py
+domains/comms/services/shared/notification/notification_engine.py
+domains/comms/services/shared/notification/notification_service.py
+domains/comms/services/shared/notification/notification_worker.py
+domains/comms/services/shared/notification/payout_notification_service.py
+domains/comms/services/shared/notification/push_notifications_service.py
+domains/comms/services/shared/security/external_contact.py
+domains/comms/services/shared/security/proxy_communication.py
+domains/comms/services/shared/security/qr_service.py
+domains/comms/services/shared/ticket/escalation_sla.py
+domains/comms/services/shared/ticket/tickets_service.py
+domains/comms/services/shared/ticket/tickets_write_service.py
+domains/comms/services/shared/utility/db_read.py
+domains/comms/services/shared/utility/db_write.py
+domains/comms/services/shared/utility/event_bus.py
+domains/comms/services/shared/utility/misc_write_service.py
+domains/comms/services/shared/utility/translation_service.py
+domains/comms/services/shared/utility/upload_job_service.py
+domains/comms/services/shared/utility/write_helpers.py
+```
+
+**models** (6):
+
+```
+domains/comms/models/chat.py
 domains/comms/models/communication.py
-domains/comms/models/core.py
+domains/comms/models/communication_schema_models.py
 domains/comms/models/marketing.py
+domains/comms/models/news.py
 domains/comms/models/suppliers.py
+```
+
+**schemas** (5):
+
+```
+domains/comms/schemas/channel.py
+domains/comms/schemas/chat.py
+domains/comms/schemas/email.py
+domains/comms/schemas/notification.py
+domains/comms/schemas/ticket.py
+```
+
+**policies** (4):
+
+```
+domains/comms/policies/chat.py
+domains/comms/policies/email.py
+domains/comms/policies/notification.py
+domains/comms/policies/ticket.py
+```
+
+**read_models** (1):
+
+```
+domains/comms/read_models/notification_read_models.py
 ```
 
 **events.py** (1):
@@ -1290,6 +1988,12 @@ domains/comms/subscribers.py
 domains/comms/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/comms/ports.py
+```
+
 **unclassified** (1):
 
 ```
@@ -1298,9 +2002,9 @@ domains/comms/mixins.py
 
 </details>
 
-<details><summary><b>domains/country</b> — 88 files (Partial, 48%, 41 ORM models)</summary>
+<details><summary><b>domains/country</b> — 141 files (Partial, 72%, 41 ORM models)</summary>
 
-**services** (76):
+**services** (123):
 
 ```
 domains/country/services/addresses_service.py
@@ -1308,14 +2012,27 @@ domains/country/services/admin_cash_service.py
 domains/country/services/admin_logistics_service.py
 domains/country/services/admin_orders_service.py
 domains/country/services/admin_products_service.py
+domains/country/services/admin_promotions_routes_service.py
 domains/country/services/admin_service.py
 domains/country/services/admin_treasury_service.py
+domains/country/services/audit/country_audit_admin_service.py
 domains/country/services/auth_service.py
 domains/country/services/cash_management_service.py
 domains/country/services/category_tax_profiles.py
 domains/country/services/chat_enrichment_service.py
 domains/country/services/chatbot_service.py
 domains/country/services/commission_service.py
+domains/country/services/communications/country_communication_service.py
+domains/country/services/communications/country_communications_read_service.py
+domains/country/services/communications/country_communications_service.py
+domains/country/services/communications/downstream_hooks.py
+domains/country/services/core/countries_service.py
+domains/country/services/core/country_config_admin_service.py
+domains/country/services/core/country_config_write_service.py
+domains/country/services/core/country_controller.py
+domains/country/services/core/country_read_service.py
+domains/country/services/core/country_service.py
+domains/country/services/core/country_write_service.py
 domains/country/services/countries_service.py
 domains/country/services/country_admin_service.py
 domains/country/services/country_admin_write_service.py
@@ -1349,36 +2066,70 @@ domains/country/services/country_tax_service.py
 domains/country/services/country_versioning_controller.py
 domains/country/services/country_versioning_service.py
 domains/country/services/country_write_service.py
+domains/country/services/cross_border/cross_border_base.py
+domains/country/services/cross_border/cross_border_detection.py
+domains/country/services/cross_border/cross_border_service.py
+domains/country/services/cross_border/cross_border_tracker.py
 domains/country/services/cross_border_base.py
 domains/country/services/cross_border_detection.py
 domains/country/services/cross_border_service.py
 domains/country/services/cross_border_tracker.py
 domains/country/services/curated_cities.py
 domains/country/services/customer_health_service.py
+domains/country/services/downstream_hooks.py
 domains/country/services/employees_service.py
+domains/country/services/entity_messaging.py
 domains/country/services/export_service.py
+domains/country/services/geo/country_detection.py
+domains/country/services/geo/country_dropdown_service.py
+domains/country/services/geo/country_maps_service.py
+domains/country/services/geo/geo_resolver.py
+domains/country/services/geo/public_geography_configuration_service.py
 domains/country/services/geo_resolver.py
 domains/country/services/hierarchy_service.py
 domains/country/services/hr_service.py
 domains/country/services/incident_service.py
 domains/country/services/internal_channels_service.py
+domains/country/services/localization/localization_service.py
+domains/country/services/localization/translation_service.py
 domains/country/services/localization_service.py
 domains/country/services/logistics_health_service.py
 domains/country/services/logistics_partner_service.py
 domains/country/services/logistics_service.py
 domains/country/services/main.py
+domains/country/services/payout/country_payout_write_service.py
+domains/country/services/payout/country_payouts_service.py
 domains/country/services/payroll_service.py
 domains/country/services/performance_service.py
 domains/country/services/permissions_service.py
+domains/country/services/public_geography_configuration_service.py
+domains/country/services/research/country_auto_populate.py
+domains/country/services/research/country_auto_populate_write_service.py
+domains/country/services/research/country_curated.py
+domains/country/services/research/country_data_orchestrator.py
+domains/country/services/research/country_heuristic_engine.py
+domains/country/services/research/country_research.py
+domains/country/services/research/curated_cities.py
+domains/country/services/restriction/country_restriction_service.py
+domains/country/services/restriction/country_rls_service.py
+domains/country/services/router/country_router_service.py
 domains/country/services/shipments_service.py
+domains/country/services/staff/country_admin_service.py
+domains/country/services/staff/country_admin_write_service.py
+domains/country/services/staff/country_staff_service.py
+domains/country/services/staff/country_staff_write_service.py
 domains/country/services/supplier_finance_service.py
 domains/country/services/supplier_health_service.py
 domains/country/services/supplier_payouts_service.py
+domains/country/services/tax/category_tax_profiles.py
+domains/country/services/tax/country_tax_service.py
 domains/country/services/translation_service.py
 domains/country/services/travel_detector.py
 domains/country/services/travel_service.py
 domains/country/services/user_read_service.py
 domains/country/services/users_service.py
+domains/country/services/versioning/country_versioning_controller.py
+domains/country/services/versioning/country_versioning_service.py
 ```
 
 **models** (7):
@@ -1393,10 +2144,24 @@ domains/country/models/country_legal.py
 domains/country/models/country_tax.py
 ```
 
+**schemas** (3):
+
+```
+domains/country/schemas/country_config.py
+domains/country/schemas/country_staff_assignment.py
+domains/country/schemas/tax_rate.py
+```
+
 **policies** (1):
 
 ```
 domains/country/policies/config_policies.py
+```
+
+**read_models** (1):
+
+```
+domains/country/read_models/country_dashboard.py
 ```
 
 **events.py** (1):
@@ -1423,46 +2188,44 @@ domains/country/features.py
 domains/country/ports.py
 ```
 
-</details>
-
-<details><summary><b>domains/customers</b> — 36 files (Scaffold, 20%, 0 ORM models)</summary>
-
-**services** (33):
+**unclassified** (2):
 
 ```
-domains/customers/services/addresses_service.py
-domains/customers/services/admin_promotions_routes_service.py
-domains/customers/services/admin_suppliers_service.py
-domains/customers/services/admin_treasury_service.py
-domains/customers/services/auth_service.py
-domains/customers/services/customer_coupons_create_service.py
-domains/customers/services/customer_coupons_mgmt_service.py
-domains/customers/services/customer_customer_health_engine.py
+domains/country/utils/country_access.py
+domains/country/utils/country_rls.py
+```
+
+</details>
+
+<details><summary><b>domains/customers</b> — 23 files (Scaffold, 20%, 0 ORM models)</summary>
+
+**services** (18):
+
+```
+domains/customers/services/cart_service.py
+domains/customers/services/cart_write_service.py
+domains/customers/services/commerce_read_service.py
+domains/customers/services/commerce_write_service.py
+domains/customers/services/coupons_read_service.py
+domains/customers/services/coupons_service.py
+domains/customers/services/coupons_write_service.py
 domains/customers/services/customer_health_engine.py
 domains/customers/services/customer_health_list_service.py
 domains/customers/services/customer_health_service.py
-domains/customers/services/export_read_service.py
-domains/customers/services/export_service.py
-domains/customers/services/internal_comms_channels_service.py
-domains/customers/services/public_commerce_validation_service.py
-domains/customers/services/public_comms_status_service.py
-domains/customers/services/public_comms_unified_service.py
-domains/customers/services/public_finance_creation_service.py
-domains/customers/services/public_geography_configuration_service.py
-domains/customers/services/public_identity_operations_service.py
-domains/customers/services/public_permissions_validation_service.py
-domains/customers/services/public_security_detection_service.py
-domains/customers/services/public_security_health_service.py
-domains/customers/services/public_security_operations_service.py
-domains/customers/services/public_security_registration_service.py
-domains/customers/services/public_treasury_payments_service.py
-domains/customers/services/retention_service.py
+domains/customers/services/customer_router_service.py
+domains/customers/services/referrals_service.py
+domains/customers/services/reviews_service.py
 domains/customers/services/search_service.py
-domains/customers/services/supplier_profile_service.py
-domains/customers/services/system_ai_upload_service.py
-domains/customers/services/system_comms_status_service.py
 domains/customers/services/user_read_service.py
+domains/customers/services/wishlist_read_service.py
 domains/customers/services/wishlist_service.py
+domains/customers/services/wishlist_write_service.py
+```
+
+**models** (1):
+
+```
+domains/customers/models/customer_schema_models.py
 ```
 
 **events.py** (1):
@@ -1483,136 +2246,122 @@ domains/customers/subscribers.py
 domains/customers/features.py
 ```
 
-</details>
-
-<details><summary><b>domains/finance</b> — 130 files (Scaffold, 40%, 105 ORM models)</summary>
-
-**services** (123):
+**ports.py** (1):
 
 ```
-domains/finance/services/accounting_controller.py
-domains/finance/services/accounting_controller__routers.py
-domains/finance/services/admin_commission_service.py
-domains/finance/services/admin_payouts_service.py
-domains/finance/services/admin_reporting_service.py
-domains/finance/services/admin_treasury_read_service.py
+domains/customers/ports.py
+```
+
+</details>
+
+<details><summary><b>domains/finance</b> — 113 files (Partial, 68%, 17 ORM models)</summary>
+
+**services** (103):
+
+```
+domains/finance/services/accounts/contractor_milestone_read_service.py
+domains/finance/services/accounts/credit_control_service.py
+domains/finance/services/accounts/trading_read_service.py
+domains/finance/services/accounts/trading_service.py
+domains/finance/services/admin_cash_service.py
 domains/finance/services/admin_treasury_service.py
-domains/finance/services/admin_treasury_write_service.py
-domains/finance/services/ai_automation_service.py
-domains/finance/services/ai_copy_jobs.py
-domains/finance/services/ai_research_jobs.py
-domains/finance/services/ai_search_service.py
-domains/finance/services/ai_service.py
-domains/finance/services/ai_upload_service.py
-domains/finance/services/ai_upload_write_service.py
-domains/finance/services/ai_variant_config.py
-domains/finance/services/auto_payout_scheduler.py
-domains/finance/services/auto_payout_scheduler__treasury.py
-domains/finance/services/automation_read_service.py
-domains/finance/services/automation_scheduler.py
-domains/finance/services/badge_billing_payment.py
-domains/finance/services/bank_transaction_service.py
-domains/finance/services/bank_transaction_service__treasury.py
-domains/finance/services/bg_removal_presets.py
-domains/finance/services/bg_removal_service.py
-domains/finance/services/cash_flow_forecast_service.py
-domains/finance/services/cash_flow_forecast_service__treasury.py
-domains/finance/services/cash_management_controller.py
-domains/finance/services/cash_management_controller__routers.py
-domains/finance/services/cash_management_controller_service.py
-domains/finance/services/cash_management_service.py
-domains/finance/services/cash_management_service__treasury.py
-domains/finance/services/cash_management_write_controller.py
-domains/finance/services/cash_management_write_controller__routers.py
-domains/finance/services/cash_management_write_service.py
-domains/finance/services/cash_read_service.py
-domains/finance/services/cash_write_service.py
-domains/finance/services/commission_admin_write_service.py
-domains/finance/services/commission_controller.py
-domains/finance/services/commission_controller__routers.py
-domains/finance/services/commission_engine.py
-domains/finance/services/commission_geography_service.py
-domains/finance/services/commission_service.py
-domains/finance/services/commission_write_service.py
-domains/finance/services/contractor_milestone_read_service.py
-domains/finance/services/country_ai_research.py
-domains/finance/services/credit_control_service.py
-domains/finance/services/erp_finance_service.py
-domains/finance/services/erp_read_service.py
-domains/finance/services/expense_processing.py
-domains/finance/services/expense_routing.py
+domains/finance/services/commission/commission_admin_write_service.py
+domains/finance/services/commission/commission_controller.py
+domains/finance/services/commission/commission_engine.py
+domains/finance/services/commission/commission_geography_service.py
+domains/finance/services/commission/commission_service.py
+domains/finance/services/commission/commission_write_service.py
+domains/finance/services/commission/supplier_finance_service.py
+domains/finance/services/commission/supplier_payouts_service.py
+domains/finance/services/country/admin_cash_service.py
+domains/finance/services/country/admin_commission_service.py
+domains/finance/services/country/admin_finance_creation_service.py
+domains/finance/services/country/admin_finance_geography_service.py
+domains/finance/services/country/admin_logistics_fallback_read_service.py
+domains/finance/services/country/country_ai_research.py
+domains/finance/services/country/finance_commission_geography_service.py
+domains/finance/services/country/public_finance_creation_service.py
 domains/finance/services/finance.py
-domains/finance/services/finance_automation.py
-domains/finance/services/finance_automation_write_service.py
-domains/finance/services/finance_commission_geography_service.py
-domains/finance/services/finance_contractor_milestone_read_service.py
-domains/finance/services/finance_controller.py
-domains/finance/services/finance_credit_control_service.py
-domains/finance/services/finance_erp_write_service.py
-domains/finance/services/finance_expense_processing.py
-domains/finance/services/finance_expense_routing.py
-domains/finance/services/finance_financial_reporting.py
-domains/finance/services/finance_je_reversal_service.py
-domains/finance/services/finance_package_service.py
-domains/finance/services/finance_period_close_service.py
-domains/finance/services/finance_read_service.py
-domains/finance/services/finance_refund_posting_service.py
-domains/finance/services/finance_transfer_service.py
-domains/finance/services/financial_reporting.py
-domains/finance/services/financial_reports_service.py
-domains/finance/services/general_ledger_service.py
-domains/finance/services/invoice_controller.py
-domains/finance/services/invoice_controller__routers.py
-domains/finance/services/invoice_service.py
-domains/finance/services/invoice_write_service.py
-domains/finance/services/je_reversal_service.py
-domains/finance/services/ocr_parser.py
-domains/finance/services/order_payment_functions.py
-domains/finance/services/parcel_verification_service.py
-domains/finance/services/payment_engine.py
-domains/finance/services/payment_orchestrator.py
-domains/finance/services/payments_gateway_service.py
-domains/finance/services/payout_admin_service.py
-domains/finance/services/payout_admin_write_service.py
-domains/finance/services/payout_approval_controller.py
-domains/finance/services/payout_approval_controller__routers.py
-domains/finance/services/payout_approval_read_service.py
-domains/finance/services/payout_approval_write_service.py
-domains/finance/services/payout_batch_service.py
-domains/finance/services/payout_dispatch_service.py
-domains/finance/services/payout_engine.py
-domains/finance/services/payout_read_service.py
-domains/finance/services/payout_status_service.py
-domains/finance/services/period_close_service.py
-domains/finance/services/public_treasury_payments_service.py
-domains/finance/services/refund_posting_service.py
-domains/finance/services/reporting_service.py
-domains/finance/services/sub_ledger_controller.py
-domains/finance/services/sub_ledger_controller__routers.py
-domains/finance/services/sub_ledger_service.py
-domains/finance/services/supplier_finance_service.py
-domains/finance/services/supplier_payouts_service.py
-domains/finance/services/tax_service.py
-domains/finance/services/trading_read_service.py
-domains/finance/services/trading_service.py
-domains/finance/services/treasurer.py
+domains/finance/services/ledger/accounting_controller.py
+domains/finance/services/ledger/bank_transaction_service.py
+domains/finance/services/ledger/expense_processing.py
+domains/finance/services/ledger/expense_routing.py
+domains/finance/services/ledger/finance_automation.py
+domains/finance/services/ledger/finance_automation_write_service.py
+domains/finance/services/ledger/finance_erp_write_service.py
+domains/finance/services/ledger/finance_transfer_service.py
+domains/finance/services/ledger/general_ledger_service.py
+domains/finance/services/ledger/invoice_controller.py
+domains/finance/services/ledger/invoice_service.py
+domains/finance/services/ledger/invoice_write_service.py
+domains/finance/services/ledger/je_reversal_service.py
+domains/finance/services/ledger/period_close_service.py
+domains/finance/services/ledger/sub_ledger_controller.py
+domains/finance/services/ledger/sub_ledger_service.py
+domains/finance/services/payments/auto_payout_scheduler.py
+domains/finance/services/payments/badge_billing_payment.py
+domains/finance/services/payments/payment_engine.py
+domains/finance/services/payments/payment_orchestrator.py
+domains/finance/services/payments/payments_gateway_service.py
+domains/finance/services/payments/payout_admin_service.py
+domains/finance/services/payments/payout_admin_write_service.py
+domains/finance/services/payments/payout_approval_controller.py
+domains/finance/services/payments/payout_approval_read_service.py
+domains/finance/services/payments/payout_approval_service.py
+domains/finance/services/payments/payout_approval_write_service.py
+domains/finance/services/payments/payout_batch_service.py
+domains/finance/services/payments/payout_dispatch_service.py
+domains/finance/services/payments/payout_engine.py
+domains/finance/services/payments/payout_read_service.py
+domains/finance/services/payments/payout_status_service.py
+domains/finance/services/payments/refund_posting_service.py
+domains/finance/services/reporting/admin_reporting_service.py
+domains/finance/services/reporting/admin_treasury_read_service.py
+domains/finance/services/reporting/admin_treasury_reporting_read_service.py
+domains/finance/services/reporting/admin_treasury_service.py
+domains/finance/services/reporting/admin_treasury_write_service.py
+domains/finance/services/reporting/finance_dashboard_service.py
+domains/finance/services/reporting/finance_read_service.py
+domains/finance/services/reporting/financial_reporting.py
+domains/finance/services/reporting/financial_reports_service.py
+domains/finance/services/reporting/reporting_service.py
+domains/finance/services/shared/ai_automation_service.py
+domains/finance/services/shared/ai_copy_jobs.py
+domains/finance/services/shared/ai_research_jobs.py
+domains/finance/services/shared/ai_search_service.py
+domains/finance/services/shared/ai_service.py
+domains/finance/services/shared/ai_upload_service.py
+domains/finance/services/shared/ai_upload_write_service.py
+domains/finance/services/shared/ai_variant_config.py
+domains/finance/services/shared/automation_read_service.py
+domains/finance/services/shared/automation_scheduler.py
+domains/finance/services/shared/bg_removal_presets.py
+domains/finance/services/shared/bg_removal_service.py
+domains/finance/services/shared/downstream_wiring.py
+domains/finance/services/shared/erp_finance_service.py
+domains/finance/services/shared/erp_read_service.py
+domains/finance/services/shared/finance_controller.py
+domains/finance/services/shared/finance_package_service.py
+domains/finance/services/shared/import_service.py
+domains/finance/services/shared/ocr_parser.py
+domains/finance/services/shared/order_payment_functions.py
+domains/finance/services/shared/parcel_verification_service.py
+domains/finance/services/tax/tax_service.py
+domains/finance/services/tax/vat_rates.py
 domains/finance/services/treasury.py
-domains/finance/services/treasury_adapter.py
-domains/finance/services/treasury_admin_treasury_write_service.py
-domains/finance/services/treasury_auto_payout_scheduler.py
-domains/finance/services/treasury_cash_flow_forecast_service.py
-domains/finance/services/treasury_cash_read_service.py
-domains/finance/services/treasury_cash_write_service.py
-domains/finance/services/treasury_engine.py
-domains/finance/services/treasury_payout_approval_read_service.py
-domains/finance/services/treasury_payout_approval_write_service.py
-domains/finance/services/treasury_payout_batch_service.py
-domains/finance/services/treasury_query_service.py
-domains/finance/services/treasury_router_service.py
-domains/finance/services/treasury_service.py
-domains/finance/services/treasury_treasury_adapter.py
-domains/finance/services/treasury_treasury_service.py
-domains/finance/services/vat_rates.py
+domains/finance/services/treasury/cash_flow_forecast_service.py
+domains/finance/services/treasury/cash_management_controller.py
+domains/finance/services/treasury/cash_management_controller_service.py
+domains/finance/services/treasury/cash_management_service.py
+domains/finance/services/treasury/cash_management_write_controller.py
+domains/finance/services/treasury/cash_management_write_service.py
+domains/finance/services/treasury/cash_write_service.py
+domains/finance/services/treasury/treasurer.py
+domains/finance/services/treasury/treasury_adapter.py
+domains/finance/services/treasury/treasury_engine.py
+domains/finance/services/treasury/treasury_query_service.py
+domains/finance/services/treasury/treasury_router_service.py
+domains/finance/services/treasury/treasury_service.py
 ```
 
 **models** (4):
@@ -1622,6 +2371,18 @@ domains/finance/models/commission.py
 domains/finance/models/erp.py
 domains/finance/models/finance.py
 domains/finance/models/general_ledger.py
+```
+
+**schemas** (1):
+
+```
+domains/finance/schemas/finance_schemas.py
+```
+
+**policies** (1):
+
+```
+domains/finance/policies/finance_policies.py
 ```
 
 **events.py** (1):
@@ -1642,150 +2403,269 @@ domains/finance/subscribers.py
 domains/finance/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/finance/ports.py
+```
+
 </details>
 
-<details><summary><b>domains/governance</b> — 135 files (Scaffold, 40%, 61 ORM models)</summary>
+<details><summary><b>domains/governance</b> — 234 files (Partial, 72%, 74 ORM models)</summary>
 
-**services** (129):
+**services** (215):
 
 ```
-domains/governance/services/admin.py
-domains/governance/services/admin_admin_fallback_service.py
-domains/governance/services/admin_admin_write_service.py
-domains/governance/services/admin_analytics_service.py
-domains/governance/services/admin_catalog_operations_service.py
-domains/governance/services/admin_catalog_orders_service.py
-domains/governance/services/admin_commerce_configuration_service.py
-domains/governance/services/admin_commerce_geography_service.py
-domains/governance/services/admin_comms_geography_service.py
-domains/governance/services/admin_comms_messaging_service.py
-domains/governance/services/admin_comms_unified_service.py
 domains/governance/services/admin_controller.py
-domains/governance/services/admin_dashboard_service.py
-domains/governance/services/admin_fallback_service.py
-domains/governance/services/admin_finance_creation_service.py
-domains/governance/services/admin_finance_geography_service.py
-domains/governance/services/admin_geography_audit_service.py
-domains/governance/services/admin_geography_configuration_service.py
-domains/governance/services/admin_identity_operations_api_service.py
-domains/governance/services/admin_identity_operations_service.py
-domains/governance/services/admin_logistics_fallback_service.py
-domains/governance/services/admin_logistics_geography_service.py
-domains/governance/services/admin_logistics_imports_service.py
-domains/governance/services/admin_logistics_operations_service.py
-domains/governance/services/admin_media_geography_service.py
-domains/governance/services/admin_orders_status_service.py
-domains/governance/services/admin_permissions_validation_service.py
-domains/governance/services/admin_security_detection_service.py
-domains/governance/services/admin_security_health_service.py
-domains/governance/services/admin_security_operations_service.py
-domains/governance/services/admin_security_registration_service.py
-domains/governance/services/admin_supplier_reviews_service.py
-domains/governance/services/admin_supplier_trading_service.py
-domains/governance/services/admin_treasury_identity_service.py
-domains/governance/services/admin_treasury_payments_service.py
-domains/governance/services/admin_treasury_reporting_service.py
-domains/governance/services/admin_treasury_status_service.py
-domains/governance/services/admin_users.py
-domains/governance/services/admin_users_service.py
-domains/governance/services/admin_write_service.py
-domains/governance/services/ai_upload_controller.py
-domains/governance/services/analytics_controller.py
-domains/governance/services/analytics_fallback_service.py
-domains/governance/services/analytics_service.py
-domains/governance/services/analytics_service__analytics.py
-domains/governance/services/approval_matrix_service.py
-domains/governance/services/audit_audit_trail_service.py
-domains/governance/services/audit_compliance_engine.py
-domains/governance/services/audit_query_service.py
-domains/governance/services/audit_service.py
-domains/governance/services/audit_trail_service.py
-domains/governance/services/auth_controller.py
-domains/governance/services/auth_controller_service.py
-domains/governance/services/auth_router_service.py
+domains/governance/services/admin_service.py
+domains/governance/services/analytics/admin_analytics_service.py
+domains/governance/services/analytics/admin_dashboard_service.py
+domains/governance/services/analytics/ai_upload_controller.py
+domains/governance/services/analytics/analytics_controller.py
+domains/governance/services/analytics/analytics_fallback_service.py
+domains/governance/services/analytics/analytics_service.py
+domains/governance/services/analytics/analytics_service__analytics.py
+domains/governance/services/analytics/flat_admin_analytics_service.py
+domains/governance/services/analytics/flat_admin_dashboard_service.py
+domains/governance/services/analytics/flat_ai_upload_controller.py
+domains/governance/services/analytics/flat_analytics_fallback_service.py
+domains/governance/services/analytics/flat_analytics_service.py
+domains/governance/services/analytics/flat_analytics_service__analytics.py
+domains/governance/services/audit/audit_query_service.py
+domains/governance/services/audit/audit_service.py
+domains/governance/services/audit/audit_trail_service.py
+domains/governance/services/audit/compliance_engine.py
+domains/governance/services/audit/data_residency.py
+domains/governance/services/audit/data_residency_service.py
+domains/governance/services/audit/ediscovery.py
+domains/governance/services/audit/flat_data_residency_service.py
+domains/governance/services/audit/retention_service.py
+domains/governance/services/audit/worm_audit.py
+domains/governance/services/auth/auth_controller.py
+domains/governance/services/auth/auth_controller_service.py
+domains/governance/services/auth/auth_router_service.py
+domains/governance/services/auth/auth_service.py
+domains/governance/services/auth/auth_service_accounts.py
+domains/governance/services/auth/auth_write_service.py
+domains/governance/services/auth/biometric_auth.py
+domains/governance/services/auth/flat_auth_controller.py
+domains/governance/services/auth/flat_iam_controller.py
+domains/governance/services/auth/flat_identity_admin_service.py
+domains/governance/services/auth/flat_mobile_auth_service.py
+domains/governance/services/auth/iam_controller.py
+domains/governance/services/auth/iam_service.py
+domains/governance/services/auth/iam_service_accounts.py
+domains/governance/services/auth/iam_write_service.py
+domains/governance/services/auth/identity_admin_service.py
+domains/governance/services/auth/kms_encryption.py
+domains/governance/services/auth/mobile_auth_service.py
+domains/governance/services/auth/otp_service.py
+domains/governance/services/auth/permissions_service.py
+domains/governance/services/auth/rbac_service.py
+domains/governance/services/auth/security_dependencies.py
+domains/governance/services/auth/session_service.py
+domains/governance/services/auth/social_service.py
+domains/governance/services/auth/triple_auth.py
 domains/governance/services/auth_service.py
-domains/governance/services/auth_write_service.py
-domains/governance/services/behavioral_analytics.py
-domains/governance/services/biometric_auth.py
-domains/governance/services/bulk_ops_service.py
-domains/governance/services/command_center_controller.py
-domains/governance/services/command_center_service.py
-domains/governance/services/compliance_engine.py
-domains/governance/services/confidence_scoring.py
-domains/governance/services/country_context_service.py
-domains/governance/services/data_residency.py
-domains/governance/services/data_residency_service.py
-domains/governance/services/database_service.py
-domains/governance/services/ediscovery.py
-domains/governance/services/effective_permissions.py
+domains/governance/services/command_center/command_center_controller.py
+domains/governance/services/command_center/command_center_service.py
+domains/governance/services/command_center/flat_command_center_controller.py
+domains/governance/services/command_center/flat_command_center_service.py
+domains/governance/services/command_center/flat_governance_command_center_service.py
+domains/governance/services/command_center/governance_command_center_service.py
+domains/governance/services/commerce/admin_commerce_configuration_service.py
+domains/governance/services/commerce/admin_commerce_geography_service.py
+domains/governance/services/commerce/flat_admin_commerce_configuration_service.py
+domains/governance/services/commerce/flat_admin_commerce_geography_service.py
+domains/governance/services/commerce/flat_public_commerce_validation_service.py
+domains/governance/services/commerce/public_commerce_validation_service.py
+domains/governance/services/comms/admin_comms_geography_service.py
+domains/governance/services/comms/admin_comms_messaging_service.py
+domains/governance/services/comms/admin_comms_unified_service.py
+domains/governance/services/comms/flat_admin_comms_geography_service.py
+domains/governance/services/comms/flat_admin_comms_messaging_service.py
+domains/governance/services/comms/public_comms_status_service.py
+domains/governance/services/comms/tickets_controller.py
+domains/governance/services/core/ai_controller.py
+domains/governance/services/core/ai_upload_controller.py
+domains/governance/services/core/approval_matrix_service.py
+domains/governance/services/core/bulk_ops_service.py
+domains/governance/services/core/export_controller.py
+domains/governance/services/core/export_read_service.py
+domains/governance/services/core/export_service.py
+domains/governance/services/core/flat_approval_matrix_service.py
+domains/governance/services/core/flat_bulk_ops_service.py
+domains/governance/services/core/flat_export_service.py
+domains/governance/services/core/maker.py
+domains/governance/services/country/admin_geography_audit_service.py
+domains/governance/services/country/admin_geography_configuration_service.py
+domains/governance/services/country/country_admin_service.py
+domains/governance/services/country/country_context_service.py
+domains/governance/services/country/country_staff_write_service.py
+domains/governance/services/country/flat_admin_geography_audit_service.py
+domains/governance/services/country/flat_admin_geography_configuration_service.py
+domains/governance/services/country/flat_country_admin_service.py
 domains/governance/services/export_service.py
-domains/governance/services/fraud_admin_controller_service.py
-domains/governance/services/fraud_admin_service.py
-domains/governance/services/fraud_detection.py
-domains/governance/services/fraud_detection_service.py
-domains/governance/services/fraud_engine.py
-domains/governance/services/fraud_service.py
-domains/governance/services/governance_command_center_service.py
-domains/governance/services/governance_package_service.py
-domains/governance/services/iam_controller.py
-domains/governance/services/iam_service.py
-domains/governance/services/iam_service__security.py
-domains/governance/services/iam_write_service.py
-domains/governance/services/identity_admin_service.py
-domains/governance/services/impossible_travel_write_service.py
-domains/governance/services/incident_admin_read_service.py
+domains/governance/services/fraud/flat_fraud_engine.py
+domains/governance/services/fraud/fraud_admin_controller_service.py
+domains/governance/services/fraud/fraud_admin_service.py
+domains/governance/services/fraud/fraud_detection.py
+domains/governance/services/fraud/fraud_detection_service.py
+domains/governance/services/fraud/fraud_engine.py
+domains/governance/services/fraud/fraud_service.py
+domains/governance/services/incident/incident_admin_read_service.py
+domains/governance/services/incident/incident_service.py
 domains/governance/services/incident_service.py
-domains/governance/services/kms_encryption.py
-domains/governance/services/maker.py
-domains/governance/services/misc_service.py
-domains/governance/services/mobile_auth_service.py
-domains/governance/services/orders_service.py
-domains/governance/services/payouts_controller.py
-domains/governance/services/payouts_service.py
-domains/governance/services/permission_primitive_write_service.py
-domains/governance/services/permission_service.py
-domains/governance/services/permissions_controller.py
+domains/governance/services/logistics/admin_logistics_fallback_service.py
+domains/governance/services/logistics/admin_logistics_geography_service.py
+domains/governance/services/logistics/admin_logistics_imports_service.py
+domains/governance/services/logistics/admin_logistics_operations_service.py
+domains/governance/services/logistics/flat_admin_logistics_fallback_service.py
+domains/governance/services/logistics/flat_admin_logistics_geography_service.py
+domains/governance/services/logistics/flat_admin_logistics_operations_service.py
+domains/governance/services/media/admin_media_geography_service.py
+domains/governance/services/media/flat_admin_media_geography_service.py
+domains/governance/services/orders/admin_catalog_orders_service.py
+domains/governance/services/orders/admin_orders_status_service.py
+domains/governance/services/orders/flat_admin_catalog_orders_service.py
+domains/governance/services/orders/flat_admin_orders_status_service.py
+domains/governance/services/orders/flat_orders_service.py
+domains/governance/services/orders/orders_service.py
+domains/governance/services/performance_service.py
+domains/governance/services/permissions/effective_permissions.py
+domains/governance/services/permissions/flat_effective_permissions.py
+domains/governance/services/permissions/flat_permission_service.py
+domains/governance/services/permissions/flat_public_permissions_validation_service.py
+domains/governance/services/permissions/flat_security_effective_permissions.py
+domains/governance/services/permissions/permission_primitive_write_service.py
+domains/governance/services/permissions/permission_service.py
+domains/governance/services/permissions/permissions_controller.py
+domains/governance/services/permissions/permissions_service.py
+domains/governance/services/permissions/permissions_write_service.py
+domains/governance/services/permissions/public_permissions_validation_service.py
+domains/governance/services/permissions/security_effective_permissions.py
 domains/governance/services/permissions_service.py
-domains/governance/services/permissions_write_service.py
-domains/governance/services/products_service.py
-domains/governance/services/public_commerce_validation_service.py
-domains/governance/services/public_comms_status_service.py
-domains/governance/services/public_comms_unified_service.py
-domains/governance/services/public_finance_creation_service.py
-domains/governance/services/public_geography_configuration_service.py
-domains/governance/services/public_identity_operations_service.py
-domains/governance/services/public_permissions_validation_service.py
-domains/governance/services/public_security_detection_service.py
-domains/governance/services/public_security_health_service.py
-domains/governance/services/public_security_operations_service.py
-domains/governance/services/public_security_registration_service.py
-domains/governance/services/public_treasury_payments_service.py
-domains/governance/services/risk_controller.py
-domains/governance/services/risk_service.py
-domains/governance/services/risk_write_service.py
-domains/governance/services/security.py
-domains/governance/services/security_auth_write_service.py
-domains/governance/services/security_effective_permissions.py
-domains/governance/services/security_fraud_admin_service.py
-domains/governance/services/security_fraud_detection_service.py
-domains/governance/services/security_incident_service.py
-domains/governance/services/security_risk_service.py
-domains/governance/services/siem_engine.py
-domains/governance/services/suppliers_controller.py
-domains/governance/services/suppliers_service.py
-domains/governance/services/tickets_controller.py
-domains/governance/services/triple_auth.py
-domains/governance/services/users_admin_controller.py
+domains/governance/services/products/admin_catalog_operations_service.py
+domains/governance/services/products/flat_admin_catalog_operations_service.py
+domains/governance/services/products/flat_products_service.py
+domains/governance/services/products/products_service.py
+domains/governance/services/risk/flat_risk_controller.py
+domains/governance/services/risk/flat_risk_service.py
+domains/governance/services/risk/risk_controller.py
+domains/governance/services/risk/risk_score_read_service.py
+domains/governance/services/risk/risk_service.py
+domains/governance/services/risk/risk_write_service.py
+domains/governance/services/security/admin_security_detection_service.py
+domains/governance/services/security/admin_security_health_service.py
+domains/governance/services/security/admin_security_operations_service.py
+domains/governance/services/security/admin_security_registration_service.py
+domains/governance/services/security/behavioral_analytics.py
+domains/governance/services/security/confidence_scoring.py
+domains/governance/services/security/flat_admin_security_health_service.py
+domains/governance/services/security/flat_admin_security_operations_service.py
+domains/governance/services/security/flat_admin_security_registration_service.py
+domains/governance/services/security/flat_security_fraud_admin_service.py
+domains/governance/services/security/iam_service__security.py
+domains/governance/services/security/impossible_travel_write_service.py
+domains/governance/services/security/public_security_detection_service.py
+domains/governance/services/security/public_security_health_service.py
+domains/governance/services/security/public_security_operations_service.py
+domains/governance/services/security/public_security_registration_service.py
+domains/governance/services/security/security_auth_write_service.py
+domains/governance/services/security/security_fraud_admin_service.py
+domains/governance/services/security/siem_engine.py
+domains/governance/services/settings/admin_admin_fallback_service.py
+domains/governance/services/settings/admin_controller.py
+domains/governance/services/settings/admin_fallback_service.py
+domains/governance/services/settings/admin_service.py
+domains/governance/services/settings/admin_support_service.py
+domains/governance/services/settings/admin_write_service.py
+domains/governance/services/settings/database_service.py
+domains/governance/services/settings/flat_admin_service.py
+domains/governance/services/settings/flat_admin_support_service.py
+domains/governance/services/settings/flat_admin_write_service.py
+domains/governance/services/settings/flat_database_service.py
+domains/governance/services/settings/flat_governance_package_service.py
+domains/governance/services/settings/flat_misc_write_service.py
+domains/governance/services/settings/governance_package_service.py
+domains/governance/services/settings/misc_service.py
+domains/governance/services/settings/misc_write_service.py
+domains/governance/services/settings/public_geography_configuration_service.py
+domains/governance/services/suppliers/admin_supplier_reviews_service.py
+domains/governance/services/suppliers/admin_supplier_trading_service.py
+domains/governance/services/suppliers/flat_admin_supplier_reviews_service.py
+domains/governance/services/suppliers/flat_admin_supplier_trading_service.py
+domains/governance/services/suppliers/suppliers_controller.py
+domains/governance/services/suppliers/suppliers_service.py
+domains/governance/services/treasury/admin_treasury_identity_service.py
+domains/governance/services/treasury/admin_treasury_payments_service.py
+domains/governance/services/treasury/admin_treasury_reporting_service.py
+domains/governance/services/treasury/admin_treasury_status_service.py
+domains/governance/services/treasury/flat_admin_treasury_payments_service.py
+domains/governance/services/treasury/flat_admin_treasury_reporting_service.py
+domains/governance/services/treasury/flat_admin_treasury_status_service.py
+domains/governance/services/treasury/payouts_controller.py
+domains/governance/services/treasury/payouts_service.py
+domains/governance/services/treasury/public_treasury_payments_service.py
+domains/governance/services/user_read_service.py
+domains/governance/services/users/addresses_service.py
+domains/governance/services/users/admin_identity_operations_api_service.py
+domains/governance/services/users/admin_identity_operations_service.py
+domains/governance/services/users/admin_permissions_validation_service.py
+domains/governance/services/users/admin_users.py
+domains/governance/services/users/admin_users_service.py
+domains/governance/services/users/flat_admin_identity_operations_service.py
+domains/governance/services/users/flat_admin_permissions_validation_service.py
+domains/governance/services/users/flat_admin_users.py
+domains/governance/services/users/flat_admin_users_service.py
+domains/governance/services/users/flat_users_service.py
+domains/governance/services/users/identity_admin_service.py
+domains/governance/services/users/identity_service.py
+domains/governance/services/users/public_identity_operations_service.py
+domains/governance/services/users/user_read_service.py
+domains/governance/services/users/user_read_service_accounts.py
+domains/governance/services/users/user_write_ops.py
+domains/governance/services/users/users_admin_controller.py
+domains/governance/services/users/users_approval_matrix_service.py
+domains/governance/services/users/users_identity_admin_service.py
+domains/governance/services/users/users_service.py
+domains/governance/services/users/users_service_accounts.py
 domains/governance/services/users_service.py
-domains/governance/services/worm_audit.py
 ```
 
-**models** (3):
+**models** (9):
 
 ```
 domains/governance/models/admin.py
+domains/governance/models/core.py
 domains/governance/models/fraud.py
 domains/governance/models/incident.py
+domains/governance/models/onboarding.py
+domains/governance/models/otp.py
+domains/governance/models/permissions.py
+domains/governance/models/social.py
+domains/governance/models/user.py
+```
+
+**schemas** (2):
+
+```
+domains/governance/schemas/governance_schemas.py
+domains/governance/schemas/user_schemas.py
+```
+
+**policies** (2):
+
+```
+domains/governance/policies/governance_policies.py
+domains/governance/policies/user_policies.py
+```
+
+**read_models** (2):
+
+```
+domains/governance/read_models/governance_read_models.py
+domains/governance/read_models/user_read_models.py
 ```
 
 **events.py** (1):
@@ -1806,13 +2686,20 @@ domains/governance/subscribers.py
 domains/governance/features.py
 ```
 
-</details>
-
-<details><summary><b>domains/hr</b> — 53 files (Scaffold, 40%, 29 ORM models)</summary>
-
-**services** (49):
+**ports.py** (1):
 
 ```
+domains/governance/ports.py
+```
+
+</details>
+
+<details><summary><b>domains/hr</b> — 60 files (Scaffold, 40%, 34 ORM models)</summary>
+
+**services** (54):
+
+```
+domains/hr/services/asset_tracking.py
 domains/hr/services/attendance_service.py
 domains/hr/services/attendance_service__hr.py
 domains/hr/services/background_check.py
@@ -1823,6 +2710,7 @@ domains/hr/services/dei_auditor.py
 domains/hr/services/employee_activity_logger.py
 domains/hr/services/employee_communication_service.py
 domains/hr/services/employee_lifecycle_service.py
+domains/hr/services/employee_service.py
 domains/hr/services/employee_write_service.py
 domains/hr/services/employees_controller.py
 domains/hr/services/employees_controller__routers.py
@@ -1857,17 +2745,21 @@ domains/hr/services/payroll_engine.py
 domains/hr/services/payroll_read_service.py
 domains/hr/services/payroll_service.py
 domains/hr/services/performance_service.py
+domains/hr/services/risk_service.py
 domains/hr/services/shift_handover.py
 domains/hr/services/shift_roster_service.py
 domains/hr/services/shift_scheduling.py
 domains/hr/services/succession_controller.py
 domains/hr/services/succession_service.py
+domains/hr/services/travel_detector.py
+domains/hr/services/travel_service.py
 ```
 
-**models** (1):
+**models** (2):
 
 ```
 domains/hr/models/employee_models.py
+domains/hr/models/hr_schema_models.py
 ```
 
 **events.py** (1):
@@ -1888,25 +2780,51 @@ domains/hr/subscribers.py
 domains/hr/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/hr/ports.py
+```
+
 </details>
 
-<details><summary><b>domains/logistics</b> — 48 files (Scaffold, 40%, 16 ORM models)</summary>
+<details><summary><b>domains/infrastructure</b> — 2 files (Scaffold, 20%, 0 ORM models)</summary>
 
-**services** (43):
+**services** (2):
+
+```
+domains/infrastructure/services/utils/translate_controller.py
+domains/infrastructure/services/utils/workflow_engine.py
+```
+
+</details>
+
+<details><summary><b>domains/logistics</b> — 74 files (Scaffold, 40%, 17 ORM models)</summary>
+
+**services** (67):
 
 ```
 domains/logistics/services/admin_logistics_service.py
 domains/logistics/services/admin_operations_service.py
 domains/logistics/services/api_geography_location_service.py
+domains/logistics/services/country_communication_service.py
+domains/logistics/services/fulfillment_service.py
+domains/logistics/services/geo/geo_fence_service.py
+domains/logistics/services/geo/logistics_locations_service.py
+domains/logistics/services/geo/map_service.py
 domains/logistics/services/geo_fence_service.py
 domains/logistics/services/geo_resolver.py
 domains/logistics/services/geo_service.py
 domains/logistics/services/geography_country_audit_admin_service.py
 domains/logistics/services/geography_country_config_admin_service.py
+domains/logistics/services/health/logistics_health_engine.py
+domains/logistics/services/health/logistics_health_list_service.py
 domains/logistics/services/live_tracking_service.py
 domains/logistics/services/location_service.py
 domains/logistics/services/logistics_admin_operations_service.py
 domains/logistics/services/logistics_analytics_service.py
+domains/logistics/services/logistics_controller.py
+domains/logistics/services/logistics_controller__routers.py
 domains/logistics/services/logistics_engine.py
 domains/logistics/services/logistics_health_engine.py
 domains/logistics/services/logistics_health_list_service.py
@@ -1919,9 +2837,12 @@ domains/logistics/services/logistics_logistics_status_service.py
 domains/logistics/services/logistics_orders_list_service.py
 domains/logistics/services/logistics_orders_v2_service.py
 domains/logistics/services/logistics_partner_admin_write_service.py
+domains/logistics/services/logistics_partner_controller.py
+domains/logistics/services/logistics_partner_controller__routers.py
 domains/logistics/services/logistics_partner_geography_service.py
 domains/logistics/services/logistics_partner_pricing.py
 domains/logistics/services/logistics_partner_service.py
+domains/logistics/services/logistics_partner_service__router_migration.py
 domains/logistics/services/logistics_partner_shipments_service.py
 domains/logistics/services/logistics_partner_verify_service.py
 domains/logistics/services/logistics_partner_write_service.py
@@ -1932,19 +2853,32 @@ domains/logistics/services/logistics_sla_service.py
 domains/logistics/services/logistics_write_service.py
 domains/logistics/services/main.py
 domains/logistics/services/map_service.py
+domains/logistics/services/operations/fulfillment_service.py
+domains/logistics/services/operations/live_tracking_service.py
+domains/logistics/services/operations/logistics_controller.py
+domains/logistics/services/operations/logistics_engine.py
+domains/logistics/services/operations/logistics_sla_service.py
+domains/logistics/services/operations/logistics_write_service.py
+domains/logistics/services/partner/admin_operations_service.py
+domains/logistics/services/partner/logistics_partner_controller.py
+domains/logistics/services/partner/logistics_partner_pricing.py
+domains/logistics/services/partner/partner_geography_service.py
 domains/logistics/services/partner_blocker_service.py
 domains/logistics/services/partner_geography_service.py
 domains/logistics/services/partner_shipments_service.py
 domains/logistics/services/shipment_service.py
+domains/logistics/services/shipments/shipments_service.py
+domains/logistics/services/shipments/shipping_tier.py
 domains/logistics/services/shipments_service.py
 domains/logistics/services/shipping_tier.py
 ```
 
-**models** (2):
+**models** (3):
 
 ```
 domains/logistics/models/logistics.py
 domains/logistics/models/logistics_entities.py
+domains/logistics/models/logistics_schema_models.py
 ```
 
 **events.py** (1):
@@ -1965,11 +2899,17 @@ domains/logistics/subscribers.py
 domains/logistics/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/logistics/ports.py
+```
+
 </details>
 
-<details><summary><b>domains/media</b> — 55 files (Scaffold, 40%, 7 ORM models)</summary>
+<details><summary><b>domains/media</b> — 58 files (Scaffold, 40%, 9 ORM models)</summary>
 
-**services** (49):
+**services** (50):
 
 ```
 domains/media/services/admin_video_service.py
@@ -2018,16 +2958,18 @@ domains/media/services/system_ai_messaging_service.py
 domains/media/services/system_ai_upload_service.py
 domains/media/services/system_ai_upload_service__system.py
 domains/media/services/upload_job_service.py
+domains/media/services/visual_voice_search_service.py
 domains/media/services/write_files_script.py
 domains/media/services/write_help.py
 domains/media/services/write_helpers.py
 ```
 
-**models** (3):
+**models** (4):
 
 ```
 domains/media/models/ai_upload.py
 domains/media/models/media_models.py
+domains/media/models/media_schema_models.py
 domains/media/models/upload_job.py
 ```
 
@@ -2049,13 +2991,20 @@ domains/media/subscribers.py
 domains/media/features.py
 ```
 
-</details>
-
-<details><summary><b>domains/orders</b> — 89 files (Scaffold, 40%, 9 ORM models)</summary>
-
-**services** (84):
+**ports.py** (1):
 
 ```
+domains/media/ports.py
+```
+
+</details>
+
+<details><summary><b>domains/orders</b> — 96 files (Scaffold, 40%, 5 ORM models)</summary>
+
+**services** (88):
+
+```
+domains/orders/services/addresses_service.py
 domains/orders/services/admin_categories_service.py
 domains/orders/services/admin_email_service.py
 domains/orders/services/admin_orders_read_service.py
@@ -2104,6 +3053,7 @@ domains/orders/services/logistics_partner_controller.py
 domains/orders/services/logistics_partner_controller__routers.py
 domains/orders/services/logistics_partner_service.py
 domains/orders/services/logistics_service.py
+domains/orders/services/order_dtos.py
 domains/orders/services/order_tracking_service.py
 domains/orders/services/orders_admin_orders_read_service.py
 domains/orders/services/orders_admin_orders_write_service.py
@@ -2111,6 +3061,7 @@ domains/orders/services/orders_controller.py
 domains/orders/services/orders_controller__routers.py
 domains/orders/services/orders_order_tracking_service.py
 domains/orders/services/orders_service.py
+domains/orders/services/orders_write_facade.py
 domains/orders/services/orders_write_service.py
 domains/orders/services/package_service.py
 domains/orders/services/promotion_admin_controller.py
@@ -2123,6 +3074,7 @@ domains/orders/services/promotion_engine_service.py
 domains/orders/services/promotion_points_service.py
 domains/orders/services/promotion_service.py
 domains/orders/services/promotions_write_service.py
+domains/orders/services/public_commerce_validation_service.py
 domains/orders/services/referrals_controller.py
 domains/orders/services/referrals_controller__routers.py
 domains/orders/services/referrals_service.py
@@ -2167,20 +3119,38 @@ domains/orders/subscribers.py
 domains/orders/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/orders/ports.py
+```
+
+**unclassified** (2):
+
+```
+domains/orders/serializers.py
+domains/orders/utils/order_tracking.py
+```
+
 </details>
 
-<details><summary><b>domains/payments</b> — 14 files (Scaffold, 40%, 7 ORM models)</summary>
+<details><summary><b>domains/payments</b> — 20 files (Scaffold, 40%, 7 ORM models)</summary>
 
-**services** (10):
+**services** (15):
 
 ```
 domains/payments/services/base.py
 domains/payments/services/base_models.py
+domains/payments/services/disputes_controller.py
+domains/payments/services/disputes_controller__routers.py
+domains/payments/services/disputes_service.py
+domains/payments/services/disputes_write_service.py
 domains/payments/services/gateway_auto_enable.py
 domains/payments/services/gateway_reconciliation_service.py
 domains/payments/services/payment_event_handlers.py
 domains/payments/services/payments.py
 domains/payments/services/payments_write_service.py
+domains/payments/services/public_commerce_validation_service.py
 domains/payments/services/registry.py
 domains/payments/services/webhook_models.py
 domains/payments/services/webhook_processor.py
@@ -2210,20 +3180,59 @@ domains/payments/subscribers.py
 domains/payments/features.py
 ```
 
+**ports.py** (1):
+
+```
+domains/payments/ports.py
+```
+
 </details>
 
-<details><summary><b>domains/suppliers</b> — 47 files (Scaffold, 20%, 0 ORM models)</summary>
+<details><summary><b>domains/security</b> — 7 files (Scaffold, 40%, 3 ORM models)</summary>
 
-**services** (43):
+**services** (4):
+
+```
+domains/security/services/ess_service.py
+domains/security/services/public_security_detection_service.py
+domains/security/services/public_security_health_service.py
+domains/security/services/public_security_registration_service.py
+```
+
+**models** (1):
+
+```
+domains/security/models/security_schema_models.py
+```
+
+**features.py** (1):
+
+```
+domains/security/features.py
+```
+
+**ports.py** (1):
+
+```
+domains/security/ports.py
+```
+
+</details>
+
+<details><summary><b>domains/suppliers</b> — 55 files (Partial, 60%, 6 ORM models)</summary>
+
+**services** (48):
 
 ```
 domains/suppliers/services/admin_supplier_review_service.py
 domains/suppliers/services/admin_supplier_write_service.py
+domains/suppliers/services/admin_suppliers_read_service.py
 domains/suppliers/services/admin_suppliers_service.py
 domains/suppliers/services/badge_billing_payment.py
 domains/suppliers/services/cash_management_controller_service.py
 domains/suppliers/services/legal_contract_service.py
 domains/suppliers/services/onboarding_pipeline.py
+domains/suppliers/services/product_coordinator_service.py
 domains/suppliers/services/supplier_analytics_service.py
 domains/suppliers/services/supplier_badge_service.py
 domains/suppliers/services/supplier_badge_write_service.py
@@ -2234,6 +3243,7 @@ domains/suppliers/services/supplier_document_controller_service.py
 domains/suppliers/services/supplier_document_service.py
 domains/suppliers/services/supplier_documents_service.py
 domains/suppliers/services/supplier_finance_service.py
+domains/suppliers/services/supplier_health_controller.py
 domains/suppliers/services/supplier_health_engine.py
 domains/suppliers/services/supplier_health_service.py
 domains/suppliers/services/supplier_legal_contract_service.py
@@ -2242,6 +3252,8 @@ domains/suppliers/services/supplier_order_service.py
 domains/suppliers/services/supplier_orders_service.py
 domains/suppliers/services/supplier_orders_verify_service.py
 domains/suppliers/services/supplier_payout_service.py
+domains/suppliers/services/supplier_payouts_service.py
+domains/suppliers/services/supplier_products_service.py
 domains/suppliers/services/supplier_products_upload_service.py
 domains/suppliers/services/supplier_profile_create_service.py
 domains/suppliers/services/supplier_profile_service.py
@@ -2268,6 +3280,12 @@ domains/suppliers/services/suppliers_write_service.py
 domains/suppliers/models/suppliers.py
 ```
 
+**schemas** (1):
+
+```
+domains/suppliers/schemas/supplier_schemas.py
+```
+
 **events.py** (1):
 
 ```
@@ -2284,6 +3302,18 @@ domains/suppliers/subscribers.py
 
 ```
 domains/suppliers/features.py
+```
+
+**ports.py** (1):
+
+```
+domains/suppliers/ports.py
+```
+
+**unclassified** (1):
+
+```
+domains/suppliers/mixins.py
 ```
 
 </details>

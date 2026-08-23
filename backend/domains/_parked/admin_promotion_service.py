@@ -24,8 +24,8 @@ from sqlalchemy.orm import Session
 from domains.comms.ports import FlashSale
 from domains.governance.ports import PromotionEngineConfig
 from domains.governance.ports import PromotionOrderTier
-from domains.payments.ports import Banner
-from domains.payments.ports import Coupon
+from domains.finance.ports import Banner
+from domains.finance.ports import Coupon
 
 
 def _banner_to_dict(b: Banner) -> dict:

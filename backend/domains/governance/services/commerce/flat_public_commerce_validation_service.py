@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from rbac import get_current_user
 from infrastructure.database.database import get_db
 from domains.governance.models.admin import CouponUsage
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 from infrastructure.utils.datetime_utils import utcnow
 
 def _normalize_discount_type(value: object) -> str | None:

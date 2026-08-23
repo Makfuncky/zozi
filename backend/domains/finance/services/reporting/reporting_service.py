@@ -1,4 +1,5 @@
-﻿from domains.comms.services.utility.db_read import query as db_read_query
+﻿from infrastructure.utils.datetime_utils import utcnow
+from domains.comms.services.utility.db_read import query as db_read_query
 from domains.comms.services.utility.db_read import execute as db_read_execute
 'Treasury reporting controller.\n\nOwns the orchestration logic that the admin treasury reporting router used to\nperform inline. Per the Grid Line layer contract, routers must not call models\nor services (``TreasuryEngine``) directly nor perform DB writes — those live\nhere in the controller, which delegates complex business logic to services and\nuses ``scripts.maintenance.write_helpers`` for commits.\n'
 import json
@@ -32,9 +33,9 @@ from domains.governance.ports import logistics_cod_remittance_receipt_query
 from domains.hr.ports import Employee
 from domains.logistics.ports import logistics_partner_query
 from domains.orders.ports import order_query
-from domains.payments.ports import logistics_partner_payout_query
-from domains.payments.ports import payout_query
-from domains.payments.ports import payment_query
+from domains.finance.ports import logistics_partner_payout_query
+from domains.finance.ports import payout_query
+from domains.finance.ports import payment_query
 from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from domains.comms.services.utility.write_helpers import commit_only
 from domains.country.utils.country_rls import get_country_or_404
@@ -77,14 +78,14 @@ def admin_payout_batches(db: Session, current_user: dict):
     return [{'id': b.id, 'batch_number': b.batch_number, 'country_code': b.country_code, 'total_amount': float(b.total_amount), 'status': b.status, 'created_at': b.created_at.isoformat(), 'created_by': b.created_by, 'created_by_name': b.creator.full_name if b.creator else None, 'approved_by': b.approved_by, 'approved_by_name': b.approver.full_name if b.approver else None} for b in batches]
 
 def admin_generate_payout_batch(country_code: str, cutoff_date: date, db: Session, current_user: dict):
-    from domains.payments.ports import payout_query, payout_model
+    from domains.finance.ports import payout_query, payout_model
     from domains.comms.models.suppliers import SupplierProfile
     P = payout_model()
     pending_payouts = payout_query(db).filter(P.country_code == country_code, P.status == 'pending', P.created_at <= cutoff_date).all()
     if not pending_payouts:
         raise HTTPException(status_code=404, detail='No pending payouts found for the given criteria')
     total = sum((p.amount for p in pending_payouts))
-    batch = PayoutBatch(batch_number=f"PB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}", country_code=country_code, total_amount=total, item_count=len(pending_payouts), status='draft', created_by=current_user.get('id'))
+    batch = PayoutBatch(batch_number=f"PB-{utcnow().strftime('%Y%m%d%H%M%S')}", country_code=country_code, total_amount=total, item_count=len(pending_payouts), status='draft', created_by=current_user.get('id'))
     db_write.add(db, batch)
     db_write.flush(db)
     for payout in pending_payouts:
@@ -117,7 +118,7 @@ def admin_dispatch_payout_batch(batch_id: int, db: Session, current_user: dict):
     engine = TreasuryEngine(db)
     entry = engine.post_journal_entry(lines=[{'account_code': PAYABLES_ACCOUNT, 'debit': float(batch.total_amount), 'description': f'Payout batch {batch.batch_number}'}, {'account_code': CASH_ACCOUNT, 'credit': float(batch.total_amount), 'description': f'Payout batch {batch.batch_number}'}], description=f'Dispatch payout batch {batch.batch_number}', source='payout_dispatch', country_code=batch.country_code, created_by=current_user.get('id'))
     batch.status = 'dispatched'
-    batch.dispatched_at = datetime.utcnow()
+    batch.dispatched_at = utcnow()
     commit_only(db)
     return {'status': 'dispatched', 'batch_id': batch.id, 'batch_number': batch.batch_number, 'journal_entry_id': entry.id, 'reference_number': entry.reference_number}
 
@@ -152,7 +153,7 @@ def admin_gateway_summary(db: Session, current_user: dict):
 
 def admin_snapshot_cash_position(db: Session, current_user: dict):
     accounts = db_read_execute(db, select(TreasuryAccount).where(TreasuryAccount.is_active == True)).scalars().all()
-    now = datetime.utcnow()
+    now = utcnow()
     for a in accounts:
         snap = CashPositionSnapshot(snapshot_time=now, account_id=a.id, balance=a.balance, currency=a.currency or 'USD')
         db_write.add(db, snap)
@@ -177,13 +178,13 @@ def consolidated_treasury_ledger(limit: int, db: Session, current_user: dict):
 def consolidated_trial_balance(page: int, page_size: int, db: Session, current_user: dict):
     query = db_read_query(db, Account).filter(Account.is_active == True)
     total = query.count()
-    accounts = query.order_by(Account.code).offset((page - 1) * page_size).limit(page_size).all()
+    accounts = query.order_by(Account.code) * page_size).limit(page_size).all()
     return {'data': [{'id': a.id, 'code': a.code, 'name': a.name, 'normal_side': a.normal_side, 'total_debits': float(db_read_query(db, func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == 'debit').scalar() or 0), 'total_credits': float(db_read_query(db, func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == 'credit').scalar() or 0)} for a in accounts], 'total': total, 'page': page, 'page_size': page_size}
 
 def consolidated_cash_position(page: int, page_size: int, db: Session, current_user: dict):
     query = db_read_query(db, TreasuryAccount).filter(TreasuryAccount.is_active == True)
     total = query.count()
-    accounts = query.offset((page - 1) * page_size).limit(page_size).all()
+    accounts = query * page_size).limit(page_size).all()
     total_balance = float(db_read_query(db, func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {'accounts': [{'id': a.id, 'name': a.name, 'balance': float(a.balance or 0), 'currency': a.currency or 'USD'} for a in accounts], 'total_balance': total_balance, 'total': total, 'page': page, 'page_size': page_size}
 
@@ -211,7 +212,7 @@ def consolidated_cash_forecasts(db: Session, current_user: dict):
 
 def consolidated_reconciliation_pipeline(limit: int, db: Session, current_user: dict):
     from domains.orders.ports import order_query, order_model
-    from domains.payments.ports import payment_query, payout_query, payment_model
+    from domains.finance.ports import payment_query, payout_query, payment_model
     O = order_model()
     P = payment_model()
     pipeline = []
@@ -290,7 +291,7 @@ def admin_reconciliation_pipeline(country_code: str, status: Optional[str], limi
     cc = country_code.upper()
     try:
         from domains.orders.ports import order_query, order_model, order_item_query, order_item_model
-        from domains.payments.ports import payment_query, payment_model, payout_query, payout_model
+        from domains.finance.ports import payment_query, payment_model, payout_query, payout_model
         from domains.logistics.ports import shipment_query, shipment_model, logistics_partner_query
         from domains.governance.ports import logistics_cod_remittance_receipt_query
         from domains.finance.services.commission.commission_engine import get_effective_rate

@@ -2,14 +2,15 @@
 Customer Health Engine - Calculates trust scores and risk metrics for customers.
 """
 from __future__ import annotations
-from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any
+from datetime import timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import ReturnRequest
+from infrastructure.utils.datetime_utils import utcnow
 
 
 class CustomerHealthEngine:
@@ -25,7 +26,7 @@ class CustomerHealthEngine:
         if not user:
             return {"error": "Customer not found"}
         
-        now = datetime.utcnow()
+        now = utcnow()
         thirty_days_ago = now - timedelta(days=30)
         
         orders = self._get_orders(user_id, thirty_days_ago, now)
@@ -79,7 +80,7 @@ class CustomerHealthEngine:
         risk = 0.0
         if not getattr(user, "email_verified", None):
             risk += 0.3
-        if user.phone is None:
+        if getattr(user, "phone", None) is None:
             risk += 0.2
         return min(risk, 1.0)
     

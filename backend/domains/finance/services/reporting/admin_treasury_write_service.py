@@ -26,7 +26,7 @@ from domains.finance.models.finance import PayoutBatchItem
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TreasuryAccount
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from infrastructure.utils.constants import CASH_ACCOUNT, PAYABLES_ACCOUNT
 import structlog
@@ -61,7 +61,7 @@ def generate_payout_batch(
 
     total = sum(p.amount for p in pending_payouts)
     batch = PayoutBatch(
-        batch_number=f"PB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+        batch_number=f"PB-{utcnow().strftime('%Y%m%d%H%M%S')}",
         country_code=country_code,
         total_amount=total,
         item_count=len(pending_payouts),
@@ -149,7 +149,7 @@ def dispatch_payout_batch(db: Session, *, batch_id: int, actor_id: Any = None) -
     )
 
     batch.status = "dispatched"
-    batch.dispatched_at = datetime.utcnow()
+    batch.dispatched_at = utcnow()
     db.commit()
 
     return {
@@ -170,7 +170,7 @@ def snapshot_cash_position(db: Session) -> dict:
         select(TreasuryAccount).where(TreasuryAccount.is_active == True)  # noqa: E712
     ).scalars().all()
 
-    now = datetime.utcnow()
+    now = utcnow()
     for a in accounts:
         snap = CashPositionSnapshot(
             snapshot_time=now,

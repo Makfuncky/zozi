@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 
 from domains.governance.ports import RolePermissionSetting
 from domains.governance.ports import SupplierDispute
-from domains.payments.models.payments import Banner
+from domains.catalog.models.promotions import Banner
 
 from infrastructure.database.seed import _ensure_demo_user, _seed_password
 

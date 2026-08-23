@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.utils.audit import audit_log, AuditAction
 from domains.governance.models.admin import CouponUsage
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 from kernel.money import round_money
 
 

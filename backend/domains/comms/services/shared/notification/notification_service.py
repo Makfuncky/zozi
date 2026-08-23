@@ -4,7 +4,6 @@ from typing import Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.governance.ports import AuditLog
 from infrastructure.utils.datetime_utils import utcnow as utcnow
 import structlog
 logger = structlog.get_logger(__name__)
@@ -27,6 +26,8 @@ class NotificationService:
         priority: str = "medium",
     ) -> dict:
         """Send an alert to the fraud monitoring dashboard."""
+        # Lazy import to avoid circular dependency
+        from domains.governance.ports import AuditLog
         audit = AuditLog(
             event_type="fraud_alert",
             actor_id=None,
@@ -96,4 +97,76 @@ class NotificationService:
             type="fulfillment_success",
             priority="medium"
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Standalone service functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def create_notification_service(db=None):
+    """Factory function to create a NotificationService instance."""
+    if db is None:
+        from infrastructure.database.database import get_db
+        db = next(get_db())
+    return NotificationService(db)
+
+
+def get_user_notifications(user_id, limit=50):
+    """Get notifications for a user."""
+    from domains.comms.models.communication import Notification
+    from infrastructure.database.database import get_db
+    db = next(get_db())
+    return db.query(Notification).filter(
+        Notification.user_id == user_id
+    ).order_by(Notification.created_at.desc()).limit(limit).all()
+
+
+def mark_notification_read(notification_id):
+    """Mark a notification as read."""
+    from domains.comms.models.communication import Notification
+    from infrastructure.database.database import get_db
+    db = next(get_db())
+    notification = db.query(Notification).filter(Notification.id == notification_id).first()
+    if notification:
+        notification.is_read = True
+        notification.read_at = utcnow()
+        db.commit()
+        return True
+    return False
+
+
+def mark_all_notifications_read(user_id):
+    """Mark all notifications as read for a user."""
+    from domains.comms.models.communication import Notification
+    from infrastructure.database.database import get_db
+    db = next(get_db())
+    db.query(Notification).filter(
+        Notification.user_id == user_id,
+        Notification.is_read == False
+    ).update({"is_read": True, "read_at": utcnow()})
+    db.commit()
+
+
+def delete_notification(notification_id):
+    """Delete a notification."""
+    from domains.comms.models.communication import Notification
+    from infrastructure.database.database import get_db
+    db = next(get_db())
+    notification = db.query(Notification).filter(Notification.id == notification_id).first()
+    if notification:
+        db.delete(notification)
+        db.commit()
+        return True
+    return False
+
+
+def get_unread_count(user_id):
+    """Get unread notification count for a user."""
+    from domains.comms.models.communication import Notification
+    from infrastructure.database.database import get_db
+    db = next(get_db())
+    return db.query(Notification).filter(
+        Notification.user_id == user_id,
+        Notification.is_read == False
+    ).count()
 

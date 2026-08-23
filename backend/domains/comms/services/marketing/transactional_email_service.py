@@ -5,7 +5,6 @@ from typing import Any, Iterable, cast
 from sqlalchemy.orm import selectinload
 
 from infrastructure.database.database import get_service_session
-from domains.governance.ports import User
 from domains.logistics.ports import Shipment
 from domains.orders.ports import Order
 from domains.orders.ports import OrderItem
@@ -488,9 +487,9 @@ def register_email_event_handlers() -> None:
     global _email_handlers_registered
     if _email_handlers_registered:
         return
-    from domains.comms.services.event_bus import EVENT_ORDER_REFUNDED
-    from domains.comms.services.event_bus import EVENT_ORDER_STATUS_CHANGED
-    from domains.comms.services.event_bus import subscribe
+    from domains.comms.services.shared.utility.event_bus import EVENT_ORDER_REFUNDED
+    from domains.comms.services.shared.utility.event_bus import EVENT_ORDER_STATUS_CHANGED
+    from domains.comms.services.shared.utility.event_bus import subscribe
 
     def _on_order_status_changed(payload: dict) -> None:
         enqueue_order_status_email(

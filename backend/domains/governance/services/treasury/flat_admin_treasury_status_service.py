@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.governance.models.user import User
 from domains.finance.models.finance import FinanceAutomationLog
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404

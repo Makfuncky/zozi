@@ -17,11 +17,11 @@ from sqlalchemy.orm import Session
 
 from domains.governance.models.admin import NormalizedWebhookEvent
 from domains.governance.models.admin import ProcessedWebhookEvent
-from domains.payments.services.base import BasePaymentGateway
-from domains.payments.services.registry import PaymentGatewayRegistry
-from domains.payments.services.webhook_models import ZoziPaymentEvent
-from domains.payments.services.webhook_models import ZoziRefundEvent
-from domains.payments.services.webhook_models import ZoziChargebackEvent
+from domains.finance.services.payments.base import BasePaymentGateway
+from domains.finance.services.payments.registry import PaymentGatewayRegistry
+from domains.finance.services.payments.webhook_models import ZoziPaymentEvent
+from domains.finance.services.payments.webhook_models import ZoziRefundEvent
+from domains.finance.services.payments.webhook_models import ZoziChargebackEvent
 from infrastructure.utils.vault import decrypt_secret
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class WebhookProcessor:
         return cls() if cls else None
 
     def _load_webhook_secret(self, provider_code: str) -> Optional[str]:
-        from domains.payments.models.payments import PaymentGatewayConnection
+        from domains.finance.models.payments import PaymentGatewayConnection
         record = self.db.query(PaymentGatewayConnection).filter(
             PaymentGatewayConnection.provider_code == provider_code,
             PaymentGatewayConnection.is_active == True,

@@ -11,7 +11,7 @@ from domains.comms.models.communication import Notification
 from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import SupplierSettlement
 from domains.governance.models.admin import LogisticsSettlement
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from infrastructure.utils.audit import audit_log, AuditAction
 
 

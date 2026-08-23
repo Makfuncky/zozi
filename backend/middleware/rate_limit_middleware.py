@@ -53,6 +53,12 @@ LOADTEST_PATH_LIMITS: list[tuple[str, int, int]] = [
 DEFAULT_LIMIT = (60, 60)
 LOADTEST_DEFAULT_LIMIT = (600, 60)
 STATE_METHODS = frozenset({"POST", "PUT", "DELETE", "PATCH"})
+# GET/HEAD requests are also rate-limited but with a higher ceiling to prevent
+# read-flooding DoS amplification. The limit is intentionally generous to avoid
+# breaking legitimate browsing while still capping abuse.
+READ_METHODS = frozenset({"GET", "HEAD"})
+READ_LIMIT = (300, 60)  # 300 reads per 60 seconds
+LOADTEST_READ_LIMIT = (3000, 60)
 
 _memory_store: Dict[str, list] = defaultdict(list)
 _memory_store_locks: Dict[str, threading.Lock] = defaultdict(threading.Lock)
@@ -114,13 +120,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        if request.method not in STATE_METHODS:
+        # Rate-limit both stateful (write) and read methods.
+        # Read methods (GET/HEAD) use a higher ceiling to prevent read-flooding
+        # DoS amplification while not breaking legitimate browsing.
+        if request.method in STATE_METHODS:
+            max_r, window = self._get_path_tier(request.url.path)
+        elif request.method in READ_METHODS:
+            max_r, window = (
+                LOADTEST_READ_LIMIT if settings.loadtest_profile_enabled else READ_LIMIT
+            )
+        else:
             return await call_next(request)
 
         if settings.loadtest_profile_enabled:
             logger.warning("loadtest_profile_enabled is ON — using elevated rate limits")
 
-        max_r, window = self._get_path_tier(request.url.path)
         client_ip = get_request_ip(request)
         user_id = getattr(getattr(request, "state", None), "user_id", None)
         key_suffix = str(user_id) if user_id else client_ip

@@ -30,9 +30,9 @@ from domains.governance.models.admin import PaymentProviderConfig
 from domains.governance.models.admin import ProcessedWebhookEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Coupon
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import PaymentGatewayConnection
+from domains.catalog.models.promotions import Coupon
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import PaymentGatewayConnection
 from infrastructure.messaging.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
 from infrastructure.utils.config import settings
 from infrastructure.utils.currency import (

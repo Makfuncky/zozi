@@ -103,7 +103,6 @@ def create_review(
         image_url=image_url,
         is_verified_purchase=is_verified_purchase,
         country_code=country_code,
-        created_by=user_id,
     )
     db.add(review)
     db.commit()

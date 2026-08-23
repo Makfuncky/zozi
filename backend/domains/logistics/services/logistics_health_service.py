@@ -1,70 +1,34 @@
-"""Logistics partner health read service.
-
-Holds the DB read/serialization logic for partner health endpoints so the
-surface router stays a thin delegator (routers -> controllers -> services).
-"""
+"""Auto-migrated service logic from routers/logistics_health.py."""
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from domains.logistics.models.logistics import LogisticsPartner
-from domains.logistics.models.logistics import LogisticsPartnerProfile
+from domains.governance.services.auth.auth_controller_service import get_current_user
+
+from infrastructure.database.database import get_db
+
 from domains.logistics.services.logistics_health_engine import get_logistics_health_engine
 
-# Number of partners returned by the list endpoint.
-LIST_LIMIT = 50
-
-
-def get_partner_health(
-    db: Session, partner_id: int, country_code: Optional[str] = None
-) -> Dict[str, Any]:
-    """Compute the health score for a single logistics partner.
-
-    Returns the engine's score dict. Callers should treat a dict containing an
-    ``"error"`` key as "partner not found".
-    """
+def get_logistics_health(partner_id: int, country_code: str, current_user: dict, db: Session):
     engine = get_logistics_health_engine(db)
     return engine.calculate_health_score(partner_id, country_code)
 
-
-def list_logistics_health(
-    db: Session, country_code: Optional[str] = None
-) -> Dict[str, Any]:
-    """Return a trust-score-ranked snapshot of every logistics partner profile.
-
-    The engine is instantiated once and reused across profiles to avoid
-    per-iteration connection churn.
-    """
-    engine = get_logistics_health_engine(db)
+def list_logistics_health(country_code: str, current_user: dict, db: Session):
+    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.logistics.models.logistics import LogisticsPartnerProfile
     profiles = db.query(LogisticsPartnerProfile).all()
-
-    results: list[Dict[str, Any]] = []
-    for profile in profiles:
-        health = dict(engine.calculate_health_score(profile.id, country_code))
-        partner = (
-            db.query(LogisticsPartner)
-            .filter(LogisticsPartner.id == profile.partner_id)
-            .first()
-        )
+    results = []
+    for p in profiles:
+        engine = get_logistics_health_engine(db)
+        health = engine.calculate_health_score(p.id, country_code)
+        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == p.partner_id).first()
         health["profile"] = {
             "name": partner.name if partner else None,
             "rating": 0,
         }
         results.append(health)
-
-    results.sort(key=lambda item: item.get("trust_score", 0), reverse=True)
-    return {"logistics_partners": results[:LIST_LIMIT]}
-
-
-# === Merged from accounts/services/logistics_health_service.py ===
-
-def get_logistics_health(partner_id: int, country_code: str, current_user: dict, db: Session):
-
-    engine = get_logistics_health_engine(db)
-
-    return engine.calculate_health_score(partner_id, country_code)
-
-
+    results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
+    return {"logistics_partners": results[:50]}
 

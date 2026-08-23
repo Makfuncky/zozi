@@ -7,7 +7,14 @@ from typing import Optional, List
 
 from sqlalchemy.orm import Session
 
-from domains.governance.ports import AuditLog
+# AuditLog imported lazily to avoid circular import
+_AuditLog_model = None
+def _get_AuditLog():
+    global _AuditLog_model
+    if _AuditLog_model is None:
+        from domains.governance.ports import AuditLog as _A
+        _AuditLog_model = _A
+    return _AuditLog_model
 from domains.governance.models.admin import EmployeeExpense
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -90,7 +97,7 @@ class ExpenseProcessingService:
         expense.approved_by = approver_id
         expense.approved_at = _utcnow()
         
-        audit = AuditLog(
+        audit = _get_AuditLog()(
             event_type="expense_approval",
             actor_id=approver_id,
             action="approve" if approved else "reject",

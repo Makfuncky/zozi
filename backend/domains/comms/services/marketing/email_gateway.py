@@ -14,12 +14,9 @@ from typing import List, Optional, Dict, Any
 
 from sqlalchemy.orm import Session
 
-from domains.governance.ports import User
 from domains.comms.models.communication import Notification
 from domains.comms.models.communication import InternalEmail
 from domains.comms.models.communication import EmailFolder
-from domains.hr.ports import Employee
-from domains.governance.ports import DLPViolation
 from infrastructure.utils.email_service import send_email, get_email_sender_address, build_email_open_tracking_url
 import structlog
 logger = structlog.get_logger(__name__)

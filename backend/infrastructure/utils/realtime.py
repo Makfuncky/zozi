@@ -20,7 +20,7 @@ from domains.comms.models.communication import InternalEmail
 from domains.comms.models.suppliers import SupplierProfile
 from domains.governance.models.admin import SupplierDispute
 from domains.governance.models.admin import TicketReply
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from infrastructure.utils.config import settings
 
 

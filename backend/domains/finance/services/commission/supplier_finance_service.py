@@ -1,4 +1,4 @@
-"""
+﻿"""
 Supplier Finance Service
 =======================
 Read/write helpers for supplier payment-status and payout-status endpoints.
@@ -24,7 +24,7 @@ from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import SupplierBankAccount
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from infrastructure.utils.pagination import cursor_paginate_desc
 from domains.comms.services.utility.write_helpers import add_and_flush
 from domains.comms.services.utility.write_helpers import commit_and_refresh
@@ -61,7 +61,7 @@ def get_payout_summary(db: Session, current_user, skip: int = 0, limit: int = 20
             SupplierSettlement.supplier_id == user_id,
             SupplierSettlement.status.in_(["pending", "eligible"]),
         )
-        .offset(skip).limit(limit)
+        .limit(limit)
         .all()
     )
     total_pending = sum(float(s.net_amount or 0) for s in pending_settlements)
@@ -72,7 +72,7 @@ def get_payout_summary(db: Session, current_user, skip: int = 0, limit: int = 20
             Payout.user_id == user_id,
             Payout.status == "completed",
         )
-        .offset(skip).limit(limit)
+        .limit(limit)
         .all()
     )
     total_paid = sum(float(p.amount or 0) for p in paid_payouts)
@@ -531,7 +531,7 @@ def list_supplier_orders_with_payout_status(page: int, page_size: int, status_fi
 
         .order_by(desc(Order.created_at))
 
-        .offset((page - 1) * page_size)
+         * page_size)
 
         .limit(page_size)
 

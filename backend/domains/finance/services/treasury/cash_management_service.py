@@ -9,6 +9,9 @@ Responsibilities:
   - Reconciliation engine for COD and card payments
   - Refund ledger creation on cancellation/return
 """
+
+from __future__ import annotations
+from pydantic import BaseModel
 import logging
 import json
 import uuid
@@ -26,22 +29,7 @@ from domains.finance.models.finance import RefundLedger
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import VATRemittance
-from domains.governance.ports import badge_billing_record_query
-from domains.governance.ports import finance_bank_account_query
-from domains.governance.ports import logistics_cod_remittance_receipt_query
-from domains.governance.ports import logistics_settlement_query
-from domains.governance.ports import processed_webhook_event_query
-from domains.logistics.ports import logistics_partner_query
-from domains.logistics.ports import logistics_partner_service_area_query
-from domains.logistics.ports import shipment_query
-from domains.orders.ports import order_query
-from domains.orders.ports import order_item_query
-from domains.orders.ports import order_logistics_allocation_query
-from domains.orders.ports import return_request_query
-from domains.payments.ports import logistics_partner_payout_query
-from domains.payments.ports import payout_query
-from domains.payments.ports import payment_gateway_connection_query
-from domains.payments.ports import payment_reconciliation_run_query
+from domains.orders.ports import Order, OrderItem, OrderLogisticsAllocation
 from domains.logistics.services.logistics_partner_pricing import _build_service_area_pricing_breakdown
 from domains.logistics.services.logistics_partner_pricing import lookup_city_distance_km
 from domains.logistics.services.logistics_partner_pricing import normalize_pricing_breakdown_payload
@@ -58,6 +46,76 @@ from domains.finance.services.ledger.finance_transfer_service import execute_tra
 from domains.finance.services.ledger.finance_transfer_service import get_default_transfer_provider
 from domains.finance.services.ledger.finance_transfer_service import list_transfer_export_providers
 from infrastructure.utils.config import settings
+
+
+def _get_governance_ports():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.governance.ports import (
+        badge_billing_record_query,
+        finance_bank_account_query,
+        logistics_cod_remittance_receipt_query,
+        logistics_settlement_query,
+        processed_webhook_event_query,
+    )
+    return (
+        badge_billing_record_query,
+        finance_bank_account_query,
+        logistics_cod_remittance_receipt_query,
+        logistics_settlement_query,
+        processed_webhook_event_query,
+    )
+
+
+def _get_logistics_ports():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.logistics.ports import (
+        logistics_partner_query,
+        logistics_partner_service_area_query,
+        shipment_query,
+    )
+    return (
+        logistics_partner_query,
+        logistics_partner_service_area_query,
+        shipment_query,
+    )
+
+
+def _get_logistics_models():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.logistics.ports import LogisticsPartnerServiceArea, Shipment
+    return LogisticsPartnerServiceArea, Shipment
+
+def _get_orders_models():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.orders.ports import Order, OrderItem, OrderLogisticsAllocation
+    return Order, OrderItem, OrderLogisticsAllocation
+
+def _get_governance_models():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.governance.ports import FinanceBankAccount, LogisticsSettlement, LogisticsPartnerPayout, LogisticsCODRemittanceReceipt
+    return FinanceBankAccount, LogisticsSettlement, LogisticsPartnerPayout, LogisticsCODRemittanceReceipt
+
+def _get_payments_models():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.finance.ports import Payout
+    return Payout
+
+
+def _get_governance_models():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.governance.ports import (
+        FinanceBankAccount,
+        LogisticsSettlement,
+        LogisticsPartnerPayout,
+        LogisticsCODRemittanceReceipt,
+    )
+    return FinanceBankAccount, LogisticsSettlement, LogisticsPartnerPayout, LogisticsCODRemittanceReceipt
+
+
+def _get_payments_models():
+    """Lazy import to avoid circular dependency at module load."""
+    from domains.finance.ports import Payout
+    return Payout
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from kernel.money import round_money, to_decimal
 from domains.finance.services.finance import commission_engine as _commission_engine
@@ -1136,7 +1194,7 @@ def list_vat_remittances(db: Session, *, skip: int = 0, limit: int = 50) -> list
     return (
         db.query(VATRemittance)
         .order_by(VATRemittance.period_end.desc(), VATRemittance.id.desc())
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )
@@ -2221,7 +2279,7 @@ def list_cod_remittance_receipts(
         q = q.filter(LogisticsCODRemittanceReceipt.settlement_id == settlement_id)
     if status:
         q = q.filter(LogisticsCODRemittanceReceipt.status == status)
-    return q.order_by(LogisticsCODRemittanceReceipt.created_at.desc(), LogisticsCODRemittanceReceipt.id.desc()).offset(skip).limit(limit).all()
+    return q.order_by(LogisticsCODRemittanceReceipt.created_at.desc(), LogisticsCODRemittanceReceipt.id.desc()).limit(limit).all()
 
 
 def create_cod_remittance_receipt(

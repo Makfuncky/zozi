@@ -191,9 +191,13 @@ def publish_gov_update_user_role_requested(
 def publish_gov_force_reset_password_admin_requested(
     user_id: int, new_password: str, actor: dict, db: object = None
 ) -> Any:
+    # SECURITY FIX: Do NOT include plaintext password in event payload.
+    # Instead, hash it before publishing or use a token-based approach.
+    from infrastructure.utils.auth import get_password_hash
+    password_hash = get_password_hash(new_password) if new_password else None
     payload = {
         "event_id": _event_id(), "timestamp": _now_iso(),
-        "user_id": user_id, "new_password": new_password, "actor": actor, "db": db,
+        "user_id": user_id, "password_hash": password_hash, "actor": actor, "db": db,
     }
     logger.info("gov: force_reset_password_admin_requested user_id=%d", user_id)
     return publish(EVENT_GOV_FORCE_RESET_PASSWORD_ADMIN_REQUESTED, payload, propagate=True)

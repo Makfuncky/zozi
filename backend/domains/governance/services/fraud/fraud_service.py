@@ -49,13 +49,15 @@ class FraudService:
         self.db.refresh(event)
         return event
     
-    def check_blacklist(self, entity_type: str, entity_value: str) -> bool:
-        """Check if entity is blacklisted."""
+    def check_blacklist(self, identifier_type: str, identifier_value: str) -> bool:
+        """Check if identifier is blacklisted."""
+        import hashlib
+        value_hash = hashlib.sha256(identifier_value.encode()).hexdigest()
         blacklisted = (
             self.db.query(FraudBlacklist)
             .filter(
-                FraudBlacklist.entity_type == entity_type,
-                FraudBlacklist.entity_value == entity_value,
+                FraudBlacklist.identifier_type == identifier_type,
+                FraudBlacklist.identifier_value_hash == value_hash,
                 FraudBlacklist.is_active == True,
             )
             .first()

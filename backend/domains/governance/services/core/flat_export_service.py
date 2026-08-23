@@ -25,7 +25,7 @@ from domains.governance.models.core import AuditLog
 from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 from domains.customers.services.export_read_service import MAX_EXPORT_ROWS
 from domains.customers.services.export_read_service import db_auditlog_query_4
 from domains.customers.services.export_read_service import db_coupon_all_3

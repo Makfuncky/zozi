@@ -42,7 +42,7 @@ import domains.media.services.ai_search_service
 
 import domains.orders.services
 
-import domains.country.services.cross_border_tracker
+import domains.country.services.cross_border.cross_border_tracker
 
 import domains.customers.services.customer_health_engine
 
@@ -98,23 +98,22 @@ import domains.media.services.country_ai_research
 
 import domains.logistics.services.country_communication_service
 
-import domains.country.services.country_data_orchestrator
+import domains.country.services.research.country_data_orchestrator
 
-import domains.country.services.country_detection
+import domains.country.services.geo.country_detection
 
-import domains.country.services.country_heuristic_engine
+import domains.country.services.research.country_heuristic_engine
 
-import domains.country.services.country_research
+import domains.country.services.research.country_research
 
-import domains.country.services.country_rls_service
 
-import domains.country.services.cross_border_detection
+import domains.country.services.cross_border.cross_border_detection
 
 import domains.comms.services
 
 import domains.suppliers.services.legal_contract_service
 
-import domains.country.services.localization_service
+import domains.country.services.localization.localization_service
 
 import domains.logistics.services.map_service
 
@@ -130,7 +129,7 @@ import domains.finance.services.ledger.invoice_write_service
 
 # REMOVED: registry referenced 'services.finance.orphan_detector_service' but no such module exists in the codebase
 
-import domains.finance.services.payments.payment_orchestrator
+import domains.finance.services.payouts.payment_orchestrator
 
 # REMOVED: registry referenced 'services.treasury.payouts_write_service' but no such module exists in the codebase
 
@@ -190,7 +189,7 @@ import domains.hr.services.succession_service
 
 import domains.hr.services.travel_detector
 
-import domains.country.services.travel_service
+import domains.hr.services.travel_service
 
 # REMOVED: registry referenced 'services.location.main' but no such module exists in the codebase
 

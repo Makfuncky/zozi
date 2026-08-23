@@ -37,7 +37,7 @@ from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderLogisticsAllocation
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.services.treasury.cash_management_service import apply_shipment_vehicle_selection
 from domains.finance.services.treasury.cash_management_service import create_cod_remittance_receipt
 from domains.finance.services.treasury.cash_management_service import deserialize_pricing_breakdown_json

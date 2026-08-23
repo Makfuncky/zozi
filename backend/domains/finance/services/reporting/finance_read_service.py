@@ -25,7 +25,7 @@ from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TreasuryAccount
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 

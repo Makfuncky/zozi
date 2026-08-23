@@ -6,7 +6,6 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
-from domains.comms.mixins import VersionMixin
 __all__ = ['CountryConfig', 'CountryCommunication', 'CountryGatewayCredentials', 'PayoutRule', 'TaxRule', 'ShippingRule', 'Message', 'PayoutRuleCategory', 'PayoutRuleProduct']
 
 class CountryConfig(Base):
@@ -182,7 +181,7 @@ class PayoutRule(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_payout_rules_country_created', 'country_code', 'created_at'), {'schema': 'treasury'})
+    __table_args__ = (Index('ix_payout_rules_country_created', 'country_code', 'created_at'), {'schema': 'country'})
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(3), nullable=False)
     min_amount = Column(Numeric(12, 2), nullable=True)
@@ -222,7 +221,7 @@ class ShippingRule(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_shipping_rules_country_created', 'country_code', 'created_at'), {'schema': 'logistics'})
+    __table_args__ = (Index('ix_shipping_rules_country_created', 'country_code', 'created_at'), {'schema': 'country'})
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(3), nullable=False)
     method = Column(String, nullable=False)

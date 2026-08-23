@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from domains.country.services.country_detection import CountryDetectionService
+from domains.country.services.geo.country_detection import CountryDetectionService
 
 router = APIRouter()
 

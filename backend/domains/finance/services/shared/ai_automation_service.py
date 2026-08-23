@@ -1,5 +1,5 @@
 ﻿from __future__ import annotations
-from domains.finance.services.payments.payout_batch_service import _log_automation
+from domains.finance.services.payouts.payout_batch_service import _log_automation
 
 import logging
 import os

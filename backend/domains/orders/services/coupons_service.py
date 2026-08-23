@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 from infrastructure.utils.audit import audit_log, AuditAction
 from domains.catalog.models.products import Product
 from domains.governance.models.admin import CouponUsage
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 from infrastructure.database.schemas import CouponValidate, OrderItemBase
 from infrastructure.utils.datetime_utils import utcnow
 from kernel.money import round_money, to_decimal

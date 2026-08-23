@@ -1,2 +1,2 @@
-"""finance domain services package."""
+"""finance domain — services sub-package."""
 from __future__ import annotations

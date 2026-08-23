@@ -69,7 +69,7 @@ from domains.comms.services.ticket.tickets_service import list_tickets
 from domains.governance.services.admin_controller import get_ticket_detail
 from domains.comms.services.ticket.tickets_service import reply_to_ticket
 from domains.comms.services.ticket.tickets_write_service import update_ticket_status
-from domains.finance.services.payments.payout_approval_read_service import list_pending_payouts
+from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
 from domains.logistics.logistics_partner_service import verify_payout
 from domains.governance.services.permissions.permissions_service import get_hierarchy_permissions
 from domains.governance.services.permissions.permissions_service import update_role_permissions
@@ -1307,7 +1307,7 @@ def verify_payout_route(
     current_admin: dict = Depends(require_admin_2fa_verified),
 ):
     require_permission("payouts.verify", current_admin)
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payout
     payout = db.query(Payout).filter(Payout.id == payout_id).first()
     amount = float(payout.amount) if payout and payout.amount is not None else None
     require_approval(db, current_admin["id"], "payout", amount=amount)

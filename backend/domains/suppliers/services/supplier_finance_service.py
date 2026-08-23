@@ -17,7 +17,7 @@ from domains.finance.models.finance import TransactionLedger
 from domains.governance.models.admin import SupplierBankAccount
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 import structlog
 logger = structlog.get_logger(__name__)
 

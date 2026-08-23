@@ -17,13 +17,10 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.schemas import (
     CartItemCreate,
-    CartItemIn,
-    CartItemViewOut,
     CartSyncRequest,
     CartViewOut,
-    ProductCartViewOut,
 )
-from domains.governance.models.core import CartItem
+from domains.accounts.models.core import CartItem
 from domains.catalog.models.products import Product
 from domains.customers.services.cart_write_service import create_cart_item
 from domains.customers.services.cart_write_service import delete_cart_items_by_user
@@ -150,7 +147,7 @@ def get_cart(user_id: int, db: Session) -> CartViewOut:
     items = load_cart_items(db, user_id)
     normalized = [_serialize_cart_item(i) for i in items]
     subtotal = float(sum(i["price"] * i["quantity"] for i in normalized))
-    return CartViewOut(items=normalized, subtotal=subtotal, item_count=len(normalized))
+    return CartViewOut(items=normalized, subtotal=subtotal, total_items=len(normalized))
 
 
 # ── Writes ─────────────────────────────────────────────────────────────────────
@@ -233,7 +230,7 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> CartViewOut:
     """
     if not body.items:
         delete_cart_items_by_user(db, user_id)
-        return CartViewOut(items=[], subtotal=0.0, item_count=0)
+        return CartViewOut(items=[], subtotal=0.0, total_items=0)
 
     product_ids = sorted({item.product_id for item in body.items})
     products = {p.id: p for p in get_products_by_ids(db, product_ids)}

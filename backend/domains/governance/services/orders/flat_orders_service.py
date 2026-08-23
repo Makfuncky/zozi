@@ -21,7 +21,7 @@ from infrastructure.utils.auth import require_permission
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
 from domains.orders.utils.order_tracking import reconcile_order_status, order_status_label
-from domains.payments.services.payments import apply_order_status_change
+from domains.finance.services.payments.payments import apply_order_status_change
 from providers.payments.stripe import refund_payment_intent
 import logging
 from sqlalchemy.exc import IntegrityError
@@ -430,7 +430,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
     if order_status not in allowed_statuses:
         raise HTTPException(status_code=409, detail=f"Cannot refund order in '{order_status}' status")
 
-    from domains.payments.services.payments import _apply_stripe_runtime_key
+    from domains.finance.services.payments.payments import _apply_stripe_runtime_key
 
     resolved_key = _apply_stripe_runtime_key(db) or os.getenv("STRIPE_SECRET_KEY", "")
     if not resolved_key:

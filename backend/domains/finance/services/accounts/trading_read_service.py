@@ -1,4 +1,4 @@
-"""Read helpers for purchase orders, goods receipt notes, sales orders and
+﻿"""Read helpers for purchase orders, goods receipt notes, sales orders and
 stock movements.
 
 Previously these ``db.query(...)`` lookups lived inline in
@@ -41,5 +41,5 @@ def list_stock_movements(
     if product_id:
         q = q.filter(StockMovement.product_id == product_id)
     total = q.count()
-    rows = q.order_by(StockMovement.id.desc()).offset(offset).limit(limit).all()
+    rows = q.order_by(StockMovement.id.desc()).limit(limit).all()
     return {"total": total, "items": rows}

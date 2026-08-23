@@ -22,7 +22,7 @@ from domains.finance.models.finance import JournalEntryLine
 from domains.finance.services.ledger.general_ledger_service import create_journal_entry
 from domains.finance.services.ledger.general_ledger_service import get_account_by_code
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from kernel.money import round_money
+from infrastructure.utils.datetime_utils import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ def get_current_fiscal_period(
     country_code: str,
 ) -> Optional[FiscalPeriod]:
     """Get the current open fiscal period for a country."""
-    now = datetime.utcnow()
+    now = utcnow()
     return (
         db.query(FiscalPeriod)
         .filter(
@@ -131,7 +131,7 @@ def close_period(
     # 3. Lock the period
     period.status = "closed"
     period.is_locked = True
-    period.closed_at = datetime.utcnow()
+    period.closed_at = utcnow()
     period.closed_by = closed_by
     period.notes = notes
     db.commit()

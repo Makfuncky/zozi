@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from domains.governance.models.admin import CouponUsage
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Coupon
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
@@ -106,7 +106,7 @@ def validate_coupon(db: Session, code: str, order_total: object) -> dict:
     if not code or order_total is None:
         raise HTTPException(status_code=422, detail="code and order_total are required")
 
-    coupon = db.query(Coupon).filter(Coupon.code == code, Coupon.is_active == True).first()
+    coupon = db.query(Coupon).filter(Coupon.code == code, Coupon.is_active.is_(True)).first()
     if coupon is None:
         raise HTTPException(status_code=404, detail="Coupon not found")
 
@@ -151,10 +151,15 @@ def validate_coupon(db: Session, code: str, order_total: object) -> dict:
     }
 
 
-def list_coupons_paginated(db: Session, page: int, page_size: int) -> dict:
-    total = db.query(func.count(Coupon.id)).scalar() or 0
-    coupons = db.query(Coupon).offset((page - 1) * page_size).limit(page_size).all()
-    return {"data": coupons, "total": total, "page": page, "page_size": page_size}
+def list_coupons_paginated(db: Session, cursor: int | None = None, page_size: int = 20) -> dict:
+    """Keyset (cursor) pagination over coupons."""
+    total = db.query(func.count(Coupon.id)).filter(Coupon.is_deleted.is_(False)).scalar() or 0
+    query = db.query(Coupon).filter(Coupon.is_deleted.is_(False))
+    if cursor is not None:
+        query = query.filter(Coupon.id < int(cursor))
+    coupons = query.order_by(Coupon.id.desc()).limit(min(max(1, page_size), 100)).all()
+    next_cursor = coupons[-1].id if coupons else None
+    return {"data": coupons, "next_cursor": next_cursor, "total": total, "page_size": page_size}
 
 
 def create_coupon_from_payload(db: Session, payload: dict) -> Coupon:
@@ -178,18 +183,11 @@ def create_coupon_from_payload(db: Session, payload: dict) -> Coupon:
 
     coupon = Coupon(
         code=code,
-        title=payload.get("title"),
-        description=payload.get("description"),
         discount_type=discount_type,
-        value=discount_value,
         discount_value=discount_value,
         maximum_discount=payload.get("maximum_discount"),
-        min_order=minimum_order,
         minimum_order=minimum_order,
-        max_uses=usage_limit,
         usage_limit=usage_limit,
-        per_user_limit=payload.get("per_user_limit"),
-        applicable_to=payload.get("applicable_to"),
         is_active=bool(payload.get("is_active", True)),
         starts_at=payload.get("starts_at"),
         expires_at=payload.get("expires_at"),

@@ -37,7 +37,7 @@ from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import ReturnRequest
-from domains.payments.models.payments import PaymentReconciliationRun
+from domains.finance.models.payments import PaymentReconciliationRun
 from infrastructure.utils.redis_client import get_redis
 
 logger = logging.getLogger(__name__)

@@ -15,8 +15,7 @@ from typing import Any, Dict
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.governance.models.user import Referral
-from domains.governance.models.admin import PromotionEngineConfig
+from domains.customers.models.customer_schema_models import Referral
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -27,6 +26,9 @@ def get_referral_config(db: Session) -> Dict[str, Any]:
 
     Falls back to safe defaults when no ``PromotionEngineConfig`` row exists.
     """
+    # Import here to avoid circular import through governance.ports (which has a broken HR chain).
+    from domains.governance.models.admin import PromotionEngineConfig
+
     row = db.query(PromotionEngineConfig).order_by(PromotionEngineConfig.id.desc()).first()
     if row is None:
         return {

@@ -24,7 +24,7 @@ __all__ = [
 
 
 from fastapi import HTTPException
-from domains.payments.ports import Coupon as _Coupon
+from domains.finance.ports import Coupon as _Coupon
 
 def delete_coupon_route(country_code, coupon_id, current_user, db):
     return delete_coupon(coupon_id, current_user, db)

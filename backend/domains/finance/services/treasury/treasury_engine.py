@@ -86,7 +86,13 @@ class TreasuryEngine:
             raise ValueError(f"Journal entry line(s) missing 'account_code' at index: {missing_code}")
         # Build a lookup that also resolves sub-account codes (e.g. "1010-001")
         # to their parent account code ("1010") when the parent exists.
-        all_accounts = self.db.execute(select(Account)).scalars().all()
+        # Only query the accounts we need (not all accounts).
+        parent_codes = set()
+        for code in account_codes:
+            parent_codes.add(str(code).split("-")[0])
+        all_accounts = self.db.execute(
+            select(Account).where(Account.code.in_(list(parent_codes)))
+        ).scalars().all()
         full_map = {a.code: a for a in all_accounts}
         resolved_accounts: Dict[str, Any] = {}
         missing = set()
@@ -176,7 +182,7 @@ class TreasuryEngine:
     
     def _generate_reference_number(self) -> str:
         """Generate unique journal entry reference number."""
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = utcnow().strftime("%Y%m%d%H%M%S")
         count = self.db.execute(select(func.count()).select_from(JournalEntry)).scalar()
         return f"JE-{timestamp}-{count + 1:06d}"
     
@@ -240,7 +246,7 @@ class TreasuryEngine:
         cutoff_date: date,
     ):
         """Generate a new payout batch for suppliers."""
-        return {"batch_number": f"PB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}", "status": "draft"}
+        return {"batch_number": f"PB-{utcnow().strftime('%Y%m%d%H%M%S')}", "status": "draft"}
     
     def approve_payout_batch(
         self,
@@ -323,7 +329,7 @@ class TreasuryEngine:
 
         pending.status = "approved"
         pending.approved_by = approver_id
-        pending.approved_at = datetime.utcnow()
+        pending.approved_at = utcnow()
         pending.journal_entry_id = entry.id
         self.db.commit()
 

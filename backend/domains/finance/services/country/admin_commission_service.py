@@ -1,4 +1,4 @@
-"""Admin commission management service."""
+﻿"""Admin commission management service."""
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
@@ -43,7 +43,7 @@ def list_rates(country_code: str, page: int, page_size: int, db: Session) -> dic
     try:
         q = db.query(CommissionCategoryRate).filter(CommissionCategoryRate.country_code == country_code.upper())
         total = q.count()
-        rows = q.offset((page - 1) * page_size).limit(page_size).all()
+        rows = q * page_size).limit(page_size).all()
         return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()
@@ -85,7 +85,7 @@ def list_badge_tiers(country_code: str, page: int, page_size: int, db: Session) 
     try:
         q = db.query(CommissionBadgeTier).filter(CommissionBadgeTier.country_code == country_code.upper())
         total = q.count()
-        rows = q.offset((page - 1) * page_size).limit(page_size).all()
+        rows = q * page_size).limit(page_size).all()
         return {"data": rows, "total": total, "page": page, "page_size": page_size}
     finally:
         clear_rls_context()

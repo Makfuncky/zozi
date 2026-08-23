@@ -1,9 +1,10 @@
-"""Financial Reports — Income Statement, Balance Sheet, Cash Flow Statement.
+﻿"""Financial Reports — Income Statement, Balance Sheet, Cash Flow Statement.
 
 Generates standard accounting reports from the double-entry ledger (AccountBalance,
 JournalEntry, JournalEntryLine) and persists them to the FinancialReport table.
 """
 from __future__ import annotations
+from infrastructure.utils.datetime_utils import utcnow
 
 import logging
 from datetime import datetime
@@ -483,7 +484,7 @@ def generate_balance_sheet(
     ]
 
     return BalanceSheetReport(
-        as_of_date=as_of_date or datetime.utcnow(),
+        as_of_date=as_of_date or utcnow(),
         asset_lines=asset_lines,
         total_assets=total_assets,
         liability_lines=liability_lines,

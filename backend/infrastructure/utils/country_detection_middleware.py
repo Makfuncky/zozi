@@ -5,7 +5,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from infrastructure.database.database import get_db_session
-from domains.country.services.country_detection import CountryDetectionService
+from domains.country.services.geo.country_detection import CountryDetectionService
 from infrastructure.utils.ip_utils import get_request_ip
 
 logger = logging.getLogger(__name__)

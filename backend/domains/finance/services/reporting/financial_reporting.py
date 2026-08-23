@@ -7,7 +7,14 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.governance.ports import AuditLog
+# AuditLog imported lazily to avoid circular import
+_AuditLog_model = None
+def _get_AuditLog():
+    global _AuditLog_model
+    if _AuditLog_model is None:
+        from domains.governance.ports import AuditLog as _A
+        _AuditLog_model = _A
+    return _AuditLog_model
 from domains.finance.models.finance import JournalEntry
 from domains.finance.models.finance import TreasuryAccount
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -123,8 +130,8 @@ class FinancialReportingService:
         report = _generate_balance_sheet(self.db, as_of_date, currency, country_code)
         data = report.to_dict()
         if persist:
-            period_end = as_of_date or datetime.utcnow()
-            period_start = as_of_date or datetime.utcnow()
+            period_end = as_of_date or utcnow()
+            period_start = as_of_date or utcnow()
             save_report(self.db, "balance_sheet", period_start, period_end, data, country_code)
         return data
 

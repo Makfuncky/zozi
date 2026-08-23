@@ -41,7 +41,7 @@ from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from domains.media.services.ai import ai_service
 from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
 from domains.logistics.services.logistics_partner_pricing import normalize_country_code

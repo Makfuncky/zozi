@@ -13,9 +13,9 @@ from domains.finance.models.finance import CashFlowForecast
 from domains.finance.models.finance import Invoice
 from domains.finance.models.finance import SupplierSettlement
 from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-from domains.payments.models.payments import Payout
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payout
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.ports import Order as OrderModel, order_query
 from domains.orders.ports import (  # Phase B read-helpers (auto)
@@ -411,8 +411,8 @@ def consolidated_cash_forecasts(db: Session):
 
 def consolidated_reconciliation_pipeline(limit, db: Session):
     from domains.orders.ports import Order as OrderModel, order_query
-    from domains.payments.models.payments import Payment as PaymentModel
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payment as PaymentModel
+    from domains.finance.models.payments import Payout
 
     pipeline = []
     orders = order_query(db).filter(
@@ -611,8 +611,8 @@ def admin_reconciliation_pipeline(country_code, status, limit, db: Session):
     try:
         from domains.orders.ports import Order as OrderModel, order_query
         from domains.orders.ports import OrderItem
-        from domains.payments.models.payments import Payment as PaymentModel
-        from domains.payments.models.payments import Payout
+        from domains.finance.models.payments import Payment as PaymentModel
+        from domains.finance.models.payments import Payout
         from domains.logistics.models.logistics import LogisticsPartner
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
         from domains.finance.services.commission.commission_engine import get_effective_rate

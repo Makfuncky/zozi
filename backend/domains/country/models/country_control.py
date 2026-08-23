@@ -14,15 +14,15 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 class ShiftHandoverLog(Base):
     __tablename__ = "shift_handover_logs"
     __table_args__ = (
-        Index("ix_handover_user_created", "user_id", "created_at"), {"schema": "hr"})
+        Index("ix_handover_user_created", "user_id", "created_at"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
+    user_id = Column(Integer, nullable=False, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
     shift_start = Column(DateTime, nullable=False)
     shift_end = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
-    handover_to_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    handover_to_user_id = Column(Integer, nullable=True)
     handover_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
 
@@ -35,7 +35,7 @@ class PaymentOrchestratorSync(Base):
     __tablename__ = "payment_orchestrator_sync"
     __table_args__ = (
         UniqueConstraint("country_code", "gateway_id", name="uq_pos_country_gateway"),
-        Index("ix_pos_status", "status"), {"schema": "hr"})
+        Index("ix_pos_status", "status"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
@@ -58,11 +58,11 @@ class SupplierOnboardingSync(Base):
     __tablename__ = "supplier_onboarding_sync"
     __table_args__ = (
         UniqueConstraint("country_code", "supplier_id", name="uq_sos_country_supplier"),
-        Index("ix_sos_status", "status"), {"schema": "hr"})
+        Index("ix_sos_status", "status"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False, index=True)
+    supplier_id = Column(Integer, nullable=False, index=True)
     kyc_status = Column(String(30), default="pending")
     kyc_documents = Column(Text, nullable=True)
     onboarding_fee_paid = Column(Boolean, default=False)
@@ -80,7 +80,7 @@ class LegalContractTemplate(Base):
     __tablename__ = "legal_contract_templates"
     __table_args__ = (
         UniqueConstraint("country_code", "template_type", name="uq_lct_country_type"),
-        Index("ix_lct_type", "template_type"), {"schema": "hr"})
+        Index("ix_lct_type", "template_type"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
@@ -98,7 +98,7 @@ class DataResidencyRecord(Base):
     __tablename__ = "data_residency_records"
     __table_args__ = (
         UniqueConstraint("country_code", "data_type", name="uq_drr_country_type"),
-        Index("ix_drr_compliance", "compliance_status"), {"schema": "hr"})
+        Index("ix_drr_compliance", "compliance_status"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
@@ -117,7 +117,7 @@ class DataResidencyRecord(Base):
 class CountryMapConfig(Base):
     __tablename__ = "country_map_configs"
     __table_args__ = (
-        UniqueConstraint("country_code", name="uq_cmc_country"), {"schema": "hr"})
+        UniqueConstraint("country_code", name="uq_cmc_country"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, unique=True, index=True)
@@ -135,7 +135,7 @@ class CountryMapConfig(Base):
 class ShopWarehouseLocation(Base):
     __tablename__ = "shop_warehouse_locations"
     __table_args__ = (
-        Index("ix_swl_active", "is_active"), {"schema": "hr"})
+        Index("ix_swl_active", "is_active"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=False, index=True)
@@ -153,7 +153,7 @@ class ShopWarehouseLocation(Base):
 class LogisticsPartnerLocation(Base):
     __tablename__ = "logistics_partner_locations"
     __table_args__ = (
-        Index("ix_lpl_partner", "partner_id"), {"schema": "hr"})
+        Index("ix_lpl_partner", "partner_id"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=False, index=True)
@@ -173,7 +173,7 @@ class ParcelLocationTracker(Base):
     __tablename__ = "parcel_location_trackers"
     __table_args__ = (
         Index("ixplt_parcel", "parcel_id"),
-        Index("ixplt_created", "created_at"), {"schema": "hr"})
+        Index("ixplt_created", "created_at"), {"schema": "country"})
 
     id = Column(Integer, primary_key=True, index=True)
     parcel_id = Column(Integer, ForeignKey("logistics.shipments.id"), nullable=False, index=True)

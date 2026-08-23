@@ -23,13 +23,17 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.comms.models.suppliers import SupplierProfile
 from domains.finance.models.commission import CommissionAgreement
 from domains.finance.models.commission import CommissionCategoryRate
 from domains.finance.models.commission import CommissionLedgerEntry
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+
+# Cross-domain model imports for read-only query building (same session).
+# These are sanctioned per DOMAIN_ALLOWLIST.yaml — will be routed through
+# governance.ports and comms.ports in a future migration.
+from domains.comms.models.suppliers import SupplierProfile  # noqa: F401
 from domains.governance.models.admin import CommissionBadgeTier
 from domains.governance.models.admin import CommissionGlobalConfig
-from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 

@@ -32,9 +32,9 @@ from domains.governance.models.admin import LogisticsCODRemittanceReceipt
 from domains.hr.models.employee_models import Employee
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
-from domains.payments.models.payments import LogisticsPartnerPayout
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout
 from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 from infrastructure.utils.constants import (
     CASH_ACCOUNT,
@@ -212,7 +212,7 @@ def admin_generate_payout_batch(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payout
 
     pending_payouts = db.execute(
         select(Payout).where(
@@ -689,8 +689,8 @@ def consolidated_reconciliation_pipeline(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_treasury_access),
 ):
-    from domains.payments.models.payments import Payment as PaymentModel
-    from domains.payments.models.payments import Payout
+    from domains.finance.models.payments import Payment as PaymentModel
+    from domains.finance.models.payments import Payout
 
     pipeline = []
     orders = db.query(OrderModel).filter(
@@ -959,8 +959,8 @@ def admin_reconciliation_pipeline(
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
         from domains.orders.models.orders import Order as OrderModel
         from domains.orders.models.orders import OrderItem
-        from domains.payments.models.payments import Payment as PaymentModel
-        from domains.payments.models.payments import Payout
+        from domains.finance.models.payments import Payment as PaymentModel
+        from domains.finance.models.payments import Payout
         from domains.finance.services.commission_engine import get_effective_rate
 
         pipeline = []

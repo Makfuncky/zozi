@@ -7,7 +7,7 @@ from infrastructure.database.database import get_db
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 from domains.governance.models.user import User
 from domains.finance.models.finance import FinanceAutomationLog
-from domains.payments.models.payments import Payout
+from domains.finance.models.payments import Payout
 from infrastructure.utils.audit import AuditAction, audit_log
 from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
 from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as _run_logistics_sweep

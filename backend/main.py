@@ -116,7 +116,7 @@ async def health_ready():
     from infrastructure.utils.config import settings
     from infrastructure.utils.auth import _get_redis
     from infrastructure.database.database import check_connection_health
-    from domains.payments.services.payments import _payment_provider_runtime_status
+    from domains.finance.services.payments.payments import _payment_provider_runtime_status
 
     db_ok = check_connection_health()
     

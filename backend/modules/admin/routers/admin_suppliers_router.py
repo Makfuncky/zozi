@@ -96,7 +96,7 @@ from domains.orders.customer_coupons_create_service import list_coupons
 
 from domains.governance.services.users.users_service_accounts import list_pending_bank_accounts
 
-from domains.finance.services.payments.payout_approval_read_service import list_pending_payouts
+from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
 
 from domains.governance.services.users.users_service_accounts import list_staff_accounts
 

@@ -116,9 +116,20 @@ def _set_rls_context(db, employee: Employee) -> None:
     employee's country_code unless the role is 'admin' or 'global'.
     On SQLite the SET statement is silently skipped.
     """
+    # SECURITY FIX: Use parameterized query to prevent SQL injection
+    country_code = employee.country_code
+    if not country_code or not isinstance(country_code, str):
+        return
+    # Validate country_code format (2-3 uppercase letters)
+    import re
+    if not re.match(r'^[A-Z]{2,3}$', country_code):
+        logger.warning("Invalid country_code format: %s", country_code)
+        return
     try:
+        from sqlalchemy import text
         db.execute(
-            f"SET app.current_country_code = '{employee.country_code}'"
+            text("SET app.current_country_code = :country_code"),
+            {"country_code": country_code}
         )
     except Exception:
         logger.debug(
@@ -798,7 +809,21 @@ def _verify_sso_token(provider: str, id_token: str) -> dict:
     Supports Google, Apple, and Microsoft. In production, validates the
     token signature, expiry, and audience (client_id) via the provider's
     public JWKS endpoint.
+
+    SECURITY NOTE: This function currently uses unverified claims decoding.
+    In production, this MUST be replaced with proper JWT verification against
+    the provider's JWKS endpoint.
     """
+    # SECURITY FIX: Reject SSO tokens in production without proper verification
+    from infrastructure.utils.config import settings
+    app_env = str(getattr(settings, "app_env", "development")).lower()
+    if app_env == "production":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="SSO token verification is not implemented in production. "
+                   "Please integrate with the provider's JWKS endpoint.",
+        )
+
     # TODO: Integrate with google-auth, apple-auth, msal libraries
     # For now, return a mock userinfo for development
     # In production, replace with proper JWT verification against provider JWKS

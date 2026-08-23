@@ -1,3 +1,4 @@
+﻿from infrastructure.utils.datetime_utils import utcnow
 """Treasury query/service functions for EOSB, Payroll, and Double-Entry Accounting.
 
 Relocated from the mis-housed ``routers/treasury_api.py`` so that raw SQL and
@@ -54,7 +55,7 @@ def create_treasury_transaction(
         currency=currency,
         reference=reference,
         description=description,
-        posted_at=datetime.utcnow(),
+        posted_at=utcnow(),
     )
     add_and_flush(db, transaction)
     commit_and_refresh(db, transaction)
@@ -115,7 +116,7 @@ def create_journal_entry(
         description=description,
         source=source,
         country_code=country_code,
-        entry_date=datetime.utcnow(),
+        entry_date=utcnow(),
     )
     add_and_flush(db, entry)
     commit_only(db)

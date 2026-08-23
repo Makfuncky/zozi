@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from typing import Any, Dict, List, Optional, Set
@@ -150,7 +150,7 @@ class AISearchService:
             )
 
         total = db_query.count()
-        products = db_query.offset(offset).limit(limit).all()
+        products = db_query.limit(limit).all()
 
         return {
             "products": [self._serialize_product(p) for p in products],

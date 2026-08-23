@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 from typing import List
 """Cash management write service — DB read and write operations for cash accounts and transactions."""
 
@@ -96,7 +96,7 @@ def list_cash_accounts(db: Session, country_code: str, skip: int = 0, limit: int
         db.query(CashAccount)
         .filter(CashAccount.is_active == True, CashAccount.country_code == country_code)
         .order_by(CashAccount.id.desc())
-        .offset(skip)
+        
         .limit(limit)
         .all()
     )

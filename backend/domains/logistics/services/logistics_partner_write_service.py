@@ -39,7 +39,7 @@ from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderLogisticsAllocation
-from domains.payments.models.payments import LogisticsPartnerPayout
+from domains.finance.models.payments import LogisticsPartnerPayout
 from infrastructure.utils.datetime_utils import utcnow as _utcnow  # noqa: F401
 import structlog
 logger = structlog.get_logger(__name__)

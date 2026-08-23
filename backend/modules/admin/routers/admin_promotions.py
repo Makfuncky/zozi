@@ -14,8 +14,8 @@ from domains.governance.models.user import User
 from domains.comms.models.marketing import FlashSale
 from domains.governance.models.admin import PromotionEngineConfig
 from domains.governance.models.admin import PromotionOrderTier
-from domains.payments.models.payments import Banner
-from domains.payments.models.payments import Coupon
+from domains.catalog.models.promotions import Banner
+from domains.catalog.models.promotions import Coupon
 from domains.country.utils.country_rls import enforce_country_access
 from infrastructure.utils.dependencies import require_admin
 

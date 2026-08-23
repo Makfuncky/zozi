@@ -62,7 +62,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
 
     def _get_country_detection_service(self):
         if self._country_detection_service is None:
-            from domains.country.services.country_detection import CountryDetectionService
+            from domains.country.services.geo.country_detection import CountryDetectionService
             self._country_detection_service = CountryDetectionService()
         return self._country_detection_service
 
@@ -153,7 +153,7 @@ class CountryContextMiddleware(BaseHTTPMiddleware):
         if not client_ip:
             return None
         try:
-            from domains.country.services.country_detection import CountryDetectionService
+            from domains.country.services.geo.country_detection import CountryDetectionService
             svc = self._get_country_detection_service()
             ip = svc._extract_ip(dict(request.headers), client_ip)
             if ip and not svc._is_private_ip(ip):
@@ -182,7 +182,8 @@ def get_rls_context() -> RLSContext:
     return rls_context
 
 
-def clear_rls_context() -> None:
+def _clear_local_rls_context() -> None:
+    """Clear the legacy RLSContext (kept for backwards compatibility)."""
     rls_context.country_scope = None
     rls_context.is_restricted = False
     rls_context.user_id = None
@@ -197,7 +198,7 @@ class RowLevelSecurityMiddleware(BaseHTTPMiddleware):
         
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
         if not token:
-            clear_rls_context()
+            _clear_local_rls_context()
             return await call_next(request)
         
         try:
@@ -209,7 +210,7 @@ class RowLevelSecurityMiddleware(BaseHTTPMiddleware):
             rls_context.role = role
             
             if role in {"admin", "super_admin"}:
-                clear_rls_context()
+                _clear_local_rls_context()
                 return await call_next(request)
             
             with get_db() as db:
@@ -219,10 +220,10 @@ class RowLevelSecurityMiddleware(BaseHTTPMiddleware):
                     rls_context.country_scope = scope
                     rls_context.is_restricted = bool(scope)
         except Exception:
-            clear_rls_context()
+            _clear_local_rls_context()
         
         response = await call_next(request)
-        clear_rls_context()
+        _clear_local_rls_context()
         return response
 
 

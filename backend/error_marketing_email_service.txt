@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\test_import.py", line 12, in <module>
+    exec(code)
+  File "<string>", line 1, in <module>
+  File "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\comms\services\marketing\email_service.py", line 30, in <module>
+    from domains.comms.services.marketing.email_gateway import EmailGateway
+  File "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\comms\services\marketing\email_gateway.py", line 21, in <module>
+    from domains.hr.ports import Employee
+  File "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\hr\ports.py", line 442, in <module>
+    from domains.hr.services.hierarchy_service import can_manage
+ImportError: cannot import name 'can_manage' from 'domains.hr.services.hierarchy_service' (D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\hr\services\hierarchy_service.py)

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.utils.audit import audit_log, AuditAction
 from domains.governance.ports import CouponUsage
-from domains.payments.ports import Coupon
+from domains.finance.ports import Coupon
 from kernel.money import round_money
 
 

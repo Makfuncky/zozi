@@ -5,8 +5,8 @@ from domains.governance.models.admin import ShippingCarrier
 from domains.governance.models.admin import ShippingZone
 from domains.hr.ports import Employee
 from domains.logistics.models.logistics import Shipment
-from domains.payments.models.payments import Payment
-from domains.payments.models.payments import Payout as PayoutModel
+from domains.finance.models.payments import Payment
+from domains.finance.models.payments import Payout as PayoutModel
 import logging
 from sqlalchemy.orm import Session
 from infrastructure.utils.pagination import keyset_offset_window
