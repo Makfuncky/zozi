@@ -8,12 +8,7 @@ from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 from providers.auth.jwt import JWTError, jwt
 from infrastructure.database.database import get_db, get_db_session
-from domains.governance.models.core import DirectChatRoom
-from domains.governance.models.core import DirectChatMessage
-from domains.governance.models.core import GroupChatRoom
-from domains.governance.models.core import GroupChatMessage
-from domains.governance.models.core import EntityChatThread
-from domains.governance.models.core import EntityChatMessage
+from domains.governance.models.core import DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage, EntityChatThread, EntityChatMessage
 from domains.governance.models.core import SupportTicket
 from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
@@ -58,6 +53,7 @@ class ConnectionManager:
                 try:
                     await ws.send_json(message)
                 except Exception:
+                    logger.debug("WebSocket send failed, marking socket as dead", exc_info=True)
                     dead.add(ws)
         for ws in dead:
             for (uid, conns) in self._rooms.get(room_id, {}).items():
@@ -123,6 +119,7 @@ class UserConnectionManager:
             try:
                 await ws.send_json(message)
             except Exception:
+                logger.debug("WebSocket send to user %s failed, marking socket as dead", user_id, exc_info=True)
                 dead.add(ws)
         for ws in dead:
             self._user_sockets.get(user_id, set()).discard(ws)
@@ -133,6 +130,7 @@ class UserConnectionManager:
             try:
                 await ws.send_json(message)
             except Exception:
+                logger.debug("WebSocket send to staff %s failed, marking socket as dead", staff_id, exc_info=True)
                 dead.add(ws)
         for ws in dead:
             self._staff_sockets.get(staff_id, set()).discard(ws)
@@ -179,6 +177,7 @@ def _decode_ws_token(token: str) -> Optional[dict]:
         from infrastructure.utils.auth import SECRET_KEY, ALGORITHM
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except Exception:
+        logger.debug("WebSocket auth token decode failed", exc_info=True)
         return None
 
 def _get_user_name(db: Session, user_id: int) -> str:
@@ -317,9 +316,11 @@ async def websocket_user(websocket: WebSocket, token: str=Query(...)):
     except WebSocketDisconnect:
         pass
     except Exception:
-        pass
+        logger.warning("WebSocket connection error", exc_info=True)
     finally:
         if scope == 'staff':
             user_manager.disconnect_staff(websocket, user_id)
         else:
             user_manager.disconnect_user(websocket, user_id)
+
+

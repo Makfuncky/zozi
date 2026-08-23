@@ -1,4 +1,4 @@
-﻿"""Category admin controller (CONTROLLERS layer).
+"""Category admin controller (CONTROLLERS layer).
 
 Canonical coordinator for admin category management. Enforces the country
 RLS context and delegates persistence to
@@ -22,14 +22,14 @@ from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 from domains.governance.services.settings.misc_service import archive_entity
-from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
-from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import restore_entity
-from domains.catalog.services.categories.category_admin_read_service import list_categories_paginated
-from domains.catalog.services.categories.category_admin_write_service import create_category as svc_create_category
-from domains.catalog.services.categories.category_admin_write_service import delete_category as svc_delete_category
-from domains.catalog.services.categories.category_admin_write_service import reorder_categories as svc_reorder_categories
-from domains.catalog.services.categories.category_admin_write_service import update_category as svc_update_category
+from domains.catalog.services.category_admin_read_service import list_categories_paginated
+from domains.catalog.services.category_admin_write_service import create_category as svc_create_category
+from domains.catalog.services.category_admin_write_service import delete_category as svc_delete_category
+from domains.catalog.services.category_admin_write_service import reorder_categories as svc_reorder_categories
+from domains.catalog.services.category_admin_write_service import update_category as svc_update_category
 
 
 def _actor(current_user) -> dict:

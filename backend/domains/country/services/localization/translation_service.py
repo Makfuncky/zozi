@@ -1,4 +1,4 @@
-"""Translation service (routers -> controllers -> services).
+﻿"""Translation service (routers -> controllers -> services).
 
 Wraps the free Google Translate implementation (deep-translator). Degrades
 gracefully to the original text if translation is unavailable so the UI stays

@@ -1,7 +1,7 @@
-ï»¿from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.datetime_utils import utcnow
 from domains.comms.services.utility.db_read import query as db_read_query
 from domains.comms.services.utility.db_read import execute as db_read_execute
-'Treasury reporting controller.\n\nOwns the orchestration logic that the admin treasury reporting router used to\nperform inline. Per the Grid Line layer contract, routers must not call models\nor services (``TreasuryEngine``) directly nor perform DB writes â€” those live\nhere in the controller, which delegates complex business logic to services and\nuses ``scripts.maintenance.write_helpers`` for commits.\n'
+'Treasury reporting controller.\n\nOwns the orchestration logic that the admin treasury reporting router used to\nperform inline. Per the Grid Line layer contract, routers must not call models\nor services (``TreasuryEngine``) directly nor perform DB writes — those live\nhere in the controller, which delegates complex business logic to services and\nuses ``scripts.maintenance.write_helpers`` for commits.\n'
 import json
 import logging
 from collections import defaultdict
@@ -44,7 +44,7 @@ from infrastructure.utils.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, TRE
 import domains.comms.services as db_write
 
 def admin_treasury_root(db: Session, current_user: dict):
-    """Treasury root â€” summary stats (bare /admin/treasury)."""
+    """Treasury root — summary stats (bare /admin/treasury)."""
     total_entries = db_read_query(db, JournalEntry).count() or 0
     total_accounts = db_read_query(db, Account).count() or 0
     total_cash = db_read_execute(db, select(func.coalesce(func.sum(AccountBalance.balance), 0))).scalar() or Decimal('0')
@@ -178,13 +178,13 @@ def consolidated_treasury_ledger(limit: int, db: Session, current_user: dict):
 def consolidated_trial_balance(page: int, page_size: int, db: Session, current_user: dict):
     query = db_read_query(db, Account).filter(Account.is_active == True)
     total = query.count()
-    accounts = query.order_by(Account.code) * page_size).limit(page_size).all()
+    accounts = query.order_by(Account.code) .offset(page_size).limit(page_size).all()
     return {'data': [{'id': a.id, 'code': a.code, 'name': a.name, 'normal_side': a.normal_side, 'total_debits': float(db_read_query(db, func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == 'debit').scalar() or 0), 'total_credits': float(db_read_query(db, func.coalesce(func.sum(JournalEntryLine.amount), 0)).filter(JournalEntryLine.account_id == a.id, JournalEntryLine.side == 'credit').scalar() or 0)} for a in accounts], 'total': total, 'page': page, 'page_size': page_size}
 
 def consolidated_cash_position(page: int, page_size: int, db: Session, current_user: dict):
     query = db_read_query(db, TreasuryAccount).filter(TreasuryAccount.is_active == True)
     total = query.count()
-    accounts = query * page_size).limit(page_size).all()
+    accounts = query .offset(page_size).limit(page_size).all()
     total_balance = float(db_read_query(db, func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {'accounts': [{'id': a.id, 'name': a.name, 'balance': float(a.balance or 0), 'currency': a.currency or 'USD'} for a in accounts], 'total_balance': total_balance, 'total': total, 'page': page, 'page_size': page_size}
 

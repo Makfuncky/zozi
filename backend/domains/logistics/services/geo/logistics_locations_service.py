@@ -1,20 +1,21 @@
-"""Auto-migrated service logic from routers/logistics_locations.py."""
+﻿"""Auto-migrated service logic from routers/logistics_locations.py."""
 from __future__ import annotations
 
 import logging
 
-from typing import Optional
+from typing import List, Optional
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
+from domains.governance.services.auth_controller_service import get_current_user
+
 from infrastructure.database.database import get_db
 
-from domains.logistics.models.logistics import LogisticsPartnerLocation
+from domains.country.models.countries import CountryConfig
+from domains.country.models.country_control import LogisticsPartnerLocation
 from domains.logistics.models.logistics import LogisticsPartner
-from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
-from domains.country.ports import get_country_config
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def list_logistics_partner_locations(country_code: str, partner_id: Optional[int
         query = query.filter(LogisticsPartnerLocation.partner_id == partner_id)
     if is_active is not None:
         query = query.filter(LogisticsPartnerLocation.is_active == is_active)
-    locations = query.order_by(LogisticsPartnerLocation.location_type, LogisticsPartnerLocation.created_at).limit(SAFE_QUERY_LIMIT).all()
+    locations = query.order_by(LogisticsPartnerLocation.location_type, LogisticsPartnerLocation.created_at).all()
     return [
         {
             "id": loc.id,
@@ -44,7 +45,7 @@ def list_logistics_partner_locations(country_code: str, partner_id: Optional[int
 def create_logistics_partner_location(country_code: str, payload: dict, db: Session, current_user):
     if not payload:
         payload = {}
-    config = get_country_config(db, country_code)
+    config = db.query(CountryConfig).filter(CountryConfig.code == country_code.upper()).first()
     if not config:
         raise HTTPException(status_code=404, detail="Country not found")
     

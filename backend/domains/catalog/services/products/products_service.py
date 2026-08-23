@@ -1130,3 +1130,107 @@ def get_recommended_products(current_user: Optional[dict], limit: int, db: Sessi
         return results + fillers
 
     return base_q.order_by(Product.sales_count.desc()).limit(limit).all()
+# ============================================================================
+# Merged from product_service.py (LAYER 4 domain service)
+# ============================================================================
+
+def unique_slug(db: Session, name: str) -> str:
+    \"\"\"Return a slug for name that no other product currently holds.\"\"\"
+    base = generate_slug(name)
+    slug = base
+    counter = 1
+    while db.query(Product.id).filter(Product.slug == slug).first() is not None:
+        slug = f"{base}-{counter}"
+        counter += 1
+    return slug
+
+
+def get_product_by_slug_hash(db: Session, slug_hash: str) -> Optional[Product]:
+    \"\"\"Fetch a product by its short share-link hash.\"\"\"
+    return db.query(Product).filter(Product.slug_hash == slug_hash).first()
+
+
+def get_supplier_profile(db: Session, user_id: int) -> SupplierProfile:
+    \"\"\"Return the supplier profile for user_id.\"\"\"
+    from domains.comms.services.suppliers.supplier_profile_service import get_supplier_profile as _get
+    return _get(db, user_id)
+
+
+def update_product_discount(
+    db: Session, product: Product, *, clear: bool = False,
+    compare_price: Any = ..., discount_starts_at: Any = ..., discount_ends_at: Any = ...,
+) -> Product:
+    \"\"\"Set or clear the discount window on a product.\"\"\"
+    if clear:
+        product.compare_price = None
+        product.discount_starts_at = None
+        product.discount_ends_at = None
+        db.commit()
+        db.refresh(product)
+        return product
+    if compare_price is not ...:
+        product.compare_price = float(compare_price) if compare_price is not None else None
+    if discount_starts_at is not ...:
+        product.discount_starts_at = discount_starts_at
+    if discount_ends_at is not ...:
+        product.discount_ends_at = discount_ends_at
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+def set_moderation_status(db: Session, product: Product, status: str, *, notes: Optional[str] = None) -> Product:
+    \"\"\"Approve or reject a product listing.\"\"\"
+    normalized = str(status or '').lower()
+    product.moderation_status = normalized
+    if normalized == 'approved':
+        product.is_verified = True
+    if notes is not None and hasattr(product, 'moderation_notes'):
+        product.moderation_notes = notes
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+def set_product_badge(db: Session, product: Product, field: str, value: bool) -> Product:
+    \"\"\"Toggle a merchandising badge flag.\"\"\"
+    setattr(product, field, bool(value))
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+def set_product_verified(db: Session, product: Product, value: bool) -> Product:
+    \"\"\"Set/clear the is_verified trust flag.\"\"\"
+    product.is_verified = bool(value)
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+def build_discount_summary(product: Product, now: datetime) -> dict[str, Any]:
+    \"\"\"Compute the public discount projection for a product.\"\"\"
+    price = float(product.price or 0)
+    compare_price = float(product.compare_price) if product.compare_price is not None else None
+    discount_pct = 0.0
+    if compare_price and compare_price > 0:
+        discount_pct = round((1 - price / compare_price) * 100, 1)
+    active = bool(compare_price and compare_price > price)
+    starts_at = product.discount_starts_at
+    ends_at = product.discount_ends_at
+    if starts_at and ends_at:
+        active = active and starts_at <= now <= ends_at
+    elif starts_at:
+        active = active and starts_at <= now
+    return {
+        "product_id": product.id, "price": price,
+        "compare_price": compare_price, "discount_percentage": discount_pct,
+        "discount_active": active,
+    }
+
+
+def build_image_filename(product_id: int, original_filename: Optional[str]) -> str:
+    \"\"\"Derive a collision-free storage filename for a product image.\"\"\"
+    name = original_filename or "product.jpg"
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else "jpg"
+    return f"products/{product_id}/{uuid.uuid4().hex[:8]}.{ext}"

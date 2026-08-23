@@ -1,6 +1,6 @@
-﻿"""
-Invoice Controller — supply chain invoice management.
-Covers the full lifecycle: supplier → logistics → customer receipt.
+"""
+Invoice Controller � supply chain invoice management.
+Covers the full lifecycle: supplier ? logistics ? customer receipt.
 """
 from __future__ import annotations
 import json
@@ -74,7 +74,7 @@ def _serialize_item(item: InvoiceItem) -> dict:
     }
 
 
-# ── List ──────────────────────────────────────────────────────────────────────
+# -- List ----------------------------------------------------------------------
 
 def list_invoices(
     current_user: dict,
@@ -99,7 +99,7 @@ def list_invoices(
         q = q.filter(Invoice.order_id == order_id)
 
     total = q.count()
-    items = q.order_by(desc(Invoice.created_at)) * page_size).limit(page_size).all()
+    items = q.order_by(desc(Invoice.created_at)) .offset(page_size).limit(page_size).all()
 
     return {
         "total": total,
@@ -132,7 +132,7 @@ def get_invoice(invoice_id: int, current_user: dict, db: Session) -> dict:
     return _serialize_invoice(inv)
 
 
-# ── Create from order ─────────────────────────────────────────────────────────
+# -- Create from order ---------------------------------------------------------
 
 def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> dict:
     """Supplier or admin creates an invoice for an order."""
@@ -226,7 +226,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
         resource_id=str(inv.id),
         details={"invoice_number": inv.invoice_number, "order_id": order_id},
     )
-    # Email the invoice to the customer — enqueued async, failure is non-blocking
+    # Email the invoice to the customer � enqueued async, failure is non-blocking
     try:
         from domains.comms.services.transactional_email_service import enqueue_invoice_email
         enqueue_invoice_email(cast(int, inv.id))
@@ -235,7 +235,7 @@ def create_invoice_from_order(data: dict, current_user: dict, db: Session) -> di
     return _serialize_invoice(inv)
 
 
-# ── Update status ─────────────────────────────────────────────────────────────
+# -- Update status -------------------------------------------------------------
 
 def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: Session) -> dict:
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
@@ -280,7 +280,7 @@ def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: S
         resource_id=str(inv.id),
         details={"invoice_number": inv.invoice_number, "prev_status": prev_status, "new_status": new_status},
     )
-    # Email delivery confirmation to customer — enqueued async, failure is non-blocking
+    # Email delivery confirmation to customer � enqueued async, failure is non-blocking
     if new_status == "delivered":
         try:
             from domains.comms.services.transactional_email_service import enqueue_invoice_email
@@ -290,7 +290,7 @@ def update_invoice_status(invoice_id: int, data: dict, current_user: dict, db: S
     return _serialize_invoice(inv)
 
 
-# ── Admin overview ─────────────────────────────────────────────────────────────
+# -- Admin overview -------------------------------------------------------------
 
 def get_invoice_overview(db: Session) -> dict:
     from sqlalchemy import func as sqlfunc

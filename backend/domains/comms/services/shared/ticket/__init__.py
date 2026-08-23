@@ -1,1 +1,0 @@
-"""comms domain - ticket services."""

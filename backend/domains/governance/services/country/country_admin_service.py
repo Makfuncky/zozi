@@ -1,4 +1,4 @@
-"""Auto-migrated service logic from routers/country_admin.py."""
+﻿"""Auto-migrated service logic from routers/country_admin.py."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -11,7 +11,7 @@ from sqlalchemy import desc
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.auth.auth_controller_service import get_current_user
+from domains.governance.services.auth_controller_service import get_current_user
 
 from infrastructure.database.database import get_db
 
@@ -20,7 +20,7 @@ from domains.country.models.country_enhancements import CountryStaffAssignment
 
 from domains.country.models.country_enhancements import CountryCategoryTaxRate, CountryCity
 
-from domains.governance.services.audit.audit_trail_service import AuditTrailService
+from domains.governance.services.audit_trail_service import AuditTrailService
 
 from domains.suppliers.services.legal_contract_service import LegalContractService
 
@@ -254,7 +254,7 @@ def set_tax_rate(country_code: str, category_id: int, tax_rate: float, tax_name:
     return {"status": "saved", "category_id": category_id, "tax_rate": tax_rate}
 
 
-from domains.governance.services.country.admin_geography_audit_service import get_audit_trail
+from domains.governance.services.admin_geography_audit_service import get_audit_trail
 
 
 
@@ -277,7 +277,7 @@ from domains.governance.services.country.admin_geography_audit_service import ge
 
 
 
-from domains.governance.services.country.admin_geography_audit_service import log_financial_change
+from domains.governance.services.admin_geography_audit_service import log_financial_change
 
 
 
@@ -292,7 +292,7 @@ from domains.governance.services.country.admin_geography_audit_service import lo
 
 
 
-from domains.governance.services.country.admin_geography_audit_service import get_data_residency
+from domains.governance.services.admin_geography_audit_service import get_data_residency
 
 
 

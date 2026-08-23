@@ -29,12 +29,12 @@ def fetch_visually_similar_products(db: Any, limit: int = 10) -> list[dict]:
             db.execute(
                 text(
                     """
-                    SELECT id, name, image_url AS primary_image, COALESCE(price, 0) as price
-                     FROM products
-                     WHERE is_active = true
-                       AND is_approved = true
-                     ORDER BY RANDOM()
-                     LIMIT :limit
+                    SELECT id, name, primary_image, COALESCE(price, 0) as price
+                    FROM products
+                    WHERE is_active = true
+                      AND is_approved = true
+                    ORDER BY RANDOM()
+                    LIMIT :limit
                     """
                 ),
                 {"limit": min(limit * 2, 20)},

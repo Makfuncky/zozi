@@ -11555,7 +11555,9 @@ def _ns_iter_py(backend: Path, *subdirs: str):
             if set(p.parts) & DEFAULT_IGNORE_DIRS:
                 continue
             try:
-                tree = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+                source = p.read_text(encoding="utf-8", errors="replace")
+                source = source.replace("\x00", "")
+                tree = ast.parse(source)
             except (OSError, SyntaxError):
                 continue
             yield p, tree

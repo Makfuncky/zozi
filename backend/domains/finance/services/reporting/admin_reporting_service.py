@@ -1,4 +1,4 @@
-﻿"""Admin Treasury reporting service layer.
+"""Admin Treasury reporting service layer.
 
 Houses the inline business/DB logic previously embedded in
 ``routers/admin_treasury_reporting.py`` so the router stays a thin HTTP
@@ -56,7 +56,7 @@ from infrastructure.utils.constants import (
 logger = logging.getLogger(__name__)
 
 
-# ── Dashboard / Metrics ────────────────────────────────────────────────
+# -- Dashboard / Metrics ------------------------------------------------
 
 def get_treasury_root(db: Session) -> dict:
     total_entries = db.query(JournalEntry).count() or 0
@@ -145,7 +145,7 @@ def get_cash_position(db: Session) -> list:
     ]
 
 
-# ── Payout Batches ────────────────────────────────────────────────────
+# -- Payout Batches ----------------------------------------------------
 
 def get_payout_batches(db: Session) -> list:
     from domains.comms.models.suppliers import SupplierProfile
@@ -277,7 +277,7 @@ def dispatch_payout_batch(db: Session, batch_id: int, current_user: dict) -> dic
     }
 
 
-# ── VAT Remittance ─────────────────────────────────────────────────────
+# -- VAT Remittance -----------------------------------------------------
 
 def get_vat_liability(db: Session, country_code: Optional[str], period: str) -> dict:
     output_vat = db.execute(
@@ -301,7 +301,7 @@ def get_vat_liability(db: Session, country_code: Optional[str], period: str) -> 
     }
 
 
-# ── COD Remittances ────────────────────────────────────────────────────
+# -- COD Remittances ----------------------------------------------------
 
 def get_cod_remittances(db: Session, status: Optional[str]) -> list:
     query = (
@@ -330,7 +330,7 @@ def get_cod_remittances(db: Session, status: Optional[str]) -> list:
     ]
 
 
-# ── Gateway Reconciliation ─────────────────────────────────────────────
+# -- Gateway Reconciliation ---------------------------------------------
 
 def _summarize_gateway(db: Session, schedules, cc: Optional[str] = None) -> list:
     by_gateway = defaultdict(lambda: {"total_settled": 0, "total_expected": 0, "count": 0, "last_date": None})
@@ -407,7 +407,7 @@ def get_country_gateway_exceptions(db: Session, cc: str) -> list:
     ]
 
 
-# ── Cash Position Snapshot ────────────────────────────────────────────
+# -- Cash Position Snapshot --------------------------------------------
 
 def snapshot_cash_position(db: Session) -> dict:
     accounts = db.execute(
@@ -428,7 +428,7 @@ def snapshot_cash_position(db: Session) -> dict:
     return {"status": "snapshot_recorded", "accounts_snapshotted": len(accounts)}
 
 
-# ── Cash Flow Forecast ─────────────────────────────────────────────────
+# -- Cash Flow Forecast -------------------------------------------------
 
 def get_cash_forecasts(db: Session) -> list:
     forecasts = db.execute(
@@ -449,7 +449,7 @@ def get_cash_forecasts(db: Session) -> list:
     ]
 
 
-# ── Consolidated (all-country) ────────────────────────────────────────
+# -- Consolidated (all-country) ----------------------------------------
 
 def get_consolidated_metrics(db: Session) -> dict:
     total_accounts = db.query(TreasuryAccount).count()
@@ -482,7 +482,7 @@ def get_consolidated_ledger(db: Session, limit: int) -> list:
 def get_consolidated_trial_balance(db: Session, page: int, page_size: int) -> dict:
     query = db.query(Account).filter(Account.is_active == True)
     total = query.count()
-    accounts = query.order_by(Account.code) * page_size).limit(page_size).all()
+    accounts = query.order_by(Account.code) .offset(page_size).limit(page_size).all()
     return {
         "data": [
             {
@@ -504,7 +504,7 @@ def get_consolidated_trial_balance(db: Session, page: int, page_size: int) -> di
 def get_consolidated_cash_position(db: Session, page: int, page_size: int) -> dict:
     query = db.query(TreasuryAccount).filter(TreasuryAccount.is_active == True)
     total = query.count()
-    accounts = query * page_size).limit(page_size).all()
+    accounts = query .offset(page_size).limit(page_size).all()
     total_balance = float(db.query(func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {
         "accounts": [
@@ -651,7 +651,7 @@ def get_consolidated_reconciliation_pipeline(db: Session, limit: int) -> dict:
     return {"pipeline": pipeline, "total": len(pipeline), "consolidated": True}
 
 
-# ── Country-scoped variants ───────────────────────────────────────────
+# -- Country-scoped variants -------------------------------------------
 
 def get_country_treasury_metrics(db: Session, cc: str) -> dict:
     total_debits = db.execute(
@@ -959,7 +959,7 @@ def approve_settlement(db: Session, cc: str, settlement_id: int) -> dict:
     return {"status": "ok", "settlement_id": settlement.id}
 
 
-# ── Payments: Transactions ──────────────────────────────────────────────
+# -- Payments: Transactions ----------------------------------------------
 
 def _shape_payment(p) -> dict:
     return {
@@ -1012,7 +1012,7 @@ def get_country_payment_transactions(
     return [_shape_payment(p) for p in rows]
 
 
-# ── Payouts: Supplier & Logistics ───────────────────────────────────────
+# -- Payouts: Supplier & Logistics ---------------------------------------
 
 def _shape_supplier_payout(p, s) -> dict:
     return {
@@ -1093,7 +1093,7 @@ def get_country_logistics_payouts(db: Session, cc: str, status: Optional[str]) -
     return [_shape_logistics_payout(p) for p in rows]
 
 
-# ── Reports: Supplier Earnings ──────────────────────────────────────────
+# -- Reports: Supplier Earnings ------------------------------------------
 
 def _shape_earnings(r) -> dict:
     return {
@@ -1129,7 +1129,7 @@ def get_country_supplier_earnings(db: Session, cc: str) -> list:
     return [_shape_earnings(r) for r in rows]
 
 
-# ── Liabilities Exposure ────────────────────────────────────────────────
+# -- Liabilities Exposure ------------------------------------------------
 
 def get_liabilities_exposure(db: Session) -> dict:
     codes = {"2010": "supplier_payables", "2020": "logistics_payables", "2040": "vat_payable"}
@@ -1157,7 +1157,7 @@ def get_country_liabilities_exposure(db: Session, cc: str) -> dict:
     return exposure
 
 
-# ── Ledger: Manual Adjustment & Pending ─────────────────────────────────
+# -- Ledger: Manual Adjustment & Pending ---------------------------------
 
 def manual_adjustment(
     db: Session, debit_account: str, credit_account: str, amount: float, reason: str, created_by: int,
@@ -1205,7 +1205,7 @@ def reject_pending(db: Session, pending_id: int, rejected_by: int, reason: str) 
     return engine.reject_pending_entry(pending_id, rejected_by, reason)
 
 
-# ── Orphan Detector ─────────────────────────────────────────────────────
+# -- Orphan Detector -----------------------------------------------------
 
 def detect_orphans(db: Session, cc: Optional[str] = None) -> dict:
     engine = TreasuryEngine(db)
@@ -1215,7 +1215,7 @@ def detect_orphans(db: Session, cc: Optional[str] = None) -> dict:
     return {"alerts": alerts, "count": len(alerts)}
 
 
-# ── Payroll ─────────────────────────────────────────────────────────────
+# -- Payroll -------------------------------------------------------------
 
 def get_payroll_equity(db: Session) -> list:
     rows = (

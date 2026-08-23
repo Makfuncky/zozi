@@ -1,8 +1,8 @@
-ï»¿"""Business logic extracted from routers/admin_treasury.py."""
+"""Business logic extracted from routers/admin_treasury.py."""
 from __future__ import annotations
 from infrastructure.utils.datetime_utils import utcnow
 
-"""Admin Treasury Router â€” bridges frontend /admin/treasury/* calls to TreasuryEngine."""
+"""Admin Treasury Router — bridges frontend /admin/treasury/* calls to TreasuryEngine."""
 
 import logging
 
@@ -76,7 +76,7 @@ def require_treasury_access(current_user: dict = Depends(get_current_user)) -> d
 
 def admin_treasury_root(db: Session = Depends(get_db), current_user: dict = Depends(require_treasury_access)):
 
-    """Treasury root â€” summary stats (bare /admin/treasury)."""
+    """Treasury root — summary stats (bare /admin/treasury)."""
     total_entries = db.query(JournalEntry).count() or 0
     total_accounts = db.query(Account).count() or 0
     total_cash = db.execute(
@@ -440,7 +440,7 @@ def consolidated_trial_balance(db: Session = Depends(get_db), current_user: dict
 
     query = db.query(Account).filter(Account.is_active == True)
     total = query.count()
-    accounts = query.order_by(Account.code) * page_size).limit(page_size).all()
+    accounts = query.order_by(Account.code) .offset(page_size).limit(page_size).all()
     return {
         "data": [
             {
@@ -462,7 +462,7 @@ def consolidated_cash_position(db: Session = Depends(get_db), current_user: dict
 
     query = db.query(TreasuryAccount).filter(TreasuryAccount.is_active == True)
     total = query.count()
-    accounts = query * page_size).limit(page_size).all()
+    accounts = query .offset(page_size).limit(page_size).all()
     total_balance = float(db.query(func.coalesce(func.sum(TreasuryAccount.balance), 0)).filter(TreasuryAccount.is_active == True).scalar() or 0)
     return {
         "accounts": [

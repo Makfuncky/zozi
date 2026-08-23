@@ -662,12 +662,8 @@ def get_recommendations(
         }
 
     # ── Redis cache lookup ────────────────────────────────────────────────────
-    # NOTE: use hashlib (not builtin hash()) for the cache key — builtin hash()
-    # is randomized per-process (PYTHONHASHSEED), which would make the key
-    # different on every restart and orphan the previously cached entry in Redis.
     _cats_key = ",".join(sorted(normalized_recent_categories))
-    _digest = hashlib.md5(_cats_key.encode("utf-8")).hexdigest()
-    _cache_key = f"rec:{user_id}:{limit}:{_digest}"
+    _cache_key = f"rec:{user_id}:{limit}:{hash(_cats_key)}"
 
     def _compute_payload() -> dict:
         category_rows = (

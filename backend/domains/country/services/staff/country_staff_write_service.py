@@ -12,8 +12,9 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
+from domains.governance.models.user import User
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_enhancements import CountryStaffAssignment
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -48,9 +49,7 @@ def list_country_staff(db: Session, code: str, active_only: bool = True) -> dict
 
         raise HTTPException(status_code=404, detail="Country not found")
 
-    q = db.query(CountryStaffAssignment).options(
-        joinedload(CountryStaffAssignment.user)
-    ).filter(
+    q = db.query(CountryStaffAssignment).filter(
         CountryStaffAssignment.country_code == code.upper()
     )
     if active_only:
@@ -166,14 +165,10 @@ def remove_staff_from_country(db: Session, code: str, user_id: int) -> dict:
 
         raise HTTPException(status_code=404, detail="Assignment not found")
 
-    try:
-        assignment.is_active = False
-        assignment.updated_at = _utcnow()
-        db.commit()
-        return {"message": "Staff removed from country"}
-    except Exception:
-        db.rollback()
-        raise
+    assignment.is_active = False
+    assignment.updated_at = _utcnow()
+    db.commit()
+    return {"message": "Staff removed from country"}
 
 
 def get_my_assigned_countries(db: Session, user_id: int) -> dict:

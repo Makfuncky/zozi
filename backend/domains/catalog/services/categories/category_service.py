@@ -24,9 +24,12 @@ from typing import Any, Iterable, Mapping, Optional, Sequence
 from sqlalchemy.orm import Query, Session
 
 from domains.catalog.models.products import Category
+from domains.catalog.utils.category_tree import rebuild_category_paths
 from infrastructure.utils.slug import generate_slug
 import structlog
 logger = structlog.get_logger(__name__)
+
+logger = logging.getLogger(__name__)
 
 # Columns a caller is allowed to set. Anything else in a payload is ignored so
 # an over-posted request can never write to `id`, `path`, `depth`, timestamps…
@@ -59,14 +62,6 @@ __all__ = [
     "delete_category",
     "reorder_categories",
     "serialize_category_summary",
-    "rebuild_category_paths",
-    "category_subtree_ids",
-    "category_subtree_ids_inclusive",
-    "list_categories_flat",
-    "archive_category",
-    "restore_category",
-    "bulk_archive_categories",
-    "bulk_restore_categories",
 ]
 
 
@@ -304,133 +299,24 @@ def reorder_categories(db: Session, order: Mapping[int, int]) -> int:
     return updated
 
 
-# ── Materialized-path helpers (Phase 3a) ──────────────────────────────────────
-# Category depth is shallow (<=5) and changes rarely; a materialized path
-# (path="/1/15/42/", depth=2) enables O(1) sub-tree queries via LIKE instead
-# of recursive CTEs. Nested-set would force a full renumber on every insert.
-
-
-def _chain_for(category: Category, by_id: dict[int, Category]) -> list[str]:
-    """Return the ancestor id chain (root-first) for ``category``."""
-    chain: list[str] = []
-    guard = 0
-    cur = category.parent_id
-    while cur and guard < 64:
-        chain.append(str(cur))
-        node = by_id.get(cur)
-        if node is None:
-            break
-        cur = node.parent_id
-        guard += 1
-    chain.reverse()
-    return chain
-
-
-def compute_category_path(category: Category, by_id: dict[int, Category]) -> tuple[str, int]:
-    """Compute ``(path, depth)`` for a single category.
-
-    ``path`` always includes the category's own id. ``depth`` is the number of
-    ancestors (0 for a top-level category).
-    """
-    chain = _chain_for(category, by_id)
-    chain.append(str(category.id))
-    path = "/" + "/".join(chain) + "/"
-    return path, len(chain) - 1
-
-
-def rebuild_category_paths(db: Session) -> int:
-    """Recompute ``path``/``depth`` for every category from ``parent_id``.
-
-    Safe to call after any create/move. The catalog is small, so a full rebuild
-    is simpler and less error-prone than incremental maintenance.
-    """
-    cats = db.query(Category).all()
-    by_id = {c.id: c for c in cats}
-    updated = 0
-    for c in cats:
-        if c.parent_id is not None and c.parent_id not in by_id:
-            c.parent_id = None
-        path, depth = compute_category_path(c, by_id)
-        if c.path != path or c.depth != depth:
-            c.path = path
-            c.depth = depth
-            updated += 1
-    db.flush()
-    return updated
-
-
-def category_subtree_ids(category_id: int, db: Session) -> list[int]:
-    """Return ids of all descendants of ``category_id`` (excludes the root)."""
-    pattern = f"%/{int(category_id)}/%"
-    rows = (
-        db.query(Category.id)
-        .filter(Category.path.like(pattern))
-        .filter(Category.id != int(category_id))
-        .all()
-    )
-    return [r[0] for r in rows]
-
-
-def category_subtree_ids_inclusive(category_id: int, db: Session) -> list[int]:
-    """Return ids of the category and all of its descendants."""
-    ids = category_subtree_ids(category_id, db)
-    ids.append(int(category_id))
-    return ids
-
-
-def list_categories_flat(
-    db: Session,
-    *,
-    active_only: bool = True,
-    page: int = 1,
-    page_size: int = 50,
-) -> dict[str, Any]:
-    """Flat projection of categories for admin commission configuration screens.
-
-    Returns ``{data, total, page, page_size}`` where each row carries the
-    fields a commission grid needs: id, slug, name, parent_id, commission_rate,
-    sort_order.
-    """
-    from infrastructure.utils.pagination import paginated_query  # local: avoids import cycle
-
-    query = get_category_query(db, active_only=active_only)
-    items, total = paginated_query(query, page, page_size)
+def list_categories_flat(db: Session, page: int = 1, page_size: int = 20) -> dict:
+    """Return all active categories with id, slug, name, parent_id, commission_rate for admin commission config."""
+    query = db.query(Category).filter(Category.is_active.is_(True))
+    total = query.count()
+    rows = query.order_by(Category.sort_order, Category.name).offset((page - 1) * page_size).limit(page_size).all()
     return {
-        "data": [serialize_category_summary(c) for c in items],
+        "data": [
+            {
+                "id": c.id,
+                "slug": c.slug,
+                "name": c.name,
+                "parent_id": c.parent_id,
+                "commission_rate": float(c.commission_rate) if c.commission_rate is not None else None,
+                "sort_order": c.sort_order,
+            }
+            for c in rows
+        ],
         "total": total,
         "page": page,
         "page_size": page_size,
     }
-
-
-# ── Archive / restore / bulk (folded from admin_categories_service) ──────────
-# These delegate to the generic governance archive/restore helpers. Kept here
-# (rather than in the router) so the router stays thin (Law 2).
-
-
-def archive_category(category_id: int, acting_user: dict, db: Session, *, reason: Optional[str] = None) -> dict:
-    """Soft-archive a category."""
-    from domains.governance.services.settings.misc_service import archive_entity
-
-    return archive_entity("category", category_id, acting_user, db, reason)
-
-
-def restore_category(category_id: int, acting_user: dict, db: Session) -> dict:
-    """Restore a soft-archived category."""
-    from domains.governance.services.settings.misc_service import restore_entity
-
-    return restore_entity("category", category_id, acting_user, db)
-
-
-def bulk_archive_categories(ids: list[int], acting_user: dict, db: Session, *, reason: Optional[str] = None) -> dict:
-    """Archive many categories."""
-    from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-
-    return bulk_archive_entities(db, Category, ids, acting_user, reason)
-
-
-def bulk_restore_categories(ids: list[int], acting_user: dict, db: Session) -> dict:
-    """Restore many categories."""
-    from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
-
-    return bulk_restore_entities(db, Category, ids, acting_user)

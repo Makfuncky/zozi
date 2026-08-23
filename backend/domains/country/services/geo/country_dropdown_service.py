@@ -7,7 +7,6 @@ from __future__ import annotations
 from typing import List, Optional
 
 from fastapi import HTTPException
-from pydantic import BaseModel
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -77,7 +76,8 @@ def get_categories_dropdown(
     country_code: Optional[str], parent_id: Optional[int], limit: int = 20, cursor: Optional[str] = None
 ) -> dict:
     from infrastructure.database.database import get_db_context
-        from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
+    from domains.catalog.models.products import Category
+    from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
     with get_db_context() as db:
         query = db.query(Category)
@@ -96,51 +96,3 @@ def get_categories_dropdown(
             },
         )
         return build_cursor_pagination_payload(result.items, result.next_cursor, result.page_size)
-
-
-# === Merged from accounts/services/country_dropdown_service.py ===
-
-class CategoryResponse(BaseModel):
-
-    id: int
-
-    name: str
-
-    slug: str
-
-    parent_id: Optional[int]
-
-
-
-
-class CityResponse(BaseModel):
-
-    id: int
-
-    name: str
-
-    region: Optional[str]
-
-    latitude: Optional[float]
-
-    longitude: Optional[float]
-
-    population: Optional[int]
-
-
-
-
-class CountryDropdownResponse(BaseModel):
-
-    code: str
-
-    name: str
-
-    currency: str
-
-    currency_symbol: Optional[str]
-
-    phone_code: Optional[str]
-
-
-
