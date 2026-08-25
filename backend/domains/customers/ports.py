@@ -14,7 +14,7 @@ from __future__ import annotations
 # Shipping quotes are owned by the orders domain; re-exported here so the
 # customer module routers import them from customers.ports instead of
 # directly from domains.orders.services.
-from domains.orders.services.cart_controller_service import (  # noqa: F401
+from domains.orders.services.cart_legacy_service import (  # noqa: F401
     CartShippingQuoteRequest,
     get_cart_shipping_quote,
 )

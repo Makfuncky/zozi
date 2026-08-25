@@ -8,6 +8,7 @@ expected to subclass ``BasePaymentGateway`` and register itself with
 """
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, Union
 
@@ -79,7 +80,7 @@ def dispatch_provider_operation(code: str, operation: str, *args: Any, **kwargs:
     return handler(*args, **kwargs)
 
 
-class BasePaymentGateway:
+class BasePaymentGateway(ABC):
     """Contract every gateway adapter must implement."""
 
     #: Human-readable name shown in admin UI / registry listings.
@@ -149,6 +150,7 @@ class BasePaymentGateway:
             return False
         return True
 
+    @abstractmethod
     def normalize_webhook_payload(
         self,
         raw_body: bytes,

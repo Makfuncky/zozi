@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from domains.governance.ports import User
-from domains.governance.services.auth.otp_service import start_otp, verify_otp
+from domains.accounts.services.auth.auth_service import start_otp, verify_otp
 from infrastructure.database.database import get_db
 from infrastructure.security.dependencies import get_current_user
 from modules.admin.auth.schemas import OtpRequest

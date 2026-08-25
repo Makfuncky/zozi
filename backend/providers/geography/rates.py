@@ -15,8 +15,6 @@ from typing import Any
 
 import httpx
 
-from infrastructure.utils.money import to_decimal
-
 logger = logging.getLogger(__name__)
 
 RATE_CACHE_TTL_SECONDS = 60 * 60
@@ -58,7 +56,7 @@ def fetch_rates() -> tuple[dict[str, Decimal], str]:
         remote_rates = data.get("rates") if isinstance(data, dict) else None
         if isinstance(remote_rates, dict):
             parsed_rates = {
-                code.upper(): to_decimal(value)
+                code.upper(): Decimal(str(value))
                 for code, value in remote_rates.items()
             }
             parsed_rates["AED"] = Decimal("1")

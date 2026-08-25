@@ -8,12 +8,17 @@ module routers delegate to (Law 2: routers stay thin).
 from __future__ import annotations
 
 import logging
+import secrets
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.governance.models.core import Address
+from domains.governance.models.user import User
+from domains.hr.models.employee_models import DynamicQRSession
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeDependent
 from domains.hr.models.employee_models import EmployeeDocument
@@ -495,3 +500,121 @@ class EmployeeService:
         employee.employment_status = "suspended"
         self.db.commit()
         return {"status": "suspended", "employee_id": employee_id}
+
+    # ── Communication & Chat (merged from employees_service) ───────
+
+    def generate_meeting_token(self, employee_id: int, room_id: Optional[str] = None) -> Dict[str, Any]:
+        emp = self.db.query(Employee).filter(Employee.id == employee_id).first()
+        if not emp:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        if emp.user and not emp.user.is_clocked_in:
+            raise HTTPException(status_code=403, detail="Employee must be clocked in to start meeting")
+        token = secrets.token_urlsafe(32)
+        return {"meeting_token": token, "room_id": room_id or f"room_{uuid4().hex[:8]}"}
+
+    def create_war_room_chat(self, entity_type: str, entity_id: int, employee_id: int) -> Dict[str, Any]:
+        return {
+            "id": uuid4().hex,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "name": f"{entity_type.title()} War Room",
+            "created_by": employee_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "is_active": True,
+        }
+
+    def send_entity_chat_message(
+        self, chat_id: str, sender_id: int, content: str,
+        recipient_type: Optional[str] = None, recipient_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        return {
+            "id": uuid4().hex,
+            "chat_id": chat_id,
+            "sender_id": sender_id,
+            "content": content,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "read_by": [],
+        }
+
+    def create_masked_communication_channel(
+        self, participant1_id: int, participant2_id: int, channel_type: str = "chat",
+    ) -> Dict[str, Any]:
+        virtual_number = f"+{secrets.randbelow(9000000000) + 1000000000}"
+        return {
+            "id": uuid4().hex,
+            "participant1_id": participant1_id,
+            "participant2_id": participant2_id,
+            "virtual_number": virtual_number,
+            "channel_type": channel_type,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def close_communication_channel(self, channel_id: str, reason: str = "completed") -> Dict[str, Any]:
+        return {"id": channel_id, "status": "closed", "closed_reason": reason}
+
+    def generate_email_alias(self, employee_id: int, country_code: str) -> Dict[str, Any]:
+        emp = self.db.query(Employee).filter(Employee.id == employee_id).first()
+        if not emp:
+            raise HTTPException(status_code=404, detail="Employee not found")
+        alias = f"{emp.department.lower()}.{country_code.lower()}@zozi.com"
+        return {"email_alias": alias, "employee_id": employee_id}
+
+    def send_treasury_email(
+        self, template_id: str, recipient_alias: str, variables: dict, priority: str = "normal",
+    ) -> Dict[str, Any]:
+        email_id = uuid4().hex
+        return {
+            "id": email_id,
+            "template_id": template_id,
+            "recipient": recipient_alias,
+            "variables": variables,
+            "priority": priority,
+            "status": "sent",
+            "sent_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def scan_outgoing_dlp(self, content: str) -> Dict[str, Any]:
+        import re
+        pii_patterns = [r'\b\d{10}\b', r'\b\d{15}\b', r'[A-Z]{2}\d{7}\b']
+        for pattern in pii_patterns:
+            if re.search(pattern, content):
+                return {"blocked": True, "reason": "PII detected", "content_preview": content[:50]}
+        return {"blocked": False}
+
+    def create_shift_handover_channel(self, shift_date: str, outgoing_shift_id: int) -> Dict[str, Any]:
+        return {
+            "id": uuid4().hex,
+            "shift_date": shift_date,
+            "outgoing_shift_id": outgoing_shift_id,
+            "alerts": [],
+            "tickets": [],
+            "notes": [],
+            "requires_acknowledgment": True,
+        }
+
+    def get_shift_handover_summary(self, channel_id: str) -> Dict[str, Any]:
+        return {
+            "channel_id": channel_id,
+            "system_alerts": [],
+            "unresolved_tickets": 0,
+            "pending_notes": 0,
+            "acknowledged": False,
+        }
+
+    def acknowledge_shift_handover(self, channel_id: str, employee_id: int) -> Dict[str, Any]:
+        return {
+            "channel_id": channel_id,
+            "acknowledged_by": employee_id,
+            "acknowledged_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+    def get_employee_communication_stats(self, employee_id: int) -> Dict[str, Any]:
+        return {
+            "employee_id": employee_id,
+            "total_chats": 0,
+            "total_meetings": 0,
+            "emails_sent": 0,
+            "emails_received": 0,
+            "last_active": datetime.now(timezone.utc).isoformat(),
+        }

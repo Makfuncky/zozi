@@ -8,10 +8,15 @@ Test file: backend/tests/_test_provider/test_geo.py
 """
 import ipaddress
 import json
-import json
 import logging
+import os
+import threading
+import time
 import urllib.request
+from dataclasses import dataclass
 from typing import Optional, Tuple
+
+import requests
 
 from ..config import settings
 
@@ -133,13 +138,6 @@ class CountryDetectionProvider:
             "region": "Unknown",
         }
 
-
-import os
-import threading
-import time
-from dataclasses import dataclass
-
-import requests
 
 DEFAULT_TIMEOUT = float(os.getenv("LOCATION_HTTP_TIMEOUT", "4.0"))
 CACHE_TTL_SECONDS = int(os.getenv("LOCATION_CACHE_TTL", "3600"))

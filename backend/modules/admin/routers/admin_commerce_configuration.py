@@ -16,8 +16,8 @@ from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import enforce_country_access
 from domains.governance.services.settings.misc_service import archive_entity
 from domains.governance.services.settings.misc_service import restore_entity
-from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import hard_delete_entity
 
 router = APIRouter(prefix="/api/v1/admin")

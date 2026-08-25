@@ -1,12 +1,11 @@
 from __future__ import annotations
 from uuid import uuid4
 from sqlalchemy import func, UUID
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, text
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, text
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
-from ..mixins import TenantMixin
-from domains.comms.mixins import VersionMixin
+from infrastructure.database.mixins import TenantMixin, VersionMixin
 __all__ = ['FlashSale', 'FlashSaleItem', 'EmailCampaign', 'EmailTemplate', 'NewsletterSubscriber', 'EmailCampaignLog', 'CampaignRecipient', 'EmailDeliveryEvent', 'EmailSuppression', 'EmailRuntimeConfig', 'PointsTransaction', 'UserPoints']
 
 class FlashSale(Base, TenantMixin):
@@ -20,7 +19,7 @@ class FlashSale(Base, TenantMixin):
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (
-        Index('ix_flash_sales_product_ids_gin', 'product_ids', postgresql_using='gin'),
+        Index('ix_flash_sales_product_ids', 'product_ids'),
         Index('ix_flash_sales_country_created', 'country_code', 'created_at'),
         {'schema': 'comms'},
     )
@@ -33,7 +32,7 @@ class FlashSale(Base, TenantMixin):
     deleted_at = Column(DateTime, nullable=True)
     deleted_by_id = Column(Integer, nullable=True)
     product_ids = Column(JSON, nullable=True)
-    country_code = Column(String(3), nullable=True)
+    country_code = Column(String(2), nullable=True)
     country = relationship('CountryConfig', foreign_keys='FlashSale.country_code', primaryjoin='foreign(FlashSale.country_code) == CountryConfig.code')
     items = relationship('FlashSaleItem', back_populates='flash_sale', cascade='all, delete-orphan')
 
@@ -57,7 +56,7 @@ class FlashSaleItem(Base, TenantMixin):
     product_id = Column(Integer, ForeignKey('commerce.products.id', ondelete='RESTRICT'), nullable=False, index=True)
     original_price = Column(Numeric(10, 2), nullable=False)
     discounted_price = Column(Numeric(10, 2), nullable=False)
-    country_code = Column(String(3), nullable=True)
+    country_code = Column(String(2), nullable=True)
     quantity_limit = Column(Integer, nullable=True)
     flash_sale = relationship('FlashSale', back_populates='items')
     product = relationship('Product')
@@ -71,11 +70,11 @@ class EmailCampaign(Base, TenantMixin):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_email_campaigns_country_created', 'country_code', 'created_at'), {'schema': 'comms'})
+    __table_args__ = (Index('ix_email_campaigns_country_created', 'country_code', 'created_at'), CheckConstraint("status_code IN ('draft', 'scheduled', 'sending', 'sent', 'paused', 'cancelled')", name='chk_email_campaigns_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     subject = Column(String, nullable=False)
-    status = Column(String, default='draft')
+    status_code = Column(String, default='draft')
     send_at = Column(DateTime, nullable=True)
     created_by = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=utcnow)
@@ -133,11 +132,11 @@ class EmailCampaignLog(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'comms'},)
+    __table_args__ = (CheckConstraint("status_code IN ('sent', 'delivered', 'bounced', 'failed')", name='chk_email_campaign_logs_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey('communication.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
     recipient_email = Column(String, nullable=False)
-    status = Column(String, default='sent')
+    status_code = Column(String, default='sent')
     sent_at = Column(DateTime, default=utcnow)
     delivered_at = Column(DateTime, nullable=True)
     opened_at = Column(DateTime, nullable=True)
@@ -153,12 +152,12 @@ class CampaignRecipient(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'comms'},)
+    __table_args__ = (CheckConstraint("status_code IN ('pending', 'sent', 'delivered', 'bounced', 'failed', 'unsubscribed')", name='chk_campaign_recipients_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     campaign_id = Column(Integer, ForeignKey('communication.email_campaigns.id', ondelete='RESTRICT'), nullable=False, index=True)
     user_id = Column(Integer, nullable=False)
     email = Column(String, nullable=False)
-    status = Column(String, default='pending')
+    status_code = Column(String, default='pending')
     sent_at = Column(DateTime, nullable=True)
     delivered_at = Column(DateTime, nullable=True)
     opened_at = Column(DateTime, nullable=True)
@@ -178,12 +177,12 @@ class EmailDeliveryEvent(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_email_delivery_events_details_gin', 'details', postgresql_using='gin'), {'schema': 'comms'})
+    __table_args__ = (Index('ix_email_delivery_events_details', 'details'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     event_type = Column(String, nullable=False)
     recipient_email = Column(String, nullable=False)
     subject = Column(String, nullable=True)
-    status = Column(String, default='sent')
+    status_code = Column(String, default='sent')
     details = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=utcnow)
 
@@ -197,13 +196,13 @@ class EmailSuppression(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = ({'schema': 'comms'},)
+    __table_args__ = (CheckConstraint("status_code IN ('active', 'inactive', 'expired')", name='chk_email_suppressions_status_valid'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False, index=True)
     reason = Column(String, nullable=False)
     source = Column(String, nullable=False)
     provider = Column(String, nullable=True)
-    status = Column(String, default='active')
+    status_code = Column(String, default='active')
     notes = Column(Text, nullable=True)
     suppressed_at = Column(DateTime, nullable=True)
     last_event_at = Column(DateTime, nullable=True)

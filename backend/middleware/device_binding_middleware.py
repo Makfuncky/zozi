@@ -62,12 +62,22 @@ class DeviceFingerprintMiddleware(BaseHTTPMiddleware):
         return response
 
 # --- Merged from zero_trust_network.py ---
+class _ServiceMeshSecurity:
+    """Placeholder for service mesh security (not yet implemented)."""
+    def validate_service_token(self, token: str | None) -> dict | None:
+        return None
+
+class _NetworkPolicy:
+    """Placeholder for network policy (not yet implemented)."""
+    def is_trusted_network(self, ip: str) -> bool:
+        return True
+
 class ZeroTrustMiddleware:
     """Middleware for zero-trust network enforcement."""
 
     def __init__(self):
-        self.mesh = ServiceMeshSecurity()
-        self.policy = NetworkPolicy()
+        self.mesh = _ServiceMeshSecurity()
+        self.policy = _NetworkPolicy()
 
     async def authenticate_service(self, request) -> bool:
         """Authenticate service request."""

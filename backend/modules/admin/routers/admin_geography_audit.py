@@ -9,20 +9,20 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from rbac import get_current_user
-from domains.suppliers.services.legal_contract_service import LegalContractService
-from domains.governance.services.audit.audit_trail_service import AuditTrailService
-from domains.country.services.country_audit_admin_service import add_city as svc_add_city
-from domains.country.services.country_audit_admin_service import assign_staff as svc_assign_staff
-from domains.country.services.country_audit_admin_service import delete_city as svc_delete_city
-from domains.country.services.country_audit_admin_service import list_cities as svc_list_cities
-from domains.country.services.country_audit_admin_service import list_communications as svc_list_communications
-from domains.country.services.country_audit_admin_service import list_staff as svc_list_staff
-from domains.country.services.country_audit_admin_service import list_tax_rates as svc_list_tax_rates
-from domains.country.services.country_audit_admin_service import mark_communication_read as svc_mark_communication_read
-from domains.country.services.country_audit_admin_service import remove_staff as svc_remove_staff
-from domains.country.services.country_audit_admin_service import send_country_communication as svc_send_country_communication
-from domains.country.services.country_audit_admin_service import set_tax_rate as svc_set_tax_rate
-from domains.country.services.country_audit_admin_service import update_city as svc_update_city
+from domains.suppliers.services.contracts.legal_contract_service import LegalContractService
+from domains.audit.services.logs.audit_trail_service import AuditTrailService
+from domains.country.services.core.country_config_admin_service import add_city as svc_add_city
+from domains.country.services.core.country_config_admin_service import assign_staff as svc_assign_staff
+from domains.country.services.core.country_config_admin_service import delete_city as svc_delete_city
+from domains.country.services.core.country_config_admin_service import list_cities as svc_list_cities
+from domains.country.services.core.country_config_admin_service import list_communications as svc_list_communications
+from domains.country.services.core.country_config_admin_service import list_staff as svc_list_staff
+from domains.country.services.core.country_config_admin_service import list_tax_rates as svc_list_tax_rates
+from domains.country.services.core.country_config_admin_service import mark_communication_read as svc_mark_communication_read
+from domains.country.services.core.country_config_admin_service import remove_staff as svc_remove_staff
+from domains.country.services.core.country_config_admin_service import send_country_communication as svc_send_country_communication
+from domains.country.services.core.country_config_admin_service import set_tax_rate as svc_set_tax_rate
+from domains.country.services.core.country_config_admin_service import update_city as svc_update_city
 
 router = APIRouter(tags=["country-admin"], prefix="/api/v1/admin")
 
@@ -152,7 +152,7 @@ def get_data_residency(
     current_user = Depends(get_current_user)
 ):
     """Get data residency tier for a country."""
-    from domains.governance.services.audit.audit_trail_service import DataResidencyService
+    from domains.audit.services.data_residency import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {

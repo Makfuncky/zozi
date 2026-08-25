@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from typing import Any, Dict
 
-from domains.orders.services.referrals_controller import get_referral_code
-from domains.orders.services.referrals_controller import get_referral_config
+from domains.customers.services.referrals.referrals_service import get_referral_code
+from domains.customers.services.referrals.referrals_service import get_referral_config
 
 router = APIRouter(prefix="/api/v1")
 

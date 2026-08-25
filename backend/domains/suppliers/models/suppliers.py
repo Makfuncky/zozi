@@ -1,4 +1,4 @@
-"""suppliers domain — ORM model package (Law 6 schema discipline).
+﻿"""suppliers domain â€” ORM model package (Law 6 schema discipline).
 
 Supplier-entity definitions live here on the ``supplier`` Postgres schema.
 Cross-domain consumers import these via ``domains.suppliers.models`` or read
@@ -19,8 +19,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Foreign
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
-from domains.suppliers.mixins import TenantMixin
-from domains.suppliers.mixins import VersionMixin
+from infrastructure.database.mixins import TenantMixin, VersionMixin
 
 __all__ = ['SupplierProfile', 'SupplierDocument', 'SupplierNotificationPreference',
            'SupplierBadgeCatalog', 'SupplierBadge', 'SupplierBadgeBillingHistory']
@@ -39,7 +38,7 @@ class SupplierProfile(Base, TenantMixin):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('accounts.users.id', ondelete='RESTRICT'), nullable=False, index=True)
     business_name = Column(String(200), nullable=False)
-    country_code = Column(String(3), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     address = Column(String(255), nullable=True)
     website = Column(String(255), nullable=True)
     bio = Column(Text, nullable=True)
@@ -80,6 +79,8 @@ class SupplierDocument(Base, TenantMixin):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
 
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'expired', 'revoked')", name='chk_supplier_documents_status_valid'), {'schema': 'supplier'})
+
 
 class SupplierNotificationPreference(Base, TenantMixin):
     __tablename__ = 'supplier_notification_preferences'
@@ -112,7 +113,7 @@ class SupplierBadgeCatalog(Base):
     __tablename__ = 'supplier_badge_catalog'
     __table_args__ = (
         Index('ix_supplier_badge_catalog_country_created', 'country_code', 'created_at'),
-        Index('ix_supplier_badge_catalog_benefits_gin', 'benefits', postgresql_using='gin'),
+        Index('ix_supplier_badge_catalog_benefits_gin', 'benefits'),
         {'schema': 'supplier'},
     )
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
@@ -134,7 +135,7 @@ class SupplierBadgeCatalog(Base):
     credibility_weight = Column(Float, nullable=False, default=10.0)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class SupplierBadge(Base):
@@ -166,9 +167,16 @@ class SupplierBadge(Base):
     credibility_weight = Column(Float, nullable=False, default=10.0)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
     catalog = relationship('SupplierBadgeCatalog', foreign_keys=[catalog_id])
+
+    __table_args__ = (
+        UniqueConstraint('supplier_id', 'catalog_id', name='uq_supplier_badge'),
+        Index('ix_supplier_badges_country_created', 'country_code', 'created_at'),
+        CheckConstraint("status IN ('active', 'inactive', 'suspended', 'expired', 'revoked')", name='chk_supplier_badges_status_valid'),
+        {'schema': 'supplier'},
+    )
 
 
 class SupplierBadgeBillingHistory(Base):
@@ -204,5 +212,12 @@ class SupplierBadgeBillingHistory(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
-    country_code = Column(String(3), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
+
+    __table_args__ = (
+        Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
+        CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded', 'cancelled')", name='chk_supplier_badge_billing_history_status_valid'),
+        {'schema': 'supplier'},
+    )
+

@@ -4956,6 +4956,64 @@ so what kind of problem you are facing ?
 
 Now I have complete clarity. Here's the proper domain architecture:
 
----
+------------------------------------------------------------
 
+We have arrange all the domains properly according the `ARCHITECTURE_DIAGRAM.md`
+have detail investigate of the `backend/domains` and organise the plan in `DOMAIN_WORK.md` 
+
+---
+Instructions which must have add,
+- Read each `domain-> services` files and folders in detail to merge the files and change the name of the files.
+- Deletion is not allowed until detection/investigated 100% duplication.
+- domains/services/** layers will be sub-domain then feature to feature files.
+- each file must be readed completely before taking action.
+- need ZERO data loss.
+- When alignment/arrangement/filing/edit of the each domains will be complete must be wire with the relevant `backend/modules` 
+- if `domains` needed any tool to use it can call by the `backend\providers`
+- each `domain` must be read, understand the code, proper filing and foldering, edit, wiring with (moduels/**, router, domains/**/models, providers, infrasturucture, database, table, security and etc), ready for production needed. 
+
+- Make a plan into the `DOMAIN_WORK.md` domain to domain after reading each domain and get approval from me then give the task to sub-agent to complete the each domain to complete the read to production the backend 100%
+
+
+------------------------------------------------------------
+
+
+- Run agents of verifier/corrections/repairing/etc. for Phase 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 and investigation in detail what agent did wrong and left behind according to the plan and architecture to be correction, resolve, complete and also test evrything to ensure everything is running smoothly.
+- Right now, what the agent did, created empty function instead of using the previous files codes which were broken but there was codes.
+- There is still not properly wiring, code arrangement, code correction, using of providers, connecting with the modules, modules' repairing and etc. so you have to ensure properly for that also.
+- still i can see a range of logical error, logical broken pieces of the code, and now new problem is empty functions.
+- Do the deep domain to domain investigation of the log `_migration_log` and findout what happened instead of plan and what corrections needed for making plan and giving the prompt to agents.
+- You have to read the `DOMAIN_WORK.md`, `ARCHITECTURE_DIAGRAM.md` and also complete codebase to make new plan for correction, verification, repairing, wiring, and etc means it will be a complete audit on `DOMAIN_WORK.md` plan.
+- we need advance python code and advance features becasue we have to handle 100Ks users at a time.
+- still i can `controllers` name files in `domain` which mean we still have controllers but according to the `ARCHITECTURE_DIAGRAM.md` we are not using any controllers.
+- I have been watching the agent work, and found that it is doing cheating to repair lagacy code, which is not correct approach, it should to use lagacy code to make it better and then wire it. if it is working on lagacy code without understanding then it will never achieve to convert on `ARCHITECTURE_DIAGRAM.md` architecture.
+- We decided into `DOMAIN_WORK.md` that we will shift all the code of `domains/media` into `providers` but it is still available. which is one of the biggest evidence that agent didn't work adequately.  
+- We decided that will make 5 routers which we will keep into the `modules` but that is also not properly implemented. we can do one more thing to keep `modules/{m}/routers/{d}.py` and keep all router domain wise properly means the number of files are same as number of domain | means `modules/{m}/routers/{d}.py` 19 routers file as same number of domains counts. this will be easy and manageable for 100Ks users. if I am not wrong. if you like this way add into the main plan file `DOMAIN_WORK.md` and execute for it.
+- If I am not wrong there are more then 10,000+ problems in the codebase, small, medium, large, Architectural, Logical, Code Management, Code Arrangement, Wiring, Technological proper use and etc.  
+- I can a range of architecture breaching also which created by the agents while working so ask also from agent to check the architecture breacking areas also.
+- Run atlesst 5 agents which are working under 4 layers to complete the architecture, wring with (modules, provider, infrastructure, utils, rbac, kernal, middleware, database/table and etc), correction, completion of code, error handling, testing and etc.
+
+
+<!-- - read the repot of `_migration_log\correction_plan.md`, `_migration_log/deep_audit.md.` and `backend/domains/_migration_log/verifier_final.md` which is also highlighting a range of not completion task. but some are complete and these audit are not providing complete picture of the codebase. -->
+------------------------------------------------------------
+
+
+------------------------------------------------------------
+
+- Proceed for Phase 18, 19, 20, 21, 22 and verification, investigation, correction, testing. 
+
+------------------------------------------------------------
+
+
+
+---------------------------------------------------------------
+
+proceed carefully on `WIRING_ALIGNMENT_PLAN.md` becasue backend 80% aligned with the `ARCHITECTURE_DIAGRAM.md`.
+remaining missing services will be created later after understanding the current 
+
+---------------------------------------------------------------
+
+read `WIRING_ALIGNMENT_PLAN.md` accoding to it we have some missing services into the domain. can you check and list down which services we don't have.
+
+---------------------------------------------------------------
 

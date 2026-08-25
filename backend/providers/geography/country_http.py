@@ -9,6 +9,7 @@ parsed JSON on HTTP 200, ``None`` otherwise; network errors propagate as
 ``httpx.RequestError`` so the caller's retry wrapper can handle them.
 """
 
+import json
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -43,7 +44,12 @@ async def get_json(
             return resp.json()
     except httpx.RequestError as exc:
         raise CountryHttpError(str(exc)) from exc
-    except Exception as exc:  # noqa: BLE001 - non-network failures degrade to None
+    except (
+        json.JSONDecodeError,
+        TimeoutError,
+        ValueError,
+        OSError,
+    ) as exc:
         logger.debug("get_json failed for %s: %s", url, exc)
         return None
 

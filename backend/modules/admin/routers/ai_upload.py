@@ -41,14 +41,14 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from domains.governance.services.admin_controller import require_roles
+from domains.security.services.iam.security_dependencies import require_roles
 from infrastructure.database.database import get_db
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import ProductVariant
-from domains.media.models.ai_upload import AIGenerationLog
-from domains.media.models.ai_upload import AIStagingProduct
-from domains.media.models.ai_upload import AIStagingVariant
-from domains.media.models.ai_upload import AIUploadJob
+from domains.catalog.models.ai_upload import AIGenerationLog
+from domains.catalog.models.ai_upload import AIStagingProduct
+from domains.catalog.models.ai_upload import AIStagingVariant
+from domains.catalog.models.ai_upload import AIUploadJob
 from infrastructure.utils.variant_key import compute_variant_key
 
 logger = logging.getLogger(__name__)

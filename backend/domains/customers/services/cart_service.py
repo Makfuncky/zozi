@@ -286,7 +286,7 @@ def sync_cart(user_id: int, body: CartSyncRequest, db: Session) -> CartViewOut:
 # (which owns the logistics pricing integration). Re-exported here so the
 # customer module routers gate on customers.cart.* features while the
 # logistics integration stays in its canonical home.
-from domains.orders.services.cart_controller_service import (  # noqa: F401
+from domains.orders.services.cart_legacy_service import (  # noqa: F401
     CartShippingQuoteRequest,
     get_cart_shipping_quote,
 )

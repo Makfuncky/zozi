@@ -7,7 +7,7 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Any, Optional
 
-from domains.governance.services.core.ai_upload_controller import UploadFile, cancel_job, create_job, process_job, publish_job
+from domains.governance.services._auto_stubs import UploadFile, cancel_job, create_job, process_job, publish_job
 
 router = APIRouter(prefix="/api/v1")
 

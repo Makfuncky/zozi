@@ -6,7 +6,7 @@ from domains.catalog.services.search.search_service import (  # noqa: F401
     smart_search,
     smart_search_from_parsed,
     get_recommendations,
+    AdvancedFilterService,
+    AdvancedSearchEngine,
+    fetch_visually_similar_products,
 )
-from domains.catalog.services.search.advanced_filter_service import AdvancedFilterService  # noqa: F401
-from domains.catalog.services.search.advanced_search_engine import AdvancedSearchEngine  # noqa: F401
-from domains.catalog.services.search.visual_search_service import fetch_visually_similar_products  # noqa: F401

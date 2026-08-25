@@ -6,20 +6,30 @@ orchestrates business logic while the provider owns the HTTP/vendor details.
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
+import urllib.error
 
+import os
 import requests
-from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
-HF_API_TOKEN: str = settings.hf_api_token  # resolved once at import; empty string -> unauthenticated
+__all__ = [
+    "HF_API_TOKEN",
+    "HF_API_BASE",
+    "ZERO_SHOT_MODEL",
+    "CAPTION_MODEL",
+    "call_hf_image_api",
+]
+
+HF_API_TOKEN: str = os.environ.get("HF_API_TOKEN", "")  # resolved once at import; empty string -> unauthenticated
 HF_API_BASE = "https://api-inference.huggingface.co/models"
 ZERO_SHOT_MODEL = "facebook/bart-large-mnli"
 CAPTION_MODEL = "Salesforce/blip-image-captioning-base"
 
-_HF_HEADERS = lambda: {"Authorization": f"Bearer {settings.hf_api_token}"} if settings.hf_api_token else {}
+_HF_HEADERS = lambda: {"Authorization": f"Bearer {HF_API_TOKEN}"} if HF_API_TOKEN else {}
 _TRANSIENT_STATUS_CODES = {408, 425, 429, 500, 502, 503, 504}
 
 
@@ -49,7 +59,12 @@ def _post_hf_request(
             last_response = response
             if response.status_code not in _TRANSIENT_STATUS_CODES:
                 return response
-        except Exception as exc:  # noqa: BLE001
+        except (
+            urllib.error.URLError,
+            requests.exceptions.RequestException,
+            TimeoutError,
+            OSError,
+        ) as exc:
             last_error = exc
 
         if attempt < attempts - 1:
@@ -75,7 +90,14 @@ def _blip_caption(image_bytes: bytes) -> str:
                 return data[0].get("generated_text", "")
             if isinstance(data, dict):
                 return data.get("generated_text", "")
-    except Exception as exc:  # noqa: BLE001
+    except (
+        urllib.error.URLError,
+        requests.exceptions.RequestException,
+        json.JSONDecodeError,
+        TimeoutError,
+        ValueError,
+        OSError,
+    ) as exc:
         if _is_transient_hf_error(exc):
             logger.debug("BLIP caption unavailable after retries; using fallback inference: %s", exc)
         else:
@@ -98,7 +120,14 @@ def _zero_shot_classify(text: str, labels: "list[str]") -> str:
             labels_out = data.get("labels", [])
             if labels_out:
                 return labels_out[0]
-    except Exception as exc:  # noqa: BLE001
+    except (
+        urllib.error.URLError,
+        requests.exceptions.RequestException,
+        json.JSONDecodeError,
+        TimeoutError,
+        ValueError,
+        OSError,
+    ) as exc:
         logger.warning("Zero-shot classification failed: %s", exc)
     return ""
 
@@ -128,7 +157,12 @@ def call_hf_image_api(model: str, image_bytes: bytes, timeout: int = 60) -> "Opt
             logger.warning("HF model %s: 503 (loading); try again shortly", model)
         else:
             logger.warning("HF model %s: HTTP %d — %.200s", model, resp.status_code, resp.text)
-    except Exception as exc:  # noqa: BLE001
+    except (
+        urllib.error.URLError,
+        requests.exceptions.RequestException,
+        TimeoutError,
+        OSError,
+    ) as exc:
         logger.warning("HF model %s: %s", model, exc)
     return None
 

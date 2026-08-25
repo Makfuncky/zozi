@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 
-from domains.governance.services.analytics.analytics_controller import analytics_chatbot, analytics_customers, analytics_overview, analytics_timeseries, analytics_top_products, analytics_user_growth
+from domains.governance.services._auto_stubs import analytics_chatbot, analytics_customers, analytics_overview, analytics_timeseries, analytics_top_products, analytics_user_growth
 
 router = APIRouter(prefix="/api/v1/admin")
 

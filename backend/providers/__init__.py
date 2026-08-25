@@ -21,7 +21,7 @@ from .image.bg_remover import (
     BottomTextEraser,
     WoodBackgroundRemover,
 )
-from .image.image import remove_background as image_remove_background, generate_angles
+from .image.image import generate_angles
 from .image.ocr import parse_bill_text, parse_statement_csv
 from .ai.finance_ai import (
     FinanceAIResult,
@@ -70,7 +70,6 @@ __all__ = [
     "FloatingArtifactRemover",
     "BottomTextEraser",
     "WoodBackgroundRemover",
-    "image_remove_background",
     "generate_angles",
     "parse_bill_text",
     "parse_statement_csv",

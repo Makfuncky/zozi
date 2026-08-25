@@ -17,9 +17,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.governance.services.admin_controller import get_current_admin
-from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
-from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
+from domains.governance.services._auto_stubs import get_current_admin
+from domains.governance.services._auto_stubs import get_all_suppliers
+from domains.finance.services.payouts.payout_batch_service import list_pending_payouts
 from domains.catalog.models.products import Category as CategoryModel
 from domains.governance.models.admin import CommissionGlobalConfig
 from domains.governance.models.admin import ShippingCarrier

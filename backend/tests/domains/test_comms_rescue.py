@@ -3,7 +3,7 @@
 Verifies the W1/CG1 violations flagged in SYSTEM_AUDIT_REPORT-style audits are
 resolved: the router no longer performs DB writes or references ``models``
 directly — it delegates persistence and user reads to
-``controllers.comms.chat_write_controller`` -> ``services.comms.chat_write_service``.
+``services.comms.messaging.chat.chat_write_service``.
 Also locks the boot-blocking import in main.py (was pointing at the pre-rename
 name ``public_comms_status``).
 """
@@ -41,20 +41,16 @@ def test_comms_router_does_not_reference_models_directly():
     assert "from domains.governance.models.core import" not in src
 
 
-def test_comms_router_delegates_to_canonical_controller():
+def test_comms_router_delegates_to_canonical_service():
     src = _read(ROUTER_PATH)
-    assert "from modules.comms.routers.chat_write_controller import" in src
+    assert "from domains.comms.services.messaging.chat.chat_write_service import" in src
     for fn in ("persist_message", "mark_messages_read", "get_user_display_name", "get_user_role"):
-        assert fn in src, f"Router does not delegate {fn} to the controller"
+        assert fn in src, f"Router does not delegate {fn} to the service"
 
 
-def test_comms_controller_wires_canonical_service():
-    import modules.comms.routers.chat_write_controller as ctrl
-    import domains.comms.services.chat_write_service as svc
+def test_comms_service_exists():
+    import domains.comms.services.messaging.chat.chat_write_service as svc
 
-    # Controller re-exports the same call contract the router uses.
-    assert hasattr(ctrl, "persist_message")
-    assert hasattr(ctrl, "mark_messages_read")
     # The service is the actual DB-write owner.
     assert hasattr(svc, "persist_message")
     assert hasattr(svc, "mark_messages_read")

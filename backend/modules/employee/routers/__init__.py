@@ -1,65 +1,31 @@
-"""Routers for the employee module (re-homed from flat backend/routers/)."""
+"""Routers for the employee module — 15 domain routers."""
 import importlib
 
 routers = []
 public_routers = []
 
 _module_names = [
-    "accounting",
-    "cash_management",
-    "chat",
-    "chat_api",
-    "chat_enrichment",
-    "chatbot",
-    "comm",
-    "comms_chat",
-    "comms_unified",
-    "comms_video",
-    "email",
-    "email_controller",
-    "email_enrichment",
-    "employees",
-    "entity_chat",
-    "entity_communication",
-    "ess",
-    "expense_controller",
-    "expenses",
+    "accounts",
+    "analytics",
+    "audit",
+    "catalog",
+    "comms",
+    "country",
+    "customers",
     "finance",
-    "finance_automation",
-    "finance_erp",
-    "finance_package",
-    "hierarchy",
+    "governance",
     "hr",
-    "hr_dashboard",
-    "internal_channels",
-    "internal_comms_channels",
-    "invoices",
-    "jobs",
-    "lms",
-    "messaging",
-    "notifications",
-    "okr",
-    "payroll",
-    "performance",
-    "proxy_communication",
-    "push_notifications",
-    "risk",
-    "shift_handover",
-    "succession",
-    "tickets",
-    "trading",
-    "travel",
-    "treasury",
-    "treasury_api",
-    "video",
-    "video_controller",
-    "ws_chat",
+    "logistics",
+    "orders",
+    "promotions",
+    "security",
+    "suppliers",
 ]
 
 for _n in _module_names:
     try:
         _m = importlib.import_module(f"modules.employee.routers.{_n}")
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         import logging as _logging
         _logging.getLogger(__name__).error("Skipping router %s: %s", _n, _e)
         continue

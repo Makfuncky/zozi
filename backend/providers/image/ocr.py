@@ -19,15 +19,15 @@ logger = logging.getLogger(__name__)
 
 try:
     import pytesseract  # noqa: F401
-    _OCR_AVAILABLE = True
+    HAS_OCR = True
 except ImportError:
     pytesseract = None  # type: ignore
-    _OCR_AVAILABLE = False
+    HAS_OCR = False
 
 
 def ocr_available() -> bool:
     """Return True when the pytesseract SDK is importable."""
-    return _OCR_AVAILABLE
+    return HAS_OCR
 
 
 def preprocess_document_bytes(image_data: bytes):
@@ -109,7 +109,7 @@ def ocr_image_array(image_array: np.ndarray) -> Optional[Tuple[str, str]]:
         A ``(text, data)`` tuple from ``image_to_string`` and ``image_to_data``,
         or ``None`` when pytesseract is unavailable.
     """
-    if not _OCR_AVAILABLE:
+    if not HAS_OCR:
         return None
     text = pytesseract.image_to_string(image_array)
     data = pytesseract.image_to_data(image_array, output_boxes=True)

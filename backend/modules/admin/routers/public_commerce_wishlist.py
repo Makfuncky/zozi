@@ -7,11 +7,11 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import get_current_user
 from typing import List, Optional
 
-from domains.orders.services.wishlist_controller import WishlistItemOut
-from domains.orders.services.wishlist_controller import add_to_wishlist
-from domains.orders.services.wishlist_controller import clear_user_wishlist
-from domains.orders.services.wishlist_controller import get_wishlist
-from domains.orders.services.wishlist_controller import remove_from_wishlist
+from domains.orders.services._auto_stubs import WishlistItemOut
+from domains.customers.services.wishlist_service import add_to_wishlist
+from domains.orders.services._auto_stubs import clear_user_wishlist
+from domains.customers.services.wishlist_service_from_accounts import get_wishlist
+from domains.customers.services.wishlist_service import remove_from_wishlist
 
 router = APIRouter(prefix="/api/v1")
 

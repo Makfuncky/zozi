@@ -5,16 +5,16 @@ from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 
-from domains.hr.services.hr_controller import check_coi_conflict
-from domains.hr.services.hr_controller import create_coi_report
-from domains.hr.services.hr_controller import create_disciplinary_case
-from domains.hr.services.hr_controller import create_offboarding_case
-from domains.hr.services.hr_controller import get_disciplinary_cases
-from domains.hr.services.hr_controller import get_employee_graph
-from domains.hr.services.hr_controller import get_offboarding_cases
-from domains.hr.services.hr_controller import register_address
-from domains.hr.services.hr_controller import register_dependent
-from domains.hr.services.hr_controller import validate_gcc_compliance
+from domains.hr.services.employees.hr_service import check_coi_conflict
+from domains.hr.services.employees.hr_service import create_coi_report
+from domains.hr.services.employees.hr_service import create_disciplinary_case
+from domains.hr.services.employees.hr_service import create_offboarding_case
+from domains.hr.services.employees.hr_service import get_disciplinary_cases
+from domains.hr.services.employees.hr_service import get_employee_graph
+from domains.hr.services.employees.hr_service import get_offboarding_cases
+from domains.hr.services.employees.hr_service import register_address
+from domains.hr.services.employees.hr_service import register_dependent
+from domains.hr.services.employees.hr_service import validate_gcc_compliance
 
 router = APIRouter(prefix="/api/v1")
 

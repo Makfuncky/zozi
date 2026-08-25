@@ -34,14 +34,14 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.governance.services.admin_controller import require_roles
+from domains.security.services.iam.security_dependencies import require_roles
 from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.catalog.models.products import ProductVariant
-from domains.media.models.ai_upload import AIUploadJob
-from domains.media.models.ai_upload import AIStagingProduct
-from domains.media.models.ai_upload import AIStagingVariant
-from domains.media.models.ai_upload import AIGenerationLog
+from domains.catalog.models.ai_upload import AIUploadJob
+from domains.catalog.models.ai_upload import AIStagingProduct
+from domains.catalog.models.ai_upload import AIStagingVariant
+from domains.catalog.models.ai_upload import AIGenerationLog
 from infrastructure.utils.variant_key import compute_variant_key
 from infrastructure.utils.config import BASE_DIR
 

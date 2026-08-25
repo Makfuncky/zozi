@@ -1,348 +1,302 @@
-"""Payment gateway provider: paytabs.
+"""PayTabs SDK access point for the provider layer.
 
-Relocated from controllers/payments_controller.py.
+PayTabs is an HTTP-based payment gateway. This module wraps their REST API
+(server-key authentication, JSON payloads) behind a provider boundary so that
+service-layer code never imports `requests` directly for PayTabs calls.
 """
+
 from __future__ import annotations
-import structlog
-logger = structlog.get_logger(__name__)
 
-import hashlib
-import hmac
-import json
-import os
-import re
-import stripe
-import httpx
 import logging
-import uuid
 from decimal import Decimal
-from datetime import datetime, timezone
-from typing import Any, Literal, Optional, cast
-from urllib.parse import parse_qs
+from typing import Any, Optional
 
-from fastapi import HTTPException, Request
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+import requests
 
-from domains.catalog.models.products import Product
-from domains.comms.models.communication import Notification
-from domains.country.models.countries import CountryConfig
-from domains.finance.models.finance import TransactionLedger
-from domains.governance.models.admin import PaymentProviderConfig
-from domains.governance.models.admin import ProcessedWebhookEvent
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.catalog.models.promotions import Coupon
-from domains.finance.models.payments import Payment
-from domains.finance.models.payments import PaymentGatewayConnection
-from infrastructure.messaging.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
-from infrastructure.utils.config import settings
-from infrastructure.utils.currency import (
-    convert_from_aed,
-    get_currency_context,
-    money_to_minor_units_for_currency,
+from providers.payments.config import (
+    is_paytabs_configured,
+    resolve_paytabs_api_base_url,
+    resolve_paytabs_callback_url,
+    resolve_paytabs_profile_id,
+    resolve_paytabs_server_key,
 )
-
-from providers.payments import payment_persistence as pp
+from providers.payments.webhooks import _verify_paytabs_signature
 
 logger = logging.getLogger(__name__)
 
+HAS_PAYTABS = True
+_PAYTABS_DEFAULT_TIMEOUT = 30
 
-__all__ = ['create_paytabs_charge', 'confirm_paytabs_payment', 'handle_paytabs_callback', '_query_paytabs_transaction', '_finalize_paytabs_transaction', '_paytabs_customer_details', '_paytabs_shipping_details', '_paytabs_transaction_reference', '_paytabs_response_status', '_paytabs_response_message']
 
-async def create_paytabs_charge(body: PayTabsChargeRequest, current_user: dict, db: Session) -> dict:
-    configured, server_key, profile_id = _paytabs_configured(db)
-    if not configured:
-        raise HTTPException(status_code=503, detail="PayTabs is not configured")
-    if not _payment_provider_mode_allows(PAYTABS_PAYMENT_METHOD, db):
-        raise HTTPException(status_code=409, detail="PayTabs payments are currently disabled by admin")
+class PayTabsError(Exception):
+    """Base exception for PayTabs provider operations."""
 
-    callback_url = _resolve_paytabs_callback_url(db)
-    if not callback_url:
-        raise HTTPException(status_code=503, detail="PayTabs callback URL not configured")
 
-    order = _get_user_order(body.order_id, current_user, db)
-    if _normalized_payment_method(order) != PAYTABS_PAYMENT_METHOD:
-        raise HTTPException(status_code=409, detail="This order is not configured for PayTabs payment")
-    if order.paid_at is not None:
-        raise HTTPException(status_code=409, detail="Order is already paid")
+class PayTabsPaymentNotFoundError(PayTabsError):
+    """Raised when a PayTabs payment reference does not exist."""
 
-    currency_code = _resolved_payment_currency(body.currency, body.country)
-    charge_total = _order_charge_total_amount(order)
-    converted_total = convert_from_aed(charge_total, currency_code)
-    redirect_url = body.success_url.strip() or f"{settings.frontend_url}/checkout?paytabs_order_id={order.id}"
-    preferred_language = str(current_user.get("preferred_language") or "en").lower()
-    payload = {
-        "profile_id": int(profile_id) if str(profile_id).isdigit() else profile_id,
+
+class PayTabsRefundError(PayTabsError):
+    """Raised when a PayTabs refund operation fails."""
+
+
+class PayTabsConfigurationError(PayTabsError):
+    """Raised when PayTabs credentials are missing or invalid."""
+
+
+def _get_headers() -> dict[str, str]:
+    """Build authenticated headers for PayTabs API calls."""
+    server_key = resolve_paytabs_server_key()
+    if not server_key:
+        raise PayTabsConfigurationError(
+            "PAYTABS_SERVER_KEY must be set."
+        )
+    return {
+        "Content-Type": "application/json",
+        "Authorization": server_key,
+    }
+
+
+def is_available() -> bool:
+    """Return True when PayTabs credentials are configured."""
+    return is_paytabs_configured()
+
+
+def create_payment_page(
+    amount: Decimal,
+    currency: str,
+    *,
+    customer_name: str,
+    customer_email: str,
+    customer_phone: str = "",
+    order_id: str = "",
+    description: str = "",
+    callback_url: str = "",
+    return_url: str = "",
+    metadata: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Create a PayTabs payment page (hosted checkout).
+
+    Args:
+        amount: The payment total.
+        currency: ISO 4217 currency code.
+        customer_name: Full name of the customer.
+        customer_email: Customer email address.
+        customer_phone: Customer phone number.
+        order_id: Merchant-side order reference.
+        description: Payment description.
+        callback_url: Server-to-server callback URL.
+        return_url: Customer redirect URL after payment.
+        metadata: Additional fields merged into the request payload.
+
+    Returns:
+        dict with 'payment_url', 'transaction_id', and 'raw' keys.
+
+    Raises:
+        PayTabsConfigurationError: If credentials are missing.
+        PayTabsError: If page creation fails.
+    """
+    api_base = resolve_paytabs_api_base_url()
+    profile_id = resolve_paytabs_profile_id()
+    resolved_callback = callback_url or resolve_paytabs_callback_url()
+    payload: dict[str, Any] = {
+        "profile_id": profile_id,
         "tran_type": "sale",
         "tran_class": "ecom",
-        "cart_id": str(order.id),
-        "cart_currency": currency_code,
-        "cart_amount": float(converted_total),
-        "cart_description": body.description or f"ZOZI Order #{order.id}",
-        "paypage_lang": "ar" if preferred_language.startswith("ar") else "en",
-        "customer_details": _paytabs_customer_details(order, current_user),
-        "shipping_details": _paytabs_shipping_details(order, current_user),
-        "callback": callback_url,
-        "return": redirect_url,
+        "cart_id": order_id,
+        "cart_description": description or f"Payment for order {order_id}",
+        "cart_currency": currency.upper(),
+        "cart_amount": str(amount),
+        "customer_details": {
+            "name": customer_name,
+            "email": customer_email,
+            "phone": customer_phone or "",
+            "street1": "",
+            "city": "",
+            "state": "",
+            "country": "",
+            "zip": "",
+        },
+        "callback": resolved_callback,
+        "return": return_url or resolved_callback,
     }
-
+    if metadata:
+        payload["framed"] = metadata.get("framed", False)
+        payload["metadata"] = metadata
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            response = await client.post(
-                f"{_resolve_paytabs_api_base_url(db)}{DEFAULT_PAYTABS_REQUEST_PATH}",
-                headers={"authorization": server_key, "content-type": "application/json"},
-                json=payload,
-            )
-        data = response.json()
-        if response.status_code not in (200, 201):
-            raise HTTPException(status_code=400, detail=_paytabs_response_message(data))
-
-        tran_ref = _paytabs_transaction_reference(data)
-        if tran_ref:
-            setattr(order, "payment_intent_id", tran_ref)
-            pp.commit(db)
-
-        return {
-            "transaction_reference": tran_ref or None,
-            "redirect_url": data.get("redirect_url"),
-            "status": _paytabs_response_status(data) or "initiated",
-            "currency": currency_code,
-            "display_amount": float(converted_total),
-        }
-    except HTTPException as e:
-        logger.exception("create_paytabs_charge_failed", error=str(e))
-        raise
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
-        logger.error("PayTabs charge error: %s", exc)
-        raise HTTPException(status_code=500, detail="PayTabs payment service error")
-
-
-async def confirm_paytabs_payment(body: ConfirmPayTabsPaymentRequest, current_user: dict, db: Session) -> dict:
-    order = _get_user_order(body.order_id, current_user, db)
-    if _normalized_payment_method(order) != PAYTABS_PAYMENT_METHOD:
-        raise HTTPException(status_code=409, detail="This order is not configured for PayTabs payment")
-
-    if order.paid_at is not None:
-        return {
-            "status": "confirmed",
-            "order_id": order.id,
-            "order_status": order.status,
-            "tran_ref": str(getattr(order, "payment_intent_id", "") or "").strip() or body.tran_ref,
-            "payment_status": "approved",
-            "paid_at": order.paid_at,
-        }
-
-    payload = await _query_paytabs_transaction(body.tran_ref or cast(Optional[str], getattr(order, "payment_intent_id", None)), str(order.id), db)
-    return _finalize_paytabs_transaction(order, payload, db)
-
-
-async def handle_paytabs_callback(request: Request, db: Session) -> dict:
-    raw_body = await request.body()
-    signature = request.headers.get("X-PAYTABS-SIGNATURE", "")
-    webhook_secret = _resolve_paytabs_webhook_secret(db)
-    
-    if webhook_secret and not _verify_paytabs_signature(raw_body, signature, webhook_secret):
-        logger.warning("paytabs_callback: invalid signature")
-        raise HTTPException(status_code=401, detail="Invalid webhook signature")
-    
-    payload: dict[str, Any] = {}
-
-    if raw_body:
-        try:
-            payload = json.loads(raw_body)
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-            logger.exception("handle_paytabs_callback_failed", error=str(e))
-            try:
-                parsed = parse_qs(raw_body.decode("utf-8"), keep_blank_values=True)
-                payload = {key: values[-1] for key, values in parsed.items() if values}
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                logger.exception("unhandled exception", error=str(e))
-                payload = {}
-
-    for key, value in request.query_params.items():
-        if key not in payload:
-            payload[key] = value
-
-    tran_ref = _paytabs_transaction_reference(payload)
-    cart_id = str(payload.get("cart_id") or "").strip()
-    if not tran_ref and not cart_id:
-        return {"status": "ignored"}
-
-    order = None
-    if cart_id.isdigit():
-        order = db.query(Order).filter(Order.id == int(cart_id)).first()
-    if order is None and tran_ref:
-        order = db.query(Order).filter(Order.payment_intent_id == tran_ref).first()
-    if order is None:
-        logger.warning("paytabs_callback: no order for tran_ref=%s cart_id=%s", tran_ref, cart_id)
-        return {"status": "unknown_order"}
-
-    queried = await _query_paytabs_transaction(tran_ref or None, cart_id or str(order.id), db)
-    response_status = _paytabs_response_status(queried) or "pending"
-    paytabs_event_id = f"{_paytabs_transaction_reference(queried) or tran_ref or cart_id}:{response_status}"
-    already_processed = db.query(ProcessedWebhookEvent).filter(
-        ProcessedWebhookEvent.event_id == paytabs_event_id,
-        ProcessedWebhookEvent.processor == PAYTABS_PAYMENT_METHOD,
-    ).first()
-    if already_processed:
-        logger.info("paytabs_callback duplicate ignored: event_id=%s", paytabs_event_id)
-        return {"status": "ok"}
-
-    _finalize_paytabs_transaction(order, queried, db)
-    pp.add(db, ProcessedWebhookEvent(event_id=paytabs_event_id, processor=PAYTABS_PAYMENT_METHOD))
-    pp.commit(db)
-    logger.info("paytabs_callback: tran_ref=%s order=%s status=%s", _paytabs_transaction_reference(queried) or tran_ref, order.id, response_status)
-    return {"status": "ok"}
-
-
-async def _query_paytabs_transaction(tran_ref: str | None, cart_id: str | None, db: Session) -> dict[str, Any]:
-    configured, server_key, profile_id = _paytabs_configured(db)
-    if not configured:
-        raise HTTPException(status_code=503, detail="PayTabs is not configured")
-    payload: dict[str, Any] = {"profile_id": profile_id}
-    if tran_ref:
-        payload["tran_ref"] = tran_ref
-    if cart_id:
-        payload["cart_id"] = cart_id
-    if not tran_ref and not cart_id:
-        raise HTTPException(status_code=422, detail="tran_ref or cart_id is required")
-
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.post(
-            f"{_resolve_paytabs_api_base_url(db)}{DEFAULT_PAYTABS_QUERY_PATH}",
-            headers={"authorization": server_key, "content-type": "application/json"},
+        response = requests.post(
+            f"{api_base}/payment/request",
             json=payload,
+            headers=_get_headers(),
+            timeout=_PAYTABS_DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        logger.exception("PayTabs create_payment_page request failed")
+        raise PayTabsError(
+            f"PayTabs API request failed: {exc}"
+        ) from exc
+    if response.status_code != 200:
+        raise PayTabsError(
+            f"PayTabs create_payment_page returned status {response.status_code}: {response.text}"
         )
     data = response.json()
-    if response.status_code not in (200, 201):
-        raise HTTPException(status_code=400, detail=_paytabs_response_message(data))
-    return data
-
-
-def _finalize_paytabs_transaction(order: Order, payload: dict[str, Any], db: Session) -> dict[str, Any]:
-    tran_ref = _paytabs_transaction_reference(payload) or str(getattr(order, "payment_intent_id", "") or "").strip()
-    if tran_ref and not getattr(order, "payment_intent_id", None):
-        setattr(order, "payment_intent_id", tran_ref)
-
-    response_status = _paytabs_response_status(payload)
-
-    if response_status in PAYTABS_SUCCESS_RESPONSE_STATUSES:
-        if order.status not in INVENTORY_RELEASE_STATUSES and order.paid_at is None:
-            _apply_successful_payment(order, f"Order #{order.id} payment via PayTabs was successful.", db)
-            pp.commit(db)
-
-        return {
-            "status": "confirmed",
-            "order_id": order.id,
-            "order_status": order.status,
-            "tran_ref": tran_ref,
-            "payment_status": response_status,
-            "paid_at": order.paid_at,
-        }
-
-    if response_status in PAYTABS_FAILURE_RESPONSE_STATUSES:
-        if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
-            setattr(order, "status", "failed")
-            pp.add(db, 
-                Notification(
-                    user_id=order.user_id,
-                    type="order_update",
-                    title="Payment Failed",
-                    message=f"Order #{order.id} PayTabs payment failed.",
-                    link=f"/orders/{order.id}",
-                )
-            )
-            pp.commit(db)
-            try:
-                event = PaymentFailedEvent.create(
-                    order_id=order.id,
-                    user_id=order.user_id,
-                    provider="paytabs",
-                    message=_paytabs_response_message(payload),
-                )
-                _event_publisher.publish(event)
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                logger.exception("Failed to publish PaymentFailedEvent for order %s", order.id)
-
-        return {
-            "status": "failed",
-            "order_id": order.id,
-            "order_status": order.status,
-            "tran_ref": tran_ref,
-            "payment_status": response_status,
-            "paid_at": order.paid_at,
-        }
-
+    if not data.get("payment_url") and not data.get("tran_ref"):
+        raise PayTabsError(
+            f"PayTabs create_payment_page unexpected response: {data}"
+        )
     return {
-        "status": "pending_verification",
-        "order_id": order.id,
-        "order_status": order.status,
-        "tran_ref": tran_ref,
-        "payment_status": response_status or "pending",
-        "paid_at": order.paid_at,
+        "payment_url": data.get("payment_url", ""),
+        "transaction_id": data.get("tran_ref", ""),
+        "redirect_url": data.get("redirect_url", ""),
+        "raw": data,
     }
 
 
-def _paytabs_customer_details(order: Order, current_user: dict[str, Any]) -> dict[str, Any]:
-    full_name = _extract_order_customer_name(order) or str(current_user.get("username") or "Customer").replace("_", " ").replace(".", " ")
-    email = str(current_user.get("email") or "customer@zozi.local").strip() or "customer@zozi.local"
-    phone = "".join(ch for ch in str(getattr(order, "customer_phone", None) or current_user.get("phone") or "") if ch.isdigit())
-    country = str(getattr(order, "shipping_country", "") or "AE").strip().upper() or "AE"
-    city = str(getattr(order, "shipping_city", "") or "Dubai").strip() or "Dubai"
-    postal_code = str(getattr(order, "shipping_postal_code", "") or "00000").strip() or "00000"
-    street = str(getattr(order, "shipping_address", "") or "ZOZI").strip() or "ZOZI"
+def get_payment_status(transaction_ref: str) -> dict[str, Any]:
+    """Retrieve the status of a PayTabs payment.
+
+    Args:
+        transaction_ref: The PayTabs transaction reference.
+
+    Returns:
+        dict with 'transaction_id', 'status', 'amount', 'currency', and 'raw' keys.
+
+    Raises:
+        PayTabsPaymentNotFoundError: If the transaction does not exist.
+        PayTabsError: If the status query fails.
+    """
+    api_base = resolve_paytabs_api_base_url()
+    profile_id = resolve_paytabs_profile_id()
+    payload: dict[str, Any] = {
+        "profile_id": profile_id,
+        "tran_ref": transaction_ref,
+    }
+    try:
+        response = requests.post(
+            f"{api_base}/payment/query",
+            json=payload,
+            headers=_get_headers(),
+            timeout=_PAYTABS_DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        logger.exception(
+            "PayTabs get_payment_status request failed for %s", transaction_ref
+        )
+        raise PayTabsError(
+            f"PayTabs API request failed: {exc}"
+        ) from exc
+    if response.status_code != 200:
+        raise PayTabsError(
+            f"PayTabs get_payment_status returned status {response.status_code}"
+        )
+    data = response.json()
+    if data.get("code") == 404 or "not found" in str(data.get("message", "")).lower():
+        raise PayTabsPaymentNotFoundError(
+            f"PayTabs transaction {transaction_ref} not found"
+        )
     return {
-        "name": full_name,
-        "email": email,
-        "phone": phone,
-        "street1": street[:120],
-        "city": city,
-        "state": city,
-        "country": country,
-        "zip": postal_code,
+        "transaction_id": data.get("tran_ref", transaction_ref),
+        "status": data.get("payment_result", {}).get("response_status", ""),
+        "amount": str(data.get("cart_amount", "")),
+        "currency": data.get("cart_currency", ""),
+        "reference": data.get("tran_ref", ""),
+        "raw": data,
     }
 
 
-def _paytabs_shipping_details(order: Order, current_user: dict[str, Any]) -> dict[str, Any]:
-    return _paytabs_customer_details(order, current_user)
+def refund(
+    transaction_ref: str,
+    *,
+    amount: Optional[Decimal] = None,
+    currency: Optional[str] = None,
+    reason: str = "",
+) -> dict[str, Any]:
+    """Refund a PayTabs payment.
+
+    Args:
+        transaction_ref: The PayTabs transaction reference.
+        amount: Optional partial refund amount (full refund if omitted).
+        currency: Currency code (required if amount is provided).
+        reason: Reason for the refund.
+
+    Returns:
+        dict with 'refund_id', 'status', and 'raw' keys.
+
+    Raises:
+        PayTabsPaymentNotFoundError: If the transaction does not exist.
+        PayTabsRefundError: If the refund operation fails.
+    """
+    api_base = resolve_paytabs_api_base_url()
+    profile_id = resolve_paytabs_profile_id()
+    payload: dict[str, Any] = {
+        "profile_id": profile_id,
+        "tran_type": "refund",
+        "tran_class": "ecom",
+        "tran_ref": transaction_ref,
+        "cart_description": reason or "Refund",
+        "cart_currency": currency or "",
+        "cart_amount": str(amount) if amount else "0",
+    }
+    if amount and currency:
+        payload["cart_amount"] = str(amount)
+    try:
+        response = requests.post(
+            f"{api_base}/payment/request",
+            json=payload,
+            headers=_get_headers(),
+            timeout=_PAYTABS_DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        logger.exception(
+            "PayTabs refund request failed for %s", transaction_ref
+        )
+        raise PayTabsRefundError(
+            f"PayTabs API request failed: {exc}"
+        ) from exc
+    if response.status_code != 200:
+        raise PayTabsRefundError(
+            f"PayTabs refund returned status {response.status_code}"
+        )
+    data = response.json()
+    if data.get("code") == 404 or "not found" in str(data.get("message", "")).lower():
+        raise PayTabsPaymentNotFoundError(
+            f"PayTabs transaction {transaction_ref} not found"
+        )
+    return {
+        "refund_id": data.get("tran_ref", ""),
+        "status": data.get("payment_result", {}).get("response_status", ""),
+        "amount": str(data.get("cart_amount", "")),
+        "raw": data,
+    }
 
 
-def _paytabs_transaction_reference(payload: dict[str, Any]) -> str:
-    payment_result = payload.get("payment_result") if isinstance(payload.get("payment_result"), dict) else {}
-    for key in ("tran_ref", "transaction_reference"):
-        value = payload.get(key) or payment_result.get(key)
-        if value:
-            return str(value).strip()
-    return ""
+def verify_webhook(
+    raw_body: bytes,
+    signature_header: str,
+    webhook_secret: str,
+) -> bool:
+    """Verify an incoming PayTabs webhook signature.
+
+    Args:
+        raw_body: The raw request body bytes.
+        signature_header: The signature from the webhook request header.
+        webhook_secret: The shared webhook secret.
+
+    Returns:
+        True if the signature is valid.
+    """
+    return _verify_paytabs_signature(raw_body, signature_header, webhook_secret)
 
 
-def _paytabs_response_status(payload: dict[str, Any]) -> str:
-    payment_result = payload.get("payment_result") if isinstance(payload.get("payment_result"), dict) else {}
-    for key in ("response_status", "payment_status", "tran_status"):
-        value = payment_result.get(key) or payload.get(key)
-        if value:
-            return str(value).strip().lower()
-    return ""
-
-
-def _paytabs_response_message(payload: dict[str, Any]) -> str:
-    payment_result = payload.get("payment_result") if isinstance(payload.get("payment_result"), dict) else {}
-    for key in ("response_message", "message"):
-        value = payment_result.get(key) or payload.get(key)
-        if value:
-            return str(value).strip()
-    return "PayTabs payment verification failed"
-
-from providers.payments._common import *  # noqa: E402,F401,F403
-from providers.payments._order import *   # noqa: E402,F401,F403
-from providers.payments.config import *    # noqa: E402,F401,F403
-from providers.payments.webhooks import * # noqa: E402,F401,F403
-from providers.payments.stripe import *    # noqa: E402,F401,F403
-from providers.payments.tap import *       # noqa: E402,F401,F403
-from providers.payments.paytabs import *   # noqa: E402,F401,F403
-from providers.payments.paypal import *    # noqa: E402,F401,F403
-import structlog
-logger = structlog.get_logger(__name__)
-from providers.payments.thawani import *   # noqa: E402,F401,F403
-from providers.payments.generic import *   # noqa: E402,F401,F403
+__all__ = [
+    "HAS_PAYTABS",
+    "PayTabsError",
+    "PayTabsPaymentNotFoundError",
+    "PayTabsRefundError",
+    "PayTabsConfigurationError",
+    "is_available",
+    "create_payment_page",
+    "get_payment_status",
+    "refund",
+    "verify_webhook",
+]

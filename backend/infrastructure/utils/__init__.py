@@ -2,7 +2,6 @@
 
 Exports commonly used utility components.
 """
-from kernel import error_handler
 from . import response_wrapper
 from . import pagination
 from . import circuit_breaker

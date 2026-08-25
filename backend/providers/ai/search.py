@@ -15,6 +15,8 @@ from .text import embed_text, cosine_similarity, _ollama_chat
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["AdvancedSearchEngine"]
+
 # ============================================================================
 # REFERENCE
 # ============================================================================
@@ -191,7 +193,10 @@ class AdvancedSearchEngine:
             Dict with products, total count, parsed query, and embeddings.
         """
         parsed = self.parse_query(query)
-        all_filters = {**(filters or {}), **parsed}
+        # Explicit filters take precedence over parsed query values
+        all_filters = {**parsed, **(filters or {})}
+        # Remove None values so they don't interfere with filtering
+        all_filters = {k: v for k, v in all_filters.items() if v is not None}
 
         # Generate query embedding for vector search
         query_embedding = embed_text(query)
@@ -232,10 +237,20 @@ class AdvancedSearchEngine:
         self._product_catalog = products
         self._product_embeddings = {}
 
+        brands_seen = set()
+        categories_seen = set()
+
         for product in products:
             pid = product.get("id")
             if pid is None:
                 continue
+            # Collect brands and categories for autocomplete
+            brand = product.get("brand")
+            if brand:
+                brands_seen.add(brand)
+            category = product.get("category")
+            if category:
+                categories_seen.add(category)
             # Build text for embedding
             embed_text_content = " ".join([
                 product.get("name", ""),
@@ -248,6 +263,8 @@ class AdvancedSearchEngine:
                     self._product_embeddings[pid] = embedding
                     product["embedding"] = embedding
 
+        self._brands = sorted(brands_seen)
+        self._categories = sorted(categories_seen)
         self._product_catalog_loaded = True
         return len(self._product_catalog)
 

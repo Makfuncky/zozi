@@ -23,9 +23,9 @@ from infrastructure.search.routers import smart_search
 from infrastructure.database.database import get_db
 from providers.image import process_image_search
 from providers.voice import transcribe_audio
-from domains.catalog.services.advanced_filter_service import AdvancedFilterService
-from domains.catalog.services.advanced_search_engine import AdvancedSearchEngine
-from domains.finance.services.shared.ai_search_service import AISearchService
+from domains.catalog.services.search.search_service import AdvancedFilterService
+from domains.catalog.services.search.search_service import AdvancedSearchEngine
+from domains.catalog.services.search.ai_search_service import AISearchService
 
 logger = logging.getLogger(__name__)
 

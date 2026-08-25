@@ -36,7 +36,7 @@ from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order as OrderModel
 from domains.hr.models.employee_models import Employee
-from domains.finance.services.treasury.treasury_engine import TreasuryEngine
+from domains.finance.services._auto_stubs import TreasuryEngine
 from rbac import get_current_user
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
@@ -965,7 +965,7 @@ def admin_reconciliation_pipeline(
         from domains.finance.models.payments import Payout
         from domains.logistics.models.logistics import LogisticsPartner
         from domains.governance.models.admin import LogisticsCODRemittanceReceipt
-        from domains.finance.services.commission.commission_engine import get_effective_rate
+        from domains.finance.services.finance_service import get_effective_rate
 
         pipeline = []
         orders = db.query(OrderModel).filter(

@@ -1,5 +1,6 @@
-﻿"""
-Cash Management Service — core financial logic for the Zozi platform.
+﻿
+ï»¿"""
+Cash Management Service â€” core financial logic for the Zozi platform.
 
 Responsibilities:
   - Create transaction ledger entries on order confirmation
@@ -30,15 +31,15 @@ from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import VATRemittance
 from domains.orders.ports import Order, OrderItem, OrderLogisticsAllocation
-from domains.logistics.services.logistics_partner_pricing import _build_service_area_pricing_breakdown
-from domains.logistics.services.logistics_partner_pricing import lookup_city_distance_km
-from domains.logistics.services.logistics_partner_pricing import normalize_pricing_breakdown_payload
-from domains.logistics.services.logistics_partner_pricing import normalize_country_code
-from domains.logistics.services.logistics_partner_pricing import normalize_vehicle_type
-from domains.logistics.services.logistics_partner_pricing import resolve_category_rules_for_area
-from domains.logistics.services.logistics_partner_pricing import resolve_pricing_profile_for_area
-from domains.logistics.services.logistics_partner_pricing import resolve_vehicle_rule_for_area
-from domains.logistics.services.logistics_partner_pricing import vehicle_baseline_multiplier
+from domains.logistics.services.partners.service import _build_service_area_pricing_breakdown
+from domains.logistics.services.partners.service import lookup_city_distance_km
+from domains.logistics.services.partners.service import normalize_pricing_breakdown_payload
+from domains.logistics.services.partners.service import normalize_country_code
+from domains.logistics.services.partners.service import normalize_vehicle_type
+from domains.logistics.services.partners.service import resolve_category_rules_for_area
+from domains.logistics.services.partners.service import resolve_pricing_profile_for_area
+from domains.logistics.services.partners.service import resolve_vehicle_rule_for_area
+from domains.logistics.services.partners.service import vehicle_baseline_multiplier
 from domains.finance.services.ledger.finance_transfer_service import build_logistics_cod_remittance_instruction
 from domains.finance.services.ledger.finance_transfer_service import build_supplier_payout_instruction
 from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
@@ -643,7 +644,7 @@ def _supplier_return_window_days(order: Order, db: Session) -> dict[int, int]:
     return supplier_windows
 
 
-# ── Ledger Creation (triggered on order confirmation) ─────────────────────────
+# â”€â”€ Ledger Creation (triggered on order confirmation) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def create_ledger_entries_for_order(order: Order, db: Session) -> list[TransactionLedger]:
     """Create transaction ledger entries for every supplier involved in the order.
@@ -655,7 +656,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
         TransactionLedger.order_id == order.id
     ).first()
     if existing:
-        logger.info("Ledger entries already exist for order %s — skipping", order.id)
+        logger.info("Ledger entries already exist for order %s â€” skipping", order.id)
         return []
 
     items: list[OrderItem] = order.items or []
@@ -663,7 +664,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
         items = order_item_query(db).filter(OrderItem.order_id == order.id).all()
 
     if not items:
-        logger.warning("No order items found for order %s — cannot create ledger", order.id)
+        logger.warning("No order items found for order %s â€” cannot create ledger", order.id)
         return []
 
     # Group items by supplier
@@ -722,7 +723,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
             or (shipment.assigned_partner_id if shipment else None)
         )
 
-        # Commission on product revenue after discount — use commission engine per item
+        # Commission on product revenue after discount â€” use commission engine per item
         taxable_product = round_money(product_subtotal - discount_share)
         # Compute per-item commission amounts then sum for the supplier group
         item_commissions: list[tuple] = []   # (item, commission_amount, rate_result, eng_result)
@@ -731,7 +732,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
             # Proportion of discourse for this item
             item_discount = round_money(discount_share * (item_value / product_subtotal)) if product_subtotal > 0 else Decimal(0)
             item_taxable = round_money(item_value - item_discount)
-            # Resolve category slug from product.category (tolower + spaces→hyphens)
+            # Resolve category slug from product.category (tolower + spacesâ†’hyphens)
             prod = item.product or product_map.get(item.product_id)
             raw_category = str(getattr(prod, "category", "") or "").lower().replace(" & ", "-").replace(" ", "-")
             category_slug = raw_category if raw_category else None
@@ -820,7 +821,7 @@ def create_ledger_entries_for_order(order: Order, db: Session) -> list[Transacti
     return entries
 
 
-# ── Settlement Creation (triggered when order is delivered) ───────────────────
+# â”€â”€ Settlement Creation (triggered when order is delivered) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def create_settlements_on_delivery(order: Order, db: Session) -> None:
     """Create supplier and logistics settlement records when order is delivered.
@@ -832,7 +833,7 @@ def create_settlements_on_delivery(order: Order, db: Session) -> None:
     ).all()
 
     if not ledger_entries:
-        logger.warning("No ledger entries for delivered order %s — creating now", order.id)
+        logger.warning("No ledger entries for delivered order %s â€” creating now", order.id)
         ledger_entries = create_ledger_entries_for_order(order, db)
 
     now = _utcnow()
@@ -947,7 +948,7 @@ def create_settlements_on_delivery(order: Order, db: Session) -> None:
     logger.info("Settlements created for delivered order %s", order.id)
 
 
-# ── Automated Bank Transaction logging ────────────────────────────────────────
+# â”€â”€ Automated Bank Transaction logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def log_bank_transaction(
     source: str,
@@ -1077,7 +1078,7 @@ def log_refund_bank_transaction(
     return txn
 
 
-# ── Refund Ledger ─────────────────────────────────────────────────────────────
+# â”€â”€ Refund Ledger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def create_refund_ledger_entry(
     order: Order,
@@ -1295,7 +1296,7 @@ def record_vat_remittance(
     return record
 
 
-# ── Financial Summary / Dashboard ─────────────────────────────────────────────
+# â”€â”€ Financial Summary / Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_financial_summary(db: Session) -> dict:
     """Aggregate financial metrics for the admin dashboard."""
@@ -1475,7 +1476,7 @@ def get_reconciliation_summary(db: Session) -> dict:
     }
 
 
-# ── Payout Processing ────────────────────────────────────────────────────────
+# â”€â”€ Payout Processing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def process_supplier_payout_batch(db: Session, settlement_ids: Optional[list[int]] = None) -> list[dict]:
     """Find all eligible supplier settlements and create payout records."""
@@ -1901,7 +1902,7 @@ def auto_reconcile_bank_transactions(
     }
 
 
-# ── Reconciliation ────────────────────────────────────────────────────────────
+# â”€â”€ Reconciliation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def reconcile_bank_transaction(txn_id: int, admin_id: int, db: Session) -> BankTransaction:
     """Mark a bank transaction as reconciled by an admin."""
@@ -2146,7 +2147,7 @@ def run_scheduled_finance_cycle(db: Session) -> dict:
     analytics_refresh: dict[str, Any] = {"refreshed": 0, "keys": []}
     retention: dict[str, Any] = {"targets": []}
 
-    from domains.suppliers.services.supplier_badge_service import run_badge_recalculation_cycle
+    from domains.suppliers.services.badges.supplier_badge_service import run_badge_recalculation_cycle
     from domains.governance.services.analytics.analytics_service import refresh_admin_analytics_snapshots
     from domains.governance.services.audit.retention_service import run_operational_retention_cycle
 
@@ -2957,7 +2958,1897 @@ def supplier_list_settlements(skip: int, limit: int, status: Optional[str], db: 
 
     return ctrl.supplier_list_settlements(current_user["id"], db, skip=skip, limit=limit, status=status)
 
+# === MERGED from cash_management_write_service.py ===
+
+ï»¿"""Cash-management write service (W1 remediation).
+
+``routers/cash_management.py`` used to own the transaction boundary for every
+finance mutation (15 inline ``db.commit()`` calls). Per the layer contract only
+``services/**`` may own DB transactions, so each admin write flow gets a
+function here that:
+
+    1. calls the underlying domain service (``services.treasury.cash_management_service``,
+       ``services.treasury.payout_dispatch_service``, ``services.supplier.supplier_badge_service``),
+    2. translates domain ``ValueError``s into ``HTTPException``s, and
+    3. commits.
+
+Every function takes the SQLAlchemy ``Session`` as its first positional
+argument. Callers (controller/router) stay read-only orchestration.
+"""
+from __future__ import annotations
+
+from typing import Any, Optional
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from domains.finance.services.treasury.cash_management_service import auto_reconcile_bank_transactions as _auto_reconcile_bank_transactions
+from domains.finance.services.treasury.cash_management_service import flag_bank_transaction as _flag_bank_transaction
+from domains.finance.services.treasury.cash_management_service import import_bank_transactions as _import_bank_transactions
+from domains.finance.services.treasury.cash_management_service import log_bank_transaction as _log_bank_transaction
+from domains.finance.services.treasury.cash_management_service import process_logistics_payout_batch as _process_logistics_payout_batch
+from domains.finance.services.treasury.cash_management_service import process_supplier_payout_batch as _process_supplier_payout_batch
+from domains.finance.services.treasury.cash_management_service import reconcile_bank_transaction as _reconcile_bank_transaction
+from domains.finance.services.treasury.cash_management_service import record_cod_remittance as _record_cod_remittance
+from domains.finance.services.treasury.cash_management_service import record_vat_remittance as _record_vat_remittance
+from domains.finance.services.treasury.cash_management_service import reject_cod_remittance_receipt as _reject_cod_remittance_receipt
+from domains.finance.services.treasury.cash_management_service import resolve_bank_transaction_exception as _resolve_bank_transaction_exception
+from domains.finance.services.treasury.cash_management_service import serialize_cod_remittance_receipt as _serialize_cod_remittance_receipt
+from domains.finance.services.treasury.cash_management_service import upsert_finance_bank_settings as _upsert_finance_bank_settings
+from domains.finance.services.treasury.cash_management_service import verify_cod_remittance_receipt as _verify_cod_remittance_receipt
+from domains.finance.services.payouts.payout_dispatch_service import dispatch_transfer_batch_with_audit as _dispatch_transfer_batch_with_audit
+from kernel.money import to_decimal
+import structlog
+logger = structlog.get_logger(__name__)
 
 
+def _receipt_review_error(exc: ValueError) -> HTTPException:
+    detail = str(exc)
+    status_code = 404 if "not found" in detail.lower() else 400
+    return HTTPException(status_code=status_code, detail=detail)
 
 
+# â”€â”€ Badge billing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def record_badge_billing_payment(
+    db: Session,
+    *,
+    billing_id: int,
+    payment_method: str,
+    current_admin: dict,
+    transaction_ref: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> Any:
+    """Record a badge billing payment and commit."""
+    from domains.suppliers.services.badges.supplier_badge_service import record_badge_billing_payment as _impl
+
+    record = _impl(
+        billing_id=billing_id,
+        payment_method=payment_method,
+        current_admin=current_admin,
+        db=db,
+        transaction_ref=transaction_ref,
+        notes=notes,
+    )
+    db.commit()
+    return record
+
+
+# â”€â”€ Bank settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def upsert_bank_settings(db: Session, *, data: dict, admin_id: Optional[int]) -> Any:
+    """Create/update the primary finance bank account and commit."""
+    record = _upsert_finance_bank_settings(data=data, admin_id=admin_id, db=db)
+    db.commit()
+    return record
+
+
+# â”€â”€ VAT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def record_vat_remittance(db: Session, *, data: dict, admin_id: Optional[int]) -> Any:
+    """Record a VAT remittance and commit."""
+    record = _record_vat_remittance(
+        period_start=data["period_start"],
+        period_end=data["period_end"],
+        amount_remitted=to_decimal(data["amount_remitted"]),
+        admin_id=admin_id,
+        db=db,
+        notes=data.get("notes"),
+        transaction_ref=data.get("transaction_ref"),
+        remitted_at=data.get("remitted_at"),
+    )
+    db.commit()
+    return record
+
+
+# â”€â”€ Bank transactions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def create_bank_transaction(db: Session, *, data: dict) -> Any:
+    """Manually create a bank transaction entry and commit."""
+    txn = _log_bank_transaction(
+        source=data["source"],
+        transaction_type=data["transaction_type"],
+        category=data["category"],
+        amount=to_decimal(data["amount"]),
+        db=db,
+        currency=data.get("currency", "OMR"),
+        order_id=data.get("linked_order_id"),
+        supplier_id=data.get("linked_supplier_id"),
+        logistics_id=data.get("linked_logistics_id"),
+        payout_id=data.get("linked_payout_id"),
+        refund_id=data.get("linked_refund_id"),
+        description=data.get("description"),
+        transaction_ref=data.get("transaction_ref"),
+        transaction_date=data.get("transaction_date"),
+    )
+    db.commit()
+    return txn
+
+
+def import_bank_transactions(
+    db: Session,
+    *,
+    items: list[dict],
+    admin_id: Optional[int],
+    auto_reconcile: bool = False,
+) -> dict:
+    """Import a bank statement batch and commit."""
+    result = _import_bank_transactions(
+        items,
+        db,
+        admin_id=admin_id,
+        auto_reconcile=auto_reconcile,
+    )
+    db.commit()
+    return result
+
+
+def reconcile_transaction(db: Session, *, txn_id: int, admin_id: Any) -> Any:
+    """Mark a bank transaction reconciled and commit."""
+    try:
+        txn = _reconcile_bank_transaction(txn_id, admin_id, db)
+    except ValueError as exc:
+        logger.exception("reconcile_transaction_failed", error=str(exc))
+        raise HTTPException(status_code=404, detail=str(exc))
+    db.commit()
+    return txn
+
+
+def flag_transaction(db: Session, *, txn_id: int, reason: str) -> Any:
+    """Flag a bank transaction for manual review and commit."""
+    try:
+        txn = _flag_bank_transaction(txn_id, reason, db)
+    except ValueError as exc:
+        logger.exception("flag_transaction_failed", error=str(exc))
+        raise HTTPException(status_code=404, detail=str(exc))
+    db.commit()
+    return txn
+
+
+def resolve_transaction_exception(
+    db: Session,
+    *,
+    txn_id: int,
+    data: dict,
+    admin_id: Optional[int],
+) -> Any:
+    """Resolve a flagged/unmatched bank transaction and commit."""
+    try:
+        txn = _resolve_bank_transaction_exception(
+            txn_id,
+            db,
+            admin_id=admin_id,
+            order_id=data.get("linked_order_id"),
+            supplier_id=data.get("linked_supplier_id"),
+            logistics_id=data.get("linked_logistics_id"),
+            payout_id=data.get("linked_payout_id"),
+            refund_id=data.get("linked_refund_id"),
+            resolution_note=data.get("resolution_note"),
+            mark_reconciled=data.get("mark_reconciled", True),
+            clear_flag=data.get("clear_flag", True),
+        )
+    except ValueError as exc:
+        logger.exception("resolve_transaction_exception_failed", error=str(exc))
+        raise HTTPException(status_code=404, detail=str(exc))
+    db.commit()
+    return txn
+
+
+def auto_reconcile_transactions(
+    db: Session,
+    *,
+    admin_id: Any,
+    limit: int = 100,
+    source: Optional[str] = None,
+    category: Optional[str] = None,
+) -> dict:
+    """Run the auto-reconciliation sweep and commit."""
+    result = _auto_reconcile_bank_transactions(
+        admin_id,
+        db,
+        limit=limit,
+        source=source,
+        category=category,
+    )
+    db.commit()
+    return result
+
+
+# â”€â”€ Payouts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def trigger_supplier_payouts(db: Session, *, settlement_ids: Optional[list[int]] = None) -> list[dict]:
+    """Process the supplier payout batch and commit."""
+    results = _process_supplier_payout_batch(db, settlement_ids=settlement_ids)
+    db.commit()
+    return results
+
+
+def trigger_logistics_payouts(db: Session, *, settlement_ids: Optional[list[int]] = None) -> list[dict]:
+    """Process the logistics payout batch and commit."""
+    results = _process_logistics_payout_batch(db, settlement_ids=settlement_ids)
+    db.commit()
+    return results
+
+
+def dispatch_transfer_batch(
+    db: Session,
+    *,
+    kind: str,
+    admin_user: dict,
+    provider: Optional[str] = None,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """Dispatch a payout transfer batch (with audit) and commit."""
+    result = _dispatch_transfer_batch_with_audit(
+        kind,
+        admin_user,
+        db,
+        provider=provider,
+        dry_run=dry_run,
+    )
+    db.commit()
+    return result
+
+
+# â”€â”€ COD remittance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def record_cod_remittance(db: Session, *, settlement_id: int, amount: float, admin_id: Any) -> Any:
+    """Record COD cash remittance from a logistics partner and commit."""
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Remittance amount must be positive")
+    try:
+        settlement = _record_cod_remittance(settlement_id, amount, admin_id, db)
+    except ValueError as exc:
+        logger.exception("record_cod_remittance_failed", error=str(exc))
+        raise HTTPException(status_code=404, detail=str(exc))
+    db.commit()
+    return settlement
+
+
+def verify_cod_remittance_receipt(
+    db: Session,
+    *,
+    receipt_id: int,
+    admin_id: Any,
+    note: Optional[str] = None,
+) -> dict[str, Any]:
+    """Verify a COD remittance receipt, commit, and return its serialized form."""
+    try:
+        receipt = _verify_cod_remittance_receipt(receipt_id, admin_id, db, review_note=note)
+    except ValueError as exc:
+        logger.exception("verify_cod_remittance_receipt_failed", error=str(exc))
+        raise _receipt_review_error(exc)
+    db.commit()
+    return _serialize_cod_remittance_receipt(receipt, db)
+
+
+def reject_cod_remittance_receipt(
+    db: Session,
+    *,
+    receipt_id: int,
+    admin_id: Any,
+    note: str,
+) -> dict[str, Any]:
+    """Reject a COD remittance receipt, commit, and return its serialized form."""
+    try:
+        receipt = _reject_cod_remittance_receipt(receipt_id, admin_id, db, review_note=note)
+    except ValueError as exc:
+        logger.exception("reject_cod_remittance_receipt_failed", error=str(exc))
+        raise _receipt_review_error(exc)
+    db.commit()
+    return _serialize_cod_remittance_receipt(receipt, db)
+
+# === MERGED from admin_treasury_identity_service.py ===
+
+"""Admin cash management router."""
+from fastapi import Depends, HTTPException, Query, Path
+from sqlalchemy.orm import Session
+from infrastructure.database.database import get_db
+from domains.governance.models.user import User
+from domains.finance.models.finance import CashAccount
+from domains.finance.models.finance import CashTransaction
+from infrastructure.database.schemas import CashAccountCreate, CashAccountOut, CashTransactionCreate, CashTransactionOut
+from infrastructure.utils.dependencies import require_admin
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from decimal import Decimal
+
+def list_accounts(country_code: str=Path(..., description='ISO country code'), _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return db.query(CashAccount).filter(CashAccount.is_active == True, CashAccount.country_code == country_code.upper()).all()
+    finally:
+        clear_rls_context()
+
+def create_account(country_code: str=Path(..., description='ISO country code'), payload: CashAccountCreate=None, _: User=Depends(require_admin), db: Session=Depends(get_db)):
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        a = CashAccount(**payload.model_dump(), country_code=country_code.upper())
+        db.add(a)
+        db.commit()
+        db.refresh(a)
+        return a
+    finally:
+        clear_rls_context()
+
+def create_transaction(country_code: str=Path(..., description='ISO country code'), payload: CashTransactionCreate=None, current_user: User=Depends(require_admin), db: Session=Depends(get_db)):
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        account = db.query(CashAccount).filter(CashAccount.id == payload.account_id, CashAccount.country_code == country_code.upper()).first()
+        if not account:
+            raise HTTPException(404, 'Account not found')
+        if payload.transaction_type == 'debit':
+            account.balance -= payload.amount
+        else:
+            account.balance += payload.amount
+        tx = CashTransaction(**payload.model_dump(), balance_after=account.balance, performed_by=current_user.id, country_code=country_code.upper())
+        db.add(tx)
+        db.commit()
+        db.refresh(tx)
+        return tx
+    finally:
+        clear_rls_context()
+
+# === MERGED from cash_flow_forecast_service.py ===
+
+ï»¿"""Cash Flow Forecast Engine â€” predicts future cash position.
+
+Uses historical patterns, pending payouts, and expected settlements
+to project daily cash balances.
+"""
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import AccountBalance
+from domains.finance.models.finance import CashFlowForecast
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.finance import SupplierSettlement
+from domains.finance.models.finance import PayoutBatch
+from kernel.money import round_money
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+
+logger = logging.getLogger(__name__)
+
+
+def generate_forecast(
+    db: Session,
+    days: int = 90,
+    currency: str = "OMR",
+    country_code: Optional[str] = None,
+) -> dict:
+    """Generate a cash flow forecast for the next N days.
+
+    Uses:
+    1. Current cash balance (Account 1010)
+    2. Historical daily net flow (average of last 90 days)
+    3. Pending supplier payouts (cash outflows)
+    4. Expected COD remittances (cash inflows)
+    5. Expected VAT remittances (cash outflows)
+    """
+    cash_acct = db.query(Account).filter(Account.code == "1010").first()
+    if not cash_acct:
+        return {"error": "Cash account (1010) not found â€” run seed first"}
+
+    current_balance = Decimal("0.00")
+    bal = db.query(AccountBalance).filter(
+        AccountBalance.account_id == cash_acct.id,
+        AccountBalance.currency == currency,
+    ).first()
+    if bal:
+        current_balance = bal.balance
+
+    today = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Historical average daily net flow (last 90 days)
+    historical_start = today - timedelta(days=90)
+    historical_net = db.query(
+        func.coalesce(
+            func.sum(JournalEntryLine.amount).filter(JournalEntryLine.side == "debit"),
+            0,
+        ) -
+        func.coalesce(
+            func.sum(JournalEntryLine.amount).filter(JournalEntryLine.side == "credit"),
+            0,
+        )
+    ).select_from(JournalEntryLine).join(
+        JournalEntry, JournalEntryLine.entry_id == JournalEntry.id
+    ).filter(
+        JournalEntryLine.account_id == cash_acct.id,
+        JournalEntry.entry_date >= historical_start,
+        JournalEntry.entry_date < today,
+        JournalEntry.is_deleted == False,
+    ).scalar()
+
+    avg_daily_net = round_money(
+        (historical_net or Decimal("0.00")) / Decimal("90")
+    )
+
+    # Pending payouts (scheduled outflows)
+    pending_payouts = db.query(
+        func.coalesce(func.sum(SupplierSettlement.net_amount), 0)
+    ).filter(
+        SupplierSettlement.status.in_(["pending", "approved"]),
+        SupplierSettlement.country_code == country_code if country_code else True,
+    ).scalar() or Decimal("0.00")
+
+    # Forecast daily
+    forecast_days = []
+    running_balance = current_balance
+    for day_offset in range(days):
+        date = today + timedelta(days=day_offset)
+        daily_inflow = Decimal("0.00")
+        daily_outflow = Decimal("0.00")
+
+        # Base projection from historical average
+        if avg_daily_net > 0:
+            daily_inflow += avg_daily_net
+        else:
+            daily_outflow += abs(avg_daily_net)
+
+        # Known payouts (schedule them evenly over first 30 days)
+        if day_offset < 30 and pending_payouts > 0:
+            scheduled = round_money(pending_payouts / Decimal("30"))
+            daily_outflow += scheduled
+
+        net = daily_inflow - daily_outflow
+        running_balance = round_money(running_balance + net)
+
+        forecast_days.append({
+            "date": date.isoformat(),
+            "opening_balance": float(running_balance - net),
+            "inflow": float(daily_inflow),
+            "outflow": float(daily_outflow),
+            "net_flow": float(net),
+            "closing_balance": float(running_balance),
+        })
+
+    result = {
+        "generated_at": utcnow().isoformat(),
+        "currency": currency,
+        "current_balance": float(current_balance),
+        "historical_avg_daily_net": float(avg_daily_net),
+        "pending_payouts": float(pending_payouts),
+        "forecast_days": forecast_days,
+        "projected_balance_30d": float(forecast_days[29]["closing_balance"]) if len(forecast_days) > 29 else None,
+        "projected_balance_90d": float(forecast_days[-1]["closing_balance"]),
+    }
+
+    # Persist summary to CashFlowForecast table
+    forecast_record = CashFlowForecast(
+        forecast_date=today,
+        period_start=today,
+        period_end=today + timedelta(days=days),
+        net_cash_flow=float(running_balance - current_balance),
+        opening_balance=float(current_balance),
+        closing_balance=float(running_balance),
+    )
+    db.add(forecast_record)
+    db.commit()
+
+    return result
+
+# === MERGED from treasury.py ===
+
+"""Lazy re-export delegator for ``domains.finance.services`` (treasury alias).
+
+Some routers import ``from ...services.treasury import X``. This alias resolves
+names from the services tree (root or any sub-domain).
+"""
+from __future__ import annotations
+
+import importlib
+import sys
+
+_PACKAGE = "domains.finance.services"
+_SUBDOMAINS = [
+    "ledger", "accounts", "treasury", "payouts", "tax",
+    "reporting", "country", "commission", "shared",
+]
+
+
+def __getattr__(name: str):
+    if name.startswith("__") and name.endswith("__"):
+        raise AttributeError(name)
+    try:
+        module = importlib.import_module(f"{_PACKAGE}.{name}")
+        setattr(sys.modules[__name__], name, module)
+        return module
+    except ModuleNotFoundError:
+        pass
+    for sub in _SUBDOMAINS:
+        try:
+            module = importlib.import_module(f"{_PACKAGE}.{sub}.{name}")
+            setattr(sys.modules[__name__], name, module)
+            return module
+        except ModuleNotFoundError:
+            continue
+    raise AttributeError(f"module {_PACKAGE!r} has no attribute {name!r}")
+
+# === MERGED from admin_cash_service.py ===
+
+ï»¿"""Admin cash management service."""
+from __future__ import annotations
+
+from sqlalchemy.orm import Session
+
+from infrastructure.database.schemas import (
+    CashAccountCreate,
+    CashAccountOut,
+    CashTransactionCreate,
+    CashTransactionOut,
+)
+from domains.finance.models.finance import CashAccount
+
+from domains.comms.services.utility.misc_write_service import create_cash_account as create_cash_account_model
+from domains.comms.services.utility.misc_write_service import create_cash_transaction as create_cash_transaction_model
+
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
+
+
+def list_accounts(country_code: str, db: Session) -> list[CashAccountOut]:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return db.query(CashAccount).filter(
+            CashAccount.is_active == True,
+            CashAccount.country_code == country_code.upper()
+        ).all()
+    finally:
+        clear_rls_context()
+
+
+def create_account(country_code: str, payload: CashAccountCreate, db: Session) -> CashAccountOut:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        account_data = payload.model_dump()
+        account_data["country_code"] = country_code.upper()
+        return create_cash_account_model(db, **account_data)
+    finally:
+        clear_rls_context()
+
+
+def create_transaction(country_code: str, payload: CashTransactionCreate, current_user_id: int, db: Session) -> CashTransactionOut:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        account = db.query(CashAccount).filter(
+            CashAccount.id == payload.account_id,
+            CashAccount.country_code == country_code.upper()
+        ).first()
+        if not account:
+            raise ValueError("Account not found")
+        if payload.transaction_type == "debit":
+            account.balance -= payload.amount
+        else:
+            account.balance += payload.amount
+        tx_data = payload.model_dump()
+        tx_data["balance_after"] = account.balance
+        tx_data["performed_by"] = current_user_id
+        tx_data["country_code"] = country_code.upper()
+        return create_cash_transaction_model(db, **tx_data)
+    finally:
+        clear_rls_context()
+
+# === MERGED from trading_service_accounts.py ===
+
+ï»¿from __future__ import annotations
+
+import logging
+from datetime import datetime, date, timedelta
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, and_
+
+from domains.catalog.ports import Product
+from domains.catalog.ports import ProductVariant
+from domains.finance.models.erp import GoodsReceiptNote
+from domains.finance.models.erp import GoodsReceiptLine
+from domains.finance.models.erp import SalesOrder
+from domains.finance.models.erp import SalesOrderLine
+from domains.finance.models.erp import Warehouse
+from domains.finance.models.erp import StockMovement
+from domains.finance.models.finance import Vendor
+from domains.finance.models.finance import Customer
+from domains.finance.models.finance import APBill
+from domains.finance.models.finance import ARInvoice
+from domains.finance.models.finance import JournalEntry
+from domains.finance.models.finance import Account
+from domains.finance.models.finance import JournalEntryLine
+from domains.finance.models.erp import PurchaseOrder
+from domains.finance.models.erp import PurchaseOrderLine
+from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
+from domains.finance.services.finance import general_ledger_service as gl
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+
+logger = logging.getLogger(__name__)
+
+INVENTORY_ACCOUNT = "1060"
+COGS_ACCOUNT = "6000"
+AP_ACCOUNT = "2010"
+AR_ACCOUNT = "1035"
+REVENUE_ACCOUNT = "4040"
+VAT_OUTPUT_ACCOUNT = "2040"
+VAT_INPUT_ACCOUNT = "2050"
+
+
+def _next_number(db: Session, prefix: str, table_column) -> str:
+    last = db.query(func.max(table_column)).filter(
+        table_column.like(f"{prefix}-%")
+    ).scalar()
+    seq = 1
+    if last:
+        try:
+            seq = int(last.split("-")[-1]) + 1
+        except (ValueError, IndexError):
+            seq = 1
+    return f"{prefix}-{seq:05d}"
+
+
+# â”€â”€ Purchase Order â”€â”€
+
+
+def create_purchase_order(
+    db: Session, *, supplier_id: int, order_date: datetime = None,
+    expected_delivery_date: datetime = None, warehouse_id: int = None,
+    currency: str = "OMR", notes: str = None, terms: str = None,
+    shipping_address: str = None, country_code: str = None,
+    lines: list[dict] = None, created_by: int = None,
+) -> PurchaseOrder:
+    supplier = db.query(Vendor).filter(Vendor.id == supplier_id).first()
+    if not supplier:
+        raise ValueError("Supplier not found")
+    po_number = _next_number(db, "PO", PurchaseOrder.po_number)
+    subtotal = Decimal("0")
+    discount_total = Decimal("0")
+    tax_total = Decimal("0")
+    po = PurchaseOrder(
+        po_number=po_number, supplier_id=supplier_id,
+        supplier_name=supplier.name,
+        order_date=order_date or _utcnow(),
+        expected_delivery_date=expected_delivery_date,
+        warehouse_id=warehouse_id, currency=currency,
+        notes=notes, terms=terms, shipping_address=shipping_address,
+        country_code=country_code, created_by=created_by,
+        status="draft",
+    )
+    db.add(po)
+    db.flush()
+    po_lines = []
+    for idx, ld in enumerate(lines or []):
+        qty = Decimal(str(ld.get("quantity_ordered", 0)))
+        price = Decimal(str(ld.get("unit_price", 0)))
+        disc_pct = Decimal(str(ld.get("discount_percent", 0)))
+        tax_rate = Decimal(str(ld.get("tax_rate", 0)))
+        line_disc = qty * price * (disc_pct / Decimal("100"))
+        line_sub = qty * price - line_disc
+        line_tax = line_sub * (tax_rate / Decimal("100"))
+        line_total = line_sub + line_tax
+        subtotal += line_sub
+        discount_total += line_disc
+        tax_total += line_tax
+        line = PurchaseOrderLine(
+            po_id=po.id, product_id=ld.get("product_id"),
+            product_name=ld.get("product_name"), sku=ld.get("sku"),
+            description=ld.get("description"),
+            quantity_ordered=qty, unit_price=price,
+            discount_percent=disc_pct, discount_amount=line_disc,
+            tax_rate=tax_rate, tax_amount=line_tax,
+            line_total=line_total,
+            weight=ld.get("weight"), volume=ld.get("volume"),
+            country_code=country_code,
+        )
+        db.add(line)
+        po_lines.append(line)
+    po.subtotal = subtotal
+    po.discount_total = discount_total
+    po.tax_total = tax_total
+    po.grand_total = subtotal + tax_total
+    db.commit()
+    db.refresh(po)
+    return po
+
+
+def confirm_purchase_order(db: Session, po_id: int) -> PurchaseOrder:
+    po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
+    if not po:
+        raise ValueError("Purchase order not found")
+    if po.status != "draft":
+        raise ValueError(f"Cannot confirm PO in status '{po.status}'")
+    po.status = "confirmed"
+    db.commit()
+    db.refresh(po)
+    return po
+
+
+def receive_purchase_order(db: Session, po_id: int, grn_data: dict) -> GoodsReceiptNote:
+    po = db.query(PurchaseOrder).options(
+        joinedload(PurchaseOrder.lines)
+    ).filter(PurchaseOrder.id == po_id).first()
+    if not po:
+        raise ValueError("Purchase order not found")
+    if po.status not in ("confirmed", "partially_received"):
+        raise ValueError(f"Cannot receive PO in status '{po.status}'")
+    supplier = db.query(Vendor).filter(Vendor.id == po.supplier_id).first()
+    grn_number = _next_number(db, "GRN", GoodsReceiptNote.grn_number)
+    grn = GoodsReceiptNote(
+        grn_number=grn_number, po_id=po.id,
+        supplier_id=po.supplier_id,
+        receipt_date=grn_data.get("receipt_date") or _utcnow(),
+        warehouse_id=grn_data.get("warehouse_id") or po.warehouse_id,
+        status="confirmed", notes=grn_data.get("notes"),
+        received_by=grn_data.get("received_by"),
+        country_code=po.country_code,
+    )
+    db.add(grn)
+    db.flush()
+    line_map = {l.id: l for l in po.lines}
+    total_received_qty = Decimal("0")
+    total_accepted_qty = Decimal("0")
+    for rl in (grn_data.get("lines") or []):
+        po_line = line_map.get(rl.get("po_line_id"))
+        if not po_line:
+            continue
+        qty_rec = Decimal(str(rl.get("quantity_received", 0)))
+        qty_acc = Decimal(str(rl.get("quantity_accepted", qty_rec)))
+        qty_rej = qty_rec - qty_acc
+        cost = po_line.unit_price
+        grn_line = GoodsReceiptLine(
+            grn_id=grn.id, po_line_id=po_line.id,
+            product_id=po_line.product_id,
+            product_name=po_line.product_name,
+            sku=po_line.sku,
+            quantity_received=qty_rec,
+            quantity_accepted=qty_acc,
+            quantity_rejected=qty_rej,
+            rejection_reason=rl.get("rejection_reason"),
+            lot_number=rl.get("lot_number"),
+            expiry_date=rl.get("expiry_date"),
+            unit_cost=cost,
+            country_code=po.country_code,
+        )
+        db.add(grn_line)
+        po_line.quantity_received = (po_line.quantity_received or 0) + qty_acc
+        total_received_qty += qty_rec
+        total_accepted_qty += qty_acc
+        _record_stock_movement(
+            db, product_id=po_line.product_id,
+            warehouse_id=grn.warehouse_id,
+            movement_type="inbound",
+            reference_type="grn", reference_id=grn.id,
+            quantity_change=qty_acc,
+            unit_cost=cost,
+            country_code=po.country_code,
+            created_by=grn_data.get("received_by"),
+        )
+    all_received = all(
+        l.quantity_received >= l.quantity_ordered
+        for l in po.lines if l.quantity_ordered > 0
+    )
+    po.status = "received" if all_received else "partially_received"
+    po.delivery_date = grn.receipt_date
+    po.warehouse_id = grn.warehouse_id or po.warehouse_id
+    _post_grn_inventory_journal(db, grn, po)
+    db.commit()
+    db.refresh(grn)
+    return grn
+
+
+def _post_grn_inventory_journal(db: Session, grn: GoodsReceiptNote, po: PurchaseOrder) -> None:
+    total_inventory = Decimal("0")
+    for gl_ in grn.lines:
+        cost = gl_.unit_cost or Decimal("0")
+        total_inventory += cost * gl_.quantity_accepted
+    if total_inventory <= 0:
+        return
+    lines = [
+        JournalLineInput(
+            account_code=INVENTORY_ACCOUNT, side="debit",
+            amount=total_inventory,
+            description=f"GRN {grn.grn_number} inventory receipt",
+            entity_type="grn", entity_id=grn.id,
+        ),
+        JournalLineInput(
+            account_code=AP_ACCOUNT, side="credit",
+            amount=total_inventory,
+            description=f"GRN {grn.grn_number} AP accrual",
+            entity_type="grn", entity_id=grn.id,
+        ),
+    ]
+    if po.country_code:
+        setattr(lines[0], "country_code", po.country_code)
+        setattr(lines[1], "country_code", po.country_code)
+    try:
+        gl.create_journal_entry(db, JournalEntryCreate(
+            entry_date=grn.receipt_date,
+            reference_type="grn", reference_id=grn.id,
+            description=f"GRN {grn.grn_number} â€” inventory receipt & AP accrual",
+            currency=po.currency, country_code=po.country_code,
+            lines=lines,
+        ))
+    except Exception as e:
+        logger.warning("GRN journal post failed (may retry): %s", e)
+
+
+def three_way_match(
+    db: Session, *, po_id: int = None, grn_id: int = None, bill_id: int = None,
+) -> dict:
+    results = {"po_ok": False, "grn_ok": False, "bill_ok": False, "match": False, "discrepancies": []}
+    po = db.query(PurchaseOrder).options(
+        joinedload(PurchaseOrder.lines)
+    ).filter(PurchaseOrder.id == po_id).first() if po_id else None
+    grn = db.query(GoodsReceiptNote).options(
+        joinedload(GoodsReceiptNote.lines)
+    ).filter(GoodsReceiptNote.id == grn_id).first() if grn_id else None
+    bill = db.query(APBill).filter(APBill.id == bill_id).first() if bill_id else None
+    if po:
+        results["po_ok"] = True
+    if grn and po:
+        po_total_qty = sum((l.quantity_ordered or 0) for l in po.lines)
+        grn_total_qty = sum((l.quantity_accepted or 0) for l in grn.lines)
+        if abs(grn_total_qty - po_total_qty) > Decimal("0.001"):
+            results["discrepancies"].append(
+                f"GRN qty ({grn_total_qty}) != PO qty ({po_total_qty})"
+            )
+        else:
+            results["grn_ok"] = True
+    if bill and po:
+        if abs(bill.amount - po.grand_total) > Decimal("0.01"):
+            results["discrepancies"].append(
+                f"Bill amount ({bill.amount}) != PO total ({po.grand_total})"
+            )
+        elif abs(bill.tax_amount - po.tax_total) > Decimal("0.01"):
+            results["discrepancies"].append(
+                f"Bill tax ({bill.tax_amount}) != PO tax ({po.tax_total})"
+            )
+        else:
+            results["bill_ok"] = True
+    if grn is None and po:
+        results["grn_ok"] = True
+    if bill is None and po:
+        results["bill_ok"] = True
+    results["match"] = results["po_ok"] and results["grn_ok"] and results["bill_ok"]
+    if results["match"] and bill and bill.status == "received":
+        bill.status = "approved"
+        db.commit()
+    return results
+
+
+# â”€â”€ Sales Order â”€â”€
+
+
+def create_sales_order(
+    db: Session, *, customer_id: int, order_date: datetime = None,
+    expected_delivery_date: datetime = None, warehouse_id: int = None,
+    currency: str = "OMR", customer_po_number: str = None,
+    shipping_address: str = None, billing_address: str = None,
+    notes: str = None, terms: str = None, country_code: str = None,
+    lines: list[dict] = None, created_by: int = None,
+) -> SalesOrder:
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        raise ValueError("Customer not found")
+    if customer.credit_limit:
+        current_ar = db.query(func.coalesce(func.sum(ARInvoice.amount), 0)).filter(
+            ARInvoice.customer_id == customer_id,
+            ARInvoice.status.in_(["issued", "partially_paid"]),
+        ).scalar()
+        new_total = sum(
+            Decimal(str(l.get("unit_price", 0))) * Decimal(str(l.get("quantity_ordered", 0)))
+            for l in (lines or [])
+        )
+        if (current_ar or 0) + new_total > customer.credit_limit:
+            raise ValueError("Order would exceed customer credit limit")
+    so_number = _next_number(db, "SO", SalesOrder.so_number)
+    subtotal = Decimal("0")
+    discount_total = Decimal("0")
+    tax_total = Decimal("0")
+    so = SalesOrder(
+        so_number=so_number, customer_id=customer_id,
+        customer_name=customer.name,
+        customer_po_number=customer_po_number,
+        order_date=order_date or _utcnow(),
+        expected_delivery_date=expected_delivery_date,
+        warehouse_id=warehouse_id, currency=currency,
+        shipping_address=shipping_address,
+        billing_address=billing_address,
+        notes=notes, terms=terms,
+        country_code=country_code, created_by=created_by,
+        status="draft",
+    )
+    db.add(so)
+    db.flush()
+    for ld in (lines or []):
+        qty = Decimal(str(ld.get("quantity_ordered", 0)))
+        price = Decimal(str(ld.get("unit_price", 0)))
+        disc_pct = Decimal(str(ld.get("discount_percent", 0)))
+        tax_rate = Decimal(str(ld.get("tax_rate", 0)))
+        line_disc = qty * price * (disc_pct / Decimal("100"))
+        line_sub = qty * price - line_disc
+        line_tax = line_sub * (tax_rate / Decimal("100"))
+        line_total = line_sub + line_tax
+        subtotal += line_sub
+        discount_total += line_disc
+        tax_total += line_tax
+        line = SalesOrderLine(
+            so_id=so.id, product_id=ld.get("product_id"),
+            product_name=ld.get("product_name"), sku=ld.get("sku"),
+            description=ld.get("description"),
+            quantity_ordered=qty, unit_price=price,
+            discount_percent=disc_pct, discount_amount=line_disc,
+            tax_rate=tax_rate, tax_amount=line_tax,
+            line_total=line_total,
+            weight=ld.get("weight"), volume=ld.get("volume"),
+            country_code=country_code,
+        )
+        db.add(line)
+    so.subtotal = subtotal
+    so.discount_total = discount_total
+    so.tax_total = tax_total
+    so.grand_total = subtotal + tax_total
+    db.commit()
+    db.refresh(so)
+    return so
+
+
+def confirm_sales_order(db: Session, so_id: int) -> SalesOrder:
+    so = db.query(SalesOrder).filter(SalesOrder.id == so_id).first()
+    if not so:
+        raise ValueError("Sales order not found")
+    if so.status != "draft":
+        raise ValueError(f"Cannot confirm SO in status '{so.status}'")
+    so.status = "confirmed"
+    db.commit()
+    db.refresh(so)
+    return so
+
+
+def invoice_sales_order(db: Session, so_id: int, invoice_date: datetime = None,
+                        created_by: int = None) -> ARInvoice:
+    so = db.query(SalesOrder).options(
+        joinedload(SalesOrder.lines)
+    ).filter(SalesOrder.id == so_id).first()
+    if not so:
+        raise ValueError("Sales order not found")
+    if so.status not in ("confirmed", "invoiced", "partially_invoiced"):
+        raise ValueError(f"Cannot invoice SO in status '{so.status}'")
+    invoice_number = _next_number(db, "INV", ARInvoice.invoice_number)
+    inv = ARInvoice(
+        customer_id=so.customer_id,
+        invoice_number=invoice_number,
+        invoice_date=invoice_date or _utcnow(),
+        due_date=(invoice_date or _utcnow()) + timedelta(days=30),
+        account_code=REVENUE_ACCOUNT,
+        amount=so.grand_total,
+        tax_amount=so.tax_total,
+        description=f"Invoice for SO {so.so_number}",
+        country_code=so.country_code,
+        created_by=created_by,
+        status="issued",
+    )
+    db.add(inv)
+    db.flush()
+    entry = gl.create_journal_entry(db, JournalEntryCreate(
+        entry_date=inv.invoice_date,
+        reference_type="so_invoice", reference_id=inv.id,
+        description=f"AR invoice {invoice_number} for SO {so.so_number}",
+        currency=so.currency, country_code=so.country_code,
+        lines=[
+            JournalLineInput(
+                account_code=AR_ACCOUNT, side="debit",
+                amount=so.grand_total,
+                description=f"AR for SO {so.so_number}",
+                entity_type="ar_invoice", entity_id=inv.id,
+            ),
+            JournalLineInput(
+                account_code=REVENUE_ACCOUNT, side="credit",
+                amount=so.grand_total - so.tax_total,
+                description=f"Revenue for SO {so.so_number}",
+                entity_type="ar_invoice", entity_id=inv.id,
+            ),
+            JournalLineInput(
+                account_code=VAT_OUTPUT_ACCOUNT, side="credit",
+                amount=so.tax_total,
+                description=f"VAT for SO {so.so_number}",
+                entity_type="ar_invoice", entity_id=inv.id,
+            ),
+        ],
+    ), user_id=created_by)
+    inv.linked_journal_entry_id = entry.id
+    so.status = "invoiced"
+    db.commit()
+    db.refresh(inv)
+    return inv
+
+
+def dispatch_sales_order(db: Session, so_id: int, dispatch_data: dict,
+                         created_by: int = None) -> SalesOrder:
+    so = db.query(SalesOrder).options(
+        joinedload(SalesOrder.lines)
+    ).filter(SalesOrder.id == so_id).first()
+    if not so:
+        raise ValueError("Sales order not found")
+    if so.status not in ("invoiced", "partially_dispatched"):
+        raise ValueError(f"Cannot dispatch SO in status '{so.status}'")
+    so.status = "dispatched"
+    total_cogs = Decimal("0")
+    for sol in so.lines:
+        qty = dispatch_data.get("quantities", {}).get(str(sol.id))
+        if qty:
+            qty_disp = Decimal(str(qty))
+            sol.quantity_dispatched = (sol.quantity_dispatched or 0) + qty_disp
+            cost = _get_product_cost(db, sol.product_id)
+            line_cogs = cost * qty_disp if cost else Decimal("0")
+            total_cogs += line_cogs
+            _record_stock_movement(
+                db, product_id=sol.product_id,
+                warehouse_id=so.warehouse_id,
+                movement_type="outbound",
+                reference_type="so", reference_id=so.id,
+                quantity_change=-qty_disp,
+                unit_cost=cost,
+                country_code=so.country_code,
+                created_by=created_by,
+            )
+    so.delivery_date = dispatch_data.get("dispatch_date") or _utcnow()
+    if total_cogs > 0:
+        try:
+            gl.create_journal_entry(db, JournalEntryCreate(
+                entry_date=so.delivery_date,
+                reference_type="so_cogs", reference_id=so.id,
+                description=f"COGS for SO {so.so_number}",
+                currency=so.currency, country_code=so.country_code,
+                lines=[
+                    JournalLineInput(
+                        account_code=COGS_ACCOUNT, side="debit",
+                        amount=total_cogs,
+                        description=f"COGS for SO {so.so_number}",
+                        entity_type="sales_order", entity_id=so.id,
+                    ),
+                    JournalLineInput(
+                        account_code=INVENTORY_ACCOUNT, side="credit",
+                        amount=total_cogs,
+                        description=f"Inventory reduction for SO {so.so_number}",
+                        entity_type="sales_order", entity_id=so.id,
+                    ),
+                ],
+            ), user_id=created_by)
+        except Exception as e:
+            logger.warning("COGS journal post failed for SO %s: %s", so.so_number, e)
+    db.commit()
+    db.refresh(so)
+    return so
+
+
+# â”€â”€ Dunning Engine â”€â”€
+
+
+def run_dunning_engine(db: Session, as_of: date = None) -> list[dict]:
+    as_of = as_of or date.today()
+    triggered = []
+    invoices = db.query(ARInvoice).filter(
+        ARInvoice.status.in_(["issued", "partially_paid"]),
+        ARInvoice.due_date.isnot(None),
+    ).all()
+    for inv in invoices:
+        days_overdue = (as_of - inv.due_date.date()).days if inv.due_date else 0
+        reminders = []
+        if days_overdue <= -7 and days_overdue > -14:
+            reminders.append({"type": "reminder_1", "message": f"Payment due in {abs(days_overdue)} days for invoice {inv.invoice_number}"})
+        elif days_overdue == 0:
+            reminders.append({"type": "reminder_2", "message": f"Payment due today for invoice {inv.invoice_number}"})
+        elif 1 <= days_overdue <= 7:
+            reminders.append({"type": "reminder_3", "message": f"Invoice {inv.invoice_number} is {days_overdue} day(s) overdue â€” late fee may apply"})
+        elif 8 <= days_overdue <= 30:
+            reminders.append({"type": "reminder_4", "message": f"Invoice {inv.invoice_number} is {days_overdue} day(s) overdue â€” credit hold risk"})
+        elif 31 <= days_overdue <= 60:
+            reminders.append({"type": "escalation_1", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days â€” management alert"})
+        elif 61 <= days_overdue <= 90:
+            reminders.append({"type": "escalation_2", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days â€” legal warning"})
+        elif days_overdue > 90:
+            reminders.append({"type": "write_off_recommendation", "message": f"Invoice {inv.invoice_number} overdue {days_overdue} days â€” recommend write-off"})
+        if reminders:
+            triggered.append({
+                "invoice_id": inv.id, "invoice_number": inv.invoice_number,
+                "customer_id": inv.customer_id, "days_overdue": days_overdue,
+                "amount": float(inv.amount), "reminders": reminders,
+            })
+            # Send dunning emails
+            try:
+                from domains.comms.services.transactional_email_service import enqueue_dunning_email
+                for reminder in reminders:
+                    enqueue_dunning_email(inv.id, reminder["type"], reminder["message"])
+            except Exception as e:
+                logger.warning("Failed to send dunning email for invoice %s: %s", inv.id, e)
+    return triggered
+
+
+# â”€â”€ Stock â”€â”€
+
+
+def _get_product_cost(db: Session, product_id: int) -> Optional[Decimal]:
+    if not product_id:
+        return None
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product and product.cost_price:
+        return Decimal(str(product.cost_price))
+    return None
+
+
+def _record_stock_movement(
+    db: Session, *, product_id: int, warehouse_id: int = None,
+    movement_type: str, reference_type: str = None, reference_id: int = None,
+    quantity_change: Decimal, unit_cost: Decimal = None,
+    country_code: str = None, created_by: int = None,
+) -> StockMovement:
+    if not product_id:
+        return None
+    last_mvt = db.query(StockMovement.quantity_after).filter(
+        StockMovement.product_id == product_id,
+        StockMovement.warehouse_id == warehouse_id,
+    ).order_by(StockMovement.id.desc()).first()
+    prev_qty = Decimal(str(last_mvt[0])) if last_mvt else Decimal("0")
+    qty_after = prev_qty + quantity_change
+    total_cost = (unit_cost or Decimal("0")) * abs(quantity_change) if quantity_change else Decimal("0")
+    mvt = StockMovement(
+        product_id=product_id, warehouse_id=warehouse_id,
+        movement_type=movement_type,
+        reference_type=reference_type, reference_id=reference_id,
+        quantity_change=quantity_change, quantity_after=qty_after,
+        unit_cost=unit_cost, total_cost=total_cost,
+        country_code=country_code, created_by=created_by,
+    )
+    db.add(mvt)
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if product:
+        new_stock = (product.stock or 0) + int(quantity_change)
+        product.stock = max(0, new_stock)
+    return mvt
+
+
+def get_stock_level(db: Session, product_id: int = None, warehouse_id: int = None) -> list[dict]:
+    q = db.query(
+        StockMovement.product_id, Product.name, Product.sku,
+        func.sum(StockMovement.quantity_change).label("current_stock"),
+        func.max(StockMovement.created_at).label("last_movement"),
+    ).join(Product, StockMovement.product_id == Product.id)
+    if product_id:
+        q = q.filter(StockMovement.product_id == product_id)
+    if warehouse_id:
+        q = q.filter(StockMovement.warehouse_id == warehouse_id)
+    q = q.group_by(StockMovement.product_id, Product.name, Product.sku)
+    results = []
+    for row in q.all():
+        results.append({
+            "product_id": row.product_id,
+            "product_name": row.name,
+            "sku": row.sku,
+            "current_stock": float(row.current_stock or 0),
+            "last_movement": row.last_movement.isoformat() if row.last_movement else None,
+        })
+    return results
+
+
+# â”€â”€ Warehouse â”€â”€
+
+
+def create_warehouse(db: Session, *, name: str, code: str, address: str = None,
+                     city: str = None, country_code: str = None) -> Warehouse:
+    existing = db.query(Warehouse).filter(Warehouse.code == code).first()
+    if existing:
+        raise ValueError(f"Warehouse code '{code}' already exists")
+    wh = Warehouse(name=name, code=code, address=address, city=city, country_code=country_code)
+    db.add(wh)
+    db.commit()
+    db.refresh(wh)
+    return wh
+
+
+def list_warehouses(db: Session, country_code: str = None) -> list[Warehouse]:
+    q = db.query(Warehouse)
+    if country_code:
+        q = q.filter(Warehouse.country_code == country_code)
+    return q.order_by(Warehouse.name).all()
+
+
+# â”€â”€ PO / SO Listing â”€â”€
+
+
+def list_purchase_orders(db: Session, status: str = None, supplier_id: int = None,
+                          country_code: str = None, limit: int = 50, offset: int = 0) -> dict:
+    q = db.query(PurchaseOrder)
+    if status:
+        q = q.filter(PurchaseOrder.status == status)
+    if supplier_id:
+        q = q.filter(PurchaseOrder.supplier_id == supplier_id)
+    if country_code:
+        q = q.filter(PurchaseOrder.country_code == country_code)
+    total = q.count()
+    rows = q.order_by(PurchaseOrder.id.desc()).limit(limit).all()
+    return {"total": total, "items": rows}
+
+
+def list_sales_orders(db: Session, status: str = None, customer_id: int = None,
+                       country_code: str = None, limit: int = 50, offset: int = 0) -> dict:
+    q = db.query(SalesOrder)
+    if status:
+        q = q.filter(SalesOrder.status == status)
+    if customer_id:
+        q = q.filter(SalesOrder.customer_id == customer_id)
+    if country_code:
+        q = q.filter(SalesOrder.country_code == country_code)
+    total = q.count()
+    rows = q.order_by(SalesOrder.id.desc()).limit(limit).all()
+    return {"total": total, "items": rows}
+
+
+def list_goods_receipts(db: Session, po_id: int = None, status: str = None,
+                         country_code: str = None, limit: int = 50, offset: int = 0) -> dict:
+    q = db.query(GoodsReceiptNote)
+    if po_id:
+        q = q.filter(GoodsReceiptNote.po_id == po_id)
+    if status:
+        q = q.filter(GoodsReceiptNote.status == status)
+    if country_code:
+        q = q.filter(GoodsReceiptNote.country_code == country_code)
+    total = q.count()
+    rows = q.order_by(GoodsReceiptNote.id.desc()).limit(limit).all()
+    return {"total": total, "items": rows}
+
+
+# â”€â”€ Single-entity reads (extracted from admin_supplier_trading router) â”€â”€
+
+
+def get_purchase_order(db: Session, po_id: int) -> PurchaseOrder:
+    po = db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
+    if not po:
+        raise ValueError("Purchase order not found")
+    return po
+
+
+def get_goods_receipt(db: Session, grn_id: int) -> GoodsReceiptNote:
+    grn = db.query(GoodsReceiptNote).filter(GoodsReceiptNote.id == grn_id).first()
+    if not grn:
+        raise ValueError("Goods receipt note not found")
+    return grn
+
+
+def get_sales_order(db: Session, so_id: int) -> SalesOrder:
+    so = db.query(SalesOrder).filter(SalesOrder.id == so_id).first()
+    if not so:
+        raise ValueError("Sales order not found")
+    return so
+
+
+def list_stock_movements(db: Session, product_id: int = None, limit: int = 100,
+                         offset: int = 0) -> dict:
+    q = db.query(StockMovement)
+    if product_id:
+        q = q.filter(StockMovement.product_id == product_id)
+    total = q.count()
+    rows = q.order_by(StockMovement.id.desc()).limit(limit).all()
+    return {"total": total, "items": rows}
+
+
+# â”€â”€ 3-Way Match Scanner â”€â”€
+
+
+def scan_unmatched_pos(db: Session, country_code: str = None) -> dict:
+    """
+    Scan for purchase orders that haven't been fully matched (3-way match).
+    Returns list of POs with GRN but no matching bill, or bill but no GRN.
+    """
+    results = {"scanned": 0, "unmatched": 0, "items": []}
+    
+    # Find POs with status 'received' (GRN confirmed) but no AP bill
+    q = db.query(PurchaseOrder).filter(
+        PurchaseOrder.status.in_(["received", "partial"]),
+    )
+    if country_code:
+        q = q.filter(PurchaseOrder.country_code == country_code)
+    
+    pos = q.all()
+    results["scanned"] = len(pos)
+    if not pos:
+        return results
+
+    po_numbers = [po.po_number for po in pos]
+
+    # Batch: one AP-bill query for bills referencing any of these POs
+    bill_candidates = db.query(APBill).filter(
+        APBill.linked_journal_entry_id.isnot(None),
+        APBill.description.like("%PO-%"),
+    ).all()
+    billed_pos: set = set()
+    for b in bill_candidates:
+        desc = b.description or ""
+        for n in po_numbers:
+            if f"PO-{n}" in desc:
+                billed_pos.add(n)
+                break
+
+    # Batch: one GRN query for these POs
+    po_ids = [po.id for po in pos]
+    grn_rows = db.query(GoodsReceiptNote).filter(
+        GoodsReceiptNote.po_id.in_(po_ids),
+        GoodsReceiptNote.status == "confirmed",
+    ).all()
+    grn_pos = {g.po_id for g in grn_rows}
+
+    for po in pos:
+        if po.po_number in billed_pos:
+            continue
+        has_grn = po.id in grn_pos
+        results["unmatched"] += 1
+        results["items"].append({
+            "po_id": po.id,
+            "po_number": po.po_number,
+            "status": po.status,
+            "has_grn": bool(has_grn),
+            "has_bill": False,
+            "vendor_id": po.vendor_id,
+            "total_amount": float(po.total_amount or 0),
+        })
+
+    return results
+
+
+# â”€â”€ E-commerce Auto-Invoice on Delivery (#11) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
+def auto_invoice_ecommerce_orders(db: Session, country_code: str = None) -> dict:
+    """
+    Auto-generate AR invoices for delivered e-commerce orders.
+    Called daily by the automation scheduler.
+    """
+    from domains.finance.models.finance import ARInvoice
+    from domains.finance.models.finance import Account
+    from domains.orders.models.orders import Order
+
+    results = {"scanned": 0, "invoiced": 0, "skipped": 0, "errors": 0}
+
+    orders = db.query(Order).filter(
+        Order.payment_method == "card",
+        Order.status == "delivered",
+        Order.invoice_id.is_(None),
+    )
+    if country_code:
+        orders = orders.filter(Order.country_code == country_code)
+
+    orders_all = orders.all()
+    results["scanned"] = len(orders_all)
+
+    # Load constant accounts and existing invoices once instead of per-order
+    revenue_acct = db.query(Account).filter(Account.code == "4010").first()
+    vat_acct = db.query(Account).filter(Account.code == "2040").first()
+    order_ids = [o.id for o in orders_all]
+    invoiced_ids: set = set()
+    if order_ids:
+        inv_rows = db.query(ARInvoice).filter(
+            ARInvoice.reference_order_id.in_(order_ids)
+        ).all()
+        invoiced_ids = {i.reference_order_id for i in inv_rows}
+
+    for order in orders_all:
+        try:
+            if order.id in invoiced_ids:
+                results["skipped"] += 1
+                continue
+
+            invoice_number = _next_number(db, "INV", ARInvoice.invoice_number)
+            now = _utcnow()
+
+            if not revenue_acct or not vat_acct:
+                results["errors"] += 1
+                continue
+
+            lines = [
+                JournalLineInput(
+                    account_code="1100",
+                    side="debit",
+                    amount=order.total_amount,
+                    description=f"AR for delivered order #{order.id}",
+                    entity_type="order",
+                    entity_id=order.id,
+                ),
+                JournalLineInput(
+                    account_code="4010",
+                    side="credit",
+                    amount=order.total_amount,
+                    description=f"Sales revenue - Order #{order.id}",
+                    entity_type="order",
+                    entity_id=order.id,
+                ),
+                JournalLineInput(
+                    account_code="2040",
+                    side="credit",
+                    amount=order.vat_amount or 0,
+                    description=f"VAT output - Order #{order.id}",
+                    entity_type="order",
+                    entity_id=order.id,
+                ),
+            ]
+
+            entry_data = JournalEntryCreate(
+                entry_date=now,
+                reference_type="ecommerce_invoice",
+                reference_id=order.id,
+                reference_number=invoice_number,
+                description=f"Auto-invoice for delivered order #{order.id}",
+                currency=order.currency or "OMR",
+                country_code=country_code or order.country_code,
+                lines=lines,
+            )
+
+            je = gl.create_journal_entry(db, entry_data)
+
+            ar_invoice = ARInvoice(
+                customer_id=order.user_id,
+                invoice_number=invoice_number,
+                invoice_date=now,
+                due_date=now,
+                account_code="1100",
+                amount=order.total_amount,
+                tax_amount=order.vat_amount,
+                status="issued",
+                linked_journal_entry_id=je.id,
+                country_code=country_code or order.country_code,
+                created_by=0,
+            )
+            db.add(ar_invoice)
+            order.invoice_id = ar_invoice.id
+            results["invoiced"] += 1
+        except Exception as e:
+            logger.warning("Auto-invoice failed for order %s: %s", order.id, e)
+            results["errors"] += 1
+
+    db.commit()
+    return results
+
+# === MERGED from trading_read_service.py ===
+
+ï»¿"""Read helpers for purchase orders, goods receipt notes, sales orders and
+stock movements.
+
+Previously these ``db.query(...)`` lookups lived inline in
+``routers/admin_supplier_trading.py`` and ``routers/trading.py``. They are
+pure data-access functions (no commit, no HTTP concerns) so they belong in
+the services layer. The routers delegate through
+``controllers/admin/admin_supplier_trading_controller.py``.
+"""
+from __future__ import annotations
+
+from typing import Optional
+
+from sqlalchemy.orm import Session
+
+from domains.finance.models.erp import GoodsReceiptNote
+from domains.finance.models.erp import PurchaseOrder
+from domains.finance.models.erp import SalesOrder
+from domains.finance.models.erp import StockMovement
+
+
+def get_purchase_order(db: Session, po_id: int) -> Optional[PurchaseOrder]:
+    return db.query(PurchaseOrder).filter(PurchaseOrder.id == po_id).first()
+
+
+def get_goods_receipt_note(db: Session, grn_id: int) -> Optional[GoodsReceiptNote]:
+    return db.query(GoodsReceiptNote).filter(GoodsReceiptNote.id == grn_id).first()
+
+
+def get_sales_order(db: Session, so_id: int) -> Optional[SalesOrder]:
+    return db.query(SalesOrder).filter(SalesOrder.id == so_id).first()
+
+
+def list_stock_movements(
+    db: Session,
+    product_id: Optional[int] = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> dict:
+    q = db.query(StockMovement)
+    if product_id:
+        q = q.filter(StockMovement.product_id == product_id)
+    total = q.count()
+    rows = q.order_by(StockMovement.id.desc()).limit(limit).all()
+    return {"total": total, "items": rows}
+
+# === MERGED from credit_control_service.py ===
+
+"""
+Credit Control Service â€” Automated credit limit enforcement.
+
+Handles:
+  - #24: Auto Credit Limit Enforcement
+  
+Features:
+  - Pre-dispatch credit check (blocks if over limit)
+  - Automated credit hold after 30/60/90 day overdue
+  - Credit utilization tracking
+  - Auto-notifications for approaching limits
+"""
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Optional
+
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+
+from domains.finance.models.finance import Customer
+from domains.finance.models.finance import ARInvoice
+from domains.finance.models.finance import FinanceAutomationLog
+from domains.finance.models.finance import FinanceAuditLog
+from infrastructure.utils.datetime_utils import utcnow as _utcnow
+
+logger = logging.getLogger(__name__)
+
+# Credit control thresholds
+OVERDUE_HARD_HOLD_DAYS = 30      # Auto-hold after 30 days overdue
+CREDIT_UTILIZATION_WARNING = 0.80  # Warn at 80% utilization
+CREDIT_UTILIZATION_CRITICAL = 0.95  # Critical at 95% utilization
+
+
+# â”€â”€ #24: Auto Credit Limit Enforcement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
+def check_customer_credit(
+    db: Session,
+    customer_id: int,
+    order_amount: Decimal = None,
+    country_code: str = None,
+) -> dict:
+    """
+    Pre-dispatch credit check for a customer/distributor.
+
+    Returns:
+    - approved: bool (can proceed with order)
+    - credit_limit: current limit
+    - outstanding: current AR balance
+    - available: remaining credit
+    - utilization_pct: current utilization percentage
+    - reason: explanation if blocked
+    """
+    customer = db.query(Customer).get(customer_id)
+    if not customer:
+        raise ValueError(f"Customer #{customer_id} not found")
+
+    outstanding = _get_customer_outstanding_ar(db, customer_id)
+    credit_limit = Decimal(str(customer.credit_limit or 0))
+
+    if credit_limit <= 0:
+        return {
+            "approved": True,
+            "credit_hold": False,
+            "credit_limit": 0,
+            "outstanding": float(outstanding),
+            "available": 0,
+            "utilization_pct": 0,
+        }
+
+    available = credit_limit - outstanding
+    utilization = float(outstanding / credit_limit * 100) if credit_limit > 0 else 0
+
+    result = {
+        "approved": True,
+        "credit_hold": False,
+        "credit_limit": float(credit_limit),
+        "outstanding": float(outstanding),
+        "available": float(available),
+        "utilization_pct": round(utilization, 1),
+    }
+
+    if order_amount:
+        if outstanding + Decimal(str(order_amount)) > credit_limit:
+            result["approved"] = False
+            result["reason"] = (
+                f"Order would exceed credit limit. "
+                f"Limit: {credit_limit}, Outstanding: {outstanding}, "
+                f"Order: {order_amount}, Shortfall: {outstanding + Decimal(str(order_amount)) - credit_limit}"
+            )
+            return result
+
+    if utilization >= CREDIT_UTILIZATION_CRITICAL * 100:
+        result["warning"] = f"Credit utilization critical: {utilization:.1f}%"
+    elif utilization >= CREDIT_UTILIZATION_WARNING * 100:
+        result["warning"] = f"Credit utilization high: {utilization:.1f}%"
+
+    return result
+    
+    # Calculate current outstanding AR
+    outstanding = _get_customer_outstanding_ar(db, customer_id)
+    credit_limit = Decimal(str(customer.credit_limit or 0))
+    
+    if credit_limit <= 0:
+        # No credit limit set â€” approve (cash customer)
+        return {
+            "approved": True,
+            "credit_hold": False,
+            "credit_limit": 0,
+            "outstanding": float(outstanding),
+            "available": 0,
+            "utilization_pct": 0,
+        }
+    
+    available = credit_limit - outstanding
+    utilization = float(outstanding / credit_limit * 100) if credit_limit > 0 else 0
+    
+    result = {
+        "approved": True,
+        "credit_hold": False,
+        "credit_limit": float(credit_limit),
+        "outstanding": float(outstanding),
+        "available": float(available),
+        "utilization_pct": round(utilization, 1),
+    }
+    
+    # Check if order would exceed limit
+    if order_amount:
+        if outstanding + Decimal(str(order_amount)) > credit_limit:
+            result["approved"] = False
+            result["reason"] = (
+                f"Order would exceed credit limit. "
+                f"Limit: {credit_limit}, Outstanding: {outstanding}, "
+                f"Order: {order_amount}, Shortfall: {outstanding + Decimal(str(order_amount)) - credit_limit}"
+            )
+            return result
+    
+    # Check utilization warnings
+    if utilization >= CREDIT_UTILIZATION_CRITICAL * 100:
+        result["warning"] = f"Credit utilization critical: {utilization:.1f}%"
+    elif utilization >= CREDIT_UTILIZATION_WARNING * 100:
+        result["warning"] = f"Credit utilization high: {utilization:.1f}%"
+    
+    return result
+
+
+def enforce_auto_credit_holds(
+    db: Session,
+    country_code: str = None,
+) -> dict:
+    """
+    Daily cron: Auto-place customers on credit hold if overdue > 30 days.
+    Auto-release hold if all overdue invoices are paid.
+    """
+    results = {"notices_sent": 0, "holds_placed": 0, "holds_released": 0}
+
+    customers = db.query(Customer).filter(Customer.is_active == True)
+    if country_code:
+        customers = customers.filter(Customer.country_code == country_code)
+
+    for customer in customers.all():
+        overdue_days = _get_max_overdue_days(db, customer.id)
+        outstanding = _get_customer_outstanding_ar(db, customer.id)
+        credit_limit = Decimal(str(customer.credit_limit or 0))
+
+        if credit_limit > 0 and outstanding > credit_limit:
+            results["holds_placed"] += 1
+            _log_credit_control(db, "credit_exceeded", customer.id, {
+                "outstanding": float(outstanding),
+                "credit_limit": float(credit_limit),
+                "overdue_days": overdue_days,
+            }, country_code)
+        elif overdue_days < 7 and credit_limit > 0:
+            results["holds_released"] += 1
+            _log_credit_control(db, "credit_ok", customer.id, {
+                "outstanding": float(outstanding),
+                "credit_limit": float(credit_limit),
+            }, country_code)
+
+    db.commit()
+    _log_automation(db, "credit_control_daily",
+                    results["holds_placed"] + results["holds_released"],
+                    results["holds_placed"] + results["holds_released"],
+                    results, country_code)
+    return results
+
+
+def get_customer_credit_summary(
+    db: Session,
+    customer_id: int,
+    country_code: str = None,
+) -> dict:
+    """Get comprehensive credit summary for a customer."""
+    customer = db.query(Customer).get(customer_id)
+    if not customer:
+        raise ValueError(f"Customer #{customer_id} not found")
+    
+    outstanding = _get_customer_outstanding_ar(db, customer_id)
+    overdue = _get_customer_overdue_ar(db, customer_id)
+    credit_limit = Decimal(str(customer.credit_limit or 0))
+    available = credit_limit - outstanding if credit_limit > 0 else Decimal("0")
+    utilization = float(outstanding / credit_limit * 100) if credit_limit > 0 else 0
+    
+    # Aging buckets
+    aging = _get_customer_aging(db, customer_id)
+    
+    return {
+        "customer_id": customer.id,
+        "customer_name": customer.name,
+        "credit_limit": float(credit_limit),
+        "outstanding_ar": float(outstanding),
+        "overdue_ar": float(overdue),
+        "available_credit": float(available),
+        "utilization_pct": round(utilization, 1),
+        "payment_terms_days": customer.payment_terms_days,
+        "aging": aging,
+    }
+
+
+# â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
+def _get_customer_outstanding_ar(db: Session, customer_id: int) -> Decimal:
+    """Get total outstanding AR for a customer."""
+    result = db.query(func.sum(ARInvoice.amount)).filter(
+        ARInvoice.customer_id == customer_id,
+        ARInvoice.status.in_(["issued", "partially_paid"]),
+    ).scalar()
+    return Decimal(str(result or 0))
+
+
+def _get_customer_overdue_ar(db: Session, customer_id: int) -> Decimal:
+    """Get total overdue AR for a customer."""
+    result = db.query(func.sum(ARInvoice.amount)).filter(
+        ARInvoice.customer_id == customer_id,
+        ARInvoice.status.in_(["issued", "partially_paid"]),
+        ARInvoice.due_date < _utcnow(),
+    ).scalar()
+    return Decimal(str(result or 0))
+
+
+def _get_max_overdue_days(db: Session, customer_id: int) -> int:
+    """Get the maximum overdue days across all invoices for a customer."""
+    now = _utcnow()
+    invoices = db.query(ARInvoice.due_date).filter(
+        ARInvoice.customer_id == customer_id,
+        ARInvoice.status.in_(["issued", "partially_paid"]),
+        ARInvoice.due_date < now,
+    ).all()
+    
+    if not invoices:
+        return 0
+    
+    max_days = 0
+    for inv in invoices:
+        if inv.due_date:
+            days = (now - inv.due_date).days
+            if days > max_days:
+                max_days = days
+    return max_days
+
+
+def _get_customer_aging(db: Session, customer_id: int) -> dict:
+    """Get AR aging buckets for a customer."""
+    now = _utcnow()
+    
+    def _bucket(days_min, days_max):
+        if days_max:
+            return db.query(func.sum(ARInvoice.amount)).filter(
+                ARInvoice.customer_id == customer_id,
+                ARInvoice.status.in_(["issued", "partially_paid"]),
+                ARInvoice.due_date >= now - timedelta(days=days_max),
+                ARInvoice.due_date < now - timedelta(days=days_min),
+            ).scalar() or 0
+        else:
+            return db.query(func.sum(ARInvoice.amount)).filter(
+                ARInvoice.customer_id == customer_id,
+                ARInvoice.status.in_(["issued", "partially_paid"]),
+                ARInvoice.due_date < now - timedelta(days=days_min),
+            ).scalar() or 0
+    
+    return {
+        "current": float(_bucket(0, 30)),
+        "31_60": float(_bucket(30, 60)),
+        "61_90": float(_bucket(60, 90)),
+        "over_90": float(_bucket(90, None)),
+    }
+
+
+def _log_credit_control(db: Session, kind: str, entity_id: int, detail: dict, country_code: str = None):
+    """Log credit control activity."""
+    try:
+        db.add(FinanceAutomationLog(
+            kind=kind,
+            records_processed=1,
+            records_changed=1,
+            detail={**detail, "entity_id": entity_id},
+            country_code=country_code,
+        ))
+        db.add(FinanceAuditLog(
+            action="credit_control",
+            entity_type="customer",
+            entity_id=entity_id,
+            detail=detail,
+            country_code=country_code,
+        ))
+        db.commit()
+    except Exception as e:
+        logger.warning("Credit control log failed: %s", e)
+        db.rollback()
+
+
+def _log_automation(db: Session, kind: str, processed: int, changed: int,
+                     detail: dict = None, country_code: str = None):
+    """Log automation run."""
+    try:
+        db.add(FinanceAutomationLog(
+            kind=kind,
+            records_processed=processed,
+            records_changed=changed,
+            detail=detail,
+            country_code=country_code,
+        ))
+        db.commit()
+    except Exception as e:
+        logger.warning("Automation log failed: %s", e)
+        db.rollback()
+
+# === MERGED from contractor_milestone_read_service.py ===
+
+"""Contractor milestone read service (owns the raw SQL read)."""
+from __future__ import annotations
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+
+def list_contractor_milestones(db: Session) -> list[dict]:
+    """Return contractor payment/delivery milestones."""
+    rows = db.execute(
+        text("""
+            SELECT m.id, m.employee_id, e.employee_code, m.milestone_type,
+                   m.due_date, m.status
+            FROM contractor_milestones m
+            LEFT JOIN employees e ON e.id = m.employee_id
+            ORDER BY m.due_date ASC
+        """)
+    ).fetchall()
+    return [
+        {
+            "id": r[0],
+            "employee_id": r[1],
+            "employee_name": r[2],
+            "milestone_type": r[3],
+            "due_date": r[4],
+            "status": r[5],
+        }
+        for r in rows
+    ]

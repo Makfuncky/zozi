@@ -23,15 +23,23 @@ Merged from:
 
 All coupon business logic lives here. Routers (in modules/) must not query
 the ORM directly — they call these service functions.
+
+Race-condition safeguards:
+- ``redeem_coupon_atomic`` uses ``SELECT ... FOR UPDATE`` on the coupon row
+  and an atomic ``UPDATE ... WHERE usage_count < usage_limit`` to prevent
+  over-redemption under concurrent requests.
+- Idempotency keys (stored in Redis, 24h TTL) prevent duplicate CouponUsage
+  records when the same request is retried.
 """
 from __future__ import annotations
 
+import json
 import logging
 from decimal import Decimal, InvalidOperation
 from typing import Any, List, Optional
 
 from fastapi import HTTPException
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -39,12 +47,17 @@ from domains.catalog.models.promotions import Coupon
 from domains.governance.models.admin import CouponUsage
 from domains.catalog.models.products import Product
 from infrastructure.utils.audit import audit_log, AuditAction
+from infrastructure.utils.cache import get_redis_client
 from infrastructure.utils.datetime_utils import utcnow
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 from kernel.money import round_money, to_decimal
 import structlog
 
 logger = structlog.get_logger(__name__)
+
+_IDEMPOTENCY_TTL = 86400  # 24 hours
+
+_IDEMPOTENCY_TTL = 86400  # 24 hours
 
 # Field aliases for backward compatibility with different payload formats
 _FIELD_ALIASES = {
@@ -479,3 +492,148 @@ def delete_coupon_by_code_admin(code: str, current_user: dict, db: Session) -> d
     if not coupon:
         raise HTTPException(status_code=404, detail="Coupon not found")
     return _delete_coupon_record(coupon, current_user, db)
+
+
+# ---------------------------------------------------------------------------
+# Atomic redemption with row-level locking and idempotency
+# ---------------------------------------------------------------------------
+
+
+def _check_coupon_idempotency_key(idempotency_key: str) -> Optional[Dict[str, Any]]:
+    """Check if this coupon idempotency key was already processed."""
+    redis_client = get_redis_client()
+    if redis_client is None:
+        return None
+    try:
+        raw = redis_client.get(f"coupon:idempotency:{idempotency_key}")
+        if raw is None:
+            return None
+        if isinstance(raw, (bytes, bytearray)):
+            raw = raw.decode("utf-8")
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
+def _store_coupon_idempotency_result(idempotency_key: str, result: Dict[str, Any]) -> None:
+    redis_client = get_redis_client()
+    if redis_client is None:
+        return
+    try:
+        redis_client.setex(
+            f"coupon:idempotency:{idempotency_key}",
+            _IDEMPOTENCY_TTL,
+            json.dumps(result, default=str),
+        )
+    except Exception:
+        pass
+
+
+def redeem_coupon_atomic(
+    db: Session,
+    *,
+    coupon_code: str,
+    user_id: int,
+    order_id: Optional[int] = None,
+    country_code: Optional[str] = None,
+    idempotency_key: Optional[str] = None,
+) -> CouponUsage:
+    """Atomically redeem a coupon with row-level locking and idempotency.
+
+    Uses ``SELECT ... FOR UPDATE`` on the coupon row to prevent concurrent
+    redemptions from exceeding the usage limit. Uses an atomic
+    ``UPDATE ... WHERE usage_count < usage_limit`` as a second layer of
+    defence — even if two transactions somehow acquire the lock, only one
+    will succeed when the limit is reached.
+
+    Args:
+        db: Database session.
+        coupon_code: The coupon code to redeem.
+        user_id: User redeeming the coupon.
+        order_id: Associated order ID (optional).
+        country_code: Country for analytics (optional).
+        idempotency_key: Optional unique key for deduplication (24h TTL).
+
+    Raises:
+        HTTPException: 404 if coupon not found.
+        HTTPException: 410 if coupon expired or usage limit reached.
+        HTTPException: 409 if coupon was already redeemed by this idempotency key
+            but the original CouponUsage row is missing.
+    """
+    if idempotency_key:
+        cached = _check_coupon_idempotency_key(idempotency_key)
+        if cached is not None:
+            usage = db.query(CouponUsage).filter(
+                CouponUsage.id == cached["usage_id"]
+            ).first()
+            if usage is not None:
+                logger.info("Idempotent coupon redemption replay for key=%s", idempotency_key)
+                return usage
+
+    normalized_code = _normalize_coupon_code(coupon_code)
+
+    coupon = (
+        db.query(Coupon)
+        .filter(Coupon.code == normalized_code, Coupon.is_active.is_(True))
+        .with_for_update()
+        .first()
+    )
+    if coupon:
+        if coupon.is_deleted:
+            coupon = None
+        else:
+            expires_at = getattr(coupon, "expires_at", None)
+            if expires_at is not None and expires_at < utcnow():
+                raise HTTPException(status_code=410, detail="Coupon has expired")
+            usage_limit = getattr(coupon, "usage_limit", None) or getattr(coupon, "max_uses", None)
+            if usage_limit is not None and (coupon.usage_count or 0) >= usage_limit:
+                raise HTTPException(status_code=410, detail="Coupon has reached max uses")
+
+    if not coupon:
+        raise HTTPException(status_code=404, detail="Coupon not found or inactive")
+
+    usage_limit = getattr(coupon, "usage_limit", None) or getattr(coupon, "max_uses", None)
+
+    if usage_limit is not None:
+        result = db.execute(
+            text(
+                "UPDATE commerce.coupons SET usage_count = usage_count + 1, updated_at = NOW() "
+                "WHERE id = :cid AND usage_count < :limit"
+            ),
+            {"cid": coupon.id, "limit": usage_limit},
+        )
+        if result.rowcount == 0:
+            db.rollback()
+            raise HTTPException(status_code=410, detail="Coupon has reached max uses")
+    else:
+        db.execute(
+            text(
+                "UPDATE commerce.coupons SET usage_count = usage_count + 1, updated_at = NOW() "
+                "WHERE id = :cid"
+            ),
+            {"cid": coupon.id},
+        )
+
+    usage = CouponUsage(
+        coupon_id=coupon.id,
+        user_id=user_id,
+        order_id=order_id,
+        country_code=country_code,
+    )
+    db.add(usage)
+    db.commit()
+    db.refresh(usage)
+
+    db.refresh(coupon)
+
+    if idempotency_key:
+        _store_coupon_idempotency_result(
+            idempotency_key,
+            {"usage_id": usage.id, "coupon_id": coupon.id, "user_id": user_id},
+        )
+
+    logger.info(
+        "Coupon redeemed atomically: code=%s user_id=%s usage_id=%s",
+        normalized_code, user_id, usage.id,
+    )
+    return usage

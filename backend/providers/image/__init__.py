@@ -1,7 +1,24 @@
 """Image provider package: background removal, OCR, parcel verification,
 and a re-export of the Pillow (PIL) SDK so external SDKs stay isolated here."""
+from __future__ import annotations
 
 from PIL import Image, ImageOps, ImageFilter, ImageEnhance
+
+HAS_CV2 = False
+HAS_GUIDED_FILTER = False
+cv2 = None
+ximgproc = None
+
+try:
+    import cv2 as _cv2
+    from cv2 import ximgproc as _ximgproc  # noqa: F401  (guided filter submodule)
+
+    cv2 = _cv2
+    ximgproc = _ximgproc
+    HAS_CV2 = True
+    HAS_GUIDED_FILTER = True
+except Exception:  # pragma: no cover - optional heavy SDK
+    pass
 
 from .bg_remover import (
     remove_background,
@@ -65,4 +82,8 @@ __all__ = [
     "ImageOps",
     "ImageFilter",
     "ImageEnhance",
+    "HAS_CV2",
+    "HAS_GUIDED_FILTER",
+    "cv2",
+    "ximgproc",
 ]

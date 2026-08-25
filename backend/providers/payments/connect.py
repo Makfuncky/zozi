@@ -11,18 +11,17 @@ import logging
 from typing import Any
 
 from providers.payments.stripe_sdk import stripe
-from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
 
 def configure_stripe_connect(api_key: str | None = None, api_version: str | None = None) -> None:
-    """Set the Stripe API key/version from the supplied values or settings."""
-    key = (api_key or "").strip() or str(getattr(settings, "stripe_secret_key", "") or "").strip()
+    """Set the Stripe API key/version from the supplied values."""
+    key = (api_key or "").strip()
     if not key:
         raise RuntimeError("STRIPE_SECRET_KEY must be configured for Stripe Connect payout dispatch.")
     stripe.api_key = key
-    version = (api_version or "").strip() or str(getattr(settings, "stripe_api_version", "") or "").strip()
+    version = (api_version or "").strip()
     if version:
         stripe.api_version = version
 
@@ -45,4 +44,3 @@ __all__ = [
     "modify_connect_account",
     "create_connect_transfer",
 ]
-

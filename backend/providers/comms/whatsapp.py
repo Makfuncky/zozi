@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 
 try:
     from providers.comms.twilio import (
-        TWILIO_AVAILABLE,
+        HAS_TWILIO,
         create_twilio_client,
     )
 
-    _HAVE_TWILIO = TWILIO_AVAILABLE
+    _HAVE_TWILIO = HAS_TWILIO
 except Exception as exc:  # pragma: no cover - defensive
     logger.warning("whatsapp_provider_twilio_unavailable: %s", exc)
     _HAVE_TWILIO = False
@@ -85,7 +85,7 @@ def send_whatsapp_message(
     }
 
 
-__all__ = ["WHATSAPP_AVAILABLE", "send_whatsapp_message"]
+__all__ = ["HAS_WHATSAPP", "send_whatsapp_message"]
 
 # Expose availability for call sites that branch on optional deps.
-WHATSAPP_AVAILABLE = _HAVE_TWILIO
+HAS_WHATSAPP = _HAVE_TWILIO

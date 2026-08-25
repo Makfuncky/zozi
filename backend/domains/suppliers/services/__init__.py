@@ -8,4 +8,11 @@ infrastructure, kernel, providers (via services), and their own domain models
 
 from __future__ import annotations
 
+from domains.suppliers.services.supplier_service import *
+from domains.suppliers.services.supplier_shared import *
+from domains.suppliers.services.profile.supplier_profile import *
+from domains.suppliers.services.products.supplier_products import *
+from domains.suppliers.services.orders.supplier_orders import *
+from domains.suppliers.services.health.supplier_health import *
+
 __all__ = []

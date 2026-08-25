@@ -39,7 +39,7 @@ def test_treasury_api_reexports_resolve():
 def test_write_helpers_roundtrip():
     from sqlalchemy.orm import Session
 
-    from domains.media.services.write_helpers import (
+    from providers.media.services.write_helpers import (
         add_and_flush,
         commit_and_refresh,
         commit_only,

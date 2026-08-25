@@ -28,7 +28,7 @@ from sqlalchemy.orm import Session
 
 from domains.orders.services import disputes_controller
 
-from domains.catalog.admin_products_service import approve_product
+from domains.catalog.services.products.admin_products_service import approve_product
 
 
 
@@ -40,107 +40,107 @@ from domains.catalog.admin_products_service import approve_product
 
 
 
-from domains.catalog.admin_promotions_service import create_coupon
+from domains.customers.services.coupons_service import create_coupon
 
 
 
-from domains.orders.customer_coupons_create_service import delete_coupon
+from domains.customers.services.coupons_service import delete_coupon
 
 
 
 
-from domains.governance.services.user.identity_admin_service import delete_user_admin
+from domains.accounts.services.identity.identity_admin_service import delete_user_admin
 
 
-from domains.governance.services.orders.orders_service import get_all_orders
+from domains.orders.services.orders_service import get_all_orders
 
-from domains.governance.services.products.products_service import get_all_products
+from domains.catalog.services.products.admin_products_service import get_all_products
 
-from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
+from domains.governance.services._auto_stubs import get_all_suppliers
 
-from domains.governance.services.users.users_service_accounts import get_all_users
+from domains.accounts.services.users.users_admin_service import get_all_users
 
-from domains.governance.services.analytics.analytics_service import get_analytics
+from domains.analytics.services.analytics_service__analytics import get_analytics
 
-from domains.governance.services.analytics.analytics_service import get_analytics_timeseries
+from domains.analytics.services.analytics_service__analytics import get_analytics_timeseries
 
 from domains.governance.services.settings.misc_service import get_audit_log_page
 
 from domains.governance.services.settings.misc_service import get_available_audit_actions
 
-from domains.governance.services.analytics.analytics_service import get_chatbot_analytics
+from domains.analytics.services.analytics_service__analytics import get_chatbot_analytics
 
 
 
-from domains.governance.services.analytics.analytics_service import get_customer_insights
+from domains.analytics.services.analytics_service__analytics import get_customer_insights
 
-from domains.governance.services.settings.database_service import get_database_overview
+from infrastructure.database.database_service import get_database_overview
 
-from domains.governance.services.permissions.permissions_service import get_hierarchy_permissions
+from domains.governance.services._auto_stubs import get_hierarchy_permissions
 
-from domains.governance.services.products.products_service import get_pending_products
+from domains.governance.services._auto_stubs import get_pending_products
 
-from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
+from domains.governance.services._auto_stubs import get_pending_suppliers
 
-from domains.governance.services.permissions.permissions_service import get_staff_permission_catalog
+from domains.governance.services._auto_stubs import get_staff_permission_catalog
 
-from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
+from domains.governance.services._auto_stubs import get_supplier_comparison
 
-from domains.governance.services.admin_controller import get_ticket_detail
+from domains.governance.services._auto_stubs import get_ticket_detail
 
-from domains.governance.services.analytics.analytics_service import get_top_products_analytics
+from domains.analytics.services.analytics_service__analytics import get_top_products_analytics
 
-from domains.governance.services.analytics.analytics_service import get_user_growth_analytics
+from domains.analytics.services.analytics_service__analytics import get_user_growth_analytics
 
-from domains.orders.customer_coupons_create_service import list_coupons
+from domains.customers.services.coupons_read_service import list_coupons
 
-from domains.governance.services.users.users_service_accounts import list_pending_bank_accounts
+from domains.accounts.services.users.users_admin_service import list_pending_bank_accounts
 
-from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
+from domains.finance.services.payouts.payout_batch_service import list_pending_payouts
 
-from domains.governance.services.users.users_service_accounts import list_staff_accounts
+from domains.accounts.services.users.users_admin_service import list_staff_accounts
 
-from domains.comms.services.ticket.tickets_service import list_tickets
-
-
-from domains.catalog.admin_products_service import reject_product
+from domains.comms.services.tickets.tickets_service import list_tickets
 
 
-from domains.comms.services.ticket.tickets_service import reply_to_ticket
+from domains.catalog.services.products.admin_products_service import reject_product
 
 
-from domains.governance.services.admin_controller import require_admin_2fa_verified
-
-from domains.governance.services.permissions.effective_permissions import require_permission
+from infrastructure.utils.operations_service import reply_to_ticket
 
 
+from domains.governance.services._auto_stubs import require_admin_2fa_verified
 
-
-from domains.orders.services.coupons_write_service import update_coupon
+from infrastructure.security.auth import require_permission
 
 
 
 
-
-from domains.comms.services.ticket.tickets_write_service import update_ticket_status
-
-
-from domains.hr.payroll_service import verify_bank_account
-
-from domains.logistics.logistics_partner_service import verify_payout
+from domains.customers.services.coupons_write_service import update_coupon
 
 
-from domains.catalog.services.banner_controller import BannerCreate
 
-from domains.catalog.services.banner_controller import BannerUpdate
 
-from domains.catalog.services.banner_controller import create_banner
 
-from domains.catalog.services.banner_controller import delete_banner
+from domains.comms.services.tickets.tickets_service import update_ticket_status
 
-from domains.catalog.services.banner_controller import get_banner_by_id
 
-from domains.catalog.services.banner_controller import update_banner
+from domains.accounts.services.users.users_admin_service import verify_bank_account
+
+from domains.finance.services.payouts.payout_batch_service import verify_payout
+
+
+from domains.promotions.services.banners.banner_service import BannerCreate
+
+from domains.promotions.services.banners.banner_service import BannerUpdate
+
+from domains.promotions.services.admin_promotion_service import create_banner
+
+from domains.promotions.services.admin_promotion_service import delete_banner
+
+from domains.promotions.services.banners.banner_service import get_banner_by_id
+
+from domains.promotions.services.admin_promotion_service import update_banner
 
 from domains.governance.core.export_service import (
 
@@ -162,19 +162,19 @@ from domains.governance.core.export_service import (
 
 )
 
-from domains.orders.services.promotion_controller import create_promotion_tier
+from domains.promotions.services.engine.promotion_service import create_promotion_tier
 
-from domains.orders.services.promotion_controller import delete_promotion_tier
+from domains.promotions.services.engine.promotion_service import delete_promotion_tier
 
-from domains.orders.services.promotion_controller import get_promotion_config
+from domains.promotions.services.admin_promotion_service import get_promotion_config
 
-from domains.orders.services.promotion_controller import list_promotion_tiers
+from domains.promotions.services.admin_promotion_service import list_promotion_tiers
 
-from domains.orders.services.promotion_controller import preview_order_tier_discount
+from domains.promotions.services.engine.promotion_service import preview_order_tier_discount
 
-from domains.orders.services.promotion_controller import update_promotion_config
+from domains.promotions.services.admin_promotion_service import update_promotion_config
 
-from domains.orders.services.promotion_controller import update_promotion_tier
+from domains.promotions.services.engine.promotion_service import update_promotion_tier
 
 from infrastructure.database.database import get_db
 
@@ -206,35 +206,35 @@ from infrastructure.database.schemas import (
 
 )
 
-from domains.governance.core.approval_matrix_service import APPROVAL_RULES
+from domains.governance.services._auto_stubs import APPROVAL_RULES
 
-from domains.governance.core.approval_matrix_service import can_approve
+from domains.governance.services.approval.approval_matrix_service import can_approve
 
-from domains.governance.core.approval_matrix_service import get_approval_chain
+from domains.governance.services.approval.approval_matrix_service import get_approval_chain
 
-from domains.governance.core.approval_matrix_service import require_approval
+from domains.governance.services.approval.approval_matrix_service import require_approval
 
-from domains.governance.core.approval_matrix_service import resolve_approvers
+from domains.governance.services.approval.approval_matrix_service import resolve_approvers
 
-from domains.hr.hierarchy_service import backfill_authority_levels
+from domains.hr.services.hierarchy.hierarchy_service import backfill_authority_levels
 
-from domains.hr.hierarchy_service import get_all_subordinates
+from domains.hr.services.hierarchy.hierarchy_service import get_all_subordinates
 
-from domains.hr.hierarchy_service import get_authority_level
+from domains.hr.services.hierarchy.hierarchy_service import get_authority_level
 
-from domains.hr.hierarchy_service import get_org_chart
+from domains.hr.services.hierarchy.hierarchy_service import get_org_chart
 
-from domains.hr.hierarchy_service import get_team_members
+from domains.hr.services.hierarchy.hierarchy_service import get_team_members
 
-from domains.hr.hierarchy_service import get_user_chain
+from domains.hr.services.hierarchy.hierarchy_service import get_user_chain
 
-from domains.hr.hierarchy_service import is_in_chain
+from domains.hr.services.hierarchy.hierarchy_service import is_in_chain
 
-from domains.hr.hierarchy_service import reassign_manager
+from domains.hr.services.hierarchy.hierarchy_service import reassign_manager
 
-from domains.hr.hierarchy_service import can_manage as hierarchy_can_manage_service
+from domains.hr.services.hierarchy.hierarchy_service import can_manage as hierarchy_can_manage_service
 
-from domains.comms.services.utility.misc_write_service import reset_demo_data
+from domains.comms.services.shared.utility.shared_utils import reset_demo_data
 
 from infrastructure.utils.backup import get_backup_manager
 
@@ -251,10 +251,10 @@ from infrastructure.utils.constants import MAX_BULK_ITEMS
 
 
 
-from domains.orders.services.flash_sale_controller import create_flash_sale
-from domains.orders.services.flash_sale_controller import delete_flash_sale
-from domains.orders.services.flash_sale_controller import get_all_flash_sales
-from domains.orders.services.flash_sale_controller import update_flash_sale
+from domains.promotions.services.admin_promotion_service import create_flash_sale
+from domains.orders.services._auto_stubs import delete_flash_sale
+from domains.orders.services._auto_stubs import get_all_flash_sales
+from domains.promotions.services.admin_promotion_service import update_flash_sale
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 from infrastructure.config import settings
 from rbac.dependencies import require_feature, require_module

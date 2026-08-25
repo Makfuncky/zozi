@@ -1,28 +1,31 @@
-"""Routers for the logistics module (re-homed from flat backend/routers/)."""
+"""Routers for the logistics module — 15 domain routers."""
 import importlib
 
 routers = []
 public_routers = []
 
 _module_names = [
+    "accounts",
+    "analytics",
+    "audit",
+    "catalog",
+    "comms",
+    "country",
+    "customers",
+    "finance",
+    "governance",
+    "hr",
     "logistics",
-    "logistics_health",
-    "logistics_health_list",
-    "logistics_locations",
-    "logistics_locations_create",
-    "logistics_logistics_status",
-    "logistics_orders_list",
-    "logistics_orders_v2",
-    "logistics_partner",
-    "logistics_partner_verify",
-    "parcel_tracking",
-    "shipments",
+    "orders",
+    "promotions",
+    "security",
+    "suppliers",
 ]
 
 for _n in _module_names:
     try:
         _m = importlib.import_module(f"modules.logistics.routers.{_n}")
-    except Exception as _e:  # noqa: BLE001
+    except Exception as _e:
         import logging as _logging
         _logging.getLogger(__name__).error("Skipping router %s: %s", _n, _e)
         continue

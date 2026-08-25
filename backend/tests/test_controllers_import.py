@@ -13,7 +13,7 @@ MODULES = [
     # domain service controllers
     "infrastructure.search.routers.search_controller",
     "domains.orders.services.orders_controller",
-    "domains.hr.services.hr_controller",
+    "domains.hr.services.core.hr_service",
     "domains.finance.services.payments.payments",
     # admin routers that import from controllers
     "modules.admin.routers.admin_logistics_operations",

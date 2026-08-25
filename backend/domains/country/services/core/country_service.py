@@ -1732,3 +1732,240 @@ def update_country_cities_bulk(code: str, payload: dict, current_user: dict, db)
         'updated_count': len(all_cities),
         'cities': [{'id': c.id, 'name': c.name, 'region': c.region or '', 'latitude': float(c.latitude) if c.latitude is not None else None, 'longitude': float(c.longitude) if c.longitude is not None else None, 'population': c.population, 'is_active': bool(c.is_active), 'sort_order': c.sort_order} for c in all_cities],
     }
+
+# === Merged from countries_service.py ===
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Pydantic models from countries_service.py are re-exported for backward compatibility
+
+# Re-exported from countries_service.py for backward compatibility
+from domains.country.services.core.countries_service import *  # noqa: F401,F403
+
+
+# === MERGED FROM communications/country_communication_service.py ===
+"""Service methods for country communication data access."""
+from __future__ import annotations
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from datetime import datetime, timezone
+from domains.country.models.countries import CountryCommunication
+from domains.country.models.country_control import LegalContractTemplate
+from domains.country.models.country_control import ShopWarehouseLocation
+from domains.country.models.country_control import LogisticsPartnerLocation
+from domains.country.models.country_enhancements import CrossCountryCustomerSession
+import structlog
+logger = structlog.get_logger(__name__)
+
+
+def get_country_communications(
+    db: Session, user_id: int, status: str | None = None, priority: str | None = None, limit: int = 50
+) -> list[dict]:
+    """Get country communications for a user."""
+    query = db.query(CountryCommunication).filter(
+        (CountryCommunication.to_user_id == user_id)
+        | (CountryCommunication.to_user_id.is_(None))
+    )
+    if status:
+        query = query.filter(CountryCommunication.status == status)
+    if priority:
+        query = query.filter(CountryCommunication.priority == priority)
+    comms = query.order_by(desc(CountryCommunication.created_at)).limit(limit).all()
+    return [
+        {
+            "id": c.id,
+            "country_code": c.country_code,
+            "from_user_id": c.from_user_id,
+            "subject": c.subject,
+            "body": c.body,
+            "priority": c.priority,
+            "category": c.category,
+            "related_entity_type": c.related_entity_type,
+            "related_entity_id": c.related_entity_id,
+            "status": c.status,
+            "read_at": c.read_at.isoformat() if c.read_at else None,
+            "created_at": c.created_at.isoformat(),
+        }
+        for c in comms
+    ]
+
+
+def get_country_communication_by_id(db: Session, comm_id: int) -> CountryCommunication | None:
+    """Get a single country communication by ID."""
+    return db.query(CountryCommunication).filter(CountryCommunication.id == comm_id).first()
+
+
+def mark_country_communication_read(db: Session, comm: CountryCommunication) -> dict:
+    """Mark a communication as read."""
+    comm.status = "read"
+    comm.read_at = datetime.now(timezone.utc)
+    db.commit()
+    return {"status": "read", "read_at": comm.read_at.isoformat()}
+
+
+def get_cross_border_sessions(db: Session, country_code: str) -> list[dict]:
+    """Get recent cross-border customer sessions for a country."""
+    sessions = (
+        db.query(CrossCountryCustomerSession)
+        .filter(CrossCountryCustomerSession.target_country_code == country_code.upper())
+        .order_by(CrossCountryCustomerSession.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": s.id,
+            "user_id": s.user_id,
+            "source_country_code": s.source_country_code,
+            "target_country_code": s.target_country_code,
+            "conversion": s.conversion,
+            "order_id": s.order_id,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+        }
+        for s in sessions
+    ]
+
+
+def get_legal_contracts(db: Session, country_code: str) -> list[dict]:
+    """Get active legal contract templates for a country."""
+    contracts = (
+        db.query(LegalContractTemplate)
+        .filter(
+            LegalContractTemplate.country_code == country_code.upper(),
+            LegalContractTemplate.is_active.is_(True),
+        )
+        .order_by(LegalContractTemplate.created_at.desc())
+        .limit(SAFE_QUERY_LIMIT).all()
+    )
+    return [
+        {
+            "id": c.id,
+            "country_code": c.country_code,
+            "template_type": c.template_type,
+            "version": c.version,
+            "content": c.content,
+            "is_active": c.is_active,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+        }
+        for c in contracts
+    ]
+
+
+def get_shop_warehouses(db: Session, country_code: str) -> list[dict]:
+    """Get active shop warehouse locations for a country."""
+    warehouses = (
+        db.query(ShopWarehouseLocation)
+        .filter(
+            ShopWarehouseLocation.country_code == country_code.upper(),
+            ShopWarehouseLocation.is_active.is_(True),
+        )
+        .limit(SAFE_QUERY_LIMIT).all()
+    )
+    return [
+        {
+            "id": w.id,
+            "country_code": w.country_code,
+            "name": w.name,
+            "warehouse_code": w.warehouse_code,
+            "latitude": float(w.latitude) if w.latitude else None,
+            "longitude": float(w.longitude) if w.longitude else None,
+            "address": w.address,
+            "is_active": w.is_active,
+            "created_at": w.created_at.isoformat() if w.created_at else None,
+        }
+        for w in warehouses
+    ]
+
+
+def get_partner_locations(db: Session, country_code: str) -> list[dict]:
+    """Get active logistics partner locations for a country."""
+    from domains.logistics.ports import get_partner_locations as _get_partner_locations
+    return _get_partner_locations(db, country_code)
+
+# === MERGED FROM communications/downstream_hooks.py ===
+"""
+Downstream Integration Hooks
+Connects Country Config to Payment, Supplier, and Logistics systems
+"""
+from typing import List, Dict, Any
+from functools import lru_cache
+from infrastructure.database.database import get_db_context
+from domains.country.models.countries import CountryConfig
+
+
+def invalidate_country_cache(country_code: str):
+    """Invalidate all caches for a country"""
+    get_country_payment_gateways.cache_clear()
+    get_country_supplier_requirements.cache_clear()
+    get_country_restricted_categories.cache_clear()
+
+
+@lru_cache(maxsize=100)
+def get_country_payment_gateways(country_code: str) -> List[Dict[str, Any]]:
+    """Get enabled payment gateways for a country"""
+    with get_db_context() as db:
+        config = db.query(CountryConfig).filter(CountryConfig.code == country_code.upper()).first()
+        if not config or not config.payment_gateways_json:
+            return []
+        
+        gateways = config.payment_gateways_json
+        return [g for g in gateways if g.get('enabled', True)]
+
+
+@lru_cache(maxsize=100)
+def get_country_supplier_requirements(country_code: str) -> Dict[str, Any]:
+    """Get supplier requirements for a country"""
+    with get_db_context() as db:
+        config = db.query(CountryConfig).filter(CountryConfig.code == country_code.upper()).first()
+        if not config or not config.supplier_requirements_json:
+            return {"kyc_level": "standard", "required_documents": []}
+        
+        return config.supplier_requirements_json
+
+
+@lru_cache(maxsize=100)
+def get_country_restricted_categories(country_code: str) -> List[str]:
+    """Get restricted categories for a country"""
+    with get_db_context() as db:
+        config = db.query(CountryConfig).filter(CountryConfig.code == country_code.upper()).first()
+        if not config or not config.product_restrictions_json:
+            return []
+        
+        return config.product_restrictions_json

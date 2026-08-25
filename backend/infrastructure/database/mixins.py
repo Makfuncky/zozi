@@ -50,7 +50,7 @@ class TenantMixin:
     """
 
     __abstract__ = True
-    country_code = Column(String(10), nullable=False, index=True)
+    country_code = Column(String(2), nullable=False, index=True)
 
 
 class VersionMixin:

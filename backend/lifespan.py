@@ -84,7 +84,7 @@ def _bootstrap_runtime(*, tables_just_created: bool = False) -> dict:
 
 def _startup_load_role_permissions() -> None:
     try:
-        from domains.governance.services.permissions.permissions_service import load_role_permission_settings
+        from domains.accounts.services.permissions.permission_service import load_role_permission_settings
         from infrastructure.database.database import SessionLocal
 
         db = SessionLocal()

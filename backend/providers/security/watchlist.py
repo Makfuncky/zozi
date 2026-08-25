@@ -13,7 +13,7 @@ import os
 import urllib.error
 import urllib.request
 
-from infrastructure.utils.datetime_utils import utcnow as _utcnow
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def screen_watchlist(
         "employee_code": employee_code,
         "full_name": full_name,
         "country_code": country_code,
-        "timestamp": _utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }).encode()
 
     try:

@@ -7,14 +7,14 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import get_current_user
 from typing import List, Optional
 
-from domains.orders.services.reviews_controller import ReviewCreate
-from domains.orders.services.reviews_controller import ReviewOut
-from domains.orders.services.reviews_controller import create_review
-from domains.orders.services.reviews_controller import delete_review
-from domains.orders.services.reviews_controller import get_product_reviews
-from domains.orders.services.reviews_controller import get_review
-from domains.orders.services.reviews_controller import list_reviews
-from domains.orders.services.reviews_controller import update_review
+from infrastructure.database.schemas import ReviewCreate
+from infrastructure.database.schemas import ReviewOut
+from domains.customers.services.reviews_service import create_review
+from domains.orders.services.orders_package_service import delete_review
+from domains.customers.services.reviews_service import get_product_reviews
+from domains.orders.services._auto_stubs import get_review
+from domains.catalog.ports import list_reviews
+from domains.customers.services.reviews_service import update_review
 
 router = APIRouter(prefix="/api/v1")
 

@@ -218,14 +218,49 @@ def get_db_sync():
 
 
 def check_connection_health() -> bool:
-    """Check database connectivity."""
+    """Check database connectivity with connection validation."""
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+            # Additional validation: check connection is alive and get server info
+            if _IS_POSTGRES:
+                result = conn.execute(text("SELECT current_database(), current_user, version()"))
+                db_name, db_user, version = result.fetchone()
+                logger.debug(f"DB Health: database={db_name}, user={db_user}, version={version[:50]}")
         return True
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         return False
+
+
+def validate_connection_pool() -> dict:
+    """Validate connection pool health and return diagnostics."""
+    pool = engine.pool
+    try:
+        # Force a connection validation
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+            validation_ok = True
+        pool_metrics = {
+            "size": pool.size() if hasattr(pool, "size") else 1,
+            "checkedin": pool.checkedin() if hasattr(pool, "checkedin") else 1,
+            "checkedout": pool.checkedout() if hasattr(pool, "checkedout") else 0,
+            "overflow": pool.overflow() if hasattr(pool, "overflow") else 0,
+            "validation_ok": validation_ok,
+            "pre_ping_enabled": _pool_kwargs.get("pool_pre_ping", False),
+            "pool_recycle_seconds": _pool_kwargs.get("pool_recycle", 1800),
+        }
+        return pool_metrics
+    except AttributeError:
+        return {
+            "size": 1,
+            "checkedin": 1,
+            "checkedout": 0,
+            "overflow": 0,
+            "note": "StaticPool used (SQLite development mode)",
+        }
+    except Exception as e:
+        return {"error": str(e), "validation_ok": False}
 
 
 def get_pool_metrics() -> dict:

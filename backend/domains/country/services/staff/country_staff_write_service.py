@@ -223,3 +223,6 @@ def list_all_staff_assignments(
         "assignments": [_staff_payload(a) for a in assignments],
         "total": len(assignments),
     }
+
+# === Merged from country_staff_service.py ===
+# Read-side functions preserved for reference

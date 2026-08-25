@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from sqlalchemy import Column, DateTime, Integer, JSON, String, Text, Boolean, Index
+from sqlalchemy import Column, DateTime, Integer, JSON, String, Text, Boolean, Index, func
 from infrastructure.database.base import Base  # noqa: A003  (DG2: import Base directly to break the models-package cycle)
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -30,7 +30,7 @@ class FinancialReport(Base):
     report_type = Column(String, nullable=False)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     data = Column(JSON, nullable=True)
     generated_at = Column(DateTime, default=_utcnow)
     is_deleted = Column(Boolean, default=False, index=True)
@@ -54,17 +54,17 @@ class ExecutiveNews(Base):
     url = Column(String(500), nullable=True)
     category = Column(String(50), default="general")
     priority = Column(String(20), default="normal")
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(2), nullable=True)
     is_published = Column(Boolean, default=False)
     ai_sentiment = Column(String(20), default="neutral")
     published_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
     # --- standard column set (DBA03) added manually to avoid mixin column clash ---
     uuid = Column(String(36), unique=True, index=True, default=_new_uuid)
     version = Column(Integer, nullable=False, default=1)
     created_by_id = Column(Integer, nullable=True, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)
@@ -81,14 +81,14 @@ class PredictiveSimulation(Base):
     simulation_type = Column(String(50), nullable=False)
     parameters_json = Column(Text, nullable=False)
     result_json = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
     # --- standard column set (DBA03) added manually ---
     uuid = Column(String(36), unique=True, index=True, default=_new_uuid)
     version = Column(Integer, nullable=False, default=1)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     created_by_id = Column(Integer, nullable=True, index=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     updated_by_id = Column(Integer, nullable=True, index=True)
     is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)

@@ -1,4 +1,4 @@
-"""finance domain — payment, payout, and gateway models.
+﻿"""finance domain â€” payment, payout, and gateway models.
 
 These models were previously in domains/payments/models/payments.py but belong
 to the finance domain because they represent financial operations:
@@ -28,9 +28,9 @@ def _get_table_args():
     args = ()
     if is_postgres:
         args = (
-            Index("idx_pgc_credentials_gin", "credentials", postgresql_using='gin'),
-            Index("idx_pgc_fee_config_gin", "fee_config", postgresql_using='gin'),
-            Index("idx_pgc_supported_methods_gin", "supported_methods", postgresql_using='gin'),
+            Index("idx_pgc_credentials_gin", "credentials"),
+            Index("idx_pgc_fee_config_gin", "fee_config"),
+            Index("idx_pgc_supported_methods_gin", "supported_methods"),
         )
     return args
 
@@ -40,7 +40,10 @@ class Payment(Base):
     __table_args__ = (
         CheckConstraint("amount >= 0", name="chk_payment_amount_non_negative"),
         CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded')", name="chk_payment_status_valid"),
-        Index("ix_payments_order_id", "order_id"), {"schema": "finance"})
+        Index("ix_payments_order_id", "order_id"),
+        Index("ix_payments_status_created", "status", "created_at"),
+        Index("ix_payments_provider_status", "provider", "status"),
+        {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
@@ -49,7 +52,8 @@ class Payment(Base):
     status = Column(String(30), default="pending")
     intent_id = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    updated_at = Column(DateTime, onupdate=_utcnow)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     layout_json = Column(Text, nullable=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
@@ -69,8 +73,9 @@ class PaymentReconciliationRun(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     status = Column(String(30), default="pending")
-    country_code = Column(String(3), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, onupdate=_utcnow)
 
 
 class PaymentGatewayConnection(Base):
@@ -79,7 +84,7 @@ class PaymentGatewayConnection(Base):
     id = Column(Integer, primary_key=True, index=True)
     provider_code = Column(String(100), nullable=False)
     gateway_name = Column(String(100), nullable=False)
-    country_code = Column(String(3), nullable=False)
+    country_code = Column(String(2), nullable=False)
     environment = Column(String(20), default="test")
     is_active = Column(Boolean, default=True)
     credentials = Column(JSON, nullable=True)
@@ -93,7 +98,7 @@ class PaymentGatewayConnection(Base):
     is_enabled = Column(Boolean, nullable=True, default=True)
     supports_customer_checkout = Column(Boolean, nullable=True, default=False)
     supports_payouts = Column(Boolean, nullable=True, default=False)
-    mode = Column(String(20), nullable=False, default="test")
+    payment_mode = Column(String(20), nullable=False, default="test")
     public_key = Column(String(500), nullable=True)
     secret_key = Column(String(1000), nullable=True)
     webhook_secret = Column(String(1000), nullable=True)
@@ -113,7 +118,7 @@ class PaymentGatewayConnection(Base):
     test_status = Column(String(20), nullable=False, default="untested")
     test_message = Column(String(500), nullable=True)
     last_tested_at = Column(DateTime, nullable=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     adapter_supported = Column(Boolean, default=False)
 
 
@@ -123,7 +128,7 @@ class Payout(Base):
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), nullable=True)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")
     method = Column(String(50), nullable=False)
@@ -136,7 +141,7 @@ class Payout(Base):
     provider_status = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     supplier = relationship("User", foreign_keys=[supplier_id])
@@ -155,9 +160,12 @@ class LogisticsPartnerPayout(Base):
     status = Column(String(30), default="pending")
     reference_id = Column(String(100), nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
+    updated_at = Column(DateTime, onupdate=_utcnow)
     method = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
     partner = relationship("LogisticsPartner", back_populates="payouts")
     country = relationship("CountryConfig", foreign_keys=[country_code])
+
+

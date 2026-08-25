@@ -224,14 +224,6 @@ def list_b_o_g_o_promotions_page(db: Session, cursor: Optional[str] = None, page
     return _keyset_page(BOGOPromotion, db, cursor, page_size, country_code, has_deleted=False)
 
 # --- sanctioned READ surface (Law 3): cross-domain *reads* only. No writes. ---
-from domains.catalog.models.products import Category, Product, Review, Wishlist, WishlistItem
-from domains.catalog.models.promotions import BOGOPromotion
-from domains.catalog.services.admin_promotions_write_service import get_promotion_config, list_promotion_tiers
-# Read helper reused by cross-domain consumers (orders). Writes were moved out of
-# ports so this module is a pure read surface; consumers import write services directly.
-from domains.catalog.services.products_service import resolve_product_variant
-from domains.catalog.services.products.products_service import _bump_product_cache_version
-from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities, bulk_restore_entities
-from domains.catalog.services.banners.banner_controller import create_banner, update_banner, delete_banner, get_banner_by_id, get_banners, get_banners_page, BannerCreate, BannerUpdate, upload_banner_image
-from domains.catalog.services.banners.banner_service import create_banner, update_banner, delete_banner, get_banner_by_id, BannerCreate, BannerUpdate
-from domains.catalog.services.categories.category_service import rebuild_category_paths
+# NOTE: All write/override imports have been removed. Cross-domain consumers
+# that need write access must import the owning service directly (outside ports).
+# Only pure read helpers remain in this module per Law 3.

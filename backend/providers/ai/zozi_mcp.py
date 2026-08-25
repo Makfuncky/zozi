@@ -85,8 +85,8 @@ async def app_lifespan(server: FastMCP):
                     json={"username": AUTO_USERNAME, "password": AUTO_PASSWORD},
                 )
                 _token = data.get("access_token")
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:  # pragma: no cover - best-effort startup
-                logger.exception("unhandled exception", error=str(exc))
+            except (RuntimeError, ValueError, TypeError, KeyError) as exc:  # pragma: no cover - best-effort startup
+                logger.exception("auto-login failed", error=str(exc))
                 print(f"[zozi_mcp] auto-login failed: {exc}", file=sys.stderr)
         yield
     _client = None
@@ -137,8 +137,8 @@ async def _request(method: str, path: str, **kwargs: Any) -> dict:
         try:
             body = resp.json()
             detail = str(body.get("detail") or body)
-        except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-            logger.exception("unhandled exception", error=str(e))
+        except (json.JSONDecodeError, ValueError, TypeError) as e:
+            logger.debug("Failed to parse error response body", error=str(e))
             detail = resp.text[:300]
         raise RuntimeError(
             f"ZOZI API error {resp.status_code} on {method} {path}: {detail}"
@@ -380,8 +380,8 @@ async def zozi_login(params: LoginInput) -> str:
             },
             indent=2,
         )
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -404,8 +404,8 @@ async def zozi_get_current_user() -> str:
     try:
         data = await _request("GET", "users/me")
         return json.dumps(data, indent=2, default=str)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -463,8 +463,8 @@ async def zozi_list_products(params: ProductListInput) -> str:
         body = _format_products(items)
         body += f"\n\n_Showing {len(items)} of {env['total']} — use offset={env['next_offset']} for more._" if env["has_more"] else ""
         return body
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -495,8 +495,8 @@ async def zozi_get_product(params: ProductGetInput) -> str:
         else:
             return "Error: provide either product_id or barcode."
         return json.dumps(data, indent=2, default=str)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -539,8 +539,8 @@ async def zozi_list_orders(params: OrderListInput) -> str:
         body = _format_orders(items)
         body += f"\n\n_Showing {len(items)} of {env['total']} — use offset={env['next_offset']} for more._" if env["has_more"] else ""
         return body
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -566,8 +566,8 @@ async def zozi_get_order(params: OrderGetInput) -> str:
     try:
         data = await _request("GET", f"orders/{params.order_id}")
         return json.dumps(data, indent=2, default=str)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -596,8 +596,8 @@ async def zozi_cancel_order(params: OrderCancelInput) -> str:
     try:
         data = await _request("POST", f"orders/{params.order_id}/cancel", json={"reason": params.reason} if params.reason else {})
         return json.dumps(data, indent=2, default=str)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -633,8 +633,8 @@ async def zozi_list_users(params: ListInput) -> str:
         body = "\n".join(lines)
         body += f"\n\n_Showing {len(items)} of {env['total']} — use offset={env['next_offset']} for more._" if env["has_more"] else ""
         return body
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -660,8 +660,8 @@ async def zozi_get_user(params: UserGetInput) -> str:
     try:
         data = await _request("GET", f"users/{params.user_id}")
         return json.dumps(data, indent=2, default=str)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 
@@ -704,8 +704,8 @@ async def zozi_list_countries(params: CountryListInput) -> str:
         body = "\n".join(lines)
         body += f"\n\n_Showing {len(items)} of {env['total']} — use offset={env['next_offset']} for more._" if env["has_more"] else ""
         return body
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("unhandled exception", error=str(e))
+    except (RuntimeError, ValueError, TypeError, KeyError) as e:
+        logger.exception("Tool execution failed", error=str(e))
         return _handle_api_error(e)
 
 

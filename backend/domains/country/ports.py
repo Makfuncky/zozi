@@ -109,60 +109,60 @@ def calculate_tax_for_country(amount: Decimal, country_code: str, db: Session,
 
 def country_add_city(db: Session, country_code: str, **kwargs):
     """Add a city to a country."""
-    from domains.country.services.country_audit_admin_service import add_city
+    from domains.country.services.staff.country_admin_write_service import add_city
     return add_city(db, country_code, **kwargs)
 
 def country_assign_staff(db: Session, country_code: str, **kwargs):
     """Assign staff to a country."""
-    from domains.country.services.country_audit_admin_service import assign_staff
+    from domains.country.services.staff.country_admin_write_service import assign_staff
     return assign_staff(db, country_code, **kwargs)
 
 def country_delete_city(db: Session, country_code: str, **kwargs):
     """Delete a city from a country."""
-    from domains.country.services.country_audit_admin_service import delete_city
+    from domains.country.services.staff.country_admin_write_service import delete_city
     return delete_city(db, country_code, **kwargs)
 
 def country_list_cities(db: Session, country_code: str, **kwargs):
     """List cities in a country."""
-    from domains.country.services.country_audit_admin_service import list_cities
+    from domains.country.services.staff.country_admin_write_service import list_cities
     return list_cities(db, country_code, **kwargs)
 
 def country_list_communications(db: Session, country_code: str, **kwargs):
     """List communications for a country."""
-    from domains.country.services.country_audit_admin_service import list_communications
+    from domains.country.services.staff.country_admin_write_service import list_communications
     return list_communications(db, country_code, **kwargs)
 
 def country_list_staff(db: Session, country_code: str, **kwargs):
     """List staff assigned to a country."""
-    from domains.country.services.country_audit_admin_service import list_staff
+    from domains.country.services.staff.country_admin_write_service import list_staff
     return list_staff(db, country_code, **kwargs)
 
 def country_list_tax_rates(db: Session, country_code: str, **kwargs):
     """List tax rates for a country."""
-    from domains.country.services.country_audit_admin_service import list_tax_rates
+    from domains.country.services.staff.country_admin_write_service import list_tax_rates
     return list_tax_rates(db, country_code, **kwargs)
 
 def country_mark_communication_read(db: Session, country_code: str, **kwargs):
     """Mark a communication as read."""
-    from domains.country.services.country_audit_admin_service import mark_communication_read
+    from domains.country.services.staff.country_admin_write_service import mark_communication_read
     return mark_communication_read(db, country_code, **kwargs)
 
 def country_remove_staff(db: Session, country_code: str, **kwargs):
     """Remove staff from a country."""
-    from domains.country.services.country_audit_admin_service import remove_staff
+    from domains.country.services.staff.country_admin_write_service import remove_staff
     return remove_staff(db, country_code, **kwargs)
 
 def country_send_country_communication(db: Session, country_code: str, **kwargs):
     """Send a communication to country staff."""
-    from domains.country.services.country_audit_admin_service import send_country_communication
+    from domains.country.services.staff.country_admin_write_service import send_country_communication
     return send_country_communication(db, country_code, **kwargs)
 
 def country_set_tax_rate(db: Session, country_code: str, **kwargs):
     """Set a tax rate for a country."""
-    from domains.country.services.country_audit_admin_service import set_tax_rate
+    from domains.country.services.staff.country_admin_write_service import set_tax_rate
     return set_tax_rate(db, country_code, **kwargs)
 
 def country_update_city(db: Session, country_code: str, **kwargs):
     """Update a city in a country."""
-    from domains.country.services.country_audit_admin_service import update_city
+    from domains.country.services.staff.country_admin_write_service import update_city
     return update_city(db, country_code, **kwargs)

@@ -7,19 +7,19 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import get_current_user
 from typing import Optional
 
-from domains.country.services.country_versioning_controller import VersionDraftBody
-from domains.country.services.country_versioning_controller import approve_config_version
-from domains.country.services.country_versioning_controller import approve_config_version_public
-from domains.country.services.country_versioning_controller import create_config_version
-from domains.country.services.country_versioning_controller import create_config_version_public
-from domains.country.services.country_versioning_controller import get_config_version
-from domains.country.services.country_versioning_controller import get_config_version_public
-from domains.country.services.country_versioning_controller import list_config_versions
-from domains.country.services.country_versioning_controller import list_config_versions_public
-from domains.country.services.country_versioning_controller import publish_config_version
-from domains.country.services.country_versioning_controller import publish_config_version_public
-from domains.country.services.country_versioning_controller import rollback_config_version
-from domains.country.services.country_versioning_controller import rollback_config_version_public
+from domains.country.services._auto_stubs import VersionDraftBody
+from domains.country.services._auto_stubs import approve_config_version
+from domains.country.services._auto_stubs import approve_config_version_public
+from domains.country.services._auto_stubs import create_config_version
+from domains.country.services._auto_stubs import create_config_version_public
+from domains.country.services._auto_stubs import get_config_version
+from domains.country.services._auto_stubs import get_config_version_public
+from domains.country.services._auto_stubs import list_config_versions
+from domains.country.services._auto_stubs import list_config_versions_public
+from domains.country.services._auto_stubs import publish_config_version
+from domains.country.services._auto_stubs import publish_config_version_public
+from domains.country.services._auto_stubs import rollback_config_version
+from domains.country.services._auto_stubs import rollback_config_version_public
 
 router = APIRouter(prefix="/api/v1")
 

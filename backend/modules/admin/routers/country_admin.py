@@ -15,8 +15,8 @@ from domains.country.models.countries import CountryCommunication
 from domains.country.models.country_enhancements import CountryStaffAssignment
 from domains.country.models.country_enhancements import CountryCategoryTaxRate
 from domains.country.models.country_enhancements import CountryCity
-from domains.governance.services.audit.audit_trail_service import AuditTrailService
-from domains.suppliers.services.legal_contract_service import LegalContractService
+from domains.audit.services.logs.audit_trail_service import AuditTrailService
+from domains.suppliers.services.contracts.legal_contract_service import LegalContractService
 
 router = APIRouter(tags=["country-admin"])
 
@@ -182,7 +182,7 @@ def get_data_residency(
     current_user = Depends(get_current_user)
 ):
     """Get data residency tier for a country."""
-    from domains.governance.services.audit.audit_trail_service import DataResidencyService
+    from domains.audit.services.data_residency import DataResidencyService
     tier = DataResidencyService.get_data_residency_tier(country_code)
     requires_encryption = DataResidencyService.requires_local_encryption(country_code)
     return {

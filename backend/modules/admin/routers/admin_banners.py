@@ -2,14 +2,14 @@
 from fastapi import APIRouter, Depends, File, Path, UploadFile
 from sqlalchemy.orm import Session
 
-from domains.catalog.services.banner_controller import BannerCreate
-from domains.catalog.services.banner_controller import BannerUpdate
-from domains.catalog.services.banner_controller import get_banners
-from domains.catalog.services.banner_controller import get_banners_page
-from domains.catalog.services.banner_controller import upload_banner_image
-from domains.catalog.services.banner_controller import create_banner as create_banner_controller
-from domains.catalog.services.banner_controller import delete_banner as delete_banner_controller
-from domains.catalog.services.banner_controller import update_banner as update_banner_controller
+from domains.promotions.services.banners.banner_service import BannerCreate
+from domains.promotions.services.banners.banner_service import BannerUpdate
+from domains.promotions.services.banners.banner_service import get_banners
+from domains.promotions.services.banners.banner_service import get_banners_page
+from domains.catalog.services._auto_stubs import upload_banner_image
+from domains.promotions.services.admin_promotion_service import create_banner as create_banner_controller
+from domains.promotions.services.admin_promotion_service import delete_banner as delete_banner_controller
+from domains.promotions.services.admin_promotion_service import update_banner as update_banner_controller
 from infrastructure.database.database import get_db
 from domains.governance.models.user import User
 from domains.country.utils.country_rls import get_country_or_404

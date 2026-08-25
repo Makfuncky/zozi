@@ -1,12 +1,11 @@
 from __future__ import annotations
 from uuid import uuid4
 from sqlalchemy import func, UUID
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint, Index, JSON, text
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, text
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as utcnow
-from ..mixins import TenantMixin
-from domains.comms.mixins import VersionMixin
+from infrastructure.database.mixins import TenantMixin, VersionMixin
 __all__ = ['Notification', 'Announcement', 'FAQ', 'HelpCategory', 'TicketMessage', 'ProxyChannel', 'ProxySession', 'ProxyMessage', 'ProxyCallLog', 'EmployeeCommunicationThread', 'ExternalContactMasking', 'CommunicationAuditTrail', 'InternalChannel', 'InternalChannelMember', 'InternalMessage', 'ChatAttachment', 'InternalEmail', 'EmailFolder', 'MaskedMessage']
 
 class Notification(Base, TenantMixin):
@@ -19,7 +18,7 @@ class Notification(Base, TenantMixin):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_notifications_user_id', 'user_id'), Index('ix_notifications_is_read', 'is_read'), Index('ix_notifications_user_read', 'user_id', 'is_read'), Index('ix_notifications_variables_gin', 'variables', postgresql_using='gin'), Index('ix_notifications_country_created', 'country_code', 'created_at'), {'schema': 'comms'})
+    __table_args__ = (Index('ix_notifications_user_id', 'user_id'), Index('ix_notifications_is_read', 'is_read'), Index('ix_notifications_user_read', 'user_id', 'is_read'), Index('ix_notifications_variables', 'variables'), Index('ix_notifications_country_created', 'country_code', 'created_at'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False)
     type = Column(String, nullable=True)
@@ -33,7 +32,7 @@ class Notification(Base, TenantMixin):
     template = Column(String, nullable=True)
     variables = Column(JSON, nullable=True)
     scheduled_at = Column(DateTime, nullable=True)
-    status = Column(String, default='delivered')
+    status_code = Column(String, default='delivered')
     created_at = Column(DateTime, default=utcnow)
 
 class TicketMessage(Base, TenantMixin):
@@ -125,7 +124,7 @@ class ProxyChannel(Base):
     proxy_email = Column(String, unique=True, nullable=False, index=True)
     participants = Column(JSON, nullable=True)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
-    __table_args__ = (Index('idx_proxy_entity', 'entity_type', 'entity_id'), Index('ix_proxy_channels_participants_gin', 'participants', postgresql_using='gin'), {'schema': 'comms'})
+    __table_args__ = (Index('idx_proxy_entity', 'entity_type', 'entity_id'), Index('ix_proxy_channels_participants', 'participants'), {'schema': 'comms'})
     sessions = relationship('ProxySession', back_populates='channel', cascade='all, delete-orphan')
     call_logs = relationship('ProxyCallLog', back_populates='channel', cascade='all, delete-orphan')
 
@@ -140,7 +139,7 @@ class ProxySession(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_proxy_sessions_session_metadata_gin', 'session_metadata', postgresql_using='gin'), {'schema': 'comms'})
+    __table_args__ = (Index('ix_proxy_sessions_session_metadata', 'session_metadata'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey('communication.proxy_channels.id', ondelete='RESTRICT'), nullable=False, index=True)
     participant_one_id = Column(Integer, nullable=False)
@@ -220,7 +219,7 @@ class EmployeeCommunicationThread(Base, TenantMixin):
     entity_type = Column(String(50), nullable=False)
     participants = Column(Text, nullable=True)
     created_at = Column(DateTime, default=utcnow)
-    country_code = Column(String(3), nullable=True)
+    country_code = Column(String(2), nullable=True)
     country = relationship('CountryConfig', primaryjoin='foreign(EmployeeCommunicationThread.country_code) == CountryConfig.code')
 
 class ExternalContactMasking(Base):
@@ -253,7 +252,7 @@ class CommunicationAuditTrail(Base):
     deleted_by = Column(Integer, nullable=True)
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_comm_entity', 'entity_type', 'entity_id'), Index('ix_comm_user', 'user_id', 'created_at'), Index('ix_communication_audit_trail_metadata_json_gin', 'metadata_json', postgresql_using='gin'), {'schema': 'comms'})
+    __table_args__ = (Index('ix_comm_entity', 'entity_type', 'entity_id'), Index('ix_comm_user', 'user_id', 'created_at'), Index('ix_communication_audit_trail_metadata_json', 'metadata_json'), {'schema': 'comms'})
     id = Column(Integer, primary_key=True, index=True)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(Integer, nullable=False)
@@ -277,7 +276,7 @@ class InternalChannel(Base, TenantMixin):
     updated_by = Column(Integer, nullable=True, index=True)
     __table_args__ = (
         Index('ix_internal_channel_entity', 'entity_type', 'entity_id'),
-        Index('ix_internal_channels_allowed_roles_gin', 'allowed_roles', postgresql_using='gin'),
+        Index('ix_internal_channels_allowed_roles', 'allowed_roles'),
         Index('ix_internal_channels_country_created', 'country_code', 'created_at'),
         {'schema': 'comms'},
     )
@@ -289,7 +288,7 @@ class InternalChannel(Base, TenantMixin):
     description = Column(Text, nullable=True)
     is_public = Column(Boolean, default=True)
     created_by = Column(Integer, nullable=True)
-    country_code = Column(String(3), nullable=True)
+    country_code = Column(String(2), nullable=True)
     allowed_roles = Column(JSON, nullable=True)
     country = relationship('CountryConfig', primaryjoin='foreign(InternalChannel.country_code) == CountryConfig.code')
     members = relationship('InternalChannelMember', back_populates='channel', cascade='all, delete-orphan')

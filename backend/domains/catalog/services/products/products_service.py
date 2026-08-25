@@ -14,7 +14,7 @@ from typing import Any, List, Optional, cast
 from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import Response
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, text
 from sqlalchemy.orm import Session, selectinload
 
 from domains.governance.models.core import CartItem
@@ -33,8 +33,20 @@ from domains.orders.models.orders import OrderItem
 from infrastructure.database.schemas import Product as ProductSchema, ProductCreate
 from infrastructure.utils.audit import audit_log, AuditAction
 from infrastructure.utils.cache import cache_or_compute, cache_get_json, cache_set_json
+from infrastructure.utils.performance_cache import cache_product_listing, set_product_listing, invalidate_product_listings
+from infrastructure.utils.pagination import paginated_response
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
 logger = logging.getLogger(__name__)
+
+from infrastructure.observability.service_observability import (
+    db_query_timer,
+    get_correlation_id,
+    log_service_call,
+    log_service_error,
+    request_context,
+)
 
 
 _MONEY_QUANT = Decimal("0.01")
@@ -689,17 +701,25 @@ def get_products(
 
 
 def create_product(product: ProductCreate, db: Session) -> Product:
-    data = _prepare_product_write_payload(product.model_dump())
-    data = _resolve_product_category_fields(data, db)
-    data["name"] = html.escape(data["name"].strip()) if data.get("name") else data.get("name")
-    if data.get("description"):
-        data["description"] = html.escape(data["description"])
-    db_product = Product(**data)
-    db.add(db_product)
-    db.commit()
-    _bump_product_cache_version()
-    db.refresh(db_product)
-    return db_product
+    try:
+        with db_query_timer("insert_product"):
+            data = _prepare_product_write_payload(product.model_dump())
+            data = _resolve_product_category_fields(data, db)
+            data["name"] = html.escape(data["name"].strip()) if data.get("name") else data.get("name")
+            if data.get("description"):
+                data["description"] = html.escape(data["description"])
+            db_product = Product(**data)
+            db.add(db_product)
+            db.commit()
+        _bump_product_cache_version()
+        invalidate_product_listings()
+        db.refresh(db_product)
+        log_service_call("products_service", "create_product", level="info", product_id=db_product.id)
+        return db_product
+    except Exception as exc:
+        log_service_error("products_service", "create_product", exc)
+        db.rollback()
+        raise
 
 
 def get_product(product_id: int, db: Session) -> Product:
@@ -708,10 +728,15 @@ def get_product(product_id: int, db: Session) -> Product:
     if isinstance(cached_payload, dict):
         return cached_payload
 
-    product = db.query(Product).options(selectinload(Product.variants)).filter(
-        Product.id == product_id,
-        Product.is_deleted == False,  # noqa: E712
-    ).first()
+    try:
+        with db_query_timer("select_product_detail"):
+            product = db.query(Product).options(selectinload(Product.variants)).filter(
+                Product.id == product_id,
+                Product.is_deleted == False,  # noqa: E712
+            ).first()
+    except Exception as exc:
+        log_service_error("products_service", "get_product", exc, product_id=product_id)
+        raise
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     active_sales = _get_active_flash_sales(db)
@@ -925,6 +950,106 @@ def patch_product_stock(
     return {"product_id": product_id, "new_stock": new_stock, "delta": delta}
 
 
+def atomic_stock_decrement(db: Session, product_id: int, quantity: int) -> bool:
+    """Atomically decrement product stock if sufficient quantity exists.
+
+    Uses a single ``UPDATE ... WHERE stock >= quantity`` statement to prevent
+    oversell under concurrent requests. The database's row-level locking ensures
+    that concurrent decrements are serialized — only transactions where stock is
+    sufficient will succeed.
+
+    Args:
+        db: Database session.
+        product_id: Product whose stock to decrement.
+        quantity: Number of units to remove from stock.
+
+    Returns:
+        True if the stock was successfully decremented.
+
+    Raises:
+        HTTPException: 409 if insufficient stock (oversell prevented).
+        HTTPException: 404 if product not found.
+    """
+    if quantity <= 0:
+        return True
+
+    result = db.execute(
+        text(
+            "UPDATE commerce.products SET stock = stock - :qty, updated_at = NOW() "
+            "WHERE id = :pid AND is_deleted = FALSE AND stock >= :qty"
+        ),
+        {"pid": product_id, "qty": quantity},
+    )
+
+    if result.rowcount == 0:
+        product = db.query(Product).filter(Product.id == product_id).first()
+        if product is None:
+            raise HTTPException(status_code=404, detail=f"Product {product_id} not found")
+        available = int(getattr(product, "stock", 0) or 0)
+        raise HTTPException(
+            status_code=409,
+            detail=f"Insufficient stock for product {product_id}. Available: {available}, Requested: {quantity}",
+        )
+
+    return True
+
+
+def finalize_inventory_atomic(db: Session, order_id: int) -> list[str]:
+    """Atomically finalize inventory for a paid order with oversell prevention.
+
+    Iterates over order items and uses atomic ``UPDATE ... WHERE stock >= quantity``
+    for each product. If any item has insufficient stock, collects the issues
+    and returns them without modifying any rows.
+
+    Args:
+        db: Database session.
+        order_id: Order whose inventory to finalize.
+
+    Returns:
+        List of issue strings (empty if all items were decremented successfully).
+    """
+    order_items = (
+        db.query(OrderItem)
+        .filter(OrderItem.order_id == order_id)
+        .all()
+    )
+
+    if not order_items:
+        return []
+
+    requested_quantities: dict[int, int] = {}
+    for item in order_items:
+        product_id = int(getattr(item, "product_id"))
+        quantity = int(getattr(item, "quantity"))
+        requested_quantities[product_id] = requested_quantities.get(product_id, 0) + quantity
+
+    issues: list[str] = []
+
+    for product_id, requested_quantity in requested_quantities.items():
+        result = db.execute(
+            text(
+                "UPDATE commerce.products SET stock = stock - :qty, updated_at = NOW() "
+                "WHERE id = :pid AND is_deleted = FALSE AND stock >= :qty"
+            ),
+            {"pid": product_id, "qty": requested_quantity},
+        )
+
+        if result.rowcount == 0:
+            product = db.query(Product).filter(Product.id == product_id).first()
+            if product is None:
+                issues.append(f"missing_product:{product_id}")
+            else:
+                available = int(getattr(product, "stock", 0) or 0)
+                issues.append(
+                    f"insufficient_stock:{product.id}:available={available}:requested={requested_quantity}"
+                )
+
+    if not issues:
+        _bump_product_cache_version()
+
+    return issues
+
+
 def get_supplier_products_simple(current_user: dict, db: Session) -> List[Product]:
     return db.query(Product).filter(
         Product.supplier_id == current_user["id"],
@@ -1130,3 +1255,501 @@ def get_recommended_products(current_user: Optional[dict], limit: int, db: Sessi
         return results + fillers
 
     return base_q.order_by(Product.sales_count.desc()).limit(limit).all()
+
+
+# ── Cascade write functions for product deletion (moved from products_write_service) ───
+
+def clear_product_carts(db: Session, product_id: int) -> int:
+    """Remove (soft-delete) all cart items for a product during cascade delete."""
+    from domains.governance.ports import CartItem
+    return _soft_delete_by_product(db, CartItem, product_id)
+
+
+def clear_product_wishlists(db: Session, product_id: int) -> int:
+    """Remove (soft-delete) all wishlist items for a product during cascade delete."""
+    from domains.catalog.models.products import WishlistItem
+    return _soft_delete_by_product(db, WishlistItem, product_id)
+
+
+def archive_product_reviews(db: Session, product_id: int) -> int:
+    """Soft-delete a product's reviews, preserving the data history."""
+    from domains.catalog.models.products import Review
+    return _soft_delete_by_product(db, Review, product_id)
+
+
+def _soft_delete_by_product(db: Session, model, product_id: int) -> int:
+    """Soft-delete every (non-deleted) row of *model* for *product_id*."""
+    from infrastructure.utils.datetime_utils import utcnow
+    updated = (
+        db.query(model)
+        .filter(model.product_id == product_id, model.is_deleted.is_(False))
+        .update(
+            {model.is_deleted: True, model.deleted_at: utcnow()},
+            synchronize_session=False,
+        )
+    )
+    db.commit()
+    return updated
+
+
+def purge_product_cart_items(db: Session, product_id: int) -> int:
+    """Remove every cart row referencing *product_id*. Caller commits."""
+    from domains.governance.ports import CartItem
+    return (
+        db.query(CartItem)
+        .filter(CartItem.product_id == product_id)
+        .delete(synchronize_session=False)
+    )
+
+
+def purge_product_wishlist_items(db: Session, product_id: int) -> int:
+    """Remove every wishlist row referencing *product_id*. Caller commits."""
+    from domains.catalog.models.products import Wishlist
+    return (
+        db.query(Wishlist)
+        .filter(Wishlist.product_id == product_id)
+        .delete(synchronize_session=False)
+    )
+
+
+def soft_delete_product_reviews(db: Session, product_id: int) -> int:
+    """Flag a product's live reviews as deleted. Caller commits."""
+    from domains.catalog.models.products import Review
+    return (
+        db.query(Review)
+        .filter(Review.product_id == product_id, Review.is_deleted == False)
+        .update({"is_deleted": True}, synchronize_session=False)
+    )
+
+
+def create_product_verification(
+    db: Session,
+    *,
+    product_id: int,
+    order_id: Optional[int] = None,
+    shipment_id: Optional[int] = None,
+    verified_by: Optional[int] = None,
+    verification_type: Optional[str] = None,
+    result: Optional[str] = None,
+    expected_specs: Optional[str] = None,
+    actual_specs: Optional[str] = None,
+    discrepancies: Optional[str] = None,
+    scan_code: Optional[str] = None,
+    image_urls: Optional[str] = None,
+    notes: Optional[str] = None,
+):
+    """Persist a new ProductVerification row and return it."""
+    from domains.governance.models.admin import ProductVerification
+    verification = ProductVerification(
+        product_id=product_id,
+        order_id=order_id,
+        shipment_id=shipment_id,
+        verified_by=verified_by,
+        verification_type=verification_type,
+        result=result,
+        expected_specs=expected_specs,
+        actual_specs=actual_specs,
+        discrepancies=discrepancies,
+        scan_code=scan_code,
+        image_urls=image_urls,
+        notes=notes,
+    )
+    db.add(verification)
+    db.commit()
+    db.refresh(verification)
+    return verification
+
+
+def update_product_verification(db: Session, verification, updates: dict):
+    """Apply *updates* to an existing verification row and return it."""
+    for key, value in updates.items():
+        setattr(verification, key, value)
+    db.add(verification)
+    db.commit()
+    db.refresh(verification)
+    return verification
+
+
+# ── Admin Product Read Helpers (merged from product_admin_read_service.py) ───
+
+def _bump_cache() -> None:
+    _bump_product_cache_version()
+
+
+def _scoped_product(db: Session, country_code: str, product_id: int) -> Product:
+    """Resolve a product scoped to a country (404 + request RLS)."""
+    code = country_code.upper()
+    get_country_or_404(code, db)
+    set_rls_context({code}, is_restricted=True)
+    try:
+        product = db.query(Product).filter(Product.id == product_id, Product.country_code == code).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        return product
+    finally:
+        clear_rls_context()
+
+
+def list_products_paginated(
+    db: Session,
+    *,
+    country_code: str,
+    page: int,
+    size: int,
+    moderation_status: str | None = None,
+    include_deleted: bool = False,
+) -> dict:
+    """Country-scoped, paginated product list used by the admin catalogue grid."""
+    q = db.query(Product).filter(Product.country_code == country_code)
+    if moderation_status:
+        q = q.filter(Product.moderation_status == moderation_status)
+    if not include_deleted:
+        q = q.filter(Product.is_deleted == False)
+    return paginated_response(q, page, size)
+
+
+# ── Admin Product Write Helpers (merged from product_admin_write_service.py) ───
+
+def approve_product_by_id(db: Session, country_code: str, product_id: int) -> dict:
+    product = _scoped_product(db, country_code, product_id)
+    product.moderation_status = "approved"
+    product.is_verified = True
+    db.commit()
+    _bump_cache()
+    return {"message": "Product approved"}
+
+
+def reject_product_by_id(db: Session, country_code: str, product_id: int, reason: Optional[str] = None) -> dict:
+    product = _scoped_product(db, country_code, product_id)
+    product.moderation_status = "rejected"
+    product.moderation_notes = reason
+    db.commit()
+    _bump_cache()
+    return {"message": "Product rejected"}
+
+
+def set_product_badge_by_id(db: Session, country_code: str, product_id: int, field: str, value: bool) -> dict:
+    if field not in ("is_hot", "is_featured"):
+        raise HTTPException(status_code=400, detail="field must be 'is_hot' or 'is_featured'")
+    product = _scoped_product(db, country_code, product_id)
+    setattr(product, field, value)
+    db.commit()
+    _bump_cache()
+    return {"message": "Product badge updated", "field": field, "value": value}
+
+
+# ── Product Domain Service (merged from product_service.py) ───
+
+from typing import Mapping
+from sqlalchemy.orm import Query
+from domains.comms.models.suppliers import SupplierProfile
+from infrastructure.utils.slug import generate_slug, generate_slug_hash
+
+
+class ProductNotFoundError(LookupError):
+    """Raised when a product does not exist or is not visible to the caller."""
+
+
+class SupplierProfileNotFoundError(LookupError):
+    """Raised when the acting user has no supplier profile."""
+
+
+MODERATION_APPROVED = "approved"
+MODERATION_REJECTED = "rejected"
+MODERATION_PENDING = "pending"
+
+BADGE_FIELDS: frozenset[str] = frozenset({"is_hot", "is_featured"})
+
+_CREATE_FIELDS: frozenset[str] = frozenset({
+    "description", "short_description", "sku", "barcode", "price", "compare_price",
+    "cost_price", "stock", "low_stock_threshold", "weight", "dimensions", "image_url",
+    "images", "category", "subcategory", "category_id", "tags", "attributes", "brand",
+    "color", "sizes", "materials", "meta_title", "meta_description", "country_code",
+})
+
+_UPDATE_FIELDS: frozenset[str] = frozenset({
+    "name", "description", "short_description", "price", "compare_price", "cost_price",
+    "stock", "low_stock_threshold", "weight", "dimensions", "image_url", "images",
+    "category", "subcategory", "category_id", "tags", "attributes", "is_active",
+    "is_featured", "brand", "color", "sizes", "materials", "rating", "meta_title",
+    "meta_description",
+})
+
+_SUPPLIER_UPDATE_FIELDS: frozenset[str] = frozenset({
+    "name", "description", "price", "stock", "category", "is_active", "tags", "image_url",
+})
+
+_FIELD_ALIASES: dict[str, str] = {"stock_quantity": "stock"}
+
+
+def _normalize(payload: Mapping[str, Any], allowed: frozenset[str]) -> dict[str, Any]:
+    resolved: dict[str, Any] = {}
+    for key, value in (payload or {}).items():
+        canonical = _FIELD_ALIASES.get(key, key)
+        if canonical in allowed:
+            resolved[canonical] = value
+    return resolved
+
+
+def unique_slug(db: Session, name: str) -> str:
+    base = generate_slug(name); slug = base; counter = 1
+    while db.query(Product.id).filter(Product.slug == slug).first() is not None:
+        slug = f"{base}-{counter}"; counter += 1
+    return slug
+
+
+def get_product_by_id(db: Session, product_id: int) -> Optional[Product]:
+    return db.query(Product).filter(Product.id == product_id).first()
+
+
+def get_product_by_slug_hash(db: Session, slug_hash: str) -> Optional[Product]:
+    return db.query(Product).filter(Product.slug_hash == slug_hash).first()
+
+
+def get_supplier_profile(db: Session, user_id: int) -> SupplierProfile:
+    profile = db.query(SupplierProfile).filter(SupplierProfile.user_id == user_id).first()
+    if profile is None: raise SupplierProfileNotFoundError("Supplier profile not found")
+    return profile
+
+
+def get_supplier_products_query(db: Session, supplier_id: int) -> Query:
+    return db.query(Product).filter(Product.supplier_id == supplier_id).order_by(Product.id.desc())
+
+
+def list_products_for_supplier(db: Session, supplier_id: int) -> Query:
+    return get_supplier_products_query(db, supplier_id)
+
+
+def get_supplier_product(db: Session, product_id: int, supplier_id: int) -> Optional[Product]:
+    return db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier_id).first()
+
+
+def get_owned_product(db: Session, product_id: int, supplier_id: int, *, exclude_deleted: bool = False) -> Product:
+    query = db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier_id)
+    if exclude_deleted: query = query.filter(Product.is_deleted.is_(False))
+    product = query.first()
+    if product is None: raise ProductNotFoundError("Product not found")
+    return product
+
+
+def get_country_products_query(db: Session, country_code: str, *, moderation_status: Optional[str] = None, include_deleted: bool = False) -> Query:
+    query = db.query(Product).filter(Product.country_code == country_code.upper())
+    if moderation_status: query = query.filter(Product.moderation_status == moderation_status)
+    if not include_deleted: query = query.filter(Product.is_deleted.is_(False))
+    return query.order_by(Product.id.desc())
+
+
+def list_country_products_query(db: Session, country_code: str, *, moderation_status: Optional[str] = None, include_deleted: bool = False) -> Query:
+    query = db.query(Product).filter(Product.country_code == country_code.upper()).order_by(Product.id.desc())
+    if moderation_status: query = query.filter(Product.moderation_status == moderation_status)
+    if not include_deleted: query = query.filter(Product.is_deleted == False)
+    return query
+
+
+def get_country_product(db: Session, product_id: int, country_code: str) -> Product:
+    product = db.query(Product).filter(Product.id == product_id, Product.country_code == country_code.upper()).first()
+    if product is None: raise ProductNotFoundError("Product not found")
+    return product
+
+
+def create_product(db: Session, *, name: str, supplier_id: int, payload: Optional[Mapping[str, Any]] = None, is_active: bool = True, is_featured: bool = False, is_digital: bool = False, is_verified: bool = True, is_approved: bool = True, moderation_status: str = MODERATION_APPROVED) -> Product:
+    clean_name = str(name or "").strip()
+    if not clean_name: raise ValueError("Product name is required")
+    data = _normalize(payload or {}, _CREATE_FIELDS)
+    product = Product(name=clean_name, slug=unique_slug(db, clean_name), slug_hash=generate_slug_hash(clean_name), supplier_id=int(supplier_id), price=data.pop("price", None) or 0, stock=data.pop("stock", None) or 0, low_stock_threshold=data.pop("low_stock_threshold", None) or 5, rating=float(data.pop("rating", 0.0) or 0.0), is_active=bool(is_active), is_featured=bool(is_featured), is_digital=bool(is_digital), is_verified=bool(is_verified), is_approved=bool(is_approved), is_deleted=False, moderation_status=str(moderation_status or MODERATION_APPROVED))
+    for field, value in data.items(): setattr(product, field, value)
+    db.add(product); db.commit(); db.refresh(product)
+    logger.info("product.created id=%s supplier_id=%s", product.id, supplier_id)
+    return product
+
+
+def update_product(db: Session, product: Product, updates: Mapping[str, Any], *, allowed_fields: Optional[frozenset[str]] = None, regenerate_slug: bool = True) -> Product:
+    data = _normalize(updates, allowed_fields or _UPDATE_FIELDS)
+    for field, value in data.items(): setattr(product, field, value)
+    if regenerate_slug and data.get("name"): product.slug = unique_slug(db, str(data["name"]))
+    db.commit(); db.refresh(product)
+    logger.info("product.updated id=%s fields=%s", product.id, sorted(data))
+    return product
+
+
+def update_supplier_product(db: Session, product: Product, updates: Mapping[str, Any]) -> Product:
+    return update_product(db, product, updates, allowed_fields=_SUPPLIER_UPDATE_FIELDS, regenerate_slug=False)
+
+
+def update_product_discount(db: Session, product: Product, *, clear: bool = False, compare_price: Any = ..., discount_starts_at: Any = ..., discount_ends_at: Any = ...) -> Product:
+    if clear:
+        product.compare_price = None; product.discount_starts_at = None; product.discount_ends_at = None
+        db.commit(); db.refresh(product); return product
+    if compare_price is not ...: product.compare_price = float(compare_price) if compare_price is not None else None
+    if discount_starts_at is not ...: product.discount_starts_at = discount_starts_at
+    if discount_ends_at is not ...: product.discount_ends_at = discount_ends_at
+    db.commit(); db.refresh(product); return product
+
+
+def set_product_image(db: Session, product: Product, image_url: str) -> Product:
+    product.image_url = image_url; db.commit(); db.refresh(product); return product
+
+
+def soft_delete_product(db: Session, product: Product, *, deactivate: bool = True) -> Product:
+    product.is_deleted = True
+    if deactivate: product.is_active = False
+    db.commit(); db.refresh(product); return product
+
+
+def set_moderation_status(db: Session, product: Product, status: str, *, notes: Optional[str] = None) -> Product:
+    normalized = str(status or "").lower()
+    if normalized not in {MODERATION_APPROVED, MODERATION_REJECTED, MODERATION_PENDING}: raise ValueError(f"Unsupported moderation status: {status!r}")
+    product.moderation_status = normalized
+    if normalized == MODERATION_APPROVED: product.is_verified = True
+    if notes is not None and hasattr(product, "moderation_notes"): product.moderation_notes = notes
+    db.commit(); db.refresh(product); return product
+
+
+def set_product_badge(db: Session, product: Product, field: str, value: bool) -> Product:
+    if field not in BADGE_FIELDS: raise ValueError(f"field must be one of {sorted(BADGE_FIELDS)}")
+    setattr(product, field, bool(value)); db.commit(); db.refresh(product); return product
+
+
+def set_product_verified(db: Session, product: Product, value: bool) -> Product:
+    product.is_verified = bool(value); db.commit(); db.refresh(product); return product
+
+
+def _parse_discount_datetime(raw: Any, field: str) -> Optional[datetime]:
+    if raw in (None, ""): return None
+    try: return datetime.fromisoformat(str(raw)).replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError) as exc:
+        logger.exception("_parse_discount_datetime_failed", error=str(exc))
+        raise HTTPException(status_code=400, detail=f"Invalid {field} format: {raw}") from exc
+
+
+def build_discount_summary(product: Product, now: datetime) -> dict[str, Any]:
+    price = float(product.price or 0)
+    compare_price = float(product.compare_price) if product.compare_price is not None else None
+    discount_pct = 0.0
+    if compare_price and compare_price > 0: discount_pct = round((1 - price / compare_price) * 100, 1)
+    active = bool(compare_price and compare_price > price)
+    starts_at = product.discount_starts_at; ends_at = product.discount_ends_at
+    if starts_at and ends_at: active = active and starts_at <= now <= ends_at
+    elif starts_at: active = active and starts_at <= now
+    return {"product_id": product.id, "price": price, "compare_price": compare_price, "discount_percentage": discount_pct, "discount_active": active}
+
+
+def build_image_filename(product_id: int, original_filename: Optional[str]) -> str:
+    name = original_filename or "product.jpg"
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else "jpg"
+    return f"product_{product_id}_{uuid4().hex[:8]}.{ext}"
+
+
+# ── Supplier Product Functions (merged from supplier_products_service.py) ───
+
+from fastapi import File, UploadFile
+from infrastructure.utils.file_validation import validate_upload_image
+from infrastructure.utils.storage import storage as _storage
+from infrastructure.utils.config import settings
+from infrastructure.utils.datetime_utils import utcnow
+
+
+def list_my_products(page: int, size: int, current_user, db: Session):
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier: raise HTTPException(404, "Supplier profile not found")
+    q = db.query(Product).filter(Product.supplier_id == supplier.id)
+    return paginated_response(q, page, size)
+
+
+def get_supplier_product(product_id: int, current_user, db: Session):
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier: raise HTTPException(404, "Supplier profile not found")
+    product = db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier.id).first()
+    if not product: raise HTTPException(404, "Product not found")
+    return product
+
+
+def update_product_discount_supplier(product_id: int, payload: dict, current_user, db: Session):
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier: raise HTTPException(404, "Supplier profile not found")
+    product = db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier.id).first()
+    if not product: raise HTTPException(404, "Product not found")
+    if payload.get("clear"):
+        product.compare_price = None; product.discount_starts_at = None; product.discount_ends_at = None
+        db.commit(); db.refresh(product)
+        return {"status": "success", "message": "Discount cleared", "product_id": product.id}
+    if "compare_price" in payload: product.compare_price = float(payload["compare_price"]) if payload["compare_price"] is not None else None
+    if "discount_starts_at" in payload:
+        raw = payload["discount_starts_at"]
+        try: product.discount_starts_at = datetime.fromisoformat(raw).replace(tzinfo=timezone.utc) if raw else None
+        except (ValueError, TypeError): raise HTTPException(400, f"Invalid discount_starts_at format: {raw}")
+    if "discount_ends_at" in payload:
+        raw = payload["discount_ends_at"]
+        try: product.discount_ends_at = datetime.fromisoformat(raw).replace(tzinfo=timezone.utc) if raw else None
+        except (ValueError, TypeError): raise HTTPException(400, f"Invalid discount_ends_at format: {raw}")
+    db.commit(); db.refresh(product)
+    discount_pct = 0; now = utcnow()
+    if product.compare_price and product.price and float(product.compare_price) > 0:
+        discount_pct = round((1 - float(product.price) / float(product.compare_price)) * 100, 1)
+    is_active = bool(product.compare_price and product.compare_price > product.price)
+    if product.discount_starts_at and product.discount_ends_at: is_active = is_active and product.discount_starts_at <= now <= product.discount_ends_at
+    elif product.discount_starts_at: is_active = is_active and product.discount_starts_at <= now
+    return {"status": "success", "product_id": product.id, "price": float(product.price), "compare_price": float(product.compare_price) if product.compare_price else None, "discount_percentage": discount_pct, "discount_active": is_active}
+
+
+def update_supplier_product_fields(product_id: int, payload: dict, current_user, db: Session):
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier: raise HTTPException(404, "Supplier profile not found")
+    product = db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier.id).first()
+    if not product: raise HTTPException(404, "Product not found")
+    field_map = {"name": "name", "description": "description", "price": "price", "stock": "stock", "stock_quantity": "stock", "category": "category", "is_active": "is_active", "tags": "tags", "image_url": "image_url"}
+    for key, attr in field_map.items():
+        if key in payload: setattr(product, attr, payload[key])
+    db.commit(); db.refresh(product)
+    return product
+
+
+async def upload_supplier_product_image(product_id: int, file: UploadFile, current_user, db: Session):
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier: raise HTTPException(404, "Supplier profile not found")
+    product = db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier.id).first()
+    if not product: raise HTTPException(404, "Product not found")
+    content = await file.read()
+    max_size = getattr(settings, "MAX_UPLOAD_SIZE_MB", 10) * 1024 * 1024
+    if len(content) > max_size: raise HTTPException(400, f"File too large (max {getattr(settings, 'MAX_UPLOAD_SIZE_MB', 10)}MB)")
+    validate_upload_image(content, file.filename or "product.jpg")
+    ext = file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "jpg"
+    filename = f"product_{product_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    key = f"products/{filename}"
+    new_url = _storage.save(key, content, content_type=file.content_type)
+    old_url = product.image_url or ""
+    if old_url:
+        old_key = None
+        if old_url.startswith("/uploads/"): old_key = old_url.lstrip("/")
+        elif getattr(_storage, "cdn_base", "") and old_url.startswith(_storage.cdn_base): old_key = old_url[len(_storage.cdn_base):].lstrip("/")
+        if old_key:
+            try: _storage.delete(old_key)
+            except Exception: pass
+    product.image_url = new_url; db.commit(); db.refresh(product)
+    return {"image_url": new_url, "filename": filename, "product_id": product.id}
+
+
+def delete_supplier_product(product_id: int, current_user, db: Session):
+    supplier = db.query(SupplierProfile).filter(SupplierProfile.user_id == current_user.id).first()
+    if not supplier: raise HTTPException(404, "Supplier profile not found")
+    product = db.query(Product).filter(Product.id == product_id, Product.supplier_id == supplier.id, Product.is_deleted == False).first()
+    if not product: raise HTTPException(404, "Product not found")
+    product.is_deleted = True; db.commit()
+    return {"status": "success", "message": "Product deleted"}
+
+
+# === RELIABILITY: Health & Metrics ===
+
+
+def get_products_health() -> dict:
+    """Return health status of the products service for monitoring."""
+    from infrastructure.database.database import check_connection_health, get_pool_metrics
+
+    db_healthy = check_connection_health()
+    pool_metrics = get_pool_metrics()
+
+    return {
+        "database": "healthy" if db_healthy else "unhealthy",
+        "connection_pool": pool_metrics,
+        "cache_version": _get_product_cache_version(),
+    }

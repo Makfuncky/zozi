@@ -66,7 +66,7 @@ def test_router_delegates_to_db_read(router_src: str) -> None:
         for node in ast.walk(tree)
     )
     assert imports_db_read, (
-        f"{_ROUTER_NAME} router should import its read helpers from domains.media.services.db_read"
+        f"{_ROUTER_NAME} router should import its read helpers from providers.media.services.db_read"
     )
 
 

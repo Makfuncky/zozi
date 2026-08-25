@@ -62,3 +62,32 @@ def get_category_tax_rate(
         )
         .first()
     )
+
+# === Merged from category_tax_profiles.py ===
+CATEGORY_TAX_PROFILES: dict[str, dict[str, float | None]] = {
+    "SA": {
+        "food_beverages": 15.0,
+        "medical": 0.0,
+        "education": 0.0,
+        "books_media": 0.0,
+        "real_estate": 15.0,
+        "transportation": 15.0,
+        "agriculture": None,
+    },
+    "AE": {
+        "food_beverages": 5.0,
+        "medical": 0.0,
+        "education": 0.0,
+        "local_transport": 5.0,
+        "international_transport": 0.0,
+    },
+    "OM": {
+        "food_beverages": 5.0,
+        "medical": 0.0,
+        "education": 0.0,
+    },
+}
+
+def get_category_tax_profile(country_code: str, category_slug: str) -> float | None:
+    """Get category-specific tax rate for a country."""
+    return CATEGORY_TAX_PROFILES.get(country_code, {}).get(category_slug)

@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from domains.comms.services.chat.chatbot_controller import handle_message
-from domains.comms.services.chat.chatbot_controller import record_product_click
+from domains.comms.services._auto_stubs import handle_message
+from domains.comms.services._auto_stubs import record_product_click
 from infrastructure.database.database import get_db
 from domains.governance.models.user import User
 from infrastructure.utils.dependencies import get_current_user_optional

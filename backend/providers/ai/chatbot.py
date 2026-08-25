@@ -13,6 +13,8 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["ChatbotProvider"]
+
 
 class ChatbotProvider:
     """AI-powered chatbot with vectorization for product search and customer chat."""

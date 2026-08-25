@@ -1,19 +1,19 @@
 """Communication providers (SMS / voice / proxy / WhatsApp channels)."""
 
 from providers.comms.twilio import (
-    TWILIO_AVAILABLE,
+    HAS_TWILIO,
     TwilioRestException,
     create_twilio_client,
 )
 from providers.comms.whatsapp import (
-    WHATSAPP_AVAILABLE,
+    HAS_WHATSAPP,
     send_whatsapp_message,
 )
 
 __all__ = [
-    "TWILIO_AVAILABLE",
+    "HAS_TWILIO",
     "TwilioRestException",
     "create_twilio_client",
-    "WHATSAPP_AVAILABLE",
+    "HAS_WHATSAPP",
     "send_whatsapp_message",
 ]

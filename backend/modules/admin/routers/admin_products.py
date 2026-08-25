@@ -3,13 +3,13 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from domains.governance.services.settings.misc_service import archive_entity
-from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-from domains.governance.services.core.bulk_ops_service import bulk_category_change
-from domains.governance.services.products.products_service import bulk_product_moderation
-from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
+from domains.governance.services.admin.bulk_ops_service import bulk_category_change
+from domains.catalog.services.products.admin_products_service import bulk_product_moderation
+from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import hard_delete_entity
 from domains.governance.services.settings.misc_service import restore_entity
-from domains.catalog.services.products_controller import _bump_product_cache_version
+from domains.catalog.services.products.products_service import _bump_product_cache_version
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest, BulkCategoryChangeRequest
 from domains.catalog.models.products import Product

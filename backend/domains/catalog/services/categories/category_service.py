@@ -424,13 +424,36 @@ def restore_category(category_id: int, acting_user: dict, db: Session) -> dict:
 
 def bulk_archive_categories(ids: list[int], acting_user: dict, db: Session, *, reason: Optional[str] = None) -> dict:
     """Archive many categories."""
-    from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
+    from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
 
     return bulk_archive_entities(db, Category, ids, acting_user, reason)
 
 
 def bulk_restore_categories(ids: list[int], acting_user: dict, db: Session) -> dict:
     """Restore many categories."""
-    from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+    from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 
     return bulk_restore_entities(db, Category, ids, acting_user)
+
+
+def list_categories_flat(_admin, db: Session, page: int = 1, page_size: int = 50) -> dict:
+    """Return all active categories with id, slug, name, parent_id, commission_rate for admin commission config."""
+    query = db.query(Category).filter(Category.is_active == True)  # noqa: E712
+    total = query.count()
+    rows = query.order_by(Category.sort_order, Category.name).offset((page - 1) * page_size).limit(page_size).all()
+    return {
+        "data": [
+            {
+                "id": c.id,
+                "slug": c.slug,
+                "name": c.name,
+                "parent_id": c.parent_id,
+                "commission_rate": float(c.commission_rate) if c.commission_rate is not None else None,
+                "sort_order": c.sort_order,
+            }
+            for c in rows
+        ],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }

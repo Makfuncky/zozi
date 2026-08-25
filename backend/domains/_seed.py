@@ -42,7 +42,7 @@ from domains.hr.models.employee_models import (
     Office,
     EmployeeRole,
 )
-from domains.logistics.services.logistics_partner_pricing import quote_shipping_for_destination
+from domains.logistics.services.partners.service import quote_shipping_for_destination
 from infrastructure.utils.auth import get_password_hash, verify_password
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 

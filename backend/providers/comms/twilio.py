@@ -15,12 +15,12 @@ try:
     from twilio.rest import Client as _TwilioClient
     from twilio.base.exceptions import TwilioRestException as _TwilioRestException
 
-    TWILIO_AVAILABLE = True
+    HAS_TWILIO = True
 except ImportError as exc:  # pragma: no cover - optional dependency
     logger.warning("optional_dependency_unavailable: %s", exc)
     _TwilioClient = None
     _TwilioRestException = Exception
-    TWILIO_AVAILABLE = False
+    HAS_TWILIO = False
 
 # Re-export the resolved exception type under the public name expected by
 # call sites (`from providers.comms.twilio import TwilioRestException`).
@@ -29,9 +29,9 @@ TwilioRestException = _TwilioRestException
 
 def create_twilio_client(account_sid: str, auth_token: str):
     """Build a Twilio REST client, or ``None`` when the SDK is unavailable."""
-    if not TWILIO_AVAILABLE:
+    if not HAS_TWILIO:
         return None
     return _TwilioClient(account_sid, auth_token)
 
 
-__all__ = ["TWILIO_AVAILABLE", "TwilioRestException", "create_twilio_client"]
+__all__ = ["HAS_TWILIO", "TwilioRestException", "create_twilio_client"]

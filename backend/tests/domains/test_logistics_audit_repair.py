@@ -106,6 +106,7 @@ def test_write_service_no_stale_reexports():
     body = open(ws_path).read()
     assert "_REEXPORTS" not in body
     assert "controllers.orders.logistics_controller" not in body
+    assert "domains.logistics.services.logistics_service" not in body or "from domains.logistics.services.logistics_service" in body
 
 
 def test_locations_service_no_unused_import_and_capped_query():

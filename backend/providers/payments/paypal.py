@@ -1,423 +1,399 @@
-"""Payment gateway provider: paypal.
+"""PayPal SDK access point for the provider layer.
 
-Relocated from controllers/payments_controller.py.
+The paypalrestsdk / checkout-sdk Python packages are external integrations.
+Service-layer code must not import them directly; it should reach them through
+this provider module so that all third-party payment SDK usage is centralized
+behind the provider boundary.
 """
+
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
-import os
-import re
-import stripe
-import httpx
 import logging
-import uuid
+import os
 from decimal import Decimal
-from datetime import datetime, timezone
-from typing import Any, Literal, Optional, cast
-from urllib.parse import parse_qs
+from typing import Any, Optional
 
-from fastapi import HTTPException, Request
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
-from domains.catalog.models.products import Product
-from domains.comms.models.communication import Notification
-from domains.country.models.countries import CountryConfig
-from domains.finance.models.finance import TransactionLedger
-from domains.governance.models.admin import PaymentProviderConfig
-from domains.governance.models.admin import ProcessedWebhookEvent
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.catalog.models.promotions import Coupon
-from domains.finance.models.payments import Payment
-from domains.finance.models.payments import PaymentGatewayConnection
-from infrastructure.messaging.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
-from infrastructure.utils.config import settings
-from infrastructure.utils.currency import (
-    convert_from_aed,
-    get_currency_context,
-    money_to_minor_units_for_currency,
+from providers.payments.config import (
+    is_paypal_configured,
+    resolve_paypal_credentials,
 )
-
-from providers.payments import payment_persistence as pp
 
 logger = logging.getLogger(__name__)
 
+HAS_PAYPAL = False
+_paypal_sdk = None
+_paypal_http = None
 
-__all__ = ['create_paypal_order', 'capture_paypal_order', 'handle_paypal_webhook', '_paypal_get_access_token', '_paypal_configured']
-
-async def create_paypal_order(body: PayPalOrderRequest, current_user: dict, db: Session) -> dict:
-    """Create a PayPal Orders API v2 order and return the approval URL."""
-    configured, client_id, secret, base_url = _paypal_configured(db)
-    if not configured:
-        raise HTTPException(status_code=503, detail="PayPal not configured")
-    if not _paypal_gateway_enabled(db):
-        raise HTTPException(status_code=409, detail="PayPal payments are currently disabled")
-
-    order = _get_user_order(body.order_id, current_user, db)
-    if _normalized_payment_method(order) != "paypal":
-        raise HTTPException(status_code=409, detail="This order is not configured for PayPal payment")
-    if order.paid_at is not None:
-        raise HTTPException(status_code=409, detail="Order is already paid")
-
-    currency_code = _resolved_payment_currency(body.currency, body.country)
-    charge_total = _order_charge_total_amount(order)
-    converted_total = convert_from_aed(charge_total, currency_code)
-
+try:
+    import paypalrestsdk as _paypal_sdk  # type: ignore[import-untyped]
+    HAS_PAYPAL = True
+except ImportError:
     try:
-        access_token = await _paypal_get_access_token(cast(str, client_id), cast(str, secret), base_url)
+        from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment, LiveEnvironment  # type: ignore[import-untyped]
+        _paypal_http = PayPalHttpClient
+        HAS_PAYPAL = True
+    except ImportError:
+        pass
 
-        payload = {
-            "intent": "CAPTURE",
-            "purchase_units": [
-                {
-                    "reference_id": str(order.id),
-                    "custom_id": str(order.id),
-                    "description": body.description or f"ZOZI Order #{order.id}",
-                    "amount": {
-                        "currency_code": currency_code,
-                        "value": f"{converted_total:.2f}",
-                    },
-                }
-            ],
-            "application_context": {
-                "brand_name": "ZOZI",
-                "landing_page": "LOGIN",
-                "user_action": "PAY_NOW",
-                "return_url": body.return_url,
-                "cancel_url": body.cancel_url,
-            },
-        }
 
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                f"{base_url}/v2/checkout/orders",
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=representation",
-                },
-                json=payload,
-            )
-        data = resp.json()
-        if resp.status_code not in (200, 201):
-            logger.error("PayPal order creation failed (%s): %s", resp.status_code, data)
-            raise HTTPException(
-                status_code=400,
-                detail=str(data.get("message") or "PayPal order creation failed"),
-            )
+class PayPalError(Exception):
+    """Base exception for PayPal provider operations."""
 
-        paypal_order_id = data.get("id")
-        approve_url = next(
-            (link["href"] for link in data.get("links", []) if link.get("rel") == "approve"),
-            None,
+
+class PayPalOrderNotFoundError(PayPalError):
+    """Raised when a PayPal order does not exist."""
+
+
+class PayPalCaptureError(PayPalError):
+    """Raised when a PayPal capture operation fails."""
+
+
+class PayPalRefundError(PayPalError):
+    """Raised when a PayPal refund operation fails."""
+
+
+class PayPalVoidError(PayPalError):
+    """Raised when a PayPal void operation fails."""
+
+
+class PayPalConfigurationError(PayPalError):
+    """Raised when PayPal credentials are missing or invalid."""
+
+
+def _get_sdk() -> Any:
+    """Return the underlying PayPal SDK module, or raise if unavailable."""
+    if not HAS_PAYPAL:
+        raise PayPalConfigurationError(
+            "PayPal SDK is not installed. Install 'paypalrestsdk' or 'paypal-checkout-sdk'."
         )
-        if paypal_order_id:
-            setattr(order, "payment_intent_id", paypal_order_id)
-            pp.commit(db)
-
-        return {
-            "paypal_order_id": paypal_order_id,
-            "approve_url": approve_url,
-            "status": data.get("status"),
-            "currency": currency_code,
-            "display_amount": float(converted_total),
-        }
-    except HTTPException as e:
-        logger.exception("create_paypal_order_failed", error=str(e))
-        raise
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
-        logger.error("PayPal order creation error: %s", exc)
-        raise HTTPException(status_code=500, detail="PayPal payment service error")
+    if _paypal_sdk is not None:
+        return _paypal_sdk
+    raise PayPalConfigurationError("PayPal SDK client is not available.")
 
 
-async def capture_paypal_order(body: PayPalCaptureRequest, current_user: dict, db: Session) -> dict:
-    """Capture an approved PayPal order (called after the customer approves on PayPal)."""
-    configured, client_id, secret, base_url = _paypal_configured(db)
-    if not configured:
-        raise HTTPException(status_code=503, detail="PayPal not configured")
-
-    order = _get_user_order(body.order_id, current_user, db)
-    if order.paid_at is not None:
-        raise HTTPException(status_code=409, detail="Order is already paid")
-
-    try:
-        access_token = await _paypal_get_access_token(cast(str, client_id), cast(str, secret), base_url)
-
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                f"{base_url}/v2/checkout/orders/{body.paypal_order_id}/capture",
-                headers={
-                    "Authorization": f"Bearer {access_token}",
-                    "Content-Type": "application/json",
-                },
-                json={},
-            )
-        data = resp.json()
-        capture_status = str(data.get("status", "") or "").upper()
-
-        if resp.status_code in (200, 201) and capture_status == "COMPLETED":
-            capture_units = data.get("purchase_units", [])
-            capture_id = None
-            if capture_units:
-                captures = capture_units[0].get("payments", {}).get("captures", [])
-                if captures:
-                    capture_id = captures[0].get("id")
-
-            _apply_successful_payment(
-                order,
-                f"Order #{order.id} payment via PayPal was successful.",
-                db,
-            )
-            if capture_id:
-                setattr(order, "payment_intent_id", capture_id)
-            pp.commit(db)
-
-            return {
-                "status": "confirmed",
-                "order_id": order.id,
-                "order_status": order.status,
-                "capture_id": capture_id,
-                "paypal_order_id": body.paypal_order_id,
-                "paid_at": order.paid_at,
-            }
-
-        if capture_status in ("VOIDED", "DECLINED"):
-            if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
-                setattr(order, "status", "failed")
-                pp.add(db, 
-                    Notification(
-                        user_id=order.user_id,
-                        type="order_update",
-                        title="Payment Failed",
-                        message=f"Order #{order.id} PayPal payment failed.",
-                        link=f"/orders/{order.id}",
-                    )
-                )
-                pp.commit(db)
-                try:
-                    event = PaymentFailedEvent.create(
-                        order_id=order.id,
-                        user_id=order.user_id,
-                        provider="paypal",
-                        message="PayPal payment failed.",
-                    )
-                    _event_publisher.publish(event)
-                except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                    logger.exception("PayPal: failed to publish PaymentFailedEvent for order %s", order.id)
-            return {
-                "status": "failed",
-                "order_id": order.id,
-                "order_status": order.status,
-                "paypal_order_id": body.paypal_order_id,
-                "paid_at": order.paid_at,
-            }
-
-        return {
-            "status": "pending",
-            "order_id": order.id,
-            "order_status": order.status,
-            "paypal_order_id": body.paypal_order_id,
-            "capture_status": capture_status,
-        }
-    except HTTPException as e:
-        logger.exception("capture_paypal_order_failed", error=str(e))
-        raise
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
-        logger.error("PayPal capture error: %s", exc)
-        raise HTTPException(status_code=500, detail="PayPal payment service error")
-
-
-async def handle_paypal_webhook(request: Request, db: Session) -> dict:
-    """Verify and process PayPal webhook event notifications."""
-    import json as _json
-
-    body_bytes = await request.body()
-    try:
-        event_data = _json.loads(body_bytes)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("handle_paypal_webhook_failed", error=str(e))
-        raise HTTPException(status_code=400, detail="Invalid PayPal webhook payload")
-
-    event_id = str(event_data.get("id") or "").strip()
-    if event_id:
-        existing = db.query(ProcessedWebhookEvent).filter(
-            ProcessedWebhookEvent.event_id == event_id,
-            ProcessedWebhookEvent.processor == "paypal",
-        ).first()
-        if existing:
-            return {"status": "duplicate"}
-
-    # Verify signature if webhook_id (stored as webhook_secret) is configured
-    configured, client_id, secret, base_url = _paypal_configured(db)
-    if configured:
-        gw_record = _get_gateway_connection_record(db, "paypal")
-        webhook_id = decrypt_secret(cast(str | None, getattr(gw_record, "webhook_secret", None))) if gw_record else None
-        if client_id and secret and webhook_id:
-            try:
-                access_token = await _paypal_get_access_token(cast(str, client_id), cast(str, secret), base_url)
-                verify_payload = {
-                    "auth_algo": request.headers.get("paypal-auth-algo", ""),
-                    "cert_url": request.headers.get("paypal-cert-url", ""),
-                    "transmission_id": request.headers.get("paypal-transmission-id", ""),
-                    "transmission_sig": request.headers.get("paypal-transmission-sig", ""),
-                    "transmission_time": request.headers.get("paypal-transmission-time", ""),
-                    "webhook_id": webhook_id,
-                    "webhook_event": event_data,
-                }
-                async with httpx.AsyncClient(timeout=10) as http_client:
-                    verify_resp = await http_client.post(
-                        f"{base_url}/v1/notifications/verify-webhook-signature",
-                        headers={
-                            "Authorization": f"Bearer {access_token}",
-                            "Content-Type": "application/json",
-                        },
-                        json=verify_payload,
-                    )
-                if verify_resp.json().get("verification_status") != "SUCCESS":
-                    logger.warning("PayPal webhook signature failed: %s", verify_resp.text[:200])
-                    raise HTTPException(status_code=400, detail="PayPal webhook signature invalid")
-            except HTTPException as e:
-                logger.exception("handle_paypal_webhook_failed", error=str(e))
-                raise
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                logger.exception("PayPal webhook verification error")
-
-    event_type = str(event_data.get("event_type", "") or "")
-    resource = event_data.get("resource", {}) if isinstance(event_data.get("resource"), dict) else {}
-
-    if event_type == "PAYMENT.CAPTURE.COMPLETED":
-        capture_id = str(resource.get("id") or "").strip()
-        # PayPal puts the custom_id (our order ID) on the purchase unit or resource
-        custom_id = str(resource.get("custom_id") or "").strip()
-        supplementary = resource.get("supplementary_data") or {}
-        pp_order_id = (supplementary.get("related_ids") or {}).get("order_id", "")
-        order_ref = custom_id or pp_order_id
-        if order_ref and order_ref.isdigit():
-            order = db.query(Order).filter(Order.id == int(order_ref)).first()
-            if order and order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
-                if capture_id:
-                    setattr(order, "payment_intent_id", capture_id)
-                _apply_successful_payment(
-                    order,
-                    f"Order #{order.id} PayPal webhook: payment captured.",
-                    db,
-                )
-                pp.commit(db)
-
-    elif event_type in ("PAYMENT.CAPTURE.DENIED", "PAYMENT.CAPTURE.DECLINED"):
-        custom_id = str(resource.get("custom_id") or "").strip()
-        if custom_id and custom_id.isdigit():
-            order = db.query(Order).filter(Order.id == int(custom_id)).first()
-            if order and order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
-                setattr(order, "status", "failed")
-                pp.add(db, 
-                    Notification(
-                        user_id=order.user_id,
-                        type="order_update",
-                        title="Payment Failed",
-                        message=f"Order #{order.id} PayPal payment failed.",
-                        link=f"/orders/{order.id}",
-                    )
-                )
-                pp.commit(db)
-                try:
-                    event = PaymentFailedEvent.create(
-                        order_id=order.id,
-                        user_id=order.user_id,
-                        provider="paypal",
-                        message="PayPal payment failed.",
-                    )
-                    _event_publisher.publish(event)
-                except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                    logger.exception("PayPal webhook: failed to publish PaymentFailedEvent for order %s", order.id)
-
-    elif event_type == "PAYMENT.CAPTURE.REFUNDED":
-        # PayPal includes the original capture ID in resource links
-        capture_id = ""
-        for link in resource.get("links", []):
-            if isinstance(link, dict) and link.get("rel") == "up":
-                capture_id = str(link.get("href", "")).rsplit("/", 2)[-2]
-                break
-        if not capture_id:
-            capture_id = str(resource.get("custom_id") or "").strip()
-        order = db.query(Order).filter(Order.payment_intent_id == capture_id).first() if capture_id else None
-        if order and order.status != "refunded":
-            apply_order_status_change(
-                order,
-                "refunded",
-                db,
-                refund_meta={
-                    "source": "paypal_refund",
-                    "transaction_ref": str(resource.get("id") or f"paypal:refund:{order.id}"),
-                    "description": f"PayPal refund settled for order #{order.id}",
-                    "transaction_date": datetime.now(timezone.utc).replace(tzinfo=None),
-                },
-            )
-            pp.add(db, 
-                Notification(
-                    user_id=order.user_id,
-                    type="order_update",
-                    title="Refund Processed",
-                    message=f"Your PayPal refund for Order #{order.id} has been processed.",
-                    link=f"/orders/{order.id}",
-                )
-            )
-            pp.commit(db)
-
-    else:
-        logger.debug("Unhandled PayPal webhook event: %s", event_type)
-
-    if event_id:
-        pp.add(db, ProcessedWebhookEvent(event_id=event_id, processor="paypal"))
-        pp.commit(db)
-
-    return {"status": "ok"}
-
-
-async def _paypal_get_access_token(client_id: str, secret: str, base_url: str) -> str:
-    """Fetch a short-lived OAuth2 client-credentials access token from PayPal."""
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.post(
-            f"{base_url}/v1/oauth2/token",
-            headers={"Accept": "application/json", "Accept-Language": "en_US"},
-            auth=(client_id, secret),
-            data={"grant_type": "client_credentials"},
+def _get_client() -> Any:
+    """Build and return a PayPal HTTP client from environment credentials."""
+    if _paypal_http is None:
+        raise PayPalConfigurationError(
+            "PayPal checkout SDK is not installed. Install 'paypal-checkout-sdk'."
         )
-    if resp.status_code != 200:
-        logger.error("PayPal token request failed (status=%s)", resp.status_code)
-        raise HTTPException(status_code=503, detail="PayPal authentication failed")
-    token = resp.json().get("access_token")
-    if not token:
-        raise HTTPException(status_code=503, detail="PayPal authentication failed: no token returned")
-    return str(token)
-
-
-def _paypal_configured(db: Session) -> tuple[bool, Optional[str], Optional[str], str]:
-    """Return (configured, client_id, secret, base_url) for the saved PayPal gateway connection."""
-    record = _get_gateway_connection_record(db, "paypal")
-    if not record:
-        return False, None, None, DEFAULT_PAYPAL_SANDBOX_URL
-    client_id = decrypt_secret(cast(str | None, getattr(record, "public_key", None)))
-    secret = decrypt_secret(cast(str | None, getattr(record, "secret_key", None)))
-    mode = str(getattr(record, "mode", "test") or "test").strip().lower()
-    base_url = DEFAULT_PAYPAL_LIVE_URL if mode == "live" else DEFAULT_PAYPAL_SANDBOX_URL
+    client_id, secret, base_url = resolve_paypal_credentials()
     if not client_id or not secret:
-        return False, None, None, base_url
-    return True, client_id, secret, base_url
+        raise PayPalConfigurationError(
+            "PAYPAL_CLIENT_ID and PAYPAL_SECRET must be set."
+        )
+    if "sandbox" in base_url:
+        environment = SandboxEnvironment(client_id=client_id, client_secret=secret)
+    else:
+        environment = LiveEnvironment(client_id=client_id, client_secret=secret)
+    return PayPalHttpClient(environment)
 
-from providers.payments._common import *  # noqa: E402,F401,F403
-from providers.payments._order import *   # noqa: E402,F401,F403
-from providers.payments.config import *    # noqa: E402,F401,F403
-from providers.payments.webhooks import * # noqa: E402,F401,F403
-from providers.payments.stripe import *    # noqa: E402,F401,F403
-from providers.payments.tap import *       # noqa: E402,F401,F403
-import structlog
-logger = structlog.get_logger(__name__)
-from providers.payments.paytabs import *   # noqa: E402,F401,F403
-from providers.payments.paypal import *    # noqa: E402,F401,F403
-from providers.payments.thawani import *   # noqa: E402,F401,F403
-from providers.payments.generic import *   # noqa: E402,F401,F403
 
+def is_available() -> bool:
+    """Return True when the PayPal SDK is importable and credentials are set."""
+    return HAS_PAYPAL and is_paypal_configured()
+
+
+def create_order(
+    amount: Decimal,
+    currency: str,
+    *,
+    return_url: str,
+    cancel_url: str,
+    description: str = "",
+    reference_id: str = "",
+    metadata: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Create a PayPal order.
+
+    Args:
+        amount: The order total.
+        currency: ISO 4217 currency code (e.g. 'USD').
+        return_url: URL to redirect after approval.
+        cancel_url: URL to redirect on cancellation.
+        description: Human-readable order description.
+        reference_id: Merchant-side reference identifier.
+        metadata: Additional key-value pairs attached to the order.
+
+    Returns:
+        dict with 'id', 'status', and 'approval_url' keys.
+
+    Raises:
+        PayPalConfigurationError: If PayPal SDK or credentials are missing.
+        PayPalError: If order creation fails.
+    """
+    client = _get_client()
+    payload: dict[str, Any] = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "reference_id": reference_id,
+                "description": description,
+                "amount": {
+                    "currency_code": currency.upper(),
+                    "value": str(amount),
+                },
+            }
+        ],
+        "application_context": {
+            "return_url": return_url,
+            "cancel_url": cancel_url,
+        },
+    }
+    if metadata:
+        payload["purchase_units"][0]["custom_id"] = str(metadata)
+    try:
+        request = _paypal_http.OrdersCreateRequest() if False else None
+    except (AttributeError, TypeError):
+        pass
+    try:
+        from paypalcheckoutsdk.orders import OrdersCreateRequest  # type: ignore[import-untyped]
+        request = OrdersCreateRequest()
+        request.prefer("return=representation")
+        request.request_body(payload)
+        response = client.execute(request)
+    except ImportError as exc:
+        raise PayPalConfigurationError(f"PayPal checkout SDK unavailable: {exc}") from exc
+    except Exception as exc:
+        logger.exception("PayPal create_order failed")
+        raise PayPalError(f"Failed to create PayPal order: {exc}") from exc
+    if response.status_code not in (200, 201):
+        raise PayPalError(
+            f"PayPal create_order returned status {response.status_code}"
+        )
+    result = response.result
+    approval_url = ""
+    for link in result.links or []:
+        if link.rel == "approve":
+            approval_url = link.href
+            break
+    return {
+        "id": result.id,
+        "status": str(result.status),
+        "approval_url": approval_url,
+        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+    }
+
+
+def capture_payment(
+    order_id: str,
+    *,
+    amount: Optional[Decimal] = None,
+    currency: Optional[str] = None,
+) -> dict[str, Any]:
+    """Capture a previously approved PayPal order.
+
+    Args:
+        order_id: The PayPal order ID.
+        amount: Optional partial capture amount.
+        currency: Required when amount is provided.
+
+    Returns:
+        dict with 'id', 'status', and 'capture_amount' keys.
+
+    Raises:
+        PayPalOrderNotFoundError: If the order does not exist.
+        PayPalCaptureError: If the capture operation fails.
+    """
+    client = _get_client()
+    try:
+        from paypalcheckoutsdk.orders import OrdersCaptureRequest  # type: ignore[import-untyped]
+        request = OrdersCaptureRequest(order_id)
+        request.prefer("return=representation")
+        if amount is not None and currency:
+            request.request_body({
+                "amount": {
+                    "currency_code": currency.upper(),
+                    "value": str(amount),
+                }
+            })
+        response = client.execute(request)
+    except Exception as exc:
+        if "NOT_FOUND" in str(exc) or "404" in str(exc):
+            raise PayPalOrderNotFoundError(
+                f"PayPal order {order_id} not found"
+            ) from exc
+        logger.exception("PayPal capture_payment failed for order %s", order_id)
+        raise PayPalCaptureError(
+            f"Failed to capture PayPal order {order_id}: {exc}"
+        ) from exc
+    if response.status_code not in (200, 201):
+        raise PayPalCaptureError(
+            f"PayPal capture returned status {response.status_code}"
+        )
+    result = response.result
+    capture_amount = str(amount) if amount else ""
+    status = str(result.status)
+    for pu in result.purchase_units or []:
+        if hasattr(pu, "payments") and pu.payments:
+            for cap in (pu.payments.captures or []):
+                status = str(cap.status)
+                if hasattr(cap, "amount"):
+                    capture_amount = str(cap.amount.value)
+                break
+    return {
+        "id": result.id,
+        "status": status,
+        "capture_amount": capture_amount,
+        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+    }
+
+
+def refund_payment(
+    capture_id: str,
+    *,
+    amount: Optional[Decimal] = None,
+    currency: Optional[str] = None,
+    reason: str = "",
+) -> dict[str, Any]:
+    """Refund a captured PayPal payment.
+
+    Args:
+        capture_id: The PayPal capture ID to refund.
+        amount: Optional partial refund amount.
+        currency: Required when amount is provided.
+        reason: Human-readable refund reason.
+
+    Returns:
+        dict with 'id', 'status', and 'refund_amount' keys.
+
+    Raises:
+        PayPalRefundError: If the refund operation fails.
+    """
+    client = _get_client()
+    try:
+        from paypalcheckoutsdk.payments import CapturesRefundRequest  # type: ignore[import-untyped]
+        request = CapturesRefundRequest(capture_id)
+        request.prefer("return=representation")
+        body: dict[str, Any] = {}
+        if reason:
+            body["note_to_payer"] = reason
+        if amount is not None and currency:
+            body["amount"] = {
+                "currency_code": currency.upper(),
+                "value": str(amount),
+            }
+        if body:
+            request.request_body(body)
+        response = client.execute(request)
+    except Exception as exc:
+        logger.exception("PayPal refund_payment failed for capture %s", capture_id)
+        raise PayPalRefundError(
+            f"Failed to refund PayPal capture {capture_id}: {exc}"
+        ) from exc
+    if response.status_code not in (200, 201):
+        raise PayPalRefundError(
+            f"PayPal refund returned status {response.status_code}"
+        )
+    result = response.result
+    refund_amount = str(amount) if amount else ""
+    if hasattr(result, "amount") and result.amount:
+        refund_amount = str(result.amount.value)
+    return {
+        "id": result.id,
+        "status": str(result.status),
+        "refund_amount": refund_amount,
+        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+    }
+
+
+def get_order(order_id: str) -> dict[str, Any]:
+    """Retrieve a PayPal order by ID.
+
+    Args:
+        order_id: The PayPal order ID.
+
+    Returns:
+        dict with 'id', 'status', 'amount', and 'raw' keys.
+
+    Raises:
+        PayPalOrderNotFoundError: If the order does not exist.
+        PayPalError: If the retrieval fails.
+    """
+    client = _get_client()
+    try:
+        from paypalcheckoutsdk.orders import OrdersGetRequest  # type: ignore[import-untyped]
+        request = OrdersGetRequest(order_id)
+        response = client.execute(request)
+    except Exception as exc:
+        if "NOT_FOUND" in str(exc) or "404" in str(exc):
+            raise PayPalOrderNotFoundError(
+                f"PayPal order {order_id} not found"
+            ) from exc
+        logger.exception("PayPal get_order failed for order %s", order_id)
+        raise PayPalError(
+            f"Failed to retrieve PayPal order {order_id}: {exc}"
+        ) from exc
+    if response.status_code != 200:
+        raise PayPalError(
+            f"PayPal get_order returned status {response.status_code}"
+        )
+    result = response.result
+    amount_value = ""
+    amount_currency = ""
+    for pu in result.purchase_units or []:
+        if hasattr(pu, "amount") and pu.amount:
+            amount_value = str(pu.amount.value)
+            amount_currency = str(pu.amount.currency_code)
+        break
+    return {
+        "id": result.id,
+        "status": str(result.status),
+        "amount": amount_value,
+        "currency": amount_currency,
+        "raw": result.to_dict() if hasattr(result, "to_dict") else result,
+    }
+
+
+def void_payment(order_id: str) -> dict[str, Any]:
+    """Void (cancel) a PayPal order that has not been captured.
+
+    Args:
+        order_id: The PayPal order ID.
+
+    Returns:
+        dict with 'id' and 'status' keys.
+
+    Raises:
+        PayPalOrderNotFoundError: If the order does not exist.
+        PayPalVoidError: If the void operation fails.
+    """
+    client = _get_client()
+    try:
+        from paypalcheckoutsdk.orders import OrdersVoidRequest  # type: ignore[import-untyped]
+        request = OrdersVoidRequest(order_id)
+        response = client.execute(request)
+    except Exception as exc:
+        if "NOT_FOUND" in str(exc) or "404" in str(exc):
+            raise PayPalOrderNotFoundError(
+                f"PayPal order {order_id} not found"
+            ) from exc
+        logger.exception("PayPal void_payment failed for order %s", order_id)
+        raise PayPalVoidError(
+            f"Failed to void PayPal order {order_id}: {exc}"
+        ) from exc
+    if response.status_code not in (200, 204):
+        raise PayPalVoidError(
+            f"PayPal void returned status {response.status_code}"
+        )
+    return {
+        "id": order_id,
+        "status": "VOIDED",
+    }
+
+
+__all__ = [
+    "HAS_PAYPAL",
+    "PayPalError",
+    "PayPalOrderNotFoundError",
+    "PayPalCaptureError",
+    "PayPalRefundError",
+    "PayPalVoidError",
+    "PayPalConfigurationError",
+    "is_available",
+    "create_order",
+    "capture_payment",
+    "refund_payment",
+    "get_order",
+    "void_payment",
+]

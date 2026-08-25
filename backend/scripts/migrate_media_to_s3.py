@@ -1,4 +1,4 @@
-ï»¿"""One-off migration: local ``uploads/`` files â†’ object storage + CDN.
+"""One-off migration: local ``uploads/`` files ? object storage + CDN.
 
 Usage:
     python scripts/migrate_media_to_s3.py
@@ -37,7 +37,7 @@ from typing import Dict, Optional
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db_context
-from domains.media.services.storage import get_storage, S3Storage
+from providers.media.services.storage import get_storage, S3Storage
 from infrastructure.utils.config import settings
 
 logger = logging.getLogger("zozi.migrate_media")
@@ -95,7 +95,7 @@ def migrate(dry_run: bool = False, batch_size: int = DEFAULT_BATCH_SIZE) -> None
     is_s3 = isinstance(storage, S3Storage)
 
     if not UPLOADS_DIR.is_dir():
-        logger.warning("Uploads directory not found: %s â€” nothing to migrate.", UPLOADS_DIR)
+        logger.warning("Uploads directory not found: %s — nothing to migrate.", UPLOADS_DIR)
         return
 
     files = sorted(p for p in UPLOADS_DIR.rglob("*") if p.is_file())
@@ -105,10 +105,10 @@ def migrate(dry_run: bool = False, batch_size: int = DEFAULT_BATCH_SIZE) -> None
         return
 
     if dry_run:
-        logger.info("DRY RUN â€” no files will be uploaded and no DB rows will be updated.")
+        logger.info("DRY RUN — no files will be uploaded and no DB rows will be updated.")
     elif not is_s3:
         logger.warning(
-            "STORAGE_BACKEND=%s â€” switching to dry-run because S3 is not active.",
+            "STORAGE_BACKEND=%s — switching to dry-run because S3 is not active.",
             getattr(settings, "storage_backend", "local"),
         )
         dry_run = True

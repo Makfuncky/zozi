@@ -360,3 +360,13 @@ def set_tax_rate(
         db.add(rate)
     db.commit()
     return {"status": "saved", "category_id": category_id, "tax_rate": tax_rate}
+
+# ── Backward compatibility aliases (merged from country_audit_admin_service) ──
+send_country_communication = create_country_communication
+add_city = create_city
+list_communications = list_country_communications
+
+
+# === Merged from country_admin_service.py (read-side functions) ===
+# These functions are aliases to the write-side functions for backward compatibility
+# The actual implementations are in country_admin_write_service.py

@@ -15,7 +15,7 @@ def test_send_whatsapp_preview_mode_without_credentials():
     os.environ.pop("WHATSAPP_ACCOUNT_SID", None)
     os.environ.pop("WHATSAPP_AUTH_TOKEN", None)
     os.environ.pop("WHATSAPP_FROM_NUMBER", None)
-    from domains.comms.services.marketing.whatsapp_service import send_message
+    from domains.comms.services.proxy_communication import send_whatsapp as send_message
 
     result = send_message("+15551234567", "Hello from ZOZI")
     assert result["channel"] == "whatsapp"
@@ -27,7 +27,7 @@ def test_send_whatsapp_normalizes_numbers():
     os.environ.pop("WHATSAPP_ACCOUNT_SID", None)
     os.environ.pop("WHATSAPP_AUTH_TOKEN", None)
     os.environ.pop("WHATSAPP_FROM_NUMBER", None)
-    from domains.comms.services.marketing.whatsapp_service import send_message
+    from domains.comms.services.proxy_communication import send_whatsapp as send_message
 
     # Provider only ensures the "whatsapp:" prefix; callers supply E.164 (+).
     result = send_message("+15551234567", "hi", from_number="+15557654321")

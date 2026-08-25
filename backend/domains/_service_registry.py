@@ -1,4 +1,4 @@
-﻿"""Service module registry (import side-effects only).
+"""Service module registry (import side-effects only).
 
 
 
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 
 
-import domains.media.services.automation_scheduler
+import providers.media.services.automation_scheduler
 
 import domains.finance.services.reporting.financial_reports_service
 
@@ -36,9 +36,9 @@ import domains.governance.services.worm_audit
 
 import domains.finance.services.ledger.bank_transaction_service
 
-import domains.catalog.services.advanced_filter_service
+import domains.catalog.services.search.search_service
 
-import domains.media.services.ai_search_service
+import providers.media.services.ai_search_service
 
 import domains.orders.services
 
@@ -94,7 +94,7 @@ import domains.governance.services
 
 import domains.governance.services
 
-import domains.media.services.country_ai_research
+import providers.media.services.country_ai_research
 
 import domains.logistics.services.country_communication_service
 
@@ -111,7 +111,7 @@ import domains.country.services.cross_border.cross_border_detection
 
 import domains.comms.services
 
-import domains.suppliers.services.legal_contract_service
+import domains.suppliers.services.contracts.legal_contract_service
 
 import domains.country.services.localization.localization_service
 
@@ -175,9 +175,9 @@ import domains.hr.services.okr_engine
 
 import domains.hr.services.payroll_engine
 
-import domains.hr.services.payroll_service
+import domains.hr.services.payroll.payroll_service
 
-import domains.hr.services.performance_service
+import domains.hr.services.performance.performance_service
 
 import domains.hr.services.shift_handover
 
@@ -199,7 +199,7 @@ import domains.logistics.services.live_tracking_service
 
 import domains.logistics.services.logistics_engine
 
-import domains.logistics.services.logistics_health_engine
+import domains.logistics.services.health.service
 
 import domains.logistics.services.logistics_sla_service
 
@@ -255,9 +255,9 @@ import domains.governance.services.permission_primitive_write_service
 
 import domains.governance.services.triple_auth
 
-import domains.suppliers.services.supplier_badge_service
+import domains.suppliers.services.badges.supplier_badge_service
 
-import domains.suppliers.services.supplier_health_engine
+import domains.suppliers.services.health.supplier_health_engine
 
 import domains.suppliers.services.suppliers_write_service
 

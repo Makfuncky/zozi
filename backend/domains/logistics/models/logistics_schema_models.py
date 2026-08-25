@@ -27,9 +27,9 @@ class CityDistanceMatrix(Base):
     __tablename__ = "city_distance_matrix"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
-    origin_country_code = Column(String(10), nullable=False)
+    origin_country_code = Column(String(2), nullable=False)
     origin_city_name = Column(String, nullable=False)
-    destination_country_code = Column(String(10), nullable=False)
+    destination_country_code = Column(String(2), nullable=False)
     destination_city_name = Column(String, nullable=False)
     distance_km = Column(Numeric(10, 2), nullable=True)
     notes = Column(Text, nullable=True)

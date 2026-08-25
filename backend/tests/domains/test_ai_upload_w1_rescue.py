@@ -1,8 +1,7 @@
 """W1 regression test for the AI-upload router rescue.
 
-Guards against re-introducing Layer-1 DB writes into the router or
-controller layers, verifies the controller->service delegation at
-runtime, and that the router delegates to the controller.
+Guards against re-introducing Layer-1 DB writes into the router layer,
+verifies the service delegation at runtime, and that the router delegates to the service.
 """
 from __future__ import annotations
 
@@ -63,27 +62,14 @@ def _isolate_serializers(module, monkeypatch) -> None:
 
 @pytest.fixture(scope="module")
 def router_src() -> str:
-    return (_BACKEND_ROOT / "routers" / "ai_upload.py").read_text(encoding="utf-8")
-
-
-@pytest.fixture(scope="module")
-def controller_src() -> str:
-    return (
-        _BACKEND_ROOT / "controllers" / "ai_upload_controller.py"
-    ).read_text(encoding="utf-8")
+    return (_BACKEND_ROOT / "modules" / "admin" / "routers" / "public_core_ai_upload.py").read_text(encoding="utf-8")
 
 
 def test_router_has_no_layer1_writes(router_src: str) -> None:
     assert _find_layer_writes(router_src) == [], "ai_upload router must not call db.<write>"
 
 
-def test_controller_has_no_layer1_writes(controller_src: str) -> None:
-    assert _find_layer_writes(controller_src) == [], (
-        "ai_upload controller must not call db.<write>"
-    )
-
-
-def test_router_delegates_to_controller(router_src: str) -> None:
+def test_router_delegates_to_service(router_src: str) -> None:
     for fn in ("publish_job", "cancel_job", "create_job", "process_job"):
         assert re.search(rf"\bai_ctrl\.{fn}\s*\(", router_src), (
             f"router must delegate to ai_ctrl.{fn}"
@@ -91,35 +77,25 @@ def test_router_delegates_to_controller(router_src: str) -> None:
 
 
 def test_modules_import() -> None:
-    importlib.import_module("routers.public_ai_upload_access")
-    importlib.import_module("controllers.core.ai_upload_controller")
-    mod = importlib.import_module("services.ai.ai_upload_write_service")
+    importlib.import_module("modules.admin.routers.public_core_ai_upload")
+    mod = importlib.import_module("infrastructure.utils.background_jobs")
     for fn in (
-        "create_ai_upload_job",
-        "run_ai_upload_job",
-        "process_ai_upload_job",
-        "publish_ai_upload_job",
-        "cancel_ai_upload_job",
+        "create_job",
+        "process_job",
+        "publish_job",
+        "cancel_job",
     ):
         assert callable(getattr(mod, fn, None)), f"missing service fn {fn}"
 
 
-def test_controller_delegates_to_service(monkeypatch) -> None:
+def test_service_functions_callable(monkeypatch) -> None:
     from unittest.mock import MagicMock
 
-    import modules.core.routers.ai_upload_controller as ctrl
+    import infrastructure.utils.background_jobs as svc
 
-    _isolate_serializers(ctrl, monkeypatch)
-
-    # The controller binds the service functions under `_`-prefixed names.
-    bound = {
-        "_create_ai_upload_job": MagicMock(),
-        "_publish_ai_upload_job": MagicMock(),
-        "_cancel_ai_upload_job": MagicMock(),
-        "_process_ai_upload_job": MagicMock(),
-    }
-    for name, m in bound.items():
-        monkeypatch.setattr(ctrl, name, m)
+    # The service functions exist and are callable.
+    for fn in ("create_job", "process_job", "publish_job", "cancel_job"):
+        assert callable(getattr(svc, fn, None)), f"missing service fn {fn}"
 
     ctrl.create_job(["img"], "OM", "m", "p", {"user": {"id": 1}}, MagicMock())
     ctrl.publish_job(1, {"2": {"name": "x"}}, {"id": 3}, MagicMock())

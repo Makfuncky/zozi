@@ -14,6 +14,13 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "FinanceAIResult",
+    "parse_email_to_ledger",
+    "extract_bill_fields",
+    "suggest_reconciliation_match",
+]
+
 
 @dataclass
 class FinanceAIResult:

@@ -7,11 +7,11 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Any
 
-from domains.finance.services.payouts.payout_approval_controller import approve_batch
-from domains.finance.services.payouts.payout_approval_controller import approve_payout
-from domains.finance.services.payouts.payout_approval_controller import dispatch_batch
-from domains.finance.services.payouts.payout_approval_controller import reject_batch
-from domains.finance.services.payouts.payout_approval_controller import reject_payout
+from domains.finance.services.payouts.payout_batch_service import approve_batch
+from domains.finance.services.payouts.payout_batch_service import approve_payout
+from domains.finance.services.payouts.payout_batch_service import dispatch_batch
+from domains.finance.services.payouts.payout_batch_service import reject_batch
+from domains.finance.services.payouts.payout_batch_service import reject_payout
 
 router = APIRouter(prefix="/api/v1/admin")
 

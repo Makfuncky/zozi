@@ -15,7 +15,7 @@ class CountryBasics(Base):
     deleted_by = Column(Integer, nullable=True)
     __table_args__ = (Index('ix_country_basics_code', 'code', unique=True), {'schema': 'country'})
     id = Column(Integer, primary_key=True, index=True)
-    code = Column(String(3), unique=True, nullable=False, index=True)
+    code = Column(String(2), unique=True, nullable=False, index=True)
     name = Column(String, nullable=False)
     currency = Column(String(3), default='USD')
     currency_symbol = Column(String(10), nullable=True)

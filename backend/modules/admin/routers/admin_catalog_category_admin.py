@@ -7,17 +7,17 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from domains.catalog.services.category_admin_controller import ArchiveRequest
-from domains.catalog.services.category_admin_controller import BulkActionRequest
-from domains.catalog.services.category_admin_controller import archive_category
-from domains.catalog.services.category_admin_controller import bulk_archive_categories
-from domains.catalog.services.category_admin_controller import bulk_restore_categories
-from domains.catalog.services.category_admin_controller import create_category
-from domains.catalog.services.category_admin_controller import delete_category
-from domains.catalog.services.category_admin_controller import list_categories
-from domains.catalog.services.category_admin_controller import reorder_categories
-from domains.catalog.services.category_admin_controller import restore_category
-from domains.catalog.services.category_admin_controller import update_category
+from infrastructure.database.schemas import ArchiveRequest
+from infrastructure.database.schemas import BulkActionRequest
+from domains.catalog.services.categories.admin_categories_service import archive_category
+from domains.catalog.services.categories.admin_categories_service import bulk_archive_categories
+from domains.catalog.services.categories.admin_categories_service import bulk_restore_categories
+from domains.accounts.services.permissions.permission_service import create_category
+from domains.accounts.services.permissions.permission_service import delete_category
+from domains.accounts.services.permissions.permission_service import list_categories
+from domains.catalog.services.categories.admin_categories_service import reorder_categories
+from domains.catalog.services.categories.admin_categories_service import restore_category
+from domains.accounts.services.permissions.permission_service import update_category
 
 router = APIRouter(prefix="/api/v1/admin")
 

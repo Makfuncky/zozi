@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 from modules.admin.routers.auth import get_current_user
-from domains.country.services.country_auto_populate import auto_populate_country
-from domains.country.services.country_research import build_country_research
+from domains.country.services._auto_stubs import auto_populate_country
+from domains.country.services.research.country_ai_research import build_country_research
 
 logger = logging.getLogger(__name__)
 

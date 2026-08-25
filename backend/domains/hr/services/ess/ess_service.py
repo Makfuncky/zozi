@@ -13,7 +13,7 @@ from sqlalchemy import text
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.auth.auth_controller_service import get_current_user
+from domains.accounts.services.auth.auth_service import get_current_user
 
 from infrastructure.database.database import get_db
 
@@ -233,4 +233,75 @@ def ess_org_chart(current_user: User, db: Session):
         "colleagues": [dict(c) for c in colleagues],
         "sub_units": [dict(s) for s in sub_units],
     }
+
+
+# ── ESS Write Operations (merged from ess_write_service.py) ───────────────────
+
+def update_employee_profile(
+    db: Session,
+    emp: Employee,
+    *,
+    phone: str | None = None,
+    address: str | None = None,
+    emergency_contact_name: str | None = None,
+    emergency_contact_phone: str | None = None,
+) -> dict:
+    updates: list[str] = []
+    params: dict = {"eid": emp.id}
+    if phone is not None:
+        updates.append("phone = :phone")
+        params["phone"] = phone
+    if address is not None:
+        updates.append("address = :address")
+        params["address"] = address
+    if emergency_contact_name is not None:
+        updates.append("emergency_contact_name = :ec_name")
+        params["ec_name"] = emergency_contact_name
+    if emergency_contact_phone is not None:
+        updates.append("emergency_contact_phone = :ec_phone")
+        params["ec_phone"] = emergency_contact_phone
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    # Column names come from a fixed allowlist, never from user input.
+    db.execute(
+        text(f"UPDATE employees SET {', '.join(updates)} WHERE id = :eid"),
+        params,
+    )
+    db.commit()
+    log_activity(db, emp.id, "profile_updated", "employee_profile", str(emp.id))
+    return {"status": "updated", "fields": [u.split(" =")[0] for u in updates]}
+
+
+def create_leave_request(
+    db: Session,
+    emp: Employee,
+    *,
+    leave_type: str,
+    start_date: str,
+    end_date: str,
+    reason: str,
+) -> dict:
+    result = db.execute(
+        text(
+            """
+            INSERT INTO leave_requests
+                (employee_id, leave_type, start_date, end_date, reason, status, created_at)
+            VALUES
+                (:eid, :leave_type, :start_date, :end_date, :reason, 'pending', :now)
+            RETURNING id
+            """
+        ),
+        {
+            "eid": emp.id,
+            "leave_type": leave_type,
+            "start_date": start_date,
+            "end_date": end_date,
+            "reason": reason,
+            "now": text("NOW()"),
+        },
+    )
+    leave_id = result.scalar()
+    db.commit()
+    log_activity(db, emp.id, "leave_requested", "leave_request", str(leave_id))
+    return {"id": leave_id, "status": "pending"}
 

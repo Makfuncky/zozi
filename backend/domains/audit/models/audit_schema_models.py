@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, JSON, ForeignKey, func
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
@@ -16,21 +16,21 @@ class AuditLog(Base):
     action = Column(String, nullable=False)
     entity_type = Column(String, nullable=False)
     entity_id = Column(Integer, nullable=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=True)
     username = Column(String, nullable=True)
     user_role = Column(String, nullable=True)
     details = Column(JSON, nullable=True)
     ip_address = Column(String, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
 
 class CommandCenterView(Base):
     __tablename__ = "command_center_views"
     __table_args__ = ({"extend_existing": True, "schema": "audit"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False)
     view_name = Column(String(100), nullable=False)
     config = Column(JSON, nullable=True)
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)

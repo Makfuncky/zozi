@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 
 def _on_update_role_permissions_requested(payload: dict):
-    from domains.governance.services.permissions.permissions_service import update_role_permissions
+    from domains.accounts.services.permissions.permission_service import update_role_permissions
     return update_role_permissions(
         payload["role"], payload["permissions"], payload.get("db"), payload.get("actor") or {},
     )

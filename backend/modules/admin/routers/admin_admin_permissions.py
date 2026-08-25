@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 
-from domains.governance.services.permissions.permissions_controller import permission_catalog, permission_hierarchy, update_role_permissions_route
+from domains.governance.services._auto_stubs import permission_catalog, permission_hierarchy, update_role_permissions_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

@@ -1,1 +1,0 @@
-# logistics sub-capability: partner

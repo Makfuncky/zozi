@@ -36,8 +36,8 @@ from infrastructure.utils.config import settings
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 from infrastructure.utils.redis_client import redis_client
 from infrastructure.utils.ip_utils import get_request_ip
-from domains.hr.services.coi_service import check_approval_blocked
-from domains.governance.services.country.country_context_service import (
+from domains.hr.services.employees.coi_service import check_approval_blocked
+from domains.country.services.core.country_context_service import (
     get_user_by_id,
     resolve_user_country_scope,
 )
@@ -376,5 +376,13 @@ def check_coi_before_approval(
             status_code=403,
             detail=f"Approval blocked due to Conflict of Interest: {reason}"
         )
+
+
+def get_country_from_request(request: Request) -> Optional[str]:
+    return request.headers.get(COUNTRY_HEADER)
+
+
+def get_country_source_from_request(request: Request) -> str:
+    return request.headers.get(COUNTRY_SOURCE_HEADER, "unknown")
 
 

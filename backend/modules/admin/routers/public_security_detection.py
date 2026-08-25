@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.governance.models.user import User
-from domains.governance.models.fraud import FraudEvent
-from domains.governance.models.fraud import FraudBlacklist
-from domains.governance.models.fraud import FraudRule
-from domains.governance.models.fraud import ManualReviewQueue
-from domains.governance.models.fraud import IPReputation
-from domains.governance.models.fraud import DeviceFingerprint
+from domains.security.models.fraud import FraudEvent
+from domains.security.models.fraud import FraudBlacklist
+from domains.security.models.fraud import FraudRule
+from domains.security.models.fraud import ManualReviewQueue
+from domains.security.models.fraud import IPReputation
+from domains.security.models.fraud import DeviceFingerprint
 from infrastructure.database.schemas import (
     FraudScoreRequest, FraudScoreResponse, FraudEventOut,
     FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut,
@@ -20,8 +20,8 @@ from infrastructure.database.schemas import (
     FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck,
     ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
 )
-from domains.governance.services.fraud.fraud_detection_service import FraudScoringEngine
-from domains.governance.services.fraud.fraud_detection_service import ThreatFeedUpdater
+from domains.security.services.fraud.fraud_detection_service import FraudScoringEngine
+from domains.security.services.fraud.fraud_detection_service import ThreatFeedUpdater
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.redis_client import get_redis
 import json
@@ -286,7 +286,7 @@ def check_impossible_travel(
 @router.post("/check/device-stacking", response_model=DeviceStackingCheck)
 def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check device account stacking."""
-    from domains.governance.services.fraud.fraud_detection_service import GraphAnalysisService
+    from domains.security.services.fraud.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_device_account_stacking(device_hash)
 
@@ -294,7 +294,7 @@ def check_device_stacking(device_hash: str, engine: FraudScoringEngine = Depends
 @router.post("/check/return-abuse", response_model=ReturnAbuseCheck)
 def check_return_abuse(user_id: int, engine: FraudScoringEngine = Depends(get_fraud_engine)):
     """Check return abuse patterns."""
-    from domains.governance.services.fraud.fraud_detection_service import GraphAnalysisService
+    from domains.security.services.fraud.fraud_detection_service import GraphAnalysisService
     graph = GraphAnalysisService(engine.db)
     return graph.check_return_abuse_pattern(user_id)
 

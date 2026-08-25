@@ -1,4 +1,4 @@
-"""Auto-migrated service logic from routers/admin_orders.py."""
+﻿"""Auto-migrated service logic from routers/admin_orders.py."""
 from __future__ import annotations
 
 import math
@@ -25,7 +25,7 @@ from infrastructure.database.schemas import (
     OrderStatusUpdate,
 )
 
-from domains.governance.models.user import User
+from domains.accounts.models.user import User
 from domains.orders.models.orders import Order
 
 from domains.country.utils.country_rls import get_country_or_404

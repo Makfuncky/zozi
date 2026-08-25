@@ -18,6 +18,29 @@ from .finance_ai import (
     extract_bill_fields,
     suggest_reconciliation_match,
 )
+from .recommendation import (
+    get_product_recommendations,
+    get_similar_products,
+    get_frequently_bought_together,
+)
+from .price_intelligence import (
+    analyze_price,
+    get_category_price_benchmarks,
+    suggest_price_range,
+)
+from .sentiment import (
+    HAS_VADER,
+    analyze_sentiment,
+    analyze_review,
+    extract_review_insights,
+)
+from .image_similarity import (
+    HAS_PIL,
+    HAS_NUMPY,
+    compute_image_embedding,
+    compute_similarity,
+    find_similar_images,
+)
 
 __all__ = [
     "suggest_price",
@@ -40,4 +63,19 @@ __all__ = [
     "parse_email_to_ledger",
     "extract_bill_fields",
     "suggest_reconciliation_match",
+    "get_product_recommendations",
+    "get_similar_products",
+    "get_frequently_bought_together",
+    "analyze_price",
+    "get_category_price_benchmarks",
+    "suggest_price_range",
+    "HAS_VADER",
+    "analyze_sentiment",
+    "analyze_review",
+    "extract_review_insights",
+    "HAS_PIL",
+    "HAS_NUMPY",
+    "compute_image_embedding",
+    "compute_similarity",
+    "find_similar_images",
 ]

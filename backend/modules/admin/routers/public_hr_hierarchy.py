@@ -7,13 +7,13 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Any
 
-from domains.hr.services.hierarchy_controller import assign_matrix
-from domains.hr.services.hierarchy_controller import create_org_unit
-from domains.hr.services.hierarchy_controller import reassign_employee_manager
-from domains.hr.services.hierarchy_controller import rebuild_org_unit_paths
-from domains.hr.services.hierarchy_controller import refresh_authority_levels
-from domains.hr.services.hierarchy_controller import remove_matrix
-from domains.hr.services.hierarchy_controller import update_org_unit
+from domains.hr.services.hierarchy.hierarchy_service import assign_matrix
+from domains.hr.services.hierarchy.hierarchy_service import create_org_unit
+from domains.hr.services.hierarchy.hierarchy_service import reassign_employee_manager
+from domains.hr.services.hierarchy.hierarchy_service import rebuild_org_unit_paths
+from domains.hr.services.hierarchy.hierarchy_service import refresh_authority_levels
+from domains.hr.services.hierarchy.hierarchy_service import remove_matrix
+from domains.hr.services.hierarchy.hierarchy_service import update_org_unit
 
 router = APIRouter(prefix="/api/v1")
 

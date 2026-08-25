@@ -466,11 +466,11 @@ def test_supplier_documents_is_keyset_not_offset():
     """
     import inspect
 
-    from domains.suppliers.services import supplier_document_controller_service
+    from domains.suppliers.services import supplier_kyc_service
 
     for fn in (
-        supplier_document_controller_service.list_my_documents,
-        supplier_document_controller_service.list_supplier_documents,
+        supplier_kyc_service.list_my_documents,
+        supplier_kyc_service.list_supplier_documents,
     ):
         src = inspect.getsource(fn)
         assert ".offset(" not in src, f"{fn.__name__} must use keyset pagination, not OFFSET"

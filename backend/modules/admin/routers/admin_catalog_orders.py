@@ -11,8 +11,8 @@ from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_cont
 from domains.catalog.utils.category_tree import rebuild_category_paths
 from domains.governance.services.settings.misc_service import archive_entity
 from domains.governance.services.settings.misc_service import restore_entity
-from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import hard_delete_entity
 
 router = APIRouter(prefix="/api/v1/admin")

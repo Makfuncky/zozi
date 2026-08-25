@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from decimal import Decimal
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, func
 from sqlalchemy import event
 from sqlalchemy.orm import relationship
 from . import Base
@@ -38,16 +38,17 @@ class AdminAnalyticsSnapshot(Base):
     payload_json = Column(Text, nullable=False)
     computed_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False, index=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class RolePermissionSetting(Base):
     __tablename__ = "role_permission_settings"
-    __table_args__ = ({"schema": "core"},)
+    __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
     role = Column(String, nullable=False)
     permissions_json = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
 
 
@@ -60,9 +61,10 @@ class SystemAlert(Base):
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
     is_acknowledged = Column(Boolean, default=False)
-    acknowledged_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    acknowledged_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     acknowledged_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
 
 
@@ -70,28 +72,30 @@ class AdminChangeAuditLog(Base):
     __tablename__ = "admin_change_audit_logs"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    admin_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     action = Column(String, nullable=False)
     entity = Column(String, nullable=False)
     entity_key = Column(String, nullable=True)
     before_json = Column(Text, nullable=True)
     after_json = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
     
-    admin = relationship("User", foreign_keys=[admin_id])
+    admin = relationship("User", foreign_keys=[admin_id], backref="admin_change_logs")
 
 
 class AdminActivityLog(Base):
     __tablename__ = "admin_activity_logs"
     __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
-    admin_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    admin_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     action = Column(String, nullable=False)
     details = Column(JSON, nullable=True)
     ip_address = Column(String, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
 
 
@@ -103,31 +107,32 @@ class SystemSetting(Base):
     value = Column(Text, nullable=True)
     value_type = Column(String, default="string")
     description = Column(String, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class APIKey(Base):
     __tablename__ = "api_keys"
-    __table_args__ = ({"schema": "core"},)
+    __table_args__ = ({"schema": "governance"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     key_hash = Column(String, nullable=False)
     permissions = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
     expires_at = Column(DateTime, nullable=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class BadgeBillingRecord(Base):
     __tablename__ = "badge_billing_records"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     billing_reference = Column(String, unique=True, nullable=True)
     badge_level = Column(String(50), nullable=True)
     charge_type = Column(String, nullable=True)
@@ -145,22 +150,23 @@ class BadgeBillingRecord(Base):
     notes = Column(Text, nullable=True)
     created_by = Column(Integer, nullable=True)
     bank_transaction_id = Column(Integer, ForeignKey("finance.bank_transactions.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
-    supplier = relationship("User", foreign_keys=[supplier_id])
-    bank_transaction = relationship("BankTransaction")
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
+    supplier = relationship("User", foreign_keys=[supplier_id], backref="badge_billing_records")
+    bank_transaction = relationship("BankTransaction", backref="badge_billing_records")
 
 
 class BadgeTransaction(Base):
     __tablename__ = "badge_transactions"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     transaction_type = Column(String, nullable=False)
     reference_id = Column(String, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
 
 
@@ -171,8 +177,9 @@ class BadgeTier(Base):
     name = Column(String, nullable=False)
     min_points = Column(Integer, nullable=False)
     benefits = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class CommissionBadgeTier(Base):
@@ -190,10 +197,10 @@ class CommissionBadgeTier(Base):
     min_monthly_revenue = Column(Numeric(15, 2), nullable=True)
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class CommissionGlobalConfig(Base):
@@ -206,10 +213,10 @@ class CommissionGlobalConfig(Base):
     fixed_cap_enabled = Column(Boolean, default=True)
     margin_protection_enabled = Column(Boolean, default=False)
     margin_threshold = Column(Numeric(5, 4), default=Decimal("0.10"))
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class TicketReply(Base):
@@ -217,10 +224,11 @@ class TicketReply(Base):
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
     ticket_id = Column(Integer, ForeignKey("communication.support_tickets.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     message = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class CouponUsage(Base):
@@ -228,14 +236,15 @@ class CouponUsage(Base):
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     coupon_id = Column(Integer, ForeignKey("commerce.coupons.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     coupon = relationship("Coupon", backref="usages")
-    user = relationship("User", foreign_keys=[user_id])
-    order = relationship("Order", foreign_keys=[order_id])
+    user = relationship("User", foreign_keys=[user_id], backref="coupon_usages")
+    order = relationship("Order", foreign_keys=[order_id], backref="coupon_usages")
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
 
@@ -246,10 +255,10 @@ class PaymentProviderConfig(Base):
     provider_name = Column(String, nullable=False)
     config = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class EmailProviderConfig(Base):
@@ -258,9 +267,9 @@ class EmailProviderConfig(Base):
     id = Column(Integer, primary_key=True, index=True)
     provider = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     email_from_default = Column(String, nullable=True)
     email_from_promotional = Column(String, nullable=True)
     email_from_transactional = Column(String, nullable=True)
@@ -278,33 +287,33 @@ class EmailProviderConfig(Base):
     smtp_use_tls = Column(Boolean, default=True)
     smtp_use_ssl = Column(Boolean, default=False)
     smtp_timeout_seconds = Column(Integer, default=10)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ShippingCarrier(Base):
     __tablename__ = "shipping_carriers"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     name = Column(String, nullable=False)
     code = Column(String, unique=True, nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ShippingZone(Base):
     __tablename__ = "shipping_zones"
     __table_args__ = ({"schema": "logistics"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     name = Column(String, nullable=False)
     countries = Column(JSON, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class FinanceBankAccount(Base):
@@ -326,18 +335,18 @@ class FinanceBankAccount(Base):
     instructions = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     scope = Column(String, nullable=True, default="zozi_primary")
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class PromotionEngineConfig(Base):
     __tablename__ = "promotion_engine_configs"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
     engine_enabled = Column(Boolean, default=False)
     allow_product_coupons = Column(Boolean, default=True)
     allow_category_coupons = Column(Boolean, default=True)
@@ -358,9 +367,9 @@ class PromotionEngineConfig(Base):
     referral_verification_delay_days = Column(Integer, default=7)
     min_points_redeem = Column(Integer, default=1000)
     allow_partial_points_redemption = Column(Boolean, default=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
@@ -370,11 +379,12 @@ class PromotionLedgerEntry(Base):
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
     promotion_id = Column(Integer, nullable=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     amount = Column(Numeric(12, 2), nullable=False)
     entry_type = Column(String, nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class PromotionOrderTier(Base):
@@ -391,9 +401,10 @@ class PromotionOrderTier(Base):
     stacking_allowed = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, nullable=True)
-    updated_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
@@ -410,11 +421,12 @@ class LogisticsCODRemittanceReceipt(Base):
     receipt_file_url = Column(String, nullable=True)
     notes = Column(Text, nullable=True)
     review_note = Column(Text, nullable=True)
-    reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     status = Column(String, default="pending")
     currency = Column(String(3), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     settlement = relationship("LogisticsSettlement", foreign_keys=[settlement_id])
     partner = relationship("LogisticsPartner", foreign_keys=[partner_id])
 
@@ -440,11 +452,11 @@ class LogisticsPartnerBankAccount(Base):
     provider_status = Column(String, nullable=True)
     provider_last_synced_at = Column(DateTime, nullable=True)
     verified_at = Column(DateTime, nullable=True)
-    verified_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    verified_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class LogisticsPartnerDocument(Base):
@@ -454,11 +466,12 @@ class LogisticsPartnerDocument(Base):
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=False)
     doc_type = Column(String, nullable=False)
     file_url = Column(String, nullable=False)
-    reviewed_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     is_verified = Column(Boolean, default=False)
     verified_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class LogisticsSettlement(Base):
@@ -482,8 +495,9 @@ class LogisticsSettlement(Base):
     currency = Column(String(3), nullable=True)
     payout_id = Column(Integer, ForeignKey("treasury.payouts.id"), nullable=True)
     bank_transaction_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ShipmentConfirmation(Base):
@@ -492,10 +506,10 @@ class ShipmentConfirmation(Base):
     id = Column(Integer, primary_key=True, index=True)
     shipment_id = Column(Integer, ForeignKey("logistics.shipments.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    requester_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    requester_user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     requester_role = Column(String, nullable=True)
-    target_user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    target_user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     target_role = Column(String, nullable=True)
     confirmation_type = Column(String, nullable=True)
     status = Column(String, default="pending")
@@ -511,8 +525,9 @@ class ShipmentConfirmation(Base):
     delivery_signature_data_url = Column(String, nullable=True)
     delivery_signature_captured_at = Column(DateTime, nullable=True)
     response_notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ChatbotQueryEvent(Base):
@@ -528,7 +543,7 @@ class ChatbotQueryEvent(Base):
         Index("ix_chatbot_events_session_id", "session_id"), {"schema": "governance"})
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     session_id = Column(String(64), nullable=False)
     event_type = Column(String(30), nullable=False, server_default="query")
     message = Column(Text, nullable=True)
@@ -538,8 +553,9 @@ class ChatbotQueryEvent(Base):
     result_count = Column(Integer, nullable=False, server_default="0")
     product_ids_json = Column(Text, nullable=True)
     clicked_product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
-    created_at = Column(DateTime, default=_utcnow, nullable=False)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
     __constraints__ = (
         CheckConstraint("result_count >= 0", name="ck_chatbot_events_result_count_nonnegative"),
@@ -550,11 +566,12 @@ class PushNotificationToken(Base):
     __tablename__ = "push_notification_tokens"
     __table_args__ = ({"schema": "communication"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     token = Column(String, nullable=False)
     device_type = Column(String, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ProductVerification(Base):
@@ -563,7 +580,7 @@ class ProductVerification(Base):
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
     status = Column(String, default="pending")
-    verified_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    verified_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     shipment_id = Column(Integer, ForeignKey("logistics.shipments.id"), nullable=True)
     verification_type = Column(String, nullable=True)
     result = Column(String, nullable=True)
@@ -573,16 +590,17 @@ class ProductVerification(Base):
     scan_code = Column(String, nullable=True)
     image_urls = Column(Text, nullable=True)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class SupplierBankAccount(Base):
     __tablename__ = "supplier_bank_accounts"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     account_number = Column(String, nullable=True)
     bank_name = Column(String, nullable=False)
     beneficiary_name = Column(String, nullable=True)
@@ -599,11 +617,11 @@ class SupplierBankAccount(Base):
     provider_status = Column(String, nullable=True)
     provider_last_synced_at = Column(DateTime, nullable=True)
     verified_at = Column(DateTime, nullable=True)
-    verified_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    verified_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ProcessedWebhookEvent(Base):
@@ -614,8 +632,9 @@ class ProcessedWebhookEvent(Base):
     event_id = Column(String, nullable=False)
     payload_hash = Column(String, nullable=False)
     processed_at = Column(DateTime, default=_utcnow)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 @event.listens_for(ProcessedWebhookEvent, "before_insert")
@@ -649,8 +668,9 @@ class NormalizedWebhookEvent(Base):
     three_ds_status = Column(String, nullable=True)
     avs_result = Column(String, nullable=True)
     raw_payload = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class EmployeeExpense(Base):
@@ -662,21 +682,21 @@ class EmployeeExpense(Base):
     amount = Column(Numeric(12, 2), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(20), default="pending")
-    approved_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    approved_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     receipt_url = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     employee = relationship("Employee", backref="expenses")
-    approver = relationship("User", foreign_keys=[approved_by])
+    approver = relationship("User", foreign_keys=[approved_by], backref="employee_expense_approvals")
 
 
 class SupplierDispute(Base):
     __tablename__ = "supplier_disputes"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
     order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
     dispute_type = Column(String(40), default="other")
     priority = Column(String(20), default="medium")
@@ -690,28 +710,29 @@ class SupplierDispute(Base):
     metadata_json = Column(JSON, nullable=True)
     supplier_notes = Column(Text, nullable=True)
     admin_notes = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     reason = Column(Text, nullable=True)
     status = Column(String, default="open")
-    resolved_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    resolved_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
     resolved_at = Column(DateTime, nullable=True)
     resolution_notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class SupplierCountryCommission(Base):
     __tablename__ = "supplier_country_commissions"
     __table_args__ = ({"schema": "supplier"},)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    country_code = Column(String(10), nullable=False)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
+    country_code = Column(String(2), nullable=False)
     commission_rate = Column(Numeric(5, 2), nullable=False)
     category_slug = Column(String(100), nullable=True)
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 
 class RetentionJobRun(Base):
@@ -731,5 +752,5 @@ class RetentionJobRun(Base):
     completed_at = Column(DateTime, nullable=True)
     status = Column(String(20), default="pending")
     error_message = Column(Text, nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 

@@ -43,7 +43,7 @@ class SupportTicket(Base):
     status = Column(String, default="open")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     replies = relationship("SupportTicketReply", back_populates="ticket")
     attachments = relationship("TicketAttachment", back_populates="ticket")
     messages = relationship("TicketMessage", back_populates="ticket", cascade="all, delete-orphan")
@@ -57,7 +57,7 @@ class SupportTicketReply(Base):
     sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     ticket = relationship("SupportTicket", back_populates="replies")
     attachments = relationship("TicketAttachment", back_populates="ticket_reply")
 
@@ -70,7 +70,7 @@ class TicketAttachment(Base):
     ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id"), nullable=True)
     file_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     ticket_reply = relationship("SupportTicketReply", back_populates="attachments")
     ticket = relationship("SupportTicket", back_populates="attachments")
 
@@ -105,7 +105,7 @@ class EscalationSLARule(Base):
     __tablename__ = "escalation_sla_rules"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(10), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True)
     priority = Column(String(20), nullable=False)
     escalate_after_minutes = Column(Integer, nullable=False)
     escalate_to_role = Column(String(40), nullable=False)

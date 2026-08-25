@@ -8,7 +8,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 import structlog
-from infrastructure.utils.logging_config import request_id_ctx, set_request_id, get_request_id
 
 logger = structlog.get_logger(__name__)
 

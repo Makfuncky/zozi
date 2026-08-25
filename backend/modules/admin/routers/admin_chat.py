@@ -10,8 +10,8 @@ from infrastructure.database.database import get_db
 from domains.governance.models.user import User
 from domains.governance.models.core import EntityChatMessage
 from domains.governance.models.core import EntityChatThread
-from domains.comms.services.chat.chat_system import get_chat_system
-from domains.comms.services.chat.entity_chat_service import EntityChatService
+from domains.comms.services.messaging.chat_service import get_chat_system
+from domains.comms.services._auto_stubs import EntityChatService
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
@@ -139,7 +139,7 @@ def admin_create_thread(
     get_country_or_404(country_code.upper(), db)
     set_rls_context({country_code.upper()}, is_restricted=True)
     try:
-        from domains.comms.services.chat_system import ChatSystem
+        from domains.comms.services.messaging.chat_service import ChatSystem
         resolved_type = entity_type or "admin"
         resolved_id = entity_id or 0
         try:
@@ -167,7 +167,7 @@ def admin_create_thread_global(
     get_country_or_404(cc, db)
     set_rls_context({cc}, is_restricted=True)
     try:
-        from domains.comms.services.chat_system import ChatSystem
+        from domains.comms.services.messaging.chat_service import ChatSystem
 
         resolved_type = entity_type or "admin"
         resolved_id = entity_id or 0

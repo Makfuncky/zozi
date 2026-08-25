@@ -1,4 +1,4 @@
-"""catalog domain — promotion models (Coupon, Banner, BOGOPromotion).
+﻿"""catalog domain â€” promotion models (Coupon, Banner, BOGOPromotion).
 
 Moved from domains/payments/models/payments.py because these are
 promotion/catalog concepts, not finance concepts.
@@ -8,7 +8,7 @@ BOGOPromotion: Buy-One-Get-One / Buy-X-Get-Y-Free promotions
 """
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, Numeric, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, Numeric, ForeignKey, UniqueConstraint, Index, func
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -32,10 +32,10 @@ class Coupon(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    deleted_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
 
@@ -51,7 +51,7 @@ class Banner(Base):
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
-    deleted_by_id = Column(Integer, ForeignKey("core.users.id"), nullable=True)
+    deleted_by_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     sort_order = Column(Integer, default=0)
     bg_color = Column(String(10), nullable=True)
     text_color = Column(String(10), nullable=True)
@@ -66,10 +66,10 @@ class Banner(Base):
     cta_url = Column(String(500), nullable=True)
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
-    created_by = Column(Integer, ForeignKey("core.users.id"), nullable=True)
-    country_code = Column(String(3), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='RESTRICT'), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
 
@@ -90,6 +90,7 @@ class BOGOPromotion(Base):
     is_active = Column(Boolean, default=True)
     starts_at = Column(DateTime, nullable=True)
     ends_at = Column(DateTime, nullable=True)
-    country_code = Column(String(3), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+

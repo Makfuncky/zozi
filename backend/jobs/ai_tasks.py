@@ -1,4 +1,4 @@
-﻿"""Celery tasks for AI/ML processing (background removal, image analysis, angle generation)."""
+"""Celery tasks for AI/ML processing (background removal, image analysis, angle generation)."""
 from __future__ import annotations
 
 import base64
@@ -47,7 +47,7 @@ def remove_background_task(
         import numpy as np
         from PIL import Image
         from domains.finance.services.shared.bg_removal_service import remove_background, remove_background_model
-        from domains.media.services.storage import storage as _store
+        from providers.media.services.storage import storage as _store
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)
@@ -162,8 +162,8 @@ def generate_angles_task(
         import asyncio
         from io import BytesIO
         from fastapi import UploadFile
-        from modules.supplier.routers.supplier_controller import process_product_image
-        from domains.media.services.storage import storage as _store
+        from domains.suppliers.services.supplier_service import process_product_image
+        from providers.media.services.storage import storage as _store
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)

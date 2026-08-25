@@ -1,35 +1,35 @@
-"""Regression test: the four delegated controllers and their dependent routers
+"""Regression test: the four delegated services and their dependent routers
 must import cleanly.
 
-These modules previously failed to import (missing controllers, wrong import
+These modules previously failed to import (missing services, wrong import
 paths for providers/services). This test locks that in so a future refactor
-cannot silently break the controller -> service boundary again.
+cannot silently break the service boundary again.
 """
 import importlib
 
 MODULES = [
-    # controllers (the modules created to satisfy the routers)
-    "controllers.search.search_controller",
-    "controllers.orders.orders_controller",
-    "controllers.hr.hr_controller",
-    "controllers.unknown.payments_controller",
+    # services (the modules created to satisfy the routers)
+    "domains.search.services.search_service",
+    "domains.orders.services.orders_service",
+    "domains.hr.services.core.hr_service",
+    "domains.finance.services.payments.payments",
     # dependent routers
-    "routers.search",
-    "routers.orders",
-    "routers.payments",
-    # hr router was migrated to the controller/service architecture: the
-    # hand-written routers/hr.py was deleted and replaced by the controller
+    "modules.search.routers.search",
+    "modules.orders.routers.orders",
+    "modules.payments.routers.payments",
+    # hr router was migrated to the service architecture: the
+    # hand-written routers/hr.py was deleted and replaced by the service
     # plus its generated surface router.
-    "controllers.core.hr_controller",
-    "routers.public_core_hr",
-    # export controller: the 8 admin export functions (users/orders/products/coupons/
+    "domains.hr.services.core.hr_service",
+    "modules.admin.routers.public_hr",
+    # export service: the 8 admin export functions (users/orders/products/coupons/
     # audit-logs/transfer/queue/download) must live here as thin wrappers over
     # services.core.export_service. routers/admin.py (the hand-written router that
     # previously imported them) was deleted during the router-consolidation
-    # migration, so the regression guard now checks the controller surface directly.
-    "controllers.core.export_controller",
-    "routers.admin_logistics_operations",
-    "routers.public_core_export",
+    # migration, so the regression guard now checks the service surface directly.
+    "domains.governance.services.core.export_service",
+    "modules.admin.routers.admin_logistics_operations",
+    "modules.admin.routers.public_core_export",
     "services.admin.admin_logistics_operations_service",
 ]
 

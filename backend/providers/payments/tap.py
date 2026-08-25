@@ -1,467 +1,295 @@
-"""Payment gateway provider: tap.
+"""Tap Payments SDK access point for the provider layer.
 
-Relocated from controllers/payments_controller.py.
+Tap Payments (formerly Tap) is an HTTP-based payment gateway operating in the
+Middle East and North Africa. This module wraps their REST API (token-based
+authentication, JSON payloads) behind a provider boundary.
 """
+
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
-import os
-import re
-import stripe
-import httpx
 import logging
-import uuid
 from decimal import Decimal
-from datetime import datetime, timezone
-from typing import Any, Literal, Optional, cast
-from urllib.parse import parse_qs
+from typing import Any, Optional
 
-from fastapi import HTTPException, Request
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
+import requests
 
-from domains.catalog.models.products import Product
-from domains.comms.models.communication import Notification
-from domains.country.models.countries import CountryConfig
-from domains.finance.models.finance import TransactionLedger
-from domains.governance.models.admin import PaymentProviderConfig
-from domains.governance.models.admin import ProcessedWebhookEvent
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.catalog.models.promotions import Coupon
-from domains.finance.models.payments import Payment
-from domains.finance.models.payments import PaymentGatewayConnection
-from infrastructure.messaging.events import PaymentConfirmedEvent, PaymentFailedEvent, PaymentRefundedEvent, EventPublisher, _event_publisher
-from infrastructure.utils.config import settings
-from infrastructure.utils.currency import (
-    convert_from_aed,
-    get_currency_context,
-    money_to_minor_units_for_currency,
+from providers.payments.config import (
+    is_tap_configured,
+    resolve_tap_api_base_url,
+    resolve_tap_secret_key,
+    resolve_tap_webhook_secret,
 )
-
-from providers.payments import payment_persistence as pp
+from providers.payments.webhooks import _verify_tap_signature
 
 logger = logging.getLogger(__name__)
 
+HAS_TAP = True
+_TAP_DEFAULT_TIMEOUT = 30
 
-__all__ = ['create_tap_charge', '_tap_error_detail', '_finalize_tap_charge_status', 'confirm_tap_payment', 'handle_tap_webhook', '_tap_country_dial_code', '_tap_phone_payload', '_build_tap_customer', '_order_charge_total_amount']
 
-async def refund_tap_charge(
-    charge_id: str,
-    amount: float,
-    api_key: str,
-    reason: str = "return_refund",
-    api_base_url: str = "https://api.tap.company",
-) -> dict:
-    """Issue a Tap refund via the refund endpoint.
+class TapError(Exception):
+    """Base exception for Tap provider operations."""
 
-    Encapsulates the raw vendor HTTP call so the orders service orchestrates
-    refunds without performing direct third-party requests. Returns the parsed
-    JSON response from Tap.
+
+class TapChargeNotFoundError(TapError):
+    """Raised when a Tap charge does not exist."""
+
+
+class TapRefundError(TapError):
+    """Raised when a Tap refund operation fails."""
+
+
+class TapConfigurationError(TapError):
+    """Raised when Tap credentials are missing or invalid."""
+
+
+def _get_headers() -> dict[str, str]:
+    """Build authenticated headers for Tap API calls."""
+    secret_key = resolve_tap_secret_key()
+    if not secret_key:
+        raise TapConfigurationError("TAP_SECRET_KEY must be set.")
+    return {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {secret_key}",
+    }
+
+
+def is_available() -> bool:
+    """Return True when Tap credentials are configured."""
+    return is_tap_configured()
+
+
+def create_charge(
+    amount: Decimal,
+    currency: str,
+    *,
+    customer_name: str,
+    customer_email: str = "",
+    customer_phone: str = "",
+    order_id: str = "",
+    description: str = "",
+    redirect_url: str = "",
+    post_url: str = "",
+    metadata: Optional[dict[str, Any]] = None,
+    save_card: bool = False,
+) -> dict[str, Any]:
+    """Create a Tap charge (payment request).
+
+    Tap's charge API returns a hosted payment URL the customer is redirected to.
+
+    Args:
+        amount: The charge total (Tap expects major currency units).
+        currency: ISO 4217 currency code (e.g. 'KWD', 'SAR', 'AED').
+        customer_name: Full name of the customer.
+        customer_email: Customer email address.
+        customer_phone: Customer phone number.
+        order_id: Merchant-side order reference.
+        description: Charge description.
+        redirect_url: URL to redirect after payment completion.
+        post_url: Server-to-server notification URL.
+        metadata: Additional fields merged into the request payload.
+        save_card: Whether to tokenize the card for future charges.
+
+    Returns:
+        dict with 'id', 'transaction_id', 'payment_url', and 'raw' keys.
+
+    Raises:
+        TapConfigurationError: If credentials are missing.
+        TapError: If charge creation fails.
     """
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.post(
-            f"{api_base_url}/v2/refunds",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
+    api_base = resolve_tap_api_base_url()
+    payload: dict[str, Any] = {
+        "amount": str(amount),
+        "currency": currency.upper(),
+        "customer": {
+            "first_name": customer_name.split()[0] if customer_name else "",
+            "last_name": " ".join(customer_name.split()[1:]) if " " in customer_name else "",
+            "email": customer_email,
+            "phone": {
+                "country_code": "",
+                "number": customer_phone,
             },
-            json={
-                "charge_id": charge_id,
-                "amount": amount,
-                "reason": reason,
-            },
-        )
-        return resp.json()
-
-
-async def create_tap_charge(body: TapChargeRequest, current_user: dict, db: Session) -> dict:
-    configured, tap_key = _tap_configured(db)
-    if not configured:
-        raise HTTPException(status_code=503, detail="Tap Payments not configured")
-    if not _payment_provider_mode_allows("tap", db):
-        raise HTTPException(status_code=409, detail="Tap payments are currently disabled by admin")
-
-    webhook_url = _resolve_tap_webhook_url(db)
-    if not webhook_url:
-        raise HTTPException(status_code=503, detail="Tap webhook URL not configured")
-    tap_api_base_url = _resolve_tap_api_base_url(db)
-
-    order = _get_user_order(body.order_id, current_user, db)
-    if _normalized_payment_method(order) != "tap":
-        raise HTTPException(status_code=409, detail="This order is not configured for Tap payment")
-    if order.paid_at is not None:
-        raise HTTPException(status_code=409, detail="Order is already paid")
-    currency_code = _resolved_payment_currency(body.currency, body.country)
-    charge_total = _order_charge_total_amount(order)
-    converted_total = convert_from_aed(charge_total, currency_code)
-    redirect_url = body.success_url.strip() or f"{settings.frontend_url}/checkout?tap_order_id={order.id}"
-    preferred_language = str(current_user.get("preferred_language") or "en").lower()
-    lang_code = "ar" if preferred_language.startswith("ar") else "en"
-
-    payload = {
-        "amount": float(converted_total),
-        "currency": currency_code,
-        "customer_initiated": True,
-        "threeDSecure": True,
-        "save_card": False,
-        "description": body.description or f"ZOZI Order #{order.id}",
-        "customer": _build_tap_customer(order, current_user),
-        "order": {"id": str(order.id)},
+        },
+        "source": {
+            "id": "src_card",
+        },
+        "redirect": {
+            "url": redirect_url,
+        },
+        "post": {
+            "url": post_url,
+        },
+        "description": description or f"Charge for order {order_id}",
         "metadata": {
-            "order_id": str(order.id),
-            "user_id": str(current_user["id"]),
-            "payment_method": "tap",
-            "shipping_country": str(getattr(order, "shipping_country", "") or ""),
-            **_order_gateway_metadata(order),
+            "order_id": order_id,
         },
-        "source": {"id": "src_all"},
-        "redirect": {"url": redirect_url},
-        "post": {"url": webhook_url},
+        "save_card": save_card,
         "reference": {
-            "transaction": f"zozi_order_{order.id}",
-            "order": str(order.id),
+            "transaction": order_id,
         },
     }
-
+    if metadata:
+        payload["metadata"].update(metadata)
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                f"{tap_api_base_url}/v2/charges",
-                headers={
-                    "Authorization": f"Bearer {tap_key}",
-                    "Content-Type": "application/json",
-                    "accept": "application/json",
-                    "lang_code": lang_code,
-                },
-                json=payload,
-            )
-        data = resp.json()
-        if resp.status_code not in (200, 201):
-            logger.error("Tap charge creation failed: %s", data)
-            errors = data.get("errors", [{}])
-            raise HTTPException(
-                status_code=400,
-                detail=errors[0].get("description", "Tap payment failed") if errors else "Tap payment failed",
-            )
-
-        charge_id = data.get("id")
-        redirect_url = data.get("transaction", {}).get("url") or data.get("redirect", {}).get("url")
-        if charge_id:
-            setattr(order, "payment_intent_id", charge_id)
-            pp.commit(db)
-        return {
-            "charge_id": charge_id,
-            "redirect_url": redirect_url,
-            "status": data.get("status"),
-            "currency": currency_code,
-            "display_amount": float(converted_total),
-        }
-    except HTTPException as e:
-        logger.exception("create_tap_charge_failed", error=str(e))
-        raise
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
-        logger.error("Tap charge error: %s", exc)
-        raise HTTPException(status_code=500, detail="Tap payment service error")
-
-
-def _tap_error_detail(payload: dict[str, Any], default: str) -> str:
-    errors = payload.get("errors", []) if isinstance(payload, dict) else []
-    if isinstance(errors, list) and errors:
-        first_error = errors[0]
-        if isinstance(first_error, dict):
-            description = first_error.get("description")
-            if description:
-                return str(description)
-    message = payload.get("message") if isinstance(payload, dict) else None
-    return str(message or default)
-
-
-def _finalize_tap_charge_status(order: Order, charge_payload: dict[str, Any], db: Session) -> dict[str, Any]:
-    charge_id = str(charge_payload.get("id") or getattr(order, "payment_intent_id", "") or "").strip()
-    if charge_id and not getattr(order, "payment_intent_id", None):
-        setattr(order, "payment_intent_id", charge_id)
-
-    status = str(charge_payload.get("status", "") or "").upper()
-
-    if status == "CAPTURED":
-        if order.status not in INVENTORY_RELEASE_STATUSES and order.paid_at is None:
-            _apply_successful_payment(
-                order,
-                f"Order #{order.id} payment via Tap was successful.",
-                db,
-            )
-            pp.commit(db)
-
-        return {
-            "status": "confirmed",
-            "order_id": order.id,
-            "order_status": order.status if order.status not in INVENTORY_RELEASE_STATUSES else order.status,
-            "charge_id": charge_id,
-            "payment_status": status,
-            "paid_at": order.paid_at,
-        }
-
-    if status == "FAILED":
-        if order.paid_at is None and order.status not in INVENTORY_RELEASE_STATUSES:
-            setattr(order, "status", "failed")
-            pp.add(db, 
-                Notification(
-                    user_id=order.user_id,
-                    type="order_update",
-                    title="Payment Failed",
-                    message=f"Order #{order.id} Tap payment failed.",
-                    link=f"/orders/{order.id}",
-                )
-            )
-            pp.commit(db)
-            try:
-                event = PaymentFailedEvent.create(
-                    order_id=order.id,
-                    user_id=order.user_id,
-                    provider="tap",
-                    message="Your Tap payment could not be completed.",
-                )
-                _event_publisher.publish(event)
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-                logger.exception("Failed to publish PaymentFailedEvent for order %s", order.id)
-
-        return {
-            "status": "failed",
-            "order_id": order.id,
-            "order_status": order.status,
-            "charge_id": charge_id,
-            "payment_status": status,
-            "paid_at": order.paid_at,
-        }
-
-    if status == "REFUNDED":
-        if order.status != "refunded":
-            apply_order_status_change(
-                order,
-                "refunded",
-                db,
-                refund_meta={
-                    "source": "tap_refund",
-                    "transaction_ref": f"{charge_id}:REFUNDED",
-                    "description": f"Tap refund settled for order #{order.id}",
-                    "transaction_date": datetime.now(timezone.utc).replace(tzinfo=None),
-                },
-            )
-            pp.add(db, 
-                Notification(
-                    user_id=order.user_id,
-                    type="order_update",
-                    title="Refund Processed",
-                    message=f"Your Tap refund for Order #{order.id} has been processed.",
-                    link=f"/orders/{order.id}",
-                )
-            )
-            pp.commit(db)
-
-        return {
-            "status": "refunded",
-            "order_id": order.id,
-            "order_status": order.status,
-            "charge_id": charge_id,
-            "payment_status": status,
-            "paid_at": order.paid_at,
-        }
-
-    return {
-        "status": "pending_verification",
-        "order_id": order.id,
-        "order_status": order.status,
-        "charge_id": charge_id,
-        "payment_status": status or "pending",
-        "paid_at": order.paid_at,
-    }
-
-
-async def confirm_tap_payment(body: ConfirmTapPaymentRequest, current_user: dict, db: Session) -> dict:
-    configured, tap_key = _tap_configured(db)
-    if not configured:
-        raise HTTPException(status_code=503, detail="Tap Payments not configured")
-    tap_api_base_url = _resolve_tap_api_base_url(db)
-
-    order = _get_user_order(body.order_id, current_user, db)
-    if _normalized_payment_method(order) != "tap":
-        raise HTTPException(status_code=409, detail="This order is not configured for Tap payment")
-
-    charge_id = (body.charge_id or cast(Optional[str], getattr(order, "payment_intent_id", None)) or "").strip()
-    if not charge_id:
-        raise HTTPException(status_code=422, detail="charge_id is required")
-
-    if order.paid_at is not None:
-        return {
-            "status": "confirmed",
-            "order_id": order.id,
-            "order_status": order.status,
-            "charge_id": charge_id,
-            "payment_status": "CAPTURED",
-            "paid_at": order.paid_at,
-        }
-
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.get(
-                f"{tap_api_base_url}/v2/charges/{charge_id}",
-                headers={
-                    "Authorization": f"Bearer {tap_key}",
-                    "accept": "application/json",
-                },
-            )
-        data = resp.json()
-        if resp.status_code != 200:
-            raise HTTPException(status_code=400, detail=_tap_error_detail(data, "Tap payment verification failed"))
-        return _finalize_tap_charge_status(order, data, db)
-    except HTTPException as e:
-        logger.exception("confirm_tap_payment_failed", error=str(e))
-        raise
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:
-        logger.error("Tap payment confirmation error: %s", exc)
-        raise HTTPException(status_code=500, detail="Tap payment verification error")
-
-
-async def handle_tap_webhook(request: Request, db: Session) -> dict:
-    raw_body = await request.body()
-
-    # ── Signature verification ────────────────────────────────────────────────
-    tap_webhook_secret = _resolve_tap_webhook_secret(db)
-    if tap_webhook_secret:
-        sig_header = request.headers.get("hashstring", "")
-        if not sig_header or not _verify_tap_signature(raw_body, sig_header, db):
-            logger.warning("tap_webhook: invalid or missing signature")
-            raise HTTPException(status_code=400, detail="Invalid Tap webhook signature")
-    else:
-        # Secret not configured — log a warning but do NOT silently accept.
-        # In production, TAP_WEBHOOK_SECRET must be set.
-        logger.warning(
-            "tap_webhook: TAP_WEBHOOK_SECRET is not configured; "
-            "signature verification is skipped. Set TAP_WEBHOOK_SECRET in production."
+        response = requests.post(
+            f"{api_base}/charges",
+            json=payload,
+            headers=_get_headers(),
+            timeout=_TAP_DEFAULT_TIMEOUT,
         )
-
-    try:
-        import json
-        data = json.loads(raw_body)
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("handle_tap_webhook_failed", error=str(e))
-        raise HTTPException(status_code=400, detail="Invalid JSON")
-
-    charge_id = data.get("id")
-    status = data.get("status", "").upper()
-
-    if not charge_id:
-        return {"status": "ignored"}
-
-    # ── Idempotency: skip events we have already processed ────────────────────
-    # Tap does not supply a unique event ID separate from the charge ID, so we
-    # use "{charge_id}:{status}" as the composite idempotency key.
-    tap_event_id = f"{charge_id}:{status}"
-    already_processed = db.query(ProcessedWebhookEvent).filter(
-        ProcessedWebhookEvent.event_id == tap_event_id,
-        ProcessedWebhookEvent.processor == "tap",
-    ).first()
-    if already_processed:
-        logger.info("tap_webhook duplicate ignored: event_id=%s", tap_event_id)
-        return {"status": "ok"}
-
-    order = db.query(Order).filter(Order.payment_intent_id == charge_id).first()
-    if not order:
-        logger.warning("tap_webhook: no order for charge %s", charge_id)
-        return {"status": "unknown_order"}
-    _finalize_tap_charge_status(order, data, db)
-
-    # Record event as processed (idempotency guard)
-    pp.add(db, ProcessedWebhookEvent(event_id=tap_event_id, processor="tap"))
-    pp.commit(db)
-    logger.info("tap_webhook: charge %s order %s status=%s", charge_id, order.id, status)
-    return {"status": "ok"}
-
-
-def _tap_country_dial_code(country: str | None) -> str:
-    code = "".join(ch for ch in str(country or "").upper() if ch.isalpha())[:2]
-    return TAP_COUNTRY_DIAL_CODES.get(code, "")
-
-
-def _tap_phone_payload(phone_value: str | None, country: str | None) -> dict[str, str] | None:
-    digits = "".join(ch for ch in str(phone_value or "") if ch.isdigit())
-    if not digits:
-        return None
-
-    if digits.startswith("00"):
-        digits = digits[2:]
-
-    dial_code = _tap_country_dial_code(country)
-    if not dial_code:
-        return None
-
-    if digits.startswith(dial_code):
-        digits = digits[len(dial_code):]
-
-    digits = digits.lstrip("0")
-    if not digits:
-        return None
-
+    except requests.RequestException as exc:
+        logger.exception("Tap create_charge request failed")
+        raise TapError(f"Tap API request failed: {exc}") from exc
+    if response.status_code not in (200, 201):
+        raise TapError(
+            f"Tap create_charge returned status {response.status_code}: {response.text}"
+        )
+    data = response.json()
     return {
-        "country_code": dial_code,
-        "number": digits,
+        "id": data.get("id", ""),
+        "transaction_id": data.get("transaction", {}).get("id", ""),
+        "payment_url": data.get("transaction", {}).get("url", ""),
+        "status": data.get("status", ""),
+        "amount": str(data.get("amount", "")),
+        "currency": data.get("currency", ""),
+        "raw": data,
     }
 
 
-def _build_tap_customer(order: Order, current_user: dict[str, Any]) -> dict[str, Any]:
-    full_name = _extract_order_customer_name(order)
-    if not full_name:
-        username = str(current_user.get("username") or "").strip()
-        if username and "@" not in username:
-            full_name = username.replace(".", " ").replace("_", " ")
+def get_charge(charge_id: str) -> dict[str, Any]:
+    """Retrieve a Tap charge by ID.
 
-    if not full_name:
-        email_local = str(current_user.get("email") or "").split("@", 1)[0].strip()
-        if email_local:
-            full_name = email_local.replace(".", " ").replace("_", " ")
+    Args:
+        charge_id: The Tap charge ID.
 
-    first_name, last_name = _split_customer_name(full_name)
-    customer: dict[str, Any] = {
-        "first_name": first_name,
-        "last_name": last_name,
+    Returns:
+        dict with 'id', 'status', 'amount', 'currency', and 'raw' keys.
+
+    Raises:
+        TapChargeNotFoundError: If the charge does not exist.
+        TapError: If the retrieval fails.
+    """
+    api_base = resolve_tap_api_base_url()
+    try:
+        response = requests.get(
+            f"{api_base}/charges/{charge_id}",
+            headers=_get_headers(),
+            timeout=_TAP_DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        logger.exception("Tap get_charge request failed for %s", charge_id)
+        raise TapError(f"Tap API request failed: {exc}") from exc
+    if response.status_code == 404:
+        raise TapChargeNotFoundError(
+            f"Tap charge {charge_id} not found"
+        )
+    if response.status_code != 200:
+        raise TapError(
+            f"Tap get_charge returned status {response.status_code}"
+        )
+    data = response.json()
+    return {
+        "id": data.get("id", charge_id),
+        "status": data.get("status", ""),
+        "amount": str(data.get("amount", "")),
+        "currency": data.get("currency", ""),
+        "customer": data.get("customer", {}),
+        "raw": data,
     }
 
-    email = str(current_user.get("email") or "").strip()
-    if email:
-        customer["email"] = email
 
-    phone_payload = _tap_phone_payload(
-        cast(str | None, getattr(order, "customer_phone", None)) or cast(str | None, current_user.get("phone")),
-        cast(str | None, getattr(order, "shipping_country", None)) or cast(str | None, current_user.get("preferred_country")),
-    )
-    if phone_payload:
-        customer["phone"] = phone_payload
+def refund_charge(
+    charge_id: str,
+    *,
+    amount: Optional[Decimal] = None,
+    reason: str = "",
+    metadata: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Refund a Tap charge.
 
-    if "email" not in customer and "phone" not in customer:
-        raise HTTPException(status_code=422, detail="Customer email or phone is required for Tap payments")
+    Args:
+        charge_id: The Tap charge ID to refund.
+        amount: Optional partial refund amount (full refund if omitted).
+        reason: Reason for the refund.
+        metadata: Additional fields merged into the request payload.
 
-    return customer
+    Returns:
+        dict with 'id', 'status', 'refund_amount', and 'raw' keys.
+
+    Raises:
+        TapChargeNotFoundError: If the charge does not exist.
+        TapRefundError: If the refund operation fails.
+    """
+    api_base = resolve_tap_api_base_url()
+    payload: dict[str, Any] = {
+        "charge_id": charge_id,
+        "reason": reason or "Refund",
+    }
+    if amount is not None:
+        payload["amount"] = str(amount)
+    if metadata:
+        payload["metadata"] = metadata
+    try:
+        response = requests.post(
+            f"{api_base}/charges/{charge_id}/refunds",
+            json=payload,
+            headers=_get_headers(),
+            timeout=_TAP_DEFAULT_TIMEOUT,
+        )
+    except requests.RequestException as exc:
+        logger.exception(
+            "Tap refund_charge request failed for %s", charge_id
+        )
+        raise TapRefundError(
+            f"Tap API request failed: {exc}"
+        ) from exc
+    if response.status_code == 404:
+        raise TapChargeNotFoundError(
+            f"Tap charge {charge_id} not found"
+        )
+    if response.status_code not in (200, 201):
+        raise TapRefundError(
+            f"Tap refund returned status {response.status_code}: {response.text}"
+        )
+    data = response.json()
+    return {
+        "id": data.get("id", ""),
+        "status": data.get("status", ""),
+        "refund_amount": str(data.get("amount", "")),
+        "raw": data,
+    }
 
 
-def _order_charge_total_amount(order: Order) -> Decimal:
-    return max(
-        _decimal_from_value(getattr(order, "payment_customer_total_amount", None) or getattr(order, "total_amount", 0)),
-        Decimal("0"),
-    )
+def verify_webhook(
+    raw_body: bytes,
+    hashstring_header: str,
+    webhook_secret: str,
+) -> bool:
+    """Verify an incoming Tap webhook signature.
 
-from providers.payments._common import *  # noqa: E402,F401,F403
-from providers.payments._order import *   # noqa: E402,F401,F403
-from providers.payments.config import *    # noqa: E402,F401,F403
-from providers.payments.webhooks import * # noqa: E402,F401,F403
-from providers.payments.stripe import *    # noqa: E402,F401,F403
-from providers.payments.tap import *       # noqa: E402,F401,F403
-from providers.payments.paytabs import *   # noqa: E402,F401,F403
-import structlog
-logger = structlog.get_logger(__name__)
-from providers.payments.paypal import *    # noqa: E402,F401,F403
-from providers.payments.thawani import *   # noqa: E402,F401,F403
-from providers.payments.generic import *   # noqa: E402,F401,F403
+    Tap signs each webhook POST with an HMAC-SHA256 digest over the raw body,
+    delivered in the 'hashstring' header.
 
+    Args:
+        raw_body: The raw request body bytes.
+        hashstring_header: The 'hashstring' header value.
+        webhook_secret: The shared TAP_WEBHOOK_SECRET.
+
+    Returns:
+        True if the signature is valid.
+    """
+    return _verify_tap_signature(raw_body, hashstring_header, webhook_secret)
+
+
+__all__ = [
+    "HAS_TAP",
+    "TapError",
+    "TapChargeNotFoundError",
+    "TapRefundError",
+    "TapConfigurationError",
+    "is_available",
+    "create_charge",
+    "get_charge",
+    "refund_charge",
+    "verify_webhook",
+]

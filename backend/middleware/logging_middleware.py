@@ -7,9 +7,6 @@ import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from infrastructure.utils.logging_config import country_code_ctx, request_id_ctx, user_id_ctx, db_query_time_ctx
-from infrastructure.utils.metrics import db_query_duration_seconds, http_request_duration_seconds, http_requests_total
-
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

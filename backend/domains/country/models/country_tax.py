@@ -15,7 +15,7 @@ class CountryTax(Base):
     __table_args__ = (Index('ix_country_tax_code', 'country_code', unique=True), Index('ix_country_tax_active', 'is_active', 'is_deleted'), Index('ix_country_tax_country_created', 'country_code', 'created_at'), {'schema': 'country'})
     id = Column(Integer, primary_key=True, index=True)
     uuid = Column(String(36), nullable=False, unique=True, index=True)
-    country_code = Column(String(3), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False, unique=True, index=True)
+    country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=False, unique=True, index=True)
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     version = Column(Integer, nullable=False, default=1)

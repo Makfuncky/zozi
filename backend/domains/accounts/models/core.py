@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from sqlalchemy import (
     Boolean,
@@ -12,12 +12,13 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
-# accounts/models/core.py — owns the ``accounts``-schema tables that have no
+# accounts/models/core.py â€” owns the ``accounts``-schema tables that have no
 # other canonical home. Tables that belong to other domains are re-exported
 # from their canonical homes below so legacy imports resolve without
 # re-defining any table on the shared MetaData.
@@ -47,13 +48,13 @@ __all__ = [
 ]
 
 
-# ── accounts-owned tables (inline definitions) ───────────────────────────────
+# â”€â”€ accounts-owned tables (inline definitions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class Address(Base):
     __tablename__ = "addresses"
     __table_args__ = ({"schema": "customer"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
     label = Column(String, nullable=True)
     full_name = Column(String, nullable=False)
     phone = Column(String, nullable=True)
@@ -64,7 +65,8 @@ class Address(Base):
     postal_code = Column(String, nullable=True)
     country = Column(String, default="US")
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
     user = relationship("User", back_populates="addresses")
 
@@ -73,24 +75,29 @@ class Cart(Base):
     __tablename__ = "carts"
     __table_args__ = ({"schema": "commerce"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), nullable=True, index=True)
     user = relationship("User", back_populates="cart")
 
 
 class CartItem(Base):
     __tablename__ = "cart_items"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = (
+        Index("ix_cart_items_user_product", "user_id", "product_id"),
+        Index("ix_cart_items_created", "created_at"),
+        {"schema": "commerce"},
+    )
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("core.users.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
+    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False)
     quantity = Column(Integer, default=1)
     selected_size = Column(String(50), default="", nullable=False)
     selected_color = Column(String(50), default="", nullable=False)
     variant_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(10), nullable=True, index=True)
     user = relationship("User", back_populates="cart_items")
     product = relationship("Product", back_populates="cart_items")
@@ -112,7 +119,7 @@ from domains.analytics.models.analytics_schema_models import (  # noqa: F401
 from domains.security.models.security_schema_models import AlertEscalationRule  # noqa: F401
 
 
-# ── Re-exports from canonical homes (DO NOT redefine) ─────────────────────────
+# â”€â”€ Re-exports from canonical homes (DO NOT redefine) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # These tables have canonical definitions in other domains. Re-exported here so
 # legacy ``from domains.accounts.models.core import X`` imports keep resolving.
 
@@ -136,7 +143,7 @@ from domains.hr.models.employee_models import (  # noqa: F401
 )
 
 # Re-export user-related classes from accounts/models/user.py (canonical home).
-# Lazy import to avoid circular import: accounts/user.py → customers → accounts/core.py
+# Lazy import to avoid circular import: accounts/user.py â†’ customers â†’ accounts/core.py
 _USER_RE_EXPORTS = {
     "User": ("domains.accounts.models.user", "User"),
     "UserLoginHistory": ("domains.accounts.models.user", "UserLoginHistory"),
@@ -164,4 +171,5 @@ def __getattr__(name: str):
         _USER_CACHE[name] = cls
         return cls
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 

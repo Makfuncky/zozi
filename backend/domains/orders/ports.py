@@ -1529,11 +1529,7 @@ from domains.country.services.cross_border.cross_border_detection import (
 # --- COMMS-IMPORT: sanctioned model/utils surface consumed by comms (Law 3) ---
 from domains.orders.utils.order_tracking import order_status_label, shipment_status_label
 from domains.orders.services.promotion_service import get_promotion_config, list_promotion_tiers, preview_order_tier_discount
-from domains.orders.services.flash_sale_controller import get_all_flash_sales
 from domains.orders.services.flash_sale_controller_service import get_all_flash_sales
 from domains.orders.services.coupons_write_service import update_coupon
-from domains.orders.services.flash_sale_controller import create_flash_sale, update_flash_sale, delete_flash_sale
 from domains.orders.services.flash_sale_controller_service import create_flash_sale, delete_flash_sale, update_flash_sale
-from domains.orders.services.promotion_controller import update_promotion_config, create_promotion_tier, update_promotion_tier, delete_promotion_tier
 from domains.orders.services.promotion_service import create_promotion_tier, delete_promotion_tier, update_promotion_config, update_promotion_tier
-from domains.orders.services.disputes_controller import disputes_controller

@@ -995,6 +995,102 @@ grep -r "from domains\." backend/ --include="*.py" | grep -v "__pycache__" | gre
 
 ---
 
+## Phase 19: Router Restructuring — `modules/{m}/routers/{d}.py` (15 files per module)
+
+### 19.1 Goal
+Restructure all router files from the current flat/haphazard layout into a **consistent domain-per-file** pattern:
+```
+modules/{m}/routers/{d}.py
+```
+Where `{m}` = module (admin, customer, employee, logistics, supplier) and `{d}` = domain (15 domains).
+
+**Result:** Exactly 15 router files per module × 5 modules = 75 router files total (down from 476).
+
+### 19.2 The 15 Domain Routers (per module)
+| # | Domain Router File | Covers |
+|---|---|---|
+| 1 | `accounts.py` | User accounts, identity, sessions, addresses |
+| 2 | `analytics.py` | Analytics dashboards, reports |
+| 3 | `audit.py` | Audit trails, compliance logs |
+| 4 | `catalog.py` | Products, categories, search, variants, pricing, uploads |
+| 5 | `comms.py` | Chat, email, notifications, tickets, video |
+| 6 | `country.py` | Countries, localization, cross-border, tax |
+| 7 | `customers.py` | Customer profiles, health, referrals, reviews, wishlist |
+| 8 | `finance.py` | Payments, payouts, commissions, treasury, ledger, tax |
+| 9 | `governance.py` | Admin, permissions, fraud, risk, compliance |
+| 10 | `hr.py` | Employees, payroll, hierarchy, LMS, OKR, attendance |
+| 11 | `logistics.py` | Shipping, fulfillment, tracking, partners, geo |
+| 12 | `orders.py` | Cart, checkout, orders, disputes, returns |
+| 13 | `promotions.py` | Coupons, coins, banners, BOGO, flash sales |
+| 14 | `security.py` | Fraud detection, threat intel, auth policies |
+| 15 | `suppliers.py` | Supplier profiles, products, documents, onboarding |
+
+> **Note:** `media` is a **provider** (already in `providers/media/`), not a domain. `infrastructure` is a **platform layer**, not a domain. Neither gets a router file.
+
+### 19.3 Migration Process
+See detailed plan: **`backend/ROUTER_CORRECTION_PLAN.md`** (module-by-module mapping of 476 → 75 files).
+
+1. **Fix 7 critical middleware blockers first** (so app can start)
+2. **For each module** (admin, customer, employee, logistics, supplier):
+   - Read all existing router files listed in `__init__.py`
+   - Group endpoints by target domain (see plan for exact mapping)
+   - Merge into the 15 canonical domain router files
+   - Remove duplicate endpoints
+   - Ensure thin-router pattern: auth + require_feature + ONE service call
+3. **Update** `modules/{m}/routers/__init__.py` to import the 15 domain routers
+4. **Create deprecated stubs** for old router files
+5. **Test** all endpoints still register correctly
+
+### 19.4 Benefits
+- **Manageable at scale:** 75 files vs 476 — easier navigation for 100K+ user codebase
+- **Domain clarity:** Each router file maps to exactly one business domain
+- **Consistent structure:** Same 15 files exist in every module, only the actor changes
+- **Easier onboarding:** New developers find endpoints by domain, not by module
+
+---
+
+## Phase 20: Fix All Broken Imports (Critical)
+
+### 20.1 Critical Blockers (Prevent App Startup)
+These broken imports prevent the app from starting at all:
+
+| # | File | Broken Import | Fix |
+|---|------|--------------|-----|
+| 1 | `middleware/country_context.py:39` | `domains.hr.services.coi_service` | → `domains.hr.services.employees.coi_service` |
+| 2 | `middleware/coi_middleware.py:10` | `domains.hr.services.coi_service` | → `domains.hr.services.employees.coi_service` |
+| 3 | `middleware/dependencies/coi_dependency.py:10` | `domains.hr.services.coi_service` | → `domains.hr.services.employees.coi_service` |
+| 4 | `middleware/impossible_travel_middleware.py:156` | `domains.governance.services.security.impossible_travel_write_service` | Function doesn't exist — implement or remove |
+| 5 | `middleware/impossible_travel_middleware.py:349` | `domains.governance.services.fraud.fraud_detection_service` | → `domains.security.services.fraud_detection_service` |
+| 6 | `middleware/device_binding_middleware.py:69-70` | `ServiceMeshSecurity()` / `NetworkPolicy()` | Classes don't exist — implement or remove |
+| 7 | `middleware/dependencies/fraud_events.py:21` | `infrastructure.database.models.FraudEvent` | → `domains.governance.models.fraud.FraudEvent` |
+
+### 20.2 High-Impact Router Import Errors (~1,789 occurrences)
+Router files reference service modules that don't exist on disk. Top patterns:
+
+| Pattern | Count | Fix Approach |
+|---------|-------|-------------|
+| `domains.governance.services.{domain}.{service}` | ~800 | Planned-but-unimplemented. Create stubs or redirect to actual service location |
+| `domains.hr.services.{subdomain}.{service}` | ~200 | HR restructured into subpackages. Update imports to actual paths |
+| `domains.comms.services.{subdomain}.{service}` | ~150 | Comms restructured. Update imports to actual paths |
+| `domains.finance.services.{subdomain}.{service}` | ~200 | Finance restructured. Update imports to actual paths |
+| `domains.country.services.{subdomain}.{service}` | ~100 | Country restructured. Update imports to actual paths |
+| Flat files that never existed | ~300 | Either create the service or remove the import |
+
+### 20.3 Domain Service Import Errors (~283 occurrences)
+Cross-domain imports within services that reference non-existent modules.
+
+### 20.4 Provider/Infrastructure Import Errors (174 occurrences)
+Missing third-party packages and domain imports that reference unimplemented modules.
+
+### 20.5 Fix Strategy
+1. **Fix critical blockers first** (Phase 20.1) — app can't start without these
+2. **Create missing service stubs** for planned-but-unimplemented modules
+3. **Update import paths** for restructured domains (hr, comms, finance, country)
+4. **Install missing third-party packages** (cv2, rembg, bcrypt, etc.)
+5. **Remove dead imports** for functionality that will never be implemented
+
+---
+
 ## Migration Order (Priority)
 
 | Phase | Description | Risk | Effort |
@@ -1018,6 +1114,8 @@ grep -r "from domains\." backend/ --include="*.py" | grep -v "__pycache__" | gre
 | 16 | Clean up infrastructure/ | Low | Low |
 | 17 | Update imports | High | High |
 | 18 | Testing | High | High |
+| 19 | Router restructuring (15 files/module) | Medium | High |
+| 20 | Fix all broken imports | Critical | High |
 
 ---
 
@@ -1640,32 +1738,32 @@ infrastructure/
 │                        ZOZI PLATFORM                            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
-│  │ accounts│  │ catalog │  │promotions│  │ orders  │           │
-│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘           │
-│       │            │            │            │                  │
-│  ┌────┴────┐  ┌────┴────┐  ┌────┴────┐  ┌────┴────┐           │
-│  │suppliers│  │ finance │  │logistics│  │customers│           │
-│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘           │
-│       │            │            │            │                  │
-│  ┌────┴────┐  ┌────┴────┐  ┌────┴────┐  ┌────┴────┐           │
-│  │   comms │  │ country │  │   hr    │  │governance│          │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘           │
+│  ┌─────────┐  ┌─────────┐  ┌──────────┐   ┌─────────┐           │
+│  │ accounts│  │ catalog │  │promotions│   │ orders  │           │
+│  └────┬────┘  └────┬────┘  └────┬─────┘   └────┬────┘           │
+│       │            │            │              │                │
+│  ┌────┴────┐  ┌────┴────┐  ┌────┴────┐    ┌────┴────┐           │
+│  │suppliers│  │ finance │  │logistics│    │customers│           │
+│  └────┬────┘  └────┬────┘  └────┬────┘    └────┬────┘           │
+│       │            │            │              │                │
+│  ┌────┴────┐  ┌────┴────┐  ┌────┴────┐    ┌────┴─────┐          │
+│  │   comms │  │ country │  │   hr    │    │governance│          │
+│  └─────────┘  └─────────┘  └─────────┘    └──────────┘          │
 │                                                                 │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐           │
-│  │analytics│  │  audit  │  │security │  │infrastructure│       │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘           │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌──────────────┐        │
+│  │analytics│  │  audit  │  │security │  │infrastructure│        │
+│  └─────────┘  └─────────┘  └─────────┘  └──────────────┘        │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                     PROVIDERS (Tools)                           │
 ├─────────────────────────────────────────────────────────────────┤
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐    │
-│  │ ai  │ │image│ │payments│ │geo │ │comms│ │auth│ │voice│    │
-│  └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘ └─────┘    │
-│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                            │
-│  │br_  │ │auto │ │secur│ │news │                            │
-│  │remov│ │maton│ │ity  │ │     │                            │
-│  └─────┘ └─────┘ └─────┘ └─────┘                            │
+│  ┌─────┐ ┌─────┐ ┌────────┐ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐     │
+│  │ ai  │ │image│ │payments│ │geo  │ │comms│ │auth │ │voice│     │
+│  └─────┘ └─────┘ └────────┘ └─────┘ └─────┘ └─────┘ └─────┘     │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                                │
+│  │br_  │ │auto │ │secur│ │news │                                │
+│  │remov│ │maton│ │ity  │ │     │                                │
+│  └─────┘ └─────┘ └─────┘ └─────┘                                │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1737,16 +1835,16 @@ You're raising a critical architectural question. Let me analyze the coupling pr
 ### Approach A: Split by Coupling (Recommended)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  catalog/                                                    │
 │  ├── sub-domains/                                            │
 │  │   ├── pricing/          ← Product-specific pricing        │
 │  │   │   ├── flash-sales/  ← Time-limited price overrides    │
 │  │   │   ├── discounts/    ← Product discount rules          │
 │  │   │   └── supplier-discounts/  ← Supplier placed discounts│
-│  │   ├── products/                                          │
-│  │   ├── categories/                                        │
-│  │   └── search/                                            │
+│  │   ├── products/                                           │
+│  │   ├── categories/                                         │
+│  │   └── search/                                             │
 │  │                                                           │
 │  promotions/                                                 │
 │  ├── sub-domains/                                            │
@@ -1755,7 +1853,7 @@ You're raising a critical architectural question. Let me analyze the coupling pr
 │  │   ├── banners/          ← Marketing banners               │
 │  │   └── bogo/             ← Buy-one-get-one (cart-level)    │
 │  │                                                           │
-└─────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **Why this works:**
@@ -1766,21 +1864,21 @@ You're raising a critical architectural question. Let me analyze the coupling pr
 ### Approach B: Event-Driven (More Complex, Scalable)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  catalog/                                                    │
 │  ├── products/                                               │
 │  ├── categories/                                             │
 │  └── search/                                                 │
 │         ▲                                                    │
-│         │ subscribes to                                       │
+│         │ subscribes to                                      │
 │         │                                                    │
 │  promotions/                                                 │
 │  ├── flash-sales/     ──publishes──▶  ProductPriceChanged   │
 │  ├── discounts/       ──publishes──▶  ProductDiscountSet    │
-│  ├── coupons/                                              │
+│  ├── coupons/                                                │
 │  └── coins/                                                  │
 │                                                              │
-└─────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **Why this works:**

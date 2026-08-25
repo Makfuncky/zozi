@@ -36,11 +36,11 @@ from domains.logistics.models.logistics import LogisticsPartner
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
 from infrastructure.utils.dependencies import require_admin
-from domains.finance.services.payments.payout_approval_controller import approve_payout as approve_payout_action
-from domains.finance.services.payments.payout_approval_controller import reject_payout as reject_payout_action
-from domains.finance.services.payments.payout_approval_controller import approve_batch as approve_batch_action
-from domains.finance.services.payments.payout_approval_controller import reject_batch as reject_batch_action
-from domains.finance.services.payments.payout_approval_controller import dispatch_batch as dispatch_batch_action
+from domains.finance.services.payouts.payout_batch_service import approve_payout as approve_payout_action
+from domains.finance.services.payouts.payout_batch_service import reject_payout as reject_payout_action
+from domains.finance.services.payouts.payout_batch_service import approve_batch as approve_batch_action
+from domains.finance.services.payouts.payout_batch_service import reject_batch as reject_batch_action
+from domains.finance.services.payouts.payout_batch_service import dispatch_batch as dispatch_batch_action
 
 router = APIRouter(prefix="/api/v1/admin")
 

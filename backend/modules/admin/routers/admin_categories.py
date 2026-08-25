@@ -3,17 +3,17 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from domains.governance.services.settings.misc_service import archive_entity
-from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import restore_entity
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from domains.governance.models.user import User
 from domains.catalog.models.products import Category
-from domains.catalog.services.products_write_service import create_category as create_category_model
-from domains.catalog.services.products_write_service import update_category as update_category_model
-from domains.catalog.services.products_write_service import delete_category as delete_category_model
-from domains.catalog.services.products_write_service import reorder_categories as reorder_categories_model
+from domains.accounts.services.permissions.permission_service import create_category as create_category_model
+from domains.accounts.services.permissions.permission_service import update_category as update_category_model
+from domains.accounts.services.permissions.permission_service import delete_category as delete_category_model
+from domains.catalog.services.categories.admin_categories_service import reorder_categories as reorder_categories_model
 from domains.catalog.utils.category_tree import rebuild_category_paths
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.dependencies import require_admin

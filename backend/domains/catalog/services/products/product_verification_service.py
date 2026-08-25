@@ -214,3 +214,22 @@ def get_verification(v_id: int, current_user: dict, db: Session) -> dict:
             raise HTTPException(status_code=403, detail="Access denied")
 
     return _serialize(v)
+
+
+# ── Verification Write Helpers (merged from product_verification_write_service.py) ───
+
+def verification_persist_create(db: Session, verification: ProductVerification) -> ProductVerification:
+    db.add(verification)
+    db.commit()
+    db.refresh(verification)
+    return verification
+
+
+def verification_persist_update(db: Session, verification: ProductVerification) -> ProductVerification:
+    db.commit()
+    db.refresh(verification)
+    return verification
+
+
+def verification_persist_bulk_commit(db: Session) -> None:
+    db.commit()

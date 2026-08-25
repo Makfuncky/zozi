@@ -15,8 +15,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
-from domains.governance.services.admin_controller import get_current_admin
+from domains.governance.services._auto_stubs import get_all_suppliers
+from domains.governance.services._auto_stubs import get_current_admin
 from infrastructure.database.database import get_db
 from domains.catalog.models.products import Category as CategoryModel
 from domains.governance.models.admin import CommissionGlobalConfig

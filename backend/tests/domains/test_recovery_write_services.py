@@ -1,4 +1,4 @@
-"""Regression tests for the implemented recovery write services.
+﻿"""Regression tests for the implemented recovery write services.
 
 Guards the remediation that replaced ``_missing_symbol`` stubs across the
 logistics / employee / HR / IAM / banner / disputes / misc / permissions /
@@ -50,13 +50,13 @@ import domains.logistics.services.logistics_write_service as logistics
 import domains.hr.services.employee_write_service as emp
 import domains.hr.services.hr_write_service as hr
 import domains.governance.services.iam_write_service as iam
-import domains.catalog.services.banner_write_service as banner
+import domains.catalog.services.banners.banner_service as banner
 import domains.orders.services.disputes_write_service as disputes
-import domains.media.services.misc_write_service as misc
+import providers.media.services.misc_write_service as misc
 import domains.governance.services.permissions_write_service as perms
-import domains.catalog.services.promotion_service as promo
+import domains.catalog.services.promotions.promotion_service as promo
 import domains.orders.services.returns_write_service as ret
-import domains.suppliers.services.supplier_badge_service as badge
+import domains.suppliers.services.badges.supplier_badge_service as badge
 import modules.admin.routers.public_permission_primitives_access as prim
 
 
@@ -124,7 +124,7 @@ def _order(db, user, code="OM"):
     return o
 
 
-# ── logistics ────────────────────────────────────────────────────────────────
+# â”€â”€ logistics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_create_shipping_carrier_absorbs_extra_kwargs(db_session):
     u = _user(db_session)
     carrier = logistics.create_shipping_carrier(
@@ -171,7 +171,7 @@ def test_update_shipment_event_accepts_object(db_session):
     assert ev.latitude == 1.0
 
 
-# ── employee ──────────────────────────────────────────────────────────────────
+# â”€â”€ employee â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_employee_attendance_and_work_log(db_session):
     e = _employee(db_session)
     a = emp.create_employee_attendance(db_session, employee_id=e.id, date=datetime.date(2024, 5, 1))
@@ -218,7 +218,7 @@ def test_create_revoked_token(db_session):
     assert db_session.get(RevokedToken, rt.id) is not None
 
 
-# ── hr ────────────────────────────────────────────────────────────────────────
+# â”€â”€ hr â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_upsert_employee_risk_score(db_session):
     _country(db_session, "OM")
     e = _employee(db_session)
@@ -240,7 +240,7 @@ def test_create_employee_address_dependent(db_session):
     assert d.id is not None
 
 
-# ── iam ───────────────────────────────────────────────────────────────────────
+# â”€â”€ iam â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_iam_biometric_geo_fence_card(db_session):
     _country(db_session, "OM")
     e = _employee(db_session)
@@ -258,7 +258,7 @@ def test_iam_biometric_geo_fence_card(db_session):
     assert db_session.get(PhysicalIDCard, c.id).is_revoked is True
 
 
-# ── banner ──────────────────────────────────────────────────────────────────
+# â”€â”€ banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_banner_helpers(db_session):
     b = banner.add_banner_if_missing(db_session, {"title": "Hero", "country_code": "OM", "image_url": "http://x"})
     assert b.id is not None
@@ -270,7 +270,7 @@ def test_banner_helpers(db_session):
     assert db_session.get(Banner, b.id).image_url == "http://y"
 
 
-# ── disputes ──────────────────────────────────────────────────────────────────
+# â”€â”€ disputes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_dispute_notification_and_updates(db_session):
     _country(db_session, "OM")
     sp = _supplier(db_session)
@@ -295,7 +295,7 @@ def test_dispute_notification_and_updates(db_session):
     assert db_session.get(SupplierDispute, d.id).priority == "high"
 
 
-# ── misc ──────────────────────────────────────────────────────────────────────
+# â”€â”€ misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_reset_demo_data(db_session):
     _country(db_session, "OM")
     result = misc.reset_demo_data(db_session)
@@ -303,7 +303,7 @@ def test_reset_demo_data(db_session):
     assert result["reseeded"] == 3
 
 
-# ── permissions ────────────────────────────────────────────────────────────
+# â”€â”€ permissions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_upsert_role_permission_setting(db_session):
     r = perms.upsert_role_permission_setting(
         db_session, role="supplier", permissions_json=["view_catalog"], country_code="OM", updated_by_id=1
@@ -316,7 +316,7 @@ def test_upsert_role_permission_setting(db_session):
     assert "manage_products" in r2.permissions_json
 
 
-# ── promotion ──────────────────────────────────────────────────────────────
+# â”€â”€ promotion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_promotion_config(db_session):
     _country(db_session, "OM")
     promo.ensure_promotion_tables(db_session)
@@ -325,7 +325,7 @@ def test_promotion_config(db_session):
     assert cfg.id is not None
 
 
-# ── returns ──────────────────────────────────────────────────────────────────
+# â”€â”€ returns â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_create_return_notification(db_session):
     _country(db_session, "OM")
     u = _user(db_session)
@@ -340,7 +340,7 @@ def test_create_return_notification(db_session):
     assert n.country_code == "OM"
 
 
-# ── supplier badge ──────────────────────────────────────────────────────────
+# â”€â”€ supplier badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_supplier_badge_flow(db_session):
     sp = _supplier(db_session)
     cat = badge.list_supplier_badge_catalog(db_session)
@@ -361,7 +361,7 @@ def test_supplier_badge_flow(db_session):
     assert cycle["updated"] >= 1
 
 
-# ── permission primitives ──────────────────────────────────────────────────
+# â”€â”€ permission primitives â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def test_permission_primitives(db_session):
     _country(db_session, "OM")
     assert isinstance(prim.COUNTRY_ROLE_PERMISSION_MAP, dict) and prim.COUNTRY_ROLE_PERMISSION_MAP

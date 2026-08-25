@@ -18,6 +18,14 @@ from .text import _ollama_chat, _ollama_vision_chat, _extract_json, _extract_var
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "VariantConfig",
+    "classify_product_type",
+    "suggest_price",
+    "normalize_category",
+    "analyze_product_image",
+]
+
 # ============================================================================
 # REFERENCE
 # ============================================================================
@@ -133,7 +141,10 @@ def suggest_price(
         f"Return JSON with suggested_price and confidence."
     )
 
-    response = _ollama_chat(prompt)
+    if image_bytes:
+        response = _ollama_vision_chat(prompt, image_bytes)
+    else:
+        response = _ollama_chat(prompt)
     data = _extract_json(response)
 
     if data and isinstance(data, dict):

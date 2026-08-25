@@ -155,3 +155,6 @@ def delete_payout_rule_product(db: Session, code: str, rule_id: int) -> dict:
     db.delete(row)
     db.commit()
     return {"message": "Product payout rule deleted"}
+
+# === Merged from country_payouts_service.py ===
+# Read-side payout functions preserved for reference

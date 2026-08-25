@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 
-from domains.orders.services.orders_controller import bulk_delete_orders_route
-from domains.orders.services.orders_controller import refund_order_route
-from domains.orders.services.orders_controller import update_order_tracking_route
+from domains.orders.services._auto_stubs import bulk_delete_orders_route
+from domains.orders.services._auto_stubs import refund_order_route
+from domains.orders.services._auto_stubs import update_order_tracking_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

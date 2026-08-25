@@ -793,8 +793,8 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "get_current_user": ("domains.governance.services.auth.auth_controller_service", "get_current_user"),
     "archive_entity": ("domains.governance.services.settings.misc_service", "archive_entity"),
     "restore_entity": ("domains.governance.services.settings.misc_service", "restore_entity"),
-    "bulk_archive_entities": ("domains.governance.services.core.bulk_ops_service", "bulk_archive_entities"),
-    "bulk_restore_entities": ("domains.governance.services.core.bulk_ops_service", "bulk_restore_entities"),
+    "bulk_archive_entities": ("domains.governance.services.admin.bulk_ops_service", "bulk_archive_entities"),
+    "bulk_restore_entities": ("domains.governance.services.admin.bulk_ops_service", "bulk_restore_entities"),
     "_banner_to_dict": ("domains.governance.services.commerce.admin_commerce_configuration_service", "_banner_to_dict"),
     "get_promotion_config": ("domains.governance.services.commerce.admin_commerce_configuration_service", "get_promotion_config"),
     "update_user_role": ("domains.governance.services.users.users_service", "update_user_role"),
@@ -856,12 +856,12 @@ def processed_webhook_event_query(db: Session) -> object:
 
 
 from domains.governance.services.auth.iam_service_accounts import _QR_SECRET_KEY, validate_geo_fence, validate_qr_token, enroll_biometric, generate_physical_card, generate_qr_token, log_geo_fence_event, revoke_physical_card, generate_qr_code
-from domains.hr.services.hierarchy_service import get_all_subordinates, get_authority_level, get_user_chain, can_manage, get_org_chart, get_team_members, get_home_org_unit, reassign_manager, backfill_authority_levels, is_in_chain
-from domains.governance.services.core.approval_matrix_service import APPROVAL_RULES, can_approve, require_approval, resolve_approvers, get_approval_chain
-from domains.hr.services.payroll_service import verify_bank_account
+from domains.hr.services.hierarchy.hierarchy_service import get_all_subordinates, get_authority_level, get_user_chain, can_manage, get_org_chart, get_team_members, get_home_org_unit, reassign_manager, backfill_authority_levels, is_in_chain
+from domains.governance.services.admin.approval_matrix_service import APPROVAL_RULES, can_approve, require_approval, resolve_approvers, get_approval_chain
+from domains.hr.services.payroll.payroll_service import verify_bank_account
 from domains.governance.services.users.identity_admin_service import delete_user_admin, set_user_role
-from domains.governance.services.users.user_write_ops import force_reset_password
-from domains.governance.services.users.user_write_ops import build_user_delete_blocker, delete_order_records, hard_delete_user_record
+from domains.accounts.services.users.users_admin_service import force_reset_password
+from domains.accounts.services.users.users_admin_service import build_user_delete_blocker, delete_order_records, hard_delete_user_record
 
 # Private-name aliases re-exported for legacy imports.
 _build_user_delete_blocker = build_user_delete_blocker
@@ -871,8 +871,8 @@ from domains.governance.services.products.products_service import approve_produc
 from domains.governance.services.commerce.admin_commerce_configuration_service import create_coupon
 from domains.governance.services.commerce.admin_commerce_configuration_service import list_coupons
 from domains.governance.services.commerce.public_commerce_validation_service import delete_coupon
-from domains.governance.services.treasury.payouts_service import verify_payout
+from domains.governance.services.admin.payouts_service import verify_payout
 # NOTE: The following import was removed because domains.governance.incident module doesn't exist
 # from domains.governance.incident.incident_service import get_incident_service, IncidentService, get_war_room_summary
 from domains.governance.services.country.country_admin_service import list_staff
-from domains.governance.services.core.export_service import export_audit_logs_csv,export_coupons_csv,export_orders_csv,export_products_csv,export_transfer_csv,export_users_csv,download_export_job_result,queue_export_job
+from domains.governance.services.admin.export_service import export_audit_logs_csv,export_coupons_csv,export_orders_csv,export_products_csv,export_transfer_csv,export_users_csv,download_export_job_result,queue_export_job

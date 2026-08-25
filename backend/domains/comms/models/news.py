@@ -29,7 +29,7 @@ class NewsArticle(Base):
     url = Column(String(500), nullable=True)
     image_url = Column(String(500), nullable=True)
     published_at = Column(DateTime, nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(2), nullable=True)
     ai_sentiment = Column(String(20), default="neutral")
     ai_tags = Column(JSON, nullable=True)
     is_published = Column(Boolean, default=True)

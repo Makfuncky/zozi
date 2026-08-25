@@ -1,7 +1,7 @@
-﻿"""Social (OAuth/OIDC) identity links for the accounts domain."""
+"""Social (OAuth/OIDC) identity links for the accounts domain."""
 from __future__ import annotations
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.types import JSON
 
 from . import Base
@@ -18,10 +18,10 @@ class SocialIdentity(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
     provider = Column(String(32), nullable=False)  # google | apple | facebook
     provider_user_id = Column(String(255), nullable=False)
     email = Column(String(320), nullable=True)
     full_name = Column(String(160), nullable=True)
     raw_data = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)

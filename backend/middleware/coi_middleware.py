@@ -7,7 +7,7 @@ from fastapi import HTTPException, Request
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.hr.services.coi_service import COIService
+from domains.hr.services.employees.coi_service import COIService
 
 
 def coi_check_dependency(

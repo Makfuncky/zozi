@@ -8,8 +8,6 @@ from domains.catalog.services.products.products_service import (  # noqa: F401
     get_product_by_barcode,
     get_supplier_names,
     _bump_product_cache_version,
-)
-from domains.catalog.services.products.product_service import (  # noqa: F401
     create_product,
     update_product,
     soft_delete_product,

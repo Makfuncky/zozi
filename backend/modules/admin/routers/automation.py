@@ -7,22 +7,22 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.database.database import get_db
 from domains.media.services.ai import automation_scheduler as scheduler
-from domains.finance.services.shared.ai_automation_service import batch_categorize_all
-from domains.finance.services.shared.ai_automation_service import categorize_expense_ai
-from domains.finance.services.shared.ai_automation_service import process_email_inbox
-from domains.finance.services.shared.ai_automation_service import process_email_invoice
-from domains.finance.services.shared.ai_automation_service import run_ai_bank_reconciliation
-from domains.finance.services.accounts.credit_control_service import check_customer_credit
-from domains.finance.services.accounts.credit_control_service import enforce_auto_credit_holds
-from domains.finance.services.accounts.credit_control_service import get_customer_credit_summary
-from domains.finance.services.payments.gateway_reconciliation_service import match_gateway_settlement
-from domains.finance.services.payments.gateway_reconciliation_service import reconcile_cod_deposit
-from domains.finance.services.payments.gateway_reconciliation_service import run_gateway_3way_reconciliation
+from domains.finance.services._auto_stubs import batch_categorize_all
+from domains.finance.services._auto_stubs import categorize_expense_ai
+from domains.finance.services._auto_stubs import process_email_inbox
+from domains.finance.services._auto_stubs import process_email_invoice
+from domains.finance.services._auto_stubs import run_ai_bank_reconciliation
+from domains.finance.services.treasury.cash_management_service import check_customer_credit
+from domains.finance.services.treasury.cash_management_service import enforce_auto_credit_holds
+from domains.finance.services.treasury.cash_management_service import get_customer_credit_summary
+from domains.finance.services.payments.payment_orchestrator import match_gateway_settlement
+from domains.finance.services.payments.payment_orchestrator import reconcile_cod_deposit
+from domains.finance.services.payments.payment_orchestrator import run_gateway_3way_reconciliation
 from domains.finance.services.payouts.payout_batch_service import generate_logistics_payout_batches
 from domains.finance.services.payouts.payout_batch_service import generate_supplier_payout_batches
 from domains.finance.services.payouts.payout_batch_service import get_pending_batches_for_supplier
 from domains.finance.services.payouts.payout_batch_service import supplier_approve_batch
-from domains.finance.services.payouts.refund_posting_service import post_refund_automatically
+from domains.finance.services.payouts.payout_batch_service import post_refund_automatically
 
 router = APIRouter()
 

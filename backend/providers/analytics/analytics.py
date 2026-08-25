@@ -2,17 +2,20 @@ from __future__ import annotations
 
 """
 Analytics Provider
-==================
+=================
 AI analysis for Admin analytics.
 Test file: backend/tests/_test_provider/test_analytics.py
 """
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+HAS_ANALYTICS = bool(os.environ.get("ANALYTICS_API_KEY", ""))
 
 
 class AnalyticsProvider:
@@ -26,20 +29,12 @@ class AnalyticsProvider:
         country_code: Optional[str] = None,
         period: str = "30d",
     ) -> Dict[str, Any]:
-        """Get dashboard summary metrics.
-
-        Args:
-            country_code: Optional ISO country code for filtering.
-            period: Time period (7d, 30d, 90d, 1y).
-
-        Returns:
-            Dict with dashboard metrics.
-        """
+        """Get dashboard summary metrics."""
         days_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}
         days = days_map.get(period, self._default_period_days)
         since = datetime.utcnow() - timedelta(days=days)
 
-        return {
+        base_result = {
             "period": period,
             "days": days,
             "since": since.isoformat(),
@@ -49,27 +44,27 @@ class AnalyticsProvider:
             "total_products": 0,
             "total_orders": 0,
             "total_revenue": 0.0,
-            "message": "Connect to a database for live analytics data.",
         }
+
+        if not HAS_ANALYTICS:
+            base_result["message"] = (
+                "Analytics provider not configured. Set ANALYTICS_API_KEY env var."
+            )
+            return base_result
+
+        base_result["message"] = "Connect to a database for live analytics data."
+        return base_result
 
     def get_chatbot_analytics(
         self,
         country_code: Optional[str] = None,
         period: str = "30d",
     ) -> Dict[str, Any]:
-        """Get chatbot analytics data.
-
-        Args:
-            country_code: Optional ISO country code for filtering.
-            period: Time period (7d, 30d, 90d, 1y).
-
-        Returns:
-            Dict with chatbot analytics.
-        """
+        """Get chatbot analytics data."""
         days_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}
         days = days_map.get(period, self._default_period_days)
 
-        return {
+        base_result = {
             "period": period,
             "days": days,
             "country_code": country_code,
@@ -82,70 +77,79 @@ class AnalyticsProvider:
             "top_intents": [],
             "top_clicked_products": [],
             "daily_data": [],
-            "message": "Connect to a database for live chatbot analytics.",
         }
+
+        if not HAS_ANALYTICS:
+            base_result["message"] = (
+                "Analytics provider not configured. Set ANALYTICS_API_KEY env var."
+            )
+            return base_result
+
+        base_result["message"] = "Connect to a database for live chatbot analytics."
+        return base_result
 
     def get_product_performance(
         self,
         country_code: Optional[str] = None,
         limit: int = 10,
     ) -> Dict[str, Any]:
-        """Get product performance analytics.
-
-        Args:
-            country_code: Optional ISO country code for filtering.
-            limit: Maximum number of products to return.
-
-        Returns:
-            Dict with product performance data.
-        """
-        return {
+        """Get product performance analytics."""
+        base_result = {
             "country_code": country_code,
             "limit": limit,
             "top_products": [],
-            "message": "Connect to a database for live product performance data.",
         }
+
+        if not HAS_ANALYTICS:
+            base_result["message"] = (
+                "Analytics provider not configured. Set ANALYTICS_API_KEY env var."
+            )
+            return base_result
+
+        base_result["message"] = "Connect to a database for live product performance data."
+        return base_result
 
     def get_sales_trends(
         self,
         country_code: Optional[str] = None,
         period: str = "30d",
     ) -> Dict[str, Any]:
-        """Get sales trend data.
-
-        Args:
-            country_code: Optional ISO country code for filtering.
-            period: Time period (7d, 30d, 90d, 1y).
-
-        Returns:
-            Dict with sales trend data.
-        """
+        """Get sales trend data."""
         days_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}
         days = days_map.get(period, self._default_period_days)
 
-        return {
+        base_result = {
             "period": period,
             "days": days,
             "country_code": country_code,
             "trends": [],
-            "message": "Connect to a database for live sales trend data.",
         }
+
+        if not HAS_ANALYTICS:
+            base_result["message"] = (
+                "Analytics provider not configured. Set ANALYTICS_API_KEY env var."
+            )
+            return base_result
+
+        base_result["message"] = "Connect to a database for live sales trend data."
+        return base_result
 
     def get_ai_insights(
         self,
         country_code: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Get AI-generated insights for admin dashboard.
-
-        Args:
-            country_code: Optional ISO country code for filtering.
-
-        Returns:
-            Dict with AI insights.
-        """
-        return {
+        """Get AI-generated insights for admin dashboard."""
+        base_result = {
             "country_code": country_code,
             "insights": [],
             "recommendations": [],
-            "message": "AI insights require database connectivity.",
         }
+
+        if not HAS_ANALYTICS:
+            base_result["message"] = (
+                "Analytics provider not configured. Set ANALYTICS_API_KEY env var."
+            )
+            return base_result
+
+        base_result["message"] = "AI insights require database connectivity."
+        return base_result

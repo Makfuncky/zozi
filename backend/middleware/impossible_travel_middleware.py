@@ -19,7 +19,7 @@ from infrastructure.utils.auth import verify_token
 from providers.geography.geoip import lookup_coordinates
 
 from sqlalchemy.orm import Session
-from domains.governance.models.core import AuditLog
+from domains.audit.models.audit_schema_models import AuditLog
 from domains.governance.models.user import User
 from domains.hr.models.employee_models import Employee
 
@@ -153,12 +153,9 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
         except Exception:
             pass
         try:
-            from domains.governance.services.security.impossible_travel_write_service import log_impossible_travel_lock
-            log_impossible_travel_lock(
-                user_id=user_id,
-                ip_address=ip,
-                distance_km=distance,
-                speed_kmh=speed,
+            logger.warning(
+                "Impossible travel detected: user_id=%s ip=%s distance=%.0fkm speed=%.0fkm/h",
+                user_id, ip, distance, speed,
             )
         except Exception:
             pass
@@ -346,7 +343,7 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
 
         try:
             from infrastructure.database.database import get_service_session
-            from domains.governance.services.fraud.fraud_detection_service import FraudScoringEngine
+            from domains.security.services.fraud.fraud_detection_service import FraudScoringEngine
 
             with get_service_session() as db:
                 engine = FraudScoringEngine(db, self.redis)

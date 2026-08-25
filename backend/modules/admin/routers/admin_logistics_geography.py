@@ -9,13 +9,13 @@ from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 from domains.governance.services.settings.misc_service import archive_entity
 from domains.governance.services.settings.misc_service import restore_entity
-from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import hard_delete_entity
-from domains.logistics.services.partner_geography_service import approve_partner
-from domains.logistics.services.partner_geography_service import list_partners
-from domains.logistics.services.partner_geography_service import reject_partner
-from domains.logistics.services.partner_geography_service import toggle_partner_active
+from domains.logistics.services.core.admin_logistics_service import approve_partner
+from domains.logistics.services.core.admin_logistics_service import list_partners
+from domains.logistics.services.core.admin_logistics_service import reject_partner
+from domains.logistics.services.core.admin_logistics_service import toggle_partner_active
 
 router = APIRouter(prefix="/api/v1/admin")
 

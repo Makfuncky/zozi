@@ -11,11 +11,29 @@ import json
 import logging
 import re
 import time
+import urllib.error
 from typing import Any, Dict, List, Optional
 
 from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "_ollama_chat",
+    "_ollama_vision_chat",
+    "_OLLAMA_TEXT_MODEL",
+    "_OLLAMA_VISION_MODEL",
+    "transcribe_audio",
+    "embed_text",
+    "cosine_similarity",
+    "_extract_json",
+    "_extract_variant_from_text",
+    "_extract_product_name",
+    "_extract_tags",
+    "translate_en_to_ar",
+    "_ollama_chat_completion",
+    "ollama_chat_json",
+]
 
 _OLLAMA_TEXT_MODEL = settings.ollama_text_model
 _OLLAMA_VISION_MODEL = settings.ollama_model
@@ -68,7 +86,7 @@ def _ollama_chat(prompt: str, model: Optional[str] = None) -> str:
         with urllib.request.urlopen(req, timeout=settings.finance_ai_timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return data.get("response", "")
-    except Exception as exc:
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
         logger.error("Ollama chat failed: %s", exc)
         return ""
 
@@ -107,7 +125,7 @@ def _ollama_vision_chat(prompt: str, image_bytes: bytes, model: Optional[str] = 
         with urllib.request.urlopen(req, timeout=settings.finance_ai_timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return data.get("response", "")
-    except Exception as exc:
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
         logger.error("Ollama vision chat failed: %s", exc)
         return ""
 
@@ -144,7 +162,7 @@ def transcribe_audio(audio_bytes: bytes, model: Optional[str] = None) -> str:
         with urllib.request.urlopen(req, timeout=60) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return data.get("response", "")
-    except Exception as exc:
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
         logger.warning("Ollama whisper failed (%s), trying local fallback", exc)
 
     # Fallback: SpeechRecognition library
@@ -158,7 +176,7 @@ def transcribe_audio(audio_bytes: bytes, model: Optional[str] = None) -> str:
         return recognizer.recognize_google(audio_data)
     except ImportError:
         logger.warning("speech_recognition not installed, STT unavailable")
-    except Exception as exc:
+    except (sr.UnknownValueError, sr.RequestError, OSError, ValueError) as exc:
         logger.error("Speech recognition failed: %s", exc)
 
     return ""
@@ -189,7 +207,7 @@ def embed_text(text: str, model: Optional[str] = None) -> List[float]:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return data.get("embedding", [])
-    except Exception as exc:
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, ValueError, OSError) as exc:
         logger.error("Embedding generation failed: %s", exc)
         return []
 
@@ -380,7 +398,7 @@ def _extract_tags(text: str, category: str = "") -> List[str]:
 # exactly: Ollama (OpenAI-compatible chat completions) first, curated
 # EN→AR glossary fallback so the feature never hard-fails.
 
-_OLLAMA_TRANSLATE_BASE_URL = "http://localhost:11434"
+_OLLAMA_TRANSLATE_BASE_URL = settings.ollama_base_url
 _OLLAMA_TRANSLATE_MODEL = "phi3:mini"
 
 # Curated EN→AR glossary for the fallback translator (common e-commerce terms).
@@ -441,7 +459,7 @@ async def translate_en_to_ar(text: str) -> str:
                 out = resp.json()["choices"][0]["message"]["content"].strip().strip('"')
                 if out:
                     return out
-    except Exception as exc:  # noqa: BLE001
+    except (httpx.HTTPError, KeyError, IndexError, ValueError, json.JSONDecodeError) as exc:
         logger.info("providers.text: Ollama translation unavailable (%s)", exc)
     return _translate_glossary_fallback(text)
 
@@ -485,7 +503,7 @@ async def _ollama_chat_completion(
             if resp.status_code != 200:
                 return None
             return resp.json()["choices"][0]["message"]["content"]
-    except Exception:  # noqa: BLE001
+    except (httpx.HTTPError, KeyError, IndexError, ValueError):
         return None
 
 
@@ -523,7 +541,7 @@ def ollama_chat_json(
             response = client.post(url, json=payload)
             response.raise_for_status()
             data = response.json()
-    except Exception as exc:
+    except (httpx.HTTPError, KeyError, IndexError, ValueError, json.JSONDecodeError) as exc:
         raise RuntimeError(f"Ollama request failed: {exc}") from exc
 
     if data.get("error"):

@@ -10,12 +10,12 @@ from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_cont
 from infrastructure.utils.pagination import paginated_response
 from domains.governance.services.settings.misc_service import archive_entity
 from domains.governance.services.settings.misc_service import restore_entity
-from domains.catalog.services.bulk_ops_write_service import bulk_archive_entities
-from domains.catalog.services.bulk_ops_write_service import bulk_restore_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_archive_entities
+from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 from domains.governance.services.settings.misc_service import hard_delete_entity
-from domains.governance.services.products.products_service import bulk_product_moderation
-from domains.governance.services.core.bulk_ops_service import bulk_category_change
-from domains.catalog.services.products_controller import _bump_product_cache_version
+from domains.catalog.services.products.admin_products_service import bulk_product_moderation
+from domains.governance.services.admin.bulk_ops_service import bulk_category_change
+from domains.catalog.services.products.products_service import _bump_product_cache_version
 
 router = APIRouter(prefix="/api/v1/admin")
 

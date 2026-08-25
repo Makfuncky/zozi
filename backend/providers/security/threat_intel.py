@@ -8,6 +8,7 @@ instead of performing raw third-party HTTP requests directly.
 from __future__ import annotations
 
 import logging
+import urllib.error
 import urllib.request
 from typing import List
 
@@ -29,7 +30,13 @@ def fetch_tor_exit_list() -> List[str]:
         )
         with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as response:
             content = response.read().decode("utf-8")
-    except Exception as exc:  # noqa: BLE001
+    except (
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        TimeoutError,
+        OSError,
+        UnicodeDecodeError,
+    ) as exc:
         logger.error("Failed to fetch Tor exit list: %s", exc)
         return []
 

@@ -1,5 +1,0 @@
-"""Chat Router"""
-from routers.chat_api import router as chat_router
-
-router = chat_router
-

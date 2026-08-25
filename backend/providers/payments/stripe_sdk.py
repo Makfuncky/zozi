@@ -14,7 +14,7 @@ try:
     import stripe as _stripe
     stripe = _stripe
     HAS_STRIPE = True
-except Exception:  # pragma: no cover - optional SDK
+except ImportError:  # pragma: no cover - optional SDK
     pass
 
 __all__ = ["stripe", "HAS_STRIPE"]

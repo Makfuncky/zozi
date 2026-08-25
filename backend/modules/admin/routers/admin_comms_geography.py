@@ -8,11 +8,11 @@ from infrastructure.database.schemas import EmailCampaignCreate, EmailCampaignOu
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
-from domains.comms.services.marketing.campaign_geography_service import create_campaign
-from domains.comms.services.marketing.campaign_geography_service import delete_campaign
-from domains.comms.services.marketing.campaign_geography_service import email_metrics
-from domains.comms.services.marketing.campaign_geography_service import list_all_campaigns
-from domains.comms.services.marketing.campaign_geography_service import list_campaigns
+from domains.orders.services.core.admin_extra import create_campaign
+from domains.orders.services.core.admin_extra import delete_campaign
+from domains.comms.services._auto_stubs import email_metrics
+from domains.orders.services.core.admin_extra import list_all_campaigns
+from domains.orders.services.core.admin_extra import list_campaigns
 
 router = APIRouter(prefix="/api/v1/admin")
 

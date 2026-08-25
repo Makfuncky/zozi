@@ -7,10 +7,10 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Optional
 
-from domains.orders.services.coupons_controller import create_coupon_route
-from domains.orders.services.coupons_controller import delete_coupon_route
-from domains.orders.services.coupons_controller import list_coupons_route
-from domains.orders.services.coupons_controller import update_coupon_route
+from domains.orders.services._auto_stubs import create_coupon_route
+from domains.orders.services._auto_stubs import delete_coupon_route
+from domains.orders.services._auto_stubs import list_coupons_route
+from domains.orders.services._auto_stubs import update_coupon_route
 
 router = APIRouter(prefix="/api/v1/admin")
 

@@ -7,12 +7,12 @@ from infrastructure.database.schemas import CommissionCategoryRateCreate, Commis
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
-from domains.finance.services.commission.commission_geography_service import create_badge_tier
-from domains.finance.services.commission.commission_geography_service import create_category_rate
-from domains.finance.services.commission.commission_geography_service import list_badge_tiers
-from domains.finance.services.commission.commission_geography_service import list_category_rates
-from domains.finance.services.commission.commission_geography_service import update_badge_tier
-from domains.finance.services.commission.commission_geography_service import update_category_rate
+from domains.finance.services.country.admin_commission_service import create_badge_tier
+from domains.finance.services.ledger.general_ledger_service import create_category_rate
+from domains.finance.services.country.admin_commission_service import list_badge_tiers
+from domains.finance.services.finance_service import list_category_rates
+from domains.finance.services.country.admin_commission_service import update_badge_tier
+from domains.finance.services.finance_service import update_category_rate
 
 router = APIRouter(prefix="/api/v1/admin")
 

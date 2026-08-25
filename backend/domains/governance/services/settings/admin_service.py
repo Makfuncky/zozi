@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 from domains.governance.services.users.users_service_accounts import list_pending_bank_accounts
 """Auto-migrated service logic from routers/admin.py."""
 from domains.governance.services.logistics.admin_logistics_operations_service import BulkUserRoleBody
@@ -94,14 +94,14 @@ from infrastructure.security.dependencies import (
     require_admin,
 )
 from domains.governance.services.settings.database_service import get_database_overview
-from domains.governance.services.permissions.permissions_service import (
+from domains.accounts.services.permissions.permission_service import (
     get_hierarchy_permissions,
     get_staff_permission_catalog,
     update_role_permissions,
 )
 from domains.comms.services.ticket.tickets_service import list_tickets
 from domains.comms.services.ticket.tickets_service import reply_to_ticket
-from domains.governance.services.treasury.payouts_service import (
+from domains.governance.services.admin.payouts_service import (
     list_pending_payouts,
     verify_payout,
 )
@@ -201,8 +201,8 @@ def admin_review_document(doc_id: int, data: dict, db: Session, current_admin: d
 
 def admin_reset_demo_data(db: Session, current_admin: dict):
     """
-    Clear all non-essential seed data — orders, products, reviews, communication
-    data, coupons, and non-admin users — so the demo environment can be reset
+    Clear all non-essential seed data  orders, products, reviews, communication
+    data, coupons, and non-admin users  so the demo environment can be reset
     from the UI without SSH or terminal access.
 
     Admin user accounts (role=admin) are preserved.
@@ -444,9 +444,9 @@ def admin_reset_demo_data(db: Session, current_admin: dict):
 
     """
 
-    Clear all non-essential seed data — orders, products, reviews, communication
+    Clear all non-essential seed data  orders, products, reviews, communication
 
-    data, coupons, and non-admin users — so the demo environment can be reset
+    data, coupons, and non-admin users  so the demo environment can be reset
 
     from the UI without SSH or terminal access.
 
@@ -493,4 +493,16 @@ def admin_supplier_documents(supplier_id: Optional[int], status: Optional[str], 
     return _sdc.admin_list_documents(current_admin, db, supplier_id=supplier_id, status=status, doc_type=doc_type, limit=page_size, offset=(page - 1) * page_size)
 
 
+
+
+
+# === Merged from admin_controller.py ===
+
+
+
+# === Merged from admin_fallback_service.py ===
+
+
+
+# === Merged from admin_support_service.py ===
 

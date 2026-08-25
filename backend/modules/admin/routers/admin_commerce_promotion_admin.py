@@ -7,17 +7,17 @@ from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
 from typing import Any, Optional
 
-from domains.orders.services.promotion_admin_controller import create_banner
-from domains.orders.services.promotion_admin_controller import create_banner_by_country
-from domains.orders.services.promotion_admin_controller import create_coupon
-from domains.orders.services.promotion_admin_controller import create_coupon_by_country
-from domains.orders.services.promotion_admin_controller import create_flash_sale
-from domains.orders.services.promotion_admin_controller import delete_banner
-from domains.orders.services.promotion_admin_controller import delete_banner_by_country
-from domains.orders.services.promotion_admin_controller import update_banner
-from domains.orders.services.promotion_admin_controller import update_banner_by_country
-from domains.orders.services.promotion_admin_controller import update_config
-from domains.orders.services.promotion_admin_controller import update_flash_sale
+from domains.promotions.services.admin_promotion_service import create_banner
+from domains.promotions.services.admin_promotion_service import create_banner_by_country
+from domains.customers.services.coupons_service import create_coupon
+from domains.customers.services.coupons_service import create_coupon_by_country
+from domains.promotions.services.admin_promotion_service import create_flash_sale
+from domains.promotions.services.admin_promotion_service import delete_banner
+from domains.promotions.services.admin_promotion_service import delete_banner_by_country
+from domains.promotions.services.admin_promotion_service import update_banner
+from domains.promotions.services.admin_promotion_service import update_banner_by_country
+from domains.promotions.services.engine.admin_promotions_write_service import update_config
+from domains.promotions.services.admin_promotion_service import update_flash_sale
 
 router = APIRouter(prefix="/api/v1/admin")
 

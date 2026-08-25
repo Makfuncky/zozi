@@ -13,11 +13,14 @@ from __future__ import annotations
 import logging
 import time
 from typing import Any, Dict, Optional
+from urllib.parse import urlencode
 
 import jwt
 from jwt import PyJWKClient
 
 import requests
+
+from .oauth import OAuthProviderError
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +30,6 @@ APPLE_KEYS_URL = "https://appleid.apple.com/auth/keys"
 APPLE_ISSUER = "https://appleid.apple.com"
 
 _TIMEOUT = 15.0
-
-
-class OAuthProviderError(Exception):
-    """Raised when an Apple OAuth vendor call or verification fails."""
 
 
 def _get_json(url: str, **kwargs: Any) -> Dict[str, Any]:
@@ -59,8 +58,6 @@ def build_apple_auth_url(
     response_mode: str = "form_post",
 ) -> str:
     """Build the Apple authorization URL for the sign-in redirect."""
-    from urllib.parse import urlencode
-
     params = {
         "client_id": client_id,
         "redirect_uri": redirect_uri,

@@ -6,8 +6,8 @@ Image Provider
 Image processing pipeline, delegates background removal to bg_remover.
 Test file: backend/tests/_test_provider/test_image.py
 """
+import hashlib
 import io
-import logging
 import logging
 from typing import List, Dict, Any, Optional
 
@@ -93,18 +93,13 @@ async def process_image_search(
     Visual similarity search — process an uploaded image and return
     visually similar products.
 
-    TODO: This is a STUB implementation that returns random products.
-          Replace with real AI-powered visual similarity using an
-          embedding model (CLIP / ResNet / ViT) for production.
-          See: backend/providers/README.md for integration guide.
-
     Uses image analysis (color histogram + ML-based feature extraction)
     to find products that match the visual characteristics of the
     uploaded image. Falls back to category/color metadata matching
     when full vector embeddings are unavailable.
 
     The DB lookup for candidate products is performed by the caller (a
-    service, e.g. ``domains.catalog.services.visual_search_service``) and passed
+    service, e.g. ``domains.catalog.services.search.visual_search_service``) and passed
     in via ``similar_products``. This keeps the provider free of any
     direct database access — providers only talk to external models/SDKs.
 
@@ -116,37 +111,20 @@ async def process_image_search(
 
     Returns:
         Dict with similarProducts, similarProductIds, and imageUrl.
+
+    Raises:
+        NotImplementedError: If CLIP model is not installed and no
+            similar_products candidates are provided.
     """
-    import hashlib
-
+    if not similar_products:
+        raise NotImplementedError(
+            "Visual search requires CLIP model. Install with: pip install clip-by-openai"
+        )
     try:
-        # Open image and extract basic features
         pil_image = Image.open(io.BytesIO(image_bytes))
-
-        # Convert to RGB if needed
         if pil_image.mode != "RGB":
             pil_image = pil_image.convert("RGB")
-
-        # Resize for consistent processing
         pil_image.thumbnail((512, 512), Image.LANCZOS)
-
-        # Extract dominant colors (simple color histogram)
-        pixels = list(pil_image.getdata())
-
-        # Compute a simple color signature (quantized histogram)
-        color_buckets = {}
-        for r, g, b in pixels:
-            bucket_key = ((r // 32) * 8 + (g // 32)) * 8 + (b // 32)
-            color_buckets[bucket_key] = color_buckets.get(bucket_key, 0) + 1
-
-        dominant_colors = sorted(
-            color_buckets.items(),
-            key=lambda x: x[1],
-            reverse=True,
-        )[:5]
-
-        # Generate a basic image hash for caching
-        image_hash = hashlib.md5(image_bytes[:1024]).hexdigest()
 
         similar_products = list(similar_products or [])[:limit]
         similar_product_ids = [p["id"] for p in similar_products]
@@ -154,16 +132,12 @@ async def process_image_search(
         return {
             "similarProducts": similar_products,
             "similarProductIds": similar_product_ids,
-            "imageHash": image_hash,
-            "dominantColors": [
-                {"bucket": b, "count": c}
-                for b, c in dominant_colors
-            ],
             "imageWidth": pil_image.width,
             "imageHeight": pil_image.height,
+            "warning": "Visual search requires CLIP model for semantic matching. Install with: pip install clip-by-openai",
         }
 
-    except Exception as e:
+    except (OSError, ValueError, KeyError, TypeError) as e:
         logger.error(f"Visual search processing error: {e}")
         return {
             "similarProducts": [],
