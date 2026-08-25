@@ -1,12 +1,13 @@
-"""Admin order management controller."""
 from __future__ import annotations
 
+import logging
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, List, Optional, cast
 
 from fastapi import HTTPException
-from sqlalchemy import exists, or_, String
+from sqlalchemy import exists, or_, String, func
 from sqlalchemy.orm import Session, selectinload
 
 from domains.governance.models.core import AuditLog
@@ -25,6 +26,8 @@ from domains.finance.ports import apply_order_status_change
 from domains.finance.ports import _apply_stripe_runtime_key
 from domains.finance.ports import log_refund_bank_transaction
 from providers.payments.stripe import refund_payment_intent
+from providers.payments.registry import PaymentGatewayRegistry
+from providers.shipping.shipping_calculator import calculate_shipping_rate, compare_shipping_options
 import logging
 from sqlalchemy.exc import IntegrityError
 from domains.governance.ports import _delete_order_records
@@ -41,6 +44,23 @@ def _build_list_page_payload(items: list, total: int, offset: int, page_size: in
         "page_size": page_size,
         "pages": (total + page_size - 1) // page_size if total > 0 else 0,
     }
+
+
+def get_order_shipping_options(order: Order, destination: dict):
+    """Compare shipping carriers for an order to a destination."""
+    origin = {"country": getattr(order, "warehouse_country", ""), "city": getattr(order, "warehouse_city", "")}
+    package = {
+        "weight_kg": float(getattr(order, "total_weight_kg", 0) or 0),
+        "length_cm": 30, "width_cm": 20, "height_cm": 10,
+    }
+    try:
+        return compare_shipping_options(origin, destination, package)
+    except ConnectionError as exc:
+        logger.warning("Shipping provider unreachable for order %s: %s", getattr(order, "id", None), exc)
+        return []
+    except Exception as exc:
+        logger.warning("Shipping calculation failed for order %s: %s", getattr(order, "id", None), exc)
+        return []
 
 def bulk_update_order_status_admin(
     order_ids: List[int], status: str, acting_user: dict, db: Session

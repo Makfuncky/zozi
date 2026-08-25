@@ -1160,8 +1160,13 @@ def list_badge_billing_records(
     country_code: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
+    cursor: Optional[str] = None,
 ):
-    """Return (items, total) for the supplied filters."""
+    """Return (items, total) for the supplied filters.
+
+    Uses keyset (cursor) pagination when ``cursor`` is provided; falls back to
+    offset-based pagination for ``skip``-based navigation.
+    """
     query = db.query(BadgeBillingRecord)
     if supplier_id is not None:
         query = query.filter(BadgeBillingRecord.supplier_id == supplier_id)
@@ -1169,10 +1174,23 @@ def list_badge_billing_records(
         query = query.filter(BadgeBillingRecord.status == status)
     if country_code is not None:
         query = query.filter(BadgeBillingRecord.country_code == country_code)
+
     query = query.order_by(desc(BadgeBillingRecord.created_at))
     total = query.count()
+
+    if cursor is not None:
+        from infrastructure.utils.pagination import keyset_paginate
+        page_size = min(max(limit, 1), 100)
+        result = keyset_paginate(
+            query,
+            sort_keys=[(BadgeBillingRecord.created_at, "desc")],
+            cursor=cursor,
+            page_size=page_size,
+        )
+        return result["items"], total, result.get("next_cursor"), result.get("has_next")
+
     items = query.offset(skip).limit(limit).all()
-    return items, total
+    return items, total, None, False
 
 
 def get_badge_billing_record(db: Session, record_id: int) -> BadgeBillingRecord:

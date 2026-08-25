@@ -1,4 +1,3 @@
-#!python
 """
 Zozi Security Middleware Package
 

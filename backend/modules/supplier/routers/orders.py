@@ -172,7 +172,7 @@ def _resolve_shipment_info(
 ) -> dict[str, Any]:
     """Resolve shipment info from the logistics models if available."""
     try:
-        from domains.logistics.models.logistics import Shipment
+        from domains.logistics.models.logistics_entities import Shipment
 
         shipment = (
             db.query(Shipment)

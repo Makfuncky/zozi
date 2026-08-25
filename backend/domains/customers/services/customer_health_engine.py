@@ -122,6 +122,55 @@ def get_customer_health_engine(db: Session) -> CustomerHealthEngine:
     return CustomerHealthEngine(db)
 
 
+def calculate_health_score_from_data(
+    db: Session,
+    user: "User",
+    orders: list,
+    returns: list,
+) -> dict[str, Any]:
+    """Calculate health score from pre-loaded data (avoids N+1 queries)."""
+    engine = CustomerHealthEngine(db)
+    if not user:
+        return {"error": "Customer not found"}
+
+    lifetime_value = engine._calculate_lifetime_value(orders)
+    fraud_risk = engine._calculate_fraud_risk(user)
+
+    returns_by_order: dict[int, list] = {}
+    for r in returns:
+        returns_by_order.setdefault(getattr(r, "order_id", 0), []).append(r)
+
+    order_returns = []
+    for o in orders:
+        order_returns.extend(returns_by_order.get(o.id, []))
+
+    refund_ratio = engine._calculate_refund_ratio(orders, order_returns)
+    cod_failure_rate = engine._calculate_cod_failure_rate(orders)
+    purchase_frequency = engine._calculate_purchase_frequency(orders)
+
+    total_score = (
+        min(lifetime_value / 1000, 1.0) * 0.25 +
+        (1 - fraud_risk) * 0.20 +
+        (1 - refund_ratio) * 0.20 +
+        (1 - cod_failure_rate) * 0.15 +
+        min(purchase_frequency / 10, 1.0) * 0.20
+    )
+
+    return {
+        "customer_id": user.id,
+        "trust_score": round(total_score * 100, 2),
+        "metrics": {
+            "lifetime_value": float(lifetime_value),
+            "fraud_risk": round(fraud_risk * 100, 2),
+            "refund_ratio": round(refund_ratio * 100, 2),
+            "cod_failure_rate": round(cod_failure_rate * 100, 2),
+            "purchase_frequency": round(purchase_frequency, 2),
+        },
+        "status": engine._get_status(total_score),
+        "last_calculated": utcnow().isoformat(),
+    }
+
+
 def list_customer_health(db: Session, page: int = 1, size: int = 100) -> dict[str, Any]:
     """List customers ranked by health/trust score (admin console).
 
@@ -136,10 +185,42 @@ def list_customer_health(db: Session, page: int = 1, size: int = 100) -> dict[st
         size=min(size, 100),
         max_size=100,
     )
+    if not users:
+        return {"customers": [], "total": total, "page": page, "size": size}
+
+    user_ids = [u.id for u in users]
+    thirty_days_ago = utcnow() - timedelta(days=30)
+
+    all_orders = (
+        db.query(Order)
+        .filter(
+            Order.user_id.in_(user_ids),
+            Order.created_at >= thirty_days_ago,
+            Order.created_at <= utcnow(),
+        )
+        .all()
+    )
+    orders_by_user: dict[int, list] = {}
+    for o in all_orders:
+        orders_by_user.setdefault(o.user_id, []).append(o)
+
+    all_order_ids = [o.id for o in all_orders]
+    all_returns: list = []
+    if all_order_ids:
+        all_returns = (
+            db.query(ReturnRequest)
+            .filter(ReturnRequest.order_id.in_(all_order_ids))
+            .all()
+        )
+    returns_by_order: dict[int, list] = {}
+    for r in all_returns:
+        returns_by_order.setdefault(r.order_id, []).append(r)
+
     results = []
     for u in users:
-        engine = get_customer_health_engine(db)
-        health = engine.calculate_health_score(u.id)
+        orders = orders_by_user.get(u.id, [])
+        returns = [r for o in orders for r in returns_by_order.get(o.id, [])]
+        health = calculate_health_score_from_data(db, u, orders, returns)
         health["profile"] = {"email": u.email, "role": u.role}
         results.append(health)
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)

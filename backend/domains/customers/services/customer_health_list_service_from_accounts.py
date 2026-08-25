@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
 
-from domains.governance.services.auth_controller_service import get_current_user
+from infrastructure.security.dependencies import get_current_user
 
 from domains.customers.services.customer_health_engine import get_customer_health_engine
 

@@ -1,7 +1,5 @@
-"""
-Auto-generated stub services for finance domain.
-TODO: Replace these stubs with real implementations.
-"""
+"""Auto-generated stub services for finance domain."""
+"""TODO: Replace with real implementations."""
 
 class AVAILABLE_MODELS:
     """TODO: Implement."""
@@ -26,14 +24,6 @@ class TreasuryEngine:
 class VALID_STRATEGIES:
     """TODO: Implement."""
     pass
-
-def _HAS_CV2(**kwargs):
-    """TODO: Implement."""
-    return {}
-
-def _OLLAMA_TEXT_MODEL(**kwargs):
-    """TODO: Implement."""
-    return {}
 
 def accounting_controller(**kwargs):
     """TODO: Implement."""
@@ -75,11 +65,31 @@ def controller_post_ar_payment(**kwargs):
     """TODO: Implement."""
     return {}
 
+def finance_transfer_service(**kwargs):
+    """TODO: Implement."""
+    return {}
+
 def get_account(**kwargs):
     """TODO: Implement."""
     return {}
 
+def get_account_balance(**kwargs):
+    """TODO: Implement."""
+    return {}
+
+def get_cash_position(**kwargs):
+    """TODO: Implement."""
+    return {}
+
 def get_payout_by_id(**kwargs):
+    """TODO: Implement."""
+    return {}
+
+def get_supplier_payables(**kwargs):
+    """TODO: Implement."""
+    return {}
+
+def get_vat_liability(**kwargs):
     """TODO: Implement."""
     return {}
 
@@ -103,6 +113,6 @@ def run_ai_bank_reconciliation(**kwargs):
     """TODO: Implement."""
     return {}
 
-def trading_service(**kwargs):
+def scheduler(**kwargs):
     """TODO: Implement."""
     return {}

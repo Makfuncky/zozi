@@ -1,5 +1,4 @@
-﻿#!python
-"""
+﻿"""
 Enhanced Security Headers Middleware for Zozi Platform
 Implements comprehensive HTTP security headers with defense-in-depth
 """

@@ -24,9 +24,9 @@ from typing import Any, Dict, List, Tuple, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, selectinload
 
-from domains.orders.services.coupons_service import build_coupon_quote
-from domains.orders.services.promotion_service import calculate_order_tier_discount
-from domains.orders.services.promotion_service import record_order_tier_ledger
+from domains.customers.services.coupons_service import build_coupon_quote
+from domains.promotions.services.engine.promotion_service import calculate_order_tier_discount
+from domains.promotions.services.engine.promotion_service import record_order_tier_ledger
 from domains.catalog.services.products.products_service import resolve_product_variant
 from domains.finance.services.payments.payments import apply_order_status_change
 from domains.finance.services.payments.payments import build_order_payment_snapshot
@@ -446,7 +446,7 @@ def _quote_supplier_groups(
                     "service_area": service_area,
                     "estimated_delivery_min": service_area.get("delivery_days_min"),
                     "estimated_delivery_max": service_area.get("delivery_days_max"),
-                    "shipping_amount": float(shipping_amount),
+                    "shipping_amount": round_money(shipping_amount),
                     "currency": approved_partner_quote.get("currency") or settings.default_currency,
                     "pricing_profile": approved_partner_quote.get("pricing_profile"),
                     "category_rules": approved_partner_quote.get("category_rules") or [],
@@ -479,7 +479,7 @@ def _quote_supplier_groups(
                     "service_area": None,
                     "estimated_delivery_min": None,
                     "estimated_delivery_max": None,
-                    "shipping_amount": float(shipping_amount),
+                    "shipping_amount": round_money(shipping_amount),
                     "currency": settings.default_currency,
                     "pricing_profile": None,
                     "category_rules": [],
@@ -487,18 +487,18 @@ def _quote_supplier_groups(
                     "pricing_breakdown": normalize_pricing_breakdown_payload({
                         "source": "supplier_shipping_zone",
                         "zone_id": cast(int, getattr(selected_zone, "id")),
-                        "base_fee": float(round_money(to_decimal(getattr(selected_zone, "base_price", 0) or 0))),
-                        "pickup_fee": 0.0,
-                        "dropoff_fee": 0.0,
-                        "weight_fee": float(round_money(to_decimal(getattr(selected_zone, "price_per_kg", 0) or 0) * supplier_weight_kg)),
-                        "distance_fee": 0.0,
-                        "handling_fee": 0.0,
-                        "load_fit_factor": 1.0,
-                        "load_fit_adjustment_amount": 0.0,
-                        "surcharge_factor": 1.0,
-                        "surcharge_amount": 0.0,
-                        "weight_discount_amount": 0.0,
-                        "shipping_amount": float(shipping_amount),
+                        "base_fee": round_money(to_decimal(getattr(selected_zone, "base_price", 0) or 0)),
+                        "pickup_fee": Decimal("0"),
+                        "dropoff_fee": Decimal("0"),
+                        "weight_fee": round_money(to_decimal(getattr(selected_zone, "price_per_kg", 0) or 0) * supplier_weight_kg),
+                        "distance_fee": Decimal("0"),
+                        "handling_fee": Decimal("0"),
+                        "load_fit_factor": Decimal("1"),
+                        "load_fit_adjustment_amount": Decimal("0"),
+                        "surcharge_factor": Decimal("1"),
+                        "surcharge_amount": Decimal("0"),
+                        "weight_discount_amount": Decimal("0"),
+                        "shipping_amount": round_money(shipping_amount),
                     }),
                     "categories": categories,
                     "total_weight_kg": float(supplier_weight_kg),
@@ -520,25 +520,25 @@ def _quote_supplier_groups(
                     "service_area": None,
                     "estimated_delivery_min": None,
                     "estimated_delivery_max": None,
-                    "shipping_amount": float(shipping_amount),
+                    "shipping_amount": round_money(shipping_amount),
                     "currency": settings.default_currency,
                     "pricing_profile": None,
                     "category_rules": [],
                     "vehicle_rule": None,
                     "pricing_breakdown": normalize_pricing_breakdown_payload({
                         "source": "fallback_flat_rate",
-                        "base_fee": float(shipping_amount),
-                        "pickup_fee": 0.0,
-                        "dropoff_fee": 0.0,
-                        "weight_fee": 0.0,
-                        "distance_fee": 0.0,
-                        "handling_fee": 0.0,
-                        "load_fit_factor": 1.0,
-                        "load_fit_adjustment_amount": 0.0,
-                        "surcharge_factor": 1.0,
-                        "surcharge_amount": 0.0,
-                        "weight_discount_amount": 0.0,
-                        "shipping_amount": float(shipping_amount),
+                        "base_fee": round_money(shipping_amount),
+                        "pickup_fee": Decimal("0"),
+                        "dropoff_fee": Decimal("0"),
+                        "weight_fee": Decimal("0"),
+                        "distance_fee": Decimal("0"),
+                        "handling_fee": Decimal("0"),
+                        "load_fit_factor": Decimal("1"),
+                        "load_fit_adjustment_amount": Decimal("0"),
+                        "surcharge_factor": Decimal("1"),
+                        "surcharge_amount": Decimal("0"),
+                        "weight_discount_amount": Decimal("0"),
+                        "shipping_amount": round_money(shipping_amount),
                     }),
                     "categories": categories,
                     "total_weight_kg": float(supplier_weight_kg),
@@ -769,7 +769,7 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
 
             fraud_score = 0
             fraud_action = "allow"
-            if total_amount and float(total_amount) > 500:
+            if total_amount and total_amount > Decimal("500"):
                 try:
                     redis_client = get_redis()
                     fraud_engine = FraudScoringEngine(db, redis_client)
@@ -906,7 +906,7 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
             "currency": currency,
             "tax_type": tax_type,
             "coupon_code": db_order.coupon_code,
-            "tier_discount": float(tier_discount),
+            "tier_discount": round_money(tier_discount),
             "tier_name": getattr(applied_tier, "tier_name", None) if applied_tier is not None else None,
             "payment_method": db_order.payment_method,
             "payment_gateway_code": db_order.payment_gateway_code,
@@ -989,18 +989,18 @@ def preview_order(order: OrderCreate, current_user: dict, db: Session) -> dict[s
         country_name = None
 
     return {
-        "subtotal_amount": float(subtotal),
-        "discount_amount": float(discount_amount),
-        "tax_amount": float(tax_amount),
-        "vat_amount": float(vat_amount),
-        "shipping_amount": float(shipping_amount),
-        "total_amount": float(total_amount),
+        "subtotal_amount": round_money(subtotal),
+        "discount_amount": round_money(discount_amount),
+        "tax_amount": round_money(tax_amount),
+        "vat_amount": round_money(vat_amount),
+        "shipping_amount": round_money(shipping_amount),
+        "total_amount": round_money(total_amount),
         "currency": currency,
         "coupon_code": coupon_code,
         "payment_method": payment_method,
         "payment_gateway_code": payment_snapshot["payment_gateway_code"],
-        "payment_gateway_fee_amount": float(payment_snapshot["payment_gateway_fee_amount"]),
-        "payment_customer_total_amount": float(payment_snapshot["payment_customer_total_amount"]),
+        "payment_gateway_fee_amount": round_money(payment_snapshot["payment_gateway_fee_amount"]),
+        "payment_customer_total_amount": round_money(payment_snapshot["payment_customer_total_amount"]),
         "payment_gateway_fee_passed_to_customer": bool(payment_snapshot["payment_gateway_fee_passed_to_customer"]),
         "country_id": country_id,
         "country_code": country_code,
@@ -1012,9 +1012,9 @@ def preview_order(order: OrderCreate, current_user: dict, db: Session) -> dict[s
             "country_name": country_name,
             "tax_type": tax_type,
             "tax_name": tax_name,
-            "tax_rate": float(tax_rate),
-            "tax_amount": float(tax_amount),
-            "vat_amount": float(vat_amount),
+            "tax_rate": round_money(tax_rate),
+            "tax_amount": round_money(tax_amount),
+            "vat_amount": round_money(vat_amount),
             "is_inclusive": is_inclusive,
             "currency": currency,
         },
@@ -1248,7 +1248,7 @@ def get_order_invoice(order_id: int, current_user: dict, db: Session) -> dict:
                 "product_name": item.product.name if item.product else f"Product #{item.product_id}",
                 "quantity": qty,
                 "unit_price": unit_price,
-                "total": float(round_money(to_decimal(item.price) * qty)),
+                "total": round_money(to_decimal(item.price) * qty),
                 "supplier_id": item.product.supplier_id if item.product else None,
                 "supplier_name": supplier_user.username if supplier_user else None,
             }

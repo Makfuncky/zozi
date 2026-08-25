@@ -106,39 +106,71 @@ def create_address(
         label=label,
         phone=phone,
     )
-    db.add(address)
-    db.commit()
-    db.refresh(address)
+    try:
+        db.add(address)
+        db.commit()
+        db.refresh(address)
+    except IntegrityError as exc:
+        db.rollback()
+        logger.warning("create_address integrity_error user_id=%s: %s", user_id, exc)
+        raise HTTPException(status_code=409, detail="Address could not be created due to a constraint violation") from exc
+    except Exception as exc:
+        db.rollback()
+        logger.error("create_address unexpected_error user_id=%s: %s", user_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to create address") from exc
     return address
 
 
 def update_address(db: Session, address: Address, updates: dict) -> Address:
     """Apply *updates* to an existing address row and persist them."""
-    for key, value in (updates or {}).items():
-        if key == "street":
-            key = "address_line1"
-        if key == "country":
-            setattr(address, "country", value)
-            setattr(address, "country_code", (value or "US").upper())
-            continue
-        if hasattr(address, key):
-            setattr(address, key, value)
-    db.commit()
-    db.refresh(address)
+    try:
+        for key, value in (updates or {}).items():
+            if key == "street":
+                key = "address_line1"
+            if key == "country":
+                setattr(address, "country", value)
+                setattr(address, "country_code", (value or "US").upper())
+                continue
+            if hasattr(address, key):
+                setattr(address, key, value)
+        db.commit()
+        db.refresh(address)
+    except IntegrityError as exc:
+        db.rollback()
+        logger.warning("update_address integrity_error address_id=%s: %s", getattr(address, "id", "?"), exc)
+        raise HTTPException(status_code=409, detail="Address could not be updated due to a constraint violation") from exc
+    except Exception as exc:
+        db.rollback()
+        logger.error("update_address unexpected_error address_id=%s: %s", getattr(address, "id", "?"), exc)
+        raise HTTPException(status_code=500, detail="Failed to update address") from exc
     return address
 
 
 def delete_address(db: Session, address: Address) -> None:
     """Hard-delete an address row."""
-    db.delete(address)
-    db.commit()
+    try:
+        db.delete(address)
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        logger.warning("delete_address integrity_error address_id=%s: %s", getattr(address, "id", "?"), exc)
+        raise HTTPException(status_code=409, detail="Address could not be deleted due to related records") from exc
+    except Exception as exc:
+        db.rollback()
+        logger.error("delete_address unexpected_error address_id=%s: %s", getattr(address, "id", "?"), exc)
+        raise HTTPException(status_code=500, detail="Failed to delete address") from exc
 
 
 def set_default_address(db: Session, address: Address) -> Address:
     """Mark *address* as the user's default address and persist it."""
-    address.is_default = True
-    db.commit()
-    db.refresh(address)
+    try:
+        address.is_default = True
+        db.commit()
+        db.refresh(address)
+    except Exception as exc:
+        db.rollback()
+        logger.error("set_default_address unexpected_error address_id=%s: %s", getattr(address, "id", "?"), exc)
+        raise HTTPException(status_code=500, detail="Failed to set default address") from exc
     return address
 
 
@@ -182,43 +214,49 @@ def _to_int(value: object, default: int = 0) -> int:
 
 def validate_coupon(request: Request, payload: dict | None = Body(default=None), _: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Validate a coupon code for a given order total."""
-    payload = {**dict(request.query_params), **(payload or {})}
-    code = str(payload.get('code') or '').strip()
-    order_total = payload.get('order_total', payload.get('order_subtotal'))
-    if not code or order_total is None:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail='code and order_total are required')
-    coupon = db.query(Coupon).filter(Coupon.code == code, Coupon.is_active == True).first()
-    if coupon is None:
-        raise HTTPException(status_code=404, detail='Coupon not found')
-    now = utcnow()
-    total = _to_decimal(order_total)
-    minimum_order_raw = getattr(coupon, 'minimum_order', None)
-    if minimum_order_raw is None:
-        minimum_order_raw = getattr(coupon, 'min_order', 0)
-    minimum_order = _to_decimal(minimum_order_raw)
-    usage_limit = getattr(coupon, 'usage_limit', None)
-    if usage_limit is None:
-        usage_limit = getattr(coupon, 'max_uses', None)
-    usage_count = getattr(coupon, 'usage_count', None)
-    if usage_count is None:
-        usage_count = getattr(coupon, 'uses_count', 0)
-    discount_value_raw = getattr(coupon, 'discount_value', None)
-    if discount_value_raw is None:
-        discount_value_raw = getattr(coupon, 'value', 0)
-    if coupon.starts_at and coupon.starts_at > now:
-        raise HTTPException(status_code=400, detail='Coupon not active yet')
-    if coupon.expires_at and coupon.expires_at < now:
-        raise HTTPException(status_code=400, detail='Coupon expired')
-    if usage_limit is not None and _to_int(usage_count) >= _to_int(usage_limit):
-        raise HTTPException(status_code=400, detail='Usage limit reached')
-    if total < minimum_order:
-        raise HTTPException(status_code=422, detail=f'Minimum order {minimum_order}')
-    discount_type = str(coupon.discount_type or '').lower()
-    discount = total * _to_decimal(discount_value_raw) / Decimal('100') if discount_type in {'percent', 'percentage'} else _to_decimal(discount_value_raw)
-    if coupon.maximum_discount is not None:
-        discount = min(discount, _to_decimal(coupon.maximum_discount))
-    new_total = max(Decimal('0'), total - discount)
-    return {'valid': True, 'discount_amount': float(discount), 'new_total': float(new_total), 'coupon': coupon}
+    try:
+        payload = {**dict(request.query_params), **(payload or {})}
+        code = str(payload.get('code') or '').strip()
+        order_total = payload.get('order_total', payload.get('order_subtotal'))
+        if not code or order_total is None:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail='code and order_total are required')
+        coupon = db.query(Coupon).filter(Coupon.code == code, Coupon.is_active == True).first()
+        if coupon is None:
+            raise HTTPException(status_code=404, detail='Coupon not found')
+        now = utcnow()
+        total = _to_decimal(order_total)
+        minimum_order_raw = getattr(coupon, 'minimum_order', None)
+        if minimum_order_raw is None:
+            minimum_order_raw = getattr(coupon, 'min_order', 0)
+        minimum_order = _to_decimal(minimum_order_raw)
+        usage_limit = getattr(coupon, 'usage_limit', None)
+        if usage_limit is None:
+            usage_limit = getattr(coupon, 'max_uses', None)
+        usage_count = getattr(coupon, 'usage_count', None)
+        if usage_count is None:
+            usage_count = getattr(coupon, 'uses_count', 0)
+        discount_value_raw = getattr(coupon, 'discount_value', None)
+        if discount_value_raw is None:
+            discount_value_raw = getattr(coupon, 'value', 0)
+        if coupon.starts_at and coupon.starts_at > now:
+            raise HTTPException(status_code=400, detail='Coupon not active yet')
+        if coupon.expires_at and coupon.expires_at < now:
+            raise HTTPException(status_code=400, detail='Coupon expired')
+        if usage_limit is not None and _to_int(usage_count) >= _to_int(usage_limit):
+            raise HTTPException(status_code=400, detail='Usage limit reached')
+        if total < minimum_order:
+            raise HTTPException(status_code=422, detail=f'Minimum order {minimum_order}')
+        discount_type = str(coupon.discount_type or '').lower()
+        discount = total * _to_decimal(discount_value_raw) / Decimal('100') if discount_type in {'percent', 'percentage'} else _to_decimal(discount_value_raw)
+        if coupon.maximum_discount is not None:
+            discount = min(discount, _to_decimal(coupon.maximum_discount))
+        new_total = max(Decimal('0'), total - discount)
+        return {'valid': True, 'discount_amount': float(discount), 'new_total': float(new_total), 'coupon': coupon}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("validate_coupon unexpected_error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Coupon validation failed") from exc
 
 
 def list_coupons(_: dict = Depends(_require_admin), db: Session = Depends(get_db), page: int = Query(1, ge=1), page_size: int = Query(20, ge=1, le=100)):

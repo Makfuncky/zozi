@@ -29,7 +29,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from modules.employee.routers import employees_controller as ctrl
+# from modules.employee.routers import employees_controller as ctrl  # FIXME: circular import
 from rbac import get_current_user
 from infrastructure.database.database import get_db
 from domains.hr.models.employee_models import Employee
@@ -271,7 +271,7 @@ def list_employee_addresses(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from domains.governance.models.core import Address
+    from domains.accounts.models.core import Address
 
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if not employee:

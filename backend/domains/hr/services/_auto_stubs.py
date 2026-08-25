@@ -1,7 +1,5 @@
-"""
-Auto-generated stub services for hr domain.
-TODO: Replace these stubs with real implementations.
-"""
+"""Auto-generated stub services for hr domain."""
+"""TODO: Replace with real implementations."""
 
 class LeaveAccrualEngine:
     """TODO: Implement."""

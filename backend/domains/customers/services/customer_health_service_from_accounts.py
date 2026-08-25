@@ -5,7 +5,7 @@ from fastapi import Depends
 
 from sqlalchemy.orm import Session
 
-from domains.governance.services.auth_controller_service import get_current_user
+from infrastructure.security.dependencies import get_current_user
 
 from infrastructure.database.database import get_db
 

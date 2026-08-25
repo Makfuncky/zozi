@@ -320,8 +320,8 @@ def validate_coupon_code(db: Session, code: str, order_total: object) -> dict:
     new_total = max(Decimal("0"), total - discount)
     return {
         "valid": True,
-        "discount_amount": float(discount),
-        "new_total": float(new_total),
+        "discount_amount": round_money(discount),
+        "new_total": round_money(new_total),
         "coupon": coupon,
     }
 

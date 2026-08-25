@@ -96,15 +96,15 @@ backend/
 │   ├── customer/  supplier/  logistics/  admin/  employee/
 │   │     ├── auth/             # per-actor login/OTP/social → that actor's own tables; sessions; device binding
 │   │     ├── routers/          # THIN per-actor routers (auth + require_feature + ONE service call)
+│   │     │                     #   modules/{m}/routers/{d}.py — one file per domain (15 files per module)
 │   │     │                     #   modules/{m}/routers/__init__.py lists routers/public_routers for main.py
 │   │     └── serializers/      # per-actor view models (customer-facing response shaping)
 │   │
 ├── domains/                    # AXIS 2 — DOMAIN (what)
-│   ├── finance/  accounts/  catalog/  orders/  payments/  logistics/  suppliers/
-│   ├── customers/  hr/  comms/  media/  country/  governance/   # the 13 domains
-│   │     ├── services/  models/  schemas/  policies/   # below threshold: flat. Above it: slice.
-│   │     ├── events.py  subscribers.py                  #   RULE OF THUMB: > ~8 services OR > ~12 tables → slice; otherwise flat.
-│   │     │                                             #   heavy domains (finance, orders, logistics, hr, comms): ledger/ payouts/ treasury/ … (one sub-capability = one folder)
+│   ├── finance/  accounts/  catalog/  orders/  logistics/  suppliers/
+│   ├── customers/  hr/  comms/  analytics/  audit/  country/  governance/  security/  promotions/
+│   │     ├── services/  models/  schemas/  policies/   # heavy domains may instead slice:
+│   │     ├── events.py  subscribers.py                  #   ledger/ payouts/ treasury/ … (one sub-capability = one folder)
 │   │     ├── ports.py        # SANCTIONED cross-domain READ path (the only thing another domain may import)
 │   │     ├── read_models/    # CQRS-lite projections for this domain's own dashboards
 │   │     └── features.py      # AXIS 3 seed: this domain's permission atoms
@@ -144,6 +144,9 @@ backend/
 │       · webhook_verification · zero_trust_auth
 ├── alembic/                     # SINGLE schema source of truth
 ├── scripts/                     # analyze_tables.py, rewrite_imports.py, seed helpers (dev)
+├── registry.py                  # ServiceRegistry: discovers + indexes domain services
+├── service_index.json           # Auto-generated index: name → {path, type, domain}
+├── migrate_imports.py           # Auto-fixes router imports using service_index.json
 └── tests/
     ├── architecture/            # test_import_laws.py (layer direction + cross-domain ban), test_feature_catalog.py
     └── domains/                 # per-domain unit/integration tests
@@ -371,15 +374,17 @@ flowchart TD
         SA["schema: accounts<br/>domains/accounts/models/*"]
         SC["schema: catalog<br/>domains/catalog/models/*"]
         SO["schema: orders<br/>domains/orders/models/*"]
-        SP["schema: payments<br/>domains/payments/models/*"]
         SL["schema: logistics<br/>domains/logistics/models/*"]
         SS["schema: suppliers<br/>domains/suppliers/models/*"]
         SCU["schema: customers<br/>domains/customers/models/*"]
         SH["schema: hr<br/>domains/hr/models/*"]
         SCO["schema: comms<br/>domains/comms/models/*"]
-        SM["schema: media<br/>domains/media/models/*"]
+        SCA["schema: analytics<br/>domains/analytics/models/*"]
         SCN["schema: country<br/>domains/country/models/*"]
         SG["schema: governance<br/>domains/governance/models/*"]
+        SE["schema: security<br/>domains/security/models/*"]
+        SP["schema: promotions<br/>domains/promotions/models/*"]
+        SAU["schema: audit<br/>domains/audit/models/*"]
     end
     RLS["infrastructure/database/ RLS enforcer<br/>country_code session context (Law 5)"]
     PORTS["ports.py — sanctioned cross-domain READ<br/>e.g. catalog.ports.get_price(db, product_id, country)"]
@@ -464,7 +469,118 @@ sequenceDiagram
     D->>K: money/numbering primitives
     D->>DB: get_db() → transaction (schema=finance, RLS country)
     DB-->>D: rows
-    D-->>M: result
-    M-->>S: 200 + payload
-    S-->>P: update store → render
+     D-->>M: result
+     M-->>S: 200 + payload
+     S-->>P: update store → render
 ```
+
+---
+
+## 12 · Service Registry & Automatic Wiring
+
+When domain services are reorganized (moved between domains, split into sub-packages),
+router import paths break. The **Service Registry** automates discovery, resolution, and
+migration of these imports.
+
+### 12.1 Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| `ServiceRegistry` | `backend/registry.py` | Discovers all public functions/classes in `domains/`, `infrastructure/`, `providers/` and builds an index |
+| `service_index.json` | `backend/service_index.json` | Persistent index: `name → {path, type, domain, file}` |
+| Migration tool | `backend/migrate_imports.py` | Compares router imports against the index and rewrites broken paths |
+
+### 12.2 How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SERVICE REGISTRY                            │
+│                                                                 │
+│  1. SCAN     → Walk domains/, infrastructure/, providers/       │
+│                 Parse every .py file for def/class definitions  │
+│                 Build index: name → actual_path                 │
+│                                                                 │
+│  2. RESOLVE  → Router asks: "where is ProductService?"         │
+│                 Registry returns: domains.catalog.services...   │
+│                                                                 │
+│  3. MIGRATE  → Compare router imports to index                  │
+│                 Generate corrections: old_path → new_path        │
+│                 Apply: string replacement in router files        │
+│                                                                 │
+│  4. VERIFY   → Re-scan confirms 0 remaining issues             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 12.3 Usage
+
+```bash
+# Build/update the service index
+python backend/registry.py
+
+# Check what needs fixing (dry run)
+python backend/migrate_imports.py
+
+# Apply corrections
+python backend/migrate_imports.py --apply
+```
+
+### 12.4 Example
+
+**Before migration** (stale import path):
+```python
+# modules/customer/routers/orders.py
+from domains.catalog.services.products_controller import ProductService
+```
+
+**Registry index entry**:
+```json
+{
+  "name": "ProductService",
+  "path": "domains.catalog.services.products.products_service",
+  "type": "class",
+  "domain": "catalog"
+}
+```
+
+**After migration** (correct import path):
+```python
+# modules/customer/routers/orders.py
+from domains.catalog.services.products.products_service import ProductService
+```
+
+### 12.5 When to Run
+
+| Scenario | Action |
+|----------|--------|
+| After domain reorganization | `python backend/migrate_imports.py --apply` |
+| After adding new domain services | `python backend/registry.py` to update index |
+| CI check | `python backend/migrate_imports.py` should report 0 issues |
+| Before commit | Verify `service_index.json` is up to date |
+
+### 12.6 Index Statistics
+
+| Category | Count |
+|----------|-------|
+| Total services indexed | ~4,200 |
+| Domains covered | 35 |
+| Infrastructure modules | ~150 |
+| Provider modules | ~78 |
+
+### 12.7 Design Principles
+
+1. **Discovery over hardcoding** — The registry scans actual files, so it never goes stale
+2. **Idempotent** — Running migration multiple times is safe (no duplicate changes)
+3. **Non-destructive preview** — Dry run shows what would change before applying
+4. **First-wins** — If a name exists in multiple modules, the first scanned wins
+5. **Domain-aware** — Prefers same-domain matches when resolving ambiguities
+
+### 12.8 Integration with Architecture Laws
+
+The registry enforces **Law 1 (Arrows point down)** by:
+- Tracking which domain each service belongs to
+- Detecting when a router imports from the wrong domain
+- Ensuring modules only import from domains (not other modules)
+
+The registry enforces **Law 3 (Cross-domain via ports/events)** by:
+- Flagging direct cross-domain imports that bypass `ports.py`
+- Tracking sanctioned imports in `DOMAIN_ALLOWLIST.yaml`

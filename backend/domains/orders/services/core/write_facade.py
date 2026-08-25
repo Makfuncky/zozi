@@ -25,8 +25,8 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from domains.orders.models.orders import Order, OrderItem
-from domains.orders.services.order_dtos import OrderDTO, OrderItemDTO, to_order_dto, to_order_item_dto
-from domains.orders.services.orders_write_service import update_order
+from domains.orders.services.core.dtos import OrderDTO, OrderItemDTO, to_order_dto, to_order_item_dto
+from domains.orders.services.core.write_service import update_order
 
 
 def _now() -> datetime:

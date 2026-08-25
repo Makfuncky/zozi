@@ -234,8 +234,8 @@ def delete_campaign(country_code: str, campaign_id: int, db: Session) -> dict:
 
 """Auto-migrated service logic from routers/addresses.py."""
 from __future__ import annotations
-from domains.orders.services.customer_router_service import _serialize_address
-from domains.orders.services.customer_router_service import _normalize_address_payload
+from domains.customers.services.customer_router_service import _serialize_address
+from domains.customers.services.customer_router_service import _normalize_address_payload
 
 from fastapi import Depends, HTTPException, status
 
@@ -247,14 +247,14 @@ from infrastructure.database.database import get_db
 
 from domains.governance.models.core import Address
 
-from domains.orders.services.commerce_write_service import create_address as create_address_model
-from domains.orders.services.commerce_write_service import update_address as update_address_model
-from domains.orders.services.commerce_write_service import delete_address as delete_address_model
-from domains.orders.services.commerce_write_service import set_default_address as set_default_address_model
-from domains.orders.services.commerce_write_service import unset_other_default_addresses
+from domains.customers.services.commerce_write_service import create_address as create_address_model
+from domains.customers.services.commerce_write_service import update_address as update_address_model
+from domains.customers.services.commerce_write_service import delete_address as delete_address_model
+from domains.customers.services.commerce_write_service import set_default_address as set_default_address_model
+from domains.customers.services.commerce_write_service import unset_other_default_addresses
 
-from domains.orders.services.commerce_read_service import list_user_addresses
-from domains.orders.services.commerce_read_service import get_user_address
+from domains.customers.services.commerce_read_service import list_user_addresses
+from domains.customers.services.commerce_read_service import get_user_address
 
 
 

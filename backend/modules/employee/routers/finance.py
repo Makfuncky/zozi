@@ -7,7 +7,7 @@ router = APIRouter(prefix="/api/v1/employee/finance", tags=["employee", "finance
 
 
 # === From accounting.py ===
-﻿"""Accounting Router — General Ledger API and Financial Report endpoints."""
+"""Accounting Router — General Ledger API and Financial Report endpoints."""
 
 from datetime import date, datetime
 from typing import Optional
@@ -1089,7 +1089,7 @@ def logistics_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.logistics.models.logistics_entities import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return {"error": "Logistics partner not found"}, 404
@@ -1104,7 +1104,7 @@ def logistics_list_settlements(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.logistics.models.logistics_entities import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []
@@ -1118,7 +1118,7 @@ def logistics_list_ledger(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from domains.logistics.models.logistics import LogisticsPartner
+    from domains.logistics.models.logistics_entities import LogisticsPartner
     partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
     if not partner:
         return []
@@ -1346,7 +1346,7 @@ def health():
 
 
 # === From finance_package.py ===
-﻿"""
+"""
 Finance Domain — payroll, treasury, expense routing, contractor milestones.
 
 Legacy hand-written router (thin HTTP layer). All business logic and DB access

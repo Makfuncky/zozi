@@ -1,11 +1,9 @@
-﻿"""Auto-migrated service logic from routers/system_comms_status.py."""
-from __future__ import annotations
+﻿from __future__ import annotations
 
-from __future__ import annotations
-from domains.accounts.services.public_comms_status_service import ConnectionManager
-from domains.accounts.services.public_comms_status_service import UserConnectionManager
-from domains.accounts.services.public_comms_status_service import websocket_chat
-from domains.accounts.services.public_comms_status_service import _decode_ws_token
+from domains.customers.services.public_comms_status_service import ConnectionManager
+from domains.customers.services.public_comms_status_service import UserConnectionManager
+from domains.customers.services.public_comms_status_service import websocket_chat
+from domains.customers.services.public_comms_status_service import _decode_ws_token
 
 import json
 

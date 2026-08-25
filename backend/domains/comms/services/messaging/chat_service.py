@@ -395,14 +395,11 @@ class ChatSystem:
             ).first()
             if not room:
                 raise ValueError(f"Direct chat {chat_id} not found")
-            messages = self.db.query(DirectChatMessage).filter(
+            count = self.db.query(DirectChatMessage).filter(
                 DirectChatMessage.room_id == room.id,
                 DirectChatMessage.sender_id != user_id,
                 DirectChatMessage.read_at.is_(None),
-            ).all()
-            for msg in messages:
-                msg.read_at = now
-                count += 1
+            ).update({"read_at": now}, synchronize_session=False)
         elif chat_type == "group":
             room = self.db.query(GroupChatRoom).filter(
                 GroupChatRoom.chat_id == chat_id,
@@ -410,24 +407,23 @@ class ChatSystem:
             ).first()
             if not room:
                 raise ValueError(f"Group chat {chat_id} not found")
-            messages = self.db.query(GroupChatMessage).filter(
+            count = self.db.query(GroupChatMessage).filter(
                 GroupChatMessage.room_id == room.id,
                 GroupChatMessage.sender_id != user_id,
                 GroupChatMessage.read_at.is_(None),
-            ).all()
-            for msg in messages:
-                msg.read_at = now
-                count += 1
+            ).update({"read_at": now}, synchronize_session=False)
         else:
             from domains.governance.models.core import EntityChatMessage
-            messages = self.db.query(EntityChatMessage).filter(
-                EntityChatMessage.thread_id == int(chat_id),
+            thread = self.db.query(EntityChatThread).filter(
+                EntityChatThread.id == int(chat_id),
+            ).first()
+            if not thread:
+                raise ValueError(f"Entity chat {chat_id} not found")
+            count = self.db.query(EntityChatMessage).filter(
+                EntityChatMessage.thread_id == thread.id,
                 EntityChatMessage.sender_id != user_id,
                 EntityChatMessage.read_at.is_(None),
-            ).all()
-            for msg in messages:
-                msg.read_at = now
-                count += 1
+            ).update({"read_at": now}, synchronize_session=False)
 
         self.db.commit()
         return {"chat_id": chat_id, "marked_read": count}

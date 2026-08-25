@@ -14,10 +14,16 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 from providers.comms.twilio import (
-    TWILIO_AVAILABLE,
+    HAS_TWILIO,
     TwilioRestException,
     create_twilio_client,
 )
+
+TWILIO_AVAILABLE = HAS_TWILIO
+
+from providers.comms.whatsapp import HAS_WHATSAPP, send_whatsapp_message
+from providers.comms.email import deliver_email
+from providers.security.encryption import Fernet, PBKDF2HMAC, hashes
 
 from domains.governance.ports import User
 from domains.comms.models.communication import ProxyChannel
@@ -502,3 +508,74 @@ def send_whatsapp(to: str, body: str, *, from_number: Optional[str] = None) -> d
     sender = from_number or cfg["from_number"]
     preview = not (cfg["account_sid"] and cfg["auth_token"] and sender)
     return send_whatsapp_message(to, body, from_number=sender, account_sid=cfg["account_sid"], auth_token=cfg["auth_token"], preview=preview)
+
+
+# ── Provider-wired helpers ──
+
+
+def _derive_fernet_key(key: str) -> bytes:
+    """Derive a 32-byte URL-safe base64 key from a settings string for Fernet encryption."""
+    import base64
+    derived = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"zozi-comms-static-salt",
+        iterations=100_000,
+    ).derive(key.encode("utf-8", errors="replace"))
+    return base64.urlsafe_b64encode(derived)
+
+
+def encrypt_message(content: str, key: str) -> str:
+    """Encrypt message content using the security provider's Fernet primitives."""
+    fernet_key = _derive_fernet_key(key) if key else _derive_fernet_key(settings.encryption_key)
+    return Fernet(fernet_key).encrypt(content.encode("utf-8")).decode("utf-8")
+
+
+def decrypt_message(encrypted: str, key: str) -> str:
+    """Decrypt Fernet-encrypted content using the security provider's primitives."""
+    fernet_key = _derive_fernet_key(key) if key else _derive_fernet_key(settings.encryption_key)
+    return Fernet(fernet_key).decrypt(encrypted.encode("utf-8")).decode("utf-8")
+
+
+def send_encrypted_sms(to_number: str, message: str, *, account_sid: str = "", auth_token: str = "", from_number: str = ""):
+    """Send an SMS through Twilio with encrypted payload. Returns a status dict."""
+    if not HAS_TWILIO:
+        return {"sent": False, "reason": "twilio_not_available"}
+    try:
+        client = create_twilio_client(account_sid or settings.twilio_account_sid, auth_token or settings.twilio_auth_token)
+        if client is None:
+            return {"sent": False, "reason": "twilio_client_unavailable"}
+        encrypted = encrypt_message(message, settings.encryption_key)
+        client.messages.create(body=encrypted, from_=from_number, to=to_number)
+        return {"sent": True}
+    except TwilioRestException as exc:
+        return {"sent": False, "reason": str(exc)}
+    except Exception as exc:
+        return {"sent": False, "reason": str(exc)}
+
+
+def _resolve_email_provider() -> str:
+    """Determine which email transport is configured."""
+    if settings.resend_api_key:
+        return "resend"
+    if settings.smtp_host:
+        return "smtp"
+    return "console"
+
+
+def send_secure_email(to_email: str, subject: str, content: str, *, from_address: str = "", provider: str = ""):
+    """Encrypt content and dispatch via the email provider. Returns a status dict."""
+    try:
+        encrypted = encrypt_message(content, settings.encryption_key)
+        deliver_email(
+            to_email,
+            subject,
+            encrypted,
+            from_address=from_address or settings.email_from,
+            provider=provider or _resolve_email_provider(),
+        )
+        return {"sent": True, "encrypted": True}
+    except RuntimeError as exc:
+        return {"sent": False, "reason": str(exc)}
+    except Exception as exc:
+        return {"sent": False, "reason": str(exc)}

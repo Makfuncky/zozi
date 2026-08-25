@@ -1,4 +1,4 @@
-﻿"""Employee models for HCM system."""
+"""Employee models for HCM system."""
 from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional, TYPE_CHECKING
@@ -24,7 +24,7 @@ __all__ = [
 
 class Office(Base):
     __tablename__ = "offices"
-    __table_args__ = ({"schema": "logistics"},)
+    __table_args__ = {"schema": "logistics"}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     country_code = Column(String(2), nullable=False)
@@ -40,7 +40,7 @@ class Office(Base):
 
 class PhysicalIDCard(Base):
     __tablename__ = "physical_id_cards"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
     card_number = Column(String(50), unique=True, nullable=False, index=True)
@@ -75,7 +75,7 @@ class DynamicQRSession(Base):
 
 class EmployeeBiometric(Base):
     __tablename__ = "employee_biometrics"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
     fingerprint_hash = Column(String(255), nullable=True)
@@ -90,7 +90,7 @@ class EmployeeBiometric(Base):
 
 class GeoFenceLog(Base):
     __tablename__ = "geo_fence_logs"
-    __table_args__ = ({"schema": "logistics"},)
+    __table_args__ = {"schema": "logistics"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
     latitude = Column(Float, nullable=False)
@@ -105,7 +105,7 @@ class GeoFenceLog(Base):
 
 class EmployeeRole(Base):
     __tablename__ = "employee_roles"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     role_name = Column(String(100), unique=True)
     permissions = Column(JSON)
@@ -118,7 +118,7 @@ class EmployeeRole(Base):
 
 class OrgUnit(Base):
     __tablename__ = "org_units"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     parent_id = Column(Integer, ForeignKey("hr.org_units.id"), nullable=True)
@@ -210,7 +210,7 @@ class EmployeeAttendance(Base):
 
 class EmployeeWorkLog(Base):
     __tablename__ = "employee_work_logs"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     record_date = Column(Date, nullable=False)
@@ -227,7 +227,7 @@ class EmployeeWorkLog(Base):
 
 class EmployeeLeaveRequest(Base):
     __tablename__ = "employee_leave_requests"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     leave_type = Column(String(50), nullable=False)
@@ -245,7 +245,7 @@ class EmployeeLeaveRequest(Base):
     employee = relationship("Employee", back_populates="leave_requests")
     approver = relationship("User", foreign_keys=[approved_by])
 
-    __table_args__ = ({"schema": "hr"}, CheckConstraint("status IN ('pending', 'approved', 'rejected', 'cancelled', 'withdrawn')", name="chk_employee_leave_requests_status_valid"))
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'cancelled', 'withdrawn')", name="chk_employee_leave_requests_status_valid"), {"schema": "hr"})
 
 
 class EmployeeLeaveLedger(Base):
@@ -286,7 +286,7 @@ class EmployeeShiftRoster(Base):
 
 class EmployeeAsset(Base):
     __tablename__ = "employee_assets"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     asset_type = Column(String(50), nullable=False)
@@ -301,12 +301,12 @@ class EmployeeAsset(Base):
     
     employee = relationship("Employee", back_populates="assets")
 
-    __table_args__ = ({"schema": "hr"}, CheckConstraint("status IN ('assigned', 'returned', 'lost', 'damaged', 'retired')", name="chk_employee_assets_status_valid"))
+    __table_args__ = (CheckConstraint("status IN ('assigned', 'returned', 'lost', 'damaged', 'retired')", name="chk_employee_assets_status_valid"), {"schema": "hr"})
 
 
 class EmployeeCertification(Base):
     __tablename__ = "employee_certifications"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     cert_type = Column(String(100), nullable=False)
@@ -323,7 +323,7 @@ class EmployeeCertification(Base):
 
 class EmployeeDocument(Base):
     __tablename__ = "employee_documents"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     doc_type = Column(String(50), nullable=False)
@@ -341,7 +341,7 @@ class EmployeeDocument(Base):
 
 class EmployeeDependent(Base):
     __tablename__ = "employee_dependents"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String(160), nullable=False)
@@ -357,7 +357,7 @@ class EmployeeDependent(Base):
 
 class EmployeeRelation(Base):
     __tablename__ = "employee_relations"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     related_person_name = Column(String(160), nullable=False)
@@ -374,7 +374,7 @@ class EmployeeRelation(Base):
 
 class EmployeeAddress(Base):
     __tablename__ = "employee_addresses"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     address_type = Column(String(30), nullable=False)
@@ -393,7 +393,7 @@ class EmployeeAddress(Base):
 
 class COIReport(Base):
     __tablename__ = "coi_reports"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
     related_person_name = Column(String(160), nullable=False)
@@ -414,7 +414,7 @@ class COIReport(Base):
 
 class TravelRequest(Base):
     __tablename__ = "employee_travel_requests"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
     destination_country = Column(String(10), nullable=False)
@@ -433,12 +433,12 @@ class TravelRequest(Base):
     employee = relationship("Employee", backref="travel_requests")
     approver = relationship("User", foreign_keys=[approved_by])
 
-    __table_args__ = ({"schema": "hr"}, CheckConstraint("status IN ('pending', 'approved', 'rejected', 'cancelled', 'completed')", name="chk_employee_travel_requests_status_valid"))
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'cancelled', 'completed')", name="chk_employee_travel_requests_status_valid"), {"schema": "hr"})
 
 
 class AlumniNetwork(Base):
     __tablename__ = "alumni_network"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
     status = Column(String(20), default="active")
@@ -451,11 +451,11 @@ class AlumniNetwork(Base):
     
     employee = relationship("Employee", backref="alumni_record")
 
-    __table_args__ = ({"schema": "hr"}, CheckConstraint("status IN ('active', 'inactive', 'suspended', 'graduated')", name="chk_alumni_network_status_valid"))
+    __table_args__ = (CheckConstraint("status IN ('active', 'inactive', 'suspended', 'graduated')", name="chk_alumni_network_status_valid"), {"schema": "hr"})
 
 class DisciplinaryCase(Base):
     __tablename__ = "disciplinary_cases"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
     employee_name = Column(String(200), nullable=True)
@@ -469,11 +469,11 @@ class DisciplinaryCase(Base):
  
     employee = relationship("Employee", foreign_keys=[employee_id], backref="disciplinary_cases")
 
-    __table_args__ = ({"schema": "hr"}, CheckConstraint("status IN ('active', 'resolved', 'escalated', 'closed', 'dismissed')", name="chk_disciplinary_cases_status_valid"))
+    __table_args__ = (CheckConstraint("status IN ('active', 'resolved', 'escalated', 'closed', 'dismissed')", name="chk_disciplinary_cases_status_valid"), {"schema": "hr"})
 
 class OffboardingCase(Base):
     __tablename__ = "offboarding_cases"
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
     employee_name = Column(String(200), nullable=True)
@@ -488,7 +488,7 @@ class OffboardingCase(Base):
     
     employee = relationship("Employee", foreign_keys=[employee_id], backref="offboarding_cases")
 
-    __table_args__ = ({"schema": "hr"}, CheckConstraint("status IN ('pending', 'in_progress', 'completed', 'cancelled')", name="chk_offboarding_cases_status_valid"))
+    __table_args__ = (CheckConstraint("status IN ('pending', 'in_progress', 'completed', 'cancelled')", name="chk_offboarding_cases_status_valid"), {"schema": "hr"})
 
 
 class EmployeeRiskScore(Base):
@@ -521,7 +521,7 @@ class PayrollRecord(Base):
 
 class TrainingModule(Base):
     __tablename__ = 'training_modules'
-    __table_args__ = ({"schema": "hr"},)
+    __table_args__ = {"schema": "hr"}
     module_id = Column(String(36), primary_key=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)

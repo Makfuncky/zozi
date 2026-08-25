@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from domains.catalog.models.products import Product, Review
 from domains.orders.models.orders import Order, OrderItem
+from providers.ai.sentiment import analyze_review
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -140,3 +141,20 @@ def recompute_product_rating(db: Session, product_id: int) -> None:
     product.rating = round(sum(r[0] for r in ratings) / len(ratings), 2) if ratings else 0
     db.add(product)
     db.commit()
+
+
+def moderate_review(review_text: str, rating: int = 0):
+    """Analyze review sentiment and flag if it needs manual moderation."""
+    try:
+        result = analyze_review(review_text, rating=rating)
+    except NotImplementedError as exc:
+        logger.warning("Sentiment SDK unavailable: %s", exc)
+        return {"is_positive": True, "needs_review": False, "label": "neutral"}
+    except Exception as exc:
+        logger.warning("Sentiment analysis failed: %s", exc)
+        return {"is_positive": True, "needs_review": False, "label": "neutral"}
+    return {
+        "is_positive": result["combined_score"] > 0,
+        "needs_review": result["combined_score"] < -0.3,
+        "label": result["combined_label"],
+    }

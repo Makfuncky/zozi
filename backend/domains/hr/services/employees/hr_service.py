@@ -18,7 +18,7 @@ from domains.hr.models.employee_models import AlumniNetwork, Employee
 from domains.hr.models.employee_models import EmployeeAddress
 from domains.hr.models.employee_models import EmployeeDependent
 from domains.hr.models.employee_models import EmployeeRiskScore
-from domains.country.utils.country_access import enforce_country_access
+from domains.country.utils.country_rls import enforce_country_access
 import structlog
 logger = structlog.get_logger(__name__)
 

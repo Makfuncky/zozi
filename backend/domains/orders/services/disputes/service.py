@@ -283,19 +283,34 @@ def list_supplier_disputes(
         if normalized_priority in _ALLOWED_PRIORITIES:
             query = query.filter(SupplierDispute.priority == normalized_priority)
 
-    total = query.count()
-    items = (
-        query.order_by(SupplierDispute.created_at.desc())
-        .offset(max(offset, 0))
-        .limit(min(max(limit, 1), 500))
-        .all()
+    page_size = min(max(limit, 1), 100)
+
+    from infrastructure.utils.pagination import keyset_paginate
+    result = keyset_paginate(
+        query,
+        sort_keys=[(SupplierDispute.created_at, "desc")],
+        cursor=None,
+        page_size=page_size,
     )
-    page_size = min(max(limit, 1), 500)
+    items = result["items"]
+
+    if offset > 0:
+        from infrastructure.utils.pagination import keyset_offset_window
+        items = keyset_offset_window(
+            query,
+            sort_keys=[(SupplierDispute.created_at, "desc")],
+            offset=offset,
+            limit=page_size,
+        )
+
+    total = query.count()
     return {
         "data": [_serialize_dispute(item) for item in items],
         "total": total,
-        "page": (max(offset, 0) // page_size) + 1,
+        "page": (offset // page_size) + 1,
         "pageSize": page_size,
+        "next_cursor": result.get("next_cursor"),
+        "has_next": result.get("has_next"),
     }
 
 
@@ -331,19 +346,34 @@ def list_admin_disputes(
         if normalized_priority in _ALLOWED_PRIORITIES:
             query = query.filter(SupplierDispute.priority == normalized_priority)
 
-    total = query.count()
-    items = (
-        query.order_by(SupplierDispute.created_at.desc())
-        .offset(max(offset, 0))
-        .limit(min(max(limit, 1), 500))
-        .all()
+    page_size = min(max(limit, 1), 100)
+
+    from infrastructure.utils.pagination import keyset_paginate
+    result = keyset_paginate(
+        query,
+        sort_keys=[(SupplierDispute.created_at, "desc")],
+        cursor=None,
+        page_size=page_size,
     )
-    page_size = min(max(limit, 1), 500)
+    items = result["items"]
+
+    if offset > 0:
+        from infrastructure.utils.pagination import keyset_offset_window
+        items = keyset_offset_window(
+            query,
+            sort_keys=[(SupplierDispute.created_at, "desc")],
+            offset=offset,
+            limit=page_size,
+        )
+
+    total = query.count()
     return {
         "data": [_serialize_dispute(item) for item in items],
         "total": total,
-        "page": (max(offset, 0) // page_size) + 1,
+        "page": (offset // page_size) + 1,
         "pageSize": page_size,
+        "next_cursor": result.get("next_cursor"),
+        "has_next": result.get("has_next"),
     }
 
 

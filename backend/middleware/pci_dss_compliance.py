@@ -1,5 +1,4 @@
-﻿#!python
-"""
+﻿"""
 PCI-DSS Compliance Module
 Implements Payment Card Industry Data Security Standard requirements
 """

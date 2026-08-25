@@ -25,11 +25,27 @@ from providers.media.ports import AIStagingProduct
 from providers.media.ports import AIStagingVariant
 from providers.media.ports import AIUploadJob
 from providers.storage.storage_backend import get_storage
+from providers.image.free_image_tools import (
+    magic_erase, smart_crop, auto_rotate, auto_lighting,
+)
+from providers.image import HAS_CV2
+from providers.ai.image_similarity import compute_image_embedding, find_similar_images
 from infrastructure.utils.variant_key import compute_variant_key
 import structlog
 logger = structlog.get_logger(__name__)
 
 logger = logging.getLogger(__name__)
+
+
+def _preprocess_for_ai(img_bytes: bytes) -> bytes:
+    """Preprocess supplier-uploaded image before AI inference."""
+    if not HAS_CV2:
+        return img_bytes
+    img_bytes = auto_rotate(img_bytes)
+    img_bytes = auto_lighting(img_bytes)
+    img_bytes = smart_crop(img_bytes, target_ratio=1.0)
+    img_bytes = magic_erase(img_bytes, max_dim=1024)
+    return img_bytes
 
 
 def _slugify(name: str) -> str:
@@ -60,6 +76,7 @@ def _enrich_one(
 ) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
     from providers.media.services.ai import ai_service
 
+    img_bytes = _preprocess_for_ai(img_bytes)
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
     category = ai_service.suggest_category(name=name, image_bytes=img_bytes)
     tags = ai_service.suggest_tags(name=name, category=category)

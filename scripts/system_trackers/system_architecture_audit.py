@@ -109,7 +109,8 @@ Sub-folder axis (per documents/ARCHITECTURE_DIAGRAM.md - the AUTHORITATIVE targe
   Routers are NO LONGER flat at backend root, and controllers/ is ABOLISHED.
 
 - AXIS 2 DOMAIN = domains/{domain}/  where domain in {finance, accounts, catalog, orders,
-  payments, logistics, suppliers, customers, hr, comms, media, country, governance}
+  logistics, suppliers, customers, hr, comms, analytics, audit, country, governance,
+  security, promotions, media}
     domains/{d}/services/  models/  schemas/  policies/  events.py  subscribers.py  features.py
   Models are ORM-only and live UNDER domains/{d}/models/ (flat per domain), NOT at backend root.
 
@@ -872,7 +873,15 @@ DEFAULT_CANONICAL_HOME = {
     "schemas.py": "domains/{domain}/schemas/{name}.py",
     "config.py": "config.py",
     "auth.py": "infrastructure/security/auth.py",
-    "email_service.py": "infrastructure/utils/email_service.py",
+    "email_service.py": "infrastructure/messaging/email_service.py",
+    "realtime.py": "infrastructure/messaging/realtime.py",
+    "money.py": "kernel/money.py",
+    "currency.py": "kernel/currency.py",
+    "constants.py": "kernel/constants.py",
+    "operations_service.py": "domains/governance/services/operations.py",
+    "workflow_engine.py": "domains/governance/services/workflow_engine.py",
+    "staff_permissions.py": "rbac/staff_permissions.py",
+    "export_read.py": "infrastructure/utils/export_read.py",
 }
 
 # Modules treated as audit/route-generation TOOLING that must never originate a
@@ -1037,10 +1046,10 @@ PLACEMENT_DOMAIN_KEYWORDS: dict[str, set[str]] = {
     },
 
     # ══════════════════════════════════════════════════════════
-    # SUPPORTING DOMAINS
+    # COMMUNICATIONS DOMAIN (comms)
     # ══════════════════════════════════════════════════════════
     "comms": {
-        "chat", "comm", "comms", "communication", "email", "fix_chat",
+        "chat", "comm", "comms", "email",
         "meeting", "message", "messages", "notification", "notifications",
         "push", "sms", "ticket", "video", "translation",
         "websocket_manager", "write_chat",
@@ -1080,11 +1089,44 @@ PLACEMENT_DOMAIN_KEYWORDS: dict[str, set[str]] = {
     # PLATFORM / INFRA DOMAINS (real backend folders)
     # ══════════════════════════════════════════════════════════
     "governance": {
-        # folded from former "audit" domain; compliance/governance engine
+        # governance, policy, risk, compliance engine
         "governance", "policy", "policies", "compliance_engine",
         "governance_engine", "rule_engine", "tenant", "tenancy",
-        "compliance", "gdpr", "sox", "audit", "worm", "audit_log",
-        "audit_trail", "permission_audit", "communication_audit", "auditor",
+        "compliance", "gdpr", "sox", "risk",
+    },
+    "analytics": {
+        # analytics, dashboards, reporting
+        "analytics", "dashboard", "dashboards", "report", "reports",
+        "metric", "metrics", "kpi", "kpis", "insight", "insights",
+        "chart", "charts", "visualization", "forecast", "trend", "trends",
+        "executive_dashboard", "command_center", "war_room",
+        "data_warehouse", "etl",
+    },
+    "audit": {
+        # audit trail, compliance logging, worm audit
+        "audit", "auditor", "audit_log", "audit_trail", "audit_event",
+        "audit_events", "compliance_log", "compliance_audit",
+        "permission_audit", "communication_audit", "audit_report",
+        "audit_reports", "finding", "findings", "remediation",
+        "worm", "worm_audit", "chain_of_custody",
+        "ediscovery", "data_residency",
+    },
+    "security": {
+        # security, fraud detection, threat intelligence
+        "security", "fraud", "fraud_detection", "fraud_event", "fraud_events",
+        "blacklist", "watchlist", "threat", "threat_intel", "threat_intelligence",
+        "siem", "ids", "ips", "vulnerability", "security_audit",
+        "intrusion_detection", "anomaly_detection", "behavioral_analytics",
+        "device_fingerprint", "impossible_travel", "brute_force",
+        "bot_detection", "account_takeover",
+    },
+    "promotions": {
+        # promotions, campaigns, coupons, loyalty
+        "promotion", "promotions", "campaign", "campaigns", "coupon", "coupons",
+        "discount", "discounts", "flash_sale", "flash_sales", "bogo",
+        "referral", "referrals", "loyalty", "voucher", "vouchers",
+        "banner", "banners", "points_program", "reward", "rewards",
+        "promo_code", "promo_codes", "offer", "offers",
     },
 }
 
@@ -1107,15 +1149,19 @@ def _rebuild_placement_aliases() -> None:
 
 # Generic tokens that must NEVER become domain names
 # ===========================================================================
-# CANONICAL DOMAINS — single source of truth for the 13 bounded contexts
+# CANONICAL DOMAINS — single source of truth for the 16 bounded contexts
 # defined in ARCHITECTURE_DIAGRAM.md (AXIS 2). PLACEMENT_DOMAIN_KEYWORDS keeps
 # a richer alias list for *inference* (mapping legacy tokens to a domain), but
 # everything an AI agent READS (the placement contract, domain-folder validity)
-# must use exactly these 13 — never treasury/core/identity/gateway/etc.
+# must use exactly these 16 — never treasury/core/identity/gateway etc.
+# Per ARCHITECTURE_DIAGRAM.md §3: finance, accounts, catalog, orders, logistics,
+# suppliers, customers, hr, comms, analytics, audit, country, governance,
+# security, promotions, media.
 # ===========================================================================
 CANONICAL_DOMAINS: list[str] = [
-    "finance", "accounts", "catalog", "orders", "payments", "logistics",
-    "suppliers", "customers", "hr", "comms", "media", "country", "governance",
+    "finance", "accounts", "catalog", "orders", "logistics",
+    "suppliers", "customers", "hr", "comms", "analytics",
+    "audit", "country", "governance", "security", "promotions", "media",
 ]
 
 # Alias → canonical domain. Folded from PLACEMENT_DOMAIN_KEYWORDS so the
@@ -1130,7 +1176,7 @@ CANONICAL_DOMAIN_ALIASES: dict[str, set[str]] = {
                 "reconciliation", "treasury", "treasurer", "cash", "bank",
                 "payout", "payouts", "settlement", "settlements",
                 "gateway_reconciliation", "payment_engine", "payment_orchestrator",
-                "auto_payout", "payout_batch", "cash_flow", "fx"},
+                "auto_payout", "payout_batch", "cash_flow", "fx", "payment", "payments"},
     "accounts": {"accounts", "account", "gl_account", "chart_of_accounts"},
     "catalog": {"catalog", "product", "products", "category", "categories",
                 "variant", "variants", "filter", "filters", "moderation",
@@ -1141,16 +1187,7 @@ CANONICAL_DOMAIN_ALIASES: dict[str, set[str]] = {
                 "warehouses", "reservation", "reservations", "stock_movement",
                 "stock_adjustment", "reorder"},
     "orders": {"order", "orders", "checkout", "cart", "purchase", "purchases",
-               "return", "returns", "dispute", "disputes", "fulfillment", "ghost",
-               "commerce", "promotion", "promotions", "coupon", "coupons",
-               "discount", "discounts", "flash_sale", "wishlist", "referral",
-               "loyalty", "campaign", "voucher", "banner", "banners"},
-    "payments": {"payment", "payments", "gateway", "checkout_gateway",
-                 "payment_gateway", "payment_provider", "payment_adapter",
-                 "payment_processor", "stripe", "paypal", "tap", "thawani",
-                 "paytabs", "supplier_payments", "logistic_payments", "billing",
-                 "subscription", "subscriptions", "billing_cycle",
-                 "billing_cycles", "receipt", "receipts", "charge", "charges"},
+               "return", "returns", "dispute", "disputes", "fulfillment", "ghost"},
     "logistics": {"logistics", "shipping", "shipment", "shipments", "dispatch",
                   "delivery", "carrier", "fleet", "route", "routes", "pod",
                   "tracking", "parcel", "geofence", "geo_fence", "map",
@@ -1170,32 +1207,52 @@ CANONICAL_DOMAIN_ALIASES: dict[str, set[str]] = {
            "dei", "offboarding", "roster", "handover", "payroll", "background",
            "shift_handover", "shift_roster", "shift_scheduling",
            "background_check", "recruitment"},
-    "comms": {"chat", "comm", "comms", "communication", "email", "fix_chat",
+    "comms": {"chat", "comm", "comms", "email",
               "meeting", "message", "messages", "notification", "notifications",
               "push", "sms", "ticket", "video", "translation", "websocket_manager",
               "write_chat", "notification_template", "notification_templates",
               "push_token", "push_tokens", "email_template", "sms_template"},
-    "media": {"media", "asset", "assets", "image", "images", "upload", "uploads",
-              "file", "storage", "free_image", "cdn", "video", "documents",
-              "document", "certificate", "certificates", "attachment",
-              "attachments", "contract_document"},
+    "analytics": {"analytics", "analytics", "dashboard", "dashboards", "report", "reports",
+                  "metric", "metrics", "kpi", "kpis", "insight", "insights",
+                  "chart", "charts", "visualization", "forecast", "trend", "trends",
+                  "sales_analytics", "customer_analytics", "product_analytics",
+                  "operational_analytics", "executive_dashboard", "command_center",
+                  "war_room", "data_warehouse", "etl", "data_pipeline"},
+    "audit": {"audit", "auditor", "audit_log", "audit_trail", "audit_event",
+              "audit_events", "compliance_log", "compliance_audit",
+              "permission_audit", "communication_audit", "audit_report",
+              "audit_reports", "finding", "findings", "remediation",
+              "audit_plan", "audit_plans", "evidence", "retention_policy",
+              "worm", "worm_audit", "chain_of_custody", "log_integrity",
+              "ediscovery", "data_residency", "gdpr_audit", "sox_audit"},
     "country": {"geography", "country", "countries", "city", "cities", "region",
                 "zone", "territory", "postal", "currency", "border",
                 "cross_border", "cross_border_tracker", "country_detection",
                 "country_research", "economics", "geo", "localization",
                 "location", "location_service"},
-    "governance": {"governance", "policy", "policies", "compliance_engine",
-                   "governance_engine", "rule_engine", "tenant", "tenancy",
-                   "permissions", "permission_grant", "permission_grants",
-                   "rbac_policy", "rbac_policies", "access_control", "webhooks",
-                   "webhook", "webhook_endpoint", "webhook_delivery",
-                   "webhook_log", "events", "outbox", "outbox_events",
-                   "event_log", "event_subscription", "event_subscriptions",
-                   "saga", "reporting", "scheduled_report", "scheduled_reports",
-                   "export", "exports", "report_template", "fraud", "risk",
-                   "compliance", "gdpr", "sox", "audit", "worm", "audit_log",
-                   "audit_trail", "permission_audit", "communication_audit",
-                   "auditor"},
+    "governance": {"governance", "policy", "policies", "governance_engine",
+                   "rule_engine", "tenant", "tenancy", "permissions",
+                   "permission_grant", "permission_grants", "access_control",
+                   "events", "outbox", "outbox_events", "event_log",
+                   "event_subscription", "event_subscriptions", "saga",
+                   "scheduled_report", "scheduled_reports", "export", "exports",
+                   "report_template", "risk", "compliance", "gdpr", "sox"},
+    "security": {"security", "fraud", "fraud_detection", "fraud_event", "fraud_events",
+                 "blacklist", "watchlist", "threat", "threat_intel", "threat_intelligence",
+                 "siem", "ids", "ips", "waf", "ddos", "xss", "sqli", "csrf",
+                 "vulnerability", "penetration_test", "security_audit", "security_scan",
+                 "intrusion_detection", "anomaly_detection", "behavioral_analytics",
+                 "device_fingerprint", "impossible_travel", "session_hijacking",
+                 "brute_force", "rate_limit_bypass", "bot_detection", "account_takeover"},
+    "promotions": {"promotion", "promotions", "campaign", "campaigns", "coupon", "coupons",
+                   "discount", "discounts", "flash_sale", "flash_sales", "bogo",
+                   "referral", "referrals", "loyalty", "voucher", "vouchers",
+                   "banner", "banners", "points_program", "reward", "rewards",
+                   "promo_code", "promo_codes", "offer", "offers", "deal", "deals"},
+    "media": {"media", "asset", "assets", "image", "images", "upload", "uploads",
+              "file", "storage", "free_image", "cdn", "video", "documents",
+              "document", "certificate", "certificates", "attachment",
+              "attachments", "contract_document"},
 }
 
 
@@ -2184,8 +2241,8 @@ def _apply_scaffolding_contract(eff: dict, contract: dict | None) -> None:
             normalized_keywords.setdefault(domain, {domain})
 
         domain_aliases = {
-            "comms": "communication",
-            "comm": "communication",
+            "comms": "comms",
+            "comm": "comms",
             "geography": "country",
             "geo": "country",
         }
@@ -5938,11 +5995,38 @@ DEFAULT_FLOW_TYPES: dict[str, dict[str, str]] = {
         "admin": "multi_way",
         "logistics": "multi_way",
     },
-    "communication": {
+    "comms": {
         "customer": "multi_way",
         "supplier": "multi_way",
         "employee": "multi_way",
         "admin": "multi_way",
+    },
+    "analytics": {
+        "customer": "multi_way",
+        "supplier": "multi_way",
+        "employee": "multi_way",
+        "admin": "multi_way",
+        "logistics": "multi_way",
+    },
+    "promotions": {
+        "customer": "multi_way",
+        "supplier": "multi_way",
+        "employee": "multi_way",
+        "admin": "multi_way",
+    },
+    "security": {
+        "customer": "multi_way",
+        "supplier": "multi_way",
+        "employee": "multi_way",
+        "admin": "multi_way",
+        "logistics": "multi_way",
+    },
+    "audit": {
+        "customer": "multi_way",
+        "supplier": "multi_way",
+        "employee": "multi_way",
+        "admin": "multi_way",
+        "logistics": "multi_way",
     },
     "logistics": {
         "logistics": "forward",
@@ -7334,7 +7418,9 @@ def target_architecture_diagram(repo=None) -> str:
 # ============================================================================
 
 # --- Database domain taxonomy (unified with PLACEMENT_DOMAIN_KEYWORDS) ---
-    # DOMAIN schemas are used (finance, accounts, catalog, orders, payments, logistics, suppliers, customers, hr, comms, media, country, governance, …), each
+    # DOMAIN schemas are used (finance, accounts, catalog, orders, logistics, suppliers,
+    # customers, hr, comms, analytics, audit, country, governance, security, promotions,
+    # media), each owning its own `user` table (referenced as governance.users.id, supplier.users.id, …).
     # owning its own `user` table (referenced as customer.user.id, supplier.user.id, …).
     # The FORBIDDEN schemas are core/platform/identity — any model or FK using one is a
     # deviation (flagged by DBA01 / DBA06). Domain schemas and schema=None are allowed.
@@ -11159,8 +11245,8 @@ def check_domain_actor_isolation(repo: Path, rep: Report, models: list, eff: dic
     The forbidden schemas are core/platform/identity — they must never appear in a
     table or FK reference.
 
-    ❌ hr_employees.user_id → core.user.id         (forbidden core schema)
-    ✅ hr_employees.user_id → customer.user.id     (domain schema, allowed)
+    ❌ hr_employees.user_id → core.users.id       (forbidden core schema)
+    ✅ hr_employees.user_id → governance.users.id  (domain schema, allowed)
     """
     for m in models:
         if not m.table:

@@ -128,10 +128,31 @@ backend/
 │   └── utils/                  # pure technical helpers: pagination.py · datetime_utils · variant_key
 ├── kernel/                     # SHARED KERNEL — pure business primitives: money, currency, numbering, country, period
 │                             #   import rule: domains → kernel → (nothing); kernel may use platform primitives only
-├── providers/                  # 3rd-party/AI adapters (called ONLY by services/jobs; never by modules/domains directly)
-│   ├── ai/  analytics/  auth/  automation/  comms/  finance/  geography/
-│   ├── image/  media/  news/  payments/  security/  voice/
-│   └── _base.py                # BaseProvider / BaseAIProvider + health_check()
+├── providers/                  # 3rd-party/AI adapters (called ONLY by services/jobs; never by modules directly)
+│   ├── ai/                      # AI/ML: chatbot, search, vision, text, sentiment, recommendation, price_intelligence, image_similarity, finance_ai
+│   ├── analytics/               # Admin analytics dashboards
+│   ├── auth/                    # JWT, OAuth, TOTP, Apple Auth
+│   ├── automation/              # Job scheduler (APScheduler)
+│   ├── barcode/                 # EAN/UPC/Code128 generation
+│   ├── bg_removal/              # AI background removal (rembg + OpenCV)
+│   ├── comms/                   # Email, Twilio, WhatsApp
+│   ├── finance/                 # Bank API integration
+│   ├── geo/                     # Geo utilities
+│   ├── geography/               # IP geolocation, country, maps, currency rates
+│   ├── image/                   # Pillow processing, OCR, bg_remover, parcel verification
+│   ├── media/                   # Media AI services
+│   ├── news/                    # RSS feed parsing
+│   ├── ocr/                     # Document OCR parsing
+│   ├── payments/                # Stripe, PayPal, Tap, PayTabs, Thawani, webhooks, registry, connect
+│   ├── qr/                      # QR generation, parcel verification
+│   ├── scanner/                 # QR/barcode scanning from images
+│   ├── security/                # Encryption, threat intel, watchlist
+│   ├── shipping/                # Rate calculator, carrier comparison
+│   ├── storage/                 # S3/local storage backends, S3 client
+│   ├── voice/                   # Speech-to-text, voice commands
+│   ├── async_workers/           # Thread/process pool executors for CPU-bound work
+│   ├── observability/           # Provider health monitoring
+│   └── _base.py                 # BaseProvider / BaseAIProvider + health_check()
 ├── jobs/                        # background workers/consumers (→ domains → infrastructure)
 │   ├── fraud_monitoring.py  ghost_order_detector.py  data_retention.py
 │   ├── payroll_run.py  payout_sweep.py  reconciliation_cron.py  bank_statement_importer.py
@@ -152,7 +173,59 @@ backend/
     └── domains/                 # per-domain unit/integration tests
 ```
 
-> **Shared kernel (`kernel/`).** Business primitives used by *every* domain — `money`
+> **Provider Availability Flags.** All providers expose `HAS_<SDK>` boolean flags (e.g., `HAS_STRIPE`, `HAS_TWILIO`, `HAS_OPENCV`, `HAS_REMBG`). Domains must gracefully degrade when a provider SDK is not installed — never crash.
+
+> **Provider-to-Domain Wiring.** Providers are wired into domain services via direct function calls (never via imports from domains into providers). Each provider tool serves specific domains:
+
+| Provider Tool | Served Domains | Use Case |
+|---|---|---|
+| `ai/chatbot` | Analytics | Intent classification, session management |
+| `ai/search` + `ai/text` (embeddings) | Catalog, Customers | Semantic product search, autocomplete |
+| `ai/vision` + `ai/image_similarity` | Catalog | Product image analysis, duplicate detection |
+| `ai/sentiment` | Reviews, Security, Analytics | Review moderation, fraud signals |
+| `ai/recommendation` | Customers, Promotions, Analytics | Personalized product feeds |
+| `ai/price_intelligence` | Promotions, Analytics | Dynamic pricing, competitor tracking |
+| `ai/finance_ai` | Finance | Transaction categorization |
+| `ai/huggingface` | Catalog | Fallback ML inference |
+| `analytics/analytics` | Analytics | Dashboard metrics, sales trends |
+| `auth/jwt` + `auth/oauth` + `auth/totp` + `auth/apple` | Security, Accounts | Session management, 2FA, social login |
+| `automation/scheduler` | Finance, Logistics, Promotions, Governance, Audit, Analytics | Recurring jobs, flash sale timing |
+| `barcode/` + `qr/` + `scanner/` | Logistics, Catalog, Suppliers | Shipping labels, SKU barcodes, parcel verification |
+| `bg_removal/` + `image/` + `ocr/` | Catalog, Reviews, Finance, Accounts, Suppliers, Audit | Image preprocessing, document extraction |
+| `comms/email` + `comms/twilio` + `comms/whatsapp` | Orders, Comms, Promotions, Accounts, HR, Suppliers, Logistics | Transactional messaging, notifications |
+| `finance/bank_api` | Finance, Orders, Suppliers | Bank verification, payouts |
+| `geography/` (ip, country, rates, maps) | Orders, Logistics, Country, Security, Accounts, Analytics | Localization, tax rules, shipping eligibility |
+| `news/` | Governance, Audit | Regulatory monitoring |
+| `payments/` (stripe, paypal, tap, paytabs, thawani, connect, registry) | Orders, Finance | Multi-PSP payment processing |
+| `security/encryption` + `security/threat_intel` + `security/watchlist` | Security, Accounts, HR, Governance, Audit, Comms | PII protection, AML screening, fraud feeds |
+| `shipping/` | Orders, Customers (cart), Logistics | Rate calculation, carrier comparison |
+| `storage/` + `storage/s3_client` | Catalog, Audit, Analytics, Suppliers | File persistence, audit archival |
+| `voice/` | *(future use)* | Speech-to-text, voice commands |
+
+> **Wiring Pattern.** Domain services import providers at the top of the service file, call provider functions with primitive parameters, and handle results. Example:
+> ```python
+> # Inside domains/catalog/services/ai_upload_service.py
+> from providers.media.services.ai import ai_service
+> from providers.image.free_image_tools import magic_erase, HAS_REMBG
+>
+> def process_upload(img_bytes: bytes) -> bytes:
+>     if HAS_REMBG:
+>         img_bytes = magic_erase(img_bytes)
+>     name = ai_service.infer_product_name(image_bytes=img_bytes)
+>     return img_bytes
+> ```
+
+> **Async Provider Calls.** CPU-bound provider work (image processing, embedding generation) runs through `providers.async_workers`:
+> ```python
+> from providers.async_workers import remove_background_async, embed_text_async
+>
+> async def process_image(img_bytes: bytes) -> bytes:
+>     return await remove_background_async(img_bytes, strategy="auto")
+> ```
+
+---
+
+## 2.1 · Shared kernel (`kernel/`)
 > (Decimal, never float), `currency`, `numbering` (centralized ORD-/INV-/PAY-/BATCH-),
 > `country`, `period` — live here as first-class residents so they are not smuggled into
 > `infrastructure/utils/` or duplicated per domain. **Dependency rule: `domains → kernel → (nothing)`.**
@@ -231,51 +304,71 @@ frontend/
 ## 5 · System Context
 
 ```mermaid
-flowchart LR
-    subgraph FE["FRONTEND — Next.js (frontend/web_app)"]
-        FEA["App Router (src/app/*)"]
-        FEL["API client (src/lib/api/*) — fetches /rbac/catalog"]
-        FES["Zustand stores (cart/currency/wishlist/...)"]
-    end
-    subgraph BE["BACKEND — FastAPI (backend/) — N stateless replicas"]
-        BEM["middleware/ pipeline (orchestrator.py)"]
-        BEMOD["modules/*/routers/ (thin: auth + require_feature + 1 service call)"]
-        BEDOM["domains/*/services/ (business logic + DB access)"]
-        BEFEAT["rbac/ (catalog · roles · resolution · dependencies)"]
-        BEK["kernel/ (money · numbering · country · period)"]
-        BEP["providers/ (AI/ML + 3rd-party adapters)"]
-        BEJ["jobs/ + events (background consumers)"]
-    end
-    subgraph INF["infrastructure/ (platform — zero business logic)"]
-        BEDB["database/ (get_db · RLS enforcer)"]
-        RED[(redis: auth cache · catalog cache · sessions · realtime)]
-    end
-    subgraph DB["DATA — PostgreSQL (domain schemas: finance/catalog/orders/…; one schema per domain)"]
-        DBE[("Pooled via PgBouncer")]
-        DBM[("Models — domains/*/models/ (schema per domain)")]
-    end
-    subgraph EXT["EXTERNAL"]
-        PG[(Payment gateway)]
-        AI[("AI/ML models")]
-        SMTP[("SMTP / email")]
-        CDN[("CDN / static + images")]
-    end
-    CDN --> FE
-    FEA --> FEL --> BEM --> BEMOD
-    FES -. state .- FEA
-    BEMOD --> BEFEAT
-    BEMOD --> BEDOM
-    BEDOM --> BEK
-    BEDOM --> BEP
-    BEDOM --> BEDB
-    BEDOM --> RED
-    BEP --> AI
-    BEJ --> DBE
-    BEDB --> DBE
-    DBE --> DBM
-    BEDOM --> PG
-    BEDOM --> SMTP
+    flowchart LR
+        subgraph FE["FRONTEND — Next.js (frontend/web_app)"]
+            FEA["App Router (src/app/*)"]
+            FEL["API client (src/lib/api/*) — fetches /rbac/catalog"]
+            FES["Zustand stores (cart/currency/wishlist/...)"]
+        end
+        subgraph BE["BACKEND — FastAPI (backend/) — N stateless replicas"]
+            BEM["middleware/ pipeline (orchestrator.py)"]
+            BEMOD["modules/*/routers/ (thin: auth + require_feature + 1 service call)"]
+            BEDOM["domains/*/services/ (business logic + DB access)"]
+            BEFEAT["rbac/ (catalog · roles · resolution · dependencies)"]
+            BEK["kernel/ (money · numbering · country · period)"]
+            BEJ["jobs/ + events (background consumers)"]
+        end
+        subgraph PROV["providers/ — external SDK wrappers"]
+            PROV_AI["ai/ (chatbot, search, vision, text, sentiment, recommendation)"]
+            PROV_AUTH["auth/ (JWT, OAuth, TOTP, Apple)"]
+            PROV_COMMS["comms/ (email, Twilio, WhatsApp)"]
+            PROV_PAY["payments/ (Stripe, PayPal, Tap, PayTabs, Thawani)"]
+            PROV_GEO["geography/ (IP, country, rates, maps)"]
+            PROV_IMG["image/ (Pillow, OCR, bg_removal)"]
+            PROV_SEC["security/ (encryption, threat_intel, watchlist)"]
+            PROV_SHIP["shipping/ (rates, carriers)"]
+            PROV_STOR["storage/ (S3, local)"]
+        end
+        subgraph INF["infrastructure/ (platform — zero business logic)"]
+            BEDB["database/ (get_db · RLS enforcer)"]
+            RED[(redis: auth cache · catalog cache · sessions · realaltime)]
+        end
+        subgraph DB["DATA — PostgreSQL (domain schemas: finance/catalog/orders/…; one schema per domain)"]
+            DBE[("Pooled via PgBouncer")]
+            DBM[("Models — domains/*/models/ (schema per domain)")]
+        end
+        subgraph EXT["EXTERNAL"]
+            PG[(Payment gateway)]
+            AI[("AI/ML models")]
+            SMTP[("SMTP / email")]
+            CDN[("CDN / static + images")]
+        end
+        CDN --> FE
+        FEA --> FEL --> BEM --> BEMOD
+        FES -. state .- FEA
+        BEMOD --> BEFEAT
+        BEMOD --> BEDOM
+        BEDOM --> BEK
+        BEDOM --> BEDB
+        BEDOM --> RED
+        BEDOM --> PROV_AI
+        BEDOM --> PROV_AUTH
+        BEDOM --> PROV_COMMS
+        BEDOM --> PROV_PAY
+        BEDOM --> PROV_GEO
+        BEDOM --> PROV_IMG
+        BEDOM --> PROV_SEC
+        BEDOM --> PROV_SHIP
+        BEDOM --> PROV_STOR
+        PROV_PAY --> PG
+        PROV_AI --> AI
+        PROV_COMMS --> SMTP
+        BEJ --> DBE
+        BEDB --> DBE
+        DBE --> DBM
 ```
+
+> **Provider-to-Domain Connection Map.** The diagram above shows providers as a separate subgraph. Domain services call providers via function calls (arrows from `BEDOM` to `PROV_*`). Providers never import from domains — data flows through parameters and return values only.
 
 ---
 

@@ -1024,6 +1024,7 @@ def finalize_inventory_atomic(db: Session, order_id: int) -> list[str]:
         requested_quantities[product_id] = requested_quantities.get(product_id, 0) + quantity
 
     issues: list[str] = []
+    insufficient_product_ids: list[int] = []
 
     for product_id, requested_quantity in requested_quantities.items():
         result = db.execute(
@@ -1035,13 +1036,23 @@ def finalize_inventory_atomic(db: Session, order_id: int) -> list[str]:
         )
 
         if result.rowcount == 0:
-            product = db.query(Product).filter(Product.id == product_id).first()
+            insufficient_product_ids.append(product_id)
+
+    if insufficient_product_ids:
+        # Batch-load all insufficient-stock products in a single query (avoids N+1)
+        insufficient_products = {
+            p.id: p
+            for p in db.query(Product).filter(Product.id.in_(insufficient_product_ids)).all()
+        }
+        for product_id in insufficient_product_ids:
+            product = insufficient_products.get(product_id)
             if product is None:
                 issues.append(f"missing_product:{product_id}")
             else:
                 available = int(getattr(product, "stock", 0) or 0)
+                requested_qty = requested_quantities[product_id]
                 issues.append(
-                    f"insufficient_stock:{product.id}:available={available}:requested={requested_quantity}"
+                    f"insufficient_stock:{product.id}:available={available}:requested={requested_qty}"
                 )
 
     if not issues:

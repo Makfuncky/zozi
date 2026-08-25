@@ -387,6 +387,10 @@ def send_email(
         )
         return
 
+    if not transport.get("available"):
+        logger.error("Email delivery is not available (provider=%s)", processor)
+        raise EmailDeliveryDisabledError(f"Email provider '{processor}' is not available")
+
     try:
         _provider_deliver_email(
             to,
@@ -396,8 +400,14 @@ def send_email(
             provider=transport.get("provider") or "disabled",
             config=transport,
         )
+    except EmailDeliveryDisabledError:
+        raise
     except RuntimeError as exc:
-        raise EmailDeliveryDisabledError(str(exc))
+        logger.error("Email delivery runtime error to %s: %s", to, exc)
+        raise EmailDeliveryDisabledError(str(exc)) from exc
+    except Exception as exc:
+        logger.error("Email delivery failed to %s: %s", to, exc, exc_info=True)
+        raise EmailDeliveryDisabledError(f"Email delivery failed: {exc}") from exc
 
     record_email_delivery_event(
         recipient_email=to,

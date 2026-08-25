@@ -1781,7 +1781,6 @@ from domains.country.services.core.countries_service import *  # noqa: F401,F403
 
 # === MERGED FROM communications/country_communication_service.py ===
 """Service methods for country communication data access."""
-from __future__ import annotations
 from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 from sqlalchemy.orm import Session
 from sqlalchemy import desc

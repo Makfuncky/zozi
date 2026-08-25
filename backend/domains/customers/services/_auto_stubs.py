@@ -1,8 +1,6 @@
-"""
-Auto-generated stub services for customers domain.
-TODO: Replace these stubs with real implementations.
-"""
+"""Auto-generated stub services for customers domain."""
+"""TODO: Replace with real implementations."""
 
-def ((**kwargs):
+def customer_router_service(**kwargs):
     """TODO: Implement."""
     return {}

@@ -3,6 +3,7 @@ Search Controller — natural-language query parsing and smart product search lo
 """
 import hashlib
 import json
+import logging
 import re
 from typing import Any, Optional, List, cast
 
@@ -14,6 +15,37 @@ from domains.catalog.models.products import Product, Wishlist
 from domains.orders.models.orders import Order, OrderItem
 from infrastructure.database.schemas import _normalize_image_path
 from infrastructure.utils.cache import cache_or_compute
+from providers.ai.search import AdvancedSearchEngine
+from providers.ai.text import embed_text
+
+logger = logging.getLogger(__name__)
+
+_search_engine = AdvancedSearchEngine()
+
+
+def load_search_catalog(products: list[dict]):
+    """Load product catalog into the AI search engine."""
+    try:
+        return _search_engine.load_product_catalog(products)
+    except ConnectionError as exc:
+        logger.warning("Search embedding provider unreachable: %s", exc)
+        return 0
+    except Exception as exc:
+        logger.warning("Search catalog load failed: %s", exc)
+        return 0
+
+
+def search_products(query: str, filters: dict = None, limit: int = 20):
+    """Search products using the AI-powered search engine."""
+    try:
+        result = _search_engine.search(query=query, filters=filters, limit=limit)
+        return result
+    except ConnectionError as exc:
+        logger.warning("Search provider unreachable: %s", exc)
+        return {"products": [], "total": 0, "error": "Search service unavailable"}
+    except Exception as exc:
+        logger.warning("Search failed: %s", exc)
+        return {"products": [], "total": 0, "error": str(exc)}
 
 # ── Price-range keyword map ────────────────────────────────────────────────
 PRICE_KEYWORDS: list[tuple[re.Pattern, float | None, float | None]] = [

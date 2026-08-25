@@ -1545,9 +1545,23 @@ def get_available_orders_for_logistics(db: Session) -> list[dict]:
         .order_by(Order.updated_at.desc())
         .all()
     )
+    if not orders:
+        return []
+
+    order_ids = [o.id for o in orders]
+
+    all_shipments = (
+        db.query(Shipment)
+        .filter(Shipment.order_id.in_(order_ids))
+        .all()
+    )
+    shipments_by_order: dict[int, Shipment] = {}
+    for s in all_shipments:
+        shipments_by_order.setdefault(cast(int, s.order_id), s)
+
     result = []
     for order in orders:
-        shipment = db.query(Shipment).filter(Shipment.order_id == order.id).first()
+        shipment = shipments_by_order.get(order.id)
         result.append({
             "order_id": order.id,
             "order_number": order.order_number,

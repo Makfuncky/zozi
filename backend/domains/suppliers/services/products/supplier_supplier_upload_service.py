@@ -16,7 +16,7 @@ import base64
 import numpy as np
 from providers.image import Image
 from fastapi import Depends, File, Form, HTTPException, UploadFile
-from domains.governance.services.admin_controller import require_roles
+from domains.security.services.iam.security_dependencies import require_roles
 from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
 from domains.finance.services.shared.bg_removal_service import remove_background
 from domains.finance.services.shared.bg_removal_service import _HAS_CV2

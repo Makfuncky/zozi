@@ -1,4 +1,3 @@
-#!python
 """
 Security Metrics Collection for Zozi Platform
 Provides comprehensive security monitoring and analytics

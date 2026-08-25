@@ -1,4 +1,3 @@
-#!python
 """
 SIEM Integration for Zozi Platform
 Implements Security Information and Event Management with real-time correlation

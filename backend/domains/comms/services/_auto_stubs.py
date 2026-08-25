@@ -1,13 +1,7 @@
-"""
-Auto-generated stub services for comms domain.
-TODO: Replace these stubs with real implementations.
-"""
+"""Auto-generated stub services for comms domain."""
+"""TODO: Replace with real implementations."""
 
 class AssetTrackingService:
-    """TODO: Implement."""
-    pass
-
-class EntityChatService:
     """TODO: Implement."""
     pass
 
@@ -32,14 +26,6 @@ def add_reaction(**kwargs):
     return {}
 
 def apply_legal_hold(**kwargs):
-    """TODO: Implement."""
-    return {}
-
-def create_cash_account(**kwargs):
-    """TODO: Implement."""
-    return {}
-
-def create_cash_transaction(**kwargs):
     """TODO: Implement."""
     return {}
 
@@ -71,14 +57,6 @@ def email_metrics(**kwargs):
     """TODO: Implement."""
     return {}
 
-def ensure_video_room_country(**kwargs):
-    """TODO: Implement."""
-    return {}
-
-def get_admin_email_stats(**kwargs):
-    """TODO: Implement."""
-    return {}
-
 def get_chat_service(**kwargs):
     """TODO: Implement."""
     return {}
@@ -88,6 +66,10 @@ def get_command_center_metrics(**kwargs):
     return {}
 
 def get_escalation_sla_service(**kwargs):
+    """TODO: Implement."""
+    return {}
+
+def get_inbox(**kwargs):
     """TODO: Implement."""
     return {}
 
@@ -112,10 +94,6 @@ def handle_message(**kwargs):
     return {}
 
 def is_legal_hold_active(**kwargs):
-    """TODO: Implement."""
-    return {}
-
-def list_all_video_rooms(**kwargs):
     """TODO: Implement."""
     return {}
 
@@ -168,9 +146,5 @@ def translate_en_to_ar(**kwargs):
     return {}
 
 def upload_attachment(**kwargs):
-    """TODO: Implement."""
-    return {}
-
-def video_room_metrics(**kwargs):
     """TODO: Implement."""
     return {}

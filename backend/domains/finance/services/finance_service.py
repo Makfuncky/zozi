@@ -5,11 +5,17 @@ from typing import Optional
 
 from fastapi import Body, Depends, Query
 
+from providers.finance.bank_api import BankApiError, dispatch_batch, test_connection
+
+from providers.geography.rates import fetch_rates
+from providers.automation.scheduler import add_interval_job, create_scheduler
+from providers.payments.connect import create_connect_account
+
 from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-import modules.treasury.routers.cash_management_controller as ctrl
+from modules.admin.routers.finance import *  # Treasury functions merged into finance
 
 from modules.admin.routers.auth import require_admin, require_permission
 from infrastructure.database.database import get_db
@@ -37,6 +43,7 @@ from infrastructure.database.schemas import (
 )
 
 from infrastructure.utils.dependencies import get_current_user
+from infrastructure.utils.config import settings
 
 class FlagRequest(BaseModel):
     reason: str
@@ -287,8 +294,6 @@ def logistics_list_ledger(skip: int, limit: int, db: Session, current_user: dict
 
 # === Merged from commission_service.py ===
 
-"""Auto-migrated service logic from routers/commission.py."""
-from __future__ import annotations
 
 from typing import Optional
 
@@ -409,7 +414,7 @@ def delete_supplier_commission_override(supplier_id: int, db: Session, current_u
 def get_product_commission_override(product_id: int, db: Session, current_user: dict):
     result = commission_controller.get_product_commission_override(product_id, db)
     if result is None:
-        return {"override": None, "message": "No override — using category/badge/default rate"}
+        return {"override": None, "message": "No override - using category/badge/default rate"}
     return result
 
 def list_product_commission_overrides(search: Optional[str], supplier_id: Optional[int], limit: int, db: Session, current_user: dict):
@@ -459,7 +464,7 @@ def get_effective_rate(supplier_id: int, product_id: Optional[int], category_slu
 # === Merged from flat_admin_finance_geography_service.py ===
 
 """Auto-migrated service logic from routers/admin_finance_geography.py."""
-from __future__ import annotations
+
 
 from fastapi import Depends, Path, Query
 
@@ -523,5 +528,46 @@ def create_badge_tier_route(country_code: str, payload: CommissionBadgeTierCreat
 def update_badge_tier_route(country_code: str, tier_id: int, payload: CommissionBadgeTierCreate, _: User, db: Session):
     get_country_or_404(country_code.upper(), db)
     return update_badge_tier(db, tier_id, country_code, payload)
+
+
+# ?? Provider-wired helpers ??
+
+
+def verify_bank_connection(base_url: str, api_key: str):
+    """Probe the bank API for connectivity using the finance provider."""
+    try:
+        result = test_connection(
+            base_url,
+            batch_path=settings.bank_api_batch_path,
+            auth_token=api_key,
+            timeout=float(settings.bank_api_timeout_seconds),
+        )
+        return {"connected": result.get("ok", False), "message": result.get("detail", "")}
+    except BankApiError as exc:
+        return {"connected": False, "message": str(exc)}
+
+
+def reconcile_in_multi_currency(amount: float, from_currency: str, to_currency: str = "USD"):
+    """Convert an amount between currencies using live FX rates from the geography provider."""
+    try:
+        rates, _source = fetch_rates()
+        from_key = from_currency.upper()
+        to_key = to_currency.upper()
+        if from_key == to_key:
+            return {"original": amount, "converted": amount, "rate": 1.0}
+        base_rate = rates.get(from_key)
+        target_rate = rates.get(to_key)
+        if base_rate is None or target_rate is None:
+            return {"original": amount, "converted": None, "rate": None, "error": f"Rate unavailable for {from_currency}/{to_currency}"}
+        rate = float(target_rate) / float(base_rate)
+        converted = round(amount * rate, 2)
+        return {"original": amount, "converted": converted, "rate": rate}
+    except Exception as exc:
+        return {"original": amount, "converted": None, "rate": None, "error": str(exc)}
+
+
+def create_stripe_connect_account(**kwargs):
+    """Create a Stripe Connect account via the payments provider."""
+    return create_connect_account(**kwargs)
 
 

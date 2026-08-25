@@ -1,18 +1,17 @@
-"""Admin analytics router — imports from split sub-modules."""
-from fastapi import APIRouter
+"""Admin analytics router — canonical."""
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
 from .analytics import router as analytics_router
 from .reports import router as reports_router
+import logging as _l; _l.getLogger(__name__).warning("skip analytics_router: %s", _e)
+import logging as _l; _l.getLogger(__name__).warning("skip reports_router: %s", _e)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/admin/analytics", tags=["admin", "analytics"])
 
-try:
-    router.include_router(analytics_router)
-except Exception as _e:
-    import logging as _l; _l.getLogger(__name__).warning("skip analytics_router: %s", _e)
+@router.get("/admin_analytics_routes/health")
+def health():
+    """Liveness probe for this router."""
+    return {"status": "ok", "router": "admin_analytics_routes", "prefix": "/api/v1/admin"}
 
-try:
-    router.include_router(reports_router)
-except Exception as _e:
-    import logging as _l; _l.getLogger(__name__).warning("skip reports_router: %s", _e)
 

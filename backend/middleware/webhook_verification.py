@@ -1,5 +1,4 @@
-﻿#!python
-"""
+﻿"""
 Cryptographic Webhook Verification
 Implements HMAC signature verification for webhook authenticity
 """

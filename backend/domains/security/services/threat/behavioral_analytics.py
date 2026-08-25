@@ -1,4 +1,3 @@
-#!python
 """
 Behavioral Analytics and Anomaly Detection
 Implements ML-based anomaly detection for security monitoring

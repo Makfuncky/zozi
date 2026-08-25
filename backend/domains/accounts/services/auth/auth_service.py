@@ -1,4 +1,4 @@
-"""
+﻿"""
 Unified Authentication Service — "One Identity, Many Doors"
 
 Implements 5 login doors, all converging on the same JWT + RLS context:
@@ -1148,7 +1148,6 @@ stubbed here and wired to the messaging layer later (twilio is not configured
 in dev, so SMS only logs). Codes are bcrypt-hashed at rest; plaintext is never
 persisted.
 """
-from __future__ import annotations
 
 import logging
 import random
@@ -1157,10 +1156,10 @@ from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.otp import OtpCode
 from infrastructure.security.auth import get_password_hash, verify_password
 from infrastructure.utils.datetime_utils import utcnow
 from infrastructure.config import settings
+# TODO: OtpCode model not yet defined — add to accounts/models/ when needed
 
 logger = logging.getLogger(__name__)
 
@@ -1240,7 +1239,6 @@ def _deliver(user, channel: str, destination: str | None, code: str) -> None:
 
 # === MERGED FROM auth_router_service.py ===
 """Auth router service — DB helpers for routers/auth.py."""
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
@@ -3260,7 +3258,6 @@ def admin_verify_totp(
 
 
 # === MERGED FROM biometric_auth.py ===
-from __future__ import annotations
 
 import logging
 from typing import Optional, Dict, Any
@@ -3338,7 +3335,6 @@ standard auth response. Provider token *verification* is stubbed for now (no
 provider SDK configured in dev); the real OIDC verification hook is marked
 TODO and will populate the identity claims before this service runs.
 """
-from __future__ import annotations
 
 import secrets
 from typing import Optional
@@ -3648,7 +3644,6 @@ controller can stay focused on request/response orchestration.
 All functions take an active SQLAlchemy `Session` as their first argument and are
 responsible for flushing/committing their own writes.
 """
-from __future__ import annotations
 
 import logging
 from typing import Any, Callable, Optional

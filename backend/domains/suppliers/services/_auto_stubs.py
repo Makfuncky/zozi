@@ -1,7 +1,5 @@
-"""
-Auto-generated stub services for suppliers domain.
-TODO: Replace these stubs with real implementations.
-"""
+"""Auto-generated stub services for suppliers domain."""
+"""TODO: Replace with real implementations."""
 
 def get_onboarding_service(**kwargs):
     """TODO: Implement."""

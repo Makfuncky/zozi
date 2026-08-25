@@ -1,5 +1,4 @@
-﻿#!python
-"""
+﻿"""
 Database Security - Encryption and Query Logging
 Implements data protection and query audit logging
 """

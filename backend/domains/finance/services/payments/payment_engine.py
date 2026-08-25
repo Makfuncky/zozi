@@ -94,7 +94,7 @@ from infrastructure.config import settings
 
 from infrastructure.redis.cache import bump_product_cache_version as _bump_product_cache_version
 
-from kernel.money import convert_from_aed, get_currency_context, money_to_minor_units_for_currency
+from kernel.money import convert_from_aed, get_currency_context, money_to_minor_units_for_currency, round_money
 
 from infrastructure.messaging.events import EventPublisher
 from infrastructure.utils.cache import get_redis_client
@@ -450,7 +450,7 @@ class ConfirmPayTabsPaymentRequest(BaseModel):
 
 class TapChargeRequest(BaseModel):
 
-    amount: Optional[float] = None
+    amount: Optional[Decimal] = None
 
     currency: Optional[str] = None
 
@@ -484,7 +484,7 @@ class TapChargeRequest(BaseModel):
 
 class PayTabsChargeRequest(BaseModel):
 
-    amount: Optional[float] = None
+    amount: Optional[Decimal] = None
 
     currency: Optional[str] = None
 
@@ -766,13 +766,13 @@ class PaymentGatewayConnectionResponse(BaseModel):
 
     notes: Optional[str] = None
 
-    fee_percent: float
+    fee_percent: Decimal
 
-    fixed_fee_amount: float
+    fixed_fee_amount: Decimal
 
-    payout_fee_percent: float
+    payout_fee_percent: Decimal
 
-    payout_fixed_fee_amount: float
+    payout_fixed_fee_amount: Decimal
 
     pass_fee_to_customer: bool
 
@@ -908,25 +908,25 @@ class PaymentFinanceQuoteResponse(BaseModel):
 
     adapter_supported: bool
 
-    order_total: float
+    order_total: Decimal
 
-    gateway_fee_amount: float
+    gateway_fee_amount: Decimal
 
-    customer_payable_total: float
+    customer_payable_total: Decimal
 
-    processor_net_capture: float
+    processor_net_capture: Decimal
 
-    taxable_product_amount: float
+    taxable_product_amount: Decimal
 
-    zozi_commission_amount: float
+    zozi_commission_amount: Decimal
 
-    supplier_payout_estimate: float
+    supplier_payout_estimate: Decimal
 
-    logistics_payout_estimate: float
+    logistics_payout_estimate: Decimal
 
-    estimated_payout_cost: float
+    estimated_payout_cost: Decimal
 
-    platform_net_after_gateway_and_payout_costs: float
+    platform_net_after_gateway_and_payout_costs: Decimal
 
     pass_fee_to_customer: bool
 
@@ -998,9 +998,9 @@ def _decimal_from_value(value: Any) -> Decimal:
 
 
 
-def _float_money(value: Any) -> float:
+def _round_money_value(value: Any) -> Decimal:
 
-    return float(_decimal_from_value(value))
+    return round_money(_decimal_from_value(value))
 
 
 
@@ -2939,13 +2939,13 @@ def _serialize_gateway_connection(
 
             notes=cast(Optional[str], defaults["notes"]),
 
-            fee_percent=float(defaults["fee_percent"]),
+            fee_percent=_decimal_from_value(defaults["fee_percent"]),
 
-            fixed_fee_amount=float(defaults["fixed_fee_amount"]),
+            fixed_fee_amount=_decimal_from_value(defaults["fixed_fee_amount"]),
 
-            payout_fee_percent=float(defaults["payout_fee_percent"]),
+            payout_fee_percent=_decimal_from_value(defaults["payout_fee_percent"]),
 
-            payout_fixed_fee_amount=float(defaults["payout_fixed_fee_amount"]),
+            payout_fixed_fee_amount=_decimal_from_value(defaults["payout_fixed_fee_amount"]),
 
             pass_fee_to_customer=bool(defaults["pass_fee_to_customer"]),
 
@@ -3007,13 +3007,13 @@ def _serialize_gateway_connection(
 
         notes=_optional_text(getattr(record, "notes", defaults["notes"])),
 
-        fee_percent=_float_money(getattr(record, "fee_percent", defaults["fee_percent"])),
+        fee_percent=_round_money_value(getattr(record, "fee_percent", defaults["fee_percent"])),
 
-        fixed_fee_amount=_float_money(getattr(record, "fixed_fee_amount", defaults["fixed_fee_amount"])),
+        fixed_fee_amount=_round_money_value(getattr(record, "fixed_fee_amount", defaults["fixed_fee_amount"])),
 
-        payout_fee_percent=_float_money(getattr(record, "payout_fee_percent", defaults["payout_fee_percent"])),
+        payout_fee_percent=_round_money_value(getattr(record, "payout_fee_percent", defaults["payout_fee_percent"])),
 
-        payout_fixed_fee_amount=_float_money(getattr(record, "payout_fixed_fee_amount", defaults["payout_fixed_fee_amount"])),
+        payout_fixed_fee_amount=_round_money_value(getattr(record, "payout_fixed_fee_amount", defaults["payout_fixed_fee_amount"])),
 
         pass_fee_to_customer=bool(getattr(record, "pass_fee_to_customer", defaults["pass_fee_to_customer"])),
 
@@ -3491,25 +3491,25 @@ def build_payment_finance_quote(payload: PaymentFinanceQuoteRequest, db: Session
 
         adapter_supported=adapter_supported,
 
-        order_total=float(order_total),
+        order_total=round_money(order_total),
 
-        gateway_fee_amount=float(gateway_fee_amount),
+        gateway_fee_amount=round_money(gateway_fee_amount),
 
-        customer_payable_total=float(customer_payable_total),
+        customer_payable_total=round_money(customer_payable_total),
 
-        processor_net_capture=float(processor_net_capture),
+        processor_net_capture=round_money(processor_net_capture),
 
-        taxable_product_amount=float(taxable_product_amount),
+        taxable_product_amount=round_money(taxable_product_amount),
 
-        zozi_commission_amount=float(zozi_commission_amount),
+        zozi_commission_amount=round_money(zozi_commission_amount),
 
-        supplier_payout_estimate=float(supplier_payout_estimate),
+        supplier_payout_estimate=round_money(supplier_payout_estimate),
 
-        logistics_payout_estimate=float(logistics_payout_estimate),
+        logistics_payout_estimate=round_money(logistics_payout_estimate),
 
-        estimated_payout_cost=float(estimated_payout_cost),
+        estimated_payout_cost=round_money(estimated_payout_cost),
 
-        platform_net_after_gateway_and_payout_costs=float(platform_net),
+        platform_net_after_gateway_and_payout_costs=round_money(platform_net),
 
         pass_fee_to_customer=pass_fee_to_customer,
 
