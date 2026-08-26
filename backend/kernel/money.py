@@ -1,4 +1,4 @@
-﻿"""Shared kernel — money primitives (Decimal, never float)."""
+"""Shared kernel — money primitives (Decimal, never float)."""
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP

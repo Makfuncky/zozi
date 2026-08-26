@@ -16,7 +16,7 @@ from infrastructure.security.auth import (
     is_token_blacklisted,
     validate_password_complexity,
 )
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 
 @pytest.mark.integration

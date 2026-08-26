@@ -311,7 +311,6 @@ def audit_log(
 # === Merged from auth_service.py ===
 
 """Auto-migrated service logic from routers/auth.py."""
-from __future__ import annotations
 
 import domains.country.services as auth_svc
 
@@ -396,7 +395,6 @@ def logout(credentials: HTTPAuthorizationCredentials | None, current_user: User)
 # === Merged from performance_service.py ===
 
 """Auto-migrated service logic from routers/performance.py."""
-from __future__ import annotations
 
 import logging
 

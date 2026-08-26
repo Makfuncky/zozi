@@ -1,4 +1,4 @@
-﻿"""rbac/resolution.py - effective feature-set resolution (spec).
+"""rbac/resolution.py - effective feature-set resolution (spec).
 
 Merges role defaults + DB grants + per-user overrides + country scope, expanding
 wildcards against the catalog.

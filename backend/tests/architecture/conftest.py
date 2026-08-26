@@ -1,4 +1,4 @@
-﻿"""conftest.py for architecture tests."""
+"""conftest.py for architecture tests."""
 import os
 import sys
 

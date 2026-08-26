@@ -1,4 +1,4 @@
-﻿"""finance domain - sanctioned cross-domain READ surface (ports).
+"""finance domain - sanctioned cross-domain READ surface (ports).
 
 Per ARCHITECTURE_DIAGRAM.md Law 3, cross-domain *reads* may ONLY happen through a
 publishing domain's ``ports.py``. Other domains import these functions instead

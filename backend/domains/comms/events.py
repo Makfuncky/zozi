@@ -9,7 +9,7 @@ method so the event bus can emit them to subscribers.
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
@@ -30,7 +30,7 @@ class CommsEvent:
     event_type: str = field(init=False)
     event_id: str = field(default_factory=lambda: str(uuid4()), init=False)
     occurred_at: datetime = field(
-        default_factory=lambda: datetime.utcnow(), init=False
+        default_factory=lambda: datetime.now(timezone.utc), init=False
     )
 
     def serialize(self) -> Dict[str, Any]:

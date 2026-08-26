@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import re
-import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -536,7 +535,6 @@ async def asyncio_sleep(seconds: float) -> None:
 
 
 # -- Research helpers (folded from country_research) -----------------------------
-from __future__ import annotations
 
 import logging
 from datetime import datetime
@@ -989,7 +987,7 @@ def build_country_research(auto_populate_result: dict) -> dict:
 
     # Build meta
     meta = {
-        "generated_at_utc": datetime.utcnow().isoformat(),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "country_code": _pop_val(ap, "code"),
         "country_name": _pop_val(ap, "name"),
         "source": "auto-populate",

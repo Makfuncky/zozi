@@ -1,4 +1,4 @@
-﻿"""
+"""
 PCI-DSS Compliance Module
 Implements Payment Card Industry Data Security Standard requirements
 """
@@ -7,9 +7,8 @@ import os
 import logging
 import hashlib
 import secrets
-import time
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 
 from fastapi import Request, HTTPException
@@ -64,7 +63,7 @@ class PCIDSSCompliance:
     def audit_log(self, event: str, user_id: Optional[int] = None, details: Dict = None):
         """Requirement 10: Log and monitor all access."""
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "event": event,
             "user_id": user_id,
             "details": details or {},

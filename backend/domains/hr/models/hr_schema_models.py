@@ -21,11 +21,34 @@ from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 
-# ── Re-export OnboardingPipeline / OnboardingStep from accounts (canonical) ──
-from domains.accounts.models.onboarding import (  # noqa: F401
-    OnboardingPipeline,
-    OnboardingStep,
-)
+# Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
+_LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
+    "OnboardingPipeline": ("domains.accounts.models.onboarding", "OnboardingPipeline"),
+    "OnboardingStep": ("domains.accounts.models.onboarding", "OnboardingStep"),
+}
+_IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
+
+
+def _get_cross_domain_model(name: str):
+    """Lazily import a cross-domain model to avoid import-time coupling."""
+    if name in _IMPORTED_CROSS_DOMAIN:
+        return _IMPORTED_CROSS_DOMAIN[name]
+    if name in _LAZY_CROSS_DOMAIN_MODELS:
+        module_path, class_name = _LAZY_CROSS_DOMAIN_MODELS[name]
+        import importlib
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        _IMPORTED_CROSS_DOMAIN[name] = cls
+        return cls
+    raise AttributeError(f"Cross-domain model {name!r} not registered")
+
+
+def __getattr__(name: str):
+    """Module-level lazy resolver for cross-domain models (Law 3)."""
+    try:
+        return _get_cross_domain_model(name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 # ── ShiftHandoverTask (also defined in employee_models.py) ───────────────────

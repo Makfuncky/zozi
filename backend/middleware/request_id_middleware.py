@@ -1,4 +1,4 @@
-﻿"""
+"""
 Request ID Middleware for Zozi Platform
 Generates and manages request IDs for tracing and correlation.
 """

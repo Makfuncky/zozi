@@ -1,4 +1,4 @@
-﻿"""Single consolidated Row-Level Security (RLS) enforcer.
+"""Single consolidated Row-Level Security (RLS) enforcer.
 
 NEW_STRUCTURE.md (step 5) requires the scattered RLS enforcers
 (rls_interceptor, rls_dependency, rls_middleware, rls_context,

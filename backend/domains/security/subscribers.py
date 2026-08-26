@@ -23,7 +23,14 @@ def _on_user_login(payload: dict) -> None:
     logger.debug("security: user login payload=%s", payload)
 
 
-subscribe("orders.order.created", _on_order_created)
-subscribe("accounts.auth.login", _on_user_login)
+def register_security_subscribers():
+    """Register all security event subscribers.
+
+    Call this at app startup (e.g., from lifespan.py) to activate handlers.
+    Kept as a function (not import-time side effects) so the module stays
+    importable without triggering subscriptions.
+    """
+    subscribe("orders.order.created", _on_order_created)
+    subscribe("accounts.auth.login", _on_user_login)
 
 __all__ = ["_on_order_created", "_on_user_login"]

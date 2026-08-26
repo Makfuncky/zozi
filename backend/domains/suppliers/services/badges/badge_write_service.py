@@ -14,7 +14,7 @@ from __future__ import annotations
 
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from typing import Optional
 
@@ -88,7 +88,7 @@ def record_badge_billing_payment(
 
     record.payment_method = payment_method
 
-    record.paid_at = datetime.utcnow()
+    record.paid_at = datetime.now(timezone.utc)
 
     if notes is not None:
 

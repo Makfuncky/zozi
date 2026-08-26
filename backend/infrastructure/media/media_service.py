@@ -11,7 +11,7 @@ storage behind a CDN (production).
 import mimetypes
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from pathlib import Path
 
@@ -54,7 +54,7 @@ def generate_media_filename(
     entity_type: str,
     entity_id: Optional[int] = None,
 ) -> str:
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     uuid_short = uuid.uuid4().hex[:8]
     ext = os.path.splitext(file.filename or "file")[1].lower()
     return f"{entity_type}_{entity_id or 'unknown'}_{timestamp}_{uuid_short}{ext}"

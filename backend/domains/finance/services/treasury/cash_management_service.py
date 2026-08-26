@@ -1,4 +1,4 @@
-﻿
+
 ï»¿"""
 Cash Management Service â€” core financial logic for the Zozi platform.
 
@@ -2975,7 +2975,6 @@ function here that:
 Every function takes the SQLAlchemy ``Session`` as its first positional
 argument. Callers (controller/router) stay read-only orchestration.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 
@@ -3319,7 +3318,6 @@ def create_transaction(country_code: str=Path(..., description='ISO country code
 Uses historical patterns, pending payouts, and expected settlements
 to project daily cash balances.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
@@ -3466,7 +3464,6 @@ def generate_forecast(
 Some routers import ``from ...services.treasury import X``. This alias resolves
 names from the services tree (root or any sub-domain).
 """
-from __future__ import annotations
 
 import importlib
 import sys
@@ -3499,7 +3496,6 @@ def __getattr__(name: str):
 # === MERGED from admin_cash_service.py ===
 
 ï»¿"""Admin cash management service."""
-from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
@@ -4451,7 +4447,6 @@ pure data-access functions (no commit, no HTTP concerns) so they belong in
 the services layer. The routers delegate through
 ``controllers/admin/admin_supplier_trading_controller.py``.
 """
-from __future__ import annotations
 
 from typing import Optional
 
@@ -4502,7 +4497,6 @@ Features:
   - Credit utilization tracking
   - Auto-notifications for approaching limits
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
@@ -4824,7 +4818,6 @@ def _log_automation(db: Session, kind: str, processed: int, changed: int,
 # === MERGED from contractor_milestone_read_service.py ===
 
 """Contractor milestone read service (owns the raw SQL read)."""
-from __future__ import annotations
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session

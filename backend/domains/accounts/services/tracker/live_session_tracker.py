@@ -148,16 +148,21 @@ def revoke_device(db: Session, user_id: int, device_id: str) -> bool:
 
 
 def get_last_login_location(db: Session, user_id: int) -> Optional[Dict[str, float]]:
-    """Return the last known login location (lat/lon) from login history."""
+    """Return the last known login location (lat/lon) from geo-fence logs."""
+    from domains.hr.models.employee_models import GeoFenceLog, Employee
+
+    # Find the employee record for this user
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return None
     record = (
-        db.query(UserLoginHistory)
-        .filter(UserLoginHistory.user_id == user_id, UserLoginHistory.success.is_(True))
-        .order_by(UserLoginHistory.timestamp.desc())
+        db.query(GeoFenceLog)
+        .filter(GeoFenceLog.employee_id == employee.id)
+        .order_by(GeoFenceLog.scanned_at.desc())
         .first()
     )
-    if record and hasattr(record, "latitude") and hasattr(record, "longitude"):
-        if record.latitude and record.longitude:
-            return {"lat": float(record.latitude), "lon": float(record.longitude)}
+    if record and record.latitude and record.longitude:
+        return {"lat": float(record.latitude), "lon": float(record.longitude)}
     return None
 
 

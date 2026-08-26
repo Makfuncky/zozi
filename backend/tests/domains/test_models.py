@@ -4,7 +4,6 @@ from __future__ import annotations
 import uuid
 import pytest
 from decimal import Decimal
-from datetime import datetime, timezone
 
 from infrastructure.database.models import (
     User, Category, Product, ProductVariant, Order, OrderItem,

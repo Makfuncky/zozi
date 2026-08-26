@@ -11,7 +11,6 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional, cast
 
 from fastapi import HTTPException
-from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
 
 from providers.payments.stripe import refund_payment_intent

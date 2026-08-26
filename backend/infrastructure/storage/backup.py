@@ -29,7 +29,7 @@ class BackupManager:
     """Manage periodic database backups."""
 
     def __init__(self) -> None:
-        from infrastructure.config import settings
+        from infrastructure.utils.config import settings
 
         self._backup_dir = Path(settings.backup_dir)
         self._max_files = max(1, int(settings.backup_max_files or settings.max_backups or 48))

@@ -1,11 +1,9 @@
+from __future__ import annotations
+
 """Admin customers router — canonical."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
-from .customers import router as customers_router
-from .referrals import router as referrals_router
-from .reviews import router as reviews_router
-from __future__ import annotations
 from domains.catalog.ports import list_reviews
 from domains.customers.services.referrals.referrals_service import get_referral_code
 from domains.customers.services.referrals.referrals_service import get_referral_config

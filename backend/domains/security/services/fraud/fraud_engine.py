@@ -9,22 +9,16 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.governance.services.fraud.fraud_detection_service import FraudScoringEngine
-from domains.governance.services.fraud.fraud_detection_service import ThreatFeedUpdater
+from domains.security.services.fraud.fraud_detection_service import FraudScoringEngine
+from domains.security.services.fraud.fraud_detection_service import ThreatFeedUpdater
 from infrastructure.utils.redis_client import get_redis
 
 
+def get_fraud_engine(db: Session = Depends(get_db), redis=Depends(get_redis)):
+    """Return a configured FraudScoringEngine instance."""
+    return FraudScoringEngine(db=db, redis=redis)
 
 
-
-
-# --- auto-wiring re-exports (added by fix_modules) ---
-from domains.governance.services.admin.admin_security_detection_service import get_threat_updater
-
-
-
-
-
-
-
-
+def get_threat_updater(db: Session = Depends(get_db), redis=Depends(get_redis)):
+    """Return a configured ThreatFeedUpdater instance."""
+    return ThreatFeedUpdater(db=db, redis=redis)

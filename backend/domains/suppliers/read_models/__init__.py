@@ -1,4 +1,4 @@
-﻿"""suppliers domain - CQRS-lite read models package (ARCHITECTURE_DIAGRAM.md §3).
+"""suppliers domain - CQRS-lite read models package (ARCHITECTURE_DIAGRAM.md §3).
 
 Holds the suppliers domain's own CQRS-lite projections — optimized read models
 populated incrementally as projections are extracted from write services. Cross-

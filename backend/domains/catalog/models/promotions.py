@@ -1,4 +1,4 @@
-﻿"""catalog domain â€” promotion models (Coupon, Banner, BOGOPromotion).
+"""catalog domain â€” promotion models (Coupon, Banner, BOGOPromotion).
 
 Moved from domains/payments/models/payments.py because these are
 promotion/catalog concepts, not finance concepts.

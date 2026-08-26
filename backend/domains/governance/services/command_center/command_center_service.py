@@ -864,7 +864,6 @@ HTTP contract declared with ``infrastructure.routing.route_contract`` decorators
 router can be auto-generated; the thin hand-written ``routers/command_center_controller.py``
 is retained as the authoritative router (the generator collision-skips these paths).
 """
-from __future__ import annotations
 
 from typing import Any
 

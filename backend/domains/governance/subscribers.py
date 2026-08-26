@@ -283,38 +283,44 @@ def _on_bulk_restore_requested(payload: dict):
     return results
 
 
-# -- register all handlers (importing this module activates them) --
-subscribe(EVENT_GOV_UPDATE_ROLE_PERMISSIONS_REQUESTED, _on_update_role_permissions_requested)
-subscribe(EVENT_GOV_BULK_DELETE_PRODUCTS_ADMIN_REQUESTED, _on_bulk_delete_products_admin_requested)
-subscribe(EVENT_GOV_BULK_PRODUCT_MODERATION_REQUESTED, _on_bulk_product_moderation_requested)
-subscribe(EVENT_GOV_DELETE_PRODUCT_ADMIN_REQUESTED, _on_delete_product_admin_requested)
-subscribe(EVENT_GOV_RESTORE_PRODUCT_ADMIN_REQUESTED, _on_restore_product_admin_requested)
-subscribe(EVENT_GOV_TOGGLE_PRODUCT_BADGE_REQUESTED, _on_toggle_product_badge_requested)
-subscribe(EVENT_GOV_BULK_DELETE_USERS_ADMIN_REQUESTED, _on_bulk_delete_users_admin_requested)
-subscribe(EVENT_GOV_BULK_TOGGLE_USERS_ACTIVE_REQUESTED, _on_bulk_toggle_users_active_requested)
-subscribe(EVENT_GOV_BULK_UPDATE_USERS_ROLE_REQUESTED, _on_bulk_update_users_role_requested)
-subscribe(EVENT_GOV_TOGGLE_USER_ACTIVE_REQUESTED, _on_toggle_user_active_requested)
-subscribe(EVENT_GOV_UPDATE_USER_ROLE_REQUESTED, _on_update_user_role_requested)
-subscribe(EVENT_GOV_FORCE_RESET_PASSWORD_ADMIN_REQUESTED, _on_force_reset_password_admin_requested)
-subscribe(EVENT_GOV_BULK_UPDATE_STAFF_ACCOUNTS_REQUESTED, _on_bulk_update_staff_accounts_requested)
-subscribe(EVENT_GOV_CREATE_STAFF_ACCOUNT_REQUESTED, _on_create_staff_account_requested)
-subscribe(EVENT_GOV_DELETE_STAFF_ACCOUNT_REQUESTED, _on_delete_staff_account_requested)
-subscribe(EVENT_GOV_UPDATE_STAFF_ACCOUNT_REQUESTED, _on_update_staff_account_requested)
-subscribe(EVENT_GOV_BULK_MANAGE_SUPPLIERS_REQUESTED, _on_bulk_manage_suppliers_requested)
-subscribe(EVENT_GOV_BULK_SUPPLIER_VERIFICATION_REQUESTED, _on_bulk_supplier_verification_requested)
-subscribe(EVENT_GOV_VERIFY_SUPPLIER_REQUESTED, _on_verify_supplier_requested)
-subscribe(EVENT_GOV_REJECT_SUPPLIER_REQUESTED, _on_reject_supplier_requested)
-subscribe(EVENT_GOV_ORDER_BULK_DELETE_REQUESTED, _on_order_bulk_delete_requested)
-subscribe(EVENT_GOV_ORDER_BULK_STATUS_UPDATE_REQUESTED, _on_order_bulk_status_update_requested)
-subscribe(EVENT_GOV_ORDER_DELETE_REQUESTED, _on_order_delete_requested)
-subscribe(EVENT_GOV_ORDER_REFUND_REQUESTED, _on_order_refund_requested)
-subscribe(EVENT_GOV_ORDER_STATUS_UPDATE_REQUESTED, _on_order_status_update_requested)
-subscribe(EVENT_GOV_ORDER_TRACKING_UPDATE_REQUESTED, _on_order_tracking_update_requested)
-subscribe(EVENT_GOV_DELETE_BANK_ACCOUNT_RECORD_REQUESTED, _on_delete_bank_account_record_requested)
-subscribe(EVENT_GOV_ENTITY_ARCHIVE_REQUESTED, _on_entity_archive_requested)
-subscribe(EVENT_GOV_ENTITY_RESTORE_REQUESTED, _on_entity_restore_requested)
-subscribe(EVENT_GOV_BULK_ARCHIVE_REQUESTED, _on_bulk_archive_requested)
-subscribe(EVENT_GOV_BULK_RESTORE_REQUESTED, _on_bulk_restore_requested)
+def register_governance_subscribers():
+    """Register all governance event subscribers.
+
+    Call this at app startup (e.g., from lifespan.py) to activate handlers.
+    Kept as a function (not import-time side effects) so the module stays
+    importable without triggering subscriptions.
+    """
+    subscribe(EVENT_GOV_UPDATE_ROLE_PERMISSIONS_REQUESTED, _on_update_role_permissions_requested)
+    subscribe(EVENT_GOV_BULK_DELETE_PRODUCTS_ADMIN_REQUESTED, _on_bulk_delete_products_admin_requested)
+    subscribe(EVENT_GOV_BULK_PRODUCT_MODERATION_REQUESTED, _on_bulk_product_moderation_requested)
+    subscribe(EVENT_GOV_DELETE_PRODUCT_ADMIN_REQUESTED, _on_delete_product_admin_requested)
+    subscribe(EVENT_GOV_RESTORE_PRODUCT_ADMIN_REQUESTED, _on_restore_product_admin_requested)
+    subscribe(EVENT_GOV_TOGGLE_PRODUCT_BADGE_REQUESTED, _on_toggle_product_badge_requested)
+    subscribe(EVENT_GOV_BULK_DELETE_USERS_ADMIN_REQUESTED, _on_bulk_delete_users_admin_requested)
+    subscribe(EVENT_GOV_BULK_TOGGLE_USERS_ACTIVE_REQUESTED, _on_bulk_toggle_users_active_requested)
+    subscribe(EVENT_GOV_BULK_UPDATE_USERS_ROLE_REQUESTED, _on_bulk_update_users_role_requested)
+    subscribe(EVENT_GOV_TOGGLE_USER_ACTIVE_REQUESTED, _on_toggle_user_active_requested)
+    subscribe(EVENT_GOV_UPDATE_USER_ROLE_REQUESTED, _on_update_user_role_requested)
+    subscribe(EVENT_GOV_FORCE_RESET_PASSWORD_ADMIN_REQUESTED, _on_force_reset_password_admin_requested)
+    subscribe(EVENT_GOV_BULK_UPDATE_STAFF_ACCOUNTS_REQUESTED, _on_bulk_update_staff_accounts_requested)
+    subscribe(EVENT_GOV_CREATE_STAFF_ACCOUNT_REQUESTED, _on_create_staff_account_requested)
+    subscribe(EVENT_GOV_DELETE_STAFF_ACCOUNT_REQUESTED, _on_delete_staff_account_requested)
+    subscribe(EVENT_GOV_UPDATE_STAFF_ACCOUNT_REQUESTED, _on_update_staff_account_requested)
+    subscribe(EVENT_GOV_BULK_MANAGE_SUPPLIERS_REQUESTED, _on_bulk_manage_suppliers_requested)
+    subscribe(EVENT_GOV_BULK_SUPPLIER_VERIFICATION_REQUESTED, _on_bulk_supplier_verification_requested)
+    subscribe(EVENT_GOV_VERIFY_SUPPLIER_REQUESTED, _on_verify_supplier_requested)
+    subscribe(EVENT_GOV_REJECT_SUPPLIER_REQUESTED, _on_reject_supplier_requested)
+    subscribe(EVENT_GOV_ORDER_BULK_DELETE_REQUESTED, _on_order_bulk_delete_requested)
+    subscribe(EVENT_GOV_ORDER_BULK_STATUS_UPDATE_REQUESTED, _on_order_bulk_status_update_requested)
+    subscribe(EVENT_GOV_ORDER_DELETE_REQUESTED, _on_order_delete_requested)
+    subscribe(EVENT_GOV_ORDER_REFUND_REQUESTED, _on_order_refund_requested)
+    subscribe(EVENT_GOV_ORDER_STATUS_UPDATE_REQUESTED, _on_order_status_update_requested)
+    subscribe(EVENT_GOV_ORDER_TRACKING_UPDATE_REQUESTED, _on_order_tracking_update_requested)
+    subscribe(EVENT_GOV_DELETE_BANK_ACCOUNT_RECORD_REQUESTED, _on_delete_bank_account_record_requested)
+    subscribe(EVENT_GOV_ENTITY_ARCHIVE_REQUESTED, _on_entity_archive_requested)
+    subscribe(EVENT_GOV_ENTITY_RESTORE_REQUESTED, _on_entity_restore_requested)
+    subscribe(EVENT_GOV_BULK_ARCHIVE_REQUESTED, _on_bulk_archive_requested)
+    subscribe(EVENT_GOV_BULK_RESTORE_REQUESTED, _on_bulk_restore_requested)
 
 
 __all__ = [
@@ -350,103 +356,3 @@ __all__ = [
     "_on_bulk_archive_requested",
     "_on_bulk_restore_requested",
 ]
-
-
-# === Merged from accounts/subscribers.py ===
-
-"""Accounts domain event subscribers.
-
-Per Law 3, cross-domain *writes* happen only by consuming events here. This module
-registers listeners against the shared ``EventPublisher``. Wire it at boot by calling
-``register_accounts_subscribers(publisher)`` from ``lifespan.py`` (kept optional so the
-domain stays importable without side effects).
-"""
-
-
-import logging
-from typing import Any
-
-from .events import (
-    LoginFailed,
-    LoginSuccess,
-    PasswordForceReset,
-    TokenRevoked,
-    UserActivated,
-    UserCreated,
-    UserDeleted,
-    UserDeactivated,
-    UserRoleChanged,
-)
-
-logger = logging.getLogger(__name__)
-
-
-def _on_user_created(event: UserCreated) -> None:
-    logger.info(
-        "user created: user_id=%s email=%s role=%s by=%s",
-        event.user_id,
-        event.email,
-        event.role,
-        event.created_by,
-    )
-    # Future: send welcome email, provision default address book, emit comms event.
-
-
-def _on_user_role_changed(event: UserRoleChanged) -> None:
-    logger.info(
-        "user role changed: user_id=%s %s -> %s by=%s",
-        event.user_id,
-        event.old_role,
-        event.new_role,
-        event.changed_by,
-    )
-
-
-def _on_user_deactivated(event: UserDeactivated) -> None:
-    logger.info("user deactivated: user_id=%s reason=%s", event.user_id, event.reason)
-
-
-def _on_user_activated(event: UserActivated) -> None:
-    logger.info("user activated: user_id=%s", event.user_id)
-
-
-def _on_user_deleted(event: UserDeleted) -> None:
-    logger.info(
-        "user deleted: user_id=%s hard=%s by=%s",
-        event.user_id,
-        event.hard_delete,
-        event.deleted_by,
-    )
-
-
-def _on_password_force_reset(event: PasswordForceReset) -> None:
-    logger.info(
-        "password force reset: user_id=%s by=%s",
-        event.user_id,
-        event.reset_by,
-    )
-
-
-def _on_login_success(event: LoginSuccess) -> None:
-    logger.info("login success: user_id=%s country=%s", event.user_id, event.country_code)
-
-
-def _on_login_failed(event: LoginFailed) -> None:
-    logger.warning("login failed: identifier=%s reason=%s", event.identifier, event.reason)
-
-
-def _on_token_revoked(event: TokenRevoked) -> None:
-    logger.info("token revoked: user_id=%s jti=%s reason=%s", event.user_id, event.jti, event.reason)
-
-
-def register_accounts_subscribers(publisher: Any) -> None:
-    """Attach accounts-domain listeners to the shared event publisher."""
-    publisher.register_listener(UserCreated, _on_user_created)
-    publisher.register_listener(UserRoleChanged, _on_user_role_changed)
-    publisher.register_listener(UserDeactivated, _on_user_deactivated)
-    publisher.register_listener(UserActivated, _on_user_activated)
-    publisher.register_listener(UserDeleted, _on_user_deleted)
-    publisher.register_listener(PasswordForceReset, _on_password_force_reset)
-    publisher.register_listener(LoginSuccess, _on_login_success)
-    publisher.register_listener(LoginFailed, _on_login_failed)
-    publisher.register_listener(TokenRevoked, _on_token_revoked)

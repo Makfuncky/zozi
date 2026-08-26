@@ -1,4 +1,4 @@
-﻿"""Shared kernel - country primitives (spec: kernel/country.py).
+"""Shared kernel - country primitives (spec: kernel/country.py).
 
 CountryCode typing and helpers for the country (4th) axis.
 """

@@ -1,4 +1,4 @@
-﻿"""B1 follow-up - forbid regrowth of the ORD-SLICE `_parked` graveyard.
+"""B1 follow-up - forbid regrowth of the ORD-SLICE `_parked` graveyard.
 
 After the deep audit (RESOLVER.md PART 5, Sec 37), the 24 files under
 ``domains/_parked`` are archived historical leftovers. Their useful logic

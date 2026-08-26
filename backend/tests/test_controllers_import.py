@@ -1,4 +1,4 @@
-﻿"""Regression test: the delegated controllers and their dependent routers
+"""Regression test: the delegated controllers and their dependent routers
 must import cleanly.
 
 These modules previously failed to import (missing controllers, wrong import

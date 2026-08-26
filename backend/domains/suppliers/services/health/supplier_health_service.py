@@ -1,4 +1,4 @@
-﻿"""Supplier health read operations.
+"""Supplier health read operations.
 
 Owns the DB reads and permission checks for supplier health endpoints. Routers
 must not query the session directly for these operations.

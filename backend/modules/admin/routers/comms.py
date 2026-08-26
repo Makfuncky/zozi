@@ -7,8 +7,8 @@ from .email import router as email_router
 from .notifications import router as notifications_router
 from .tickets import router as tickets_router
 from __future__ import annotations
-from _legacy.models import User
-from db.database import get_db
+from domains.accounts.models.user import User
+from infrastructure.database.database import get_db
 from domains.accounts.ports import list_video_rooms
 from domains.accounts.services._auto_stubs import list_video_rooms_for_country
 from domains.comms.models.chat import EntityChatMessage
@@ -46,12 +46,10 @@ from infrastructure.utils.email_service import record_email_delivery_event
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 from modules.admin.routers.auth import require_roles
-from pydantic import BaseModel
-from pydantic import BaseModel, Field
 from rbac import get_current_user
 from seed_comms import seed as _seed_comms
-from services.comms.chat_system import ChatSystem, get_chat_system
-from services.comms.video_conferencing import VideoConferenceRoom, get_video_conference
+from domains.comms.services.chat_system import ChatSystem, get_chat_system
+from domains.comms.services.video_conferencing import VideoConferenceRoom, get_video_conference
 from sqlalchemy import case as sql_case
 from sqlalchemy import desc
 from sqlalchemy import func as sqlfunc
@@ -60,9 +58,9 @@ from sqlalchemy.orm import Session
 from typing import Annotated, Any, Dict, List, Optional
 from typing import List, Optional
 from typing import Optional
-from utils.audit import AuditAction, audit_log
-from utils.dependencies import get_current_user, require_admin
-from utils.ip_utils import get_ip_for_logging
+from infrastructure.utils.audit import AuditAction, audit_log
+from infrastructure.utils.dependencies import get_current_user, require_admin
+from infrastructure.utils.ip_utils import get_ip_for_logging
 import base64
 import logging
 import logging as _l; _l.getLogger(__name__).warning("skip chat_router: %s", _e)

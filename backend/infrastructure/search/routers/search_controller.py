@@ -1,9 +1,10 @@
 """Search controller — HTTP/service boundary for search and recommendations.
 
 The recommendation algorithm and smart-search parsing live in
-``services.core.search_service``; this module is the thin controller layer the
-router depends on. Keeping the logic in the service keeps the controller
-importable and testable and avoids duplicating the recommendation engine.
+``domains.catalog.services.search.search_service``; this module is the thin
+controller layer the router depends on. Keeping the logic in the service keeps
+the controller importable and testable and avoids duplicating the recommendation
+engine.
 """
 from __future__ import annotations
 
@@ -12,10 +13,13 @@ from typing import Optional
 from fastapi import Response
 from sqlalchemy.orm import Session
 
-from domains.governance.services.search_service import (
+# TODO: Law 1 violation - infrastructure importing domain service functions.
+# This should be refactored to use a search ports layer or the catalog domain
+# should expose search via a sanctioned cross-domain interface.
+from domains.catalog.services.search.search_service import (
     get_recommendations as _get_recommendations,
 )
-from domains.governance.services.search_service import (
+from domains.catalog.services.search.search_service import (
     smart_search as _smart_search,
 )
 from infrastructure.routing.route_contract import get

@@ -21,7 +21,7 @@ from infrastructure.routing.route_contract import delete, get, post, put
 from domains.country.utils.country_rls import get_country_or_404
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
-from modules.admin.routers.admin_controller import (
+from domains.governance.services.settings.misc_service import (
     archive_entity,
     bulk_archive_entities,
     bulk_restore_entities,

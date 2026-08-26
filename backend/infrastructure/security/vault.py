@@ -39,7 +39,7 @@ class VaultService:
     def __init__(self, master_key: Optional[str] = None):
         self._master_key = master_key or os.getenv("ZOZI_VAULT_MASTER_KEY")
         if not self._master_key:
-            from infrastructure.config import settings
+            from infrastructure.utils.config import settings
             self._master_key = getattr(settings, "field_encryption_key", None) or getattr(settings, "secret_key", None)
         if not self._master_key:
             raise VaultError("No encryption key available. Set ZOZI_VAULT_MASTER_KEY or configure field_encryption_key.")

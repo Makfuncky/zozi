@@ -1,4 +1,4 @@
-﻿"""Auto-migrated service logic from routers/admin_products.py."""
+"""Auto-migrated service logic from routers/admin_products.py."""
 from __future__ import annotations
 
 from fastapi import Body, Depends, HTTPException, Path, Query

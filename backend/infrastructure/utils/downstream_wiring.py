@@ -1,2 +1,2 @@
-﻿"""Backward-compat shim."""
-from domains.finance.services.downstream_wiring import *  # noqa: F401,F403
+"""Backward-compat shim."""
+# TODO: Reimplement downstream wiring shim — canonical target domains.finance.services.downstream_wiring does not yet exist

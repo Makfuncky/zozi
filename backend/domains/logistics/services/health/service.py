@@ -8,7 +8,7 @@ from __future__ import annotations
 Logistics Partner Health Engine - Calculates performance scores for logistics partners.
 """
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from domains.logistics.models.logistics import LogisticsPartnerProfile
@@ -31,7 +31,7 @@ class LogisticsHealthEngine:
         if not profile:
             return {"error": "Logistics partner not found"}
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         thirty_days_ago = now - timedelta(days=30)
         
         shipments = self._get_shipments(partner_id, country_code, thirty_days_ago, now)
@@ -231,7 +231,7 @@ from domains.logistics.services.health.logistics_health_service import list_logi
 Logistics Partner Health Engine - Calculates performance scores for logistics partners.
 """
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from domains.logistics.models.logistics import LogisticsPartnerProfile
@@ -254,7 +254,7 @@ class LogisticsHealthEngine:
         if not profile:
             return {"error": "Logistics partner not found"}
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         thirty_days_ago = now - timedelta(days=30)
         
         shipments = self._get_shipments(partner_id, country_code, thirty_days_ago, now)

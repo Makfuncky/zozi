@@ -1748,7 +1748,7 @@ from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 
-from modules.admin.routers.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
+from domains.governance.services.settings.misc_service import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
 
 from domains.logistics.services.partner_geography_service import approve_partner
 from domains.logistics.services.partner_geography_service import list_partners
@@ -2728,7 +2728,7 @@ from typing import Any
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from modules.admin.routers import get_current_user
+from infrastructure.utils.dependencies import get_current_user
 import domains.logistics.services.core.logistics_service as ctrl
 
 async def scan_lookup_shipment(code: str, db: Session=Depends(get_db), current_user: dict=Depends(get_current_user)):

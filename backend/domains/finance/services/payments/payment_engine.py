@@ -90,7 +90,7 @@ from domains.finance.models.payments import PaymentGatewayConnection
 
 from infrastructure.messaging.events import PaymentConfirmedEvent
 
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 from infrastructure.redis.cache import bump_product_cache_version as _bump_product_cache_version
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
@@ -113,7 +113,7 @@ class MediaStorageService:
         self.db.add(asset)
         
         session.status = "completed"
-        session.completed_at = datetime.utcnow()
+        session.completed_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(asset)
         return asset

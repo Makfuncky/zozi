@@ -153,7 +153,7 @@ class CrossBorderTracker:
             "new_country": country_code,
             "ip_address": ip_address,
             "user_id": user_id,
-            "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+            "timestamp": __import__("datetime").datetime.now(timezone.utc).isoformat(),
             "is_new_session": previous is None,
         }
         

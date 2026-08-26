@@ -3,8 +3,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
 from .documents import router as documents_router
-from .products import router as products_router
-from .suppliers import router as suppliers_router
 from infrastructure.database.database import get_db
 from sqlalchemy.orm import Session
 import domains.suppliers.services.supplier_controller as ctrl

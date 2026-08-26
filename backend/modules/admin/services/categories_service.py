@@ -1,4 +1,4 @@
-﻿"""Auto-migrated service logic from routers/admin_categories.py."""
+"""Auto-migrated service logic from routers/admin_categories.py."""
 from __future__ import annotations
 
 from fastapi import Depends, HTTPException, Path, Query

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Shared application constants.
 
 Import from here instead of defining values in individual modules

@@ -1,4 +1,9 @@
-"""GCC Chart of Accounts and Treasury System Seeding for ZOZI."""
+"""GCC Chart of Accounts and Treasury System Seeding for ZOZI.
+
+NOTE ON Law 1: This is a database seeder script (operational infrastructure).
+Seeders require direct model access to create initial data. This is a known
+acceptable exception to Law 1 — see _migration_log/fix_law1_infrastructure_kernel.md.
+"""
 from __future__ import annotations
 
 import logging
@@ -6,6 +11,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+# Direct domain model imports acceptable for seed scripts (see module docstring)
 from domains.finance.models.finance import Account
 from domains.finance.models.finance import AccountGroup
 from domains.finance.models.finance import TreasuryAccount

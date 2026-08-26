@@ -1,4 +1,4 @@
-﻿"""
+"""
 Integration test for the auto-payout sweep (``run_auto_payout_sweep``).
 
 Verifies the full pipeline:

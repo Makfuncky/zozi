@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import secrets
 from pathlib import Path
 from typing import Any
 
@@ -27,7 +28,7 @@ class Settings:
         "env": "development",
         "app_env": os.getenv("APP_ENV", "development"),
         "runtime_profile": os.getenv("RUNTIME_PROFILE", "standard"),
-        "secret_key": os.getenv("SECRET_KEY", ""),
+        "secret_key": os.getenv("SECRET_KEY", secrets.token_hex(32)),
         "algorithm": "HS256",
         "jwt_algorithm": "HS256",
         "access_token_expire_minutes": 15,
@@ -133,6 +134,8 @@ class Settings:
         "cookie_secure": True,
         "rate_limit_enabled": True,
         "trusted_proxy_ips": os.getenv("TRUSTED_PROXY_IPS", ""),
+        "fraud_proxy_seed_ips": os.getenv("FRAUD_PROXY_SEED_IPS", ""),
+        "audit_chain_key": os.getenv("AUDIT_CHAIN_KEY", ""),
         "country_ai_enabled": str(os.getenv("COUNTRY_AI_ENABLED", "true")).lower() in {"1", "true", "yes", "on"},
         "country_ai_ollama_model": os.getenv("COUNTRY_AI_OLLAMA_MODEL", "llama3.1"),
         "country_ai_cache_ttl_seconds": int(os.getenv("COUNTRY_AI_CACHE_TTL_SECONDS", "86400")),

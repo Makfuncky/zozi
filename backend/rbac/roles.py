@@ -1,4 +1,4 @@
-﻿"""rbac/roles.py - (module, role) -> default feature sets (spec).
+"""rbac/roles.py - (module, role) -> default feature sets (spec).
 
 Replaces DEFAULT_ROLE_PERMISSION_MAP / ADMIN_PERMISSION_MAP.
 """

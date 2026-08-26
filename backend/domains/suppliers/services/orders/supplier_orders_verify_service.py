@@ -1,4 +1,4 @@
-﻿"""Supplier orders sub-router.
+"""Supplier orders sub-router.
 
 DB reads/writes live in ``services.supplier.supplier_order_service``; this
 router keeps request parsing, file handling, storage and parcel-AI logic.
@@ -7,7 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 from fastapi import Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse, RedirectResponse
@@ -150,7 +150,7 @@ def _persist_verification_result(prefix: str, result: dict, image_filename: str)
         existing = []
     if not isinstance(existing, list):
         existing = []
-    entry = {'analyzed_at': result.get('analyzed_at', datetime.utcnow().isoformat()), 'image_filename': image_filename, 'order_id': result.get('order_id'), 'order_number': result.get('order_number', ''), 'status': result.get('status', 'unknown'), 'match_score': result.get('match_score', 0.0), 'match_percentage': result.get('match_percentage', 0.0), 'engines_used': result.get('engines_used', 0), 'total_items': result.get('total_items', 0), 'matched_items': result.get('matched_items', 0), 'elapsed_seconds': result.get('elapsed_seconds', 0.0), 'engine_details': result.get('engine_details', {})}
+    entry = {'analyzed_at': result.get('analyzed_at', datetime.now(timezone.utc).isoformat()), 'image_filename': image_filename, 'order_id': result.get('order_id'), 'order_number': result.get('order_number', ''), 'status': result.get('status', 'unknown'), 'match_score': result.get('match_score', 0.0), 'match_percentage': result.get('match_percentage', 0.0), 'engines_used': result.get('engines_used', 0), 'total_items': result.get('total_items', 0), 'matched_items': result.get('matched_items', 0), 'elapsed_seconds': result.get('elapsed_seconds', 0.0), 'engine_details': result.get('engine_details', {})}
     existing.insert(0, entry)
     existing = existing[:20]
     _storage.save(key, json.dumps(existing, indent=2, default=str).encode('utf-8'), content_type='application/json')

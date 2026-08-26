@@ -1,7 +1,6 @@
 """Auto-migrated service logic from routers/ess.py."""
 from __future__ import annotations
 
-from __future__ import annotations
 
 import logging
 

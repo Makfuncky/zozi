@@ -74,6 +74,17 @@ class EmailVerificationToken(Base):
     created_at = Column(DateTime)
 
 
+class RevokedToken(Base):
+    __tablename__ = "revoked_tokens"
+    __table_args__ = {"schema": "governance"}
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
+    token = Column(String(255), unique=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    revoked_at = Column(DateTime, server_default=func.now())
+
+
 class ReferralPointEvent(Base):
     __tablename__ = "referral_point_events"
     __table_args__ = {"schema": "governance"}

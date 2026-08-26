@@ -21,20 +21,24 @@ from domains.catalog.models.promotions import Coupon
 MAX_EXPORT_ROWS: int = 5000
 
 
-def list_user(db: Session) -> list[User]:
-    return db.query(User).order_by(User.id).all()
+def list_user(db: Session, limit: int = MAX_EXPORT_ROWS) -> list[User]:
+    limit = min(max(1, limit), MAX_EXPORT_ROWS)
+    return db.query(User).order_by(User.id).limit(limit).all()
 
 
-def list_order(db: Session) -> list[Order]:
-    return db.query(Order).order_by(Order.id).all()
+def list_order(db: Session, limit: int = MAX_EXPORT_ROWS) -> list[Order]:
+    limit = min(max(1, limit), MAX_EXPORT_ROWS)
+    return db.query(Order).order_by(Order.id).limit(limit).all()
 
 
-def list_product(db: Session) -> list[Product]:
-    return db.query(Product).order_by(Product.id).all()
+def list_product(db: Session, limit: int = MAX_EXPORT_ROWS) -> list[Product]:
+    limit = min(max(1, limit), MAX_EXPORT_ROWS)
+    return db.query(Product).order_by(Product.id).limit(limit).all()
 
 
-def list_coupon(db: Session) -> list[Coupon]:
-    return db.query(Coupon).order_by(Coupon.id).all()
+def list_coupon(db: Session, limit: int = MAX_EXPORT_ROWS) -> list[Coupon]:
+    limit = min(max(1, limit), MAX_EXPORT_ROWS)
+    return db.query(Coupon).order_by(Coupon.id).limit(limit).all()
 
 
 def get_user_first(db: Session) -> User | None:

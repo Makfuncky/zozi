@@ -11,17 +11,29 @@ from fastapi import WebSocket
 from sqlalchemy import and_, event, inspect as sa_inspect
 from sqlalchemy.orm import Session as OrmSession
 
-from domains.governance.models.core import AuditLog
-from domains.governance.models.core import SupportTicket
-from domains.governance.models.user import User
-from domains.catalog.models.products import Product
-from domains.comms.models.communication import Notification
-from domains.comms.models.communication import InternalEmail
-from domains.comms.models.suppliers import SupplierProfile
-from domains.governance.models.admin import SupplierDispute
-from domains.governance.models.admin import TicketReply
-from domains.finance.models.payments import Payout
 from infrastructure.utils.config import settings
+
+
+# --- Lazy domain model resolution (Law 1 compliance) ---
+# Infrastructure must not import domain models at module level. Instead we
+# resolve them lazily on first use via the sanctioned ports surface. The
+# SQLAlchemy event listeners below only run at flush/commit time (well after
+# all modules are imported), so runtime resolution is safe and side-effect-free.
+_governance_ports = None
+_comms_ports = None
+_catalog_ports = None
+_finance_ports = None
+
+
+def _resolve_models():
+    """Resolve domain models lazily to avoid circular imports at module load."""
+    global _governance_ports, _comms_ports, _catalog_ports, _finance_ports
+    if _governance_ports is None:
+        from domains.governance import ports as _governance_ports
+        from domains.comms import ports as _comms_ports
+        from domains.catalog import ports as _catalog_ports
+        from domains.finance import ports as _finance_ports
+    return _governance_ports, _comms_ports, _catalog_ports, _finance_ports
 
 
 _REALTIME_EVENTS_KEY = "_zozi_realtime_events"
@@ -457,6 +469,8 @@ def _staff_user_ids_for_permission(session: OrmSession, permission: str) -> list
         cache[permission] = []
         return []
 
+    governance_ports, _, _, _ = _resolve_models()
+    User = getattr(governance_ports, "User")
     rows = (
         session.query(User.id)
         .filter(and_(User.role.in_(tuple(roles)), User.is_active == 1))
@@ -476,6 +490,17 @@ def _ticket_user_id(reply: TicketReply) -> object:
 
 @event.listens_for(OrmSession, "after_flush")
 def _collect_realtime_events(session: OrmSession, flush_context) -> None:  # pragma: no cover - exercised via commit tests
+    # Resolve domain models lazily (Law 1: no module-level domain imports)
+    governance_ports, comms_ports, catalog_ports, finance_ports = _resolve_models()
+    Notification = getattr(comms_ports, "Notification")
+    InternalEmail = getattr(comms_ports, "InternalEmail")
+    SupplierProfile = getattr(comms_ports, "SupplierProfile")
+    SupportTicket = getattr(governance_ports, "SupportTicket")
+    TicketReply = getattr(governance_ports, "TicketReply")
+    SupplierDispute = getattr(governance_ports, "SupplierDispute")
+    AuditLog = getattr(governance_ports, "AuditLog")
+    Product = catalog_ports.Product
+    Payout = finance_ports.Payout
     for obj in session.new:
         if isinstance(obj, Notification):
             _queue_user_event(

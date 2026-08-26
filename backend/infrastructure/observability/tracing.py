@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Optional
 
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 

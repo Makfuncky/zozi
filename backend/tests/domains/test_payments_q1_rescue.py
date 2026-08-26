@@ -1,4 +1,4 @@
-﻿"""Q1 rescue test for the payments router.
+"""Q1 rescue test for the payments router.
 
 Guards the Q1 architecture rule: routers must never touch the ORM session
 directly through ``db.query()`` / ``db.execute()``. All access is delegated to

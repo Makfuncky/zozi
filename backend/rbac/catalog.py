@@ -1,4 +1,4 @@
-﻿"""rbac/catalog.py - the feature registry (spec: AXIS 3 single source of truth).
+"""rbac/catalog.py - the feature registry (spec: AXIS 3 single source of truth).
 
 Aggregates every domain's FEATURES dict via package scan so a feature string can
 never be invented in a router. CI fails on any require_feature(...) literal not

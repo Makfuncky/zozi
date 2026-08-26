@@ -1,4 +1,4 @@
-﻿"""suppliers domain â€” ORM model package (Law 6 schema discipline).
+"""suppliers domain â€” ORM model package (Law 6 schema discipline).
 
 Supplier-entity definitions live here on the ``supplier`` Postgres schema.
 Cross-domain consumers import these via ``domains.suppliers.models`` or read

@@ -72,7 +72,7 @@ from domains.accounts.services.admin_treasury_service import require_treasury_ac
 
 import logging
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from decimal import Decimal
 
@@ -470,7 +470,7 @@ def admin_generate_payout_batch(country_code: str=FastAPIBody(...), cutoff_date:
     if not pending_payouts:
         raise HTTPException(status_code=404, detail='No pending payouts found for the given criteria')
     total = sum((p.amount for p in pending_payouts))
-    batch = PayoutBatch(batch_number=f"PB-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}", country_code=country_code, total_amount=total, item_count=len(pending_payouts), status='draft', created_by=current_user.get('id'))
+    batch = PayoutBatch(batch_number=f"PB-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}", country_code=country_code, total_amount=total, item_count=len(pending_payouts), status='draft', created_by=current_user.get('id'))
     db.add(batch)
     db.flush()
     for payout in pending_payouts:
@@ -503,7 +503,7 @@ def admin_dispatch_payout_batch(batch_id: int=Path(...), db: Session=Depends(get
     engine = TreasuryEngine(db)
     entry = engine.post_journal_entry(lines=[{'account_code': PAYABLES_ACCOUNT, 'debit': float(batch.total_amount), 'description': f'Payout batch {batch.batch_number}'}, {'account_code': CASH_ACCOUNT, 'credit': float(batch.total_amount), 'description': f'Payout batch {batch.batch_number}'}], description=f'Dispatch payout batch {batch.batch_number}', source='payout_dispatch', country_code=batch.country_code, created_by=current_user.get('id'))
     batch.status = 'dispatched'
-    batch.dispatched_at = datetime.utcnow()
+    batch.dispatched_at = datetime.now(timezone.utc)
     db.commit()
     return {'status': 'dispatched', 'batch_id': batch.id, 'batch_number': batch.batch_number, 'journal_entry_id': entry.id, 'reference_number': entry.reference_number}
 
@@ -537,7 +537,7 @@ def admin_gateway_summary(db: Session=Depends(get_db), current_user: dict=Depend
 
 def admin_snapshot_cash_position(db: Session=Depends(get_db), current_user: dict=Depends(require_treasury_access)):
     accounts = db.execute(select(TreasuryAccount).where(TreasuryAccount.is_active == True)).scalars().all()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     for a in accounts:
         snap = CashPositionSnapshot(snapshot_time=now, account_id=a.id, balance=a.balance, currency=a.currency or 'USD')
         db.add(snap)

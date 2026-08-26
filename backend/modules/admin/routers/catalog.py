@@ -1,11 +1,9 @@
+from __future__ import annotations
+
 """Admin catalog router — canonical."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
-from .categories import router as categories_router
-from .products import router as products_router
-from .search import router as search_router
-from __future__ import annotations
 from domains.accounts.services.permissions.permission_service import create_category
 from domains.accounts.services.permissions.permission_service import create_category as create_category_model
 from domains.accounts.services.permissions.permission_service import create_category as svc_create_category

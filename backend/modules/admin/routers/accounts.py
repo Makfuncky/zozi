@@ -5,8 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 from .identity import router as identity_router
 from .sessions import router as sessions_router
 from __future__ import annotations
-from controllers.admin.bank_accounts_controller import delete_bank_account_route, list_pending_bank_accounts_route, verify_bank_account_route
-from datetime import datetime, timezone
+from modules.admin.routers.accounts import delete_bank_account_route, list_pending_bank_accounts_route, verify_bank_account_route
 from domains.accounts.services.users.users_admin_service import get_user_display_name
 from domains.accounts.services.users.users_admin_service import get_user_role
 from domains.comms.services._auto_stubs import mark_messages_read

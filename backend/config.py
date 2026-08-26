@@ -1,4 +1,4 @@
-﻿"""Application configuration (spec: backend/config.py).
+"""Application configuration (spec: backend/config.py).
 
 Canonical settings / env / feature-gates entry point. Re-exports the existing
 implementation in infrastructure.utils.config so behaviour is unchanged while

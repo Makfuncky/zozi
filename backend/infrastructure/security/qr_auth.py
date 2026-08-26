@@ -10,7 +10,6 @@ import time
 import json
 from io import BytesIO
 from typing import Optional, Dict, Any
-from datetime import datetime, timedelta
 
 
 class QRAuthService:

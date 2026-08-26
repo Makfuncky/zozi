@@ -2,7 +2,6 @@
 Admin Router  route declarations only (HTTP layer).
 All business logic lives in controllers/admin_controller.py.
 """
-from datetime import datetime
 from typing import List, Optional
 from fastapi import Body, Depends, HTTPException, Path, Query
 from fastapi.responses import JSONResponse

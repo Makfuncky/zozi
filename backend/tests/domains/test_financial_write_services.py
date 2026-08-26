@@ -1,4 +1,4 @@
-﻿"""Regression tests for the implemented financial write services.
+"""Regression tests for the implemented financial write services.
 
 Guards the remediation that replaced ``_missing_symbol`` stubs in
 ``commission_write_service``, ``payments_write_service`` and

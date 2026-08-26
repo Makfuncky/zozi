@@ -1,4 +1,4 @@
-﻿"""Canonical Celery worker: automated payout sweep (supplier + logistics).
+"""Canonical Celery worker: automated payout sweep (supplier + logistics).
 
 Wires to ``domains.finance.services.payouts.auto_payout_scheduler``.
 """

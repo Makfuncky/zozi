@@ -7,13 +7,10 @@ import os
 import json
 import hashlib
 import base64
-from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from providers.security.encryption import Fernet, hashes, PBKDF2HMAC
 
 from sqlalchemy.orm import Session
-
-from infrastructure.database.database import get_service_session
 
 logger = logging.getLogger("zozi.kms")
 
@@ -27,13 +24,22 @@ class KeyManager:
         self._load_keys()
     
     def _load_keys(self):
-        """Load keys from environment or generate new ones."""
+        """Load keys from environment or persistent key file."""
         key = os.environ.get("KMS_ENCRYPTION_KEY")
         if key:
             self._keys["v1"] = base64.urlsafe_b64decode(key.encode())
         else:
-            self._keys["v1"] = Fernet.generate_key()
-            logger.warning("Generated ephemeral encryption key. Set KMS_ENCRYPTION_KEY environment variable for production.")
+            key_file = os.path.join(os.path.expanduser("~"), ".zozi", "kms_key")
+            if os.path.exists(key_file):
+                with open(key_file, "rb") as f:
+                    self._keys["v1"] = base64.urlsafe_b64decode(f.read().strip())
+            else:
+                self._keys["v1"] = Fernet.generate_key()
+                os.makedirs(os.path.dirname(key_file), exist_ok=True)
+                with open(key_file, "wb") as f:
+                    f.write(base64.urlsafe_b64encode(self._keys["v1"]))
+                os.chmod(key_file, 0o600)
+                logger.warning("Generated persistent encryption key at %s. Set KMS_ENCRYPTION_KEY env var to override.", key_file)
     
     def get_current_key(self) -> bytes:
         return self._keys[self._current_key_id]
@@ -92,7 +98,10 @@ class KMSService:
     }
     
     def __init__(self, db: Session = None):
-        self.db = db or get_service_session()
+        if db is None:
+            from infrastructure.database.database import get_service_session
+            db = get_service_session()
+        self.db = db
         self.key_manager = KeyManager()
     
     def encrypt_record(self, table: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -132,5 +141,8 @@ class EncryptedField:
 
 
 def get_kms_service(db: Session = None) -> KMSService:
-    return KMSService(db or get_service_session())
+    if db is None:
+        from infrastructure.database.database import get_service_session
+        db = get_service_session()
+    return KMSService(db)
 

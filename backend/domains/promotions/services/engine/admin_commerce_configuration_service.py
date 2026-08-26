@@ -1,4 +1,4 @@
-﻿"""Admin promotions router — country-scoped."""
+"""Admin promotions router — country-scoped."""
 from typing import Optional
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session

@@ -1,6 +1,12 @@
 """Logistics logistics router — consolidated from 12 source files."""
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
+
+from infrastructure.utils.pagination import paginated_response
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/api/v1/logistics/logistics", tags=["logistics", "logistics"])
@@ -31,25 +37,45 @@ def get_logistics_health(
 
 @router.get("/health/logistics")
 def list_logistics_health(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(50, ge=1, le=100, description="Items per page (max 100)"),
     country_code: str = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     from domains.logistics.models.logistics_entities import LogisticsPartner
     from domains.logistics.models.logistics_entities import LogisticsPartnerProfile
-    profiles = db.query(LogisticsPartnerProfile).all()
+    page = max(1, page)
+    limit = min(max(1, limit), 100)
+    profiles = db.query(LogisticsPartnerProfile).order_by(LogisticsPartnerProfile.id).limit(1000).all()
+    partner_ids = [p.partner_id for p in profiles]
+    partners = {
+        pid: name
+        for pid, name in db.query(LogisticsPartner.id, LogisticsPartner.name).filter(
+            LogisticsPartner.id.in_(partner_ids)
+        ).all()
+    }
+    engine = get_logistics_health_engine(db)
     results = []
     for p in profiles:
-        engine = get_logistics_health_engine(db)
         health = engine.calculate_health_score(p.id, country_code)
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == p.partner_id).first()
+        partner_name = partners.get(p.partner_id)
         health["profile"] = {
-            "name": partner.name if partner else None,
+            "name": partner_name,
             "rating": 0,
         }
         results.append(health)
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
-    return {"logistics_partners": results[:50]}
+    total = len(results)
+    start = (page - 1) * limit
+    end = start + limit
+    return {
+        "logistics_partners": results[start:end],
+        "total": total,
+        "page": page,
+        "size": limit,
+        "pages": max(1, (total + limit - 1) // limit),
+    }
 
 
 # === From logistics_health_list.py ===
@@ -65,7 +91,7 @@ from domains.logistics.services.health.service import get_logistics_health_engin
 
 
 @router.get("/health/logistics/{partner_id}")
-def get_logistics_health(
+def get_supplier_health(
     partner_id: int,
     country_code: str = None,
     current_user: dict = Depends(get_current_user),
@@ -77,25 +103,45 @@ def get_logistics_health(
 
 @router.get("/health/logistics")
 def list_logistics_health(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(50, ge=1, le=100, description="Items per page (max 100)"),
     country_code: str = None,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     from domains.logistics.models.logistics_entities import LogisticsPartnerProfile
     from domains.logistics.models.logistics_entities import LogisticsPartner
-    profiles = db.query(LogisticsPartnerProfile).all()
+    page = max(1, page)
+    limit = min(max(1, limit), 100)
+    profiles = db.query(LogisticsPartnerProfile).order_by(LogisticsPartnerProfile.id).limit(1000).all()
+    partner_ids = [p.partner_id for p in profiles]
+    partners = {
+        pid: name
+        for pid, name in db.query(LogisticsPartner.id, LogisticsPartner.name).filter(
+            LogisticsPartner.id.in_(partner_ids)
+        ).all()
+    }
+    engine = get_logistics_health_engine(db)
     results = []
     for p in profiles:
-        engine = get_logistics_health_engine(db)
         health = engine.calculate_health_score(p.id, country_code)
-        partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == p.partner_id).first()
+        partner_name = partners.get(p.partner_id)
         health["profile"] = {
-            "name": partner.name if partner else None,
+            "name": partner_name,
             "rating": 0,
         }
         results.append(health)
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
-    return {"logistics_partners": results[:50]}
+    total = len(results)
+    start = (page - 1) * limit
+    end = start + limit
+    return {
+        "logistics_partners": results[start:end],
+        "total": total,
+        "page": page,
+        "size": limit,
+        "pages": max(1, (total + limit - 1) // limit),
+    }
 
 
 # === From logistics_locations.py ===

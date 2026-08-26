@@ -1,19 +1,19 @@
+from __future__ import annotations
+
 """Admin audit router — canonical."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
-from .audit import router as audit_router
 from .compliance import router as compliance_router
-from __future__ import annotations
-from controllers.admin.audit_controller import audit_actions, audit_log_page
-from controllers.security.auth_controller import get_current_user
-from db.database import get_db
+from modules.admin.routers.audit import audit_actions, audit_log_page
+from modules.admin.routers.accounts import get_current_user
+from infrastructure.database.database import get_db
 from domains.audit.services.ediscovery import get_ediscovery_service
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
-from services.audit.audit_trail_service import AuditTrailService
-from services.audit.audit_trail_service import DataResidencyService
-from services.supplier.legal_contract_service import LegalContractService
+from domains.audit.services.logs.audit_trail_service import AuditTrailService
+from domains.audit.services.logs.audit_trail_service import DataResidencyService
+from domains.suppliers.services.legal_contract_service import LegalContractService
 from sqlalchemy.orm import Session
 from typing import Optional
 from typing import Optional, Any, Dict

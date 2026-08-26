@@ -23,7 +23,6 @@ Handles:
   - #14: Smart Payout Batch Generation (nightly cron gathers eligible settlements)
   - #15: Supplier Self-Approval (SMS/email link for supplier approval)
 """
-from __future__ import annotations
 
 import logging
 import uuid
@@ -815,7 +814,6 @@ Idempotency:
   - The entire batch is wrapped in a DB transaction
 """
 
-from __future__ import annotations
 
 import logging
 import threading
@@ -1634,7 +1632,6 @@ service layer. These symbols are re-exported by
 payments controllers. They are provided here as leaf definitions so the import
 graph stays acyclic and ``import main`` succeeds.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 import structlog
@@ -1690,7 +1687,6 @@ __all__ = [
 # === MERGED from admin_payouts_service.py ===
 
 """Auto-migrated service logic from routers/admin_payouts.py."""
-from __future__ import annotations
 from domains.governance.services.admin_treasury_status_service import _update_bg_status_after_manual_trigger
 
 from fastapi import Depends, HTTPException, Path, Query
@@ -1857,7 +1853,6 @@ Design decisions:
   - If the entity has no verified email address, falls back to an in-app
     notification via NotificationEngine.
 """
-from __future__ import annotations
 
 
 import logging
@@ -2314,7 +2309,6 @@ Thin service layer backing the payout-admin controller. Operations are kept
 deliberately small; this module exists so the routers -> controllers ->
 services circuit (CIR2) is preserved for payout administration.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 
@@ -2418,7 +2412,6 @@ NOTE: the ``audit_log(...)`` calls below are reproduced verbatim from the
 original router endpoints (same arguments, same position *after* the commit) so
 that runtime behaviour is byte-for-byte preserved by this refactor.
 """
-from __future__ import annotations
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -2514,7 +2507,6 @@ def process_country_payout(
 Owns the read behind ``supplier_payout_controller.list_supplier_payouts`` so the
 controller no longer reaches into the ORM directly.
 """
-from __future__ import annotations
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -2545,7 +2537,6 @@ def list_supplier_payouts(current_user, db: Session) -> list[Payout]:
 # === MERGED from payouts_service.py ===
 
 """Admin payout management controller."""
-from __future__ import annotations
 
 from typing import Any, List, Optional, cast
 from datetime import datetime, timezone
@@ -2756,7 +2747,6 @@ Owns the read/aggregation behind the Admin Payout Approval Dashboard so the
 router stays free of ``db.query`` calls. The shape returned by ``get_pending_payouts``
 is identical to the former inline implementation in ``routers/public_treasury_payments.py``.
 """
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, cast
@@ -2992,7 +2982,6 @@ Mirrors the admin payout-approval router's mutate endpoints so the HTTP layer
 stays a thin wrapper. Reads (the /pending dashboard) remain in the router as the
 accepted read-layer.
 """
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, cast
@@ -3194,7 +3183,6 @@ than ``user_id`` / ``resource_type`` / ``resource_id``. Every write endpoint
 therefore raised HTTP 500 *after* committing. The calls below preserve the
 original intent while matching the real ``audit_log`` signature.
 """
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, cast
@@ -3517,7 +3505,6 @@ def request_supplier_payout(db: Session, current_user, payload: dict) -> dict:
 # === MERGED from payout_status_service.py ===
 
 'Treasury payout status controller.\n\nHolds the read/write logic for admin payout records (list / create / verify /\nprocess). Previously inline in ``routers.admin_treasury_status`` (CG1: ``Payout``\ninstantiation in router, W1: ``db.add``/``db.commit`` in router, DBA32: OFFSET\npagination). Routers now set RLS context, authorize, and delegate here.\n\nLists use keyset (seek) pagination via an opaque ``cursor`` (``created_at`` +\n``id``) instead of ``OFFSET``.\n'
-from __future__ import annotations
 import base64
 from domains.comms.services.utility.db_read import query as db_read_query
 from domains.comms.services.utility.db_read import execute as db_read_execute
@@ -3624,7 +3611,6 @@ controller/router layer stays read-only (LC1 / W1 layer contract):
   ``commit``/``rollback`` (used by the background job enqueued from the
   controller). It is the only place here that opens a session and commits.
 """
-from __future__ import annotations
 
 from typing import Any
 
@@ -3721,7 +3707,6 @@ Refund Journal Entries:
   - VAT reversal: Dr 2040 VAT Payable / Cr 2030 Customer Refund Reserve
   - Supplier deduction: Dr 2010 Supplier Payable / Cr 2030 Customer Refund Reserve
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime
@@ -3977,7 +3962,6 @@ Read/serialization helpers live here (routers -> models reads are permitted for
 enrichment); all session writes are delegated to
 ``controllers.treasury.payout_approval_controller``.
 """
-from __future__ import annotations
 from decimal import Decimal
 from typing import Any, cast
 from fastapi import Depends, HTTPException, Query

@@ -1,4 +1,4 @@
-﻿"""Orders core service — backward-compatible shim.
+"""Orders core service — backward-compatible shim.
 
 Code has been moved to:
   - order_engine: order lifecycle (create, preview, get, cancel)

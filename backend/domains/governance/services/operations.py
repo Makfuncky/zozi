@@ -1,4 +1,4 @@
-﻿"""
+"""
 Admin Data Export Controller.
 
 Streams CSV data for admin download.  All PII fields (phone, address) are

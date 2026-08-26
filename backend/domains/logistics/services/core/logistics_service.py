@@ -1,4 +1,4 @@
-﻿"""Auto-migrated service logic from routers/logistics.py."""
+"""Auto-migrated service logic from routers/logistics.py."""
 from __future__ import annotations
 
 from typing import Any

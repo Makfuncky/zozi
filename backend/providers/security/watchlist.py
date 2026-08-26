@@ -1,4 +1,4 @@
-﻿"""Watchlist / sanctions screening provider.
+"""Watchlist / sanctions screening provider.
 
 Owns the *raw* external HTTP call to the configured screening vendor
 (e.g. LexisNexis, Onfido, World-Check). Domain logic such as the

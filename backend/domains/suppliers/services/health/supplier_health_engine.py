@@ -3,7 +3,7 @@ Supplier Health Engine - Calculates trust scores and health metrics for supplier
 """
 from __future__ import annotations
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
 
@@ -28,7 +28,7 @@ class SupplierHealthEngine:
         if not profile:
             return {"error": "Supplier not found"}
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         thirty_days_ago = now - timedelta(days=30)
         
         orders = self._get_orders(supplier_id, country_code, thirty_days_ago, now)

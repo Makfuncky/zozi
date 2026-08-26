@@ -14,9 +14,37 @@ from sqlalchemy.orm import Session
 
 from domains.governance.models.user import User
 from domains.governance.models.user import UserDevice
-from domains.hr.models.employee_models import Employee
-from domains.hr.models.employee_models import Office
-from domains.hr.models.employee_models import GeoFenceLog
+
+# Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
+_LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
+    "Employee": ("domains.hr.models.employee_models", "Employee"),
+    "Office": ("domains.hr.models.employee_models", "Office"),
+    "GeoFenceLog": ("domains.hr.models.employee_models", "GeoFenceLog"),
+    "DynamicQRSession": ("domains.hr.models.employee_models", "DynamicQRSession"),
+}
+_IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
+
+
+def _get_cross_domain_model(name: str):
+    """Lazily import a cross-domain model to avoid import-time coupling."""
+    if name in _IMPORTED_CROSS_DOMAIN:
+        return _IMPORTED_CROSS_DOMAIN[name]
+    if name in _LAZY_CROSS_DOMAIN_MODELS:
+        module_path, class_name = _LAZY_CROSS_DOMAIN_MODELS[name]
+        import importlib
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        _IMPORTED_CROSS_DOMAIN[name] = cls
+        return cls
+    raise AttributeError(f"Cross-domain model {name!r} not registered")
+
+
+def __getattr__(name: str):
+    """Module-level lazy resolver for cross-domain models (Law 3)."""
+    try:
+        return _get_cross_domain_model(name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class GeoFenceValidator:

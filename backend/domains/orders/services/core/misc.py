@@ -115,9 +115,7 @@ def update_banner_image(db: Session, banner_or_id, image_url: str, filename: Opt
 # -------------------------------------------------------------------
 
 """Auto-migrated service logic from routers/categories.py."""
-from __future__ import annotations
 
-from __future__ import annotations
 
 from typing import Optional
 
@@ -226,7 +224,6 @@ async def delete_category(category_id: int, _admin: User, db: Session):
 # -------------------------------------------------------------------
 
 """Customer router service - DB operations for address and customer health routers."""
-from __future__ import annotations
 from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
@@ -494,9 +491,7 @@ def get_ghost_watchdog(db: Session) -> GhostEmployeeWatchdog:
 # -------------------------------------------------------------------
 
 """Auto-migrated service logic from routers/supplier_documents.py."""
-from __future__ import annotations
 
-from __future__ import annotations
 
 from fastapi import Depends, HTTPException, Query
 

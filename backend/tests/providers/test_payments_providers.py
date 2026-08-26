@@ -14,7 +14,6 @@ import hmac
 import json
 import os
 import sys
-import time
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Optional

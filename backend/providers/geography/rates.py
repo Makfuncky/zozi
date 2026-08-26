@@ -1,4 +1,4 @@
-﻿"""Foreign-exchange + currency lookup provider.
+"""Foreign-exchange + currency lookup provider.
 
 External HTTP calls (open.er-api.com live rates, Wikidata currency resolution)
 live here so ``infrastructure.utils.currency`` keeps only pure conversion arithmetic and string

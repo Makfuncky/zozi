@@ -9,7 +9,6 @@ This router provides shallow proxy routes that delegate to the same
 underlying controllers, so the frontend works whether or not a country
 code is supplied.
 """
-from datetime import datetime
 from typing import List, Optional
 from fastapi import Depends, HTTPException, Query
 from sqlalchemy import func

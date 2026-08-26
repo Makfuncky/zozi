@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
@@ -93,7 +93,7 @@ def generate_terms_of_service(country_code: str, language_code: str = "en") -> d
         "document_type": "terms_of_service",
         "country_code": country_code,
         "language": language_code,
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "content": {
             "title": "Terms of Service" if language_code != "ar" else "شروط الخدمة",
             "minimum_order_age": terms.get("minimum_order_age", 18),
@@ -118,7 +118,7 @@ def generate_privacy_policy(country_code: str, language_code: str = "en") -> dic
         "document_type": "privacy_policy",
         "country_code": country_code,
         "language": language_code,
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "content": {
             "title": "Privacy Policy" if language_code != "ar" else "سياسة الخصوصية",
             "data_residency_tier": privacy.get("data_residency", "standard"),
@@ -138,7 +138,7 @@ def generate_supplier_agreement(country_code: str, language_code: str = "en") ->
         "document_type": "supplier_agreement",
         "country_code": country_code,
         "language": language_code,
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "content": {
             "title": "Supplier Agreement" if language_code != "ar" else "اتفاقية المورد",
             "commercial_registration_required": terms.get("requires_commercial_license", False),

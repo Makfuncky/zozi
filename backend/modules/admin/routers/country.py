@@ -6,8 +6,7 @@ from .countries import router as countries_router
 from .localization import router as localization_router
 from .tax import router as tax_router
 from __future__ import annotations
-from controllers.admin.bank_accounts_controller import delete_bank_account_route, list_pending_bank_accounts_route, verify_bank_account_route
-from datetime import datetime, timezone
+from modules.admin.routers.accounts import delete_bank_account_route, list_pending_bank_accounts_route, verify_bank_account_route
 from decimal import Decimal
 from deep_translator import GoogleTranslator  # lazy import
 from domains.audit.services.data_residency import DataResidencyService
@@ -130,8 +129,6 @@ from providers.ai.ai_research_jobs import mark_job_failed
 from providers.ai.ai_research_jobs import mark_job_running
 from providers.geography.geo import resolve_ip_location
 from providers.geography.geo import reverse_geocode
-from pydantic import BaseModel
-from pydantic import BaseModel, Field
 from rbac import get_current_user
 from sqlalchemy import desc
 from sqlalchemy.orm import Session

@@ -10,7 +10,6 @@ router = APIRouter(prefix="/api/v1/customer/finance", tags=["customer", "finance
 """Payments routes restored around the recovered payments controller."""
 from typing import Optional
 
-from controllers.payments_controller import (
     ConfirmCardPaymentRequest,
     ConfirmGenericGatewayRequest,
     ConfirmPayTabsPaymentRequest,

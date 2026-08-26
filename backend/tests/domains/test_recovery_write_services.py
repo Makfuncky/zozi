@@ -1,4 +1,4 @@
-﻿"""Regression tests for the implemented recovery write services.
+"""Regression tests for the implemented recovery write services.
 
 Guards the remediation that replaced ``_missing_symbol`` stubs across the
 logistics / employee / HR / IAM / banner / disputes / misc / permissions /

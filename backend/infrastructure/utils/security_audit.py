@@ -1,2 +1,2 @@
 """Backward-compat shim — canonical location is domains/governance/services/security_audit.py."""
-from domains.governance.services.security_audit import *  # noqa: F401,F403
+# TODO: Reimplement security audit shim — canonical target domains.governance.services.security_audit does not yet exist

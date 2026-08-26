@@ -178,7 +178,6 @@ Extracted from ``routers/admin_orders_status.py`` so the router stays a thin
 HTTP layer (W1: routers must not issue DB queries directly). The router sets
 the country RLS context; this service only builds and runs the query.
 """
-from __future__ import annotations
 
 import math
 
@@ -220,7 +219,6 @@ def list_orders_paginated(
 Layer-1 code (routers / controllers) must never drive session transaction state
 directly; it delegates here so that only ``services/`` owns DB transactions.
 """
-from __future__ import annotations
 
 from sqlalchemy.orm import Session
 import structlog

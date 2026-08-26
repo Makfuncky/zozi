@@ -7,7 +7,7 @@ it is domain-agnostic and depends only on governance ports (SystemSetting).
 """
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from sqlalchemy.orm import Session
 
@@ -45,7 +45,7 @@ class WorkflowEngine:
                 "type": workflow_type,
                 "steps": steps,
                 "config": config or {},
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }),
             category="workflows",
         )

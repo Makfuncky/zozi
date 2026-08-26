@@ -1,4 +1,4 @@
-﻿"""Payroll service — calculation, batch processing, approval, and read operations.
+"""Payroll service — calculation, batch processing, approval, and read operations.
 
 Consolidates payroll_service.py (payroll calculation, batch processing, approval)
 and payroll_read_service.py (payroll record reads, summary stats).
@@ -90,7 +90,7 @@ def approve_payroll_batch(body: PayrollApproveBody, db: Session, current_user: d
     disbursement["batch_id"] = body.batch_id
     disbursement["status"] = "disbursed"
     disbursement["approved_by"] = user_id
-    disbursement["approved_at"] = datetime.utcnow().isoformat()
+    disbursement["approved_at"] = datetime.now(timezone.utc).isoformat()
 
     PENDING_PAYROLL_APPROVALS[batch_key] = disbursement
     return disbursement

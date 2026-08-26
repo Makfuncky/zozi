@@ -33,8 +33,6 @@ def get_employee_risk_scores(db: Session, employee_id: Optional[int] = None) -> 
 
 
 def update_employee_risk_score(employee_id: int, metric: str, score: float, db: Session):
-    from rbac import update_flight_risk_score
-
     return update_flight_risk_score(employee_id, metric, score, db)
 
 

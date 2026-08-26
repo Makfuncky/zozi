@@ -1,4 +1,4 @@
-﻿"""Admin categories router."""
+"""Admin categories router."""
 from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db

@@ -1,4 +1,4 @@
-﻿"""Shared kernel - fiscal period / date-range logic (spec: kernel/period.py)."""
+"""Shared kernel - fiscal period / date-range logic (spec: kernel/period.py)."""
 from datetime import date, timedelta
 from typing import Iterator
 

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_service_session
 from domains.governance.models.core import AuditLog
+from infrastructure.utils.config import settings
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -20,11 +21,10 @@ logger = logging.getLogger("zozi.worm_audit")
 
 class WORMAuditService:
     """Write-Once-Read-Many compliant audit trail."""
-    
-    CHAIN_KEY = "zozi_audit_chain"
-    
+
     def __init__(self, db: Session = None):
         self.db = db or get_service_session()
+        self._chain_key = (settings.audit_chain_key or settings.secret_key or "zozi_audit_chain").encode()
         self._last_hash = self._get_chain_tail_hash()
     
     def append(
@@ -91,7 +91,7 @@ class WORMAuditService:
         """Compute chain hash linking to previous record."""
         chain_input = f"{self._last_hash}|{record_hash}"
         return hmac.new(
-            self.CHAIN_KEY.encode(),
+            self._chain_key,
             chain_input.encode(),
             hashlib.sha256
         ).hexdigest()

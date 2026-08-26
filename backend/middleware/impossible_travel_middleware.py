@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import math
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from fastapi import Request, Response
@@ -271,7 +270,7 @@ class FraudDetectionMiddleware(BaseHTTPMiddleware):
             .filter(
                 AuditLog.user_id == user_id,
                 AuditLog.action == "login",
-                AuditLog.created_at > datetime.utcnow() - timedelta(hours=1),
+                AuditLog.created_at > datetime.now(timezone.utc) - timedelta(hours=1),
             )
             .all()
         )
@@ -286,7 +285,7 @@ class FraudDetectionMiddleware(BaseHTTPMiddleware):
 
     def check_ghost_employee(self, db: Session, employee_id: int) -> bool:
         """Return True if the employee has zero activity for 5+ days."""
-        five_days_ago = datetime.utcnow() - timedelta(days=5)
+        five_days_ago = datetime.now(timezone.utc) - timedelta(days=5)
         recent_qr_scans = db.query(AuditLog).filter(
             AuditLog.entity_type == "attendance",
             AuditLog.entity_id == employee_id,

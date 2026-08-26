@@ -6,13 +6,38 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.permissions import (
-    Permission,
-    PermissionAuditLog,
-    PermissionCategory,
-    RolePermissionAssignment,
-    UserPermissionOverride,
-)
+# Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
+_LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
+    "Permission": ("domains.governance.models.permissions", "Permission"),
+    "PermissionAuditLog": ("domains.governance.models.permissions", "PermissionAuditLog"),
+    "PermissionCategory": ("domains.governance.models.permissions", "PermissionCategory"),
+    "RolePermissionAssignment": ("domains.governance.models.permissions", "RolePermissionAssignment"),
+    "UserPermissionOverride": ("domains.governance.models.permissions", "UserPermissionOverride"),
+}
+_IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
+
+
+def _get_cross_domain_model(name: str):
+    """Lazily import a cross-domain model to avoid import-time coupling."""
+    if name in _IMPORTED_CROSS_DOMAIN:
+        return _IMPORTED_CROSS_DOMAIN[name]
+    if name in _LAZY_CROSS_DOMAIN_MODELS:
+        module_path, class_name = _LAZY_CROSS_DOMAIN_MODELS[name]
+        import importlib
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        _IMPORTED_CROSS_DOMAIN[name] = cls
+        return cls
+    raise AttributeError(f"Cross-domain model {name!r} not registered")
+
+
+def __getattr__(name: str):
+    """Module-level lazy resolver for cross-domain models (Law 3)."""
+    try:
+        return _get_cross_domain_model(name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 from infrastructure.utils.performance_cache import cached_call
 
 logger = logging.getLogger(__name__)
@@ -334,15 +359,18 @@ def _log_audit(actor_id: int, action: str, target_user_id: Optional[int] = None,
         country_code=country_code,
         details=details,
     )
-    db.add(log)
-    db.commit()
+    try:
+        db.add(log)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
 
 
 # === MERGED FROM rbac_service.py ===
 """Role-Based Access Control service with delegation workflows."""
 
-from __future__ import annotations
 
 
 

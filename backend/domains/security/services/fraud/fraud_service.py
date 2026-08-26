@@ -1,7 +1,7 @@
 """Comprehensive fraud detection and prevention service."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
@@ -63,7 +63,7 @@ class FraudService:
             .first()
         )
         if blacklisted and blacklisted.expires_at:
-            if blacklisted.expires_at < datetime.utcnow():
+            if blacklisted.expires_at < datetime.now(timezone.utc):
                 return False
         return blacklisted is not None
     
@@ -115,7 +115,7 @@ class FraudService:
             existing.is_vpn = is_vpn
             existing.is_hosting = is_hosting
             existing.country_code = country_code
-            existing.last_seen = datetime.utcnow()
+            existing.last_seen = datetime.now(timezone.utc)
             self.db.commit()
             self.db.refresh(existing)
             return existing

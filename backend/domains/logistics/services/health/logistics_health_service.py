@@ -1,4 +1,4 @@
-﻿"""Auto-migrated service logic from routers/logistics_health.py."""
+"""Auto-migrated service logic from routers/logistics_health.py."""
 from __future__ import annotations
 
 from fastapi import Depends

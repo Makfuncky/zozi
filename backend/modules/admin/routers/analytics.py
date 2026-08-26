@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
-from .analytics import router as analytics_router
 from .reports import router as reports_router
 import logging as _l; _l.getLogger(__name__).warning("skip analytics_router: %s", _e)
 import logging as _l; _l.getLogger(__name__).warning("skip reports_router: %s", _e)

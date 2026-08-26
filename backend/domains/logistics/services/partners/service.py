@@ -2187,7 +2187,7 @@ from fastapi import Depends, File, Form, Query, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from modules.admin.routers import get_current_user
+from infrastructure.utils.dependencies import get_current_user
 import domains.logistics.services.partners.logistics_partner_service as ctrl
 
 class BulkPartnerAdminActionRequest(BaseModel):

@@ -1,4 +1,4 @@
-﻿"""
+"""
 BG Strategy A/B Testing Router
 ================================
 Evaluates multiple background-removal strategies on the uploaded image and returns

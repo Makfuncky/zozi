@@ -1,4 +1,4 @@
-﻿"""
+"""
 Unified Authentication Service — "One Identity, Many Doors"
 
 Implements 5 login doors, all converging on the same JWT + RLS context:
@@ -19,12 +19,16 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import secrets
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Optional, Tuple
+
+import jwt
+import requests
 
 from providers.auth import totp as totp_provider
 from fastapi import HTTPException, Request, status
@@ -58,6 +62,13 @@ KIOSK_SESSION_HOURS = 8
 MOBILE_SESSION_DAYS = 30
 MAX_OTP_ATTEMPTS = 5
 RISK_HIGH_THRESHOLD = 75  # out of 100
+
+_SSO_JWKS_URLS = {
+    "google": "https://www.googleapis.com/oauth2/v3/certs",
+    "apple": "https://appleid.apple.com/auth/keys",
+    "microsoft": "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+}
+_JWKS_CACHE: dict = {}
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  Shared Helpers
@@ -189,7 +200,7 @@ def _record_device(
     if existing:
         existing.last_ip = ip
         existing.last_user_agent = user_agent
-        existing.last_seen_at = datetime.utcnow()
+        existing.last_seen_at = datetime.now(timezone.utc)
         existing.is_trusted = is_trusted or existing.is_trusted
         db.commit()
         return existing
@@ -201,8 +212,8 @@ def _record_device(
         last_ip=ip,
         last_user_agent=user_agent,
         is_trusted=is_trusted,
-        first_seen_at=datetime.utcnow(),
-        last_seen_at=datetime.utcnow(),
+        first_seen_at=datetime.now(timezone.utc),
+        last_seen_at=datetime.now(timezone.utc),
     )
     db.add(device)
     db.commit()
@@ -251,7 +262,7 @@ def _compute_risk_score(
                 score += 10
 
     # 3. Odd-hour login
-    hour = datetime.utcnow().hour
+    hour = datetime.now(timezone.utc).hour
     if hour < 6 or hour > 22:
         score += 20
 
@@ -382,7 +393,7 @@ def request_otp(phone: str) -> dict:
     _store_otp(phone, otp)
 
     # TODO: Integrate with SMS/WhatsApp provider
-    logger.info("OTP for %s: %s (expires in %ds)", phone, otp, OTP_EXPIRY_SECONDS)
+    logger.info("OTP generated for %s (expires in %ds)", phone, OTP_EXPIRY_SECONDS)
 
     # In production, mask the phone in the response
     masked = phone[:4] + "****" + phone[-3:] if len(phone) > 7 else "****"
@@ -637,7 +648,7 @@ def generate_kiosk_qr(
             raise HTTPException(status_code=404, detail="Employee not found")
 
         qr_token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
 
         session = DynamicQRSession(
             employee_id=employee_id,
@@ -695,7 +706,7 @@ def authenticate_kiosk_qr(
         if session.used_at:
             raise HTTPException(status_code=400, detail="QR code already used")
 
-        if session.expires_at < datetime.utcnow():
+        if session.expires_at < datetime.now(timezone.utc):
             raise HTTPException(status_code=401, detail="QR code expired")
 
         employee = db.query(Employee).filter(Employee.id == session.employee_id).first()
@@ -754,11 +765,11 @@ def authenticate_kiosk_qr(
                         )
 
         # Mark QR session as used
-        session.used_at = datetime.utcnow()
+        session.used_at = datetime.now(timezone.utc)
         session.ip_address = ip_address
 
         # Log attendance
-        today = datetime.utcnow().date()
+        today = datetime.now(timezone.utc).date()
         existing_attendance = (
             db.query(EmployeeAttendance)
             .filter(
@@ -769,13 +780,13 @@ def authenticate_kiosk_qr(
         )
         if existing_attendance:
             if not existing_attendance.scan_in_time:
-                existing_attendance.scan_in_time = datetime.utcnow()
-            existing_attendance.scan_out_time = datetime.utcnow()
+                existing_attendance.scan_in_time = datetime.now(timezone.utc)
+            existing_attendance.scan_out_time = datetime.now(timezone.utc)
         else:
             attendance = EmployeeAttendance(
                 employee_id=employee.id,
                 date=today,
-                scan_in_time=datetime.utcnow(),
+                scan_in_time=datetime.now(timezone.utc),
                 scan_type="qr_kiosk",
                 location_lat=latitude,
                 location_long=longitude,
@@ -806,38 +817,72 @@ def authenticate_kiosk_qr(
 def _verify_sso_token(provider: str, id_token: str) -> dict:
     """Verify an SSO ID token and return the userinfo claims.
 
-    Supports Google, Apple, and Microsoft. In production, validates the
-    token signature, expiry, and audience (client_id) via the provider's
-    public JWKS endpoint.
-
-    SECURITY NOTE: This function currently uses unverified claims decoding.
-    In production, this MUST be replaced with proper JWT verification against
-    the provider's JWKS endpoint.
+    Supports Google, Apple, and Microsoft. Validates the token signature,
+    expiry, and audience (client_id) via the provider's public JWKS endpoint.
     """
-    # SECURITY FIX: Reject SSO tokens in production without proper verification
     from infrastructure.utils.config import settings
-    app_env = str(getattr(settings, "app_env", "development")).lower()
-    if app_env == "production":
+    from cryptography.x509 import load_pem_x509_certificate
+
+    client_id = getattr(settings, "sso_client_id", None) or os.environ.get("SSO_CLIENT_ID")
+    jwks_url = _SSO_JWKS_URLS.get(provider)
+
+    if not jwks_url:
         raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="SSO token verification is not implemented in production. "
-                   "Please integrate with the provider's JWKS endpoint.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported SSO provider: {provider}",
         )
 
-    # TODO: Integrate with google-auth, apple-auth, msal libraries
-    # For now, return a mock userinfo for development
-    # In production, replace with proper JWT verification against provider JWKS
     try:
-        from providers.auth import jwt as jwt_provider
+        jwks = _JWKS_CACHE.get(provider)
+        if not jwks:
+            resp = requests.get(jwks_url, timeout=10)
+            resp.raise_for_status()
+            jwks = resp.json()
+            _JWKS_CACHE[provider] = jwks
 
-        # Get provider's JWKS — placeholder
-        payload = jwt_provider.decode_unverified_claims(id_token)
+        unverified_header = jwt.get_unverified_header(id_token)
+        kid = unverified_header.get("kid")
+        if not kid:
+            raise ValueError("Missing 'kid' in token header")
+
+        matching_key = None
+        for jwk in jwks.get("keys", []):
+            if jwk.get("kid") == kid:
+                matching_key = jwk
+                break
+        if not matching_key:
+            raise ValueError(f"No matching key found for kid: {kid}")
+
+        x5c = matching_key.get("x5c")
+        if x5c:
+            cert_b64 = x5c[0]
+            cert_pem = "-----BEGIN CERTIFICATE-----\n"
+            for i in range(0, len(cert_b64), 64):
+                cert_pem += cert_b64[i:i+64] + "\n"
+            cert_pem += "-----END CERTIFICATE-----\n"
+            cert = load_pem_x509_certificate(cert_pem.encode())
+            public_key = cert.public_key()
+        else:
+            n = int.from_bytes(base64.urlsafe_b64decode(matching_key["n"] + "=="), "big")
+            e = int.from_bytes(base64.urlsafe_b64decode(matching_key["e"] + "=="), "big")
+            from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+            public_key = RSAPublicNumbers(e, n).public_key()
+
+        audience = client_id if client_id else None
+        payload = jwt.decode(
+            id_token,
+            public_key,
+            algorithms=["RS256"],
+            audience=audience,
+            options={"verify_aud": audience is not None},
+        )
+
         provider_claims = {
-            "google": {"email", "sub", "name"},
+            "google": {"email", "sub"},
             "apple": {"email", "sub"},
-            "microsoft": {"email", "sub", "name", "preferred_username"},
+            "microsoft": {"sub"},
         }
-        required = provider_claims.get(provider, {"email", "sub"})
+        required = provider_claims.get(provider, {"sub"})
         if not required.issubset(payload.keys()):
             raise ValueError(f"Missing required claims: {required - set(payload.keys())}")
 
@@ -848,6 +893,8 @@ def _verify_sso_token(provider: str, id_token: str) -> dict:
             "provider": provider,
             "issuer": payload.get("iss", ""),
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -1101,21 +1148,20 @@ def refresh_session(refresh_token: str, db: Session | None = None) -> dict:
 
 def logout(access_token: str, db: Session | None = None) -> dict:
     """Blacklist the access token and log the activity."""
-    from infrastructure.utils.auth import verify_token
+    from infrastructure.utils.auth import decode_token
 
     close_db = False
     if db is None:
         db = SessionLocal()
         close_db = True
     try:
-        from providers.auth import jwt as jwt_provider
-
-        payload = jwt_provider.decode_unverified_claims(access_token)
+        payload = decode_token(access_token)
         jti = payload.get("jti", "")
         exp = payload.get("exp", 3600)
         ttl = max(exp - int(time.time()), 60)
 
-        blacklist_token(jti, ttl)
+        if jti:
+            blacklist_token(jti, ttl)
 
         user_id = int(payload.get("sub", 0))
         employee = (
@@ -1158,7 +1204,7 @@ from sqlalchemy.orm import Session
 
 from infrastructure.security.auth import get_password_hash, verify_password
 from infrastructure.utils.datetime_utils import utcnow
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 # TODO: OtpCode model not yet defined — add to accounts/models/ when needed
 
 logger = logging.getLogger(__name__)
@@ -1405,7 +1451,7 @@ from infrastructure.utils.email_service import (
     send_verification_email,
 )
 from infrastructure.utils.staff_permissions import default_permissions_for_role, sanitize_staff_permissions
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.governance.services.infrastructure_audit import audit_log, AuditAction
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-﻿"""rbac/service.py - admin-facing RBAC operations (spec).
+"""rbac/service.py - admin-facing RBAC operations (spec).
 
 Grant/revoke, delegation, maker-checker. Migrated from the legacy RBACService.
 """

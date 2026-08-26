@@ -1,6 +1,5 @@
 """Employee models for HCM system."""
 from __future__ import annotations
-from datetime import datetime, timezone
 from typing import Optional, TYPE_CHECKING
 from decimal import Decimal
 from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint, BigInteger, Time, func

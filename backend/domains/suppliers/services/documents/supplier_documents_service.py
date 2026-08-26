@@ -5,7 +5,6 @@
 """Auto-migrated service logic from routers/supplier_documents.py."""
 from __future__ import annotations
 
-from __future__ import annotations
 
 from fastapi import Depends, HTTPException, Query
 

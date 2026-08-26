@@ -1,4 +1,4 @@
-﻿"""Admin commission management service."""
+"""Admin commission management service."""
 from __future__ import annotations
 
 from sqlalchemy.orm import Session

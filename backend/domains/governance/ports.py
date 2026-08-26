@@ -40,6 +40,9 @@ from domains.governance.models.admin import APIKey, AdminActivityLog, AdminAnaly
 from domains.governance.models.fraud import CreditCardBin, DLPViolation, DeviceFingerprint, FraudAlert, FraudBlacklist, FraudCase, FraudCaseAssignment, FraudEvent, FraudRule, FraudScoringLog, IPAccountLinkage, IPReputation, LogisticsFraudIndicator, ManualReviewQueue, MeetingActionItem, MeetingRecording, MeetingTranscript, ReturnAbusePattern, SupplierFraudIndicator, VelocityCounter
 from domains.governance.models.incident import IncidentActionItem, IncidentThread, IncidentWarRoom, WarRoomTemplate
 
+# Import functions from accounts for cross-domain use
+from domains.accounts.services.users.users_admin_service.merged_from_user_write_ops_py import build_user_delete_blocker, delete_order_records, hard_delete_user_record
+
 
 def get_admin_analytics_snapshot_by_id(db: Session, id_: int) -> Optional[AdminAnalyticsSnapshot]:
     """Return AdminAnalyticsSnapshot by primary key (or None)."""
@@ -804,6 +807,10 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "get_incident_service": ("domains.governance.services.incident_service", "get_incident_service"),
     # Model re-exports (canonical homes in other domains)
     "User": ("domains.governance.models.user", "User"),
+    "AuditLog": ("domains.audit.models.audit_schema_models", "AuditLog"),
+    "SupportTicket": ("domains.comms.models.communication_schema_models", "SupportTicket"),
+    "TicketReply": ("domains.governance.models.admin", "TicketReply"),
+    "SupplierDispute": ("domains.governance.models.admin", "SupplierDispute"),
     "DirectChatMessage": ("domains.comms.models.chat", "DirectChatMessage"),
     "DirectChatRoom": ("domains.comms.models.chat", "DirectChatRoom"),
     "GroupChatRoom": ("domains.comms.models.chat", "GroupChatRoom"),
@@ -824,6 +831,15 @@ def __getattr__(name: str):
         module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
         mod = _importlib.import_module(module_path)
         value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    if name in _IMPORTED_CROSS_DOMAIN_SERVICES:
+        return _IMPORTED_CROSS_DOMAIN_SERVICES[name]
+    if name in _LAZY_CROSS_DOMAIN_SERVICES:
+        module_path, symbol = _LAZY_CROSS_DOMAIN_SERVICES[name]
+        mod = _importlib.import_module(module_path)
+        value = getattr(mod, name)
+        _IMPORTED_CROSS_DOMAIN_SERVICES[name] = value
         globals()[name] = value
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -854,25 +870,73 @@ def processed_webhook_event_query(db: Session) -> object:
 
 # === Merged from accounts/ports.py ===
 
+# Cross-domain service functions (Law 3: lazy-loaded to avoid import-time coupling)
+# These are resolved lazily via __getattr__ to prevent circular imports and
+# cross-domain coupling at module import time.
+_LAZY_CROSS_DOMAIN_SERVICES: dict[str, tuple[str, str]] = {
+    # HR domain services
+    "get_all_subordinates": ("domains.hr.services.hierarchy.hierarchy_service", "get_all_subordinates"),
+    "get_authority_level": ("domains.hr.services.hierarchy.hierarchy_service", "get_authority_level"),
+    "get_user_chain": ("domains.hr.services.hierarchy.hierarchy_service", "get_user_chain"),
+    "can_manage": ("domains.hr.services.hierarchy.hierarchy_service", "can_manage"),
+    "get_org_chart": ("domains.hr.services.hierarchy.hierarchy_service", "get_org_chart"),
+    "get_team_members": ("domains.hr.services.hierarchy.hierarchy_service", "get_team_members"),
+    "get_home_org_unit": ("domains.hr.services.hierarchy.hierarchy_service", "get_home_org_unit"),
+    "reassign_manager": ("domains.hr.services.hierarchy.hierarchy_service", "reassign_manager"),
+    "backfill_authority_levels": ("domains.hr.services.hierarchy.hierarchy_service", "backfill_authority_levels"),
+    "is_in_chain": ("domains.hr.services.hierarchy.hierarchy_service", "is_in_chain"),
+    "verify_bank_account": ("domains.hr.services.payroll.payroll_service", "verify_bank_account"),
+    # Accounts domain services
+    "force_reset_password": ("domains.accounts.services.users.users_admin_service", "force_reset_password"),
+    "build_user_delete_blocker": ("domains.accounts.services.users.users_admin_service", "build_user_delete_blocker"),
+    "delete_order_records": ("domains.accounts.services.users.users_admin_service", "delete_order_records"),
+    "hard_delete_user_record": ("domains.accounts.services.users.users_admin_service", "hard_delete_user_record"),
+}
+_IMPORTED_CROSS_DOMAIN_SERVICES: dict[str, object] = {}
 
-from domains.governance.services.auth.iam_service_accounts import _QR_SECRET_KEY, validate_geo_fence, validate_qr_token, enroll_biometric, generate_physical_card, generate_qr_token, log_geo_fence_event, revoke_physical_card, generate_qr_code
-from domains.hr.services.hierarchy.hierarchy_service import get_all_subordinates, get_authority_level, get_user_chain, can_manage, get_org_chart, get_team_members, get_home_org_unit, reassign_manager, backfill_authority_levels, is_in_chain
-from domains.governance.services.admin.approval_matrix_service import APPROVAL_RULES, can_approve, require_approval, resolve_approvers, get_approval_chain
-from domains.hr.services.payroll.payroll_service import verify_bank_account
-from domains.governance.services.users.identity_admin_service import delete_user_admin, set_user_role
-from domains.accounts.services.users.users_admin_service import force_reset_password
-from domains.accounts.services.users.users_admin_service import build_user_delete_blocker, delete_order_records, hard_delete_user_record
+# Same-domain service imports (governance services) — resolved lazily to avoid circular imports
+_LAZY_SERVICE_EXPORTS.update({
+    # IAM / auth services
+    "_QR_SECRET_KEY": ("domains.governance.services.auth.iam_service_accounts", "_QR_SECRET_KEY"),
+    "validate_geo_fence": ("domains.governance.services.auth.iam_service_accounts", "validate_geo_fence"),
+    "validate_qr_token": ("domains.governance.services.auth.iam_service_accounts", "validate_qr_token"),
+    "enroll_biometric": ("domains.governance.services.auth.iam_service_accounts", "enroll_biometric"),
+    "generate_physical_card": ("domains.governance.services.auth.iam_service_accounts", "generate_physical_card"),
+    "generate_qr_token": ("domains.governance.services.auth.iam_service_accounts", "generate_qr_token"),
+    "log_geo_fence_event": ("domains.governance.services.auth.iam_service_accounts", "log_geo_fence_event"),
+    "revoke_physical_card": ("domains.governance.services.auth.iam_service_accounts", "revoke_physical_card"),
+    "generate_qr_code": ("domains.governance.services.auth.iam_service_accounts", "generate_qr_code"),
+    # Admin services
+    "APPROVAL_RULES": ("domains.governance.services.admin.approval_matrix_service", "APPROVAL_RULES"),
+    "can_approve": ("domains.governance.services.admin.approval_matrix_service", "can_approve"),
+    "require_approval": ("domains.governance.services.admin.approval_matrix_service", "require_approval"),
+    "resolve_approvers": ("domains.governance.services.admin.approval_matrix_service", "resolve_approvers"),
+    "get_approval_chain": ("domains.governance.services.admin.approval_matrix_service", "get_approval_chain"),
+    "delete_user_admin": ("domains.governance.services.users.identity_admin_service", "delete_user_admin"),
+    "set_user_role": ("domains.governance.services.users.identity_admin_service", "set_user_role"),
+    # Product services
+    "approve_product": ("domains.governance.services.products.products_service", "approve_product"),
+    "reject_product": ("domains.governance.services.products.products_service", "reject_product"),
+    # Commerce services
+    "create_coupon": ("domains.governance.services.commerce.admin_commerce_configuration_service", "create_coupon"),
+    "list_coupons": ("domains.governance.services.commerce.admin_commerce_configuration_service", "list_coupons"),
+    "delete_coupon": ("domains.governance.services.commerce.public_commerce_validation_service", "delete_coupon"),
+    # Payout services
+    "verify_payout": ("domains.governance.services.admin.payouts_service", "verify_payout"),
+    # Country services
+    "list_staff": ("domains.governance.services.country.country_admin_service", "list_staff"),
+    # Export services
+    "export_audit_logs_csv": ("domains.governance.services.admin.export_service", "export_audit_logs_csv"),
+    "export_coupons_csv": ("domains.governance.services.admin.export_service", "export_coupons_csv"),
+    "export_orders_csv": ("domains.governance.services.admin.export_service", "export_orders_csv"),
+    "export_products_csv": ("domains.governance.services.admin.export_service", "export_products_csv"),
+    "export_transfer_csv": ("domains.governance.services.admin.export_service", "export_transfer_csv"),
+    "export_users_csv": ("domains.governance.services.admin.export_service", "export_users_csv"),
+    "download_export_job_result": ("domains.governance.services.admin.export_service", "download_export_job_result"),
+    "queue_export_job": ("domains.governance.services.admin.export_service", "queue_export_job"),
+})
 
 # Private-name aliases re-exported for legacy imports.
 _build_user_delete_blocker = build_user_delete_blocker
 _delete_order_records = delete_order_records
 _hard_delete_user_record = hard_delete_user_record
-from domains.governance.services.products.products_service import approve_product, reject_product
-from domains.governance.services.commerce.admin_commerce_configuration_service import create_coupon
-from domains.governance.services.commerce.admin_commerce_configuration_service import list_coupons
-from domains.governance.services.commerce.public_commerce_validation_service import delete_coupon
-from domains.governance.services.admin.payouts_service import verify_payout
-# NOTE: The following import was removed because domains.governance.incident module doesn't exist
-# from domains.governance.incident.incident_service import get_incident_service, IncidentService, get_war_room_summary
-from domains.governance.services.country.country_admin_service import list_staff
-from domains.governance.services.admin.export_service import export_audit_logs_csv,export_coupons_csv,export_orders_csv,export_products_csv,export_transfer_csv,export_users_csv,download_export_job_result,queue_export_job

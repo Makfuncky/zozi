@@ -1,4 +1,4 @@
-﻿"""Stripe Connect provider.
+"""Stripe Connect provider.
 
 Owns the Stripe SDK calls for connected-account payout dispatch
 (``Account.create`` / ``Account.modify`` / ``Transfer.create``) so the finance

@@ -6,7 +6,6 @@ Image Provider
 Image processing pipeline, delegates background removal to bg_remover.
 Test file: backend/tests/_test_provider/test_image.py
 """
-import hashlib
 import io
 import logging
 from typing import List, Dict, Any, Optional
@@ -15,7 +14,7 @@ import numpy as np
 from PIL import Image
 
 from .bg_remover import remove_background as _bg_remover_remove_background, ProcessingConfig, _resize_image, _bytes_to_image, _image_to_bytes
-from ..config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 

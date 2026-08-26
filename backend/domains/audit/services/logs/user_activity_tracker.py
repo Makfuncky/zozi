@@ -5,7 +5,7 @@ Tracks user sessions, actions, and activity patterns for cross-domain audit.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func
@@ -60,7 +60,7 @@ class UserActivityTracker:
         days: int = 30,
     ) -> Dict[str, Any]:
         """Get aggregated activity summary for a user over the last N days."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         total_actions = (
             self.db.query(func.count(AuditLog.id))
@@ -92,7 +92,7 @@ class UserActivityTracker:
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """Get most active users in the last N days."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         rows = (
             self.db.query(

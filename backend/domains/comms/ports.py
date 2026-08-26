@@ -562,3 +562,26 @@ __all__ = [
     "get_ticket_message_by_id", "list_ticket_messages",
     "get_announcement_by_id", "list_announcements",
 ]
+
+
+# --- Lazy model re-exports for infrastructure/kernel Law 1 compliance ---
+# Infrastructure and kernel layers must not import directly from domains/*/models.
+# These lazy exports let infrastructure access domain models via the sanctioned
+# ports surface without circular imports (resolved on first access at runtime).
+_LAZY_MODEL_EXPORTS: dict[str, tuple[str, str]] = {
+    "Notification": ("domains.comms.models.communication", "Notification"),
+    "InternalEmail": ("domains.comms.models.communication", "InternalEmail"),
+    "SupplierProfile": ("domains.comms.models.suppliers", "SupplierProfile"),
+}
+
+import importlib as _importlib
+
+
+def __getattr__(name: str):
+    if name in _LAZY_MODEL_EXPORTS:
+        module_path, symbol = _LAZY_MODEL_EXPORTS[name]
+        mod = _importlib.import_module(module_path)
+        value = getattr(mod, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

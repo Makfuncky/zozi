@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from domains.customers.services.public_comms_status_service import ConnectionManager
 from domains.customers.services.public_comms_status_service import UserConnectionManager
@@ -9,7 +9,6 @@ import json
 
 import logging
 
-from datetime import datetime, timezone
 
 from typing import Optional
 

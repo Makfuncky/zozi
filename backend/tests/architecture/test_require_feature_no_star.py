@@ -1,4 +1,4 @@
-﻿"""B4 / R5 gate - forbid a catch-all permission wildcard in require_feature.
+"""B4 / R5 gate - forbid a catch-all permission wildcard in require_feature.
 
 A bare require_feature("*") (literal asterisk) grants *every* feature and
 silently defeats the entire RBAC surface. Namespace wildcards such as

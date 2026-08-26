@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
 from typing import Any
 
-from domains.governance.ports import AuditLog
+from domains.governance import ports as governance_ports
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +68,7 @@ def log_security_event(
     from infrastructure.database.database import get_service_session
     try:
         with get_service_session() as db:
+            AuditLog = getattr(governance_ports, "AuditLog")
             entry = AuditLog(
                 user_id=user_id,
                 username=username,

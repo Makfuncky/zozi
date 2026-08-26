@@ -11,7 +11,7 @@ try:
 except ImportError:
     HAS_PROMETHEUS = False
 
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 
 def setup_prometheus(app: FastAPI):

@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import Any, Generator
 
 from infrastructure.database.database import SessionLocal
-from domains.governance.models.user import User
+from domains.governance import ports as governance_ports
 from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,7 @@ def rls_context_for_user(
     if user_id is not None:
         db = SessionLocal()
         try:
+            User = getattr(governance_ports, "User")
             user = db.query(User).filter(User.id == user_id).first()
             if user is None:
                 set_rls_context(None, is_restricted=False)

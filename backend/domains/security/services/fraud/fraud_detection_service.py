@@ -33,14 +33,40 @@ from domains.security.models.fraud import SupplierFraudIndicator
 from domains.security.models.fraud import LogisticsFraudIndicator
 from domains.security.models.fraud import FraudAlert
 from domains.security.models.fraud import IPAccountLinkage
-from domains.logistics.models.logistics import Shipment
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
-from domains.orders.models.orders import ReturnRequest
-from domains.finance.models.payments import PaymentReconciliationRun
 from infrastructure.utils.redis_client import get_redis
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
+_LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
+    "Shipment": ("domains.logistics.models.logistics", "Shipment"),
+    "Order": ("domains.orders.models.orders", "Order"),
+    "ReturnRequest": ("domains.orders.models.orders", "ReturnRequest"),
+}
+_IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
+
+
+def _get_cross_domain_model(name: str):
+    """Lazily import a cross-domain model to avoid import-time coupling."""
+    if name in _IMPORTED_CROSS_DOMAIN:
+        return _IMPORTED_CROSS_DOMAIN[name]
+    if name in _LAZY_CROSS_DOMAIN_MODELS:
+        module_path, class_name = _LAZY_CROSS_DOMAIN_MODELS[name]
+        import importlib
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        _IMPORTED_CROSS_DOMAIN[name] = cls
+        return cls
+    raise AttributeError(f"Cross-domain model {name!r} not registered")
+
+
+def __getattr__(name: str):
+    """Module-level lazy resolver for cross-domain models (Law 3)."""
+    try:
+        return _get_cross_domain_model(name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class IPIntelligenceService:
@@ -945,13 +971,12 @@ class ThreatFeedUpdater:
         return count
     
     def _update_proxy_list(self) -> int:
-        """Update proxy IP list."""
+        """Update proxy IP list from configured seed or threat feed."""
         count = 0
         try:
             key = "fraud:bloom:proxies"
-            proxies = [
-                "1.1.1.1", "8.8.8.8", "9.9.9.9",
-            ]
+            seed_ips = str(settings.fraud_proxy_seed_ips or "").strip()
+            proxies = [ip.strip() for ip in seed_ips.split(",") if ip.strip()] if seed_ips else []
             for ip in proxies:
                 try:
                     self.redis.execute_command("BF.ADD", key, ip)

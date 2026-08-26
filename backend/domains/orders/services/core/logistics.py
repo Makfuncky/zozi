@@ -4066,7 +4066,6 @@ def delete_city_distance(matrix_id: int, current_user: dict, db: Session) -> dic
 """
 Logistics controller — shipping carriers, zones, and shipment fulfilment.
 """
-from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone

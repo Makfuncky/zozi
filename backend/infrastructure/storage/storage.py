@@ -22,7 +22,7 @@ import abc
 import os
 from typing import Optional
 
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 from providers.storage import create_s3_client
 

@@ -8,7 +8,6 @@ into an ``asynccontextmanager`` that ``main.py`` passes to FastAPI.
 from __future__ import annotations
 
 import json
-import logging
 import os
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING

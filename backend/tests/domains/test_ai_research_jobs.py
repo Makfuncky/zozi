@@ -1,4 +1,4 @@
-﻿"""Tests for ai_research_jobs.py — Redis-backed job tracker."""
+"""Tests for ai_research_jobs.py — Redis-backed job tracker."""
 import pytest
 from unittest.mock import MagicMock
 

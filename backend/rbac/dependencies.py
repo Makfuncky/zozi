@@ -1,4 +1,4 @@
-﻿"""rbac/dependencies.py - FastAPI gates (spec).
+"""rbac/dependencies.py - FastAPI gates (spec).
 
 require_feature(...) / require_module(...) are dependency factories used by module
 routers. Wiring to the resolved auth context + resolution.effective_features is

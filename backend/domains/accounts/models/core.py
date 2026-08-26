@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from sqlalchemy import (
     Boolean,
@@ -18,7 +18,7 @@ from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
-# accounts/models/core.py â€” owns the ``accounts``-schema tables that have no
+# accounts/models/core.py — owns the ``accounts``-schema tables that have no
 # other canonical home. Tables that belong to other domains are re-exported
 # from their canonical homes below so legacy imports resolve without
 # re-defining any table on the shared MetaData.
@@ -48,7 +48,7 @@ __all__ = [
 ]
 
 
-# â”€â”€ accounts-owned tables (inline definitions) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── accounts-owned tables (inline definitions) ──────────────────────────────
 
 class Address(Base):
     __tablename__ = "addresses"
@@ -104,46 +104,43 @@ class CartItem(Base):
 
 
 # Re-export tables whose canonical homes live in other domains.
-# These are NOT re-defined here to avoid InvalidRequestError conflicts.
+# Lazily imported (Law 3: avoid direct cross-domain model imports at module level).
 
-from domains.audit.models.audit_schema_models import AuditLog, CommandCenterView  # noqa: F401
-from domains.comms.models.communication_schema_models import (  # noqa: F401
-    SupportTicket, SupportTicketReply, TicketAttachment,
-    NewsSource, InternalNotice, EscalationSLARule,
-)
-from domains.comms.models.communication import TicketMessage  # noqa: F401
-from domains.logistics.models.logistics_schema_models import CityDistanceMatrix  # noqa: F401
-from domains.analytics.models.analytics_schema_models import (  # noqa: F401
-    ExecutiveNews, PredictiveSimulation,
-)
-from domains.security.models.security_schema_models import AlertEscalationRule  # noqa: F401
+_CANONICAL_CROSS_DOMAIN_EXPORTS: dict[str, tuple[str, str]] = {
+    "AuditLog": ("domains.audit.models.audit_schema_models", "AuditLog"),
+    "CommandCenterView": ("domains.audit.models.audit_schema_models", "CommandCenterView"),
+    "SupportTicket": ("domains.comms.models.communication_schema_models", "SupportTicket"),
+    "SupportTicketReply": ("domains.comms.models.communication_schema_models", "SupportTicketReply"),
+    "TicketAttachment": ("domains.comms.models.communication_schema_models", "TicketAttachment"),
+    "NewsSource": ("domains.comms.models.communication_schema_models", "NewsSource"),
+    "InternalNotice": ("domains.comms.models.communication_schema_models", "InternalNotice"),
+    "EscalationSLARule": ("domains.comms.models.communication_schema_models", "EscalationSLARule"),
+    "TicketMessage": ("domains.comms.models.communication", "TicketMessage"),
+    "CityDistanceMatrix": ("domains.logistics.models.logistics_schema_models", "CityDistanceMatrix"),
+    "ExecutiveNews": ("domains.analytics.models.analytics_schema_models", "ExecutiveNews"),
+    "PredictiveSimulation": ("domains.analytics.models.analytics_schema_models", "PredictiveSimulation"),
+    "AlertEscalationRule": ("domains.security.models.security_schema_models", "AlertEscalationRule"),
+    "NewsArticle": ("domains.comms.models.news", "NewsArticle"),
+    "DirectChatMessage": ("domains.comms.models.chat", "DirectChatMessage"),
+    "DirectChatRoom": ("domains.comms.models.chat", "DirectChatRoom"),
+    "EntityChatMessage": ("domains.comms.models.chat", "EntityChatMessage"),
+    "EntityChatThread": ("domains.comms.models.chat", "EntityChatThread"),
+    "EscalationSLALog": ("domains.comms.models.chat", "EscalationSLALog"),
+    "GroupChatMember": ("domains.comms.models.chat", "GroupChatMember"),
+    "GroupChatMessage": ("domains.comms.models.chat", "GroupChatMessage"),
+    "GroupChatRoom": ("domains.comms.models.chat", "GroupChatRoom"),
+    "VideoRoom": ("domains.comms.models.chat", "VideoRoom"),
+    "VideoRoomParticipant": ("domains.comms.models.chat", "VideoRoomParticipant"),
+    "VideoRoomRecording": ("domains.comms.models.chat", "VideoRoomRecording"),
+    "ShiftHandoverSession": ("domains.hr.models.employee_models", "ShiftHandoverSession"),
+    "ShiftHandoverTask": ("domains.hr.models.employee_models", "ShiftHandoverTask"),
+}
 
+_IMPORTED_CROSS_DOMAIN: dict[str, object] = {}
 
-# â”€â”€ Re-exports from canonical homes (DO NOT redefine) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# These tables have canonical definitions in other domains. Re-exported here so
-# legacy ``from domains.accounts.models.core import X`` imports keep resolving.
-
-from domains.comms.models.news import NewsArticle as NewsArticle  # noqa: F401,F811
-from domains.comms.models.chat import (  # noqa: F401
-    DirectChatMessage as DirectChatMessage,
-    DirectChatRoom as DirectChatRoom,
-    EntityChatMessage as EntityChatMessage,
-    EntityChatThread as EntityChatThread,
-    EscalationSLALog as EscalationSLALog,
-    GroupChatMember as GroupChatMember,
-    GroupChatMessage as GroupChatMessage,
-    GroupChatRoom as GroupChatRoom,
-    VideoRoom as VideoRoom,
-    VideoRoomParticipant as VideoRoomParticipant,
-    VideoRoomRecording as VideoRoomRecording,
-)
-from domains.hr.models.employee_models import (  # noqa: F401
-    ShiftHandoverSession as ShiftHandoverSession,
-    ShiftHandoverTask as ShiftHandoverTask,
-)
 
 # Re-export user-related classes from accounts/models/user.py (canonical home).
-# Lazy import to avoid circular import: accounts/user.py â†’ customers â†’ accounts/core.py
+# Lazy import to avoid circular import: accounts/user.py → customers → accounts/core.py
 _USER_RE_EXPORTS = {
     "User": ("domains.accounts.models.user", "User"),
     "UserLoginHistory": ("domains.accounts.models.user", "UserLoginHistory"),
@@ -160,7 +157,8 @@ _USER_CACHE: dict[str, object] = {}
 
 
 def __getattr__(name: str):
-    """Lazy import of user re-exports to break circular import."""
+    """Lazy import of cross-domain re-exports (Law 3: no import-time coupling)."""
+    # Check user re-exports first (existing behavior)
     if name in _USER_CACHE:
         return _USER_CACHE[name]
     if name in _USER_RE_EXPORTS:
@@ -170,6 +168,14 @@ def __getattr__(name: str):
         cls = getattr(mod, class_name)
         _USER_CACHE[name] = cls
         return cls
+    # Then check cross-domain model re-exports
+    if name in _IMPORTED_CROSS_DOMAIN:
+        return _IMPORTED_CROSS_DOMAIN[name]
+    if name in _CANONICAL_CROSS_DOMAIN_EXPORTS:
+        module_path, class_name = _CANONICAL_CROSS_DOMAIN_EXPORTS[name]
+        import importlib
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        _IMPORTED_CROSS_DOMAIN[name] = cls
+        return cls
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-

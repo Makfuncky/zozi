@@ -1,4 +1,4 @@
-﻿"""Tests for ai_research.py router endpoints."""
+"""Tests for ai_research.py router endpoints."""
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 

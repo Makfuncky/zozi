@@ -1,4 +1,4 @@
-﻿"""Email provider — transport implementations for ZOZI.
+"""Email provider — transport implementations for ZOZI.
 
 Vendor/protocol code (SMTP ``smtplib``, Resend HTTP API, console preview) is
 encapsulated here so the email *service* layer (`infrastructure.utils.email_service`) and the

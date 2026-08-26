@@ -16,11 +16,11 @@ from sqlalchemy.orm import Session
 
 from infrastructure.routing.route_contract import get, post
 
-from domains.governance.services.risk.risk_service import detect_ghost_employees as _detect_ghost_employees
-from domains.governance.services.risk.risk_service import detect_impossible_travel as _detect_impossible_travel
-from domains.governance.services.risk.risk_service import get_audit_timeline as _get_audit_timeline
-from domains.governance.services.risk.risk_service import get_team_health_radar as _get_team_health_radar
-from domains.governance.services.risk.risk_service import update_flight_risk_score as _update_flight_risk_score
+from domains.security.services.health.flat_risk_service import detect_ghost_employees as _detect_ghost_employees
+from domains.security.services.health.flat_risk_service import detect_impossible_travel as _detect_impossible_travel
+from domains.security.services.health.flat_risk_service import get_audit_timeline as _get_audit_timeline
+from domains.security.services.health.flat_risk_service import get_team_health_radar as _get_team_health_radar
+from domains.security.services.health.flat_risk_service import update_flight_risk_score as _update_flight_risk_score
 
 @get("/api/v1/admin/ghost-employees", deps=["db"], query=["threshold_days"], tags=["security-risk"])
 @get("/api/v1/ghost-employees", deps=["db"], query=["threshold_days"], tags=["security-risk"])

@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -520,7 +520,7 @@ def _persist_verification_result(
     if not isinstance(existing, list):
         existing = []
     entry = {
-        "analyzed_at": result.get("analyzed_at", datetime.utcnow().isoformat()),
+        "analyzed_at": result.get("analyzed_at", datetime.now(timezone.utc).isoformat()),
         "image_filename": image_filename,
         "order_id": result.get("order_id"),
         "order_number": result.get("order_number", ""),

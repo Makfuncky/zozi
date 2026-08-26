@@ -1,4 +1,4 @@
-﻿"""Tests for country_ai_research.py — async AI enrichment service."""
+"""Tests for country_ai_research.py — async AI enrichment service."""
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 

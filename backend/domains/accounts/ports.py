@@ -1,4 +1,4 @@
-﻿"""accounts domain - sanctioned cross-domain READ surface (ports).
+"""accounts domain - sanctioned cross-domain READ surface (ports).
 
 Per NEW_STRUCTURE.md Law 3, cross-domain *reads* may ONLY happen through a
 publishing domain's ``ports.py``. Other domains import these functions instead
@@ -620,6 +620,6 @@ from domains.accounts.models.core import Address, CartItem, CityDistanceMatrix
 from domains.accounts.models.user import Referral, User
 # Read helpers re-exported from owning services (Law 3: cross-domain READ surface only;
 # writes were removed — call the owning accounts service directly).
-from domains.accounts.services.customer_coupons_create_service import list_coupons
+from domains.promotions.services.coupons.customer_coupons_create_service import list_coupons
 # --- P11.5 re-exports (orders cross-domain repointing) ---
-from domains.accounts.services.customer_coupons_mgmt_service import validate_coupon
+from domains.promotions.services.coupons.customer_coupons_mgmt_service import validate_coupon

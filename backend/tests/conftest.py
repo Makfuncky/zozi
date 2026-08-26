@@ -1,4 +1,4 @@
-﻿"""Shared pytest fixtures for the Zozi backend test-suite.
+"""Shared pytest fixtures for the Zozi backend test-suite.
 
 Every ``db_session`` is wrapped in a **transaction-level rollback** -- the
 fixture opens a connection, begins a transaction, and yields a session whose

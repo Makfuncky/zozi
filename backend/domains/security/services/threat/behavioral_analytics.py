@@ -8,9 +8,8 @@ import math
 import statistics
 from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from collections import deque
-import hashlib
 import structlog
 
 from infrastructure.utils.redis_client import redis_client
@@ -29,7 +28,7 @@ class BehaviorProfile:
     typical_active_hours: List[int] = field(default_factory=list)
     typical_ips: List[str] = field(default_factory=list)
     risk_score: float = 0.0
-    last_updated: datetime = field(default_factory=datetime.utcnow)
+    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class AnomalyDetector:
@@ -100,7 +99,6 @@ class AnomalyDetector:
             self.redis.ltrim(key, 0, self.window_size - 1)
         except Exception as e:
             logger.warning(f"Risk score update failed: {e}")
-            pass
 
     def _calculate_z_score(self, value: float, history: List[float]) -> float:
         """Calculate Z-score for value against history."""
@@ -133,7 +131,6 @@ class AnomalyDetector:
             self.redis.setex(risk_key, 3600, new_score)
         except Exception as e:
             logger.warning(f"Risk score update failed: {e}")
-            pass
 
 
 class BehavioralAnalyzer:

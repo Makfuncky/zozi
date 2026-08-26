@@ -6,7 +6,6 @@ from decimal import Decimal
 from typing import Any, Literal, Protocol
 from uuid import uuid4
 from providers.finance import bank_api
-from providers.payments.connect import (
 from typing import Any
 from sqlalchemy.orm import Session
 from domains.country.models.countries import CountryConfig
@@ -42,7 +41,6 @@ from datetime import datetime
 from typing import Optional, List
 # AuditLog imported lazily to avoid circular import
 """General Ledger — double-entry accounting core."""
-from __future__ import annotations
 
 import uuid
 from datetime import datetime
@@ -1143,12 +1141,11 @@ def validate_entry_balanced(lines: list[JournalLineInput]) -> bool:
 
 # === MERGED from je_reversal_service.py ===
 
-﻿"""Journal Entry Reversal Service — formal reversal/correction of posted JEs.
+"""Journal Entry Reversal Service — formal reversal/correction of posted JEs.
 
 Allows reversing a journal entry by creating a mirror entry with opposite
 sides, referencing the original via `reversal_of_id`.
 """
-from __future__ import annotations
 from infrastructure.utils.datetime_utils import utcnow
 
 import logging
@@ -1245,12 +1242,11 @@ def reverse_journal_entry(
 
 # === MERGED from period_close_service.py ===
 
-﻿"""Period Close Service — fiscal period management, year-end procedures.
+"""Period Close Service — fiscal period management, year-end procedures.
 
 Handles opening/closing accounting periods, transferring P&L balances
 to retained earnings, and locking periods against further edits.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime
@@ -1552,12 +1548,6 @@ def list_periods(
     return q.limit(limit).all()
 
 # === MERGED from finance_transfer_service.py ===
-
-    configure_stripe_connect,
-    create_connect_account,
-    create_connect_transfer,
-    modify_connect_account,
-)
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -2680,7 +2670,6 @@ def _default_payout_settings() -> dict[str, Any]:
 # === MERGED from admin_finance_creation_service.py ===
 
 """Accounting Router — General Ledger API and Financial Report endpoints."""
-from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 from fastapi import Depends, Query
@@ -2761,13 +2750,12 @@ class APPaymentBody(BaseModel):
 
 # === MERGED from sub_ledger_service.py ===
 
-﻿"""Sub-Ledger Service — per-customer (AR) and per-supplier (AP) tracking.
+"""Sub-Ledger Service — per-customer (AR) and per-supplier (AP) tracking.
 
 Bridges GL account balances to entity-level outstanding amounts.
 Allows drill-down from GL account 1030 (AR) and 2010 (AP) to individual
 customer/supplier sub-ledger entries.
 """
-from __future__ import annotations
 from infrastructure.utils.datetime_utils import utcnow
 
 import logging
@@ -3109,7 +3097,7 @@ def _get_ap_balance(db: Session, supplier_id: int, currency: str) -> Decimal:
 
 # === MERGED from commission_service.py ===
 
-﻿"""
+"""
 Commission Controller — admin-managed supplier and product-level commission rates.
 
 Combined lookup flow:
@@ -4124,7 +4112,7 @@ def list_supplier_commissions(page: int, page_size: int, search: Optional[str], 
 
 # === MERGED from commission_admin_write_service.py ===
 
-﻿"""Country-scoped commission admin write service.
+"""Country-scoped commission admin write service.
 
 Owns DB writes for the admin commission management router
 (`backend/routers/admin_commission.py`). Kept independent of the legacy
@@ -4135,7 +4123,6 @@ Functions are db-param (the session is passed in by the calling controller),
 per the backend grid-line contract: routers/controllers must not issue
 `db.add`/`db.commit` directly (W1).
 """
-from __future__ import annotations
 
 from typing import Optional
 
@@ -4230,7 +4217,6 @@ Implements the commission domain write surface. Previously stubbed with
 DB-write logic, consistent with the platform contract (``data.models``,
 soft-delete via ``infrastructure.utils.soft_delete``).
 """
-from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
@@ -4370,7 +4356,6 @@ def delete_commission_agreement(db: Session, agreement_id: int, acting_user: int
 Owns the DB reads/writes for ``admin_finance_geography`` so the router stays
 free of ``db.query``/``db.add``/``db.commit``.
 """
-from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
@@ -4477,7 +4462,7 @@ def update_badge_tier(db: Session, tier_id: int, country_code: str, payload) -> 
 
 # === MERGED from supplier_finance_service.py ===
 
-﻿"""
+"""
 Supplier Finance Service
 =======================
 Read/write helpers for supplier payment-status and payout-status endpoints.
@@ -4492,7 +4477,6 @@ Integrates with:
   - ``TransactionLedger`` — detailed financial breakdown
   - ``SupplierBankAccount`` — linked bank account for payouts
 """
-from __future__ import annotations
 from typing import Optional
 
 from fastapi import HTTPException
@@ -4987,35 +4971,19 @@ def list_supplier_orders_with_payout_status(page: int, page_size: int, status_fi
 
 
     # Base query: orders with items for this supplier
-
     base = (
-
         db.query(Order)
-
         .join(OrderItem)
-
         .filter(OrderItem.supplier_id == user_id)
-
         .distinct()
-
     )
-
-
-
     total = base.count()
 
     orders = (
-
         base
-
         .order_by(desc(Order.created_at))
-
-         * page_size)
-
         .limit(page_size)
-
         .all()
-
     )
 
 
@@ -5198,7 +5166,6 @@ def upsert_supplier_bank_account(payload: dict, current_user: User, db: Session)
 # === MERGED from supplier_payouts_service.py ===
 
 """Auto-migrated service logic from routers/supplier_payouts.py."""
-from __future__ import annotations
 
 from fastapi import Depends, HTTPException
 
@@ -5256,7 +5223,6 @@ def request_payout(payload: dict, current_user: User, db: Session):
 # === MERGED from admin_finance_geography_service.py ===
 
 """Auto-migrated service logic from routers/admin_finance_geography.py."""
-from __future__ import annotations
 
 from fastapi import Depends, Path, Query
 
@@ -5337,7 +5303,6 @@ After combining the rate, the low-value cap is applied:
 
 Also seeds the default category rates and badge tiers on first use (idempotent).
 """
-from __future__ import annotations
 
 import json
 import logging
@@ -5978,7 +5943,6 @@ minimum order age, return windows, and product restrictions.
 
 Add entries here as new countries are onboarded.
 """
-from __future__ import annotations
 
 from typing import Any, Optional
 
@@ -6045,7 +6009,6 @@ All postings go through the canonical immutable ledger
 (`general_ledger_service.create_journal_entry`) so balances and the audit trail
 stay consistent.
 """
-from __future__ import annotations
 
 import logging
 from datetime import datetime, date
@@ -6401,7 +6364,6 @@ consolidated in ``services.finance.general_ledger_service`` and
 ``services.treasury``; these leaf functions exist so the import graph stays
 acyclic and ``import main`` succeeds.
 """
-from __future__ import annotations
 
 from typing import Any, List, Optional
 
@@ -6456,7 +6418,6 @@ Each function takes ``db: Session`` first, mutates, commits, and raises
 Endpoints that already delegate to ``data.services.finance.erp_finance_service`` /
 ``data.services.finance.finance_automation`` are intentionally not duplicated here.
 """
-from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional
@@ -7395,11 +7356,10 @@ def get_expense_router(db: Session) -> ExpenseRoutingEngine:
 
 # === MERGED from invoice_service.py ===
 
-﻿"""
+"""
 Invoice Controller — supply chain invoice management.
 Covers the full lifecycle: supplier → logistics → customer receipt.
 """
-from __future__ import annotations
 import json
 import logging
 import uuid
@@ -7496,7 +7456,7 @@ def list_invoices(
         q = q.filter(Invoice.order_id == order_id)
 
     total = q.count()
-    items = q.order_by(desc(Invoice.created_at)) * page_size).limit(page_size).all()
+    items = q.order_by(desc(Invoice.created_at)).offset(page_size).limit(page_size).all()
 
     return {
         "total": total,
@@ -7709,7 +7669,6 @@ def get_invoice_overview(db: Session) -> dict:
 Implements the invoice domain write surface. Previously stubbed with
 ``_missing_symbol`` placeholders; now contains real DB-write logic.
 """
-from __future__ import annotations
 
 from decimal import Decimal
 
@@ -7843,7 +7802,7 @@ def update_invoice(db: Session, invoice_id: int, **changes) -> Invoice:
 
 # === MERGED from finance_automation.py ===
 
-﻿"""Finance Automation Service.
+"""Finance Automation Service.
 
 
 
@@ -7867,7 +7826,6 @@ immutable, double-entry ledger and audit trail remain the single source of truth
 
 """
 
-from __future__ import annotations
 from infrastructure.utils.datetime_utils import utcnow
 
 
@@ -8951,7 +8909,6 @@ so routers and controllers stay write-free (W1). Each function takes the
 injected ``db`` session first, performs its own ``add``/``flush``/``commit``
 and raises the same ``HTTPException`` values the router used to raise.
 """
-from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, Optional

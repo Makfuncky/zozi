@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 import numpy as np
 from providers.image import Image
-from providers.image.bg_remover import _bytes_to_image, create_frugal_rembg_session, rembg_remove_bytes
+from providers.image.bg_remover import create_frugal_rembg_session, rembg_remove_bytes
 logger = logging.getLogger(__name__)
 from providers.image import HAS_CV2 as _HAS_CV2, HAS_GUIDED_FILTER as _HAS_GUIDED_FILTER, cv2, ximgproc as _ximgproc
 MAX_CONCURRENT = int(os.environ.get('BG_MAX_CONCURRENT', '2'))
@@ -799,12 +799,17 @@ def remove_background_preset(data: bytes, preset: str='general', fast_mode: bool
 
 def remove_background_model(data: bytes, model_name: str='isnet-general-use', fast_mode: bool=False) -> bytes:
     if LIGHTWEIGHT_MODE:
-        logger.info("bg_svc: lightweight mode â€” '%s' downgraded to u2net", model_name)
+        logger.info("bg_svc: lightweight mode — '%s' downgraded to u2net", model_name)
         model_name = 'u2net'
     elif model_name in HEAVY_MODELS and (not ALLOW_HEAVY_MODELS):
         logger.info("bg_svc: '%s' is heavy; using lightweight segmenter instead", model_name)
         model_name = 'u2net'
-    singleton = _Strategy([model_name, 'isnet-general-use', 'u2net'], 'clean')
+    # Build priority list, avoiding duplicates
+    priority = [model_name]
+    for fallback in ('isnet-general-use', 'u2net'):
+        if fallback not in priority:
+            priority.append(fallback)
+    singleton = _Strategy(priority, 'clean')
     try:
         img = Image.open(io.BytesIO(data)).convert('RGB')
         input_np = np.array(img)
@@ -828,10 +833,3 @@ if SKIP_HEAVY_MODELS:
     for h in HEAVY_MODELS:
         if h in AVAILABLE_MODELS:
             AVAILABLE_MODELS.remove(h)
-
-def __getattr__(name):
-    _LAZY = {'AVAILABLE_MODELS': 'services.ai.bg_removal_service'}
-    if name in _LAZY:
-        import importlib
-        return getattr(importlib.import_module(_LAZY[name]), name)
-    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

@@ -1,4 +1,4 @@
-﻿"""WebSocket endpoints for real-time chat, user notifications, and presence."""
+"""WebSocket endpoints for real-time chat, user notifications, and presence."""
 from __future__ import annotations
 import json
 import logging

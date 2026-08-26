@@ -13,7 +13,7 @@ import bcrypt
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
 
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 
 logger = logging.getLogger(__name__)

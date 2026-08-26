@@ -8,7 +8,7 @@ Test file: backend/tests/_test_provider/test_analytics.py
 """
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 from ..config import settings
@@ -32,7 +32,7 @@ class AnalyticsProvider:
         """Get dashboard summary metrics."""
         days_map = {"7d": 7, "30d": 30, "90d": 90, "1y": 365}
         days = days_map.get(period, self._default_period_days)
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         base_result = {
             "period": period,

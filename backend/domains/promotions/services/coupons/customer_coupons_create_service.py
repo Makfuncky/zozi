@@ -5,7 +5,6 @@
 """Auto-migrated service logic from routers/customer_coupons_create.py."""
 from __future__ import annotations
 
-from __future__ import annotations
 
 from decimal import Decimal
 

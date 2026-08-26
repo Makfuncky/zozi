@@ -1,43 +1,39 @@
+from __future__ import annotations
+
 """Admin logistics router — canonical."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
-from .partners import router as partners_router
-from .shipping import router as shipping_router
-from .tracking import router as tracking_router
-from __future__ import annotations
-from _legacy.models import NewsletterSubscriber, EmailCampaign, CampaignRecipient
-from _legacy.models import Payout
-from _legacy.models import Shipment, ShippingCarrier, ShippingZone
-from _legacy.models import User
-from controllers.admin.admin_controller import (
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
-from controllers.admin.admin_controller import require_admin
-from controllers.catalog.banner_controller import (
-from controllers.catalog.banner_controller import get_banners_page
-from controllers.commerce.flash_sale_controller import (
-from controllers.commerce.promotion_controller import (
-from controllers.core.export_controller import (
-from controllers.orders import disputes_controller
+from domains.comms.models.marketing import NewsletterSubscriber, EmailCampaign, CampaignRecipient
+from domains.finance.models.payments import Payout
+from domains.logistics.models.logistics import Shipment, ShippingCarrier, ShippingZone
+from domains.accounts.models.user import User
+from modules.admin.routers.governance import (
+from modules.admin.routers.governance import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity
+from modules.admin.routers.governance import require_admin
+from modules.admin.routers.catalog import (
+from modules.admin.routers.catalog import get_banners_page
+from modules.admin.routers.promotions import (
+from modules.admin.routers.promotions import (
+from modules.admin.routers.governance import (
+from modules.admin.routers.orders import disputes_controller
 from datetime import date, datetime
 from datetime import datetime
 from datetime import datetime, timezone
-from db.database import get_db
-from db.schemas import (
-from db.schemas import ArchiveRequest, BulkActionRequest
-from db.schemas import FlashSaleCreate, FlashSaleOut
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import (
+from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
+from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 from decimal import Decimal
 from infrastructure.database.database import get_db
 from infrastructure.utils import import_service as svc
 from infrastructure.utils.dependencies import require_admin
-from pydantic import BaseModel, Field
-from pydantic import BaseModel, field_validator
-from services.audit.audit_trail_service import AuditTrailService
-from services.common import import_service as svc
-from services.hierarchy.hierarchy_service import (
-from services.logistics.partner_geography_service import (
-from services.supplier.legal_contract_service import LegalContractService
-from services.users.approval_matrix_service import (
+from domains.audit.services.logs.audit_trail_service import AuditTrailService
+from domains.catalog.services import import_service as svc
+from domains.hr.services.hierarchy.hierarchy_service import (
+from domains.logistics.services.partners.service import (
+from domains.suppliers.services.legal_contract_service import LegalContractService
+from domains.governance.services.approval_matrix_service import (
 from sqlalchemy import func as sqlfunc
 from sqlalchemy import func as sqlfunc, case as sql_case
 from sqlalchemy import text
@@ -45,18 +41,18 @@ from sqlalchemy.orm import Session
 from the UI without SSH or terminal access.
 from typing import List, Optional
 from typing import Optional
-from utils.analytics_service import get_country_dashboard_stats
-from utils.backup import get_backup_manager
-from utils.constants import MAX_BULK_ITEMS
-from utils.country_rls import get_country_or_404
-from utils.dependencies import require_admin, require_super_admin
-from utils.key_rotation import rotate_encryption_key
-from utils.rls_interceptor import set_rls_context, clear_rls_context
-import controllers.finance.invoice_controller as _ic
-import controllers.orders.logistics_controller as _ctrl
-import controllers.orders.logistics_partner_controller as _lpc
-import controllers.supplier.supplier_controller as _sc
-import controllers.supplier.supplier_document_controller as _sdc
+from infrastructure.utils.analytics_service import get_country_dashboard_stats
+from infrastructure.utils.backup import get_backup_manager
+from infrastructure.utils.constants import MAX_BULK_ITEMS
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from infrastructure.utils.key_rotation import rotate_encryption_key
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
+import modules.admin.routers.finance as _ic
+import modules.admin.routers.orders.logistics_controller as _ctrl
+import modules.admin.routers.orders.logistics_partner_controller as _lpc
+import modules.admin.routers.suppliers as _sc
+import modules.admin.routers.suppliers as _sdc
 import domains.orders.services.logistics_controller as _ctrl
 import logging as _l; _l.getLogger(__name__).warning("skip partners_router: %s", _e)
 import logging as _l; _l.getLogger(__name__).warning("skip shipping_router: %s", _e)

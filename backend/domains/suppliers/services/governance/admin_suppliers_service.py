@@ -12,7 +12,7 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from modules.admin.routers.admin_controller import (
+from domains.governance.services.settings.misc_service import (
     archive_entity,
     hard_delete_entity,
     restore_entity,

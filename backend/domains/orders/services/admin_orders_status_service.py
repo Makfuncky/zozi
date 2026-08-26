@@ -1,4 +1,4 @@
-﻿"""Admin orders router — country-scoped."""
+"""Admin orders router — country-scoped."""
 from fastapi import Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db

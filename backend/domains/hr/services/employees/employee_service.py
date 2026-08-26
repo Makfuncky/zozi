@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
@@ -374,12 +374,32 @@ class EmployeeService:
     # ── QR & Geo ─────────────────────────────────────────────────
 
     def generate_qr_login_token(self, employee_id: int) -> Dict[str, Any]:
-        import uuid
-        token = uuid.uuid4().hex
-        return {"qr_token": token, "employee_id": employee_id}
+        token = secrets.token_urlsafe(32)
+        session = DynamicQRSession(
+            employee_id=employee_id,
+            qr_token=token,
+            expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+            used_at=None,
+        )
+        self.db.add(session)
+        self.db.commit()
+        return {"qr_token": token, "employee_id": employee_id, "expires_in_seconds": 300}
 
     def validate_qr_login(self, qr_token: str) -> Dict[str, Any]:
-        return {"status": "validated", "qr_token": qr_token}
+        session = (
+            self.db.query(DynamicQRSession)
+            .filter(DynamicQRSession.qr_token == qr_token)
+            .first()
+        )
+        if not session:
+            raise HTTPException(status_code=404, detail="QR token not found")
+        if session.used_at is not None:
+            raise HTTPException(status_code=410, detail="QR token already used")
+        if session.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=410, detail="QR token expired")
+        session.used_at = datetime.now(timezone.utc)
+        self.db.commit()
+        return {"status": "validated", "employee_id": session.employee_id, "qr_token": qr_token}
 
     def validate_geo_location(self, latitude: float, longitude: float, office_id: int) -> Dict[str, Any]:
         return {"valid": True, "latitude": latitude, "longitude": longitude, "office_id": office_id}

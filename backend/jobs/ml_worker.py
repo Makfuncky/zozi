@@ -1,4 +1,4 @@
-﻿"""
+"""
 Dedicated ML worker process.
 
 Runs in a separate container (``ml_worker`` in ``docker-compose.prod.yml``)

@@ -147,7 +147,6 @@ def delete_category(country_code: str, category_id: int, _: User, db: Session):
 # -------------------------------------------------------------------
 
 """Admin email management service."""
-from __future__ import annotations
 
 from sqlalchemy import case as sql_case
 from sqlalchemy import func as sqlfunc
@@ -233,7 +232,6 @@ def delete_campaign(country_code: str, campaign_id: int, db: Session) -> dict:
 # -------------------------------------------------------------------
 
 """Auto-migrated service logic from routers/addresses.py."""
-from __future__ import annotations
 from domains.customers.services.customer_router_service import _serialize_address
 from domains.customers.services.customer_router_service import _normalize_address_payload
 

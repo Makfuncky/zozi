@@ -83,7 +83,7 @@ def accrue_leave_days(employee_id: int, db: Session, country_code: str) -> dict:
     sick_days = 15
     maternity_days = 90 if emp.gender == "female" else 0
     
-    year = datetime.utcnow().year
+    year = datetime.now(timezone.utc).year
     
     for leave_type, total in [("annual", annual_days), ("sick", sick_days), ("maternity", maternity_days)]:
         existing = db.query(EmployeeLeaveLedger).filter(

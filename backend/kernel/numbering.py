@@ -1,4 +1,4 @@
-﻿"""Shared kernel - reference numbering (spec: kernel/numbering.py).
+"""Shared kernel - reference numbering (spec: kernel/numbering.py).
 
 Centralised, configurable reference-number generation for business documents
 (ORD-, INV-, PAY-, BATCH-, ...). Domains call this instead of inventing local IDs.

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from infrastructure.messaging.events.event_bus import publish
@@ -59,7 +59,7 @@ def _event_id() -> str:
 
 
 def _now_iso() -> str:
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def publish_gov_update_role_permissions_requested(
@@ -480,120 +480,3 @@ __all__ = [
     "publish_gov_bulk_archive_requested",
     "publish_gov_bulk_restore_requested",
 ]
-
-
-# === Merged from accounts/events.py ===
-
-"""Accounts domain events.
-
-Accounts is a *publishing* domain: when user-account state changes it emits
-events that other domains may subscribe to (Law 3 — cross-domain writes only via
-events). Events are plain dataclass-like objects; the bus is
-``infrastructure.messaging.events.event_publisher.EventPublisher`` (which keys
-listeners by event *type*).
-"""
-
-
-import uuid
-from dataclasses import dataclass, field
-from typing import Any, Dict
-
-
-@dataclass
-class AccountsEvent:
-    """Base class for all accounts domain events."""
-
-    event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    meta: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class UserCreated(AccountsEvent):
-    user_id: int = 0
-    email: str = ""
-    role: str = "customer"
-    created_by: int | None = None
-
-
-@dataclass
-class UserRoleChanged(AccountsEvent):
-    user_id: int = 0
-    old_role: str = ""
-    new_role: str = ""
-    changed_by: int | None = None
-
-
-@dataclass
-class UserDeactivated(AccountsEvent):
-    user_id: int = 0
-    reason: str = ""
-    deactivated_by: int | None = None
-
-
-@dataclass
-class UserActivated(AccountsEvent):
-    user_id: int = 0
-    activated_by: int | None = None
-
-
-@dataclass
-class UserDeleted(AccountsEvent):
-    user_id: int = 0
-    hard_delete: bool = False
-    deleted_by: int | None = None
-
-
-@dataclass
-class PasswordChanged(AccountsEvent):
-    user_id: int = 0
-    self_initiated: bool = True
-
-
-@dataclass
-class PasswordForceReset(AccountsEvent):
-    user_id: int = 0
-    reset_by: int | None = None
-
-
-@dataclass
-class LoginSuccess(AccountsEvent):
-    user_id: int = 0
-    ip_address: str | None = None
-    country_code: str | None = None
-
-
-@dataclass
-class LoginFailed(AccountsEvent):
-    identifier: str = ""
-    reason: str = ""
-    ip_address: str | None = None
-
-
-@dataclass
-class TokenRevoked(AccountsEvent):
-    user_id: int = 0
-    jti: str = ""
-    reason: str = ""
-
-
-@dataclass
-class MfaEnabled(AccountsEvent):
-    user_id: int = 0
-
-
-@dataclass
-class MfaDisabled(AccountsEvent):
-    user_id: int = 0
-
-
-@dataclass
-class SocialIdentityLinked(AccountsEvent):
-    user_id: int = 0
-    provider: str = ""
-    provider_user_id: str = ""
-
-
-@dataclass
-class AddressBookChanged(AccountsEvent):
-    user_id: int = 0
-    action: str = ""

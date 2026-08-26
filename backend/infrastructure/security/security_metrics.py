@@ -3,10 +3,9 @@ Security Metrics Collection for Zozi Platform
 Provides comprehensive security monitoring and analytics
 """
 
-import time
 import logging
 from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from collections import defaultdict, Counter
 import statistics
 
@@ -39,7 +38,7 @@ class SecurityMetricsCollector:
             }
         }
         
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         
     def record_request(self, method: str, path: str, status_code: int, 
                       response_time: float, user_role: str = 'unknown'):
@@ -47,7 +46,7 @@ class SecurityMetricsCollector:
         self.metrics['requests_total'][path] += 1
         self.metrics['requests_by_method'][method] += 1
         self.metrics['response_times'].append({
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'path': path,
             'method': method,
             'status_code': status_code,
@@ -65,7 +64,7 @@ class SecurityMetricsCollector:
                             severity: str = 'INFO', client_ip: str = 'unknown'):
         """Record security event."""
         event = {
-            'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
             'event_type': event_type,
             'details': details,
             'severity': severity,
@@ -102,8 +101,8 @@ class SecurityMetricsCollector:
             'overview': {
                 'total_requests': total_requests,
                 'security_events': total_security_events,
-                'uptime': str(datetime.utcnow() - self.start_time).split('.')[0],
-                'requests_per_second': total_requests / max(1, (datetime.utcnow() - self.start_time).total_seconds() / 60)
+                'uptime': str(datetime.now(timezone.utc) - self.start_time).split('.')[0],
+                'requests_per_second': total_requests / max(1, (datetime.now(timezone.utc) - self.start_time).total_seconds() / 60)
             },
             'performance': {
                 'average_response_time_ms': avg_response_time * 1000,
@@ -117,7 +116,7 @@ class SecurityMetricsCollector:
                 'PCI_DSS': 'compliant'
             },
             'security_level': 'unbreakable',
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
 
 

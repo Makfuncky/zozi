@@ -15,9 +15,8 @@ from pydantic import BaseModel
 
 from sqlalchemy.orm import Session
 
-from modules.admin.routers.finance import *  # Treasury functions merged into finance
-
-from modules.admin.routers.auth import require_admin, require_permission
+from infrastructure.utils.auth import require_permission
+from infrastructure.security.dependencies import require_admin
 from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import (
@@ -44,6 +43,14 @@ from infrastructure.database.schemas import (
 
 from infrastructure.utils.dependencies import get_current_user
 from infrastructure.utils.config import settings
+
+# Import real implementations from general_ledger_service to avoid recursive calls
+from domains.finance.services.ledger.general_ledger_service import (
+    delete_supplier_commission_override as _delete_supplier_commission_override,
+    get_product_commission_override as _get_product_commission_override,
+    list_product_commission_overrides as _list_product_commission_overrides,
+    set_product_commission_override as _set_product_commission_override,
+)
 
 class FlagRequest(BaseModel):
     reason: str
@@ -303,9 +310,14 @@ from pydantic import BaseModel, Field
 
 from sqlalchemy.orm import Session
 
-from modules.finance.routers import commission_controller
-
-from modules.admin.routers.auth import require_admin
+from domains.finance.services.ledger.general_ledger_service import (
+    get_global_config, update_global_config, list_category_rates, update_category_rate,
+    list_badge_tiers, update_badge_tier, list_ledger_entries, create_ledger_adjustment,
+    preview_commission, list_all_supplier_commissions, get_supplier_commission,
+    set_supplier_commission, delete_supplier_commission_override,
+    get_product_commission_override, list_product_commission_overrides,
+    set_product_commission_override, delete_product_commission_override,
+)
 from infrastructure.database.database import get_db
 
 from infrastructure.database.schemas import ListPage
@@ -349,31 +361,31 @@ class PreviewBody(BaseModel):
     category_slug: Optional[str] = None
 
 def get_global_config(db: Session, current_user: dict):
-    return commission_controller.get_global_config(db)
+    return get_global_config(db)
 
 def update_global_config(body: GlobalConfigBody, db: Session, current_user: dict):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
-    return commission_controller.update_global_config(payload, current_user, db)
+    return update_global_config(payload, current_user, db)
 
 def list_category_rates(page: int, page_size: int, search: Optional[str], db: Session, current_user: dict):
-    return commission_controller.list_category_rates(db, limit=page_size, offset=(page - 1) * page_size, search=search)
+    return list_category_rates(db, limit=page_size, offset=(page - 1) * page_size, search=search)
 
 def update_category_rate(category_slug: str, body: CategoryRateBody, db: Session, current_user: dict):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
-    return commission_controller.update_category_rate(category_slug, payload, current_user, db)
+    return update_category_rate(category_slug, payload, current_user, db)
 
 def list_badge_tiers(page: int, page_size: int, search: Optional[str], db: Session, current_user: dict):
-    return commission_controller.list_badge_tiers(db, limit=page_size, offset=(page - 1) * page_size, search=search)
+    return list_badge_tiers(db, limit=page_size, offset=(page - 1) * page_size, search=search)
 
 def update_badge_tier(badge_level: str, body: BadgeTierBody, db: Session, current_user: dict):
     payload = {k: v for k, v in body.model_dump().items() if v is not None}
-    return commission_controller.update_badge_tier(badge_level, payload, current_user, db)
+    return update_badge_tier(badge_level, payload, current_user, db)
 
 def list_ledger_entries(supplier_id: Optional[int], order_id: Optional[int], skip: int, limit: int, db: Session, current_user: dict):
-    return commission_controller.list_ledger_entries(db, supplier_id, order_id, skip, limit)
+    return list_ledger_entries(db, supplier_id, order_id, skip, limit)
 
 def adjust_ledger_entry(ledger_id: int, body: LedgerAdjustmentBody, db: Session, current_user: dict):
-    return commission_controller.create_ledger_adjustment(
+    return create_ledger_adjustment(
         ledger_id=ledger_id,
         new_amount=body.new_amount,
         reason=body.reason,
@@ -382,7 +394,7 @@ def adjust_ledger_entry(ledger_id: int, body: LedgerAdjustmentBody, db: Session,
     )
 
 def preview_commission(body: PreviewBody, db: Session, current_user: dict):
-    return commission_controller.preview_commission(
+    return preview_commission(
         supplier_id=body.supplier_id,
         order_value=body.order_value,
         category_slug=body.category_slug,
@@ -390,13 +402,13 @@ def preview_commission(body: PreviewBody, db: Session, current_user: dict):
     )
 
 def list_supplier_commissions(page: int, page_size: int, search: Optional[str], db: Session, current_user: dict):
-    return commission_controller.list_all_supplier_commissions(db, limit=page_size, offset=(page - 1) * page_size, search=search)
+    return list_all_supplier_commissions(db, limit=page_size, offset=(page - 1) * page_size, search=search)
 
 def get_supplier_commission(supplier_id: int, db: Session, current_user: dict):
-    return commission_controller.get_supplier_commission(supplier_id, db)
+    return get_supplier_commission(supplier_id, db)
 
 def set_supplier_commission(supplier_id: int, body: CommissionRateBody, db: Session, current_user: dict):
-    return commission_controller.set_supplier_commission(
+    return set_supplier_commission(
         supplier_id=supplier_id,
         rate=body.rate,
         note=body.note,
@@ -405,20 +417,20 @@ def set_supplier_commission(supplier_id: int, body: CommissionRateBody, db: Sess
     )
 
 def delete_supplier_commission_override(supplier_id: int, db: Session, current_user: dict):
-    return commission_controller.delete_supplier_commission_override(
+    return _delete_supplier_commission_override(
         supplier_id=supplier_id,
         acting_user=current_user,
         db=db,
     )
 
 def get_product_commission_override(product_id: int, db: Session, current_user: dict):
-    result = commission_controller.get_product_commission_override(product_id, db)
+    result = _get_product_commission_override(product_id, db)
     if result is None:
         return {"override": None, "message": "No override - using category/badge/default rate"}
     return result
 
 def list_product_commission_overrides(search: Optional[str], supplier_id: Optional[int], limit: int, db: Session, current_user: dict):
-    return commission_controller.list_product_commission_overrides(
+    return _list_product_commission_overrides(
         db,
         search=search,
         supplier_id=supplier_id,
@@ -426,7 +438,7 @@ def list_product_commission_overrides(search: Optional[str], supplier_id: Option
     )
 
 def set_product_commission_override(product_id: int, body: CommissionRateBody, db: Session, current_user: dict):
-    return commission_controller.set_product_commission_override(
+    return _set_product_commission_override(
         product_id=product_id,
         rate=body.rate,
         note=body.note,
@@ -435,7 +447,7 @@ def set_product_commission_override(product_id: int, body: CommissionRateBody, d
     )
 
 def delete_product_commission_override(product_id: int, db: Session, current_user: dict):
-    return commission_controller.delete_product_commission_override(
+    return delete_product_commission_override(
         product_id=product_id,
         acting_user=current_user,
         db=db,

@@ -1,4 +1,4 @@
-﻿"""Auto-migrated service logic from routers/admin_commerce_geography.py."""
+"""Auto-migrated service logic from routers/admin_commerce_geography.py."""
 from __future__ import annotations
 
 from fastapi import Depends, HTTPException, Query, Path, File, UploadFile

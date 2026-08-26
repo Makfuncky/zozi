@@ -2,7 +2,6 @@
 import asyncio
 import logging
 import aiohttp
-from datetime import datetime, timezone
 from typing import Set
 
 logging.basicConfig(level=logging.INFO)

@@ -218,7 +218,7 @@ def balance_sheet(
             username=_admin.get("username"),
             user_role=_admin.get("role"),
             resource_type="balance_sheet",
-            details={"as_of_date": (as_of_date or datetime.utcnow()).isoformat(), "currency": currency, "country_code": country_code},
+            details={"as_of_date": (as_of_date or datetime.now(timezone.utc)).isoformat(), "currency": currency, "country_code": country_code},
         )
         return result
     finally:
@@ -1638,3 +1638,98 @@ def get_treasury_metrics(*args: Any, **kwargs: Any) -> dict:
 def get_vat_liability(*args: Any, **kwargs: Any) -> dict:
     return {}
 
+
+
+# === MERGED FROM cash_management_controller.py ===
+"""treasury.cash_management controller.
+
+Business logic is delegated to services.treasury.cash_management_service (routers -> services)."""
+
+from modules.employee.routers.cash_management_controller import _commission_metadata_for_entry
+from modules.employee.routers.cash_management_controller import _decorate_badge_billing
+from modules.employee.routers.cash_management_controller import _decorate_ledger_entry
+from modules.employee.routers.cash_management_controller import _decorate_logistics_settlement
+from modules.employee.routers.cash_management_controller import _decorate_refund
+from modules.employee.routers.cash_management_controller import _decorate_supplier_settlement
+from modules.employee.routers.cash_management_controller import _dispatch_transfer_batch_with_audit
+from modules.employee.routers.cash_management_controller import _latest_refund_for_order
+from modules.employee.routers.cash_management_controller import _model_columns_dict
+from modules.employee.routers.cash_management_controller import _normalize_dispatch_kind
+from modules.employee.routers.cash_management_controller import _serialize_allocation
+from modules.employee.routers.cash_management_controller import _serialize_finance_bank_settings
+from modules.employee.routers.cash_management_controller import _serialize_finance_order_summary
+from modules.employee.routers.cash_management_controller import _serialize_finance_supplier_summary
+from modules.employee.routers.cash_management_controller import admin_auto_reconcile_transactions
+from modules.employee.routers.cash_management_controller import admin_create_bank_transaction
+from modules.employee.routers.cash_management_controller import admin_dispatch_transfer_batch
+from modules.employee.routers.cash_management_controller import admin_flag_transaction
+from modules.employee.routers.cash_management_controller import admin_get_finance_bank_settings
+from modules.employee.routers.cash_management_controller import admin_get_financial_summary
+from modules.employee.routers.cash_management_controller import admin_get_reconciliation_summary
+from modules.employee.routers.cash_management_controller import admin_import_bank_transactions
+from modules.employee.routers.cash_management_controller import admin_list_badge_billing_records
+from modules.employee.routers.cash_management_controller import admin_list_bank_transactions
+from modules.employee.routers.cash_management_controller import admin_list_cod_remittance_receipts
+from modules.employee.routers.cash_management_controller import admin_list_ledger_entries
+from modules.employee.routers.cash_management_controller import admin_list_logistics_settlements
+from modules.employee.routers.cash_management_controller import admin_list_refunds
+from modules.employee.routers.cash_management_controller import admin_list_supplier_settlements
+from modules.employee.routers.cash_management_controller import admin_list_transfer_providers
+from modules.employee.routers.cash_management_controller import admin_list_vat_remittance_records
+from modules.employee.routers.cash_management_controller import admin_queue_dispatch_transfer_batch
+from modules.employee.routers.cash_management_controller import admin_reconcile_transaction
+from modules.employee.routers.cash_management_controller import admin_record_badge_billing_payment
+from modules.employee.routers.cash_management_controller import admin_record_cod_remittance
+from modules.employee.routers.cash_management_controller import admin_record_vat_remittance
+from modules.employee.routers.cash_management_controller import admin_reject_cod_remittance_receipt
+from modules.employee.routers.cash_management_controller import admin_resolve_transaction_exception
+from modules.employee.routers.cash_management_controller import admin_test_finance_bank_connection
+from modules.employee.routers.cash_management_controller import admin_trigger_logistics_payouts
+from modules.employee.routers.cash_management_controller import admin_trigger_supplier_payouts
+from modules.employee.routers.cash_management_controller import admin_upsert_finance_bank_settings
+from modules.employee.routers.cash_management_controller import admin_verify_cod_remittance_receipt
+from modules.employee.routers.cash_management_controller import logger
+from modules.employee.routers.cash_management_controller import logistics_get_financial_summary
+from modules.employee.routers.cash_management_controller import logistics_list_ledger_entries
+from modules.employee.routers.cash_management_controller import logistics_list_settlements
+from modules.employee.routers.cash_management_controller import supplier_get_financial_summary
+from modules.employee.routers.cash_management_controller import supplier_list_ledger_entries
+from modules.employee.routers.cash_management_controller import supplier_list_settlements
+
+__all__ = [
+    "_commission_metadata_for_entry", "_decorate_badge_billing", "_decorate_ledger_entry", "_decorate_logistics_settlement", "_decorate_refund", "_decorate_supplier_settlement",
+    "_dispatch_transfer_batch_with_audit", "_latest_refund_for_order", "_model_columns_dict", "_normalize_dispatch_kind", "_serialize_allocation", "_serialize_finance_bank_settings",
+    "_serialize_finance_order_summary", "_serialize_finance_supplier_summary", "admin_auto_reconcile_transactions", "admin_create_bank_transaction", "admin_dispatch_transfer_batch", "admin_flag_transaction",
+    "admin_get_finance_bank_settings", "admin_get_financial_summary", "admin_get_reconciliation_summary", "admin_import_bank_transactions", "admin_list_badge_billing_records", "admin_list_bank_transactions",
+    "admin_list_cod_remittance_receipts", "admin_list_ledger_entries", "admin_list_logistics_settlements", "admin_list_refunds", "admin_list_supplier_settlements", "admin_list_transfer_providers",
+    "admin_list_vat_remittance_records", "admin_queue_dispatch_transfer_batch", "admin_reconcile_transaction", "admin_record_badge_billing_payment", "admin_record_cod_remittance", "admin_record_vat_remittance",
+    "admin_reject_cod_remittance_receipt", "admin_resolve_transaction_exception", "admin_test_finance_bank_connection", "admin_trigger_logistics_payouts", "admin_trigger_supplier_payouts", "admin_upsert_finance_bank_settings",
+    "admin_verify_cod_remittance_receipt", "logger", "logistics_get_financial_summary", "logistics_list_ledger_entries", "logistics_list_settlements", "supplier_get_financial_summary",
+    "supplier_list_ledger_entries", "supplier_list_settlements"
+]
+
+
+# === MERGED FROM treasury_api.py ===
+"""Treasury API sub-router.
+
+PLACEHOLDER: the original ``routers.treasury_api`` module is missing. This stub exposes
+the symbols imported by ``routers.treasury.py`` so the app boots. Implement the real
+endpoints and replace this file.
+"""
+from typing import Any
+
+
+def get_cash_position(*args: Any, **kwargs: Any) -> dict:
+    return {}
+
+
+def get_supplier_payables(*args: Any, **kwargs: Any) -> dict:
+    return {}
+
+
+def get_treasury_metrics(*args: Any, **kwargs: Any) -> dict:
+    return {}
+
+
+def get_vat_liability(*args: Any, **kwargs: Any) -> dict:
+    return {}

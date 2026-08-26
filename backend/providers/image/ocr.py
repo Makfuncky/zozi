@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, Tuple
 import numpy as np
 from PIL import Image
 
-from ..config import settings
+from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 

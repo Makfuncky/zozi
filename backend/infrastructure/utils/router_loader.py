@@ -1,4 +1,4 @@
-﻿"""Non-silent router loader for ``modules/*/routers/__init__.py`` packages.
+"""Non-silent router loader for ``modules/*/routers/__init__.py`` packages.
 
 This replaces the per-submodule ``try/except Exception: log + continue``
 swallow that previously let a broken router submodule vanish from the app

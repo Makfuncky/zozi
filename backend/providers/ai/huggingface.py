@@ -1,4 +1,4 @@
-﻿"""HuggingFace Inference API provider.
+"""HuggingFace Inference API provider.
 
 Vendor integration for BLIP image captioning and BART zero-shot classification via
 the HF Inference API. Extracted from ``services.ai.ai_service`` so the service layer

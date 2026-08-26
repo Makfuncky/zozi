@@ -163,10 +163,41 @@ def register_dependent(employee_id: int, dependent_data: dict, db: Session) -> d
 
 
 def validate_gcc_compliance(employee_id: int, db: Session) -> dict:
+    """Validate GCC compliance checks: Nitaqat, WPS, and Iqama."""
+    from datetime import date
+
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         return {"employee_id": employee_id, "compliant": None, "reason": "Employee not found"}
-    return {"employee_id": employee_id, "compliant": True, "checks": ["nitaqat", "wps", "iqama"]}
+
+    checks = {}
+    today = date.today()
+
+    iqama_doc = db.execute(text("""
+        SELECT ed.id, ed.expiry_date, ed.status
+        FROM employee_documents ed
+        WHERE ed.employee_id = :eid AND ed.document_type = 'iqama'
+        ORDER BY ed.created_at DESC LIMIT 1
+    """), {"eid": employee_id}).fetchone()
+
+    if iqama_doc:
+        iqama_valid = iqama_doc[2] == "verified" and (iqama_doc[1] is None or iqama_doc[1] >= today)
+        checks["iqama"] = {"status": "pass" if iqama_valid else "fail", "verified": iqama_doc[2] == "verified", "expired": iqama_doc[1] is not None and iqama_doc[1] < today}
+    else:
+        checks["iqama"] = {"status": "fail", "reason": "No iqama document on file"}
+
+    wps_check = db.execute(text("""
+        SELECT COUNT(*) FROM payroll_records pr
+        WHERE pr.employee_id = :eid AND pr.wps_submitted = 1
+        AND pr.period_month = :month AND pr.period_year = :year
+    """), {"eid": employee_id, "month": today.month, "year": today.year}).fetchone()
+    checks["wps"] = {"status": "pass" if wps_check and wps_check[0] > 0 else "pending", "current_month_submitted": wps_check[0] > 0 if wps_check else False}
+
+    nitaqat_valid = emp.employment_status == "active" and emp.is_verified
+    checks["nitaqat"] = {"status": "pass" if nitaqat_valid else "review", "active": emp.employment_status == "active", "verified": emp.is_verified}
+
+    all_pass = all(c.get("status") == "pass" for c in checks.values())
+    return {"employee_id": employee_id, "compliant": all_pass, "checks": checks}
 
 
 def get_employee_graph(employee_id: int, db: Session) -> dict:

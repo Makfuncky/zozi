@@ -218,7 +218,6 @@ def get_staff_assignment_by_id(
 Each function owns its database session via ``data.db.get_db_context`` so the
 router layer never injects or touches a SQLAlchemy session directly.
 """
-from __future__ import annotations
 from typing import List, Optional
 
 from fastapi import HTTPException

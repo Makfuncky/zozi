@@ -13,7 +13,7 @@ import re
 import pytest
 
 from providers.media.services.misc_write_service import reset_demo_data
-from infrastructure.config import settings
+from infrastructure.utils.config import settings
 
 _MISC_WRITE_SERVICE = (
     pathlib.Path(__file__).resolve().parents[1] / "services" / "misc_write_service.py"

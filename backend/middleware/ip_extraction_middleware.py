@@ -1,4 +1,4 @@
-﻿"""
+"""
 Request IP extraction middleware - runs first to extract and store client IP.
 """
 from __future__ import annotations

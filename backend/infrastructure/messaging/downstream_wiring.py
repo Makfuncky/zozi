@@ -15,11 +15,9 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.catalog.models.products import Product
-from domains.country.models.countries import CountryConfig
-from domains.orders.models.orders import Order
-from domains.finance.services.tax.tax_service import calculate_tax
-from domains.finance.services.tax.tax_service import get_country_config
+from domains.catalog import ports as catalog_ports
+from domains.country import ports as country_ports
+from domains.finance import ports as finance_ports
 from infrastructure.utils.money import to_decimal
 
 logger = logging.getLogger(__name__)
@@ -27,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def get_enabled_gateways_for_country(db: Session, country_code: str) -> list[dict[str, Any]]:
     """Get list of enabled payment gateways for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.payment_gateways_json:
         return []
     try:
@@ -39,7 +37,7 @@ def get_enabled_gateways_for_country(db: Session, country_code: str) -> list[dic
 
 def get_settlement_hold_days(db: Session, country_code: str) -> int:
     """Get settlement hold days for a country from config."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config:
         return 3
     return config.settlement_hold_days or 3
@@ -47,7 +45,7 @@ def get_settlement_hold_days(db: Session, country_code: str) -> int:
 
 def get_public_holidays_for_country(db: Session, country_code: str) -> list[dict[str, Any]]:
     """Get public holidays for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.public_holidays_json:
         return []
     try:
@@ -59,13 +57,13 @@ def get_public_holidays_for_country(db: Session, country_code: str) -> list[dict
 
 def is_product_restricted_for_country(db: Session, product_id: int, country_code: str) -> bool:
     """Check if a product is restricted in a specific country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.product_restrictions_json:
         return False
     try:
         restrictions = json.loads(config.product_restrictions_json) if isinstance(config.product_restrictions_json, str) else config.product_restrictions_json
         restriction_list = restrictions or []
-        product = db.query(Product).filter(Product.id == product_id).first()
+        product = catalog_ports.get_product_by_id(db, product_id)
         if not product or not product.category:
             return False
         return product.category.lower() in [r.lower() for r in restriction_list]
@@ -75,7 +73,7 @@ def is_product_restricted_for_country(db: Session, product_id: int, country_code
 
 def get_product_restrictions_for_country(db: Session, country_code: str) -> list[str]:
     """Get product restrictions for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.product_restrictions_json:
         return []
     try:
@@ -94,10 +92,9 @@ def calculate_order_totals_with_country(
 ) -> dict[str, Any]:
     """Calculate order totals with country-specific tax and currency."""
     subtotal_decimal = to_decimal(subtotal)
-    discount = to_decimal("0")
-    
-    tax_preview = calculate_tax(subtotal_decimal, country_code, db)
-    
+
+    tax_preview = finance_ports.calculate_tax(subtotal_decimal, country_code, db)
+
     return {
         "country_code": country_code,
         "currency": tax_preview.get("currency", "USD"),
@@ -123,7 +120,7 @@ def get_checkout_payment_config(db: Session, country_code: str, payment_method: 
             break
     if not gateway_code and gateways:
         gateway_code = gateways[0].get("gateway_id")
-    
+
     return {
         "country_code": country_code,
         "payment_method": payment_method,
@@ -135,12 +132,12 @@ def get_checkout_payment_config(db: Session, country_code: str, payment_method: 
 
 def get_logistics_sla_for_country(db: Session, country_code: str) -> dict[str, Any]:
     """Get logistics SLA configuration for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config:
         return {"min_days": 1, "max_days": 7, "holidays": []}
-    
+
     holidays = get_public_holidays_for_country(db, country_code)
-    
+
     return {
         "min_days": 1,
         "max_days": 7,
@@ -151,7 +148,7 @@ def get_logistics_sla_for_country(db: Session, country_code: str) -> dict[str, A
 
 def get_commission_tiers_for_country(db: Session, country_code: str) -> list[dict[str, Any]]:
     """Get commission tiers for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.commission_tiers_json:
         return []
     try:
@@ -163,7 +160,7 @@ def get_commission_tiers_for_country(db: Session, country_code: str) -> list[dic
 
 def get_supplier_requirements_for_country(db: Session, country_code: str) -> dict[str, Any]:
     """Get supplier requirements for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.supplier_requirements_json:
         return {"kyc_level": "standard", "required_documents": [], "approval_required": True}
     try:
@@ -175,7 +172,7 @@ def get_supplier_requirements_for_country(db: Session, country_code: str) -> dic
 
 def get_payout_settings_for_country(db: Session, country_code: str) -> dict[str, Any]:
     """Get payout settings for a country."""
-    config = get_country_config(db, country_code)
+    config = country_ports.get_country_config(db, country_code)
     if not config or not config.payout_settings_json:
         return {"minimum_payout_amount": 100.0, "payout_schedule": "weekly", "payout_day": "sunday"}
     try:

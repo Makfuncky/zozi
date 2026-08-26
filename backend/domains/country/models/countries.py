@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 from uuid import uuid4
 from sqlalchemy import func, UUID
 from decimal import Decimal

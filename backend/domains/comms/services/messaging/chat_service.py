@@ -22,7 +22,7 @@ class ChatThread:
     participants: List[int] = field(default_factory=list)
     name: str = ""
     is_external: bool = False
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     channel_type: str = "entity"
 
 
@@ -651,7 +651,7 @@ class MessagingService:
 
             if msg:
                 msg.status = "read"
-                msg.read_at = datetime.utcnow()
+                msg.read_at = datetime.now(timezone.utc)
                 db.commit()
                 return True
             return False

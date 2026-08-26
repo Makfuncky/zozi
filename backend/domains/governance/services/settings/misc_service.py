@@ -25,7 +25,7 @@ from domains.orders.models.orders import ReturnRequest
 from domains.catalog.models.promotions import Coupon
 from domains.catalog.models.promotions import Banner
 from domains.finance.models.payments import Payout
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.audit_service import audit_log, AuditAction
 from infrastructure.utils.constants import DEFAULT_COUNTRY
 
 

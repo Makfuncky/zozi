@@ -5,7 +5,7 @@ Encrypts PII with localized KMS keys based on data_residency_tier.
 import json
 import logging
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from infrastructure.database.database import get_db_context
 from domains.country.models.countries import CountryConfig
@@ -74,7 +74,7 @@ class DataResidencyService:
                 "kms_key_ref": kms_key,
                 "residency_tier": tier,
                 "country_code": country_code,
-                "encrypted_at": datetime.utcnow().isoformat()
+                "encrypted_at": datetime.now(timezone.utc).isoformat()
             }
         else:
             return {
@@ -83,7 +83,7 @@ class DataResidencyService:
                 "kms_key_ref": None,
                 "residency_tier": tier,
                 "country_code": country_code,
-                "encrypted_at": datetime.utcnow().isoformat()
+                "encrypted_at": datetime.now(timezone.utc).isoformat()
             }
     
     @staticmethod

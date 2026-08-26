@@ -4,7 +4,7 @@ Logs all financial field changes with "Reason for Change".
 """
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from infrastructure.database.database import get_db_context
@@ -43,7 +43,7 @@ class AuditTrailService:
             "reason": reason,
             "user_id": user_id,
             "metadata": metadata or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "change_hash": AuditTrailService._compute_hash(
                 country_code, table_name, record_id, field_name, old_value, new_value, reason
             )

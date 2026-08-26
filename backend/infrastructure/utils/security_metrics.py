@@ -1,2 +1,2 @@
 """Backward-compat shim."""
-from domains.governance.services.security_metrics import *  # noqa: F401,F403
+# TODO: Reimplement security metrics shim — canonical target domains.governance.services.security_metrics does not yet exist

@@ -18,14 +18,12 @@ from domains.governance.services.logistics.flat_admin_logistics_operations_servi
 from domains.governance.services.logistics.flat_admin_logistics_operations_service import ReassignManagerBody
 from domains.governance.services.logistics.flat_admin_logistics_operations_service import PromotionPreviewBody
 from domains.governance.services.logistics.flat_admin_logistics_operations_service import BulkDeleteUsersBody
-from datetime import datetime
 from typing import List, Optional
 from fastapi import Body, Depends, HTTPException, Path, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, field_validator
 from sqlalchemy.orm import Session
-from modules.orders.routers import disputes_controller
-from modules.admin.routers.auth import bulk_delete_users_admin, bulk_manage_suppliers, bulk_product_moderation, bulk_supplier_verification, bulk_toggle_users_active, bulk_update_order_status_admin, bulk_update_staff_accounts, bulk_update_users_role, create_coupon, create_staff_account, delete_bank_account_record, delete_coupon, delete_order_admin, delete_product_admin, delete_staff_account, delete_user_admin, force_reset_password_admin, get_all_orders, get_all_products, get_all_suppliers, get_all_users, get_analytics, get_analytics_timeseries, get_audit_log_page, get_available_audit_actions, get_chatbot_analytics, get_current_admin, get_current_user, get_customer_insights, get_database_overview, get_hierarchy_permissions, get_pending_products, get_pending_suppliers, get_staff_permission_catalog, get_supplier_comparison, get_ticket_detail, get_top_products_analytics, get_user_growth_analytics, list_coupons, list_pending_bank_accounts, list_pending_payouts, list_staff_accounts, list_tickets, refund_order, reject_product, reject_supplier, reply_to_ticket, require_admin, require_admin_2fa_verified, require_permission, restore_product_admin, toggle_product_badge, toggle_user_active, update_coupon, update_order_status, update_order_tracking, update_role_permissions, update_staff_account, update_ticket_status, update_user_role, verify_bank_account, verify_payout, verify_supplier
+from infrastructure.utils.auth import require_permission
+from infrastructure.security.dependencies import require_admin
 from domains.catalog.services.banner_controller import BannerCreate
 from domains.catalog.services.banner_controller import BannerUpdate
 from domains.catalog.services.banner_controller import create_banner
@@ -40,7 +38,6 @@ from domains.governance.core.export_service import export_products_csv
 from domains.governance.core.export_service import export_transfer_csv
 from domains.governance.core.export_service import export_users_csv
 from domains.governance.core.export_service import queue_export_job
-from modules.commerce.routers.promotion_controller import create_promotion_tier, delete_promotion_tier, get_promotion_config, list_promotion_tiers, preview_order_tier_discount, update_promotion_config, update_promotion_tier
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import AuditLogPage, BulkUpdateStaffBody, CouponSchema, CreateStaffAccount, ListPage, UpdateStaffAccount
 from infrastructure.database.schemas import Order as OrderSchema
@@ -72,7 +69,6 @@ from infrastructure.utils.constants import MAX_BULK_ITEMS
 
 
 
-from modules.commerce.routers.flash_sale_controller import create_flash_sale, delete_flash_sale, get_all_flash_sales, update_flash_sale
 from infrastructure.database.schemas import FlashSaleCreate, FlashSaleOut
 
 

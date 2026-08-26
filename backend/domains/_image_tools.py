@@ -1,4 +1,4 @@
-﻿"""
+"""
 Free / open-source image processing tools for supplier product uploads.
 
 All tools use MIT / BSD licensed libraries:

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Database Security - Encryption and Query Logging
 Implements data protection and query audit logging
 """
@@ -7,7 +7,6 @@ import time
 import logging
 import hashlib
 from typing import Optional, Dict, Any, List
-from datetime import datetime
 from functools import wraps
 
 from sqlalchemy import event, text

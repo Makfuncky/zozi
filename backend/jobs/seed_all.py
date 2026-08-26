@@ -1,4 +1,4 @@
-﻿"""
+"""
 Seed ALL dev database data — users, products, orders, communications, commissions.
 
 This is the single entry point to populate the entire dev database with
@@ -17,7 +17,7 @@ import os
 import random
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -347,7 +347,7 @@ def seed_users():
                     is_verified=user_data.get("is_verified", False),
                     preferred_country=user_data.get("preferred_country"),
                     preferred_currency=user_data.get("preferred_currency"),
-                    created_at=datetime.utcnow() - timedelta(days=30),
+                    created_at=datetime.now(timezone.utc) - timedelta(days=30),
                 )
                 db.add(user)
                 db.commit()
@@ -429,7 +429,7 @@ def seed_products():
                 is_approved=True,
                 is_deleted=False,
                 image_url=f"https://via.placeholder.com/400x400?text={product_data['name'].replace(' ', '+')}",
-                created_at=datetime.utcnow() - timedelta(days=random.randint(1, 90)),
+                created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(1, 90)),
             )
             db.add(product)
             created_count += 1
@@ -467,7 +467,7 @@ def seed_products():
                         ]),
                         is_approved=True,
                         is_verified_purchase=random.choice([True, True, False]),
-                        created_at=datetime.utcnow() - timedelta(days=random.randint(1, 30)),
+                        created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(1, 30)),
                     )
                     db.add(review)
                     review_count += 1
@@ -563,7 +563,7 @@ def seed_orders():
                 tracking_number=f"ZO-TRK-{random.randint(100000, 999999)}" if status in ["shipped", "in_transit", "delivered"] else None,
                 fraud_score=Decimal(str(round(random.uniform(0, 0.3), 2))),
                 fraud_action="allow",
-                created_at=datetime.utcnow() - timedelta(days=random.randint(1, 60)),
+                created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(1, 60)),
             )
             db.add(order)
             db.flush()
@@ -636,7 +636,7 @@ def seed_comms():
                     department=dept,
                     position=pos,
                     employment_status="active",
-                    hire_date=datetime.utcnow().date() - timedelta(days=365),
+                    hire_date=datetime.now(timezone.utc).date() - timedelta(days=365),
                 )
                 db.add(emp)
                 db.flush()
@@ -672,7 +672,7 @@ def seed_comms():
                 entity_id=tdata["entity_id"],
                 title=tdata["title"],
                 is_active=True,
-                created_at=datetime.utcnow() - timedelta(hours=tdata["messages"][0][2]),
+                created_at=datetime.now(timezone.utc) - timedelta(hours=tdata["messages"][0][2]),
             )
             db.add(thread)
             db.flush()
@@ -683,7 +683,7 @@ def seed_comms():
                     sender_id=sender_id,
                     message=msg,
                     message_type="text",
-                    created_at=datetime.utcnow() - timedelta(hours=hours_ago),
+                    created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
                 ))
             log.info(f"  Thread #{thread.id}: {tdata['title'][:55]}")
 
@@ -696,7 +696,7 @@ def seed_comms():
                 participant_two=p2,
                 country_code="AE",
                 is_active=True,
-                created_at=datetime.utcnow() - timedelta(hours=conv["messages"][0][2]),
+                created_at=datetime.now(timezone.utc) - timedelta(hours=conv["messages"][0][2]),
             )
             db.add(room)
             db.flush()
@@ -707,7 +707,7 @@ def seed_comms():
                     sender_id=sender_id,
                     message=msg,
                     message_type="text",
-                    created_at=datetime.utcnow() - timedelta(hours=hours_ago),
+                    created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
                 ))
             log.info(f"  DM between users {p1} <-> {p2}")
 
@@ -719,7 +719,7 @@ def seed_comms():
                 name=gdata["name"],
                 is_active=True,
                 created_by=gdata["created_by"],
-                created_at=datetime.utcnow() - timedelta(hours=gdata["messages"][0][2]),
+                created_at=datetime.now(timezone.utc) - timedelta(hours=gdata["messages"][0][2]),
             )
             db.add(room)
             db.flush()
@@ -737,7 +737,7 @@ def seed_comms():
                     sender_id=sender_id,
                     message=msg,
                     message_type="text",
-                    created_at=datetime.utcnow() - timedelta(hours=hours_ago),
+                    created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
                 ))
             log.info(f"  Group: {gdata['name']}")
 
@@ -758,7 +758,7 @@ def seed_comms():
                 folder_id=folder.id,
                 is_read=False,
                 thread_id=f"seed_thread_{hours_ago}_{recipient_id}",
-                created_at=datetime.utcnow() - timedelta(hours=hours_ago),
+                created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
             )
             db.add(email)
             email_count += 1
@@ -812,7 +812,7 @@ def main():
     parser.add_argument("--force", action="store_true", help="Wipe existing data before seeding")
     args = parser.parse_args()
 
-    log.info(f"🚀 ZOZI Database Seeder — {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    log.info(f"🚀 ZOZI Database Seeder — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC")
     log.info("   Seeding all data in dependency order...\n")
 
     if args.force:

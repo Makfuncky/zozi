@@ -1,16 +1,13 @@
+from __future__ import annotations
+
 """Admin orders router — canonical."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
-from .cart import router as cart_router
-from .disputes import router as disputes_router
-from .orders import router as orders_router
-from .returns import router as returns_router
-from __future__ import annotations
-from _legacy.models import Order, User
-from controllers.admin.admin_controller import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_order_status
-from db.database import get_db
-from db.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
+from domains.accounts.models.user import User
+from modules.admin.routers.governance import archive_entity, restore_entity, bulk_archive_entities, bulk_restore_entities, hard_delete_entity, update_order_status
+from infrastructure.database.database import get_db
+from infrastructure.database.schemas import OrderOut, OrderStatusUpdate, ArchiveRequest, BulkActionRequest, BulkStatusUpdateRequest
 from domains.comms.services._auto_stubs import email_metrics
 from domains.country.utils.country_rls import get_country_or_404
 from domains.governance.models.user import User
@@ -31,12 +28,12 @@ from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
 from sqlalchemy.orm import Session
 from typing import Optional
-from utils.audit import audit_log
-from utils.country_rls import enforce_country_access, get_country_or_404
-from utils.dependencies import require_admin, require_super_admin
-from utils.rls_interceptor import clear_rls_context
-from utils.rls_interceptor import set_rls_context
-import controllers.orders.orders_controller as _ctrl
+from infrastructure.utils.audit import audit_log
+from domains.country.utils.country_rls import enforce_country_access, get_country_or_404
+from infrastructure.utils.dependencies import require_admin, require_super_admin
+from infrastructure.database.rls_interceptor import clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context
+import modules.admin.routers.orders.orders_controller as _ctrl
 import domains.orders.services.orders_controller as _ctrl
 import logging as _l; _l.getLogger(__name__).warning("skip cart_router: %s", _e)
 import logging as _l; _l.getLogger(__name__).warning("skip disputes_router: %s", _e)

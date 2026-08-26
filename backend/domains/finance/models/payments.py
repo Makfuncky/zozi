@@ -1,4 +1,4 @@
-﻿"""finance domain â€” payment, payout, and gateway models.
+"""finance domain â€” payment, payout, and gateway models.
 
 These models were previously in domains/payments/models/payments.py but belong
 to the finance domain because they represent financial operations:

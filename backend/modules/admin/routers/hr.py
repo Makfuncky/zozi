@@ -39,7 +39,6 @@ from domains.hr.services.hierarchy.hierarchy_service import remove_matrix
 from domains.hr.services.hierarchy.hierarchy_service import update_org_unit
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
-from pydantic import BaseModel
 from rbac import get_current_user
 from sqlalchemy import func
 from sqlalchemy.orm import Session

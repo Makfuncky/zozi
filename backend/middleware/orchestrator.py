@@ -1,4 +1,4 @@
-﻿"""
+"""
 Middleware Orchestrator
 =======================
 Single entry point for all middleware registration.

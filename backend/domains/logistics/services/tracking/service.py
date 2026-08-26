@@ -10,7 +10,7 @@ Provides real-time location tracking, GPS updates, and tracking visualization.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
 
@@ -197,7 +197,7 @@ def estimate_arrival_time(
     """Estimate arrival time based on current position and speed."""
     distance = calculate_distance(current_lat, current_lon, dest_lat, dest_lon)
     hours = distance / speed_kmh
-    return datetime.utcnow() + __import__("datetime").timedelta(hours=hours)
+    return datetime.now(timezone.utc) + __import__("datetime").timedelta(hours=hours)
 
 # -------------------------------------------------------------------
 # FROM: operations\live_tracking_service.py
@@ -209,7 +209,7 @@ Provides real-time location tracking, GPS updates, and tracking visualization.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
 
@@ -396,7 +396,7 @@ def estimate_arrival_time(
     """Estimate arrival time based on current position and speed."""
     distance = calculate_distance(current_lat, current_lon, dest_lat, dest_lon)
     hours = distance / speed_kmh
-    return datetime.utcnow() + __import__("datetime").timedelta(hours=hours)
+    return datetime.now(timezone.utc) + __import__("datetime").timedelta(hours=hours)
 
 # -------------------------------------------------------------------
 # FROM: logistics_orders_list_service.py

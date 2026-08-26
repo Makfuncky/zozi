@@ -10,7 +10,7 @@ import logging
 
 import os
 
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 
 from decimal import Decimal
 
@@ -554,7 +554,7 @@ async def fetch_geodb_cities(code: str, limit: int = 20) -> list[dict]:
 
 async def fetch_public_holidays(code: str, year: int = None) -> list[dict]:
 
-    year = year or datetime.utcnow().year
+    year = year or datetime.now(timezone.utc).year
 
     async def _fetch():
 
@@ -1366,7 +1366,7 @@ async def auto_populate_country(country_code: str) -> dict:
 
         "warnings": warnings,
 
-        "fetched_at": datetime.utcnow().isoformat(),
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
 
         "is_active": False,
 

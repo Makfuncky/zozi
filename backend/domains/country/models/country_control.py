@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint, BigInteger

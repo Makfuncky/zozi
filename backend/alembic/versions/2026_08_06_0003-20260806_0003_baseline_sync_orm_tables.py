@@ -1,4 +1,4 @@
-﻿"""baseline sync: materialise every ORM table explicitly.
+"""baseline sync: materialise every ORM table explicitly.
 
 Contract artifact for DBA13 (ORM tables must appear as literal
 ``op.create_table`` operations in the migration chain) and for production

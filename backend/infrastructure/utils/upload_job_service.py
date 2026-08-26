@@ -1,2 +1,2 @@
 """Backward-compat shim — canonical location is domains/comms/services/upload_job.py."""
-from domains.comms.services.upload_job import *  # noqa: F401,F403
+# TODO: Reimplement upload job service shim — canonical target domains.comms.services.upload_job does not yet exist

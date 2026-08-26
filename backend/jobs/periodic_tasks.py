@@ -1,4 +1,4 @@
-﻿"""Celery periodic tasks (replacing APScheduler)."""
+"""Celery periodic tasks (replacing APScheduler)."""
 from __future__ import annotations
 
 import logging

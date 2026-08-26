@@ -1,8 +1,7 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 import secrets
-import hashlib
 import logging
 from typing import Optional
 from fastapi import Request, HTTPException, status

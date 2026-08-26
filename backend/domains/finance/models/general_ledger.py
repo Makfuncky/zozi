@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint

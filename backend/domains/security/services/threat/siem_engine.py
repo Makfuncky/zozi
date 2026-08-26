@@ -5,13 +5,10 @@ Implements Security Information and Event Management with real-time correlation
 
 import json
 import logging
-import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from dataclasses import dataclass, field
 from enum import Enum
-import hashlib
-
 from infrastructure.utils.redis_client import redis_client
 
 logger = logging.getLogger(__name__)
@@ -160,10 +157,16 @@ class ThreatIntelligence:
         if value in self.iocs:
             return self.iocs[value]
         if self.redis:
-            key = f"threat:ioc:*:{value}"
-            result = self.redis.get(key)
-            if result:
-                return json.loads(result)
+            pattern = f"threat:ioc:*:{value}"
+            cursor = 0
+            while True:
+                cursor, keys = self.redis.scan(cursor=cursor, match=pattern, count=100)
+                if keys:
+                    result = self.redis.get(keys[0])
+                    if result:
+                        return json.loads(result)
+                if cursor == 0:
+                    break
         return None
 
     def is_malicious_ip(self, ip: str) -> bool:
