@@ -22,14 +22,16 @@ def list_customer_health(current_user: dict, db: Session, page: int, size: int):
     from domains.accounts.models.user import User
     from domains.orders.models.orders import Order, ReturnRequest
 
+    page = max(1, page)
+    size = min(max(1, size), 100)
     users, total = paginated_query(
         db.query(User).order_by(User.created_at.desc()),
         page=page,
-        size=min(size, 100),
+        size=size,
         max_size=100,
     )
     if not users:
-        return {"customers": [], "total": total, "page": page, "size": size}
+        return {"customers": [], "total": total, "page": page, "size": size, "pages": 0}
 
     user_ids = [u.id for u in users]
     now = utcnow()
@@ -71,4 +73,10 @@ def list_customer_health(current_user: dict, db: Session, page: int, size: int):
         }
         results.append(health)
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
-    return {"customers": results, "total": total, "page": page, "size": size}
+    return {
+        "customers": results,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": max(1, (total + size - 1) // size),
+    }

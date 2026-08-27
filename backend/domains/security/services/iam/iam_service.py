@@ -95,23 +95,33 @@ class DeviceFingerprinter:
 
 class IAMService:
     """Service for identity management, QR login, and geo-fencing."""
-    
+
     def __init__(self, db: Session):
         self.db = db
         self.geo_validator = GeoFenceValidator()
         self.fingerprinter = DeviceFingerprinter()
-    
+        self._qr_token_store: dict[str, str] = {}
+
     def generate_qr_login_token(self, user_id: int, device_id: str) -> str:
-        """Generate a secure QR login token for device pairing."""
+        """Generate a secure QR login token for device pairing.
+
+        Stores the token internally so it can be validated later.
+        Returns the token hash that should be presented to the user.
+        """
         token = secrets.token_urlsafe(32)
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
-        
-        return hashlib.sha256(f"{user_id}:{token}:{device_id}".encode()).hexdigest()
-    
+        token_hash = hashlib.sha256(f"{user_id}:{token}:{device_id}".encode()).hexdigest()
+        self._qr_token_store[f"{user_id}:{device_id}"] = token_hash
+        return token_hash
+
     def validate_qr_token(self, user_id: int, token: str, device_id: str) -> bool:
-        """Validate a QR login token."""
-        expected = self.generate_qr_login_token(user_id, device_id)
-        return secrets.compare_digest(token, expected)
+        """Validate a QR login token against the previously generated token."""
+        store_key = f"{user_id}:{device_id}"
+        expected = self._qr_token_store.get(store_key)
+        if expected is None:
+            return False
+        token_hash = hashlib.sha256(f"{user_id}:{token}:{device_id}".encode()).hexdigest()
+        return secrets.compare_digest(token_hash, expected)
     
     def register_device(
         self,

@@ -59,6 +59,30 @@ FEATURES: dict[str, dict] = {
         "actions": ["read"],
         "description": "View customer health scores and the ranked health list (admin).",
     },
+    "customers.referrals.manage": {
+        "label": "Manage Referrals",
+        "risk": "medium",
+        "actions": ["read", "create"],
+        "description": "View referral config and get/create the authenticated customer's referral code.",
+    },
+    "coins.earn": {
+        "label": "Earn Coins",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View coin balance, earn history, and earning opportunities.",
+    },
+    "coins.redeem": {
+        "label": "Redeem Coins",
+        "risk": "medium",
+        "actions": ["read", "create"],
+        "description": "Redeem Zozi coins for discounts, rewards, or order credits.",
+    },
+    "coins.manage": {
+        "label": "Manage Coins (Admin)",
+        "risk": "high",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Administer coin programs, adjust balances, and configure earning rules.",
+    },
 }
 
 

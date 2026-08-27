@@ -7,6 +7,13 @@ here, mirroring the pattern used for other external integrations.
 """
 from typing import Any, Optional
 
+try:
+    import boto3
+    HAS_STORAGE = True
+except ImportError:
+    HAS_STORAGE = False
+    boto3 = None  # type: ignore[assignment]
+
 
 def create_s3_client(
     bucket: str,

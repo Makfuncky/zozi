@@ -197,7 +197,6 @@ class TestCoreIOHelpers:
             result = bg_remover._safe_remove(real_img, mock_session)
             assert result is not None
 
-    @pytest.mark.skip(reason="Test logic error: _ensure_rembg overrides mock")
     def test_safe_remove_raises_when_rembg_unavailable(self):
         from providers.image import bg_remover
         from PIL import Image
@@ -216,14 +215,12 @@ class TestCoreIOHelpers:
             result = bg_remover.rembg_remove_bytes(b"input", mock_session)
             assert result == expected
 
-    @pytest.mark.skip(reason="Test logic error: _ensure_rembg overrides mock")
     def test_rembg_remove_bytes_raises_when_unavailable(self):
         from providers.image import bg_remover
         with patch.object(bg_remover, "remove", None):
             with pytest.raises(RuntimeError, match="rembg is not available"):
                 bg_remover.rembg_remove_bytes(b"input", MagicMock())
 
-    @pytest.mark.skip(reason="Test logic error: _ensure_rembg overrides mock")
     def test_create_rembg_session_returns_none_when_unavailable(self):
         from providers.image import bg_remover
         with patch.object(bg_remover, "new_session", None):
@@ -244,13 +241,11 @@ class TestCoreIOHelpers:
         assert img.mode == "RGBA"
         assert img.size == (20, 30)
 
-    @pytest.mark.skip(reason="Test logic error: bytes_to_image raises on invalid input")
     def test_bytes_to_image_invalid_returns_1x1(self):
         from providers.image.bg_remover import bytes_to_image
         result = bytes_to_image(b"not-an-image")
         assert result.size == (1, 1)
 
-    @pytest.mark.skip(reason="Test logic error: bytes_to_image raises on empty input")
     def test_bytes_to_image_empty_bytes(self):
         from providers.image.bg_remover import bytes_to_image
         result = bytes_to_image(b"")
@@ -499,14 +494,12 @@ class TestPublicAPI:
             result = bg_remover.remove_background(_FAKE_IMAGE_BYTES)
             assert isinstance(result, bytes)
 
-    @pytest.mark.skip(reason="Test logic error: _HAS_REMBG=False returns input but test expects different behavior")
     def test_remove_background_no_rembg_returns_input(self):
         from providers.image import bg_remover
         with patch.object(bg_remover, "_HAS_REMBG", False):
             result = bg_remover.remove_background(_FAKE_IMAGE_BYTES)
             assert result == _FAKE_IMAGE_BYTES
 
-    @pytest.mark.skip(reason="Test logic error: _HAS_REMBG=False returns input but test expects different behavior")
     def test_remove_background_preset_unknown_falls_back(self):
         from providers.image import bg_remover
         with patch.object(bg_remover, "settings") as mock_settings:

@@ -39,13 +39,20 @@ IDLE_SHUTDOWN = int(os.getenv("ML_WORKER_IDLE_SHUTDOWN", "0"))
 
 def _warmup_models() -> None:
     """Pre-load common ML models on startup so the first request doesn't pay a
-    cold-start penalty."""
+    cold-start penalty.
+
+    TODO(Law 1 cleanup 2026-08-27): the legacy warmup used
+    ``domains.finance.services.shared.bg_removal_service.remove_background``
+    which is domain business logic. Background removal is now exposed via
+    the providers/image/bg_remover module; replace the warmup with a
+    pure-infrastructure check that just touches the rembg session to
+    JIT-load the model weights.
+    """
     try:
-        from domains.finance.services.shared.bg_removal_service import remove_background
+        from providers.image.bg_remover import create_rembg_session
 
         logger.info("Warming up background-removal model (u2net)...")
-        dummy = b""
-        remove_background(dummy, strategy="general", fast_mode=True)
+        create_rembg_session("u2net")
         logger.info("Background-removal model warmed up.")
     except Exception:
         logger.warning("Model warmup skipped (expected on first load, will be ready on first job)")

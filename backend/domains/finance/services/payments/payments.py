@@ -12,19 +12,117 @@ sub-modules:
 
 Import from the sub-modules directly for new code.
 """
-from domains.finance.services.payments.payment_engine import *  # noqa: F401,F403
-from domains.finance.services.payments.gateway_stripe import *  # noqa: F401,F403
-from domains.finance.services.payments.gateway_paypal import *  # noqa: F401,F403
-from domains.finance.services.payments.gateway_tap import *  # noqa: F401,F403
-from domains.finance.services.payments.payment_orchestrator import *  # noqa: F401,F403
-from domains.finance.services.payments.payment_event_handlers import *  # noqa: F401,F403
 
-# Preserve explicit __all__ for backward compatibility
-from domains.finance.services.payments.payment_engine import __all__ as _engine_all
-from domains.finance.services.payments.gateway_stripe import __all__ as _stripe_all
-from domains.finance.services.payments.gateway_paypal import __all__ as _paypal_all
-from domains.finance.services.payments.gateway_tap import __all__ as _tap_all
-from domains.finance.services.payments.payment_orchestrator import __all__ as _orch_all
-from domains.finance.services.payments.payment_event_handlers import __all__ as _evt_all
+# Explicit backward-compatible exports
+from domains.finance.services.payments.payment_engine import (
+    apply_order_status_change,
+    build_order_payment_snapshot,
+    confirm_cash_on_delivery_order,
+    get_payment_methods_status,
+    extract_country_code,
+    get_customer_checkout_gateways,
+    get_payment_provider_runtime_config,
+    list_payments,
+    list_payment_gateway_connections,
+    update_payment_provider_runtime_config,
+    upsert_payment_gateway_connection,
+    test_payment_gateway_connection,
+    build_payment_finance_quote,
+    normalize_checkout_payment_method,
+    gateway_code_for_payment_method,
+    is_checkout_payment_method_allowed,
+    issue_stripe_refund,
+)
+from domains.finance.services.payments.gateway_stripe import (
+    create_payment_intent,
+    create_stripe_checkout_session,
+    confirm_card_payment,
+    handle_stripe_webhook,
+)
+from domains.finance.services.payments.gateway_paypal import (
+    create_paypal_order,
+    capture_paypal_order,
+    handle_paypal_webhook,
+)
+from domains.finance.services.payments.gateway_tap import (
+    create_tap_charge,
+    confirm_tap_payment,
+    create_paytabs_charge,
+    confirm_paytabs_payment,
+    handle_tap_webhook,
+    handle_paytabs_callback,
+    create_thawani_session,
+    handle_thawani_webhook,
+    confirm_thawani_payment,
+)
+from domains.finance.services.payments.payment_orchestrator import (
+    gateway_wizard_step,
+    create_generic_gateway_payment,
+    confirm_generic_gateway_payment,
+    handle_generic_gateway_callback,
+    match_gateway_settlement,
+    reconcile_cod_deposit,
+    run_gateway_3way_reconciliation,
+    reconcile_all_cod_deposits,
+    GatewayAutoEnableService,
+    auto_enable_gateways,
+    list_badge_billing_records,
+    get_badge_billing_record,
+    generate_badge_billing_record,
+    pay_badge_billing_record,
+)
 
-__all__ = _engine_all + _stripe_all + _paypal_all + _tap_all + _orch_all + _evt_all
+__all__ = [
+    # payment_engine
+    "apply_order_status_change",
+    "build_order_payment_snapshot",
+    "confirm_cash_on_delivery_order",
+    "get_payment_methods_status",
+    "extract_country_code",
+    "get_customer_checkout_gateways",
+    "get_payment_provider_runtime_config",
+    "list_payments",
+    "list_payment_gateway_connections",
+    "update_payment_provider_runtime_config",
+    "upsert_payment_gateway_connection",
+    "test_payment_gateway_connection",
+    "build_payment_finance_quote",
+    "normalize_checkout_payment_method",
+    "gateway_code_for_payment_method",
+    "is_checkout_payment_method_allowed",
+    "issue_stripe_refund",
+    # gateway_stripe
+    "create_payment_intent",
+    "create_stripe_checkout_session",
+    "confirm_card_payment",
+    "handle_stripe_webhook",
+    # gateway_paypal
+    "create_paypal_order",
+    "capture_paypal_order",
+    "handle_paypal_webhook",
+    # gateway_tap
+    "create_tap_charge",
+    "confirm_tap_payment",
+    "create_paytabs_charge",
+    "confirm_paytabs_payment",
+    "handle_tap_webhook",
+    "handle_paytabs_callback",
+    "create_thawani_session",
+    "handle_thawani_webhook",
+    "confirm_thawani_payment",
+    # payment_orchestrator
+    "gateway_wizard_step",
+    "create_generic_gateway_payment",
+    "confirm_generic_gateway_payment",
+    "handle_generic_gateway_callback",
+    "match_gateway_settlement",
+    "reconcile_cod_deposit",
+    "run_gateway_3way_reconciliation",
+    "reconcile_all_cod_deposits",
+    "GatewayAutoEnableService",
+    "auto_enable_gateways",
+    "list_badge_billing_records",
+    "get_badge_billing_record",
+    "generate_badge_billing_record",
+    "pay_badge_billing_record",
+]

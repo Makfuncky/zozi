@@ -49,6 +49,29 @@ from domains.suppliers.models.suppliers import (  # noqa: F401
     SupplierNotificationPreference,
 )
 
+# Service re-exports (Law 3 sanctioned cross-domain surface). Modules under
+# modules/supplier import these from ``domains.suppliers.ports`` instead of
+# reaching into the services tree directly.
+from domains.suppliers.services.analytics.supplier_analytics_service import (  # noqa: E402, F401
+    get_supplier_analytics_summary,
+)
+from domains.suppliers.services.profile.supplier_product_image_service import (  # noqa: E402, F401
+    upload_supplier_product_image,
+)
+from domains.suppliers.services.profile.supplier_payouts_service import (  # noqa: E402, F401
+    list_payouts,
+    request_payout,
+)
+from domains.suppliers.services.orders.supplier_orders_service import (  # noqa: E402, F401
+    get_parcel_verification_history,
+    get_reference_image,
+    get_supplier_label,
+    list_supplier_orders,
+    replace_reference_image,
+    upload_parcel_proof,
+    verify_parcel_proof,
+)
+
 
 __all__ = [
     "get_supplier_profile_by_user",
@@ -60,4 +83,16 @@ __all__ = [
     "SupplierDocument",
     "SupplierNotificationPreference",
     "SupplierProfile",
+    # service re-exports
+    "get_supplier_analytics_summary",
+    "upload_supplier_product_image",
+    "list_payouts",
+    "request_payout",
+    "get_parcel_verification_history",
+    "get_reference_image",
+    "get_supplier_label",
+    "list_supplier_orders",
+    "replace_reference_image",
+    "upload_parcel_proof",
+    "verify_parcel_proof",
 ]

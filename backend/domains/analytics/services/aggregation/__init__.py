@@ -3,6 +3,5 @@ from __future__ import annotations
 
 from domains.analytics.services.aggregation.command_center_service import *
 from domains.analytics.services.aggregation.command_center_query_service import *
-from domains.analytics.services.aggregation.command_center_background import *
 
 __all__: list[str] = []

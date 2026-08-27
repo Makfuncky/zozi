@@ -17,10 +17,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.governance.ports import User
-from domains.accounts.services.users.users_admin_service import update_user_role, toggle_user_active
+from domains.accounts.ports import get_user_by_id
+# TODO: Module not yet created
+# from domains.accounts.services.users.user_management_service import update_user_role, toggle_user_active
 from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
-from infrastructure.utils.pagination import paginated_response
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.utils.pagination import cursor_paginate_asc, paginated_response
 
 
 def _scope(db: Session, country_code: str):
@@ -79,14 +81,14 @@ def update_user_in_country(
     return user
 
 
-def get_user_by_id(db: Session, user_id: int) -> User:
-    """Fetch a user by primary key (no 404; returns None if absent)."""
-    return db.query(User).filter(User.id == user_id).first()
-
-
 def list_all_users(db: Session, skip: int = 0, limit: int = 50) -> List[User]:
     """List users across all countries (admin console, no RLS scoping)."""
-    return db.query(User).offset(skip).limit(limit).all()
+    query = db.query(User)
+    if skip and skip > 0:
+        page = cursor_paginate_asc(query, cursor=skip, page_size=limit)
+        return list(page.items)
+    page = cursor_paginate_asc(query, cursor=None, page_size=limit)
+    return list(page.items)
 
 
 def get_user_by_id_or_404(db: Session, user_id: int) -> User:
@@ -133,12 +135,13 @@ def bulk_archive_users(db: Session, country_code: str, payload, reason: Optional
     _scope(db, country_code)
     try:
         ids = payload.ids if payload else []
-        count = 0
-        for uid in ids:
-            user = db.query(User).filter(User.id == uid, User.country_code == country_code.upper()).first()
-            if user:
-                user.is_deleted = True
-                count += 1
+        if not ids:
+            return {"message": "0 users archived", "count": 0, "reason": reason}
+        count = (
+            db.query(User)
+            .filter(User.id.in_(ids), User.country_code == country_code.upper())
+            .update({User.is_deleted: True}, synchronize_session=False)
+        )
         db.commit()
         return {"message": f"{count} users archived", "count": count, "reason": reason}
     finally:
@@ -148,12 +151,13 @@ def bulk_archive_users(db: Session, country_code: str, payload, reason: Optional
 def bulk_toggle_active(db: Session, country_code: str, user_ids: List[int], is_active: bool = True) -> Dict[str, Any]:
     _scope(db, country_code)
     try:
-        count = 0
-        for uid in user_ids:
-            user = db.query(User).filter(User.id == uid, User.country_code == country_code.upper()).first()
-            if user:
-                user.is_active = is_active
-                count += 1
+        if not user_ids:
+            return {"message": "Updated 0 users", "updated": 0}
+        count = (
+            db.query(User)
+            .filter(User.id.in_(user_ids), User.country_code == country_code.upper())
+            .update({User.is_active: is_active}, synchronize_session=False)
+        )
         db.commit()
         return {"message": f"Updated {count} users", "updated": count}
     finally:
@@ -164,12 +168,13 @@ def bulk_restore_users(db: Session, country_code: str, payload) -> Dict[str, Any
     _scope(db, country_code)
     try:
         ids = payload.ids if payload else []
-        count = 0
-        for uid in ids:
-            user = db.query(User).filter(User.id == uid, User.country_code == country_code.upper()).first()
-            if user:
-                user.is_deleted = False
-                count += 1
+        if not ids:
+            return {"message": "0 users restored", "count": 0}
+        count = (
+            db.query(User)
+            .filter(User.id.in_(ids), User.country_code == country_code.upper())
+            .update({User.is_deleted: False}, synchronize_session=False)
+        )
         db.commit()
         return {"message": f"{count} users restored", "count": count}
     finally:

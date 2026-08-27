@@ -10,19 +10,19 @@ __all__ = ["Category", "Product", "ProductVariant", "Review", "WishlistItem", "W
 
 class Category(Base):
     __tablename__ = "categories"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    slug = Column(String, unique=True, index=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(50), unique=True, index=True)
     description = Column(Text, nullable=True)
     parent_id = Column(Integer, ForeignKey("commerce.categories.id", ondelete='CASCADE'), nullable=True)
-    icon = Column(String, nullable=True)
-    image_url = Column(String, nullable=True)
+    icon = Column(String(255), nullable=True)
+    image_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
     sort_order = Column(Integer, default=0)
     commission_rate = Column(Numeric(5, 4), nullable=True)
-    meta_title = Column(String, nullable=True)
+    meta_title = Column(String(255), nullable=True)
     meta_description = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -41,27 +41,27 @@ class Product(Base):
         Index("ix_products_category_active", "category", "is_active"),
         Index("ix_products_created_sort", "created_at", "id"),
         Index("ix_products_country_status", "country_code", "moderation_status"),
-        {"schema": "commerce"},
+        {"schema": "catalog"},
     )
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    slug = Column(String, unique=True, index=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(50), unique=True, index=True)
     description = Column(Text, nullable=True)
     short_description = Column(Text, nullable=True)
     ai_description = Column(Text, nullable=True)
-    sku = Column(String, unique=True, nullable=True)
-    barcode = Column(String, unique=True, nullable=True)
+    sku = Column(String(255), unique=True, nullable=True)
+    barcode = Column(String(50), unique=True, nullable=True)
     price = Column(Numeric(10, 2), nullable=False)
     compare_price = Column(Numeric(10, 2), nullable=True)
     cost_price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
     low_stock_threshold = Column(Integer, default=5)
     weight = Column(Numeric(10, 2), nullable=True)
-    dimensions = Column(String, nullable=True)
+    dimensions = Column(String(255), nullable=True)
     materials = Column(JSON, nullable=True)
-    image_url = Column(String, nullable=True)
+    image_url = Column(String(500), nullable=True)
     images = Column(JSON, nullable=True)
-    category = Column(String, nullable=True)
+    category = Column(String(255), nullable=True)
     category_id = Column(Integer, ForeignKey("commerce.categories.id", ondelete='RESTRICT'), nullable=True)
     tags = Column(JSON, nullable=True)
     attributes = Column(JSON, nullable=True)
@@ -71,13 +71,13 @@ class Product(Base):
     is_featured = Column(Boolean, default=False)
     is_digital = Column(Boolean, default=False)
     is_verified = Column(Boolean, default=True)
-    moderation_status = Column(String, default="approved")
-    brand = Column(String, nullable=True)
-    color = Column(String, nullable=True)
+    moderation_status = Column(String(50), default="approved")
+    brand = Column(String(255), nullable=True)
+    color = Column(String(255), nullable=True)
     sizes = Column(JSON, nullable=True)
     rating = Column(Numeric(3, 2), default=0)
     sales_count = Column(Integer, default=0)
-    meta_title = Column(String, nullable=True)
+    meta_title = Column(String(255), nullable=True)
     meta_description = Column(Text, nullable=True)
     is_approved = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
@@ -89,10 +89,10 @@ class Product(Base):
     search_vector = Column(JSON, nullable=True)
     video_count = Column(Integer, default=0)
     variant_axes = Column(JSON, nullable=True)
-    bg_preset = Column(String, nullable=True)
+    bg_preset = Column(String(255), nullable=True)
     visibility_regions = Column(Text, nullable=True)
     slug_hash = Column(String(32), unique=True, nullable=True, index=True)
-    subcategory = Column(String, nullable=True)
+    subcategory = Column(String(255), nullable=True)
     return_window_days = Column(Integer, default=10)
     is_new = Column(Boolean, default=False)
     supplier = relationship("User", back_populates="products")
@@ -111,27 +111,27 @@ class Product(Base):
 
 class Review(Base):
     __tablename__ = "reviews"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
     rating = Column(Integer, nullable=False)
-    title = Column(String, nullable=True)
+    title = Column(String(255), nullable=True)
     comment = Column(Text, nullable=True)
-    image_url = Column(String, nullable=True)
+    image_url = Column(String(500), nullable=True)
     is_approved = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
     is_verified_purchase = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     user = relationship("User", back_populates="reviews")
     product = relationship("Product", back_populates="reviews")
 
 
 class WishlistItem(Base):
     __tablename__ = "wishlist_items"
-    __table_args__ = ({"schema": "customer"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False)
@@ -144,7 +144,7 @@ class WishlistItem(Base):
 
 class Wishlist(Base):
     __tablename__ = "wishlists"
-    __table_args__ = ({"schema": "customer"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
     product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False)
@@ -159,18 +159,18 @@ class ProductVariant(Base):
     __tablename__ = "product_variants"
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False)
-    sku = Column(String, unique=True, nullable=True)
-    title = Column(String, nullable=True)
-    size = Column(String, nullable=True, index=True)
-    color = Column(String, nullable=True, index=True)
-    material = Column(String, nullable=True, index=True)
-    pattern = Column(String, nullable=True, index=True)
-    gender = Column(String, nullable=True, index=True)
-    barcode = Column(String, unique=True, nullable=True)
-    product_code = Column(String, nullable=True)
+    sku = Column(String(255), unique=True, nullable=True)
+    title = Column(String(255), nullable=True)
+    size = Column(String(255), nullable=True, index=True)
+    color = Column(String(255), nullable=True, index=True)
+    material = Column(String(255), nullable=True, index=True)
+    pattern = Column(String(255), nullable=True, index=True)
+    gender = Column(String(50), nullable=True, index=True)
+    barcode = Column(String(50), unique=True, nullable=True)
+    product_code = Column(String(50), nullable=True)
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
-    media_url = Column(String, nullable=True)
+    media_url = Column(String(500), nullable=True)
     attributes_json = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
@@ -185,12 +185,12 @@ class ProductVariant(Base):
     product = relationship("Product", back_populates="variants")
 
     __table_args__ = (
-        UniqueConstraint("product_id", "variant_key", name="uq_product_variant_key"), {"schema": "commerce"})
+        UniqueConstraint("product_id", "variant_key", name="uq_product_variant_key"), {"schema": "catalog"})
 
 
 class ProductVideo(Base):
     __tablename__ = "product_videos"
-    __table_args__ = ({"schema": "media"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False, index=True)
     video_url = Column(String(500), nullable=False)
@@ -210,7 +210,7 @@ class ProductVideo(Base):
 
 class VideoAnalytics(Base):
     __tablename__ = "video_analytics"
-    __table_args__ = ({"schema": "media"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     video_id = Column(Integer, ForeignKey("media.product_videos.id", ondelete='CASCADE'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True, index=True)
@@ -219,12 +219,12 @@ class VideoAnalytics(Base):
     device_type = Column(String(50), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
 
 
 class ProductFilterMetadata(Base):
     __tablename__ = "product_filter_metadata"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     category_id = Column(Integer, ForeignKey("commerce.categories.id", ondelete='CASCADE'), nullable=True, index=True)
     filter_name = Column(String(100), nullable=False)
@@ -233,14 +233,14 @@ class ProductFilterMetadata(Base):
     is_active = Column(Boolean, nullable=False, server_default=sa_text("true"))
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     category = relationship("Category")
     options = relationship("ProductFilterOption", back_populates="filter_metadata", order_by="ProductFilterOption.sort_order")
 
 
 class ProductFilterOption(Base):
     __tablename__ = "product_filter_options"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     filter_metadata_id = Column(Integer, ForeignKey("commerce.product_filter_metadata.id", ondelete='CASCADE'), nullable=False, index=True)
     option_value = Column(String(255), nullable=False)
@@ -249,11 +249,5 @@ class ProductFilterOption(Base):
     sort_order = Column(Integer, nullable=False, server_default="0")
     country_code = Column(String(2), nullable=True, index=True)
     filter_metadata = relationship("ProductFilterMetadata", back_populates="options")
-
-
-Product.variants = relationship(
-    "ProductVariant", back_populates="product",
-    order_by="ProductVariant.id", cascade="all, delete-orphan",
-)
 
 

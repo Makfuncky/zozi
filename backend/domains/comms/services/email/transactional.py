@@ -12,7 +12,7 @@ from domains.orders.ports import ReturnRequest
 from infrastructure.utils.background_jobs import enqueue_job
 from infrastructure.utils.config import settings
 from infrastructure.utils.email_service import send_email
-from domains.orders.utils.order_tracking import order_status_label, shipment_status_label
+from domains.orders.services.tracking.service import order_status_label, shipment_status_label
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -509,5 +509,24 @@ def register_email_event_handlers() -> None:
 
 
 register_email_event_handlers()
+
+
+def dispatch_transactional_email(template: str, to: str, variables: dict) -> dict[str, Any]:
+    """Dispatch a transactional email by template name.
+
+    Returns a status dict with template name or raises ValueError for unknown templates.
+    """
+    if template == "order_created":
+        enqueue_order_created_email(int(variables.get("order_id", 0)))
+    elif template == "invoice":
+        enqueue_invoice_email(int(variables.get("invoice_id", 0)))
+    elif template == "low_stock":
+        enqueue_low_stock_alert_email(
+            int(variables.get("product_id", 0)),
+            int(variables.get("stock_count", 0)),
+        )
+    else:
+        raise ValueError(f"Unknown template: {template}")
+    return {"status": "queued", "template": template}
 
 

@@ -33,6 +33,6 @@ class CityDistanceMatrix(Base):
     destination_city_name = Column(String, nullable=False)
     distance_km = Column(Numeric(10, 2), nullable=True)
     notes = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey("accounts.users.id"), nullable=True)
-    updated_by = Column(Integer, ForeignKey("accounts.users.id"), nullable=True)
+    created_by = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)

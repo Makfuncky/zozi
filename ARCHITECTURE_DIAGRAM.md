@@ -165,9 +165,6 @@ backend/
 │       · webhook_verification · zero_trust_auth
 ├── alembic/                     # SINGLE schema source of truth
 ├── scripts/                     # analyze_tables.py, rewrite_imports.py, seed helpers (dev)
-├── registry.py                  # ServiceRegistry: discovers + indexes domain services
-├── service_index.json           # Auto-generated index: name → {path, type, domain}
-├── migrate_imports.py           # Auto-fixes router imports using service_index.json
 └── tests/
     ├── architecture/            # test_import_laws.py (layer direction + cross-domain ban), test_feature_catalog.py
     └── domains/                 # per-domain unit/integration tests
@@ -569,111 +566,53 @@ sequenceDiagram
 
 ---
 
-## 12 · Service Registry & Automatic Wiring
+## 12 · Project Rules & Decisions
 
-When domain services are reorganized (moved between domains, split into sub-packages),
-router import paths break. The **Service Registry** automates discovery, resolution, and
-migration of these imports.
+### 12.1 Architecture Rules (The Seven Laws)
 
-### 12.1 Components
+1. **Arrows point down only** — `modules → domains → infrastructure`. Domains never import modules. `infrastructure`/`kernel` import nothing above them.
+2. **Module routers stay thin** — auth context + `require_feature(...)` + ONE domain-service call. No DB writes, no business rules.
+3. **Cross-domain writes only via events** (`events.py`/`subscribers.py`); cross-domain reads only via `ports.py`/`read_models/`.
+4. **Features single-sourced** in `domains/*/features.py`; aggregated by `rbac/catalog.py`.
+5. **Country is the orthogonal scope axis** — RLS session context + `country_staff_assignments`.
+6. **Schema discipline** — one Postgres schema per domain; Alembic is the only schema source; `snake_case`, plural tables, `<thing>_id` FKs.
+7. **Allowlist rule** — `DOMAIN_ALLOWLIST.yaml` tracks temporary cross-domain imports; may only shrink.
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| `ServiceRegistry` | `backend/registry.py` | Discovers all public functions/classes in `domains/`, `infrastructure/`, `providers/` and builds an index |
-| `service_index.json` | `backend/service_index.json` | Persistent index: `name → {path, type, domain, file}` |
-| Migration tool | `backend/migrate_imports.py` | Compares router imports against the index and rewrites broken paths |
+### 12.2 Structural Decisions
 
-### 12.2 How It Works
+8. **Router structure** — `modules/{m}/routers/{d}.py` with 15 router files (one per domain per module).
+9. **Media code belongs in providers** — `domains/media` should not exist; all media code goes to `providers/media`.
+10. **Kernel is pure** — `kernel/` contains only business primitives (money/Decimal, currency, numbering, country, period). Must not import domains/modules/rbac/providers.
+11. **Providers wrap SDKs only** — No business logic, no domain imports. Each exposes `HAS_<SDK>` flags.
+12. **16 domains** — accounts, analytics, audit, catalog, comms, country, customers, finance, governance, hr, logistics, orders, promotions, security, suppliers.
+13. **5 modules** — admin, customer, employee, logistics, supplier.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SERVICE REGISTRY                            │
-│                                                                 │
-│  1. SCAN     → Walk domains/, infrastructure/, providers/       │
-│                 Parse every .py file for def/class definitions  │
-│                 Build index: name → actual_path                 │
-│                                                                 │
-│  2. RESOLVE  → Router asks: "where is ProductService?"         │
-│                 Registry returns: domains.catalog.services...   │
-│                                                                 │
-│  3. MIGRATE  → Compare router imports to index                  │
-│                 Generate corrections: old_path → new_path        │
-│                 Apply: string replacement in router files        │
-│                                                                 │
-│  4. VERIFY   → Re-scan confirms 0 remaining issues             │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 12.3 File Placement Rules
 
-### 12.3 Usage
+14. **Business logic → `domains/{domain}/services/`**
+15. **API endpoints → `modules/{module}/routers/{domain}.py`**
+16. **External SDK wrappers → `providers/{category}/`**
+17. **Cross-domain communication → `events.py` (writes) or `ports.py` (reads) only**
+18. **Root-level `utils/`, `routers/`, `controllers/`, `services/`, `models/`, `db/` are FORBIDDEN**
 
-```bash
-# Build/update the service index
-python backend/registry.py
+### 12.4 Code Quality Rules
 
-# Check what needs fixing (dry run)
-python backend/migrate_imports.py
+19. **No float for money** — Use `Decimal` from `kernel/money.py`.
+20. **country_code width** — Standardized to `String(2)` (ISO 3166-1 alpha-2).
+21. **Timestamps** — `server_default=func.now()` (DB-side), not Python-side defaults.
+22. **Foreign keys** — Must have explicit `ondelete` constraint.
+23. **Audit columns** — `created_at`/`updated_at` on all models via canonical mixin.
+24. **No forbidden schemas** — `core`, `platform`, `identity` are banned as Postgres schema names.
 
-# Apply corrections
-python backend/migrate_imports.py --apply
-```
+### 12.5 Migration Decisions
 
-### 12.4 Example
+25. **Shift files to correct domains first** before beginning domain-specific reorganization.
+26. **Use backward-compat shims** in `infrastructure/utils/` for relocated files (re-export from canonical location).
+27. **Delete temporary scripts** — Root-level `fix_*.py`, `debug_*.py`, `migrate_*.py` should be removed after use.
+28. **`_auto_stubs.py` are NOT architecture** — They are migration scaffolding to be deleted when real implementations exist.
+29. **`registry.py` and `auto_wire.py` are NOT architecture** — They were migration scaffolding and have been removed.
 
-**Before migration** (stale import path):
-```python
-# modules/customer/routers/orders.py
-from domains.catalog.services.products_controller import ProductService
-```
+### 12.6 Provider Rules
 
-**Registry index entry**:
-```json
-{
-  "name": "ProductService",
-  "path": "domains.catalog.services.products.products_service",
-  "type": "class",
-  "domain": "catalog"
-}
-```
-
-**After migration** (correct import path):
-```python
-# modules/customer/routers/orders.py
-from domains.catalog.services.products.products_service import ProductService
-```
-
-### 12.5 When to Run
-
-| Scenario | Action |
-|----------|--------|
-| After domain reorganization | `python backend/migrate_imports.py --apply` |
-| After adding new domain services | `python backend/registry.py` to update index |
-| CI check | `python backend/migrate_imports.py` should report 0 issues |
-| Before commit | Verify `service_index.json` is up to date |
-
-### 12.6 Index Statistics
-
-| Category | Count |
-|----------|-------|
-| Total services indexed | ~4,200 |
-| Domains covered | 35 |
-| Infrastructure modules | ~150 |
-| Provider modules | ~78 |
-
-### 12.7 Design Principles
-
-1. **Discovery over hardcoding** — The registry scans actual files, so it never goes stale
-2. **Idempotent** — Running migration multiple times is safe (no duplicate changes)
-3. **Non-destructive preview** — Dry run shows what would change before applying
-4. **First-wins** — If a name exists in multiple modules, the first scanned wins
-5. **Domain-aware** — Prefers same-domain matches when resolving ambiguities
-
-### 12.8 Integration with Architecture Laws
-
-The registry enforces **Law 1 (Arrows point down)** by:
-- Tracking which domain each service belongs to
-- Detecting when a router imports from the wrong domain
-- Ensuring modules only import from domains (not other modules)
-
-The registry enforces **Law 3 (Cross-domain via ports/events)** by:
-- Flagging direct cross-domain imports that bypass `ports.py`
-- Tracking sanctioned imports in `DOMAIN_ALLOWLIST.yaml`
+30. **Graceful degradation** — Domains must handle missing provider SDKs (check `HAS_<SDK>` flags).
+31. **Providers never import domains** — Data flows through parameters and return values only.

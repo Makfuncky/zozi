@@ -1,8 +1,7 @@
 """Employee models for HCM system."""
 from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
-from decimal import Decimal
-from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint, BigInteger, Time, func
+from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, Float, ForeignKey, Index, Integer, JSON, Numeric, String, Text, UniqueConstraint, Time, func
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -23,7 +22,7 @@ __all__ = [
 
 class Office(Base):
     __tablename__ = "offices"
-    __table_args__ = {"schema": "logistics"}
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
     country_code = Column(String(2), nullable=False)
@@ -41,7 +40,7 @@ class PhysicalIDCard(Base):
     __tablename__ = "physical_id_cards"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="SET NULL"), unique=True, nullable=False)
     card_number = Column(String(50), unique=True, nullable=False, index=True)
     issued_at = Column(DateTime, default=_utcnow)
     expires_at = Column(DateTime, nullable=True)
@@ -49,15 +48,15 @@ class PhysicalIDCard(Base):
     revoked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
-    
+    country_code = Column(String(2), nullable=True, index=True)
+
     employee = relationship("Employee", back_populates="id_card")
 
 
 class DynamicQRSession(Base):
     __tablename__ = "dynamic_qr_sessions"
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="SET NULL"), nullable=False)
     qr_token = Column(String(255), unique=True, nullable=False, index=True)
     expires_at = Column(DateTime, nullable=False)
     used_at = Column(DateTime, nullable=True)
@@ -66,17 +65,17 @@ class DynamicQRSession(Base):
     device_fingerprint = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
-    
+    country_code = Column(String(2), nullable=True, index=True)
+
     employee = relationship("Employee", back_populates="dynamic_qr_sessions")
-    __table_args__ = (Index("ix_qr_session_employee_expires", "employee_id", "expires_at"), {"schema": "logistics"})
+    __table_args__ = (Index("ix_qr_session_employee_expires", "employee_id", "expires_at"), {"schema": "hr"})
 
 
 class EmployeeBiometric(Base):
     __tablename__ = "employee_biometrics"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="SET NULL"), unique=True, nullable=False)
     fingerprint_hash = Column(String(255), nullable=True)
     face_encoding = Column(Text, nullable=True)
     biometric_type = Column(String(20), default="fingerprint")
@@ -89,9 +88,9 @@ class EmployeeBiometric(Base):
 
 class GeoFenceLog(Base):
     __tablename__ = "geo_fence_logs"
-    __table_args__ = {"schema": "logistics"}
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("hr.employees.id", ondelete="SET NULL"), nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     accuracy_meters = Column(Integer, nullable=True)
@@ -120,7 +119,7 @@ class OrgUnit(Base):
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
-    parent_id = Column(Integer, ForeignKey("hr.org_units.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("hr.org_units.id", ondelete="SET NULL"), nullable=True)
     country_code = Column(String(2), nullable=True)
     level = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
@@ -146,7 +145,7 @@ class Employee(Base):
     employment_status = Column(String(30), default="active")
     salary = Column(Numeric(12, 2), nullable=True)
     currency = Column(String(3), default="OMR")
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True)
     hire_date = Column(Date, nullable=False)
     termination_date = Column(Date, nullable=True)
     is_verified = Column(Boolean, default=False)
@@ -155,10 +154,10 @@ class Employee(Base):
     performance_score = Column(Integer, nullable=True)
     education_level = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
-    reporting_manager_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
-    hiring_manager_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    reporting_manager_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=True)
+    hiring_manager_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     authority_level = Column(Integer, nullable=True)
-    org_unit_id = Column(Integer, ForeignKey("hr.org_units.id"), nullable=True)
+    org_unit_id = Column(Integer, ForeignKey("hr.org_units.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     
@@ -204,7 +203,7 @@ class EmployeeAttendance(Base):
     
     employee = relationship("Employee", back_populates="attendance")
     
-    __table_args__ = (UniqueConstraint("employee_id", "record_date", name="uq_attendance_employee_date"), CheckConstraint("status IN ('present', 'absent', 'late', 'half_day', 'on_leave', 'holiday')", name="chk_employee_attendance_status_valid"), {"schema": "logistics"})
+    __table_args__ = (UniqueConstraint("employee_id", "record_date", name="uq_attendance_employee_date"), CheckConstraint("status IN ('present', 'absent', 'late', 'half_day', 'on_leave', 'holiday')", name="chk_employee_attendance_status_valid"), {"schema": "hr"})
 
 
 class EmployeeWorkLog(Base):
@@ -234,7 +233,7 @@ class EmployeeLeaveRequest(Base):
     end_date = Column(Date, nullable=False)
     days_requested = Column(Integer, nullable=False)
     status = Column(String(20), default="pending")
-    approved_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    approved_by = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     rejection_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
@@ -267,6 +266,7 @@ class EmployeeLeaveLedger(Base):
 
 class EmployeeShiftRoster(Base):
     __tablename__ = "employee_shift_rosters"
+    __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="CASCADE"), nullable=False, index=True)
     shift_date = Column(Date, nullable=False)
@@ -328,7 +328,7 @@ class EmployeeDocument(Base):
     doc_type = Column(String(50), nullable=False)
     file_url = Column(String(500), nullable=False)
     expiry_date = Column(Date, nullable=True)
-    verified_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    verified_by = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -362,7 +362,7 @@ class EmployeeRelation(Base):
     related_person_name = Column(String(160), nullable=False)
     relation_type = Column(String(30), nullable=False)
     is_internal_employee = Column(Boolean, default=False)
-    internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
@@ -381,7 +381,7 @@ class EmployeeAddress(Base):
     city = Column(String(100), nullable=False)
     state = Column(String(100), nullable=True)
     postal_code = Column(String(20), nullable=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=False)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=False)
     is_primary = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -394,18 +394,18 @@ class COIReport(Base):
     __tablename__ = "coi_reports"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=False)
     related_person_name = Column(String(160), nullable=False)
     relation_type = Column(String(30), nullable=False)
     is_internal = Column(Boolean, default=False)
-    internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    internal_employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=True)
     risk_level = Column(String(20), default="low")
     is_approved = Column(Boolean, default=False)
-    approved_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    approved_by = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     employee = relationship("Employee", foreign_keys=[employee_id], backref="coi_reports")
     internal_employee = relationship("Employee", foreign_keys=[internal_employee_id])
     approver = relationship("User", foreign_keys=[approved_by])
@@ -415,19 +415,19 @@ class TravelRequest(Base):
     __tablename__ = "employee_travel_requests"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=False)
     destination_country = Column(String(10), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     purpose = Column(String(200), nullable=True)
     status = Column(String(20), default="pending")
-    approved_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    approved_by = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     per_diem_json = Column(JSON, nullable=True)
     total_cost = Column(Numeric(12, 2), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     
     employee = relationship("Employee", backref="travel_requests")
     approver = relationship("User", foreign_keys=[approved_by])
@@ -439,14 +439,14 @@ class AlumniNetwork(Base):
     __tablename__ = "alumni_network"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), unique=True, nullable=False)
+    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), unique=True, nullable=False)
     status = Column(String(20), default="active")
     granted_at = Column(DateTime, default=_utcnow)
     eligibility_expires_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     
     employee = relationship("Employee", backref="alumni_record")
 
@@ -456,7 +456,7 @@ class DisciplinaryCase(Base):
     __tablename__ = "disciplinary_cases"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=False, index=True)
     employee_name = Column(String(200), nullable=True)
     stage = Column(String(30), nullable=False, default="verbal_warning")
     description = Column(Text, nullable=False)
@@ -474,7 +474,7 @@ class OffboardingCase(Base):
     __tablename__ = "offboarding_cases"
     __table_args__ = {"schema": "hr"}
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=False, index=True)
     employee_name = Column(String(200), nullable=True)
     reason = Column(String(50), nullable=False, default="resignation")
     status = Column(String(20), default="pending")
@@ -483,7 +483,7 @@ class OffboardingCase(Base):
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     
     employee = relationship("Employee", foreign_keys=[employee_id], backref="offboarding_cases")
 
@@ -493,13 +493,13 @@ class OffboardingCase(Base):
 class EmployeeRiskScore(Base):
     __tablename__ = 'employee_risk_scores'
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey('logistics.employees.id'), nullable=False, index=True)
+    employee_id = Column(Integer, ForeignKey('logistics.employees.id', ondelete="SET NULL"), nullable=False, index=True)
     assessment_date = Column(Date, nullable=False)
     score = Column(Float, default=0.0)
     risk_level = Column(String(20), nullable=True)
     factors = Column(JSON, nullable=True)
     notes = Column(Text, nullable=True)
-    country_code = Column(String(10), nullable=True)
+    country_code = Column(String(2), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -508,7 +508,7 @@ class PayrollRecord(Base):
     __tablename__ = 'payroll_records'
     id = Column(Integer, primary_key=True, index=True)
     country_code = Column(String(2), nullable=False, index=True)
-    employee_id = Column(Integer, ForeignKey('logistics.employees.id'), nullable=True)
+    employee_id = Column(Integer, ForeignKey('logistics.employees.id', ondelete="SET NULL"), nullable=True)
     net_pay = Column(Numeric(14, 2), default=0)
     status = Column(String(20), default='pending')
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
@@ -534,8 +534,8 @@ class TrainingModule(Base):
 class EmployeeTraining(Base):
     __tablename__ = 'employee_trainings'
     id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey('logistics.employees.id'), nullable=False, index=True)
-    module_id = Column(String(36), ForeignKey('training_modules.module_id'), nullable=False)
+    employee_id = Column(Integer, ForeignKey('logistics.employees.id', ondelete="SET NULL"), nullable=False, index=True)
+    module_id = Column(String(36), ForeignKey('training_modules.module_id', ondelete="SET NULL"), nullable=False)
     status = Column(String(20), default='assigned')
     score = Column(Float, nullable=True)
     completed_at = Column(DateTime, nullable=True)
@@ -555,7 +555,7 @@ class EmployeeActivityLog(Base):
     """
     __tablename__ = "employee_activity_logs"
     id = Column(Integer, primary_key=True, index=True)
-    actor_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False, index=True)
+    actor_employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=False, index=True)
     action = Column(String(100), nullable=False, index=True)
     entity_type = Column(String(100), nullable=True)
     entity_id = Column(Integer, nullable=True)
@@ -575,11 +575,11 @@ class ShiftHandoverSession(Base):
         Index("ix_handover_outgoing", "outgoing_employee_id"),
         Index("ix_handover_incoming", "incoming_employee_id"),
         Index("ix_handover_status", "status"),
-        CheckConstraint("status IN ('pending', 'in_progress', 'completed', 'cancelled')", name="chk_shift_handover_sessions_status_valid"), {"schema": "customer"})
+        CheckConstraint("status IN ('pending', 'in_progress', 'completed', 'cancelled')", name="chk_shift_handover_sessions_status_valid"), {"schema": "hr"})
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True)
-    outgoing_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=False)
-    incoming_employee_id = Column(Integer, ForeignKey("logistics.employees.id"), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True)
+    outgoing_employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=False)
+    incoming_employee_id = Column(Integer, ForeignKey("logistics.employees.id", ondelete="SET NULL"), nullable=True)
     shift_date = Column(DateTime, nullable=False)
     notes = Column(Text, nullable=True)
     status = Column(String(20), default="pending")
@@ -596,11 +596,11 @@ class ShiftHandoverTask(Base):
         CheckConstraint("status IN ('open', 'in_progress', 'completed', 'cancelled', 'blocked')", name="chk_shift_handover_tasks_status_valid"),
         {"extend_existing": True, "schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("shift_handover_sessions.id"), nullable=False)
+    session_id = Column(Integer, ForeignKey("shift_handover_sessions.id", ondelete="SET NULL"), nullable=False)
     description = Column(Text, nullable=False)
     priority = Column(String(20), default="normal")
     status = Column(String(20), default="open")
-    assigned_to = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     session = relationship("ShiftHandoverSession", back_populates="tasks")

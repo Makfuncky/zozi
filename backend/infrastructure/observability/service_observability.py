@@ -108,7 +108,6 @@ def log_service_error(
     service_name: str,
     method_name: str,
     error: Exception,
-    *,
     **extra: Any,
 ) -> None:
     """Log a service error with structured context."""

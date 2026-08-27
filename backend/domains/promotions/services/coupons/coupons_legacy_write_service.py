@@ -20,7 +20,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from domains.governance.ports import CouponUsage
 from domains.finance.ports import Coupon
 from kernel.money import round_money

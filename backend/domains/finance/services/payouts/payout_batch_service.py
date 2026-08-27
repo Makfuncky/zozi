@@ -3,19 +3,17 @@ import logging
 from decimal import Decimal
 from typing import Optional
 from sqlalchemy.orm import Session
-from domains.country.models.countries import CountryConfig
-from domains.country.models.countries import PayoutRule
-from domains.country.models.countries import PayoutRuleCategory
-from domains.country.models.countries import PayoutRuleProduct
-from domains.country.models.country_enhancements import CountryCommissionRate
-import json
-from typing import Any
-from domains.country.models.countries import CountryGatewayCredentials
-from domains.finance.services.payments.base import BasePaymentGateway
-from domains.finance.services.payments.base_models import ConnectionTestResult
-from domains.finance.services.payments.base_models import PaymentResult
-from domains.finance.services.payments.base_models import RefundResult
-from domains.finance.services.payments.registry import PaymentGatewayRegistry
+from domains.finance.models.finance import PayoutBatch
+# TODO: Module not yet created
+# from domains.finance.services.payments.base import BasePaymentGateway
+# TODO: Module not yet created
+# from domains.finance.services.payments.base_models import ConnectionTestResult
+# TODO: Module not yet created
+# from domains.finance.services.payments.base_models import PaymentResult
+# TODO: Module not yet created
+# from domains.finance.services.payments.base_models import RefundResult
+# TODO: Module not yet created
+# from domains.finance.services.payments.registry import PaymentGatewayRegistry
 """
 Payout Batch Service — Smart automated payout generation.
 
@@ -30,19 +28,16 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.finance import PayoutBatchItem
 from domains.finance.models.finance import SupplierSettlement
 from domains.finance.models.finance import Vendor
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import FinanceAuditLog
-from domains.logistics.models.logistics import LogisticsPartner
 from domains.finance.models.payments import LogisticsPartnerPayout
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance import general_ledger_service as gl
+from domains.finance.services.finance_service import general_ledger_service as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -342,6 +337,10 @@ class PayoutEngine:
     def __init__(self, db: Session):
         self.db = db
 
+    def _lazy_country_models(self):
+        from domains.country.models.countries import CountryConfig, PayoutRuleCategory, PayoutRuleProduct
+        return CountryConfig, PayoutRuleCategory, PayoutRuleProduct
+
     def get_payout_rate(
         self,
         country_code: str,
@@ -366,13 +365,15 @@ class PayoutEngine:
 
         return self._get_default_payout_rate(country_code)
 
-    def _get_country(self, country_code: str) -> Optional[CountryConfig]:
+    def _get_country(self, country_code: str):
+        CountryConfig, _, _ = self._lazy_country_models()
         return self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper(),
             CountryConfig.is_active == True,
         ).first()
 
     def _get_product_payout_rate(self, country_code: str, product_id: int) -> Optional[Decimal]:
+        _, _, PayoutRuleProduct = self._lazy_country_models()
         rule = (
             self.db.query(PayoutRuleProduct)
             .filter(
@@ -387,6 +388,7 @@ class PayoutEngine:
         return None
 
     def _get_category_payout_rate(self, country_code: str, category_slug: str) -> Optional[Decimal]:
+        _, PayoutRuleCategory, _ = self._lazy_country_models()
         rule = (
             self.db.query(PayoutRuleCategory)
             .filter(
@@ -483,6 +485,13 @@ class PaymentEngine:
             order_id=42,
         )
     """
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def _lazy_country_models(self):
+        from domains.country.models.countries import CountryConfig, CountryGatewayCredentials
+        return CountryConfig, CountryGatewayCredentials
 
     def __init__(self, db: Session):
         self.db = db
@@ -598,13 +607,14 @@ class PaymentEngine:
     # Internal helpers
     # ----------------------------------------------------------------
 
-    def _get_country(self, country_code: str) -> CountryConfig | None:
+    def _get_country(self, country_code: str):
+        CountryConfig, _ = self._lazy_country_models()
         return self.db.query(CountryConfig).filter(
             CountryConfig.code == country_code.upper(),
             CountryConfig.is_active == True,
         ).first()
 
-    def _gateway_enabled_for_country(self, country: CountryConfig, gateway_id: str) -> bool:
+    def _gateway_enabled_for_country(self, country, gateway_id: str) -> bool:
         raw = country.payment_gateways_json
         if not raw:
             return False
@@ -629,6 +639,7 @@ class PaymentEngine:
         gateway_id: str,
         environment: str,
     ) -> dict[str, Any]:
+        _, CountryGatewayCredentials = self._lazy_country_models()
         record = self.db.query(CountryGatewayCredentials).filter(
             CountryGatewayCredentials.country_code == country_code.upper(),
             CountryGatewayCredentials.gateway_id == gateway_id,
@@ -649,7 +660,7 @@ class PaymentEngine:
 
 # === MERGED from payment_orchestrator.py ===
 
-﻿from infrastructure.utils.datetime_utils import utcnow
+from infrastructure.utils.datetime_utils import utcnow
 """
 Payment Orchestrator Service
 Dynamically enables/disables payment gateways based on country configuration.
@@ -1687,7 +1698,8 @@ __all__ = [
 # === MERGED from admin_payouts_service.py ===
 
 """Auto-migrated service logic from routers/admin_payouts.py."""
-from domains.governance.services.admin_treasury_status_service import _update_bg_status_after_manual_trigger
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import _update_bg_status_after_manual_trigger
 
 from fastapi import Depends, HTTPException, Path, Query
 
@@ -1703,17 +1715,22 @@ from domains.accounts.models.user import User
 from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.payments import Payout
 
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 
-from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
+# TODO: Module not yet created
+# from domains.finance.services.auto_payout_scheduler import get_background_job_status as _get_bg_status
 
-from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as _run_logistics_sweep
+# TODO: Module not yet created
+# from domains.finance.services.auto_payout_scheduler import run_auto_logistics_payout_sweep as _run_logistics_sweep
 
-from domains.finance.services.auto_payout_scheduler import run_auto_payout_sweep as _run_supplier_sweep
+# TODO: Module not yet created
+# from domains.finance.services.auto_payout_scheduler import run_auto_payout_sweep as _run_supplier_sweep
 
-from domains.finance.services.auto_payout_scheduler import start_auto_payout_background_job as _start_bg_job
+# TODO: Module not yet created
+# from domains.finance.services.auto_payout_scheduler import start_auto_payout_background_job as _start_bg_job
 
-from domains.finance.services.auto_payout_scheduler import stop_auto_payout_background_job as _stop_bg_job
+# TODO: Module not yet created
+# from domains.finance.services.auto_payout_scheduler import stop_auto_payout_background_job as _stop_bg_job
 
 from domains.country.utils.country_rls import get_country_or_404
 
@@ -1721,7 +1738,7 @@ from infrastructure.utils.datetime_utils import utcnow
 
 from infrastructure.utils.dependencies import require_admin
 
-from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
+from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 class PayoutVerifyRequest(BaseModel):
     note: str | None = None
@@ -1743,7 +1760,8 @@ class PayoutVerifyRequest(BaseModel):
 
 
 
-from domains.governance.services.admin_treasury_status_service import create_payout
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import create_payout
 
 
 
@@ -1766,7 +1784,8 @@ from domains.governance.services.admin_treasury_status_service import create_pay
 
 
 
-from domains.governance.services.admin_treasury_status_service import list_pending_payouts
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import list_pending_payouts
 
 
 
@@ -1781,7 +1800,9 @@ from domains.governance.services.admin_treasury_status_service import list_pendi
 
 
 
-from domains.governance.services.admin_treasury_status_service import list_pending_payouts_by_country
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import list_pending_payouts_by_country
 
 
 
@@ -1793,7 +1814,8 @@ from domains.governance.services.admin_treasury_status_service import list_pendi
 
 
 
-from domains.governance.services.admin_treasury_status_service import verify_payout
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import verify_payout
 
 
 
@@ -1807,7 +1829,8 @@ from domains.governance.services.admin_treasury_status_service import verify_pay
 
 
 
-from domains.governance.services.admin_treasury_status_service import run_auto_payout_sweep
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import run_auto_payout_sweep
 
 
 
@@ -1822,15 +1845,22 @@ from domains.governance.services.admin_treasury_status_service import run_auto_p
 
 
 
-from domains.governance.services.admin_treasury_status_service import process_payout
-from domains.governance.services.admin_treasury_status_service import get_background_job_status_endpoint
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import process_payout
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import get_background_job_status_endpoint
 
 
 # === auto-wiring re-exports (migration repair) ===
-from domains.governance.services.admin_treasury_status_service import start_background_job
-from domains.governance.services.admin_treasury_status_service import stop_background_job
-from domains.governance.services.admin_treasury_status_service import trigger_background_job
-from domains.governance.services.admin_treasury_status_service import trigger_background_job_kind
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import start_background_job
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import stop_background_job
+# TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import trigger_background_job
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.governance.services.admin_treasury_status_service import trigger_background_job_kind
 
 # === MERGED from payout_notification_service.py ===
 
@@ -2303,7 +2333,7 @@ def _send_in_app_notification_separate_session(
 
 # === MERGED from payout_admin_service.py ===
 
-﻿"""Treasury payout-admin service.
+"""Treasury payout-admin service.
 
 Thin service layer backing the payout-admin controller. Operations are kept
 deliberately small; this module exists so the routers -> controllers ->
@@ -2417,7 +2447,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from domains.finance.models.payments import Payout
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
@@ -2549,7 +2579,7 @@ from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import SupplierSettlement
 from domains.governance.models.admin import LogisticsSettlement
 from domains.finance.models.payments import Payout
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 
 
 def list_pending_payouts(db: Session, limit: int = 200, offset: int = 0) -> list:
@@ -2991,7 +3021,7 @@ from sqlalchemy.orm import Session, joinedload
 from domains.finance.models.finance import PayoutBatch, PayoutBatchItem
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.finance.models.payments import LogisticsPartnerPayout, Payout
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.utils.datetime_utils import utcnow
 
 
@@ -3178,7 +3208,7 @@ NOTE — audit logging: the router previously called
 ``audit_log(db=db, action=AuditAction.PAYOUT_PROCESSED, user_id=..., username=...,
 user_role=..., resource_type=..., resource_id=...)``. That call could never
 succeed: ``AuditAction`` has no ``PAYOUT_PROCESSED`` member (AttributeError) and
-``infrastructure.utils.audit.audit_log`` takes ``actor_id`` / ``entity`` / ``entity_key`` rather
+``domains.audit.services.logs.audit_service.audit_log`` takes ``actor_id`` / ``entity`` / ``entity_key`` rather
 than ``user_id`` / ``resource_type`` / ``resource_id``. Every write endpoint
 therefore raised HTTP 500 *after* committing. The calls below preserve the
 original intent while matching the real ``audit_log`` signature.
@@ -3194,7 +3224,7 @@ from domains.comms.models.suppliers import SupplierProfile
 from domains.finance.models.finance import PayoutBatch
 from domains.finance.models.payments import LogisticsPartnerPayout
 from domains.finance.models.payments import Payout
-from infrastructure.utils.audit import audit_log
+from domains.audit.services.logs.audit_service import audit_log
 from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
@@ -3506,16 +3536,20 @@ def request_supplier_payout(db: Session, current_user, payload: dict) -> dict:
 
 'Treasury payout status controller.\n\nHolds the read/write logic for admin payout records (list / create / verify /\nprocess). Previously inline in ``routers.admin_treasury_status`` (CG1: ``Payout``\ninstantiation in router, W1: ``db.add``/``db.commit`` in router, DBA32: OFFSET\npagination). Routers now set RLS context, authorize, and delegate here.\n\nLists use keyset (seek) pagination via an opaque ``cursor`` (``created_at`` +\n``id``) instead of ``OFFSET``.\n'
 import base64
-from domains.comms.services.utility.db_read import query as db_read_query
-from domains.comms.services.utility.db_read import execute as db_read_execute
+# TODO: Module not yet created
+# from domains.comms.services.utility.db_read import query as db_read_query
+# TODO: Module not yet created
+# from domains.comms.services.utility.db_read import execute as db_read_execute
 from datetime import datetime
 from typing import Optional, Tuple
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from domains.finance.models.payments import Payout
-from infrastructure.utils.audit import AuditAction, audit_log
-from domains.comms.services.utility.write_helpers import commit_and_refresh
-from domains.comms.services.utility.write_helpers import commit_only
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
+# TODO: Module not yet created
+# from domains.comms.services.utility.write_helpers import commit_and_refresh
+# TODO: Module not yet created
+# from domains.comms.services.utility.write_helpers import commit_only
 from infrastructure.utils.datetime_utils import utcnow
 
 def _encode_cursor(dt: datetime, id_: int) -> str:
@@ -3617,8 +3651,9 @@ from typing import Any
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.finance.services.ledger.finance_transfer_service import execute_transfer_batch
-from infrastructure.utils.audit import AuditAction, audit_log
+# TODO: Module not yet created
+# from domains.finance.services.ledger.finance_transfer_service import execute_transfer_batch
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from infrastructure.database.database import SessionLocal
 import structlog
 logger = structlog.get_logger(__name__)
@@ -3722,7 +3757,7 @@ from domains.finance.models.finance import FinanceAutomationLog
 from domains.finance.models.finance import FinanceAuditLog
 from domains.orders.models.orders import Order
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance import general_ledger_service as gl
+from domains.finance.services.finance_service import general_ledger_service as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -4090,10 +4125,10 @@ from domains.finance.models.payments import Payout
 from infrastructure.database.schemas import PayoutCreate, PayoutOut
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from infrastructure.utils.datetime_utils import utcnow
-from infrastructure.utils.audit import audit_log, AuditAction
-from finance.ports import get_background_job_status
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
+from domains.finance.ports import get_background_job_status
 from domains.finance.ports import start_auto_payout_background_job
 from domains.finance.ports import stop_auto_payout_background_job
 from domains.finance.ports import run_auto_payout_sweep

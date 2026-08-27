@@ -171,13 +171,14 @@ def clear_failed_logins(identifier: str) -> None:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
         return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
-    except Exception:
+    except Exception as exc:
+        logger.warning("Password verification error: %s", exc)
         return False
 
 
 def get_password_hash(password: str) -> str:
     if len(password) > 72:
-        password = password[:72]
+        raise ValueError("Password exceeds maximum length of 72 characters")
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 

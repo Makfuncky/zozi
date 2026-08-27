@@ -21,6 +21,14 @@ logger = logging.getLogger(__name__)
 
 _VAULT_PREFIX = "v1:"
 
+_ALLOWED_FIELDS = {"secret_key", "webhook_secret", "extra_config_json", "api_key", "encryption_key"}
+
+
+def _validate_field(field: str) -> None:
+    """Validate that a field name is in the allowlist."""
+    if field not in _ALLOWED_FIELDS:
+        raise VaultError(f"Field '{field}' is not in the allowed fields list")
+
 
 class VaultError(Exception):
     """Raised when vault encryption/decryption fails."""
@@ -122,42 +130,48 @@ def rotate_key(new_master_key: Optional[str] = None) -> dict:
     """
     global _vault_instance
     from infrastructure.database.database import get_db
-    from domains.finance.models.payments import PaymentGatewayConnection
-    from cryptography.fernet import Fernet
+    from sqlalchemy import text as _text
     import json as _json
-    
+
     if _vault_instance is None:
         _vault_instance = VaultService()
-    
+
     old_vault = _vault_instance
     old_vault._fernet = Fernet(old_vault._derive_key(old_vault._master_key))
-    
+
     new_key = new_master_key or os.getenv("ZOZI_VAULT_MASTER_KEY")
     if not new_key:
         raise VaultError("New master key must be provided")
-    
+
     new_vault = VaultService(master_key=new_key)
-    
+
     reencrypted_count = 0
     errors = []
-    
+
     with get_db() as db:
-        connections = db.query(PaymentGatewayConnection).all()
-        for conn in connections:
-            for field in ['secret_key', 'webhook_secret', 'extra_config_json']:
-                val = getattr(conn, field)
+        rows = db.execute(_text("SELECT id, provider_code, secret_key, webhook_secret, extra_config_json FROM payment_gateway_connections")).fetchall()
+        for row in rows:
+            conn_id = row[0]
+            provider_code = row[1]
+            for field_idx, field in enumerate(['secret_key', 'webhook_secret', 'extra_config_json'], start=2):
+                if field not in _ALLOWED_FIELDS:
+                    raise VaultError(f"Refusing to interpolate non-allowlisted field '{field}' into SQL")
+                val = row[field_idx]
                 if val and old_vault.is_encrypted(val):
                     try:
                         decrypted = old_vault.decrypt(val)
                         new_encrypted = new_vault.encrypt(decrypted)
-                        setattr(conn, field, new_encrypted)
+                        db.execute(
+                            _text(f"UPDATE payment_gateway_connections SET {field} = :val WHERE id = :id"),
+                            {"val": new_encrypted, "id": conn_id},
+                        )
                         reencrypted_count += 1
                     except Exception as e:
-                        errors.append(f"Connection {conn.provider_code}: {str(e)}")
-        
+                        errors.append(f"Connection {provider_code}: {str(e)}")
+
         db.commit()
         _vault_instance = new_vault
-        
+
         return {
             "status": "success",
             "reencrypted_count": reencrypted_count,

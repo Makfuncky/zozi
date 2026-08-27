@@ -4,8 +4,6 @@ import json
 import logging
 from typing import Any
 
-from domains.governance import ports as governance_ports
-
 logger = logging.getLogger(__name__)
 
 SECURITY_EVENTS = frozenset({
@@ -66,6 +64,7 @@ def log_security_event(
         logger.warning("Unknown security event type: %s", action)
 
     from infrastructure.database.database import get_service_session
+    from domains.governance import ports as governance_ports
     try:
         with get_service_session() as db:
             AuditLog = getattr(governance_ports, "AuditLog")

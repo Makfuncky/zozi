@@ -47,7 +47,7 @@ def remove_background_task(
         import numpy as np
         from PIL import Image
         from domains.finance.services.shared.bg_removal_service import remove_background, remove_background_model
-        from providers.media.services.storage import storage as _store
+        from providers.storage.storage_backend import storage as _store
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)
@@ -163,7 +163,7 @@ def generate_angles_task(
         from io import BytesIO
         from fastapi import UploadFile
         from domains.suppliers.services.supplier_service import process_product_image
-        from providers.media.services.storage import storage as _store
+        from providers.storage.storage_backend import storage as _store
         
         # Decode base64 image
         image_bytes = base64.b64decode(image_data)

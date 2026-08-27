@@ -10,9 +10,6 @@ from typing import Optional, List, Dict, Any
 
 from sqlalchemy.orm import Session
 
-import structlog
-logger = structlog.get_logger(__name__)
-
 from providers.comms.twilio import (
     HAS_TWILIO,
     TwilioRestException,
@@ -21,11 +18,10 @@ from providers.comms.twilio import (
 
 TWILIO_AVAILABLE = HAS_TWILIO
 
-from providers.comms.whatsapp import HAS_WHATSAPP, send_whatsapp_message
+from providers.comms.whatsapp import send_whatsapp_message
 from providers.comms.email import deliver_email
 from providers.security.encryption import Fernet, PBKDF2HMAC, hashes
 
-from domains.governance.ports import User
 from domains.comms.models.communication import ProxyChannel
 from domains.comms.models.communication import ProxySession
 from domains.comms.models.communication import ProxyMessage

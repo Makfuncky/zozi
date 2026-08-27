@@ -2,27 +2,33 @@
 import asyncio
 import hashlib
 import json
+import logging
+import structlog
 from datetime import datetime, timezone, timedelta, date
 from typing import Optional, List, Dict, Any
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from domains.governance.ports import SystemHealthEvent
-from domains.governance.ports import NewsSource
-from domains.governance.ports import NewsArticle
-from domains.governance.ports import InternalNotice
-from domains.governance.ports import PredictiveSimulation
-from domains.governance.ports import AlertEscalationRule
-from domains.governance.ports import ExecutiveNews
-from domains.governance.ports import User
+from domains.analytics.ports import ExecutiveNews, PredictiveSimulation
+from domains.comms.ports import InternalNotice, NewsArticle, NewsSource
 from domains.country.ports import CountryConfig
-from domains.governance.ports import FraudAlert
-from domains.logistics.ports import LogisticsPartner
+from domains.governance.ports import (
+    FraudAlert,
+    FraudEvent,
+    IPAccountLinkage,
+    SystemHealthEvent,
+    User,
+)
+from domains.logistics.ports import LogisticsPartner, Shipment
 from domains.orders.ports import Order
 from domains.hr.ports import Employee
+from domains.security.ports import AlertEscalationRule
 from infrastructure.utils.config import settings
 from infrastructure.utils.redis_client import redis_client
+
+logger = structlog.get_logger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class WebSocketManager:

@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-_QR_SECRET_KEY = "default-qr-secret"
+from backend.infrastructure.config.settings import settings
+
+_QR_SECRET_KEY = settings.qr_secret_key or settings.secret_key
+if not _QR_SECRET_KEY:
+    raise ValueError("settings.qr_secret_key or settings.secret_key must be configured")
 
 
 def validate_geo_fence(*args, **kwargs):

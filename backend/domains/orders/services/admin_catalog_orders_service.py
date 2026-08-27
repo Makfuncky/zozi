@@ -7,7 +7,7 @@ from domains.catalog.models.products import Category
 from infrastructure.database.schemas import ArchiveRequest, BulkActionRequest
 from infrastructure.utils.dependencies import require_admin
 from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from domains.catalog.ports import rebuild_category_paths
 from domains.governance.services.settings.misc_service import archive_entity
 from domains.governance.services.settings.misc_service import restore_entity

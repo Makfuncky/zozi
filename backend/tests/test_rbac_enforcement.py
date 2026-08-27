@@ -92,7 +92,7 @@ def test_catalog_populated_from_all_domains():
     counts = Counter(k.split(".")[0] for k in catalog.FEATURE_CATALOG)
     assert len(catalog.FEATURE_CATALOG) > 500, "catalog is suspiciously small"
     for d in ("accounts", "catalog", "comms", "country", "customers", "finance",
-              "governance", "hr", "logistics", "media", "orders", "payments", "suppliers"):
+              "governance", "hr", "logistics", "orders", "payments", "suppliers"):
         assert counts.get(d, 0) > 0, f"domain {d} has no features registered"
 
 

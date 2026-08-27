@@ -8,8 +8,8 @@ from sqlalchemy import event
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.logging_config import db_query_time_ctx
-from infrastructure.utils.metrics import db_query_duration_seconds
+from infrastructure.observability.logging_config import db_query_time_ctx
+from infrastructure.observability.metrics import db_query_duration_seconds
 
 
 def _before_cursor_execute(

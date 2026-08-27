@@ -10,13 +10,13 @@ __all__ = ["IncidentWarRoom", "IncidentThread", "IncidentActionItem", "WarRoomTe
 
 class IncidentWarRoom(Base):
     __tablename__ = "incident_war_rooms"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
     incident_id = Column(String, unique=True, nullable=False, index=True)
     title = Column(String(200), nullable=False)
     severity = Column(String, default="medium")
     status = Column(String, default="active")
-    created_by = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
+    created_by = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
     started_at = Column(DateTime, default=_utcnow)
     resolved_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
@@ -28,10 +28,10 @@ class IncidentWarRoom(Base):
 
 class IncidentThread(Base):
     __tablename__ = "incident_threads"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    war_room_id = Column(Integer, ForeignKey("communication.incident_war_rooms.id"), nullable=False)
-    participant_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
+    war_room_id = Column(Integer, ForeignKey("comms.incident_war_rooms.id", ondelete="SET NULL"), nullable=False)
+    participant_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     war_room = relationship("IncidentWarRoom", back_populates="threads")
@@ -40,10 +40,10 @@ class IncidentThread(Base):
 
 class IncidentActionItem(Base):
     __tablename__ = "incident_action_items"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    war_room_id = Column(Integer, ForeignKey("communication.incident_war_rooms.id"), nullable=False)
-    assignee_id = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    war_room_id = Column(Integer, ForeignKey("comms.incident_war_rooms.id", ondelete="SET NULL"), nullable=False)
+    assignee_id = Column(Integer, ForeignKey("governance.users.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String, default="pending")
@@ -57,7 +57,7 @@ class IncidentActionItem(Base):
 
 class WarRoomTemplate(Base):
     __tablename__ = "war_room_templates"
-    __table_args__ = ({"schema": "communication"},)
+    __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     severity = Column(String, nullable=False)

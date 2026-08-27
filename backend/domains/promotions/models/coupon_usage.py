@@ -15,7 +15,7 @@ class CouponUsage(Base):
     coupon_id = Column(Integer, nullable=False)
     user_id = Column(Integer, nullable=False)
     order_id = Column(Integer, nullable=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     is_deleted = Column(Boolean, default=False)

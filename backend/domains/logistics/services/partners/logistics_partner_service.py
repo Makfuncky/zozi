@@ -16,6 +16,13 @@ from infrastructure.database.database import get_db
 
 from infrastructure.utils.dependencies import get_current_user
 
+from domains.logistics.models.logistics import LogisticsPartner
+
+
+def get_logistics_partner_by_user_id(db: Session, user_id: int):
+    """Look up a logistics partner by their user_id."""
+    return db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+
 class BulkPartnerAdminActionRequest(BaseModel):
     partner_ids: List[int]
     action: str

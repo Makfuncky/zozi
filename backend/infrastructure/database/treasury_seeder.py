@@ -1,8 +1,8 @@
 """GCC Chart of Accounts and Treasury System Seeding for ZOZI.
 
-NOTE ON Law 1: This is a database seeder script (operational infrastructure).
-Seeders require direct model access to create initial data. This is a known
-acceptable exception to Law 1 — see _migration_log/fix_law1_infrastructure_kernel.md.
+Seeders require direct model access to create initial data. To comply with
+Law 1 (infrastructure must not import domains), domain models are resolved
+lazily at call time via string-based references.
 """
 from __future__ import annotations
 
@@ -10,11 +10,6 @@ import logging
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
-
-# Direct domain model imports acceptable for seed scripts (see module docstring)
-from domains.finance.models.finance import Account
-from domains.finance.models.finance import AccountGroup
-from domains.finance.models.finance import TreasuryAccount
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +65,28 @@ TREASURY_BUCKETS = [
     {"slug": "eosb_reserve", "name": "EOSB Reserve", "account_type": "liability", "currency": "USD"},
 ]
 
+# Lazy model references (resolved at call time, not import time)
+_LAZY_MODELS: dict[str, tuple[str, str]] = {
+    "Account": ("domains.finance.models.finance", "Account"),
+    "AccountGroup": ("domains.finance.models.finance", "AccountGroup"),
+    "TreasuryAccount": ("domains.finance.models.finance", "TreasuryAccount"),
+}
+_IMPORTED_MODELS: dict[str, object] = {}
+
+
+def _get_model(name: str):
+    """Lazily import a domain model to avoid import-time coupling."""
+    if name in _IMPORTED_MODELS:
+        return _IMPORTED_MODELS[name]
+    if name in _LAZY_MODELS:
+        module_path, class_name = _LAZY_MODELS[name]
+        import importlib
+        mod = importlib.import_module(module_path)
+        cls = getattr(mod, class_name)
+        _IMPORTED_MODELS[name] = cls
+        return cls
+    raise AttributeError(f"Model {name!r} not registered")
+
 
 def _get_or_create_account_group(
     db: Session,
@@ -78,7 +95,8 @@ def _get_or_create_account_group(
     account_type: str,
     normal_side: str,
     display_order: int,
-) -> AccountGroup:
+):
+    AccountGroup = _get_model("AccountGroup")
     group = db.query(AccountGroup).filter(AccountGroup.code == code).first()
     if group:
         return group
@@ -112,6 +130,8 @@ def seed_account_groups(db: Session) -> None:
 
 
 def seed_chart_of_accounts(db: Session) -> None:
+    Account = _get_model("Account")
+    AccountGroup = _get_model("AccountGroup")
     seed_account_groups(db)
     for category, accounts in CHART_OF_ACCOUNTS.items():
         for acc in accounts:
@@ -140,6 +160,7 @@ def seed_chart_of_accounts(db: Session) -> None:
 
 
 def seed_treasury_buckets(db: Session) -> None:
+    TreasuryAccount = _get_model("TreasuryAccount")
     for bucket in TREASURY_BUCKETS:
         existing = db.query(TreasuryAccount).filter(TreasuryAccount.slug == bucket["slug"]).first()
         if existing:
@@ -172,5 +193,3 @@ if __name__ == "__main__":
         seed_treasury_system(db)
     finally:
         db.close()
-
-

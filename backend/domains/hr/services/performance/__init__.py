@@ -4,6 +4,7 @@ from __future__ import annotations
 from domains.hr.services.performance.okr import *  # noqa: F401,F403
 from domains.hr.services.performance.kpi import *  # noqa: F401,F403
 from domains.hr.services.performance.reviews import *  # noqa: F401,F403
+from domains.hr.services.performance.reviews import _recompute_employee_score  # noqa: F401
 from domains.hr.services.performance.health import *  # noqa: F401,F403
 from domains.hr.services.performance.endpoints import *  # noqa: F401,F403
 from domains.hr.services.performance.dei_auditor import *  # noqa: F401,F403

@@ -13,6 +13,8 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+HAS_MAP = True
+
 
 class LocationProvider:
     """Map and location provider system for the Zozi platform."""

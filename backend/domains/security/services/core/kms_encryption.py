@@ -24,22 +24,16 @@ class KeyManager:
         self._load_keys()
     
     def _load_keys(self):
-        """Load keys from environment or persistent key file."""
+        """Load keys from environment variable."""
+        import base64
         key = os.environ.get("KMS_ENCRYPTION_KEY")
         if key:
             self._keys["v1"] = base64.urlsafe_b64decode(key.encode())
         else:
-            key_file = os.path.join(os.path.expanduser("~"), ".zozi", "kms_key")
-            if os.path.exists(key_file):
-                with open(key_file, "rb") as f:
-                    self._keys["v1"] = base64.urlsafe_b64decode(f.read().strip())
-            else:
-                self._keys["v1"] = Fernet.generate_key()
-                os.makedirs(os.path.dirname(key_file), exist_ok=True)
-                with open(key_file, "wb") as f:
-                    f.write(base64.urlsafe_b64encode(self._keys["v1"]))
-                os.chmod(key_file, 0o600)
-                logger.warning("Generated persistent encryption key at %s. Set KMS_ENCRYPTION_KEY env var to override.", key_file)
+            raise RuntimeError(
+                "KMS_ENCRYPTION_KEY environment variable is not set. "
+                "Set KMS_ENCRYPTION_KEY to a base64-encoded 32-byte key."
+            )
     
     def get_current_key(self) -> bytes:
         return self._keys[self._current_key_id]

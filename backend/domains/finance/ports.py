@@ -41,6 +41,43 @@ from domains.finance.models.general_ledger import AutomationRule  # noqa: E402
 from domains.finance.models.commission import CommissionAgreement, CommissionCategoryRate, CommissionLedgerEntry, ProductCommissionOverride
 from domains.finance.models.erp import CustomsEntry, GoodsReceiptLine, GoodsReceiptNote, ImportCostTemplate, ImportShipment, ImportShipmentLine, LandedCostAllocation, PurchaseOrder, PurchaseOrderLine, SalesOrder, SalesOrderLine, StockMovement, Warehouse
 from domains.finance.models.finance import APBill, APLedger, ARInvoice, ARLedgerEntry, Account, AccountBalance, AccountGroup, Accrual, BankAccount, BankMappingRule, BankReconciliation, BankStatementImport, BankStatementLine, BankTransaction, Budget, CashAccount, CashFlowForecast, CashPositionSnapshot, CashTransaction, CostCenter, Customer, FinanceAuditLog, FinanceAutomationLog, FiscalPeriod, FixedAsset, GatewaySettlementSchedule, Invoice, InvoiceItem, JournalEntry, JournalEntryLine, PayoutBatch, PayoutBatchItem, PendingJournalEntry, RecurringTemplate, RefundLedger, ScannedExpense, SupplierSettlement, TransactionLedger, TreasuryAccount, TreasuryTransaction, VATRemittance, Vendor
+from domains.finance.models.payments import Payment, PaymentGatewayConnection, PaymentReconciliationRun, Payout
+
+# Lazy model imports to break circular dependencies
+_model_cache = {}
+def _get_model(name):
+    if name not in _model_cache:
+        import importlib
+        # Map model names to their modules
+        model_map = {
+            'CommissionAgreement': 'domains.finance.models.commission',
+            'CommissionCategoryRate': 'domains.finance.models.commission',
+            'CommissionLedgerEntry': 'domains.finance.models.commission',
+            'ProductCommissionOverride': 'domains.finance.models.commission',
+            'CustomsEntry': 'domains.finance.models.erp',
+            'GoodsReceiptLine': 'domains.finance.models.erp',
+            'GoodsReceiptNote': 'domains.finance.models.erp',
+            'ImportCostTemplate': 'domains.finance.models.erp',
+            'ImportShipment': 'domains.finance.models.erp',
+            'ImportShipmentLine': 'domains.finance.models.erp',
+            'LandedCostAllocation': 'domains.finance.models.erp',
+            'PurchaseOrder': 'domains.finance.models.erp',
+            'PurchaseOrderLine': 'domains.finance.models.erp',
+            'SalesOrder': 'domains.finance.models.erp',
+            'SalesOrderLine': 'domains.finance.models.erp',
+            'StockMovement': 'domains.finance.models.erp',
+            'Warehouse': 'domains.finance.models.erp',
+        }
+        if name in model_map:
+            mod = importlib.import_module(model_map[name])
+            _model_cache[name] = getattr(mod, name)
+        else:
+            # Try general_ledger
+            mod = importlib.import_module('domains.finance.models.general_ledger')
+            _model_cache[name] = getattr(mod, name)
+    return _model_cache[name]
+
+
 
 
 def get_commission_agreement_by_id(db: Session, id_: int) -> Optional[CommissionAgreement]:
@@ -71,11 +108,11 @@ def get_commission_ledger_entry_by_id(db: Session, id_: int) -> Optional[Commiss
     """Return CommissionLedgerEntry by primary key (or None)."""
     return db.get(CommissionLedgerEntry, id_)
 
-def list_commission_ledger_entrys(db: Session, limit: int = 100) -> List[CommissionLedgerEntry]:
+def list_commission_ledger_entries(db: Session, limit: int = 100) -> List[CommissionLedgerEntry]:
     """Return up to ``limit`` CommissionLedgerEntry rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(CommissionLedgerEntry, db, limit)
 
-def list_commission_ledger_entrys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_commission_ledger_entries_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of CommissionLedgerEntry rows (scale-ready)."""
     return _keyset_page(CommissionLedgerEntry, db, cursor, page_size)
 
@@ -227,11 +264,11 @@ def get_customs_entry_by_id(db: Session, id_: int) -> Optional[CustomsEntry]:
     """Return CustomsEntry by primary key (or None)."""
     return db.get(CustomsEntry, id_)
 
-def list_customs_entrys(db: Session, limit: int = 100) -> List[CustomsEntry]:
+def list_customs_entries(db: Session, limit: int = 100) -> List[CustomsEntry]:
     """Return up to ``limit`` CustomsEntry rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(CustomsEntry, db, limit)
 
-def list_customs_entrys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_customs_entries_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of CustomsEntry rows (scale-ready)."""
     return _keyset_page(CustomsEntry, db, cursor, page_size)
 
@@ -287,11 +324,11 @@ def get_journal_entry_by_id(db: Session, id_: int) -> Optional[JournalEntry]:
     """Return JournalEntry by primary key (or None)."""
     return db.get(JournalEntry, id_)
 
-def list_journal_entrys(db: Session, limit: int = 100) -> List[JournalEntry]:
+def list_journal_entries(db: Session, limit: int = 100) -> List[JournalEntry]:
     """Return up to ``limit`` JournalEntry rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(JournalEntry, db, limit)
 
-def list_journal_entrys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_journal_entries_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of JournalEntry rows (scale-ready)."""
     return _keyset_page(JournalEntry, db, cursor, page_size)
 
@@ -347,11 +384,11 @@ def get_a_r_ledger_entry_by_id(db: Session, id_: int) -> Optional[ARLedgerEntry]
     """Return ARLedgerEntry by primary key (or None)."""
     return db.get(ARLedgerEntry, id_)
 
-def list_a_r_ledger_entrys(db: Session, limit: int = 100) -> List[ARLedgerEntry]:
+def list_ar_ledger_entries(db: Session, limit: int = 100) -> List[ARLedgerEntry]:
     """Return up to ``limit`` ARLedgerEntry rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(ARLedgerEntry, db, limit)
 
-def list_a_r_ledger_entrys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ar_ledger_entries_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of ARLedgerEntry rows (scale-ready)."""
     return _keyset_page(ARLedgerEntry, db, cursor, page_size)
 
@@ -359,11 +396,11 @@ def get_a_p_ledger_by_id(db: Session, id_: int) -> Optional[APLedger]:
     """Return APLedger by primary key (or None)."""
     return db.get(APLedger, id_)
 
-def list_a_p_ledgers(db: Session, limit: int = 100) -> List[APLedger]:
+def list_ap_ledgers(db: Session, limit: int = 100) -> List[APLedger]:
     """Return up to ``limit`` APLedger rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(APLedger, db, limit)
 
-def list_a_p_ledgers_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ap_ledgers_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of APLedger rows (scale-ready)."""
     return _keyset_page(APLedger, db, cursor, page_size)
 
@@ -420,11 +457,11 @@ def get_v_a_t_remittance_by_id(db: Session, id_: int) -> Optional[VATRemittance]
     """Return VATRemittance by primary key (or None)."""
     return db.get(VATRemittance, id_)
 
-def list_v_a_t_remittances(db: Session, limit: int = 100) -> List[VATRemittance]:
+def list_vat_remittances(db: Session, limit: int = 100) -> List[VATRemittance]:
     """Return up to ``limit`` VATRemittance rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(VATRemittance, db, limit)
 
-def list_v_a_t_remittances_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_vat_remittances_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of VATRemittance rows (scale-ready)."""
     return _keyset_page(VATRemittance, db, cursor, page_size)
 
@@ -516,11 +553,11 @@ def get_pending_journal_entry_by_id(db: Session, id_: int) -> Optional[PendingJo
     """Return PendingJournalEntry by primary key (or None)."""
     return db.get(PendingJournalEntry, id_)
 
-def list_pending_journal_entrys(db: Session, limit: int = 100) -> List[PendingJournalEntry]:
+def list_pending_journal_entries(db: Session, limit: int = 100) -> List[PendingJournalEntry]:
     """Return up to ``limit`` PendingJournalEntry rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(PendingJournalEntry, db, limit)
 
-def list_pending_journal_entrys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_pending_journal_entries_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of PendingJournalEntry rows (scale-ready)."""
     return _keyset_page(PendingJournalEntry, db, cursor, page_size)
 
@@ -528,11 +565,11 @@ def get_payout_batch_by_id(db: Session, id_: int) -> Optional[PayoutBatch]:
     """Return PayoutBatch by primary key (or None)."""
     return db.get(PayoutBatch, id_)
 
-def list_payout_batchs(db: Session, limit: int = 100) -> List[PayoutBatch]:
+def list_payout_batches(db: Session, limit: int = 100) -> List[PayoutBatch]:
     """Return up to ``limit`` PayoutBatch rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(PayoutBatch, db, limit)
 
-def list_payout_batchs_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_payout_batches_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of PayoutBatch rows (scale-ready)."""
     return _keyset_page(PayoutBatch, db, cursor, page_size)
 
@@ -660,11 +697,11 @@ def get_a_p_bill_by_id(db: Session, id_: int) -> Optional[APBill]:
     """Return APBill by primary key (or None)."""
     return db.get(APBill, id_)
 
-def list_a_p_bills(db: Session, limit: int = 100) -> List[APBill]:
+def list_ap_bills(db: Session, limit: int = 100) -> List[APBill]:
     """Return up to ``limit`` APBill rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(APBill, db, limit)
 
-def list_a_p_bills_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ap_bills_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of APBill rows (scale-ready)."""
     return _keyset_page(APBill, db, cursor, page_size)
 
@@ -672,11 +709,11 @@ def get_a_r_invoice_by_id(db: Session, id_: int) -> Optional[ARInvoice]:
     """Return ARInvoice by primary key (or None)."""
     return db.get(ARInvoice, id_)
 
-def list_a_r_invoices(db: Session, limit: int = 100) -> List[ARInvoice]:
+def list_ar_invoices(db: Session, limit: int = 100) -> List[ARInvoice]:
     """Return up to ``limit`` ARInvoice rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(ARInvoice, db, limit)
 
-def list_a_r_invoices_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ar_invoices_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of ARInvoice rows (scale-ready)."""
     return _keyset_page(ARInvoice, db, cursor, page_size)
 
@@ -778,31 +815,50 @@ def list_automation_logs_page(db: Session, cursor: Optional[str] = None, page_si
 
 # --- P11 re-exports (Law 3 sanctioned read/behavior surface) ---
 from domains.finance.models.finance import Invoice, RefundLedger, TransactionLedger, TreasuryAccount
-from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
-from domains.finance.services.tax.tax_service import calculate_tax, get_country_config
+# TODO: Module not yet created
+# from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
+# TODO: Module not yet created
+# from domains.finance.services.tax.tax_service import calculate_tax, get_country_config
 # --- P11.5 re-exports (orders cross-domain repointing) ---
-from domains.finance.services.treasury.cash_management_service import (
-    apply_shipment_vehicle_selection,
-    deserialize_pricing_breakdown_json,
-    effective_allocation_delivery_amounts,
-    list_cod_remittance_receipts,
-    serialize_cod_remittance_receipt,
-)
-from domains.finance.services.ledger.sub_ledger_controller import controller_get_ar_summary, controller_get_ap_summary
-from domains.finance.services.commission.commission_geography_service import list_badge_tiers, list_category_rates
-from domains.finance.services.ledger.period_close_service import get_or_create_fiscal_period, get_current_fiscal_period, list_periods
-from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
-from domains.finance.services.payouts.auto_payout_scheduler import get_background_job_status
-from domains.finance.services.commission.commission_engine import get_effective_rate
-from domains.finance.services.treasury.treasury_engine import TreasuryEngine
-from domains.finance.services.payouts.auto_payout_scheduler import start_auto_payout_background_job, stop_auto_payout_background_job, run_auto_payout_sweep, run_auto_logistics_payout_sweep
-from domains.finance.services.treasury.cash_flow_forecast_service import generate_forecast
-from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
-from domains.finance.services.treasury.cash_write_service import create_cash_account, create_cash_transaction
-from domains.finance.services.commission.commission_geography_service import create_badge_tier, create_category_rate, update_badge_tier, update_category_rate
-from domains.finance.services.ledger.expense_processing import ExpenseProcessingService
-from domains.finance.services.ledger.finance_transfer_service import build_transfer_export_payload
-from domains.finance.services.reporting.financial_reporting import FinancialReportingService
+# TODO: These functions do not exist in cash_management_service yet
+# from domains.finance.services.treasury.cash_management_service import (
+#     apply_shipment_vehicle_selection,
+#     deserialize_pricing_breakdown_json,
+#     effective_allocation_delivery_amounts,
+#     list_cod_remittance_receipts,
+#     serialize_cod_remittance_receipt,
+# )
+# TODO: Module not yet created
+# from domains.finance.services.ledger.sub_ledger_controller import controller_get_ar_summary, controller_get_ap_summary
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import list_badge_tiers, list_category_rates
+# TODO: Module not yet created
+# from domains.finance.services.ledger.period_close_service import get_or_create_fiscal_period, get_current_fiscal_period, list_periods
+# TODO: Module not yet created
+# from domains.finance.services.payouts.payout_approval_read_service import list_pending_payouts
+# TODO: Module not yet created
+# from domains.finance.services.payouts.auto_payout_scheduler import get_background_job_status
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_engine import get_effective_rate
+# TODO: Module not yet created
+# from domains.finance.services.treasury.treasury_engine import TreasuryEngine
+# TODO: Module not yet created
+# from domains.finance.services.payouts.auto_payout_scheduler import start_auto_payout_background_job, stop_auto_payout_background_job, run_auto_payout_sweep, run_auto_logistics_payout_sweep
+# TODO: Module not yet created
+# from domains.finance.services.treasury.cash_flow_forecast_service import generate_forecast
+# TODO: log_refund_bank_transaction not found in cash_management_service
+# from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
+# TODO: Module not yet created
+# from domains.finance.services.treasury.cash_write_service import create_cash_account, create_cash_transaction
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import create_badge_tier, create_category_rate, update_badge_tier, update_category_rate
+# TODO: Module not yet created
+# from domains.finance.services.ledger.expense_processing import ExpenseProcessingService
+# TODO: Module not yet created
+# from domains.finance.services.ledger.finance_transfer_service import build_transfer_export_payload
+# TODO: Module not yet created
+# from domains.finance.services.reporting.financial_reporting import FinancialReportingService
 from domains.finance.services.ledger.general_ledger_service import post_logistics_cod_remittance_journal, post_supplier_settlement_journal
 from domains.finance.services.ledger.je_reversal_service import reverse_journal_entry
-from domains.finance.services.ledger.period_close_service import close_period
+# TODO: Module not yet created
+# from domains.finance.services.ledger.period_close_service import close_period

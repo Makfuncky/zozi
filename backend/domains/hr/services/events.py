@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_EMPLOYEE_ONBOARDED = "hr.employee.onboarded"
@@ -86,8 +89,8 @@ def publish_employee_onboarded(employee_id: int, country_code: str, department: 
         from infrastructure.messaging.events.event_bus import publish
         event = EmployeeOnboarded(employee_id=employee_id, user_id=user_id, country_code=country_code, department=department)
         publish(EVENT_EMPLOYEE_ONBOARDED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish EmployeeOnboarded event: %s", exc)
 
 def publish_employee_offboarded(employee_id: int, reason: str, user_id: Optional[int] = None) -> None:
     """Publish an EmployeeOffboarded event."""
@@ -95,8 +98,8 @@ def publish_employee_offboarded(employee_id: int, reason: str, user_id: Optional
         from infrastructure.messaging.events.event_bus import publish
         event = EmployeeOffboarded(employee_id=employee_id, user_id=user_id, reason=reason)
         publish(EVENT_EMPLOYEE_OFFBOARDED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish EmployeeOffboarded event: %s", exc)
 
 def publish_leave_requested(request_id: int, employee_id: int, leave_type: str, start_date: str, end_date: str) -> None:
     """Publish a LeaveRequested event."""
@@ -104,8 +107,8 @@ def publish_leave_requested(request_id: int, employee_id: int, leave_type: str, 
         from infrastructure.messaging.events.event_bus import publish
         event = LeaveRequested(request_id=request_id, employee_id=employee_id, leave_type=leave_type, start_date=start_date, end_date=end_date)
         publish(EVENT_LEAVE_REQUESTED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish LeaveRequested event: %s", exc)
 
 def publish_payroll_processed(payroll_id: int, employee_id: int, period_start: str, period_end: str, amount: str) -> None:
     """Publish a PayrollProcessed event."""
@@ -113,8 +116,8 @@ def publish_payroll_processed(payroll_id: int, employee_id: int, period_start: s
         from infrastructure.messaging.events.event_bus import publish
         event = PayrollProcessed(payroll_id=payroll_id, employee_id=employee_id, period_start=period_start, period_end=period_end, amount=amount)
         publish(EVENT_PAYROLL_PROCESSED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish PayrollProcessed event: %s", exc)
 
 __all__ = [
     # Event type constants

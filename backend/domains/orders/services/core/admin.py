@@ -12,14 +12,14 @@ from fastapi import Depends, Path, Query
 
 from sqlalchemy.orm import Session
 
-from modules.admin.routers.admin_controller import (
+from domains.governance.services.settings.misc_service import (
     archive_entity,
     bulk_archive_entities,
     bulk_restore_entities,
     hard_delete_entity,
     restore_entity,
-    update_order_status,
 )
+from domains.orders.services.orders_service import update_order_status
 
 from infrastructure.database.database import get_db
 
@@ -37,7 +37,7 @@ from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin, require_super_admin
 
-from infrastructure.utils.rls_interceptor import set_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context
 
 def list_all_orders(country_code: str, page: int, size: int, status: str, include_deleted: bool, _: User, db: Session):
     if country_code == "*":
@@ -55,7 +55,7 @@ def list_all_orders(country_code: str, page: int, size: int, status: str, includ
         items = q.order_by(Order.created_at.desc()).offset((page - 1) * size).limit(size).all()
         return {"items": items, "total": total, "page": page, "pages": math.ceil(total / size) if total else 1}
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def update_status(country_code: str, order_id: int, payload: OrderStatusUpdate, _: User, db: Session, current_user: User):
@@ -74,7 +74,7 @@ def update_status(country_code: str, order_id: int, payload: OrderStatusUpdate, 
             "to": result.get("new_status", payload.status),
         }
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def archive_order(country_code: str, order_id: int, payload: ArchiveRequest, _: User, db: Session, current_user: User):
@@ -89,7 +89,7 @@ def archive_order(country_code: str, order_id: int, payload: ArchiveRequest, _: 
             payload.reason if payload else None,
         )
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def restore_order(country_code: str, order_id: int, _: User, db: Session, current_user: User):
@@ -103,7 +103,7 @@ def restore_order(country_code: str, order_id: int, _: User, db: Session, curren
             db,
         )
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def bulk_archive_orders(country_code: str, payload: BulkActionRequest, _: User, db: Session, current_user: User):
@@ -118,7 +118,7 @@ def bulk_archive_orders(country_code: str, payload: BulkActionRequest, _: User, 
             payload.reason,
         )
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def bulk_restore_orders(country_code: str, payload: BulkActionRequest, _: User, db: Session, current_user: User):
@@ -132,7 +132,7 @@ def bulk_restore_orders(country_code: str, payload: BulkActionRequest, _: User, 
             db,
         )
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def bulk_update_order_status(country_code: str, payload: BulkStatusUpdateRequest, _: User, db: Session):
@@ -148,7 +148,7 @@ def bulk_update_order_status(country_code: str, payload: BulkStatusUpdateRequest
         db.commit()
         return {"message": f"Status updated for {updated} orders", "updated": updated}
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 def delete_order_permanent(country_code: str, order_id: int, _: User, db: Session, current_user: User):
@@ -162,7 +162,7 @@ def delete_order_permanent(country_code: str, order_id: int, _: User, db: Sessio
             db,
         )
     finally:
-        from infrastructure.utils.rls_interceptor import clear_rls_context
+        from infrastructure.database.rls_interceptor import clear_rls_context
         clear_rls_context()
 
 

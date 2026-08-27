@@ -904,7 +904,7 @@ const ProductResultsGrid = memo(function ProductResultsGrid({
 
   return (
     <>
-      <motion.div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+      <motion.div style={{ contentVisibility: "auto", containIntrinsicSize: "0 500px" }} className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {products.map((product, index) => (
           <div
             key={product.id}

@@ -26,6 +26,8 @@ from typing import Optional, Callable
 import numpy as np
 from providers.image import Image, ImageEnhance, ImageFilter, ImageOps
 
+HAS_FREE_IMAGE = True
+
 from providers.image.bg_remover import create_rembg_session, rembg_remove_bytes, CleanEdgeRefiner
 
 from skimage import exposure

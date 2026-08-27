@@ -9,9 +9,6 @@ from typing import Any, Dict, List, Optional
 
 from infrastructure.database.database import get_db_context
 from domains.country.models.countries import CountryConfig
-import structlog
-logger = structlog.get_logger(__name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +50,7 @@ class AuditTrailService:
 
         # Also write to the central audit_logs table for unified querying
         try:
-            from infrastructure.utils.audit import audit_log as _audit_log
+            from domains.audit.services.logs.audit_service import audit_log as _audit_log
             with get_db_context() as _db:
                 _audit_log(
                     db=_db,

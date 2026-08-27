@@ -5,15 +5,17 @@ from fastapi import Depends, HTTPException, Query, Path
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.governance.models.user import User
-from domains.governance.models.fraud import FraudEvent
-from domains.governance.models.fraud import FraudBlacklist
-from domains.governance.models.fraud import FraudRule
-from domains.governance.models.fraud import ManualReviewQueue
-from domains.governance.models.fraud import IPReputation
-from domains.governance.models.fraud import DeviceFingerprint
+from domains.security.models.fraud import FraudEvent
+from domains.security.models.fraud import FraudBlacklist
+from domains.security.models.fraud import FraudRule
+from domains.security.models.fraud import ManualReviewQueue
+from domains.security.models.fraud import IPReputation
+from domains.security.models.fraud import DeviceFingerprint
 from infrastructure.database.schemas import FraudScoreRequest, FraudScoreResponse, FraudEventOut, FraudBlacklistCreate, FraudBlacklistOut, FraudRuleCreate, FraudRuleOut, ManualReviewOut, ManualReviewAssign, ManualReviewResolve, IPReputationOut, DeviceFingerprintOut, ThreatFeedStatus, FraudDashboardStats, ImpossibleTravelCheck, DeviceStackingCheck, ReturnAbuseCheck, IPAccountCheck, BINCheck, LogisticsFraudCheck
-from domains.governance.services.fraud.fraud_detection_service import FraudScoringEngine
-from domains.governance.services.fraud.fraud_detection_service import ThreatFeedUpdater
+# TODO: Module not yet created
+# from domains.governance.services.fraud.fraud_detection_service import FraudScoringEngine
+# TODO: Module not yet created
+# from domains.governance.services.fraud.fraud_detection_service import ThreatFeedUpdater
 from infrastructure.utils.dependencies import require_admin
 from infrastructure.utils.redis_client import get_redis
 import json
@@ -115,7 +117,7 @@ def list_device_fingerprints(limit: int=Query(100, ge=1, le=1000), min_risk_scor
     """List device fingerprint records."""
     return db.query(DeviceFingerprint).filter(DeviceFingerprint.risk_score >= min_risk_score).order_by(DeviceFingerprint.last_seen_at.desc()).limit(limit).all()
 
-def get_threat_feed_status(db: Session=Depends(get_db)):
+def get_threat_feed_status(_: User=Depends(require_admin), db: Session=Depends(get_db)):
     """Get threat feed status."""
     tor_count = db.query(IPReputation).filter(IPReputation.is_tor == True).count()
     proxy_count = db.query(IPReputation).filter(IPReputation.is_proxy == True).count()

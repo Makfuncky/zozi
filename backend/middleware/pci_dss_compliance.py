@@ -176,39 +176,103 @@ def validate_pci_environment():
 
 
 class PCIComplianceChecker:
-    """Check PCI-DSS compliance status."""
+    """Check PCI-DSS compliance status against actual configuration."""
 
     def __init__(self):
         self.redis = None
 
     def check_compliance(self) -> Dict[str, Any]:
         """Run all PCI-DSS compliance checks."""
-        return {
+        results = {
             "requirement_1": self._check_network_controls(),
             "requirement_3": self._check_data_protection(),
             "requirement_4": self._check_encryption(),
             "requirement_6": self._check_secure_development(),
             "requirement_8": self._check_authentication(),
             "requirement_10": self._check_logging(),
-            "overall_status": "COMPLIANT",
+        }
+        all_passed = all(r.get("status") == "PASS" for r in results.values())
+        results["overall_status"] = "COMPLIANT" if all_passed else "NON_COMPLIANT"
+        return results
+
+    def _check_data_encryption(self) -> Dict:
+        """Requirement 3: Verify field encryption is configured."""
+        from infrastructure.utils.config import settings
+        key = getattr(settings, "field_encryption_key", "") or ""
+        if key and len(key.strip()) >= 16:
+            return {"status": "PASS", "details": "Field encryption key configured"}
+        return {"status": "FAIL", "details": "FIELD_ENCRYPTION_KEY is missing or too short"}
+
+    def _check_access_controls(self) -> Dict:
+        """Requirement 7: Verify RBAC is configured and not stubbed.
+
+        Previously reached into ``rbac.dependencies``. The rbac module
+        is no longer importable from the middleware layer (Law 1).
+        The compliance probe is reduced to a WARN until an
+        infrastructure-level RBAC status helper is added.
+        """
+        return {
+            "status": "WARN",
+            "details": "RBAC live-check skipped — rbac module not reachable from middleware",
         }
 
+    def _check_audit_logging(self) -> Dict:
+        """Requirement 10: Verify audit logging is enabled."""
+        from infrastructure.utils.config import settings
+        audit_key = getattr(settings, "audit_chain_key", "") or ""
+        if audit_key.strip():
+            return {"status": "PASS", "details": "Audit chain key configured"}
+        return {"status": "WARN", "details": "AUDIT_CHAIN_KEY not set — audit log integrity not guaranteed"}
+
+    def _check_network_security(self) -> Dict:
+        """Requirement 1: Verify security headers middleware is active."""
+        from infrastructure.utils.config import settings
+        headers_enabled = getattr(settings, "security_headers_enabled", False)
+        hsts_enabled = getattr(settings, "hsts_enabled", False)
+        if headers_enabled and hsts_enabled:
+            return {"status": "PASS", "details": "Security headers and HSTS enabled"}
+        if headers_enabled:
+            return {"status": "WARN", "details": "Security headers enabled but HSTS disabled"}
+        return {"status": "FAIL", "details": "Security headers middleware is disabled"}
+
+    def _check_vulnerability_management(self) -> Dict:
+        """Requirement 6: Verify rate limiting is configured."""
+        from infrastructure.utils.config import settings
+        rate_limit = getattr(settings, "rate_limit_enabled", False)
+        if rate_limit:
+            return {"status": "PASS", "details": "Rate limiting is enabled"}
+        return {"status": "FAIL", "details": "Rate limiting is disabled — vulnerability to brute-force attacks"}
+
     def _check_network_controls(self) -> Dict:
-        return {"status": "PASS", "details": "Network segmentation in place"}
+        """Requirement 1: Check network security controls."""
+        return self._check_network_security()
 
     def _check_data_protection(self) -> Dict:
-        return {"status": "PASS", "details": "Field encryption active"}
+        """Requirement 3: Check data protection measures."""
+        return self._check_data_encryption()
 
     def _check_encryption(self) -> Dict:
-        return {"status": "PASS", "details": "TLS 1.2+ enforced"}
+        """Requirement 4: Check encryption in transit."""
+        from infrastructure.utils.config import settings
+        cookie_secure = getattr(settings, "cookie_secure", False)
+        if cookie_secure:
+            return {"status": "PASS", "details": "Secure cookies enforced"}
+        return {"status": "FAIL", "details": "Cookie secure flag is disabled"}
 
     def _check_secure_development(self) -> Dict:
-        return {"status": "PASS", "details": "SAST/DAST integrated"}
+        """Requirement 6: Check secure development practices."""
+        return self._check_vulnerability_management()
 
     def _check_authentication(self) -> Dict:
-        return {"status": "PASS", "details": "MFA enforced for admin"}
+        """Requirement 8: Check authentication controls."""
+        from infrastructure.utils.config import settings
+        access_expiry = getattr(settings, "access_token_expire_minutes", 0)
+        if access_expiry and access_expiry <= 60:
+            return {"status": "PASS", "details": f"Access token expiry is {access_expiry} minutes"}
+        return {"status": "WARN", "details": f"Access token expiry ({access_expiry} min) exceeds 60 minutes"}
 
     def _check_logging(self) -> Dict:
-        return {"status": "PASS", "details": "All access logged"}
+        """Requirement 10: Check logging configuration."""
+        return self._check_audit_logging()
 
 

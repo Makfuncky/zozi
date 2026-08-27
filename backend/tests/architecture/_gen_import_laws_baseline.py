@@ -49,20 +49,11 @@ EXCLUDE_PATHS = {
     # files stay as thin backward-compat shims. They intentionally import domains
     # at module scope; the AST count is a backlog signal, not a per-edit gate.
     "infrastructure/utils/audit.py",
-    "infrastructure/utils/command_center_service.py",
     "infrastructure/utils/common_asset_tracking.py",
     "infrastructure/utils/write_help.py",
-    "infrastructure/security/dependencies.py",
-    "infrastructure/security/key_rotation.py",
     "infrastructure/utils/async_workers.py",
-    "infrastructure/utils/import_service.py",
     "infrastructure/utils/upload_job_service.py",
     "infrastructure/utils/asset_tracking.py",
-    "infrastructure/utils/downstream_wiring.py",
-    "infrastructure/utils/downstream_hooks.py",
-    "infrastructure/utils/entity_messaging.py",
-    "infrastructure/utils/realtime.py",
-    "infrastructure/utils/free_image_tools.py",
     "infrastructure/utils/image_ai_service.py",
     # Service registry: intentionally aggregates every domain's service modules
     # at module scope to wire them centrally. Like the shims above, it MUST

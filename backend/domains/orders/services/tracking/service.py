@@ -70,7 +70,9 @@ FAULT_STATUSES = [
 TERMINAL_STATUSES = {"delivered", "cancelled", "refunded", "failed", "shipment_cancelled", "shipment_returned"}
 TERMINAL_ORDER_STATUSES = {"cancelled", "failed", "refunded"}
 
-QR_SECRET = settings.secret_key or "zozi-order-qr-default"
+QR_SECRET = settings.secret_key
+if not QR_SECRET:
+    raise ValueError("settings.secret_key must be configured")
 
 DEFAULT_STATUS_LABELS = {
     "pending": "Pending",

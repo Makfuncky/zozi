@@ -216,7 +216,6 @@ class BehavioralAnalyzer:
             self.redis.expire(profile_key, 86400)
         except Exception as e:
             logger.warning(f"Risk score update failed: {e}")
-            pass
 
 
 class ImpossibleTravelDetector:
@@ -288,7 +287,7 @@ class ImpossibleTravelDetector:
             return
 
         try:
-            self.redis.hmset(key, {
+            self.redis.hset(key, mapping={
                 "lat": lat,
                 "lon": lon,
                 "timestamp": timestamp,
@@ -296,7 +295,6 @@ class ImpossibleTravelDetector:
             self.redis.expire(key, 86400)
         except Exception as e:
             logger.warning(f"Risk score update failed: {e}")
-            pass
 
 
 class RiskScoringEngine:
@@ -345,6 +343,5 @@ class RiskScoringEngine:
             self.redis.setex(key, 3600, score)
         except Exception as e:
             logger.warning(f"Risk score update failed: {e}")
-            pass
 
 

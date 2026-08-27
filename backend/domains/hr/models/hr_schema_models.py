@@ -56,11 +56,11 @@ class ShiftHandoverTask(Base):
     __tablename__ = "shift_handover_tasks"
     __table_args__ = ({"extend_existing": True, "schema": "hr"},)
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("customer.shift_handover_sessions.id"), nullable=False)
+    session_id = Column(Integer, ForeignKey("customer.shift_handover_sessions.id", ondelete="SET NULL"), nullable=False)
     description = Column(Text, nullable=False)
     priority = Column(String(20), default="normal")
     status_code = Column(String(20), default="open")
-    assigned_to = Column(Integer, ForeignKey("accounts.users.id"), nullable=True)
+    assigned_to = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     session = relationship("ShiftHandoverSession", back_populates="tasks")
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from domains.finance.models.finance import Invoice
-from domains.orders.ports import Order
+from domains.orders.ports import Order, get_order_by_id
 from typing import Any, List
 """Tickets write service — DB write operations for ticket entities."""
 
@@ -174,10 +174,6 @@ def get_invoice_first(db: Session, **filters) -> Optional[Invoice]:
     conditions = [getattr(Invoice, key) == value for key, value in filters.items()]
     query = db.query(Invoice).filter(*conditions)
     return query.limit(1).first()
-
-
-def get_order_by_id(db: Session, record_id: int) -> Optional[Order]:
-    return db.query(Order).filter(Order.id == record_id).first()
 
 
 def get_order_first(db: Session, **filters) -> Optional[Order]:

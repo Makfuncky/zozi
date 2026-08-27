@@ -435,13 +435,20 @@ from domains.governance.models.user import User
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.logistics.models.logistics import Shipment
 from infrastructure.utils.dependencies import require_logistics, require_admin
-from domains.orders.services.order_tracking_service import get_available_orders_for_logistics
-from domains.orders.services.order_tracking_service import get_order_shipment_label
-from domains.orders.services.order_tracking_service import logistics_confirm_pickup
-from domains.orders.services.order_tracking_service import logistics_scan_and_receive
-from domains.orders.services.order_tracking_service import logistics_update_transit_status
-from domains.orders.services.order_tracking_service import logistics_deliver_order
-from domains.orders.services.order_tracking_service import logistics_cancel_pickup
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import get_available_orders_for_logistics
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import get_order_shipment_label
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import logistics_confirm_pickup
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import logistics_scan_and_receive
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import logistics_update_transit_status
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import logistics_deliver_order
+# TODO: Module not yet created
+# from domains.orders.services.order_tracking_service import logistics_cancel_pickup
 logger = logging.getLogger(__name__)
 
 class ScanReceiveRequest(BaseModel):

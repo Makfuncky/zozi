@@ -183,3 +183,24 @@ def require_permissions(slugs: list):
         return current_user
 
     return _checker
+
+
+def start_otp(user, purpose: str, channel: str = "email", destination: str | None = None, db: Session | None = None):
+    """Security-domain facade for issuing an OTP challenge.
+
+    Delegates to the canonical implementation in ``domains.accounts.services.auth``
+    while keeping a stable import surface in the security domain (so admin
+    routers can stay same-domain per the import laws).
+    """
+    from domains.accounts.services.auth.auth_service import start_otp as _start_otp
+    return _start_otp(user, purpose=purpose, channel=channel, destination=destination, db=db)
+
+
+def verify_otp(user, purpose: str, code: str, db: Session | None = None) -> bool:
+    """Security-domain facade for verifying an OTP challenge.
+
+    Delegates to the canonical implementation in ``domains.accounts.services.auth``
+    while keeping a stable import surface in the security domain.
+    """
+    from domains.accounts.services.auth.auth_service import verify_otp as _verify_otp
+    return _verify_otp(user, purpose=purpose, code=code, db=db)

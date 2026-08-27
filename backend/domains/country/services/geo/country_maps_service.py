@@ -291,7 +291,7 @@ def get_categories_dropdown(
     country_code: Optional[str], parent_id: Optional[int], limit: int = 20, cursor: Optional[str] = None
 ) -> dict:
     from infrastructure.database.database import get_db_context
-        from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
+    from infrastructure.utils.pagination import cursor_paginate_asc, build_cursor_pagination_payload
 
     with get_db_context() as db:
         query = db.query(Category)

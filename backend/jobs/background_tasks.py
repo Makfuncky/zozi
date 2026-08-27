@@ -8,9 +8,6 @@ import time
 from datetime import datetime
 
 from domains.logistics.services.logistics_sla_service import run_treasury_sync
-import structlog
-logger = structlog.get_logger(__name__)
-
 logger = logging.getLogger(__name__)
 running = True
 

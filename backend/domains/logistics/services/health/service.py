@@ -111,7 +111,7 @@ class LogisticsHealthEngine:
     def _calculate_dispute_rate(self, shipments) -> float:
         if not shipments:
             return 0.0
-        from domains.governance.models.fraud import LogisticsFraudIndicator
+        from domains.security.models.fraud import LogisticsFraudIndicator
         disputes = self.db.query(LogisticsFraudIndicator).filter(
             LogisticsFraudIndicator.shipment_id.in_([s.id for s in shipments])
         ).count()
@@ -220,8 +220,15 @@ def list_logistics_health(country_code: str, current_user: dict, db: Session):
 
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.logistics.logistics_health_service re-exports for HTTP routers."""
-from domains.logistics.services.health.logistics_health_service import get_partner_health
-from domains.logistics.services.health.logistics_health_service import list_logistics_health
+def _reexport_get_partner_health(*args, **kwargs):
+    """Lazy re-export to break circular import with logistics_health_service."""
+    from domains.logistics.services.health.logistics_health_service import get_partner_health
+    return get_partner_health(*args, **kwargs)
+
+def _reexport_list_logistics_health(*args, **kwargs):
+    """Lazy re-export to break circular import with logistics_health_service."""
+    from domains.logistics.services.health.logistics_health_service import list_logistics_health
+    return list_logistics_health(*args, **kwargs)
 
 # -------------------------------------------------------------------
 # FROM: health\logistics_health_engine.py
@@ -334,7 +341,7 @@ class LogisticsHealthEngine:
     def _calculate_dispute_rate(self, shipments) -> float:
         if not shipments:
             return 0.0
-        from domains.governance.models.fraud import LogisticsFraudIndicator
+        from domains.security.models.fraud import LogisticsFraudIndicator
         disputes = self.db.query(LogisticsFraudIndicator).filter(
             LogisticsFraudIndicator.shipment_id.in_([s.id for s in shipments])
         ).count()
@@ -378,7 +385,11 @@ def get_logistics_health_engine(db: Session) -> LogisticsHealthEngine:
 
 from sqlalchemy.orm import Session
 
-from domains.logistics.services.health.logistics_health_engine import get_logistics_health_engine
+# Law 1 compliance: lazy import breaks circular dependency with
+# logistics_health_service.py which imports from this module.
+def _get_health_engine(db: Session):
+    from domains.logistics.services.health.logistics_health_engine import get_logistics_health_engine
+    return get_logistics_health_engine(db)
 
 
 def list_logistics_health(db: Session, country_code: str | None = None) -> dict:
@@ -389,11 +400,61 @@ def list_logistics_health(db: Session, country_code: str | None = None) -> dict:
     profiles = db.query(LogisticsPartnerProfile).all()
     results = []
     for p in profiles:
-        engine = get_logistics_health_engine(db)
+        engine = _get_health_engine(db)
         health = engine.calculate_health_score(p.partner_id, country_code)
         partner = db.query(LogisticsPartner).filter(LogisticsPartner.id == p.partner_id).first()
         health["profile"] = {"name": partner.name if partner else None, "rating": 0}
         results.append(health)
     results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
     return {"logistics_partners": results[:50]}
+
+
+def list_logistics_profiles_with_partners(db: Session, country_code: str | None = None) -> dict:
+    """Return all logistics partner profiles with partner names and health scores (paginated)."""
+    from domains.logistics.models.logistics import LogisticsPartnerProfile
+    from domains.logistics.models.logistics import LogisticsPartner
+
+    profiles = db.query(LogisticsPartnerProfile).order_by(LogisticsPartnerProfile.id).limit(1000).all()
+    partner_ids = [p.partner_id for p in profiles]
+    partners = {
+        pid: name
+        for pid, name in db.query(LogisticsPartner.id, LogisticsPartner.name).filter(
+            LogisticsPartner.id.in_(partner_ids)
+        ).all()
+    }
+    engine = get_logistics_health_engine(db)
+    results = []
+    for p in profiles:
+        health = engine.calculate_health_score(p.id, country_code)
+        partner_name = partners.get(p.partner_id)
+        health["profile"] = {
+            "name": partner_name,
+            "rating": 0,
+        }
+        results.append(health)
+    results.sort(key=lambda x: x.get("trust_score", 0), reverse=True)
+    return {"logistics_partners": results}
+
+
+def list_logistics_health_paginated(
+    db: Session,
+    country_code: str | None = None,
+    page: int = 1,
+    limit: int = 50,
+) -> dict:
+    """Return paginated logistics partner health scores."""
+    page = max(1, page)
+    limit = min(max(1, limit), 100)
+    data = list_logistics_profiles_with_partners(db, country_code)
+    results = data["logistics_partners"]
+    total = len(results)
+    start = (page - 1) * limit
+    end = start + limit
+    return {
+        "logistics_partners": results[start:end],
+        "total": total,
+        "page": page,
+        "size": limit,
+        "pages": max(1, (total + limit - 1) // limit),
+    }
 

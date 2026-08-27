@@ -14,8 +14,10 @@ from fastapi import Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
-from domains.governance.services.settings.admin_controller import get_current_admin
-from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
+# TODO: Module not yet created
+# from domains.governance.services.settings.admin_controller import get_current_admin
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
 from domains.finance.ports import list_pending_payouts
 from domains.catalog.models.products import Category as CategoryModel
 from domains.governance.models.admin import CommissionGlobalConfig

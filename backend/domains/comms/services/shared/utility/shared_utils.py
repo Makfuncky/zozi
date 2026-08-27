@@ -178,7 +178,8 @@ def flush_only(db: Session, obj: _M | None = None) -> None:
 from domains.governance.ports import RolePermissionSetting, SupplierDispute
 from domains.catalog.models.promotions import Banner
 from infrastructure.database.seed import _ensure_demo_user, _seed_password
-from domains.finance.services.cash_write_service import create_cash_account, create_cash_transaction
+# TODO: Module not yet created
+# from domains.finance.services.cash_write_service import create_cash_account, create_cash_transaction
 from infrastructure.utils.config import settings
 from infrastructure.utils.soft_delete import (
     _has_soft_delete as has_soft_delete,
@@ -247,7 +248,7 @@ def reset_demo_data(db: Session, *, country_code: Optional[str] = None) -> dict:
 # ── Upload Job Service (from upload_job_service.py) ───
 
 from infrastructure.database.database import get_db_session
-from providers.media.models.upload_job import UploadJob
+from domains.catalog.models.upload_job import UploadJob
 
 _ws_manager = None
 

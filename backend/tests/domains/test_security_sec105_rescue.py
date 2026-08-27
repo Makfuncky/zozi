@@ -12,7 +12,7 @@ import re
 
 import pytest
 
-from providers.media.services.misc_write_service import reset_demo_data
+from domains.governance.services.misc_write_service import reset_demo_data
 from infrastructure.utils.config import settings
 
 _MISC_WRITE_SERVICE = (

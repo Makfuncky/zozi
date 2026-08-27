@@ -66,6 +66,48 @@ FEATURES: dict[str, dict] = {
         "actions": ["read"],
         "description": "View cross-country customer sessions and conversion tracking.",
     },
+    "country.read": {
+        "label": "View Countries",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View country configurations, settings, and metadata.",
+    },
+    "country.manage": {
+        "label": "Manage Countries",
+        "risk": "high",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Add, configure, and deactivate countries in the marketplace.",
+    },
+    "country.currency.configure": {
+        "label": "Configure Currency",
+        "risk": "medium",
+        "actions": ["read", "update"],
+        "description": "Configure currency settings, exchange rates, and display formats.",
+    },
+    "country.tax.configure": {
+        "label": "Configure Tax Rules",
+        "risk": "medium",
+        "actions": ["read", "create", "update"],
+        "description": "Configure tax rules, rates, and exemptions per country.",
+    },
+    "country.cross_border.read": {
+        "label": "View Cross-Border Activity",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View cross-border detection logs and compliance data.",
+    },
+    "country.cross_border.manage": {
+        "label": "Manage Cross-Border Rules",
+        "risk": "medium",
+        "actions": ["read", "create", "update"],
+        "description": "Configure cross-border detection rules and compliance policies.",
+    },
+    "country.rls.configure": {
+        "label": "Configure RLS Policies",
+        "risk": "high",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Configure row-level security policies and tenant isolation rules.",
+    },
 }
 
 

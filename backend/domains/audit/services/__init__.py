@@ -12,6 +12,5 @@ from domains.audit.services.data_residency import *
 from domains.audit.services.flat_data_residency_service import *
 from domains.audit.services.ediscovery import *
 from domains.audit.services.compliance_engine import *
-from domains.audit.services.communication_audit import *
 
 __all__: list[str] = []

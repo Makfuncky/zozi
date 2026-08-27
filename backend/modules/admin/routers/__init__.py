@@ -1,5 +1,8 @@
 """Routers for the admin module — 15 domain routers."""
 import importlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 routers = []
 public_routers = []
@@ -26,8 +29,7 @@ for _n in _module_names:
     try:
         _m = importlib.import_module(f"modules.admin.routers.{_n}")
     except Exception as _e:
-        import logging as _logging
-        _logging.getLogger(__name__).error("Skipping router %s: %s", _n, _e)
+        logger.error("Skipping router %s: %s", _n, _e)
         continue
     _r = getattr(_m, "router", None)
     if _r is not None:

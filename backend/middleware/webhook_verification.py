@@ -87,7 +87,7 @@ class WebhookVerificationMiddleware(BaseHTTPMiddleware):
 
         provider = self._identify_provider(path)
         if not provider:
-            return JSONResponse(status_code=404, content={"detail": "Not found"})
+            return JSONResponse(status_code=401, content={"detail": "Invalid webhook signature"})
 
         if not await self._verify_webhook(request, provider):
             logger.warning(f"Webhook verification failed for {provider.name}")

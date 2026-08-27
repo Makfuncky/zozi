@@ -59,13 +59,13 @@ def list_employee_attendances(db: Session, limit: int = 100) -> List[object]:
 
 def get_employee_leave_request_by_id(db: Session, id_: int) -> Optional[object]:
     """Return EmployeeLeaveRequest by primary key (or None)."""
-    *_, EmployeeLeaveRequest, *_ = _get_models()
+    *_, EmployeeLeaveRequest, __, __ = _get_models()
     return db.get(EmployeeLeaveRequest, id_)
 
 
 def list_employee_leave_requests(db: Session, limit: int = 100) -> List[object]:
     """Return up to ``limit`` EmployeeLeaveRequest rows."""
-    *_, EmployeeLeaveRequest, __, __ = _get_models() if False else (None, None, None, None, None, None)
+    *_, EmployeeLeaveRequest, __, __ = _get_models()
     from domains.hr.models.employee_models import EmployeeLeaveRequest as _ELR
     return db.query(_ELR).limit(limit).all()
 

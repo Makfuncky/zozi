@@ -12,6 +12,13 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+try:
+    import httpx
+    HAS_WEB_SEARCH = True
+except ImportError:
+    HAS_WEB_SEARCH = False
+    httpx = None  # type: ignore[assignment]
+
 _DDG_HTML_URL = "https://duckduckgo.com/html/"
 _DEFAULT_USER_AGENT = "Mozilla/5.0 (compatible; ZoziCountryAI/1.0)"
 

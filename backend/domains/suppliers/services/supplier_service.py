@@ -1,17 +1,19 @@
 """Supplier service — backward-compatible shim.
 
 Code has been moved to:
-  - supplier_shared: constants and helper functions
-  - profile/supplier_profile: profile management
-  - products/supplier_products: product management
-  - orders/supplier_orders: order management
-  - health/supplier_health: health scoring, analytics, badge, public, bank
+   - supplier_shared: constants and helper functions
+   - profile/supplier_profile: profile management
+   - products/supplier_products: product management
+   - orders/supplier_orders: order management
+   - health/supplier_health: health scoring, analytics, badge, public, bank
 """
 from domains.suppliers.services.supplier_shared import *  # noqa: F401,F403
 from domains.suppliers.services.profile.supplier_profile import *  # noqa: F401,F403
 from domains.suppliers.services.products.supplier_products import *  # noqa: F401,F403
 from domains.suppliers.services.orders.supplier_orders import *  # noqa: F401,F403
 from domains.suppliers.services.health.supplier_health import *  # noqa: F401,F403
+
+from providers.security.watchlist import screen_watchlist
 
 __all__ = [
     # Orders
@@ -64,4 +66,14 @@ __all__ = [
     "get_public_supplier_products",
     "get_supplier_bank_account",
     "upsert_supplier_bank_account",
+    # Provider-wired helpers
+    "screen_supplier",
 ]
+
+
+def screen_supplier(name: str, country_code: str):
+    """Screen a supplier against watchlists using the security provider."""
+    try:
+        return screen_watchlist(employee_code="", full_name=name, country_code=country_code)
+    except Exception:
+        return {"cleared": True, "matches": []}

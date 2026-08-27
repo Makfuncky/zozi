@@ -1451,7 +1451,7 @@ def _load_active_badge_tiers(db: Session) -> list[CommissionBadgeTier]:
     if rows:
         return rows
 
-    from domains.finance.services.finance import commission_engine as _commission_engine
+    from domains.finance.services.finance_service import commission_engine as _commission_engine
 
     _commission_engine.seed_defaults(db)
     return (

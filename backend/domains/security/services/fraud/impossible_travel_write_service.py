@@ -19,10 +19,7 @@ from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.fraud import FraudEvent
-import structlog
-logger = structlog.get_logger(__name__)
-
+from domains.security.models.fraud import FraudEvent
 logger = logging.getLogger(__name__)
 
 IMPOSSIBLE_TRAVEL_EVENT_TYPE = "impossible_travel"

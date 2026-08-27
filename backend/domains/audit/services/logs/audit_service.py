@@ -126,7 +126,7 @@ class AuditAction:
 
 
 
-    # ── Generic CRUD / workflow (legacy infrastructure.utils.audit vocabulary) ─────────────
+    # ── Generic CRUD / workflow (legacy domains.audit.services.logs.audit_service vocabulary) ─────────────
 
     CREATE = "create"
 

@@ -10,27 +10,21 @@ from fastapi import HTTPException
 from sqlalchemy import exists, or_, String, func
 from sqlalchemy.orm import Session, selectinload
 
-from domains.governance.models.core import AuditLog
-from domains.governance.models.user import User
-from domains.catalog.models.products import Product
-from domains.comms.models.communication import Notification
-from domains.logistics.models.logistics import Shipment
-from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from infrastructure.utils.auth import require_permission
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.utils.constants import ORDER_STATUSES, STAFF_ROLES, _ADMIN_DEFAULT_PAGE_SIZE, _ADMIN_MAX_PAGE_SIZE
-from domains.orders.utils.order_tracking import reconcile_order_status, order_status_label
-from domains.finance.ports import apply_order_status_change
-from domains.finance.ports import _apply_stripe_runtime_key
-from domains.finance.ports import log_refund_bank_transaction
-from providers.payments.stripe import refund_payment_intent
+from domains.orders.services.tracking.service import reconcile_order_status, order_status_label
+from domains.finance.services.payments.payment_engine import apply_order_status_change
+from domains.finance.services.payments.payment_engine import _apply_stripe_runtime_key
+from domains.finance.services.treasury.cash_management_service import log_refund_bank_transaction
+from providers.payments.stripe_sdk import refund_payment_intent
 from providers.payments.registry import PaymentGatewayRegistry
 from providers.shipping.shipping_calculator import calculate_shipping_rate, compare_shipping_options
 import logging
 from sqlalchemy.exc import IntegrityError
-from domains.governance.ports import _delete_order_records
+# _delete_order_records imported lazily to avoid cross-domain coupling at module level
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +40,29 @@ def _build_list_page_payload(items: list, total: int, offset: int, page_size: in
     }
 
 
-def get_order_shipping_options(order: Order, destination: dict):
+def get_order_gateway(order: Order) -> str:
+    """Resolve the payment gateway provider code for an order based on its country."""
+    country_code = str(getattr(order, "country_code", "") or "").upper()
+    country_gateway_map = {
+        "SA": "stripe",
+        "AE": "stripe",
+        "KW": "stripe",
+        "QA": "stripe",
+        "BH": "stripe",
+        "OM": "stripe",
+        "JO": "tap",
+        "EG": "paytabs",
+        "PK": "paytabs",
+        "IN": "paytabs",
+    }
+    provider_code = country_gateway_map.get(country_code, "stripe")
+    if PaymentGatewayRegistry.get(provider_code) is None:
+        logger.warning("No gateway adapter registered for '%s'; falling back to stripe", provider_code)
+        return "stripe"
+    return provider_code
+
+
+def get_order_shipping_options(order: Order, destination: dict) -> list:
     """Compare shipping carriers for an order to a destination."""
     origin = {"country": getattr(order, "warehouse_country", ""), "city": getattr(order, "warehouse_city", "")}
     package = {
@@ -122,6 +138,7 @@ def bulk_update_order_status_admin(
 
 def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Session) -> dict:
     """Bulk delete multiple orders (admin only)."""
+    from domains.governance.ports import _delete_order_records
     if acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete orders")
     if not order_ids:
@@ -176,6 +193,7 @@ def bulk_delete_orders_admin(order_ids: List[int], acting_user: dict, db: Sessio
 # â”€â”€ Bulk Product Operations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def delete_order_admin(order_id: int, acting_user: dict, db: Session) -> dict:
+    from domains.governance.ports import _delete_order_records
     if acting_user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Only admins can delete orders")
 
@@ -219,6 +237,8 @@ def get_all_orders(
     max_amount: Optional[float] = None,
     missing_tracking_only: bool = False,
 ) -> dict[str, Any]:
+    from domains.governance.models.user import User
+    from domains.logistics.models.logistics import Shipment, ShipmentEvent
     resolved_limit = _ADMIN_DEFAULT_PAGE_SIZE if limit is None else max(1, min(limit, _ADMIN_MAX_PAGE_SIZE))
     query = db.query(Order).options(selectinload(Order.items).selectinload(OrderItem.product))
     if status and status != "all":
@@ -436,6 +456,7 @@ def update_order_status(order_id: int, status: str, acting_user: dict, db: Sessi
 
 
 def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
+    from domains.comms.models.communication import Notification
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -505,6 +526,7 @@ def refund_order(order_id: int, acting_user: dict, db: Session) -> dict:
 
 
 def update_order_tracking(order_id: int, tracking_number: str, acting_user: dict, db: Session) -> dict:
+    from domains.comms.models.communication import Notification
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")

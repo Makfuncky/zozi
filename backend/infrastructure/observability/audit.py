@@ -30,7 +30,8 @@ from uuid import UUID
 import structlog
 from sqlalchemy.orm import Session
 
-from domains.governance import ports as governance_ports
+import json as _json
+
 from infrastructure.observability.logging_config import get_request_id
 
 logger = structlog.get_logger(__name__)
@@ -46,7 +47,7 @@ class AuditAction:
     pass raw strings.
     """
 
-    # ── Generic CRUD / workflow (legacy infrastructure.utils.audit vocabulary) ─────────────
+    # ── Generic CRUD / workflow (legacy domains.audit.services.logs.audit_service vocabulary) ─────────────
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"
@@ -188,6 +189,10 @@ class AuditAction:
         return f"BULK_{entity_name.upper()}_RESTORE"
 
 
+def _json_dumps(value: Any) -> str:
+    return _json.dumps(coerce_json_safe(value), default=str)
+
+
 def coerce_json_safe(value: Any) -> Any:
     """Recursively convert `value` into something a JSON column accepts."""
     if value is None or isinstance(value, (str, int, float, bool)):
@@ -279,19 +284,31 @@ def audit_log(
         payload.setdefault("request_id", request_id)
 
     try:
-        AuditLog = getattr(governance_ports, "AuditLog")
-        entry = AuditLog(
-            action=action or AuditAction.UPDATE,
-            entity_type=effective_type,
-            entity_id=entity_id,
-            user_id=effective_user_id,
-            username=username or (details or {}).get("username"),
-            user_role=user_role or (details or {}).get("role"),
-            details=payload or None,
-            ip_address=ip_address,
-            created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        # Law 1 compliance: write the audit row via raw SQL against the
+        # ``audit_logs`` table. The column layout is the schema contract
+        # defined in ``domains/governance/models/admin.py``. Infrastructure
+        # is not allowed to import the AuditLog ORM class.
+        from sqlalchemy import text
+        db.execute(
+            text(
+                "INSERT INTO audit_logs "
+                "(action, entity_type, entity_id, user_id, username, user_role, "
+                " details, ip_address, created_at) "
+                "VALUES (:action, :entity_type, :entity_id, :user_id, :username, :user_role, "
+                " :details, :ip_address, :created_at)"
+            ),
+            {
+                "action": action or AuditAction.UPDATE,
+                "entity_type": effective_type,
+                "entity_id": entity_id,
+                "user_id": effective_user_id,
+                "username": username or (details or {}).get("username"),
+                "user_role": user_role or (details or {}).get("role"),
+                "details": _json_dumps(payload) if payload else None,
+                "ip_address": ip_address,
+                "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            },
         )
-        db.add(entry)
         db.commit()
         return True
     except Exception as exc:  # pragma: no cover - defensive, audit must not raise

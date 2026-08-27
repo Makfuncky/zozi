@@ -30,6 +30,8 @@ from providers.ai.text import _ollama_chat_completion, _extract_json
 
 logger = logging.getLogger(__name__)
 
+HAS_AI_VARIANT = True
+
 __all__ = [
     "suggest_price",
     "normalize_category",

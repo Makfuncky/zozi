@@ -13,6 +13,8 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+HAS_COUNTRY_GEO = True
+
 
 class CountrySearchProvider:
     """AI-powered country details search system."""

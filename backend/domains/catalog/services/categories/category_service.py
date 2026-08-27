@@ -25,6 +25,12 @@ from sqlalchemy.orm import Query, Session
 
 from domains.catalog.models.products import Category
 from infrastructure.utils.slug import generate_slug
+from domains.catalog.utils.category_tree import (
+    _chain_for,
+    compute_category_path,
+    rebuild_category_paths,
+    category_subtree_ids,
+)
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -54,7 +60,9 @@ __all__ = [
     "get_category_by_id",
     "category_slug_exists",
     "create_category",
+    "build_category_payload",
     "update_category",
+    "build_category_updates",
     "deactivate_category",
     "delete_category",
     "reorder_categories",
@@ -67,6 +75,8 @@ __all__ = [
     "restore_category",
     "bulk_archive_categories",
     "bulk_restore_categories",
+    "update_category_by_id",
+    "delete_category_by_id",
 ]
 
 
@@ -226,6 +236,52 @@ def create_category(
     return category
 
 
+def build_category_payload(
+    *,
+    name: str | None = None,
+    slug: str | None = None,
+    parent_id: int | None = None,
+    sort_order: int = 0,
+    description: str | None = None,
+    country_code: str | None = None,
+) -> dict[str, Any]:
+    """Build a normalized category payload dict from raw request data.
+
+    Country code is uppercased for storage consistency.
+    """
+    return {
+        "name": name,
+        "slug": slug,
+        "parent_id": parent_id,
+        "sort_order": sort_order,
+        "description": description,
+        "country_code": country_code.upper() if country_code else country_code,
+    }
+
+
+def build_category_updates(
+    *,
+    name: str | None = None,
+    slug: str | None = None,
+    parent_id: int | None = None,
+    sort_order: int | None = None,
+    description: str | None = None,
+) -> dict[str, Any]:
+    """Build a filtered updates dict, excluding unset (None) fields."""
+    updates: dict[str, Any] = {}
+    if name is not None:
+        updates["name"] = name
+    if slug is not None:
+        updates["slug"] = slug
+    if parent_id is not None:
+        updates["parent_id"] = parent_id
+    if sort_order is not None:
+        updates["sort_order"] = sort_order
+    if description is not None:
+        updates["description"] = description
+    return updates
+
+
 def update_category(
     db: Session,
     category: Category,
@@ -276,6 +332,34 @@ def deactivate_category(db: Session, category: Category) -> Category:
 delete_category = deactivate_category
 
 
+def update_category_by_id(
+    db: Session,
+    country_code: str,
+    category_id: int,
+    updates: Mapping[str, Any],
+    *,
+    rebuild_paths: bool = True,
+) -> Category:
+    """Fetch a category by id + country and apply updates. Raises 404 if missing."""
+    from fastapi import HTTPException
+
+    category = get_category_by_id(db, category_id, country_code=country_code)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return update_category(db, category, updates, rebuild_paths=rebuild_paths)
+
+
+def delete_category_by_id(db: Session, country_code: str, category_id: int) -> dict:
+    """Fetch a category by id + country and deactivate it. Raises 404 if missing."""
+    from fastapi import HTTPException
+
+    category = get_category_by_id(db, category_id, country_code=country_code)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
+    delete_category(db, category)
+    return {"message": "Category deleted"}
+
+
 def reorder_categories(db: Session, order: Mapping[int, int]) -> int:
     """Bulk-assign ``sort_order`` values.
 
@@ -308,67 +392,7 @@ def reorder_categories(db: Session, order: Mapping[int, int]) -> int:
 # Category depth is shallow (<=5) and changes rarely; a materialized path
 # (path="/1/15/42/", depth=2) enables O(1) sub-tree queries via LIKE instead
 # of recursive CTEs. Nested-set would force a full renumber on every insert.
-
-
-def _chain_for(category: Category, by_id: dict[int, Category]) -> list[str]:
-    """Return the ancestor id chain (root-first) for ``category``."""
-    chain: list[str] = []
-    guard = 0
-    cur = category.parent_id
-    while cur and guard < 64:
-        chain.append(str(cur))
-        node = by_id.get(cur)
-        if node is None:
-            break
-        cur = node.parent_id
-        guard += 1
-    chain.reverse()
-    return chain
-
-
-def compute_category_path(category: Category, by_id: dict[int, Category]) -> tuple[str, int]:
-    """Compute ``(path, depth)`` for a single category.
-
-    ``path`` always includes the category's own id. ``depth`` is the number of
-    ancestors (0 for a top-level category).
-    """
-    chain = _chain_for(category, by_id)
-    chain.append(str(category.id))
-    path = "/" + "/".join(chain) + "/"
-    return path, len(chain) - 1
-
-
-def rebuild_category_paths(db: Session) -> int:
-    """Recompute ``path``/``depth`` for every category from ``parent_id``.
-
-    Safe to call after any create/move. The catalog is small, so a full rebuild
-    is simpler and less error-prone than incremental maintenance.
-    """
-    cats = db.query(Category).all()
-    by_id = {c.id: c for c in cats}
-    updated = 0
-    for c in cats:
-        if c.parent_id is not None and c.parent_id not in by_id:
-            c.parent_id = None
-        path, depth = compute_category_path(c, by_id)
-        if c.path != path or c.depth != depth:
-            c.path = path
-            c.depth = depth
-            updated += 1
-    db.flush()
-    return updated
-
-
-def category_subtree_ids(category_id: int, db: Session) -> list[int]:
-    """Return ids of all descendants of ``category_id`` (excludes the root)."""
-    pattern = f"%/{int(category_id)}/%"
-    rows = (
-        db.query(Category.id)
-        .filter(Category.path.like(pattern))
-        .filter(Category.id != int(category_id))
-        .all()
-    )
-    return [r[0] for r in rows]
+# These helpers are imported from domains.catalog.utils.category_tree.
 
 
 def category_subtree_ids_inclusive(category_id: int, db: Session) -> list[int]:
@@ -434,26 +458,3 @@ def bulk_restore_categories(ids: list[int], acting_user: dict, db: Session) -> d
     from domains.catalog.services.products.bulk_ops_write_service import bulk_restore_entities
 
     return bulk_restore_entities(db, Category, ids, acting_user)
-
-
-def list_categories_flat(_admin, db: Session, page: int = 1, page_size: int = 50) -> dict:
-    """Return all active categories with id, slug, name, parent_id, commission_rate for admin commission config."""
-    query = db.query(Category).filter(Category.is_active == True)  # noqa: E712
-    total = query.count()
-    rows = query.order_by(Category.sort_order, Category.name).offset((page - 1) * page_size).limit(page_size).all()
-    return {
-        "data": [
-            {
-                "id": c.id,
-                "slug": c.slug,
-                "name": c.name,
-                "parent_id": c.parent_id,
-                "commission_rate": float(c.commission_rate) if c.commission_rate is not None else None,
-                "sort_order": c.sort_order,
-            }
-            for c in rows
-        ],
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-    }

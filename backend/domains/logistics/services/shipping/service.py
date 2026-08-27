@@ -184,7 +184,8 @@ def lookup_shipment_by_code(db: Session, code: str) -> dict[str, Any]:
 
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.logistics.shipment_service re-exports for HTTP routers."""
-from domains.logistics.services.shipment_service import lookup_shipment_by_code
+# TODO: Module not yet created
+# from domains.logistics.services.shipment_service import lookup_shipment_by_code
 
 # -------------------------------------------------------------------
 # FROM: logistics_shipping_tier.py
@@ -192,7 +193,8 @@ from domains.logistics.services.shipment_service import lookup_shipment_by_code
 
 # AUTO-GENERATED controller delegator (routers -> controllers -> services).
 """services.logistics.shipping_tier re-exports for HTTP routers."""
-from domains.logistics.services.shipping_tier import resolve_shipping_tier
+# TODO: Module not yet created
+# from domains.logistics.services.shipping_tier import resolve_shipping_tier
 
 # -------------------------------------------------------------------
 # FROM: map_service.py

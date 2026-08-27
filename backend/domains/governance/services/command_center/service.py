@@ -17,7 +17,7 @@ from domains.governance.models.core import AlertEscalationRule
 from domains.governance.models.core import ExecutiveNews
 from domains.governance.models.user import User
 from domains.country.models.countries import CountryConfig
-from domains.governance.models.fraud import FraudAlert
+from domains.security.models.fraud import FraudAlert
 from domains.logistics.models.logistics import LogisticsPartner
 from domains.orders.models.orders import Order
 from domains.hr.models.employee_models import Employee

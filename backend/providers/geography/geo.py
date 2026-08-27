@@ -16,7 +16,12 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-import requests
+try:
+    import requests
+    HAS_GEO = True
+except ImportError:
+    HAS_GEO = False
+    requests = None  # type: ignore[assignment]
 
 from ..config import settings
 

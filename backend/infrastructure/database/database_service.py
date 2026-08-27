@@ -38,6 +38,9 @@ def _table_row_count(db: Session, table_name: str) -> int | None:
     try:
         if not table_name or not table_name.replace("_", "").isalnum():
             return None
+        valid_tables = set(inspect(bind).get_table_names())
+        if table_name not in valid_tables:
+            return None
         quoted_table_name = bind.dialect.identifier_preparer.quote_identifier(table_name)
         count_value = db.execute(text("SELECT COUNT(*) FROM " + quoted_table_name)).scalar()
         return 0 if count_value is None else int(count_value)

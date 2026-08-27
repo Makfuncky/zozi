@@ -37,11 +37,8 @@ def _keyset_page(model, db: Session, cursor: Optional[str] = None,
     return cursor_paginate_asc(db.query(model), cursor=cursor, page_size=page_size)
 
 from domains.governance.models.admin import APIKey, AdminActivityLog, AdminAnalyticsSnapshot, AdminChangeAuditLog, BadgeBillingRecord, BadgeTier, BadgeTransaction, ChatbotQueryEvent, CommissionBadgeTier, CommissionGlobalConfig, CouponUsage, EmailProviderConfig, EmployeeExpense, FinanceBankAccount, LogisticsCODRemittanceReceipt, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsSettlement, NormalizedWebhookEvent, PaymentProviderConfig, ProcessedWebhookEvent, ProductVerification, PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier, PushNotificationToken, RetentionJobRun, RolePermissionSetting, ShipmentConfirmation, ShippingCarrier, ShippingZone, SupplierBankAccount, SupplierCountryCommission, SupplierDispute, SystemAlert, SystemSetting, TicketReply
-from domains.governance.models.fraud import CreditCardBin, DLPViolation, DeviceFingerprint, FraudAlert, FraudBlacklist, FraudCase, FraudCaseAssignment, FraudEvent, FraudRule, FraudScoringLog, IPAccountLinkage, IPReputation, LogisticsFraudIndicator, ManualReviewQueue, MeetingActionItem, MeetingRecording, MeetingTranscript, ReturnAbusePattern, SupplierFraudIndicator, VelocityCounter
+from domains.security.models.fraud import CreditCardBin, DLPViolation, DeviceFingerprint, FraudAlert, FraudBlacklist, FraudCase, FraudCaseAssignment, FraudEvent, FraudRule, FraudScoringLog, IPAccountLinkage, IPReputation, LogisticsFraudIndicator, ManualReviewQueue, MeetingActionItem, MeetingRecording, MeetingTranscript, ReturnAbusePattern, SupplierFraudIndicator, VelocityCounter
 from domains.governance.models.incident import IncidentActionItem, IncidentThread, IncidentWarRoom, WarRoomTemplate
-
-# Import functions from accounts for cross-domain use
-from domains.accounts.services.users.users_admin_service.merged_from_user_write_ops_py import build_user_delete_blocker, delete_order_records, hard_delete_user_record
 
 
 def get_admin_analytics_snapshot_by_id(db: Session, id_: int) -> Optional[AdminAnalyticsSnapshot]:
@@ -120,11 +117,11 @@ def get_a_p_i_key_by_id(db: Session, id_: int) -> Optional[APIKey]:
     """Return APIKey by primary key (or None)."""
     return db.get(APIKey, id_)
 
-def list_a_p_i_keys(db: Session, limit: int = 100) -> List[APIKey]:
+def list_api_keys(db: Session, limit: int = 100) -> List[APIKey]:
     """Return up to ``limit`` APIKey rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(APIKey, db, limit)
 
-def list_a_p_i_keys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_api_keys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of APIKey rows (scale-ready)."""
     return _keyset_page(APIKey, db, cursor, page_size)
 
@@ -192,11 +189,11 @@ def get_ticket_reply_by_id(db: Session, id_: int) -> Optional[TicketReply]:
     """Return TicketReply by primary key (or None)."""
     return db.get(TicketReply, id_)
 
-def list_ticket_replys(db: Session, limit: int = 100) -> List[TicketReply]:
+def list_ticket_replies(db: Session, limit: int = 100) -> List[TicketReply]:
     """Return up to ``limit`` TicketReply rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(TicketReply, db, limit)
 
-def list_ticket_replys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ticket_replies_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of TicketReply rows (scale-ready)."""
     return _keyset_page(TicketReply, db, cursor, page_size)
 
@@ -294,11 +291,11 @@ def get_promotion_ledger_entry_by_id(db: Session, id_: int) -> Optional[Promotio
     """Return PromotionLedgerEntry by primary key (or None)."""
     return db.get(PromotionLedgerEntry, id_)
 
-def list_promotion_ledger_entrys(db: Session, limit: int = 100) -> List[PromotionLedgerEntry]:
+def list_promotion_ledger_entries(db: Session, limit: int = 100) -> List[PromotionLedgerEntry]:
     """Return up to ``limit`` PromotionLedgerEntry rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(PromotionLedgerEntry, db, limit)
 
-def list_promotion_ledger_entrys_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_promotion_ledger_entries_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of PromotionLedgerEntry rows (scale-ready)."""
     return _keyset_page(PromotionLedgerEntry, db, cursor, page_size)
 
@@ -546,11 +543,11 @@ def get_i_p_reputation_by_id(db: Session, id_: int) -> Optional[IPReputation]:
     """Return IPReputation by primary key (or None)."""
     return db.get(IPReputation, id_)
 
-def list_i_p_reputations(db: Session, limit: int = 100) -> List[IPReputation]:
+def list_ip_reputations(db: Session, limit: int = 100) -> List[IPReputation]:
     """Return up to ``limit`` IPReputation rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(IPReputation, db, limit)
 
-def list_i_p_reputations_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ip_reputations_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of IPReputation rows (scale-ready)."""
     return _keyset_page(IPReputation, db, cursor, page_size)
 
@@ -630,11 +627,11 @@ def get_i_p_account_linkage_by_id(db: Session, id_: int) -> Optional[IPAccountLi
     """Return IPAccountLinkage by primary key (or None)."""
     return db.get(IPAccountLinkage, id_)
 
-def list_i_p_account_linkages(db: Session, limit: int = 100) -> List[IPAccountLinkage]:
+def list_ip_account_linkages(db: Session, limit: int = 100) -> List[IPAccountLinkage]:
     """Return up to ``limit`` IPAccountLinkage rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(IPAccountLinkage, db, limit)
 
-def list_i_p_account_linkages_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_ip_account_linkages_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of IPAccountLinkage rows (scale-ready)."""
     return _keyset_page(IPAccountLinkage, db, cursor, page_size)
 
@@ -690,7 +687,7 @@ def get_d_l_p_violation_by_id(db: Session, id_: int) -> Optional[DLPViolation]:
     """Return DLPViolation by primary key (or None)."""
     return db.get(DLPViolation, id_)
 
-def list_d_l_p_violations(db: Session, limit: int = 100) -> List[DLPViolation]:
+def list_dlp_violations(db: Session, limit: int = 100) -> List[DLPViolation]:
     """Return up to ``limit`` DLPViolation rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(DLPViolation, db, limit)
 
@@ -783,30 +780,19 @@ def list_war_room_templates_page(db: Session, cursor: Optional[str] = None, page
     return _keyset_page(WarRoomTemplate, db, cursor, page_size)
 
 # --- P11 re-exports (Law 3 sanctioned READ surface only) ---
+# Ports.py is read-only model access. Service functions must be imported
+# directly from their owning service modules, NOT through ports.
 # Reads/models are re-exported from owning models; writes were removed and their
 # consumers now call the owning governance service directly (ports is read-only).
 from domains.governance.models.admin import CouponUsage, LogisticsCODRemittanceReceipt, LogisticsPartnerBankAccount, LogisticsPartnerDocument, LogisticsSettlement, PromotionEngineConfig, PromotionLedgerEntry, PromotionOrderTier, ShipmentConfirmation, ShippingCarrier, ShippingZone, SupplierDispute
 
-# Service-function re-exports are resolved lazily to break an import cycle:
-# catalog.ports -> governance.services.commerce -> catalog.ports. Consumers
-# (``from domains.governance.ports import get_current_user``) keep working, but
-# the symbol is only fetched on first access, after the interpreter has finished
-# initializing both modules.
+# Model re-exports only (Law 3: ports should be read-only model access).
+# Service functions were removed from this module and must be imported
+# directly from their owning service modules.
 _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
-    "get_current_user": ("domains.governance.services.auth.auth_controller_service", "get_current_user"),
-    "archive_entity": ("domains.governance.services.settings.misc_service", "archive_entity"),
-    "restore_entity": ("domains.governance.services.settings.misc_service", "restore_entity"),
-    "bulk_archive_entities": ("domains.governance.services.admin.bulk_ops_service", "bulk_archive_entities"),
-    "bulk_restore_entities": ("domains.governance.services.admin.bulk_ops_service", "bulk_restore_entities"),
-    "_banner_to_dict": ("domains.governance.services.commerce.admin_commerce_configuration_service", "_banner_to_dict"),
-    "get_promotion_config": ("domains.governance.services.commerce.admin_commerce_configuration_service", "get_promotion_config"),
-    "update_user_role": ("domains.governance.services.users.users_service", "update_user_role"),
-    "toggle_user_active": ("domains.governance.services.users.users_service", "toggle_user_active"),
-    "update_profile": ("domains.governance.services.users.admin_identity_operations_api_service", "update_profile"),
-    # NOTE: Fixed import path - incident_service is in services/ not services/incident/
-    "get_incident_service": ("domains.governance.services.incident_service", "get_incident_service"),
     # Model re-exports (canonical homes in other domains)
     "User": ("domains.governance.models.user", "User"),
+    "SystemHealthEvent": ("domains.governance.models.core", "SystemHealthEvent"),
     "AuditLog": ("domains.audit.models.audit_schema_models", "AuditLog"),
     "SupportTicket": ("domains.comms.models.communication_schema_models", "SupportTicket"),
     "TicketReply": ("domains.governance.models.admin", "TicketReply"),
@@ -824,22 +810,13 @@ _LAZY_SERVICE_EXPORTS: dict[str, tuple[str, str]] = {
     "VideoRoomRecording": ("domains.comms.models.chat", "VideoRoomRecording"),
 }
 
-import importlib as _importlib
+import importlib
 
 def __getattr__(name: str):
     if name in _LAZY_SERVICE_EXPORTS:
         module_path, symbol = _LAZY_SERVICE_EXPORTS[name]
-        mod = _importlib.import_module(module_path)
+        mod = importlib.import_module(module_path)
         value = getattr(mod, name)
-        globals()[name] = value
-        return value
-    if name in _IMPORTED_CROSS_DOMAIN_SERVICES:
-        return _IMPORTED_CROSS_DOMAIN_SERVICES[name]
-    if name in _LAZY_CROSS_DOMAIN_SERVICES:
-        module_path, symbol = _LAZY_CROSS_DOMAIN_SERVICES[name]
-        mod = _importlib.import_module(module_path)
-        value = getattr(mod, name)
-        _IMPORTED_CROSS_DOMAIN_SERVICES[name] = value
         globals()[name] = value
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -868,75 +845,7 @@ def processed_webhook_event_query(db: Session) -> object:
     return db.query(ProcessedWebhookEvent)
 
 
-# === Merged from accounts/ports.py ===
-
-# Cross-domain service functions (Law 3: lazy-loaded to avoid import-time coupling)
-# These are resolved lazily via __getattr__ to prevent circular imports and
-# cross-domain coupling at module import time.
-_LAZY_CROSS_DOMAIN_SERVICES: dict[str, tuple[str, str]] = {
-    # HR domain services
-    "get_all_subordinates": ("domains.hr.services.hierarchy.hierarchy_service", "get_all_subordinates"),
-    "get_authority_level": ("domains.hr.services.hierarchy.hierarchy_service", "get_authority_level"),
-    "get_user_chain": ("domains.hr.services.hierarchy.hierarchy_service", "get_user_chain"),
-    "can_manage": ("domains.hr.services.hierarchy.hierarchy_service", "can_manage"),
-    "get_org_chart": ("domains.hr.services.hierarchy.hierarchy_service", "get_org_chart"),
-    "get_team_members": ("domains.hr.services.hierarchy.hierarchy_service", "get_team_members"),
-    "get_home_org_unit": ("domains.hr.services.hierarchy.hierarchy_service", "get_home_org_unit"),
-    "reassign_manager": ("domains.hr.services.hierarchy.hierarchy_service", "reassign_manager"),
-    "backfill_authority_levels": ("domains.hr.services.hierarchy.hierarchy_service", "backfill_authority_levels"),
-    "is_in_chain": ("domains.hr.services.hierarchy.hierarchy_service", "is_in_chain"),
-    "verify_bank_account": ("domains.hr.services.payroll.payroll_service", "verify_bank_account"),
-    # Accounts domain services
-    "force_reset_password": ("domains.accounts.services.users.users_admin_service", "force_reset_password"),
-    "build_user_delete_blocker": ("domains.accounts.services.users.users_admin_service", "build_user_delete_blocker"),
-    "delete_order_records": ("domains.accounts.services.users.users_admin_service", "delete_order_records"),
-    "hard_delete_user_record": ("domains.accounts.services.users.users_admin_service", "hard_delete_user_record"),
-}
-_IMPORTED_CROSS_DOMAIN_SERVICES: dict[str, object] = {}
-
-# Same-domain service imports (governance services) — resolved lazily to avoid circular imports
-_LAZY_SERVICE_EXPORTS.update({
-    # IAM / auth services
-    "_QR_SECRET_KEY": ("domains.governance.services.auth.iam_service_accounts", "_QR_SECRET_KEY"),
-    "validate_geo_fence": ("domains.governance.services.auth.iam_service_accounts", "validate_geo_fence"),
-    "validate_qr_token": ("domains.governance.services.auth.iam_service_accounts", "validate_qr_token"),
-    "enroll_biometric": ("domains.governance.services.auth.iam_service_accounts", "enroll_biometric"),
-    "generate_physical_card": ("domains.governance.services.auth.iam_service_accounts", "generate_physical_card"),
-    "generate_qr_token": ("domains.governance.services.auth.iam_service_accounts", "generate_qr_token"),
-    "log_geo_fence_event": ("domains.governance.services.auth.iam_service_accounts", "log_geo_fence_event"),
-    "revoke_physical_card": ("domains.governance.services.auth.iam_service_accounts", "revoke_physical_card"),
-    "generate_qr_code": ("domains.governance.services.auth.iam_service_accounts", "generate_qr_code"),
-    # Admin services
-    "APPROVAL_RULES": ("domains.governance.services.admin.approval_matrix_service", "APPROVAL_RULES"),
-    "can_approve": ("domains.governance.services.admin.approval_matrix_service", "can_approve"),
-    "require_approval": ("domains.governance.services.admin.approval_matrix_service", "require_approval"),
-    "resolve_approvers": ("domains.governance.services.admin.approval_matrix_service", "resolve_approvers"),
-    "get_approval_chain": ("domains.governance.services.admin.approval_matrix_service", "get_approval_chain"),
-    "delete_user_admin": ("domains.governance.services.users.identity_admin_service", "delete_user_admin"),
-    "set_user_role": ("domains.governance.services.users.identity_admin_service", "set_user_role"),
-    # Product services
-    "approve_product": ("domains.governance.services.products.products_service", "approve_product"),
-    "reject_product": ("domains.governance.services.products.products_service", "reject_product"),
-    # Commerce services
-    "create_coupon": ("domains.governance.services.commerce.admin_commerce_configuration_service", "create_coupon"),
-    "list_coupons": ("domains.governance.services.commerce.admin_commerce_configuration_service", "list_coupons"),
-    "delete_coupon": ("domains.governance.services.commerce.public_commerce_validation_service", "delete_coupon"),
-    # Payout services
-    "verify_payout": ("domains.governance.services.admin.payouts_service", "verify_payout"),
-    # Country services
-    "list_staff": ("domains.governance.services.country.country_admin_service", "list_staff"),
-    # Export services
-    "export_audit_logs_csv": ("domains.governance.services.admin.export_service", "export_audit_logs_csv"),
-    "export_coupons_csv": ("domains.governance.services.admin.export_service", "export_coupons_csv"),
-    "export_orders_csv": ("domains.governance.services.admin.export_service", "export_orders_csv"),
-    "export_products_csv": ("domains.governance.services.admin.export_service", "export_products_csv"),
-    "export_transfer_csv": ("domains.governance.services.admin.export_service", "export_transfer_csv"),
-    "export_users_csv": ("domains.governance.services.admin.export_service", "export_users_csv"),
-    "download_export_job_result": ("domains.governance.services.admin.export_service", "download_export_job_result"),
-    "queue_export_job": ("domains.governance.services.admin.export_service", "queue_export_job"),
-})
-
-# Private-name aliases re-exported for legacy imports.
-_build_user_delete_blocker = build_user_delete_blocker
-_delete_order_records = delete_order_records
-_hard_delete_user_record = hard_delete_user_record
+def get_approval_chain(db: Session, employee_id: int, resource_type: str, min_authority_level: int | None = None) -> list:
+    """Sanctioned cross-domain read: resolve the approval chain for an employee/resource."""
+    from domains.governance.services.approval.approval_matrix_service import get_approval_chain as _svc
+    return _svc(db, user_id=employee_id, resource_type=resource_type)

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import json
 import logging
 import math
 import time
-from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from fastapi import Request, Response
@@ -16,11 +14,6 @@ from infrastructure.utils.ip_utils import get_request_ip
 from infrastructure.utils.auth import verify_token
 
 from providers.geography.geoip import lookup_coordinates
-
-from sqlalchemy.orm import Session
-from domains.audit.models.audit_schema_models import AuditLog
-from domains.governance.models.user import User
-from domains.hr.models.employee_models import Employee
 
 logger = logging.getLogger(__name__)
 
@@ -170,16 +163,11 @@ class ImpossibleTravelMiddleware(BaseHTTPMiddleware):
         )
         return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-# --- Merged from fraud_prevention.py / fraud_scoring_middleware.py ---
-# These two middlewares were consolidated here from the original
-# ``fraud_prevention.py`` and ``fraud_scoring_middleware.py`` files.  Neither
-# owns a DB write: persistence lives in ``services.security.fraud_detection_service``
-# (FraudScoringEngine) and the models layer.  Each opens a short-lived, read-only
-# service session per request, matching the other middleware (country_context /
-# coi_middleware), so the Layer-1 W1 contract (no inline Session writes) holds.
 
-# Path prefixes that should be fraud-scored.  These constants were lost in the
-# original merge; the values mirror the fraud_scoring_middleware configuration.
+# --- Fraud scoring middleware ---
+# All DB / service access is delegated to ``middleware.dependencies.fraud_events``
+# so this module never imports from ``domains/``.
+
 SENSITIVE_PATHS: dict[str, str] = {
     "checkout": "/api/checkout",
     "cart": "/api/cart",
@@ -218,10 +206,9 @@ def _extract_user_id(request: Request) -> Optional[int]:
 class FraudDetectionMiddleware(BaseHTTPMiddleware):
     """Real-time fraud detection for financial operations.
 
-    Runs read-only checks against the audit log / HR models.  A hard fraud signal
-    (impossible travel between logins) blocks the request; softer signals (ghost
-    employee) are flagged on ``request.state`` for downstream logging rather than
-    blocking, to avoid locking out legitimate staff.
+    All domain access is delegated to
+    :mod:`middleware.dependencies.fraud_events`; this class only orchestrates
+    request flow and the response.
     """
 
     FRAUD_RULES = {
@@ -244,72 +231,40 @@ class FraudDetectionMiddleware(BaseHTTPMiddleware):
         country_code = request.headers.get("X-Country-Code") or getattr(request.state, "country_code", None)
 
         try:
-            from infrastructure.database.database import get_service_session
+            from middleware.dependencies.fraud_events import (
+                detect_impossible_travel,
+                detect_ghost_employee,
+            )
 
-            with get_service_session() as db:
-                if country_code and self.check_impossible_travel(db, user_id, country_code, ip_address):
-                    logger.warning("Impossible travel detected", extra={"user_id": user_id, "ip": ip_address})
-                    return JSONResponse(
-                        status_code=403,
-                        content={"detail": "Access denied: impossible travel detected"},
-                    )
+            if country_code and detect_impossible_travel(user_id, country_code):
+                logger.warning("Impossible travel detected", extra={"user_id": user_id, "ip": ip_address})
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Access denied: impossible travel detected"},
+                )
 
-                employee = db.query(Employee).filter(Employee.user_id == user_id).first()
-                if employee and self.check_ghost_employee(db, employee.id):
-                    request.state.fraud_flag_ghost_employee = True
-                    logger.warning("Ghost employee detected", extra={"user_id": user_id})
+            if detect_ghost_employee(user_id):
+                request.state.fraud_flag_ghost_employee = True
+                logger.warning("Ghost employee detected", extra={"user_id": user_id})
         except Exception:
             logger.exception("Fraud detection check failed")
 
         return await call_next(request)
 
-    def check_impossible_travel(self, db: Session, user_id: int, country_code: str, ip_address: str) -> bool:
-        """Return True if a login from a different country occurred in the last hour."""
-        recent_logins = (
-            db.query(AuditLog)
-            .filter(
-                AuditLog.user_id == user_id,
-                AuditLog.action == "login",
-                AuditLog.created_at > datetime.now(timezone.utc) - timedelta(hours=1),
-            )
-            .all()
-        )
-        for login in recent_logins:
-            if not login.details:
-                continue
-            details = json.loads(login.details) if isinstance(login.details, str) else login.details
-            prev_country = details.get("country_code") if isinstance(details, dict) else None
-            if prev_country and prev_country != country_code:
-                return True
-        return False
+    def check_impossible_travel(self, db, user_id: int, country_code: str, ip_address: str) -> bool:
+        """Deprecated thin wrapper kept for backward compatibility."""
+        from middleware.dependencies.fraud_events import detect_impossible_travel
+        return detect_impossible_travel(user_id, country_code)
 
-    def check_ghost_employee(self, db: Session, employee_id: int) -> bool:
-        """Return True if the employee has zero activity for 5+ days."""
-        five_days_ago = datetime.now(timezone.utc) - timedelta(days=5)
-        recent_qr_scans = db.query(AuditLog).filter(
-            AuditLog.entity_type == "attendance",
-            AuditLog.entity_id == employee_id,
-            AuditLog.created_at > five_days_ago,
-        ).count()
-        recent_api_activity = db.query(AuditLog).filter(
-            AuditLog.user_id == employee_id,
-            AuditLog.created_at > five_days_ago,
-        ).count()
-        return recent_qr_scans == 0 and recent_api_activity == 0
+    def check_ghost_employee(self, db, employee_id: int) -> bool:
+        """Deprecated thin wrapper kept for backward compatibility."""
+        from middleware.dependencies.fraud_events import detect_ghost_employee
+        return detect_ghost_employee(employee_id)
 
-    def check_coi(self, db: Session, user_id: int, related_entity_id: int, entity_type: str) -> bool:
-        """Return True if the user and related entity share a country (conflict of interest)."""
-        employee = db.query(Employee).filter(Employee.user_id == user_id).first()
-        if not employee:
-            return False
-        related_user = db.query(User).filter(User.id == related_entity_id).first()
-        if not related_user:
-            return False
-        if employee.country_code and related_user.staff_country_codes:
-            related_countries = {str(c).strip().upper() for c in related_user.staff_country_codes}
-            if employee.country_code.upper() in related_countries:
-                return True
-        return False
+    def check_coi(self, db, user_id: int, related_entity_id: int, entity_type: str) -> bool:
+        """Deprecated thin wrapper kept for backward compatibility."""
+        from middleware.dependencies.fraud_events import check_country_coi
+        return check_country_coi(user_id, related_entity_id)
 
 
 class FraudScoringMiddleware(BaseHTTPMiddleware):
@@ -341,18 +296,15 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
             event_type = "other"
 
         try:
-            from infrastructure.database.database import get_service_session
-            from domains.security.services.fraud.fraud_detection_service import FraudScoringEngine
+            from middleware.dependencies.fraud_events import calculate_fraud_score
 
-            with get_service_session() as db:
-                engine = FraudScoringEngine(db, self.redis)
-                score_result = engine.calculate_score(
-                    user_id=user_id,
-                    ip_address=ip_address,
-                    device_hash=device_hash,
-                    event_type=event_type,
-                    request_headers=headers,
-                )
+            score_result = calculate_fraud_score(
+                user_id=user_id,
+                ip_address=ip_address,
+                device_hash=device_hash,
+                event_type=event_type,
+                request_headers=headers,
+            )
 
             if score_result.get("is_blocked"):
                 logger.warning(
@@ -375,7 +327,3 @@ class FraudScoringMiddleware(BaseHTTPMiddleware):
             logger.error(f"Fraud scoring error: {e}")
 
         return await call_next(request)
-
-
-
-

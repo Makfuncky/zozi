@@ -377,3 +377,40 @@ def refresh_supplier_badge_review(db: Session, supplier_id: int) -> dict:
     if not hasattr(s, "badge_level"):
         raise HTTPException(status_code=400, detail="Supplier does not support badge levels")
     return {"id": s.id, "badge_level": s.badge_level}
+
+
+def admin_list_suppliers(
+    db: Session,
+    q: str | None,
+    country: str | None,
+    limit: int,
+    cursor: str | None,
+) -> dict:
+    from infrastructure.utils.pagination import keyset_paginate
+    query = db.query(SupplierProfile)
+    if q:
+        query = query.filter(SupplierProfile.business_name.ilike(f"%{q}%"))
+    if country:
+        query = query.filter(SupplierProfile.country_code == country.upper())
+    return keyset_paginate(query, sort_keys=[(SupplierProfile.id, "asc")], cursor=cursor, page_size=limit)
+
+
+def admin_resolve_supplier_slug(db: Session, slug: str):
+    s = db.query(SupplierProfile).filter(SupplierProfile.business_name == slug).first()
+    if not s:
+        raise HTTPException(404, "Supplier not found")
+    return s
+
+
+def admin_get_supplier(db: Session, supplier_id: int):
+    s = db.query(SupplierProfile).filter(SupplierProfile.id == supplier_id).first()
+    if not s:
+        raise HTTPException(404, "Supplier not found")
+    return s
+
+
+def admin_get_supplier_products(db: Session, supplier_id: int, limit: int, cursor: str | None) -> dict:
+    from infrastructure.utils.pagination import keyset_paginate
+    from domains.catalog.models.products import Product
+    query = db.query(Product).filter(Product.supplier_id == supplier_id)
+    return keyset_paginate(query, sort_keys=[(Product.id, "asc")], cursor=cursor, page_size=limit)

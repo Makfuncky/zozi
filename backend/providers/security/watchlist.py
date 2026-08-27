@@ -17,6 +17,8 @@ from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
+HAS_WATCHLIST = True
+
 
 class WatchlistProviderError(Exception):
     """Raised when the external screening API cannot be reached or returns garbage."""

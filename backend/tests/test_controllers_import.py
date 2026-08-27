@@ -11,7 +11,7 @@ MODULES = [
     # governance export controller (reconstructed from controllers migration)
     "domains.governance.services.core.export_controller",
     # domain service controllers
-    "infrastructure.search.routers.search_controller",
+    "modules.admin.routers.catalog",
     "domains.orders.services.orders_controller",
     "domains.hr.services.core.hr_service",
     "domains.finance.services.payments.payments",

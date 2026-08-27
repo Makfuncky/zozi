@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from domains.comms.ports import FlashSale
 from domains.governance.ports import PromotionEngineConfig
-from domains.finance.ports import Banner
+from domains.catalog.models.promotions import Banner
 from domains.finance.ports import Coupon
 import structlog
 logger = structlog.get_logger(__name__)

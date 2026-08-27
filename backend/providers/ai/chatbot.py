@@ -13,6 +13,8 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+HAS_CHATBOT = True
+
 __all__ = ["ChatbotProvider"]
 
 

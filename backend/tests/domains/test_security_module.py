@@ -3,7 +3,7 @@ Smoke tests for the rescued Security module.
 
 Verifies that the authentic Security-domain import violations have been resolved:
   * `controllers/auth_controller.py` resolves (`services.security.auth_write_service` was
-    broken/missing, and all audit imports now resolve to the canonical `infrastructure.utils.audit`).
+    broken/missing, and all audit imports now resolve to the canonical `domains.audit.services.logs.audit_service`).
   * `utils/security_audit.py` no longer imports `models` at module top (CIR1).
   * `routers/auth.py` no longer imports the `generate_csrf_token` upward edge.
   * `services/auth_write_service.py` exposes the write-helper callables.
@@ -85,11 +85,11 @@ def test_auth_write_service_helpers_callable():
 
 
 def test_audit_single_canonical_source():
-    """`infrastructure.utils.audit` is the single source of truth; the `services/audit` package is a
+    """`domains.audit.services.logs.audit_service` is the single source of truth; the `services/audit` package is a
     real (non-shim) package and no longer re-exports the audit primitives."""
     import pathlib
 
-    mod = importlib.import_module("infrastructure.utils.audit")
+    mod = importlib.import_module("domains.audit.services.logs.audit_service")
     assert hasattr(mod, "AuditAction")
     assert callable(mod.audit_log)
 

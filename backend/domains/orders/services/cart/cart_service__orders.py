@@ -30,13 +30,20 @@ from infrastructure.database.schemas import (
 )
 from domains.governance.ports import CartItem
 from domains.catalog.ports import Product
-from domains.orders.services.cart_write_service import create_cart_item
-from domains.orders.services.cart_write_service import delete_cart_items_by_user
-from domains.orders.services.cart_write_service import get_active_product_by_id
-from domains.orders.services.cart_write_service import get_cart_item_by_variant
-from domains.orders.services.cart_write_service import get_products_by_ids
-from domains.orders.services.cart_write_service import load_cart_items
-from domains.orders.services.cart_write_service import update_cart_item as write_update_cart_item
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import create_cart_item
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import delete_cart_items_by_user
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import get_active_product_by_id
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import get_cart_item_by_variant
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import get_products_by_ids
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import load_cart_items
+# TODO: Module not yet created
+# from domains.orders.services.cart_write_service import update_cart_item as write_update_cart_item
 import structlog
 logger = structlog.get_logger(__name__)
 

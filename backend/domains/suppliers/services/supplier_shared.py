@@ -44,14 +44,15 @@ from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.finance.models.payments import Payout
-from providers.media.services.ai import ai_service
-from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
+from providers.ai.ai_variant_config import ai_service
+# TODO: Module not yet created
+# from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
 from domains.logistics.services.partners.service import normalize_country_code
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
 from domains.catalog.services.products.products_service import _bump_product_cache_version
 from infrastructure.utils.background_jobs import enqueue_job
-from domains.orders.utils.order_tracking import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
+from domains.orders.services.tracking.service import canonical_scan_code, derive_order_financials, ensure_shipment_identifiers, order_status_label, reconcile_order_status, shipment_status_label
 from infrastructure.utils.realtime import logistics_realtime_hub
 from infrastructure.utils.config import settings
 from kernel.money import to_decimal
@@ -75,12 +76,6 @@ _AI_IMAGE_SMOKE_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "ai_i
 _UNSET = object()
 _PROFILE_JSON_ARRAY_FIELDS = {"certifications"}
 _PROFILE_JSON_OBJECT_FIELDS = {"social_links"}
-_SUPPLIER_PROFILE_MEDIA_FIELDS = {
-    "logo_url": {"kind": "image", "label": "logo", "max_size": 10 * 1024 * 1024},
-    "banner_url": {"kind": "image", "label": "banner", "max_size": 10 * 1024 * 1024},
-    "video_url": {"kind": "video", "label": "video", "max_size": 25 * 1024 * 1024},
-    "certification_image": {"kind": "image", "label": "certification", "max_size": 10 * 1024 * 1024},
-}
 _PUBLIC_SUPPLIER_CACHE_TTL = 120
 
 
@@ -193,7 +188,6 @@ def _persist_supplier_product(
     is_active: bool,
     image_url: Optional[str],
     video_url: Optional[str],
-    additional_media: Optional[list[str]],
     ai_description: Optional[str],
     variants_payload: Optional[object],
     current_user: dict,
@@ -252,7 +246,6 @@ def _persist_supplier_product(
         discount_starts_at=discount_starts_at,
         discount_ends_at=discount_ends_at,
         return_window_days=normalized_return_window_days,
-        images=json.dumps(additional_media) if additional_media else None,
         ai_description=ai_description,
         is_active=is_active,
         supplier_id=current_user["id"],
@@ -295,7 +288,7 @@ def _map_bulk_upload_error(detail: object) -> dict[str, object]:
         return {"field_key": "category"}
     if "subcategory" in lowered:
         return {"field_key": "subcategory"}
-    if "gallery media items" in lowered or "image" in lowered or "video" in lowered:
+    if "image" in lowered or "video" in lowered:
         return {"field_key": "image-mode"}
     return {}
 
@@ -478,27 +471,10 @@ def _sanitize_profile_json(value: Any) -> Any:
     return value
 
 
-def _normalize_media_path(value: Optional[str]) -> Optional[str]:
-    if value is None:
-        return None
-    normalized = value.strip().replace("\\", "/")
-    if not normalized:
-        return None
-    if normalized.startswith(("http://", "https://", "blob:", "data:")):
-        return normalized
-    if normalized.startswith("/uploads/"):
-        return normalized
-    if normalized.startswith("uploads/"):
-        return f"/{normalized}"
-    if "/" not in normalized and "." in normalized:
-        return f"/uploads/{normalized}"
-    return normalized
-
-
 def _normalize_product_video_reference(value: Optional[object]) -> Optional[str]:
     if value in (None, "", b""):
         return None
-    normalized = _normalize_media_path(str(value))
+    normalized = str(value).strip()
     if not normalized:
         return None
     lower = normalized.lower()
@@ -642,7 +618,7 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
         sku = _sanitize_profile_string(raw_variant.get("sku"))
         barcode = _sanitize_profile_string(raw_variant.get("barcode"))
         product_code = _sanitize_profile_string(raw_variant.get("product_code"))
-        media_url = _normalize_media_path(_sanitize_profile_string(raw_variant.get("media_url") or raw_variant.get("image_url")))
+        image_url = _sanitize_profile_string(raw_variant.get("image_url"))
         attributes = _normalize_variant_attributes(raw_variant.get("attributes") or raw_variant.get("attributes_json"))
         is_active = _coerce_optional_bool(raw_variant.get("is_active"), True)
 
@@ -688,7 +664,7 @@ def _parse_product_variants_payload(value: Optional[object]) -> list[dict[str, o
             "product_code": product_code,
             "price": price,
             "stock": stock,
-            "media_url": media_url,
+            "image_url": image_url,
             "attributes_json": json.dumps(attributes) if attributes else None,
             "is_active": is_active,
             "sort_order": sort_order,

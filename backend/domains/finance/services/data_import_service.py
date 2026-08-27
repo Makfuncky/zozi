@@ -24,7 +24,7 @@ from domains.finance.models.erp import ImportShipmentLine
 from domains.finance.models.erp import PurchaseOrder
 from domains.finance.models.erp import PurchaseOrderLine
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance import general_ledger_service as gl
+from domains.finance.services.finance_service import general_ledger_service as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)

@@ -16,6 +16,8 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+HAS_VOICE = True
+
 _OLLAMA_WHISPER_MODEL = "whisper:small"
 _OLLAMA_TEXT_MODEL = settings.ollama_text_model
 

@@ -320,6 +320,55 @@ FEATURES: dict[str, dict] = {
         "actions": ["read", "write"],
         "description": "Perform database maintenance and management operations.",
     },
+    # -- Legacy role/permission/policy atoms (from services/features.py) -------
+    "governance.roles.read": {
+        "label": "View Roles",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View governance roles and their permission assignments.",
+    },
+    "governance.roles.manage": {
+        "label": "Manage Roles",
+        "risk": "high",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Create, update, and delete governance roles and assign permissions.",
+    },
+    "governance.permissions.read": {
+        "label": "View Permissions",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View the permission catalog and feature registry.",
+    },
+    "governance.permissions.assign": {
+        "label": "Assign Permissions",
+        "risk": "high",
+        "actions": ["read", "create", "update"],
+        "description": "Assign and revoke permissions to roles and users.",
+    },
+    "governance.policies.read": {
+        "label": "View Policies",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View governance policies, terms, and acceptable use agreements.",
+    },
+    "governance.policies.manage": {
+        "label": "Manage Policies",
+        "risk": "medium",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Create and manage governance policies and compliance frameworks.",
+    },
+    "governance.user.ban": {
+        "label": "Ban/Suspend Users",
+        "risk": "high",
+        "actions": ["read", "update"],
+        "description": "Ban or suspend user accounts for policy violations.",
+    },
+    "governance.moderation": {
+        "label": "Content Moderation",
+        "risk": "medium",
+        "actions": ["read", "update", "delete"],
+        "description": "Moderate user-generated content and enforce community guidelines.",
+    },
 }
 
 

@@ -111,6 +111,41 @@ def create_review(
     return review
 
 
+def create_review_with_checks(
+    db: Session,
+    *,
+    product_id: int,
+    user_id: int,
+    rating: int,
+    comment: Optional[str] = None,
+    image_url: Optional[str] = None,
+) -> Review:
+    if not product_exists(db, product_id):
+        raise HTTPException(status_code=404, detail="Product not found")
+    if find_existing_review(db, product_id, user_id):
+        raise HTTPException(status_code=409, detail="You have already reviewed this product")
+    verified = has_verified_purchase(db, user_id, product_id)
+    return create_review(
+        db,
+        product_id=product_id,
+        user_id=user_id,
+        rating=rating,
+        comment=comment,
+        image_url=image_url,
+        is_verified_purchase=verified,
+    )
+
+
+def delete_review_by_user(db: Session, review_id: int, user_id: int, user_role: str) -> dict:
+    review = get_review_by_id(db, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+    if review.user_id != user_id and user_role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorised")
+    soft_delete_review(db, review)
+    return {"detail": "Review deleted"}
+
+
 def soft_delete_review(db: Session, review: Review) -> None:
     review.is_deleted = True
     db.add(review)
@@ -129,7 +164,11 @@ def update_review(db: Session, review: Review, updates: dict) -> Review:
     return review
 
 
-def recompute_product_rating(db: Session, product_id: int) -> None:
+def delete_review(db: Session, *, review_id: int, current_user: dict) -> dict:
+    """Delete a review (admin wrapper around delete_review_by_user)."""
+    user_id = int(current_user.get("id", 0))
+    user_role = current_user.get("role", "admin")
+    return delete_review_by_user(db, review_id, user_id, user_role)
     product = db.query(Product).filter(Product.id == product_id).first()
     if product is None:
         return
@@ -149,10 +188,13 @@ def moderate_review(review_text: str, rating: int = 0):
         result = analyze_review(review_text, rating=rating)
     except NotImplementedError as exc:
         logger.warning("Sentiment SDK unavailable: %s", exc)
-        return {"is_positive": True, "needs_review": False, "label": "neutral"}
+        return {"is_positive": rating >= 3, "needs_review": rating < 3, "label": "neutral"}
+    except (ConnectionError, TimeoutError) as exc:
+        logger.warning("Sentiment provider unreachable: %s", exc)
+        return {"is_positive": rating >= 3, "needs_review": rating < 3, "label": "neutral"}
     except Exception as exc:
         logger.warning("Sentiment analysis failed: %s", exc)
-        return {"is_positive": True, "needs_review": False, "label": "neutral"}
+        return {"is_positive": rating >= 3, "needs_review": rating < 3, "label": "neutral"}
     return {
         "is_positive": result["combined_score"] > 0,
         "needs_review": result["combined_score"] < -0.3,

@@ -225,14 +225,14 @@ def test_send_encrypted_sms_calls_encryption_and_twilio():
 
 def test_create_shipment_label_calls_qr_and_barcode():
     """Verify logistics service generates QR and barcode for labels."""
-    from domains.logistics.services.features import create_shipment_label
+    from domains.logistics.services.shipping_label import create_shipment_label
 
     with patch(
-        "domains.logistics.services.features.calculate_shipping_rate"
+        "domains.logistics.services.shipping_label.calculate_shipping_rate"
     ) as mock_rate, patch(
-        "domains.logistics.services.features.generate_tracking_qr"
+        "domains.logistics.services.shipping_label.generate_tracking_qr"
     ) as mock_qr, patch(
-        "domains.logistics.services.features.generate_code128"
+        "domains.logistics.services.shipping_label.generate_code128"
     ) as mock_barcode:
         mock_rate.return_value = {"total": 15.0, "carrier": "FedEx"}
         mock_qr.return_value = b"qr_bytes"
@@ -257,9 +257,9 @@ def test_create_shipment_label_calls_qr_and_barcode():
 
 def test_verify_user_token_calls_jwt():
     """Verify security service uses JWT provider."""
-    from domains.security.services.features import verify_user_token
+    from domains.security.services.security_provider_helpers import verify_user_token
 
-    with patch("domains.security.services.features.decode_token") as mock_decode:
+    with patch("domains.security.services.security_provider_helpers.decode_token") as mock_decode:
         mock_decode.return_value = {"user_id": 1, "email": "test@example.com"}
         result = verify_user_token("some.jwt.token")
         mock_decode.assert_called_once()
@@ -268,12 +268,12 @@ def test_verify_user_token_calls_jwt():
 
 def test_setup_2fa_calls_totp():
     """Verify security service uses TOTP for 2FA setup."""
-    from domains.security.services.features import setup_2fa_for_user
+    from domains.security.services.security_provider_helpers import setup_2fa_for_user
 
     with patch(
-        "domains.security.services.features.generate_secret"
+        "domains.security.services.security_provider_helpers.generate_secret"
     ) as mock_secret, patch(
-        "domains.security.services.features.provisioning_uri"
+        "domains.security.services.security_provider_helpers.provisioning_uri"
     ) as mock_uri:
         mock_secret.return_value = "JBSWY3DPEHPK3PXP"
         mock_uri.return_value = "otpauth://totp/ZOHI:test@example.com?secret=JBSWY3DPEHPK3PXP"
@@ -286,9 +286,9 @@ def test_setup_2fa_calls_totp():
 
 def test_screen_entity_calls_watchlist():
     """Verify security service uses watchlist for screening."""
-    from domains.security.services.features import screen_entity
+    from domains.security.services.security_provider_helpers import screen_entity
 
-    with patch("domains.security.services.features.screen_watchlist") as mock_screen:
+    with patch("domains.security.services.security_provider_helpers.screen_watchlist") as mock_screen:
         mock_screen.return_value = {"cleared": True, "matches": []}
         result = screen_entity("ACME Corp", "US")
         mock_screen.assert_called_once()

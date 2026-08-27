@@ -9,6 +9,12 @@ from __future__ import annotations
 import importlib
 from typing import Any, Optional
 
+try:
+    import sentry_sdk  # noqa: F401
+    HAS_OBSERVABILITY = True
+except ImportError:
+    HAS_OBSERVABILITY = False
+
 
 def capture_exception(exc: BaseException) -> None:
     """Capture an exception to Sentry (no-op when sentry_sdk is unavailable)."""

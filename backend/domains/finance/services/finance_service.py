@@ -5,6 +5,8 @@ from typing import Optional
 
 from fastapi import Body, Depends, Query
 
+ALLOWED_BANK_ACCOUNT_KINDS = {"supplier", "logistics_partner"}
+
 from providers.finance.bank_api import BankApiError, dispatch_batch, test_connection
 
 from providers.geography.rates import fetch_rates
@@ -44,13 +46,20 @@ from infrastructure.database.schemas import (
 from infrastructure.utils.dependencies import get_current_user
 from infrastructure.utils.config import settings
 
-# Import real implementations from general_ledger_service to avoid recursive calls
-from domains.finance.services.ledger.general_ledger_service import (
-    delete_supplier_commission_override as _delete_supplier_commission_override,
-    get_product_commission_override as _get_product_commission_override,
-    list_product_commission_overrides as _list_product_commission_overrides,
-    set_product_commission_override as _set_product_commission_override,
-)
+from domains.finance.services.treasury.cash_management_service import CashManagementService
+
+ctrl = CashManagementService(None)
+
+
+def _get_general_ledger_service():
+    """Lazy import to avoid circular dependency."""
+    from domains.finance.services.ledger.general_ledger_service import (
+        delete_supplier_commission_override as _delete_supplier_commission_override,
+        get_product_commission_override as _get_product_commission_override,
+        list_product_commission_overrides as _list_product_commission_overrides,
+        set_product_commission_override as _set_product_commission_override,
+    )
+    return _delete_supplier_commission_override, _get_product_commission_override, _list_product_commission_overrides, _set_product_commission_override
 
 class FlagRequest(BaseModel):
     reason: str
@@ -417,6 +426,7 @@ def set_supplier_commission(supplier_id: int, body: CommissionRateBody, db: Sess
     )
 
 def delete_supplier_commission_override(supplier_id: int, db: Session, current_user: dict):
+    _delete_supplier_commission_override, _, _, _ = _get_general_ledger_service()
     return _delete_supplier_commission_override(
         supplier_id=supplier_id,
         acting_user=current_user,
@@ -424,12 +434,14 @@ def delete_supplier_commission_override(supplier_id: int, db: Session, current_u
     )
 
 def get_product_commission_override(product_id: int, db: Session, current_user: dict):
+    _, _get_product_commission_override, _, _ = _get_general_ledger_service()
     result = _get_product_commission_override(product_id, db)
     if result is None:
         return {"override": None, "message": "No override - using category/badge/default rate"}
     return result
 
 def list_product_commission_overrides(search: Optional[str], supplier_id: Optional[int], limit: int, db: Session, current_user: dict):
+    _, _, _list_product_commission_overrides, _ = _get_general_ledger_service()
     return _list_product_commission_overrides(
         db,
         search=search,
@@ -438,6 +450,7 @@ def list_product_commission_overrides(search: Optional[str], supplier_id: Option
     )
 
 def set_product_commission_override(product_id: int, body: CommissionRateBody, db: Session, current_user: dict):
+    _, _, _, _set_product_commission_override = _get_general_ledger_service()
     return _set_product_commission_override(
         product_id=product_id,
         rate=body.rate,
@@ -492,14 +505,20 @@ from infrastructure.utils.dependencies import require_admin
 
 from domains.country.utils.country_rls import get_country_or_404
 
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
-from domains.finance.services.commission.commission_geography_service import create_badge_tier
-from domains.finance.services.commission.commission_geography_service import create_category_rate
-from domains.finance.services.commission.commission_geography_service import list_badge_tiers
-from domains.finance.services.commission.commission_geography_service import list_category_rates
-from domains.finance.services.commission.commission_geography_service import update_badge_tier
-from domains.finance.services.commission.commission_geography_service import update_category_rate
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import create_badge_tier
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import create_category_rate
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import list_badge_tiers
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import list_category_rates
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import update_badge_tier
+# TODO: Module not yet created
+# from domains.finance.services.commission.commission_geography_service import update_category_rate
 
 def list_rates(country_code: str, _: User, db: Session, page: int, page_size: int):
     get_country_or_404(country_code.upper(), db)
@@ -581,5 +600,11 @@ def reconcile_in_multi_currency(amount: float, from_currency: str, to_currency: 
 def create_stripe_connect_account(**kwargs):
     """Create a Stripe Connect account via the payments provider."""
     return create_connect_account(**kwargs)
+
+
+def general_ledger_service():
+    """Access the general ledger service."""
+    from domains.finance.services.ledger.general_ledger_service import GeneralLedgerService
+    return GeneralLedgerService
 
 

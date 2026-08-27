@@ -39,15 +39,13 @@ from domains.governance.models.core import (
 from domains.hr.models.employee_models import Employee
 from domains.comms.models.communication import EmailFolder, InternalEmail
 from domains.orders.models import Order, OrderItem
-from domains.catalog.models.products import Category, Product, Review
+from domains.catalogger.models.products import Category, Product, Review
 from domains.governance.models.user import User
 from domains.finance.services.commission.commission_engine import get_global_config, seed_defaults
 from infrastructure.utils.auth import get_password_hash
-import structlog
-logger = structlog.get_logger(__name__)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger("seed_all")
+logger = logging.getLogger("seed_all")
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 
@@ -294,15 +292,22 @@ def _wipe_data():
             "order_items", "orders",
             "reviews", "products", "categories",
         ]
+        from sqlalchemy import inspect as _inspect
+        valid_tables = set(_inspect(db.get_bind()).get_table_names())
         for table in tables:
             try:
-                db.execute(text("DELETE FROM " + table))
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
+                if not table.replace("_", "").isalnum():
+                    raise ValueError(f"Invalid table name: {table}")
+                if table not in valid_tables:
+                    continue
+                quoted_table = db.get_bind().dialect.identifier_preparer.quote_identifier(table)
+                db.execute(text("DELETE FROM " + quoted_table))
+            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError) as e:
                 logger.exception("_wipe_data_failed", error=str(e))
         db.commit()
-        log.info("  ✅ Existing data wiped")
+        logger.info("  ✅ Existing data wiped")
     except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        log.error(f"  ❌ Wipe failed: {e}")
+        logger.error(f"  ❌ Wipe failed: {e}")
         db.rollback()
     finally:
         db.close()
@@ -310,7 +315,7 @@ def _wipe_data():
 
 def seed_users():
     """Seed users (admin, suppliers, customers, logistics partners)."""
-    log.info("Seeding users...")
+    logger.info("Seeding users...")
     created_count = 0
     skipped_count = 0
     db = SessionLocal()
@@ -319,18 +324,18 @@ def seed_users():
             try:
                 existing = db.query(User).filter(User.email == user_data["email"]).first()
                 if existing:
-                    log.info(f"  ✓ User already exists: {user_data['email']}")
+                    logger.info(f"  ✓ User already exists: {user_data['email']}")
                     skipped_count += 1
                     continue
 
                 role = user_data["role"]
                 if role not in VALID_ROLES:
-                    log.warning(f"  ⚠ Role '{role}' not in DB constraint — mapping to 'employee'")
+                    logger.warning(f"  ⚠ Role '{role}' not in DB constraint — mapping to 'employee'")
                     role = "employee"
 
                 password_env = _ROLE_PASSWORD_ENV.get(role)
                 if not password_env:
-                    log.warning(f"  ⚠ No password env var for role '{role}', skipping")
+                    logger.warning(f"  ⚠ No password env var for role '{role}', skipping")
                     skipped_count += 1
                     continue
 
@@ -352,34 +357,34 @@ def seed_users():
                 db.add(user)
                 db.commit()
                 created_count += 1
-                log.info(f"  + Created user: {user_data['email']} ({role})")
+                logger.info(f"  + Created user: {user_data['email']} ({role})")
 
             except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
                 db.rollback()
-                log.warning(f"  ⚠ Failed to create {user_data['email']}: {e}")
+                logger.warning(f"  ⚠ Failed to create {user_data['email']}: {e}")
                 skipped_count += 1
     finally:
         db.close()
 
-    log.info(f"\n{'='*55}")
-    log.info("User seeding complete!")
-    log.info(f"  Created: {created_count} new users")
-    log.info(f"  Existing/Skipped: {skipped_count} users")
-    log.info(f"  Total: {len(USERS)} users")
-    log.info(f"{'='*55}")
+    logger.info(f"\n{'='*55}")
+    logger.info("User seeding complete!")
+    logger.info(f"  Created: {created_count} new users")
+    logger.info(f"  Existing/Skipped: {skipped_count} users")
+    logger.info(f"  Total: {len(USERS)} users")
+    logger.info(f"{'='*55}")
 
 
 def seed_products():
     """Seed categories, products, and reviews."""
     db = SessionLocal()
     try:
-        log.info("Seeding categories...")
+        logger.info("Seeding categories...")
         category_map = {}
         for cat_data in CATEGORIES:
             existing = db.query(Category).filter(Category.slug == cat_data["slug"]).first()
             if existing:
                 category_map[cat_data["name"]] = existing.id
-                log.info(f"  ✓ Category exists: {cat_data['name']}")
+                logger.info(f"  ✓ Category exists: {cat_data['name']}")
                 continue
             cat = Category(
                 name=cat_data["name"],
@@ -391,22 +396,22 @@ def seed_products():
             db.add(cat)
             db.flush()
             category_map[cat_data["name"]] = cat.id
-            log.info(f"  + Created category: {cat_data['name']}")
+            logger.info(f"  + Created category: {cat_data['name']}")
 
         db.commit()
 
         suppliers = db.query(User).filter(User.role == "supplier").all()
         if not suppliers:
-            log.warning("No suppliers found! Run seed_users first.")
+            logger.warning("No suppliers found! Run seed_users first.")
             return
         supplier_ids = [s.id for s in suppliers]
 
-        log.info("\nSeeding products...")
+        logger.info("\nSeeding products...")
         created_count = 0
         for product_data in PRODUCTS:
             existing = db.query(Product).filter(Product.name == product_data["name"]).first()
             if existing:
-                log.info(f"  ✓ Product exists: {product_data['name']}")
+                logger.info(f"  ✓ Product exists: {product_data['name']}")
                 continue
 
             category_id = category_map.get(product_data["category"])
@@ -433,17 +438,17 @@ def seed_products():
             )
             db.add(product)
             created_count += 1
-            log.info(f"  + Created product: {product_data['name']}")
+            logger.info(f"  + Created product: {product_data['name']}")
 
         db.commit()
 
-        log.info("\nSeeding reviews...")
+        logger.info("\nSeeding reviews...")
         customers = db.query(User).filter(User.role == "customer").all()
         products = db.query(Product).all()
 
         review_count = 0
         if not customers:
-            log.warning("  No customers found — skipping reviews")
+            logger.warning("  No customers found — skipping reviews")
         else:
             for product in products[:15]:
                 existing_reviews = db.query(Review).filter(Review.product_id == product.id).count()
@@ -474,15 +479,15 @@ def seed_products():
 
             db.commit()
 
-        log.info(f"\n{'='*55}")
-        log.info("Product seeding complete!")
-        log.info(f"  Categories: {len(category_map)}")
-        log.info(f"  Products: {created_count} new")
-        log.info(f"  Reviews: {review_count} new")
-        log.info(f"{'='*55}")
+        logger.info(f"\n{'='*55}")
+        logger.info("Product seeding complete!")
+        logger.info(f"  Categories: {len(category_map)}")
+        logger.info(f"  Products: {created_count} new")
+        logger.info(f"  Reviews: {review_count} new")
+        logger.info(f"{'='*55}")
 
     except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        log.exception("Seed failed")
+        logger.exception("Seed failed")
         db.rollback()
         raise
     finally:
@@ -493,22 +498,22 @@ def seed_orders():
     """Seed orders and order items."""
     db = SessionLocal()
     try:
-        log.info("Seeding orders...")
+        logger.info("Seeding orders...")
 
         customers = db.query(User).filter(User.role == "customer").all()
         suppliers = db.query(User).filter(User.role == "supplier").all()
         products = db.query(Product).filter(Product.is_active == True, Product.is_deleted == False).all()
 
         if not customers:
-            log.warning("No customers found! Run seed_users first.")
+            logger.warning("No customers found! Run seed_users first.")
             return
         if not products:
-            log.warning("No products found! Run seed_products first.")
+            logger.warning("No products found! Run seed_products first.")
             return
 
         existing_count = db.query(Order).count()
         if existing_count > 0:
-            log.info(f"  ✓ {existing_count} orders already exist. Skipping.")
+            logger.info(f"  ✓ {existing_count} orders already exist. Skipping.")
             return
 
         created_count = 0
@@ -589,14 +594,14 @@ def seed_orders():
 
         db.commit()
 
-        log.info(f"\n{'='*55}")
-        log.info("Order seeding complete!")
-        log.info(f"  Orders: {created_count} new")
-        log.info(f"  Order Items: {item_count} new")
-        log.info(f"{'='*55}")
+        logger.info(f"\n{'='*55}")
+        logger.info("Order seeding complete!")
+        logger.info(f"  Orders: {created_count} new")
+        logger.info(f"  Order Items: {item_count} new")
+        logger.info(f"{'='*55}")
 
     except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        log.exception("Seed failed")
+        logger.exception("Seed failed")
         db.rollback()
         raise
     finally:
@@ -607,7 +612,7 @@ def seed_comms():
     """Seed communication data (DMs, groups, emails)."""
     db = SessionLocal()
     try:
-        log.info("Clearing existing communication seed data...")
+        logger.info("Clearing existing communication seed data...")
         db.execute(text("DELETE FROM entity_chat_messages"))
         db.execute(text("DELETE FROM entity_chat_threads"))
         db.execute(text("DELETE FROM direct_chat_messages"))
@@ -617,7 +622,7 @@ def seed_comms():
         db.execute(text("DELETE FROM group_chat_rooms"))
         db.execute(text("DELETE FROM internal_emails"))
         db.commit()
-        log.info("Cleared.\n")
+        logger.info("Cleared.\n")
 
         LOGIN_EMPLOYEES = [
             (1, "ADM-001", "Administration", "System Administrator"),
@@ -625,7 +630,7 @@ def seed_comms():
             (3, "CUS-001", "Customer Service", "Premium Support Agent"),
             (4, "LOG-001", "Logistics", "Fleet Operations Manager"),
         ]
-        log.info("Ensuring Employee + EmailFolder for all users...")
+        logger.info("Ensuring Employee + EmailFolder for all users...")
         inbox_folders = {}
         for user_id, emp_code, dept, pos in LOGIN_EMPLOYEES:
             emp = db.query(Employee).filter(Employee.user_id == user_id).first()
@@ -640,9 +645,9 @@ def seed_comms():
                 )
                 db.add(emp)
                 db.flush()
-                log.info(f"  Created Employee #{emp.id} for user_id={user_id} ({pos})")
+                logger.info(f"  Created Employee #{emp.id} for user_id={user_id} ({pos})")
             else:
-                log.info(f"  Found Employee #{emp.id} for user_id={user_id}")
+                logger.info(f"  Found Employee #{emp.id} for user_id={user_id}")
 
             folder = db.query(EmailFolder).filter(
                 EmailFolder.employee_id == emp.id,
@@ -658,14 +663,14 @@ def seed_comms():
                 )
                 db.add(folder)
                 db.flush()
-                log.info(f"  Created 'inbox' folder #{folder.id} for user_id={user_id}")
+                logger.info(f"  Created 'inbox' folder #{folder.id} for user_id={user_id}")
             else:
-                log.info(f"  Found 'inbox' folder #{folder.id} for user_id={user_id}")
+                logger.info(f"  Found 'inbox' folder #{folder.id} for user_id={user_id}")
 
             inbox_folders[user_id] = folder
-        log.info("")
+        logger.info("")
 
-        log.info("Seeding entity chat threads...")
+        logger.info("Seeding entity chat threads...")
         for tdata in ENTITY_THREADS:
             thread = EntityChatThread(
                 entity_type=tdata["entity_type"],
@@ -685,9 +690,9 @@ def seed_comms():
                     message_type="text",
                     created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
                 ))
-            log.info(f"  Thread #{thread.id}: {tdata['title'][:55]}")
+            logger.info(f"  Thread #{thread.id}: {tdata['title'][:55]}")
 
-        log.info("\nSeeding direct messages...")
+        logger.info("\nSeeding direct messages...")
         for conv in DIRECT_CONVERSATIONS:
             p1, p2 = sorted([conv["p1"], conv["p2"]])
             room = DirectChatRoom(
@@ -709,9 +714,9 @@ def seed_comms():
                     message_type="text",
                     created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
                 ))
-            log.info(f"  DM between users {p1} <-> {p2}")
+            logger.info(f"  DM between users {p1} <-> {p2}")
 
-        log.info("\nSeeding group conversations...")
+        logger.info("\nSeeding group conversations...")
         for gdata in GROUP_CONVERSATIONS:
             slug = gdata["name"].lower().replace(" ", "_")[:20]
             room = GroupChatRoom(
@@ -739,15 +744,15 @@ def seed_comms():
                     message_type="text",
                     created_at=datetime.now(timezone.utc) - timedelta(hours=hours_ago),
                 ))
-            log.info(f"  Group: {gdata['name']}")
+            logger.info(f"  Group: {gdata['name']}")
 
-        log.info("\nSeeding internal emails...")
+        logger.info("\nSeeding internal emails...")
         email_count = 0
         email_counts = {1: 0, 2: 0, 3: 0, 4: 0}
         for sender_id, recipient_id, subject, body_text, hours_ago in INTERNAL_EMAIL_DATA:
             folder = inbox_folders.get(recipient_id)
             if not folder:
-                log.warning(f"  Skipping email to user_id={recipient_id} — no inbox folder")
+                logger.warning(f"  Skipping email to user_id={recipient_id} — no inbox folder")
                 continue
 
             email = InternalEmail(
@@ -763,27 +768,27 @@ def seed_comms():
             db.add(email)
             email_count += 1
             email_counts[recipient_id] = email_counts.get(recipient_id, 0) + 1
-            log.info(f"  Email to user_id={recipient_id}: {subject[:50]}")
+            logger.info(f"  Email to user_id={recipient_id}: {subject[:50]}")
 
         db.commit()
         msg_count = sum(len(t["messages"]) for t in ENTITY_THREADS)
         dm_count = sum(len(c["messages"]) for c in DIRECT_CONVERSATIONS)
         grp_count = sum(len(g["messages"]) for g in GROUP_CONVERSATIONS)
         total = msg_count + dm_count + grp_count + email_count
-        log.info(f"\n{'='*55}")
-        log.info("Communication data seeded successfully!")
-        log.info(f"  {len(ENTITY_THREADS)} entity threads ({msg_count} messages)")
-        log.info(f"  {len(DIRECT_CONVERSATIONS)} DM rooms ({dm_count} messages)")
-        log.info(f"  {len(GROUP_CONVERSATIONS)} group chats ({grp_count} messages)")
-        log.info(f"  {email_count} internal emails:")
+        logger.info(f"\n{'='*55}")
+        logger.info("Communication data seeded successfully!")
+        logger.info(f"  {len(ENTITY_THREADS)} entity threads ({msg_count} messages)")
+        logger.info(f"  {len(DIRECT_CONVERSATIONS)} DM rooms ({dm_count} messages)")
+        logger.info(f"  {len(GROUP_CONVERSATIONS)} group chats ({grp_count} messages)")
+        logger.info(f"  {email_count} internal emails:")
         for uid in sorted(email_counts):
             if email_counts[uid] > 0:
-                log.info(f"    - user_id={uid}: {email_counts[uid]} email(s)")
-        log.info(f"  Total: {total} messages across all channels")
-        log.info(f"{'='*55}")
+                logger.info(f"    - user_id={uid}: {email_counts[uid]} email(s)")
+        logger.info(f"  Total: {total} messages across all channels")
+        logger.info(f"{'='*55}")
 
     except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        log.exception("Seed failed")
+        logger.exception("Seed failed")
         db.rollback()
         raise
     finally:
@@ -796,13 +801,13 @@ def seed_commission():
     try:
         seed_defaults(db)
         cfg = get_global_config(db)
-        log.info(f"Commission config default_rate: {cfg.default_rate}")
+        logger.info(f"Commission config default_rate: {cfg.default_rate}")
         cats = db.query(CommissionCategoryRate).count()
         badges = db.query(CommissionBadgeTier).count()
-        log.info(f"Category rates: {cats}, Badge tiers: {badges}")
+        logger.info(f"Category rates: {cats}, Badge tiers: {badges}")
     finally:
         db.close()
-    log.info("Commission seeding complete!")
+    logger.info("Commission seeding complete!")
 
 
 def main():
@@ -812,13 +817,13 @@ def main():
     parser.add_argument("--force", action="store_true", help="Wipe existing data before seeding")
     args = parser.parse_args()
 
-    log.info(f"🚀 ZOZI Database Seeder — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC")
-    log.info("   Seeding all data in dependency order...\n")
+    logger.info(f"🚀 ZOZI Database Seeder — {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    logger.info("   Seeding all data in dependency order...\n")
 
     if args.force:
-        log.info("⚠️  FORCE MODE: Wiping existing data before seeding...")
+        logger.info("⚠️  FORCE MODE: Wiping existing data before seeding...")
         _wipe_data()
-        log.info("")
+        logger.info("")
 
     results = []
 
@@ -832,7 +837,7 @@ def main():
 
     for module_name, description in seeders:
         if module_name in args.skip:
-            log.info(f"\n⏭  Skipping: {description}")
+            logger.info(f"\n⏭  Skipping: {description}")
             results.append((module_name, description, True, 0.0))
             continue
 
@@ -850,38 +855,38 @@ def main():
                 seed_commission()
 
             elapsed = time.time() - start
-            log.info(f"  ✅ {description} — completed in {elapsed:.1f}s")
+            logger.info(f"  ✅ {description} — completed in {elapsed:.1f}s")
             results.append((module_name, description, True, elapsed))
 
         except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
             elapsed = time.time() - start
-            log.error(f"  ❌ {description} — FAILED after {elapsed:.1f}s")
-            log.error(f"     Error: {e}")
+            logger.error(f"  ❌ {description} — FAILED after {elapsed:.1f}s")
+            logger.error(f"     Error: {e}")
             if args.verbose:
-                log.exception("     Full traceback:")
+                logger.exception("     Full traceback:")
             results.append((module_name, description, False, elapsed))
 
             if module_name in ("users", "products"):
-                log.error(f"\n⛔ Critical seeder '{module_name}' failed. Aborting remaining seeders.")
+                logger.error(f"\n⛔ Critical seeder '{module_name}' failed. Aborting remaining seeders.")
                 break
 
     success_count = sum(1 for _, _, ok, _ in results if ok)
     fail_count = len(results) - success_count
     total_time = sum(t for _, _, _, t in results)
 
-    log.info(f"\n{'═'*60}")
-    log.info("📊 SEEDING SUMMARY")
-    log.info(f"{'═'*60}")
+    logger.info(f"\n{'═'*60}")
+    logger.info("📊 SEEDING SUMMARY")
+    logger.info(f"{'═'*60}")
     for module, desc, ok, elapsed in results:
         status = "✅" if ok else "❌"
-        log.info(f"  {status} {desc:<45} {elapsed:>6.1f}s")
-    log.info(f"{'─'*60}")
-    log.info(f"  Total: {success_count}/{len(results)} succeeded  |  {total_time:.1f}s total")
+        logger.info(f"  {status} {desc:<45} {elapsed:>6.1f}s")
+    logger.info(f"{'─'*60}")
+    logger.info(f"  Total: {success_count}/{len(results)} succeeded  |  {total_time:.1f}s total")
     if fail_count > 0:
-        log.info(f"  ⚠ {fail_count} seeder(s) failed — check logs above")
+        logger.info(f"  ⚠ {fail_count} seeder(s) failed — check logs above")
     else:
-        log.info("  🎉 All seeders completed successfully!")
-    log.info(f"{'═'*60}\n")
+        logger.info("  🎉 All seeders completed successfully!")
+    logger.info(f"{'═'*60}\n")
 
     if any(not ok for _, _, ok, _ in results):
         sys.exit(1)

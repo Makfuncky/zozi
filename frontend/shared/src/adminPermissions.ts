@@ -8,6 +8,42 @@ export interface StaffPermissionGroup {
   permissions: readonly string[];
 }
 
+export interface RbacCatalogResponse {
+  features: Record<string, string>;
+  namespaces: string[];
+  feature_list: string[];
+}
+
+const RBAC_CATALOG_URL = "/api/v1/rbac/catalog";
+
+// ── In-memory cache (NOT persisted to localStorage for security) ──
+
+let cachedCatalog: RbacCatalogResponse | null = null;
+let catalogFetchPromise: Promise<RbacCatalogResponse | null> | null = null;
+
+export async function fetchRbacCatalog(): Promise<RbacCatalogResponse | null> {
+  if (catalogFetchPromise) return catalogFetchPromise;
+  catalogFetchPromise = (async () => {
+    try {
+      const resp = await fetch(RBAC_CATALOG_URL, { credentials: "include" });
+      if (!resp.ok) return null;
+      const data = (await resp.json()) as RbacCatalogResponse;
+      cachedCatalog = data;
+      return data;
+    } catch {
+      return cachedCatalog;
+    } finally {
+      catalogFetchPromise = null;
+    }
+  })();
+  return catalogFetchPromise;
+}
+
+export function getAvailablePermissions(): string[] {
+  if (cachedCatalog?.feature_list?.length) return cachedCatalog.feature_list;
+  return [];
+}
+
 export const STAFF_PERMISSION_GROUPS: readonly StaffPermissionGroup[] = [
   {
     key: "governance",
@@ -163,20 +199,6 @@ function normalizePermissionOverrideMap(value: unknown): PermissionOverrideMap |
   return normalized;
 }
 
-function readStoredPermissionOverrides(): PermissionOverrideMap | null {
-  if (runtimePermissionOverrides) return runtimePermissionOverrides;
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(ADMIN_PERMISSION_OVERRIDE_STORAGE_KEY);
-    if (!raw) return null;
-    runtimePermissionOverrides = normalizePermissionOverrideMap(JSON.parse(raw));
-    return runtimePermissionOverrides;
-  } catch {
-    return null;
-  }
-}
-
 function normalizePermissionList(value: unknown): readonly string[] | null {
   if (!Array.isArray(value)) return null;
   return value
@@ -184,62 +206,29 @@ function normalizePermissionList(value: unknown): readonly string[] | null {
     .filter(Boolean);
 }
 
-function readStoredCurrentAdminPermissions(): readonly string[] | null {
-  if (runtimeCurrentAdminPermissions) return runtimeCurrentAdminPermissions;
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(CURRENT_ADMIN_PERMISSION_STORAGE_KEY);
-    if (!raw) return null;
-    runtimeCurrentAdminPermissions = normalizePermissionList(JSON.parse(raw));
-    return runtimeCurrentAdminPermissions;
-  } catch {
-    return null;
-  }
-}
-
 function getResolvedPermissionMap(): Record<AdminStaffRole, readonly string[]> {
-  const overrides = readStoredPermissionOverrides();
-  if (!overrides) return ADMIN_PERMISSION_MAP;
+  if (!runtimePermissionOverrides) return ADMIN_PERMISSION_MAP;
   return {
-    admin: overrides.admin ?? ADMIN_PERMISSION_MAP.admin,
-    sub_admin: overrides.sub_admin ?? ADMIN_PERMISSION_MAP.sub_admin,
-    moderator: overrides.moderator ?? ADMIN_PERMISSION_MAP.moderator,
-    support: overrides.support ?? ADMIN_PERMISSION_MAP.support,
-    country_head: overrides.country_head ?? ADMIN_PERMISSION_MAP.country_head,
-    country_manager: overrides.country_manager ?? ADMIN_PERMISSION_MAP.country_manager,
+    admin: runtimePermissionOverrides.admin ?? ADMIN_PERMISSION_MAP.admin,
+    sub_admin: runtimePermissionOverrides.sub_admin ?? ADMIN_PERMISSION_MAP.sub_admin,
+    moderator: runtimePermissionOverrides.moderator ?? ADMIN_PERMISSION_MAP.moderator,
+    support: runtimePermissionOverrides.support ?? ADMIN_PERMISSION_MAP.support,
+    country_head: runtimePermissionOverrides.country_head ?? ADMIN_PERMISSION_MAP.country_head,
+    country_manager: runtimePermissionOverrides.country_manager ?? ADMIN_PERMISSION_MAP.country_manager,
   };
 }
 
 export function setAdminPermissionOverrides(matrix: Record<string, string[]> | null | undefined): void {
   runtimePermissionOverrides = normalizePermissionOverrideMap(matrix ?? null);
-  if (typeof window === "undefined") return;
-
-  if (!runtimePermissionOverrides) {
-    window.localStorage.removeItem(ADMIN_PERMISSION_OVERRIDE_STORAGE_KEY);
-    return;
-  }
-  window.localStorage.setItem(ADMIN_PERMISSION_OVERRIDE_STORAGE_KEY, JSON.stringify(runtimePermissionOverrides));
 }
 
 export function setCurrentAdminPermissions(permissions: readonly string[] | null | undefined): void {
   runtimeCurrentAdminPermissions = normalizePermissionList(permissions ?? null);
-  if (typeof window === "undefined") return;
-
-  if (!runtimeCurrentAdminPermissions) {
-    window.localStorage.removeItem(CURRENT_ADMIN_PERMISSION_STORAGE_KEY);
-    return;
-  }
-  window.localStorage.setItem(CURRENT_ADMIN_PERMISSION_STORAGE_KEY, JSON.stringify(runtimeCurrentAdminPermissions));
 }
 
 export function clearAdminPermissionOverrides(): void {
   runtimePermissionOverrides = null;
   runtimeCurrentAdminPermissions = null;
-  if (typeof window !== "undefined") {
-    window.localStorage.removeItem(ADMIN_PERMISSION_OVERRIDE_STORAGE_KEY);
-    window.localStorage.removeItem(CURRENT_ADMIN_PERMISSION_STORAGE_KEY);
-  }
 }
 
 export function isAdminStaffRole(role: string | null | undefined): role is AdminStaffRole {
@@ -248,14 +237,17 @@ export function isAdminStaffRole(role: string | null | undefined): role is Admin
 
 export function getAdminPermissions(role: string | null | undefined): readonly string[] {
   if (!isAdminStaffRole(role)) return [];
-  const currentUserPermissions = readStoredCurrentAdminPermissions();
-  if (currentUserPermissions && currentUserPermissions.length > 0) {
-    return currentUserPermissions;
+  if (runtimeCurrentAdminPermissions && runtimeCurrentAdminPermissions.length > 0) {
+    return runtimeCurrentAdminPermissions;
   }
   return getResolvedPermissionMap()[role];
 }
 
 export function hasAdminPermission(role: string | null | undefined, permission: string): boolean {
+  const backendPermissions = getAvailablePermissions();
+  if (backendPermissions.length > 0) {
+    return backendPermissions.includes(permission);
+  }
   return getAdminPermissions(role).includes(permission);
 }
 

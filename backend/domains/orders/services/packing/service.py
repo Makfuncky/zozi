@@ -30,7 +30,9 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
 
-PACKING_SECRET = settings.secret_key or "zozi-packing-default"
+PACKING_SECRET = settings.secret_key
+if not PACKING_SECRET:
+    raise ValueError("settings.secret_key must be configured")
 
 # ── QR Code Generation ──────────────────────────────────────────────────────
 

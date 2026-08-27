@@ -1776,7 +1776,7 @@ def update_country_cities_bulk(code: str, payload: dict, current_user: dict, db)
 # Pydantic models from countries_service.py are re-exported for backward compatibility
 
 # Re-exported from countries_service.py for backward compatibility
-from domains.country.services.core.countries_service import *  # noqa: F401,F403
+# Removed incorrect self-import
 
 
 # === MERGED FROM communications/country_communication_service.py ===

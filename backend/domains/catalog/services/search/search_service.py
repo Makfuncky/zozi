@@ -6,7 +6,7 @@ import json
 import re
 from datetime import datetime, timezone
 from difflib import SequenceMatcher, get_close_matches
-from typing import Any, Optional, List, cast
+from typing import Any, Dict, Optional, List, cast
 
 from fastapi.responses import Response
 from sqlalchemy import desc, func, or_, and_, text, cast as sql_cast, String

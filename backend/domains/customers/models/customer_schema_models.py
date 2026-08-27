@@ -25,7 +25,7 @@ class Referral(Base):
         Index("ix_referrals_referrer", "referrer_id"),
         Index("ix_referrals_referred", "referred_id"),
         Index("ix_referrals_code", "referral_code"),
-        {"schema": "customer"},
+        {"schema": "customers"},
     )
     id = Column(Integer, primary_key=True, index=True)
     referrer_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
@@ -46,7 +46,7 @@ class ReferralPointEvent(Base):
     __table_args__ = (
         Index("ix_referral_point_events_user", "user_id"),
         Index("ix_referral_point_events_type", "event_type"),
-        {"schema": "customer"},
+        {"schema": "customers"},
     )
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)

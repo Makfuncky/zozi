@@ -1,2 +1,2 @@
-"""Backward-compat shim — canonical location is infrastructure/media/media_service.py."""
-from infrastructure.media.media_service import *  # noqa: F401,F403
+"""Backward-compat shim — canonical location is providers/storage/storage_backend.py."""
+from providers.storage.storage_backend import *  # noqa: F401,F403

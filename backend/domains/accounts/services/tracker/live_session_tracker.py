@@ -149,10 +149,10 @@ def revoke_device(db: Session, user_id: int, device_id: str) -> bool:
 
 def get_last_login_location(db: Session, user_id: int) -> Optional[Dict[str, float]]:
     """Return the last known login location (lat/lon) from geo-fence logs."""
-    from domains.hr.models.employee_models import GeoFenceLog, Employee
+    from domains.hr.ports import GeoFenceLog, get_employee_by_user_id
 
     # Find the employee record for this user
-    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    employee = get_employee_by_user_id(db, user_id)
     if not employee:
         return None
     record = (
@@ -206,7 +206,7 @@ def detect_impossible_travel(
         distance_km > IMPOSSIBLE_TRAVEL_KM_THRESHOLD
         and time_diff_minutes < IMPOSSIBLE_TRAVEL_MINUTES_THRESHOLD
     ):
-        speed_kmh = distance_kmh / (time_diff_minutes / 60)
+        speed_kmh = distance_km / (time_diff_minutes / 60)
         reason = (
             f"Impossible travel detected: {distance_km:.0f}km in {time_diff_minutes:.0f}min "
             f"(~{speed_kmh:.0f} km/h). Last login: ({last_location['lat']:.2f}, {last_location['lon']:.2f}), "

@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import asyncio
 import functools
+
+HAS_ASYNC_WORKERS = True
 import gc
 import logging
 import os

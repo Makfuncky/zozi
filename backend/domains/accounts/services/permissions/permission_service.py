@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 # Lazy-loaded cross-domain models (Law 3: avoid direct cross-domain model imports at module level)
 _LAZY_CROSS_DOMAIN_MODELS: dict[str, tuple[str, str]] = {
@@ -58,7 +58,12 @@ def _get_role_permissions_cache_key(role_name: str, country_code: Optional[str] 
 
 
 def list_categories(db: Session) -> list[dict]:
-    categories = db.query(PermissionCategory).order_by(PermissionCategory.sort_order).all()
+    categories = (
+        db.query(PermissionCategory)
+        .options(selectinload(PermissionCategory.permissions))
+        .order_by(PermissionCategory.sort_order)
+        .all()
+    )
     return [
         {
             "id": c.id,
@@ -95,8 +100,13 @@ def create_category(data: dict, actor_id: int, db: Session) -> PermissionCategor
         is_active=True,
     )
     db.add(category)
-    db.commit()
-    db.refresh(category)
+    try:
+        db.commit()
+        db.refresh(category)
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to create category '%s': %s", data.get("name"), exc)
+        raise
 
     _log_audit(actor_id, "category_created", target_role=None, permission_id=None, country_code=None, details=f"Created category '{category.name}'", db=db)
     return category
@@ -109,8 +119,13 @@ def update_category(category_id: int, data: dict, actor_id: int, db: Session) ->
     for key in ("name", "slug", "description", "icon", "sort_order", "is_active"):
         if key in data:
             setattr(category, key, data[key])
-    db.commit()
-    db.refresh(category)
+    try:
+        db.commit()
+        db.refresh(category)
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to update category %s: %s", category_id, exc)
+        raise
     _log_audit(actor_id, "category_updated", target_role=None, permission_id=None, country_code=None, details=f"Updated category '{category.name}'", db=db)
     return category
 
@@ -121,7 +136,12 @@ def delete_category(category_id: int, actor_id: int, db: Session) -> bool:
         return False
     _log_audit(actor_id, "category_deleted", target_role=None, permission_id=None, country_code=None, details=f"Deleted category '{category.name}'", db=db)
     db.delete(category)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to delete category %s: %s", category_id, exc)
+        raise
     return True
 
 
@@ -157,8 +177,13 @@ def create_permission(data: dict, actor_id: int, db: Session) -> Permission:
         is_active=True,
     )
     db.add(permission)
-    db.commit()
-    db.refresh(permission)
+    try:
+        db.commit()
+        db.refresh(permission)
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to create permission '%s': %s", data.get("name"), exc)
+        raise
     _log_audit(actor_id, "permission_created", target_role=None, permission_id=permission.id, country_code=None, details=f"Created permission '{permission.name}'", db=db)
     return permission
 
@@ -169,7 +194,12 @@ def delete_permission(permission_id: int, actor_id: int, db: Session) -> bool:
         return False
     _log_audit(actor_id, "permission_deleted", target_role=None, permission_id=permission_id, country_code=None, details=f"Deleted permission '{permission.name}'", db=db)
     permission.is_active = False
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to delete permission %s: %s", permission_id, exc)
+        raise
     return True
 
 
@@ -219,8 +249,13 @@ def assign_permission_to_role(role_name: str, permission_id: int, actor_id: int,
         existing.is_granted = True
         existing.country_code = country_code
         existing.updated_at = datetime.now(timezone.utc)
-        db.commit()
-        db.refresh(existing)
+        try:
+            db.commit()
+            db.refresh(existing)
+        except Exception as exc:
+            db.rollback()
+            logger.warning("Failed to update role permission '%s': %s", role_name, exc)
+            raise
         _invalidate_role_cache(role_name)
         return existing
 
@@ -232,8 +267,13 @@ def assign_permission_to_role(role_name: str, permission_id: int, actor_id: int,
         is_granted=True,
     )
     db.add(assignment)
-    db.commit()
-    db.refresh(assignment)
+    try:
+        db.commit()
+        db.refresh(assignment)
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to assign permission to role '%s': %s", role_name, exc)
+        raise
     _invalidate_role_cache(role_name)
     return assignment
 
@@ -246,7 +286,12 @@ def revoke_permission_from_role(role_name: str, permission_id: int, actor_id: in
     if not existing:
         return False
     existing.is_granted = False
-    db.commit()
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to revoke permission from role '%s': %s", role_name, exc)
+        raise
     _log_audit(actor_id, "role_permission_revoked", target_role=role_name, permission_id=permission_id, country_code=None, details=f"Revoked permission id={permission_id} from role '{role_name}'", db=db)
     _invalidate_role_cache(role_name)
     return True
@@ -265,8 +310,13 @@ def set_user_permission_override(user_id: int, permission_id: int, actor_id: int
         existing.country_code = country_code
         existing.granted_by = actor_id
         existing.expires_at = expires_at
-        db.commit()
-        db.refresh(existing)
+        try:
+            db.commit()
+            db.refresh(existing)
+        except Exception as exc:
+            db.rollback()
+            logger.warning("Failed to update user permission override for user %s: %s", user_id, exc)
+            raise
         _invalidate_user_cache(user_id)
         return existing
 
@@ -279,8 +329,13 @@ def set_user_permission_override(user_id: int, permission_id: int, actor_id: int
         expires_at=expires_at,
     )
     db.add(override)
-    db.commit()
-    db.refresh(override)
+    try:
+        db.commit()
+        db.refresh(override)
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Failed to set user permission override for user %s: %s", user_id, exc)
+        raise
     _invalidate_user_cache(user_id)
     return override
 
@@ -290,8 +345,8 @@ def _invalidate_role_cache(role_name: str) -> None:
     try:
         from infrastructure.utils.performance_cache import invalidate_role_permissions_cache as _invalidate
         _invalidate(role_name)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to invalidate role cache for %s: %s", role_name, exc)
 
 
 def _invalidate_user_cache(user_id: int) -> None:
@@ -299,8 +354,8 @@ def _invalidate_user_cache(user_id: int) -> None:
     try:
         from infrastructure.utils.performance_cache import invalidate_user_permissions_cache as _invalidate
         _invalidate(user_id)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to invalidate user cache for %s: %s", user_id, exc)
 
 
 # ── Permission Check ──────────────────────────────────────────────
@@ -362,8 +417,9 @@ def _log_audit(actor_id: int, action: str, target_user_id: Optional[int] = None,
     try:
         db.add(log)
         db.commit()
-    except Exception:
+    except Exception as exc:
         db.rollback()
+        logger.warning("Failed to log audit: %s", exc)
         raise
 
 
@@ -385,15 +441,12 @@ from sqlalchemy.orm import Session
 
 
 from domains.governance.models.user import User
-from domains.country.ports import CountryStaffAssignment
+# TODO: CountryStaffAssignment not found in country.ports
+# from domains.country.ports import CountryStaffAssignment
 from domains.hr.ports import Employee
+from rbac.dependencies import _ROLE_FEATURES
 
-
-
-
-
-from infrastructure.utils.staff_permissions import DEFAULT_ROLE_PERMISSION_MAP
-
+DEFAULT_ROLE_PERMISSION_MAP: dict = {role: set(features) for role, features in _ROLE_FEATURES.items()}
 
 
 

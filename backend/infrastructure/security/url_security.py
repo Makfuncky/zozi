@@ -16,9 +16,6 @@ import ipaddress
 import logging
 from urllib.parse import urlparse
 from typing import Iterable, Optional
-import structlog
-logger = structlog.get_logger(__name__)
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_ALLOWED_SCHEMES: tuple[str, ...] = ("https", "http")

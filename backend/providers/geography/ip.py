@@ -11,7 +11,12 @@ import ipaddress
 import logging
 from typing import Any, Dict, List, Optional
 
-import httpx
+try:
+    import httpx
+    HAS_IP_GEO = True
+except ImportError:
+    HAS_IP_GEO = False
+    httpx = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

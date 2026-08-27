@@ -18,10 +18,18 @@ class SocialIdentity(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    # TODO(migration): governance.users is a cross-domain FK (Law 3). After the User
+    # model is migrated into the accounts domain, this must become ``accounts.users.id``.
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
     provider = Column(String(32), nullable=False)  # google | apple | facebook
     provider_user_id = Column(String(255), nullable=False)
-    email = Column(String(320), nullable=True)
+    # Every supported provider (google | apple | facebook) returns an email — make
+    # it required at the storage layer so the column can be trusted downstream.
+    email = Column(String(320), nullable=False)
     full_name = Column(String(160), nullable=True)
     raw_data = Column(JSON, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    # Law #5: country is the orthogonal scope axis — must be non-null on every row.
+    country_code = Column(String(2), nullable=False, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)

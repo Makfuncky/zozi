@@ -9,7 +9,12 @@ from __future__ import annotations
 
 import logging
 
-import httpx
+try:
+    import httpx
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
+    httpx = None
 
 logger = logging.getLogger(__name__)
 

@@ -25,9 +25,6 @@ from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from mcp.server.fastmcp import FastMCP
-import structlog
-logger = structlog.get_logger(__name__)
-
 logger = logging.getLogger(__name__)
 
 # Create MCP server

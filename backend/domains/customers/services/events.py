@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_CUSTOMER_REGISTERED = "customers.customer.registered"
@@ -79,8 +82,8 @@ def publish_customer_registered(user_id: int, email: str, country_code: str, ref
         from infrastructure.messaging.events.event_bus import publish
         event = CustomerRegistered(user_id=user_id, email=email, country_code=country_code, referral_code=referral_code)
         publish(EVENT_CUSTOMER_REGISTERED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish CustomerRegistered event: %s", exc)
 
 def publish_review_submitted(review_id: int, product_id: int, user_id: int, rating: int) -> None:
     """Publish a ReviewSubmitted event."""
@@ -88,8 +91,8 @@ def publish_review_submitted(review_id: int, product_id: int, user_id: int, rati
         from infrastructure.messaging.events.event_bus import publish
         event = ReviewSubmitted(review_id=review_id, product_id=product_id, user_id=user_id, rating=rating)
         publish(EVENT_REVIEW_SUBMITTED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish ReviewSubmitted event: %s", exc)
 
 def publish_coins_earned(user_id: int, amount: int, reason: str, reference_id: Optional[int] = None) -> None:
     """Publish a CoinsEarned event."""
@@ -97,8 +100,8 @@ def publish_coins_earned(user_id: int, amount: int, reason: str, reference_id: O
         from infrastructure.messaging.events.event_bus import publish
         event = CoinsEarned(user_id=user_id, amount=amount, reason=reason, reference_id=reference_id)
         publish(EVENT_COINS_EARNED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish CoinsEarned event: %s", exc)
 
 def publish_coins_redeemed(user_id: int, amount: int, reason: str, order_id: Optional[int] = None) -> None:
     """Publish a CoinsRedeemed event."""
@@ -106,8 +109,8 @@ def publish_coins_redeemed(user_id: int, amount: int, reason: str, order_id: Opt
         from infrastructure.messaging.events.event_bus import publish
         event = CoinsRedeemed(user_id=user_id, amount=amount, reason=reason, order_id=order_id)
         publish(EVENT_COINS_REDEEMED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish CoinsRedeemed event: %s", exc)
 
 __all__ = [
     # Event type constants

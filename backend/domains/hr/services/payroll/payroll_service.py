@@ -1,4 +1,4 @@
-"""Payroll service — calculation, batch processing, approval, and read operations.
+"""Payroll service â€” calculation, batch processing, approval, and read operations.
 
 Consolidates payroll_service.py (payroll calculation, batch processing, approval)
 and payroll_read_service.py (payroll record reads, summary stats).
@@ -17,13 +17,97 @@ from domains.accounts.services.auth.auth_service import get_current_user
 from infrastructure.database.database import get_db
 from domains.hr.models.employee_models import EmployeeDocument
 from domains.hr.models.employee_models import PayrollRecord
-from domains.governance.services.effective_permissions import check_permission
 from domains.hr.services.payroll.payroll_engine import PayrollEngine
+from domains.hr.services.hr_permissions import check_permission
 
 logger = logging.getLogger(__name__)
 
-# In-memory store for pending payroll approvals (batch_key → payroll data)
-PENDING_PAYROLL_APPROVALS: dict[str, dict] = {}
+# Redis key prefix for pending payroll approvals
+_PAYROLL_APPROVALS_PREFIX = "payroll:pending:"
+
+
+def _get_redis():
+    """Return Redis client or None."""
+    try:
+        from infrastructure.utils.redis_client import redis_client
+        client = redis_client()
+        if not client:
+            return None
+        try:
+            if not client.ping():
+                return None
+        except Exception:
+            return None
+        return client
+    except Exception:
+        return None
+
+
+def _get_pending_approvals() -> dict:
+    """Get all pending payroll approvals from Redis."""
+    redis = _get_redis()
+    if not redis:
+        return {}
+    try:
+        keys = redis.keys(f"{_PAYROLL_APPROVALS_PREFIX}*")
+        result = {}
+        for key in keys:
+            key_str = key.decode() if isinstance(key, bytes) else key
+            batch_key = key_str.replace(_PAYROLL_APPROVALS_PREFIX, "")
+            data = redis.hgetall(key_str)
+            if data:
+                decoded = {}
+                for k, v in data.items():
+                    k_str = k.decode() if isinstance(k, bytes) else k
+                    v_str = v.decode() if isinstance(v, bytes) else v
+                    decoded[k_str] = v_str
+                result[batch_key] = decoded
+        return result
+    except Exception:
+        return {}
+
+
+def _get_pending_approval(batch_key: str) -> dict | None:
+    """Get a specific pending payroll approval from Redis."""
+    redis = _get_redis()
+    if not redis:
+        return None
+    try:
+        data = redis.hgetall(f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}")
+        if not data:
+            return None
+        result = {}
+        for k, v in data.items():
+            k_str = k.decode() if isinstance(k, bytes) else k
+            v_str = v.decode() if isinstance(v, bytes) else v
+            result[k_str] = v_str
+        return result
+    except Exception:
+        return None
+
+
+def _set_pending_approval(batch_key: str, data: dict) -> None:
+    """Store a pending payroll approval in Redis."""
+    redis = _get_redis()
+    if not redis:
+        return
+    try:
+        key = f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}"
+        redis.hset(key, mapping=data)
+    except Exception:
+        pass
+
+
+def _update_pending_approval(batch_key: str, field: str, value: str) -> None:
+    """Update a field in a pending payroll approval."""
+    redis = _get_redis()
+    if not redis:
+        return
+    try:
+        key = f"{_PAYROLL_APPROVALS_PREFIX}{batch_key}"
+        redis.hset(key, field, value)
+    except Exception:
+        pass
 
 class PayrollApproveBody(BaseModel):
     batch_id: str
@@ -47,14 +131,14 @@ def process_payroll_batch(country_code: str, month: int, year: int, db: Session,
 
     # Check if already approved
     batch_key = f"{country_code}:{year}:{month:02d}"
-    existing = PENDING_PAYROLL_APPROVALS.get(batch_key)
+    existing = _get_pending_approval(batch_key)
     if existing and existing.get("status") == "disbursed":
         raise HTTPException(status_code=400, detail="This period has already been disbursed")
 
     payroll = engine.process_payroll_batch(period, country_code.upper())
     payroll["country_code"] = country_code.upper()
     payroll["status"] = "pending_approval"
-    PENDING_PAYROLL_APPROVALS[batch_key] = payroll
+    _set_pending_approval(batch_key, payroll)
     return payroll
 
 def approve_payroll_batch(body: PayrollApproveBody, db: Session, current_user: dict):
@@ -71,7 +155,7 @@ def approve_payroll_batch(body: PayrollApproveBody, db: Session, current_user: d
     if not check_permission(user_id, "hr.payroll.approve", country_code.upper(), db):
         raise HTTPException(status_code=403, detail="Missing hr.payroll.approve permission")
 
-    pending = PENDING_PAYROLL_APPROVALS.get(batch_key)
+    pending = _get_pending_approval(batch_key)
     if not pending or pending.get("status") != "pending_approval":
         raise HTTPException(status_code=400, detail="No pending payroll batch found for this period")
 
@@ -80,7 +164,7 @@ def approve_payroll_batch(body: PayrollApproveBody, db: Session, current_user: d
         raise HTTPException(status_code=400, detail="Cannot approve your own payroll batch")
 
     if not body.approved:
-        PENDING_PAYROLL_APPROVALS[batch_key]["status"] = "rejected"
+        _update_pending_approval(batch_key, "status", "rejected")
         return {"status": "rejected", "batch_id": body.batch_id}
 
     # Execute auto-disbursement
@@ -92,7 +176,7 @@ def approve_payroll_batch(body: PayrollApproveBody, db: Session, current_user: d
     disbursement["approved_by"] = user_id
     disbursement["approved_at"] = datetime.now(timezone.utc).isoformat()
 
-    PENDING_PAYROLL_APPROVALS[batch_key] = disbursement
+    _set_pending_approval(batch_key, disbursement)
     return disbursement
 
 def get_employee_payslips(employee_id: int, db: Session, current_user: dict):
@@ -129,7 +213,8 @@ def verify_bank_account(account_id: int, db: Session, current_user: dict):
 def payroll_status(country_code: str, db: Session):
     """Get current payroll batch status for a country."""
     results = {}
-    for key, value in PENDING_PAYROLL_APPROVALS.items():
+    pending_approvals = _get_pending_approvals()
+    for key, value in pending_approvals.items():
         if key.startswith(country_code.upper()):
             results[key] = {
                 "status": value.get("status"),
@@ -139,7 +224,7 @@ def payroll_status(country_code: str, db: Session):
     return {"payroll_batches": results}
 
 
-# ── Payroll Read Operations (merged from payroll_read_service.py) ─────────────
+# â”€â”€ Payroll Read Operations (merged from payroll_read_service.py) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_payroll_records(
     db: Session, country_code: str, skip: int = 0, limit: int = 20
@@ -178,4 +263,5 @@ def get_payroll_summary(db: Session, country_code: str) -> dict:
         or 0
     )
     return {"total_paid": float(total), "total_records": count, "paid_count": paid}
+
 

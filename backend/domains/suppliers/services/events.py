@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_SUPPLIER_REGISTERED = "suppliers.supplier.registered"
@@ -67,8 +70,8 @@ def publish_supplier_registered(supplier_id: int, company_name: str, country_cod
         from infrastructure.messaging.events.event_bus import publish
         event = SupplierRegistered(supplier_id=supplier_id, user_id=user_id, company_name=company_name, country_code=country_code)
         publish(EVENT_SUPPLIER_REGISTERED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish SupplierRegistered event: %s", exc)
 
 def publish_supplier_verified(supplier_id: int, verified_by: Optional[int] = None) -> None:
     """Publish a SupplierVerified event."""
@@ -76,8 +79,8 @@ def publish_supplier_verified(supplier_id: int, verified_by: Optional[int] = Non
         from infrastructure.messaging.events.event_bus import publish
         event = SupplierVerified(supplier_id=supplier_id, verified_by=verified_by)
         publish(EVENT_SUPPLIER_VERIFIED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish SupplierVerified event: %s", exc)
 
 def publish_supplier_suspended(supplier_id: int, reason: str, suspended_by: Optional[int] = None) -> None:
     """Publish a SupplierSuspended event."""
@@ -85,8 +88,8 @@ def publish_supplier_suspended(supplier_id: int, reason: str, suspended_by: Opti
         from infrastructure.messaging.events.event_bus import publish
         event = SupplierSuspended(supplier_id=supplier_id, reason=reason, suspended_by=suspended_by)
         publish(EVENT_SUPPLIER_SUSPENDED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish SupplierSuspended event: %s", exc)
 
 __all__ = [
     # Event type constants

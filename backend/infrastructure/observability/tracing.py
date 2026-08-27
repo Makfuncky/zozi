@@ -36,9 +36,6 @@ except ImportError:  # pragma: no cover - optional dependency
         logger.info("OpenTelemetry tracing disabled (SDK not installed)")
         return None
 
-    # Avoid the name being treated as unused when the SDK is missing.
-    _ = (Optional,)
-
 
 
 if _OTEL_AVAILABLE:

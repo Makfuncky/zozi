@@ -12,7 +12,13 @@ import time
 import urllib.error
 
 import os
-import requests
+
+try:
+    import requests
+    HAS_HUGGINGFACE = True
+except ImportError:
+    HAS_HUGGINGFACE = False
+    requests = None
 
 logger = logging.getLogger(__name__)
 

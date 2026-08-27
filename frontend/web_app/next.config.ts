@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/:path*`,
+        destination: `${apiUrl}/api/:path*`,
       },
       {
         source: '/auth/:path*',
@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/__api/:path*',
-        destination: `${apiUrl}/:path*`,
+        destination: `${apiUrl}/api/:path*`,
       },
       {
         source: '/uploads/:path*',

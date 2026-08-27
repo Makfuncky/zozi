@@ -9,8 +9,19 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-import feedparser
-import httpx
+try:
+    import feedparser
+    HAS_FEEDPARSER = True
+except ImportError:
+    HAS_FEEDPARSER = False
+    feedparser = None  # type: ignore[assignment]
+
+try:
+    import httpx
+    HAS_HTTPX = True
+except ImportError:
+    HAS_HTTPX = False
+    httpx = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

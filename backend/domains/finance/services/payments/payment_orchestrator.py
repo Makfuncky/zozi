@@ -1,6 +1,13 @@
 """Payment orchestrator — gateway wizard, generic gateway, reconciliation, auto-enable, badge billing."""
 
-from domains.finance.services.payments.payment_engine import *
+from domains.finance.services.payments.payment_engine import (
+    _normalize_gateway_code,
+    _optional_text,
+    GatewayWizardRequest,
+    GatewayWizardResponse,
+    PaymentGatewayConnectionResponse,
+    test_payment_gateway_connection,
+)
 
 def gateway_wizard_step(
 
@@ -1093,31 +1100,22 @@ def confirm_generic_gateway_payment(body: ConfirmGenericGatewayRequest, current_
 
 
 
-from domains.finance.services.payouts.payments_gateway_service import event_publisher
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.finance.services.payouts.payments_gateway_service import event_publisher
 
 
 
 
 
 
-from domains.finance.services.payouts.payments_gateway_service import event_publisher
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.finance.services.payouts.payments_gateway_service import event_publisher
 
 
 
 # === MERGED from badge_billing_payment.py ===
-
-"""Badge billing payment service.
-
-Business logic for supplier badge billing records: listing, generation of
-pending charges, and recording payments against a ``BadgeBillingRecord`` while
-mirroring the cash movement through the canonical ``log_bank_transaction``
-helper so the finance reconciliation ledger stays consistent.
-
-The underlying ``BadgeBillingRecord`` model already lives in
-``models/admin.py`` and is surfaced through the ``data.models`` shim, so this
-service reuses it rather than declaring a duplicate ORM class.
-"""
-from __future__ import annotations
 
 import logging
 from datetime import datetime
@@ -1130,7 +1128,8 @@ from sqlalchemy.orm import Session
 
 from domains.finance.models.finance import BankTransaction
 from domains.governance.models.admin import BadgeBillingRecord
-from domains.finance.services.treasury.cash_management_service import log_bank_transaction
+# TODO: log_bank_transaction not found in cash_management_service
+# from domains.finance.services.treasury.cash_management_service import log_bank_transaction
 from infrastructure.utils.datetime_utils import utcnow
 from kernel.money import round_money, to_decimal
 import structlog

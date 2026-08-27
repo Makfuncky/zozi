@@ -1,25 +1,13 @@
-"""Routers for the logistics module — 15 domain routers."""
+"""Routers for the logistics module — 1 domain router."""
 import importlib
 
 routers = []
 public_routers = []
 
 _module_names = [
+    "logistics",
     "accounts",
     "analytics",
-    "audit",
-    "catalog",
-    "comms",
-    "country",
-    "customers",
-    "finance",
-    "governance",
-    "hr",
-    "logistics",
-    "orders",
-    "promotions",
-    "security",
-    "suppliers",
 ]
 
 for _n in _module_names:
@@ -32,6 +20,3 @@ for _n in _module_names:
     _r = getattr(_m, "router", None)
     if _r is not None:
         routers.append(_r)
-    _pr = getattr(_m, "public_router", None)
-    if _pr is not None:
-        public_routers.append(_pr)

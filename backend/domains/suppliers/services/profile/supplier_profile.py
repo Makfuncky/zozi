@@ -1,6 +1,6 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
-from domains.suppliers.services.supplier_shared import *
+from domains.suppliers.services.supplier_shared import _sanitize_profile_string
 
 def get_supplier_profile(current_user: dict, db: Session) -> dict:
     supplier = db.query(User).filter(User.id == current_user["id"]).first()

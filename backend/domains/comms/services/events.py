@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_MESSAGE_SENT = "comms.message.sent"
@@ -74,8 +77,8 @@ def publish_message_sent(message_id: int, sender_id: int, room_id: int, room_typ
         from infrastructure.messaging.events.event_bus import publish
         event = MessageSent(message_id=message_id, sender_id=sender_id, room_id=room_id, room_type=room_type)
         publish(EVENT_MESSAGE_SENT, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish MessageSent event: %s", exc)
 
 def publish_ticket_created(ticket_id: int, created_by: int, category: str, priority: str = "medium") -> None:
     """Publish a TicketCreated event."""
@@ -83,8 +86,8 @@ def publish_ticket_created(ticket_id: int, created_by: int, category: str, prior
         from infrastructure.messaging.events.event_bus import publish
         event = TicketCreated(ticket_id=ticket_id, created_by=created_by, category=category, priority=priority)
         publish(EVENT_TICKET_CREATED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish TicketCreated event: %s", exc)
 
 def publish_notification_sent(notification_id: int, user_id: int, channel: str, type_: str) -> None:
     """Publish a NotificationSent event."""
@@ -92,8 +95,8 @@ def publish_notification_sent(notification_id: int, user_id: int, channel: str, 
         from infrastructure.messaging.events.event_bus import publish
         event = NotificationSent(notification_id=notification_id, user_id=user_id, channel=channel, type=type_)
         publish(EVENT_NOTIFICATION_SENT, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish NotificationSent event: %s", exc)
 
 __all__ = [
     # Event type constants

@@ -27,8 +27,10 @@ from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.utils.cache import build_versioned_cache_key, bump_cache_version, cache_get_json, cache_set_json
+from domains.country.utils.country_rls import get_country_or_404
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 from domains.catalog.models.promotions import Banner
 
 logger = logging.getLogger(__name__)
@@ -408,3 +410,52 @@ def update_banner_image(db: Session, banner_or_id, image_url: str, filename: Opt
     db.commit()
     db.refresh(record)
     return record
+
+
+# ---------------------------------------------------------------------------
+# RLS-aware wrappers for country-scoped admin operations
+# ---------------------------------------------------------------------------
+
+def get_banners_by_country(db: Session, country_code: str, banner_type: Optional[str] = None, active_only: bool = False) -> list[dict]:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return get_banners(db, banner_type=banner_type, active_only=active_only, country_code=country_code)
+    finally:
+        clear_rls_context()
+
+
+def get_all_banners_by_country(db: Session, country_code: str) -> dict:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return get_banners_page(db, active_only=False)
+    finally:
+        clear_rls_context()
+
+
+def create_banner_by_country(country_code: str, payload: BannerCreate, admin_id: int, current_admin: dict, db: Session) -> dict:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return create_banner(payload, admin_id, current_admin, db)
+    finally:
+        clear_rls_context()
+
+
+def update_banner_by_country(country_code: str, banner_id: int, payload: BannerUpdate, current_admin: dict, db: Session) -> dict:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return update_banner(banner_id, payload, current_admin, db)
+    finally:
+        clear_rls_context()
+
+
+def delete_banner_by_country(country_code: str, banner_id: int, current_admin: dict, db: Session) -> dict:
+    get_country_or_404(country_code.upper(), db)
+    set_rls_context({country_code.upper()}, is_restricted=True)
+    try:
+        return delete_banner(banner_id, current_admin, db)
+    finally:
+        clear_rls_context()

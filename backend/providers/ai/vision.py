@@ -18,6 +18,8 @@ from .text import _ollama_chat, _ollama_vision_chat, _extract_json, _extract_var
 
 logger = logging.getLogger(__name__)
 
+HAS_AI_VISION = True
+
 __all__ = [
     "VariantConfig",
     "classify_product_type",

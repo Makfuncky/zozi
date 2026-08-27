@@ -234,6 +234,8 @@ FEATURES = {
     "comms.faq.manage": "Manage FAQs",
     # SLA features
     "comms.sla.manage": "Configure escalation SLA rules",
+    # Broadcast features
+    "comms.broadcast": "Send broadcast messages and notifications to user segments",
 }
 
 __all__ = [

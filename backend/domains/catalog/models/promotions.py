@@ -18,7 +18,7 @@ __all__ = ["Coupon", "Banner", "BOGOPromotion"]
 
 class Coupon(Base):
     __tablename__ = "coupons"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(100), unique=True, index=True, nullable=False)
     discount_type = Column(String(20), default="percentage")
@@ -41,7 +41,7 @@ class Coupon(Base):
 
 class Banner(Base):
     __tablename__ = "banners"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     subtitle = Column(String(500), nullable=True)
@@ -76,7 +76,7 @@ class Banner(Base):
 class BOGOPromotion(Base):
     """Buy-One-Get-One (and Buy-X-Get-Y-Free) promotion definition."""
     __tablename__ = "bogo_promotions"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "catalog"},)
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)

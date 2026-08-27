@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_NOTIFICATION_CREATED = "comms.notification.created"
@@ -97,8 +100,8 @@ def publish_notification_created(notification_id: int, user_id: int, type_: str,
         from infrastructure.utils.event_bus import publish
         event = NotificationCreated(notification_id=notification_id, user_id=user_id, type=type_, title=title, channel=channel)
         publish(EVENT_NOTIFICATION_CREATED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish NotificationCreated event: %s", exc)
 
 def publish_ticket_replied(ticket_id: int, message_id: int, sender_id: int, is_admin: bool) -> None:
     """Publish a TicketReplied event."""
@@ -106,8 +109,8 @@ def publish_ticket_replied(ticket_id: int, message_id: int, sender_id: int, is_a
         from infrastructure.utils.event_bus import publish
         event = TicketReplied(ticket_id=ticket_id, message_id=message_id, sender_id=sender_id, is_admin=is_admin)
         publish(EVENT_TICKET_REPLIED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish TicketReplied event: %s", exc)
 
 def publish_ticket_status_changed(ticket_id: int, old_status: str, new_status: str, changed_by: int) -> None:
     """Publish a TicketStatusChanged event."""
@@ -115,8 +118,8 @@ def publish_ticket_status_changed(ticket_id: int, old_status: str, new_status: s
         from infrastructure.utils.event_bus import publish
         event = TicketStatusChanged(ticket_id=ticket_id, old_status=old_status, new_status=new_status, changed_by=changed_by)
         publish(EVENT_TICKET_STATUS_CHANGED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish TicketStatusChanged event: %s", exc)
 
 def publish_email_campaign_created(campaign_id: int, name: str, created_by: int) -> None:
     """Publish an EmailCampaignCreated event."""
@@ -124,8 +127,8 @@ def publish_email_campaign_created(campaign_id: int, name: str, created_by: int)
         from infrastructure.utils.event_bus import publish
         event = EmailCampaignCreated(campaign_id=campaign_id, name=name, created_by=created_by)
         publish(EVENT_EMAIL_CAMPAIGN_CREATED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish EmailCampaignCreated event: %s", exc)
 
 def publish_email_campaign_sent(campaign_id: int, recipient_count: int) -> None:
     """Publish an EmailCampaignSent event."""
@@ -133,8 +136,8 @@ def publish_email_campaign_sent(campaign_id: int, recipient_count: int) -> None:
         from infrastructure.utils.event_bus import publish
         event = EmailCampaignSent(campaign_id=campaign_id, recipient_count=recipient_count)
         publish(EVENT_EMAIL_CAMPAIGN_SENT, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish EmailCampaignSent event: %s", exc)
 
 def publish_escalation_triggered(sla_log_id: int, message_type: str, escalated_to_role: str, priority: str) -> None:
     """Publish an EscalationTriggered event."""
@@ -142,8 +145,8 @@ def publish_escalation_triggered(sla_log_id: int, message_type: str, escalated_t
         from infrastructure.utils.event_bus import publish
         event = EscalationTriggered(sla_log_id=sla_log_id, message_type=message_type, escalated_to_role=escalated_to_role, priority=priority)
         publish(EVENT_ESCALATION_TRIGGERED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish EscalationTriggered event: %s", exc)
 
 __all__ = [
     # Event type constants

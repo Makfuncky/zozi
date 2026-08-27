@@ -5,17 +5,16 @@ NEW_STRUCTURE.md (step 5) requires the scattered RLS enforcers
 country_context) to be consolidated into ONE module:
 infrastructure/database/security.py.
 
-This module is the canonical import surface for RLS. The original
-implementations still live in infrastructure.utils.rls_interceptor and
-middleware.country_context (heavily imported across the codebase); this
-file re-exports them so new code should `from infrastructure.database.security
-import ...` and the legacy paths remain functional during the migration.
+This module is the canonical import surface for RLS infrastructure primitives.
+Country-context middleware lives in middleware.country_context and should be
+imported directly from there — infrastructure must not import middleware
+(Law 1: modules → domains → infrastructure).
 """
 
 from __future__ import annotations
 
 # Canonical RLS context + SQLA event interceptor.
-from infrastructure.utils.rls_interceptor import (  # noqa: F401
+from infrastructure.database.rls_interceptor import (  # noqa: F401
     COUNTRY_AWARE_TABLES,
     SecurityContextMissingError,
     clear_rls_context,
@@ -28,9 +27,6 @@ from infrastructure.utils.rls_interceptor import (  # noqa: F401
     validate_rls_coverage,
 )
 
-# Country-context middleware (per-request RLS scope resolution).
-from middleware.country_context import CountryContextMiddleware  # noqa: F401
-
 __all__ = [
     "COUNTRY_AWARE_TABLES",
     "SecurityContextMissingError",
@@ -42,5 +38,4 @@ __all__ = [
     "rls_before_execute",
     "set_rls_context",
     "validate_rls_coverage",
-    "CountryContextMiddleware",
 ]

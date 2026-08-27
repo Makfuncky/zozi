@@ -21,9 +21,20 @@ from domains.country.models.country_enhancements import CountryStaffAssignment
 from domains.hr.models.employee_models import OrgUnit
 
 from domains.country.models.country_enhancements import CountryLocalization
+from domains.hr.models.employee_models import Employee
 
-# NOTE: The following imports were removed because they were self-imports
-# (importing from domains.hr.hierarchy_service which is this same file).
+
+class OrgUnitCreate(BaseModel):
+    name: str
+    parent_id: Optional[int] = None
+    country_code: Optional[str] = None
+    level: int = 1
+
+class OrgUnitUpdate(BaseModel):
+    name: Optional[str] = None
+    parent_id: Optional[int] = None
+    level: Optional[int] = None
+    is_active: Optional[bool] = None
 
 class ManagerReassign(BaseModel):
     employee_user_id: int
@@ -232,7 +243,7 @@ def switch_country_scope(country_code: str, db: Session, current_user: dict):
         raise HTTPException(status_code=403, detail=f"No access to country '{normalized}'")
 
     # Set RLS context
-    from infrastructure.utils.rls_interceptor import set_rls_context
+    from infrastructure.database.rls_interceptor import set_rls_context
     set_rls_context(normalized)
 
     return {"active_country": normalized, "message": f"Switched to {normalized}"}
@@ -296,59 +307,212 @@ def required_authority_for_resource(resource_type: str, db: Session, current_use
     }
 
 
-# ──────────────────────────────────────────────
-# Stub implementations for missing functions
-# These functions were referenced but never implemented.
-# TODO: Implement these functions properly.
-# ──────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Hierarchy function implementations
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def get_all_subordinates(user_id: int, db: Session, direct_only: bool = False) -> list:
-    """Get all subordinates of a user. STUB - needs implementation."""
-    raise NotImplementedError("get_all_subordinates is not implemented")
+    """Get all subordinates of a user (direct and indirect)."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return []
+    result = []
+    visited = set()
+    queue = [employee.id]
+    while queue:
+        current_id = queue.pop(0)
+        if current_id in visited:
+            continue
+        visited.add(current_id)
+        subordinates = db.query(Employee).filter(Employee.reporting_manager_id == current_id).all()
+        for sub in subordinates:
+            result.append({
+                "id": sub.id,
+                "user_id": sub.user_id,
+                "employee_code": sub.employee_code,
+                "department": sub.department,
+                "position": sub.position,
+            })
+            if not direct_only:
+                queue.append(sub.id)
+    return result
 
 
 def can_manage(manager_id: int, target_user_id: int, db: Session) -> bool:
-    """Check if a manager can manage a target user. STUB - needs implementation."""
-    raise NotImplementedError("can_manage is not implemented")
+    """Check if a manager can manage a target user."""
+    manager = db.query(Employee).filter(Employee.user_id == manager_id).first()
+    target = db.query(Employee).filter(Employee.user_id == target_user_id).first()
+    if not manager or not target:
+        return False
+    if manager.id == target.id:
+        return True
+    current = target
+    while current.reporting_manager_id:
+        if current.reporting_manager_id == manager.id:
+            return True
+        current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()
+        if not current:
+            break
+    return False
 
 
-def backfill_authority_levels(db: Session) -> None:
-    """Backfill authority levels. STUB - needs implementation."""
-    raise NotImplementedError("backfill_authority_levels is not implemented")
+def backfill_authority_levels(db: Session) -> int:
+    """Backfill authority levels based on org unit hierarchy depth."""
+    employees = db.query(Employee).filter(Employee.authority_level.is_(None)).all()
+    updated = 0
+    for emp in employees:
+        if emp.org_unit_id:
+            unit = db.query(OrgUnit).filter(OrgUnit.id == emp.org_unit_id).first()
+            if unit and unit.level:
+                emp.authority_level = unit.level
+                updated += 1
+    db.flush()
+    return updated
 
 
 def get_authority_level(user_id: int, db: Session) -> int:
-    """Get the authority level of a user. STUB - needs implementation."""
-    raise NotImplementedError("get_authority_level is not implemented")
+    """Get the authority level of a user."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return 0
+    if employee.authority_level is not None:
+        return employee.authority_level
+    if employee.org_unit_id:
+        unit = db.query(OrgUnit).filter(OrgUnit.id == employee.org_unit_id).first()
+        if unit and unit.level:
+            return unit.level
+    return 0
 
 
 def get_home_org_unit(user_id: int, db: Session) -> Optional[dict]:
-    """Get the home org unit of a user. STUB - needs implementation."""
-    raise NotImplementedError("get_home_org_unit is not implemented")
+    """Get the home org unit of a user."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee or not employee.org_unit_id:
+        return None
+    unit = db.query(OrgUnit).filter(OrgUnit.id == employee.org_unit_id).first()
+    if not unit:
+        return None
+    return {
+        "id": unit.id,
+        "name": unit.name,
+        "path": unit.path,
+        "depth": unit.depth,
+        "level": unit.level,
+        "country_code": unit.country_code,
+    }
 
 
 def get_org_chart(org_unit_id: Optional[int], db: Session, current_user: dict) -> dict:
-    """Get the org chart. STUB - needs implementation."""
-    raise NotImplementedError("get_org_chart is not implemented")
+    """Get the org chart for a unit or the full hierarchy."""
+    if org_unit_id:
+        root_units = db.query(OrgUnit).filter(OrgUnit.id == org_unit_id).all()
+    else:
+        root_units = db.query(OrgUnit).filter(OrgUnit.parent_id.is_(None), OrgUnit.is_active == True).all()
+
+    def build_chart(unit: OrgUnit) -> dict:
+        employees = db.query(Employee).filter(Employee.org_unit_id == unit.id, Employee.employment_status == "active").all()
+        children = db.query(OrgUnit).filter(OrgUnit.parent_id == unit.id, OrgUnit.is_active == True).all()
+        return {
+            "id": unit.id,
+            "name": unit.name,
+            "path": unit.path,
+            "depth": unit.depth,
+            "level": unit.level,
+            "employees": [
+                {
+                    "id": e.id,
+                    "user_id": e.user_id,
+                    "employee_code": e.employee_code,
+                    "department": e.department,
+                    "position": e.position,
+                }
+                for e in employees
+            ],
+            "children": [build_chart(child) for child in children],
+        }
+
+    return {"roots": [build_chart(u) for u in root_units]}
 
 
 def get_team_members(user_id: int, db: Session, direct_only: bool = False) -> list:
-    """Get team members. STUB - needs implementation."""
-    raise NotImplementedError("get_team_members is not implemented")
+    """Get team members for a manager."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return []
+    query = db.query(Employee).filter(Employee.reporting_manager_id == employee.id)
+    members = query.all()
+    return [
+        {
+            "id": m.id,
+            "user_id": m.user_id,
+            "employee_code": m.employee_code,
+            "department": m.department,
+            "position": m.position,
+            "employment_status": m.employment_status,
+        }
+        for m in members
+    ]
 
 
 def get_user_chain(user_id: int, db: Session) -> list:
-    """Get the user chain. STUB - needs implementation."""
-    raise NotImplementedError("get_user_chain is not implemented")
+    """Get the management chain for a user (from self up to top)."""
+    employee = db.query(Employee).filter(Employee.user_id == user_id).first()
+    if not employee:
+        return []
+    chain = []
+    current = employee
+    visited = set()
+    while current and current.id not in visited:
+        visited.add(current.id)
+        chain.append({
+            "id": current.id,
+            "user_id": current.user_id,
+            "employee_code": current.employee_code,
+            "department": current.department,
+            "position": current.position,
+            "authority_level": current.authority_level,
+        })
+        if current.reporting_manager_id:
+            current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()
+        else:
+            break
+    return chain
 
 
 def is_in_chain(manager_id: int, target_user_id: int, db: Session) -> bool:
-    """Check if a user is in the chain of another. STUB - needs implementation."""
-    raise NotImplementedError("is_in_chain is not implemented")
+    """Check if target_user is in the management chain of manager_id."""
+    manager = db.query(Employee).filter(Employee.user_id == manager_id).first()
+    target = db.query(Employee).filter(Employee.user_id == target_user_id).first()
+    if not manager or not target:
+        return False
+    current = target
+    visited = set()
+    while current and current.id not in visited:
+        visited.add(current.id)
+        if current.reporting_manager_id == manager.id:
+            return True
+        if current.reporting_manager_id:
+            current = db.query(Employee).filter(Employee.id == current.reporting_manager_id).first()
+        else:
+            break
+    return False
 
 
-def reassign_manager(payload: dict, db: Session, current_user: dict) -> dict:
-    """Reassign a manager. STUB - needs implementation."""
-    raise NotImplementedError("reassign_manager is not implemented")
+def reassign_manager(db: Session, employee_user_id: int, new_manager_user_id: int) -> dict:
+    """Reassign an employee's manager."""
+    employee = db.query(Employee).filter(Employee.user_id == employee_user_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    new_manager = db.query(Employee).filter(Employee.user_id == new_manager_user_id).first()
+    if not new_manager:
+        raise HTTPException(status_code=404, detail="New manager not found")
+    employee.reporting_manager_id = new_manager.id
+    db.flush()
+    return {
+        "status": "updated",
+        "employee_id": employee.id,
+        "new_manager_id": new_manager.id,
+    }
+
 
 

@@ -36,9 +36,19 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
+
 import numpy as np
-from providers.image import Image
-from providers.image.bg_remover import create_frugal_rembg_session, rembg_remove_bytes
+
+try:
+    from providers.image import Image
+    from providers.image.bg_remover import create_frugal_rembg_session, rembg_remove_bytes
+    HAS_REMBG = True
+except ImportError:
+    HAS_REMBG = False
+    Image = None  # type: ignore[assignment]
+    create_frugal_rembg_session = None  # type: ignore[assignment]
+    rembg_remove_bytes = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 from providers.image import HAS_CV2 as _HAS_CV2, HAS_GUIDED_FILTER as _HAS_GUIDED_FILTER, cv2, ximgproc as _ximgproc
 MAX_CONCURRENT = int(os.environ.get('BG_MAX_CONCURRENT', '2'))

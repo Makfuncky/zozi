@@ -15,6 +15,8 @@ from .text import embed_text, cosine_similarity, _ollama_chat
 
 logger = logging.getLogger(__name__)
 
+HAS_AI_SEARCH = True
+
 __all__ = ["AdvancedSearchEngine"]
 
 # ============================================================================

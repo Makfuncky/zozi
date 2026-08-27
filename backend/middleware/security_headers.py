@@ -47,7 +47,7 @@ CSP_POLICY_DEV = (
     "style-src 'self' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; "
-    "connect-src 'self' http://localhost:3000 http://localhost:8000 ws://localhost:3000 wss://localhost:3000 https://api.stripe.com https://api.tap.company; "
+    f"connect-src 'self' {os.getenv('BACKEND_URL', 'http://localhost:8000')} {os.getenv('FRONTEND_URL', 'http://localhost:3000').replace('http', 'ws', 1)} {os.getenv('FRONTEND_URL', 'http://localhost:3000').replace('https', 'wss', 1)} {os.getenv('FRONTEND_WS_URL', '')} https://api.stripe.com https://api.tap.company; "
     "frame-src https://js.stripe.com; "
     "object-src 'none'; "
     "base-uri 'self'; "
@@ -115,9 +115,6 @@ class EnhancedSecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "max-age=31536000; includeSubDomains; preload"
             )
 
-        response.headers["X-Zoi-Security-Level"] = "unbreakable"
-        response.headers["X-Zoi-Compliance"] = "SOX-HIPAA-GDPR-CCPA"
-
         incoming_request_id = request.headers.get("X-Request-ID")
         if incoming_request_id:
             request_id = incoming_request_id
@@ -136,10 +133,6 @@ class EnhancedSecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         request_type = self._classify_request_type(request)
         response.headers["X-Zoi-Request-Type"] = request_type
-
-        response.headers["X-Zoi-SOX-Compliant"] = "true"
-        response.headers["X-Zoi-HIPAA-Compliant"] = "true"
-        response.headers["X-Zoi-GDPR-Compliant"] = "true"
 
         return response
 

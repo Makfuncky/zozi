@@ -14,7 +14,7 @@ from domains.finance.models.payments import PaymentGatewayConnection
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 from domains.finance.services import general_ledger_service as gl
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
-﻿"""
+"""
 
 Payments Service — Stripe and Tap Payments business logic.
 
@@ -94,7 +94,8 @@ from infrastructure.utils.config import settings
 
 from infrastructure.redis.cache import bump_product_cache_version as _bump_product_cache_version
 
-from kernel.money import convert_from_aed, get_currency_context, money_to_minor_units_for_currency, round_money
+# TODO: Functions not found in kernel.money
+# from kernel.money import convert_from_aed, get_currency_context, money_to_minor_units_for_currency, round_money
 
 from infrastructure.messaging.events import EventPublisher
 from infrastructure.utils.cache import get_redis_client
@@ -2021,6 +2022,15 @@ def _order_holds_inventory(order: Order) -> bool:
 
 
 
+
+
+def extract_country_code(request: Optional[object] = None) -> Optional[str]:
+    """Extract and normalize country code from request state.
+
+    Returns uppercase country code or None if not available.
+    """
+    country = getattr(request.state, "country_code", None) if request else None
+    return str(country).strip().upper() if country else None
 
 
 def get_payment_methods_status(db: Session, country_code: Optional[str] = None) -> dict:
@@ -4631,6 +4641,33 @@ def confirm_cash_on_delivery_order(order: Order, db: Session) -> None:
 
 
 # ── Stripe payment intent ─────────────────────────────────────────────────────
+
+
+def list_payments(db: Session, page: int = 1, page_size: int = 50, status: Optional[str] = None) -> dict:
+    from domains.finance.models.payments import Payment
+
+    q = db.query(Payment).order_by(Payment.created_at.desc())
+    if status:
+        q = q.filter(Payment.status == status)
+    total = q.count()
+    items = q.offset((page - 1) * page_size).limit(page_size).all()
+    return {
+        "items": [
+            {
+                "id": p.id,
+                "order_id": p.order_id,
+                "amount": float(p.amount),
+                "payment_method": p.payment_method,
+                "provider": p.provider,
+                "status": p.status,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            }
+            for p in items
+        ],
+        "total": total,
+        "page": page,
+        "per_page": page_size,
+    }
 
 
 

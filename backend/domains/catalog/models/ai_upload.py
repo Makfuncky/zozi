@@ -32,10 +32,10 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    func,
 )
 from sqlalchemy.orm import relationship
 from . import Base
-from infrastructure.utils.datetime_utils import utcnow as _utcnow
 __all__ = [
     "AIUploadJob",
     "AIStagingProduct",
@@ -49,17 +49,17 @@ class AIUploadJob(Base):
     __table_args__ = ({"schema": "catalog"},)
 
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False, index=True)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete='RESTRICT'), nullable=False, index=True)
     status = Column(String(20), default="pending", nullable=False, index=True)
     model_used = Column(String(100), nullable=True)
     prompt_hash = Column(String(64), nullable=True, index=True)
     tokens_used = Column(Numeric(12, 2), nullable=True)
     source_media_json = Column(Text, nullable=True)
-    created_product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
+    created_product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='SET NULL'), nullable=True)
     error_log = Column(Text, nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     staging_products = relationship(
         "AIStagingProduct", back_populates="job",
@@ -72,20 +72,20 @@ class AIStagingProduct(Base):
     __table_args__ = ({"schema": "catalog"},)
 
     id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id"), nullable=False, index=True)
-    product_id = Column(Integer, ForeignKey("commerce.products.id"), nullable=True)
-    name = Column(String, nullable=False)
+    job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id", ondelete='CASCADE'), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='SET NULL'), nullable=True)
+    name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
-    category = Column(String, nullable=True)
-    subcategory = Column(String, nullable=True)
-    color = Column(String, nullable=True)
-    brand = Column(String, nullable=True)
+    category = Column(String(255), nullable=True)
+    subcategory = Column(String(255), nullable=True)
+    color = Column(String(255), nullable=True)
+    brand = Column(String(255), nullable=True)
     tags = Column(JSON, nullable=True)
     sizes = Column(JSON, nullable=True)
     materials = Column(JSON, nullable=True)
-    image_url = Column(String, nullable=True)
+    image_url = Column(String(500), nullable=True)
     additional_media = Column(JSON, nullable=True)
     ai_description = Column(Text, nullable=True)
     variant_axes = Column(JSON, nullable=True)
@@ -93,7 +93,8 @@ class AIStagingProduct(Base):
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     job = relationship("AIUploadJob", back_populates="staging_products")
     staging_variants = relationship(
@@ -107,25 +108,27 @@ class AIStagingVariant(Base):
     __table_args__ = ({"schema": "catalog"},)
 
     id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id"), nullable=False, index=True)
-    staging_product_id = Column(Integer, ForeignKey("catalog.ai_staging_products.id"), nullable=False, index=True)
+    job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id", ondelete='CASCADE'), nullable=False, index=True)
+    staging_product_id = Column(Integer, ForeignKey("catalog.ai_staging_products.id", ondelete='CASCADE'), nullable=False, index=True)
     variant_key = Column(String(64), nullable=True, index=True)
-    size = Column(String, nullable=True)
-    color = Column(String, nullable=True)
-    material = Column(String, nullable=True)
-    pattern = Column(String, nullable=True)
-    gender = Column(String, nullable=True)
-    sku = Column(String, nullable=True)
-    barcode = Column(String, nullable=True)
-    product_code = Column(String, nullable=True)
+    size = Column(String(255), nullable=True)
+    color = Column(String(255), nullable=True)
+    material = Column(String(255), nullable=True)
+    pattern = Column(String(255), nullable=True)
+    gender = Column(String(50), nullable=True)
+    sku = Column(String(255), nullable=True)
+    barcode = Column(String(50), nullable=True)
+    product_code = Column(String(50), nullable=True)
     price = Column(Numeric(10, 2), nullable=True)
     stock = Column(Integer, default=0)
-    media_url = Column(String, nullable=True)
+    media_url = Column(String(500), nullable=True)
     attributes_json = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     confidence_score = Column(Numeric(5, 4), nullable=True)
     requires_human_review = Column(Boolean, default=False)
     country_code = Column(String(2), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
     staging_product = relationship("AIStagingProduct", back_populates="staging_variants")
 
@@ -135,7 +138,7 @@ class AIGenerationLog(Base):
     __table_args__ = ({"schema": "catalog"},)
 
     id = Column(Integer, primary_key=True, index=True)
-    job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id"), nullable=False, index=True)
+    job_id = Column(Integer, ForeignKey("catalog.ai_upload_jobs.id", ondelete='CASCADE'), nullable=False, index=True)
     field = Column(String(40), nullable=False)
     model_used = Column(String(100), nullable=True)
     prompt_hash = Column(String(64), nullable=True, index=True)
@@ -143,6 +146,7 @@ class AIGenerationLog(Base):
     cost = Column(Numeric(12, 6), nullable=True)
     confidence = Column(Numeric(5, 4), nullable=True)
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 Index("ix_ai_staging_variants_job_staging", AIStagingVariant.job_id, AIStagingVariant.staging_product_id)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """
 Shipping Rate Calculator
-=========================
+========================
 Calculate shipping costs based on weight, dimensions, distance, and carrier.
 Includes major carriers: FedEx, UPS, DHL, Aramex, local post.
 Pure Python — zone-based pricing model.
@@ -10,6 +10,8 @@ Pure Python — zone-based pricing model.
 import logging
 import math
 from typing import Any, Dict, List, Optional
+
+HAS_SHIPPING = True  # Pure Python implementation, no external SDK required
 
 logger = logging.getLogger(__name__)
 

@@ -40,7 +40,9 @@ class _ImageIOMissing:
 try:
     import imageio.v2 as imageio
     from gradio_client import Client, handle_file  # type: ignore
+    HAS_IMAGE_AI = True
 except ImportError:
+    HAS_IMAGE_AI = False
     imageio = _ImageIOMissing()  # type: ignore[assignment]
     Client = None  # type: ignore[assignment]
     handle_file = None  # type: ignore[assignment]

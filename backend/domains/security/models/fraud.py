@@ -37,7 +37,7 @@ class FraudEvent(Base):
     reviewed_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
-    country_code = Column(String(10), nullable=True, index=True)
+    country_code = Column(String(2), nullable=True, index=True)
     
     user = relationship("User", foreign_keys=[user_id], backref="fraud_events")
     reviewer = relationship("User", foreign_keys=[reviewed_by], backref="fraud_reviewed_events")
@@ -51,12 +51,12 @@ class FraudBlacklist(Base):
         {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
-    identifier_type = Column(String, nullable=False)
-    identifier_value = Column(String, nullable=False)
-    identifier_value_hash = Column(String, nullable=True)
-    reason = Column(String, nullable=True)
+    identifier_type = Column(String(50), nullable=False)
+    identifier_value = Column(String(100), nullable=False)
+    identifier_value_hash = Column(String(100), nullable=True)
+    reason = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
-    status_code = Column(String, default="active")
+    status_code = Column(String(50), default="active")
     created_at = Column(DateTime, default=_utcnow)
     expires_at = Column(DateTime, nullable=True)
 
@@ -81,7 +81,7 @@ class FraudRule(Base):
 class ManualReviewQueue(Base):
     __tablename__ = "manual_review_queue"
     __table_args__ = (
-        Index("ix_manual_review_status", "status"),
+        Index("ix_manual_review_status", "status_code"),
         Index("ix_manual_review_priority", "priority"),
         CheckConstraint("status_code IN ('queued', 'in_review', 'approved', 'rejected', 'escalated')", name="chk_manual_review_queue_status_valid"),
         {"schema": "security"})
@@ -91,11 +91,11 @@ class ManualReviewQueue(Base):
     entity_id = Column(Integer, nullable=False)
     fraud_score = Column(Integer, nullable=False)
     triggered_rules = Column(Text, nullable=True)
-    reason = Column(String, nullable=False)
-    priority = Column(String, default="medium")
+    reason = Column(String(255), nullable=False)
+    priority = Column(String(50), default="medium")
     assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     admin_notes = Column(Text, nullable=True)
-    status_code = Column(String, default="queued")
+    status_code = Column(String(50), default="queued")
     created_at = Column(DateTime, default=_utcnow)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
 
@@ -105,14 +105,14 @@ class IPReputation(Base):
     __table_args__ = (Index("ix_ip_reputation_ip", "ip_address"), {"schema": "security"})
     
     id = Column(Integer, primary_key=True, index=True)
-    ip_address = Column(String, nullable=False, index=True)
+    ip_address = Column(String(255), nullable=False, index=True)
     reputation_score = Column(Numeric(5, 2), default=0)
     is_blocked = Column(Boolean, default=False)
     is_proxy = Column(Boolean, default=False)
     is_tor = Column(Boolean, default=False)
     is_vpn = Column(Boolean, default=False)
     is_hosting = Column(Boolean, default=False)
-    asn = Column(String, nullable=True)
+    asn = Column(String(255), nullable=True)
     country_code = Column(String(2), nullable=True)
     last_seen_at = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
@@ -125,8 +125,8 @@ class DeviceFingerprint(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
-    fingerprint_hash = Column(String, nullable=False, index=True)
-    user_agent = Column(String, nullable=True)
+    fingerprint_hash = Column(String(255), nullable=False, index=True)
+    user_agent = Column(String(255), nullable=True)
     ip_addresses = Column(Text, nullable=True)
     is_trusted = Column(Boolean, default=False)
     is_blocked = Column(Boolean, default=False)
@@ -153,7 +153,7 @@ class CreditCardBin(Base):
 
 class ReturnAbusePattern(Base):
     __tablename__ = "return_abuse_patterns"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
     abuse_type = Column(String(50), nullable=False)
@@ -167,11 +167,11 @@ class ReturnAbusePattern(Base):
 
 class SupplierFraudIndicator(Base):
     __tablename__ = "supplier_fraud_indicators"
-    __table_args__ = ({"schema": "supplier"},)
+    __table_args__ = ({"schema": "suppliers"},)
     id = Column(Integer, primary_key=True, index=True)
     supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
     indicator_type = Column(String(50), nullable=False)
-    value = Column(String, nullable=True)
+    value = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
@@ -183,7 +183,7 @@ class LogisticsFraudIndicator(Base):
     id = Column(Integer, primary_key=True, index=True)
     partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete='CASCADE'), nullable=False)
     indicator_type = Column(String(50), nullable=False)
-    value = Column(String, nullable=True)
+    value = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
@@ -210,10 +210,10 @@ class IPAccountLinkage(Base):
     __tablename__ = "ip_account_linkages"
     __table_args__ = ({"schema": "security"},)
     id = Column(Integer, primary_key=True, index=True)
-    ip_address = Column(String, nullable=False, index=True)
+    ip_address = Column(String(255), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    device_fingerprint = Column(String, nullable=True)
-    session_id = Column(String, nullable=True)
+    device_fingerprint = Column(String(255), nullable=True)
+    session_id = Column(String(100), nullable=True)
     interaction_count = Column(Integer, default=1)
     is_suspicious = Column(Boolean, default=False)
     last_seen = Column(DateTime, default=_utcnow)
@@ -261,7 +261,7 @@ class FraudScoringLog(Base):
 class FraudCase(Base):
     __tablename__ = "fraud_cases"
     __table_args__ = (
-        Index("ix_fraud_case_status", "status"),
+        Index("ix_fraud_case_status", "status_code"),
         Index("ix_fraud_case_priority", "priority"),
         CheckConstraint("status_code IN ('open', 'investigating', 'resolved', 'closed', 'dismissed')", name="chk_fraud_cases_status_valid"),
         {"schema": "security"})
@@ -307,7 +307,7 @@ class FraudCaseAssignment(Base):
 class DLPViolation(Base):
     __tablename__ = "dlp_violations"
     __table_args__ = (
-        Index("ix_dlp_status", "status"),
+        Index("ix_dlp_status", "status_code"),
         Index("ix_dlp_created_at", "created_at"),
         CheckConstraint("status_code IN ('pending', 'reviewing', 'action_taken', 'dismissed', 'escalated')", name="chk_dlp_violations_status_valid"),
         {"schema": "security"})
@@ -347,7 +347,7 @@ class MeetingActionItem(Base):
     __tablename__ = "meeting_action_items"
     __table_args__ = (
         Index("ix_action_item_meeting", "meeting_id"),
-        Index("ix_action_item_status", "status"),
+        Index("ix_action_item_status", "status_code"),
         CheckConstraint("status_code IN ('pending', 'in_progress', 'completed', 'cancelled', 'deferred')", name="chk_meeting_action_items_status_valid"),
         {"schema": "security"})
     
@@ -355,7 +355,7 @@ class MeetingActionItem(Base):
     meeting_id = Column(Integer, ForeignKey("security.meeting_transcripts.id", ondelete='CASCADE'), nullable=False)
     entity_type = Column(String(50), nullable=True)
     entity_id = Column(Integer, nullable=True)
-    action = Column(String, nullable=False)
+    action = Column(String(255), nullable=False)
     metadata_json = Column(JSON, nullable=True)
     status_code = Column(String(20), default="pending")
     assigned_to = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)

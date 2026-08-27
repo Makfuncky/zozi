@@ -47,14 +47,6 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         app_env = str(getattr(settings, "app_env", "development")).lower()
-        csrf_disabled = os.environ.get("CSRF_DISABLED", "").lower() in {"1", "true", "yes"}
-        if csrf_disabled:
-            logger.warning(
-                f"CSRF protection is DISABLED via CSRF_DISABLED env var. "
-                "This should NEVER be enabled in production."
-            )
-            return await call_next(request)
-
         if app_env in ("test", "development"):
             # Per AGENTS.md, CSRF is bypassed (not merely warned) in dev/test so the
             # frontend can be exercised without token plumbing. Production always enforces.

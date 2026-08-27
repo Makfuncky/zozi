@@ -1,296 +1,193 @@
-"""Admin governance router — canonical."""
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
+"""Admin governance router — thin HTTP layer delegating to governance domain services."""
 
 from __future__ import annotations
-from domains.comms.models.communication import Notification
-from domains.governance.models.admin import TicketReply
-from domains.governance.models.core import DirectChatMessage
-from domains.governance.models.core import DirectChatRoom
-from domains.governance.models.core import EntityChatMessage
-from domains.governance.models.core import EntityChatThread
-from domains.governance.models.core import GroupChatMessage
-from domains.governance.models.core import GroupChatRoom
-from domains.governance.models.core import SupportTicket
-from domains.governance.models.user import User
-from infrastructure.database.database import get_db
-from infrastructure.database.database import get_db, get_db_session
-from infrastructure.utils.auth import SECRET_KEY, ALGORITHM
-from infrastructure.utils.config import settings
-from infrastructure.utils.dependencies import require_admin
-from jose import JWTError, jwt
+
+from typing import Any
+
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from typing import Optional
-import json
-import logging
 
-router = APIRouter(prefix="/api/v1/admin/governance", tags=["admin", "governance"])
+from infrastructure.database.database import get_db
+from infrastructure.security.dependencies import require_admin
+from infrastructure.utils.config import settings
+from rbac.dependencies import require_feature
+from domains.governance.services.command_center.command_center_service import (
+    create_executive_news,
+    delete_executive_news,
+    get_alerts,
+    get_command_center,
+    get_command_center_headlines,
+    get_command_center_heartbeat,
+    get_comprehensive_dashboard,
+    get_dashboard,
+    get_dashboard_stats,
+    get_executive_news,
+    get_fraud_alerts,
+    get_realtime_metrics,
+    get_system_metrics,
+    get_treasury_metrics,
+    resolve_alert,
+)
 
-@router.get("/config/checkout")
-def get_checkout_config():
-    """
-    Public checkout configuration endpoint.
-    Returns VAT rate, shipping flat rate, and free shipping threshold.
-    """
+router = APIRouter(tags=["admin", "governance"])
+
+
+@router.get("/api/v1/admin/governance/config/checkout")
+def get_checkout_config(
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.system.health")
     return {
-        "vat_rate": 0.05,
-        "shipping_flat_rate": 2.0,
-        "free_shipping_threshold": 0.0,
+        "vat_rate": settings.checkout_vat_rate,
+        "shipping_flat_rate": settings.checkout_shipping_flat_rate,
+        "free_shipping_threshold": settings.checkout_free_shipping_threshold,
     }
 
 
-@router.websocket("/ws/chat/{room_id}")
-async def websocket_chat(
-    websocket: WebSocket,
-    room_id: str,
-    token: str = Query(...),
+# ── Command center (moved from modules/admin/routers/command_center.py) ────────
+
+
+@router.get("/api/v1/admin/command-center/heartbeat")
+def heartbeat_route(
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-    """Real-time chat WebSocket with presence, typing, and read receipts.
-
-    Query params:
-    - token: JWT authentication token
-    """
-    payload = _decode_ws_token(token)
-    if payload is None:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
-
-    user_id = payload.get("user_id") or payload.get("sub")
-    if not user_id:
-        await websocket.close(code=4001, reason="Invalid user")
-        return
-
-    user_id = int(user_id)
-
-    db = get_db_session()
-    try:
-        user_name = _get_user_name(db, user_id)
-    finally:
-        db.close()
-
-    await manager.connect(websocket, room_id, user_id, user_name)
-
-    # Notify others in the room about the new user
-    room_users = manager.get_room_users(room_id)
-    await manager.broadcast(room_id, {
-        "type": "user_joined",
-        "room_id": room_id,
-        "user_id": user_id,
-        "user_name": user_name,
-        "users": room_users,
-    })
-
-    try:
-        while True:
-            data = await websocket.receive_json()
-            event_type = data.get("type", "message")
-
-            if event_type == "message":
-                content = data.get("content", "")
-                msg_type = data.get("message_type", "text")
-                if not content:
-                    continue
-
-                db = get_db_session()
-                try:
-                    msg_id, created_at = _persist_message(db, room_id, user_id, content, msg_type)
-                finally:
-                    db.close()
-
-                await manager.broadcast(room_id, {
-                    "type": "message",
-                    "room_id": room_id,
-                    "sender_id": user_id,
-                    "sender_name": user_name,
-                    "content": content,
-                    "message_type": msg_type,
-                    "message_id": msg_id,
-                    "created_at": created_at,
-                })
-
-            elif event_type == "typing":
-                is_typing = data.get("is_typing", False)
-                manager.set_typing(room_id, user_id, is_typing)
-
-                typing_users = manager.get_typing_users(room_id)
-                typing_names = []
-                for tuid in typing_users:
-                    uinfo = manager._user_info.get(tuid, {})
-                    typing_names.append(uinfo.get("name", f"User {tuid}"))
-
-                await manager.broadcast(room_id, {
-                    "type": "typing",
-                    "room_id": room_id,
-                    "user_id": user_id,
-                    "user_name": user_name,
-                    "is_typing": is_typing,
-                    "typing_user_ids": typing_users,
-                    "typing_user_names": typing_names,
-                }, exclude_user_id=user_id)
-
-            elif event_type == "read_receipt":
-                db = get_db_session()
-                try:
-                    count = _mark_messages_read(db, room_id, user_id)
-                finally:
-                    db.close()
-
-                await manager.broadcast(room_id, {
-                    "type": "read_receipt",
-                    "room_id": room_id,
-                    "user_id": user_id,
-                    "user_name": user_name,
-                    "count": count,
-                }, exclude_user_id=user_id)
-
-            elif event_type == "presence":
-                status = data.get("status", "online")
-                if user_id in manager._user_info:
-                    manager._user_info[user_id]["status"] = status
-                user_rooms = list(manager._user_info.get(user_id, {}).get("rooms", set()))
-                for rid in user_rooms:
-                    await manager.broadcast(rid, {
-                        "type": "presence",
-                        "room_id": rid,
-                        "user_id": user_id,
-                        "user_name": user_name,
-                        "status": status,
-                        "users": manager.get_room_users(rid),
-                    }, exclude_user_id=user_id)
-
-            elif event_type == "ping":
-                await websocket.send_json({"type": "pong"})
-
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, room_id, user_id)
-        room_users = manager.get_room_users(room_id)
-        await manager.broadcast(room_id, {
-            "type": "user_left",
-            "room_id": room_id,
-            "user_id": user_id,
-            "user_name": user_name,
-            "users": room_users,
-        })
-    except Exception as exc:
-        logger.exception("WebSocket error: %s", exc)
-        manager.disconnect(websocket, room_id, user_id)
+    require_feature("governance.system.health")
+    return get_command_center_heartbeat(db=db)
 
 
-class UserConnectionManager:
-    """Manages per-user WebSocket connections for notifications and alerts."""
-
-    def __init__(self):
-        self._user_sockets: dict[int, set[WebSocket]] = {}
-        self._staff_sockets: dict[int, set[WebSocket]] = {}
-
-    async def connect_user(self, websocket: WebSocket, user_id: int):
-        await websocket.accept()
-        self._user_sockets.setdefault(user_id, set()).add(websocket)
-
-    async def connect_staff(self, websocket: WebSocket, staff_id: int):
-        await websocket.accept()
-        self._staff_sockets.setdefault(staff_id, set()).add(websocket)
-
-    def disconnect_user(self, websocket: WebSocket, user_id: int):
-        conns = self._user_sockets.get(user_id, set())
-        conns.discard(websocket)
-        if not conns:
-            self._user_sockets.pop(user_id, None)
-
-    def disconnect_staff(self, websocket: WebSocket, staff_id: int):
-        conns = self._staff_sockets.get(staff_id, set())
-        conns.discard(websocket)
-        if not conns:
-            self._staff_sockets.pop(staff_id, None)
-
-    async def broadcast_to_user(self, user_id: int, message: dict):
-        dead = set()
-        for ws in self._user_sockets.get(user_id, set()):
-            try:
-                await ws.send_json(message)
-            except Exception:
-                dead.add(ws)
-        for ws in dead:
-            self._user_sockets.get(user_id, set()).discard(ws)
-
-    async def broadcast_to_staff(self, staff_id: int, message: dict):
-        dead = set()
-        for ws in self._staff_sockets.get(staff_id, set()):
-            try:
-                await ws.send_json(message)
-            except Exception:
-                dead.add(ws)
-        for ws in dead:
-            self._staff_sockets.get(staff_id, set()).discard(ws)
-
-    async def broadcast_to_all_staff(self, message: dict):
-        for staff_id in list(self._staff_sockets.keys()):
-            await self.broadcast_to_staff(staff_id, message)
-
-
-
-@router.websocket("/ws/user")
-async def websocket_user(
-    websocket: WebSocket,
-    token: str = Query(...),
+@router.get("/api/v1/admin/command-center/system-metrics")
+def system_metrics_route(
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-    payload = _decode_ws_token(token)
-    if payload is None:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
-
-    user_id = payload.get("user_id") or payload.get("sub")
-    if not user_id:
-        await websocket.close(code=4001, reason="Invalid user")
-        return
-
-    user_id = int(user_id)
-
-    db = next(get_db())
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        role = user.role if user else ""
-    finally:
-        db.close()
-
-    scope = "staff" if role in ("admin", "support", "country_head", "country_manager") else "user"
-    if scope == "staff":
-        await user_manager.connect_staff(websocket, user_id)
-    else:
-        await user_manager.connect_user(websocket, user_id)
-
-    await websocket.send_json({"type": "connected", "scope": scope, "user_id": user_id})
-
-    try:
-        while True:
-            data = await websocket.receive_json()
-            event_type = data.get("type", "")
-            if event_type == "ping":
-                await websocket.send_json({"type": "pong"})
-    except WebSocketDisconnect:
-        pass
-    except Exception:
-        pass
-    finally:
-        if scope == "staff":
-            user_manager.disconnect_staff(websocket, user_id)
-        else:
-            user_manager.disconnect_user(websocket, user_id)
+    require_feature("governance.system.health")
+    return get_system_metrics(db=db)
 
 
-@router.get("/ws/room/{room_id}/online")
-def get_online_users(room_id: str):
-    """Get online users in a room with presence info."""
-    return {"room_id": room_id, "online": manager.get_room_size(room_id), "users": manager.get_room_users(room_id)}
+@router.get("/api/v1/admin/command-center/treasury-metrics")
+def treasury_metrics_route(
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.treasury.read")
+    return get_treasury_metrics(db=db)
 
 
+@router.get("/api/v1/admin/command-center/dashboard")
+def dashboard_route(
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return get_dashboard(current_user=current_user, db=db)
 
-@router.get("/ws/user/{user_id}/status")
-def get_user_status(user_id: int):
-    """Get presence status for a specific user."""
-    status = manager.get_user_status(user_id)
-    if status:
-        return status
-    return {"user_id": user_id, "status": "offline", "last_seen": None}
+
+@router.get("/api/v1/admin/command-center/fraud-alerts")
+def fraud_alerts_route(
+    limit: int = Query(50),
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.fraud.read")
+    return get_fraud_alerts(limit=limit, db=db)
 
 
+@router.get("/api/v1/admin/command-center/news")
+def news_route(
+    limit: int = Query(20),
+    category: str | None = None,
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return get_executive_news(limit=limit, category=category, db=db)
+
+
+@router.get("/api/v1/admin/command-center/headlines")
+def headlines_route(
+    limit: int = Query(20),
+    category: str | None = None,
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return get_command_center_headlines(limit=limit, category=category, db=db)
+
+
+@router.post("/api/v1/admin/command-center/news", status_code=201)
+def create_news_route(
+    payload: dict | None = None,
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return create_executive_news(payload=payload, db=db)
+
+
+@router.delete("/api/v1/admin/command-center/news/{news_id}")
+def delete_news_route(
+    news_id: int,
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return delete_executive_news(news_id=news_id, db=db)
+
+
+@router.get("/api/v1/admin/command-center/alerts")
+def alerts_route(
+    severity: str | None = None,
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.security.incident.read")
+    return get_alerts(severity=severity, db=db)
+
+
+@router.post("/api/v1/admin/command-center/alerts/{alert_id}/resolve")
+def resolve_alert_route(
+    alert_id: int,
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.security.incident.manage")
+    return resolve_alert(alert_id=alert_id, db=db)
+
+
+@router.get("/api/v1/admin/command-center/dashboard-stats")
+def dashboard_stats_route(
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return get_dashboard_stats(current_user=current_user, db=db)
+
+
+@router.get("/api/v1/admin/command-center/realtime-metrics")
+def realtime_metrics_route(
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.system.health")
+    return get_realtime_metrics(db=db)
+
+
+@router.get("/api/v1/admin/command-center/comprehensive-dashboard")
+def comprehensive_dashboard_route(
+    current_user: dict = Depends(require_admin),
+    country_code: str | None = None,
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return get_comprehensive_dashboard(current_user=current_user, db=db, country_code=country_code)
+
+
+@router.get("/api/v1/admin/command-center/")
+def command_center_root_route(
+    _: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    require_feature("governance.analytics.read")
+    return get_command_center(db=db)

@@ -14,6 +14,8 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
+HAS_THREAT_INTEL = True
+
 _TOR_EXIT_LIST_URL = "https://check.torproject.org/torbulkexitlist"
 _REQUEST_TIMEOUT = 30.0
 

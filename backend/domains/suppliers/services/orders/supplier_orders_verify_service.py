@@ -19,15 +19,28 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from infrastructure.utils.dependencies import require_supplier
 from infrastructure.utils.storage import storage as _storage
-from domains.suppliers.services.orders.supplier_order_service import get_supplier_order
-from domains.suppliers.services.orders.supplier_order_service import get_supplier_order_for_verify
-from domains.suppliers.services.orders.supplier_order_service import get_supplier_order_items
-from domains.suppliers.services.orders.supplier_order_service import get_supplier_order_items_for_verify
-from domains.suppliers.services.orders.supplier_order_service import get_supplier_profile_by_user_id
-from domains.suppliers.services.orders.supplier_order_service import list_supplier_order_ids
-from domains.suppliers.services.orders.supplier_order_service import list_supplier_orders
-from domains.suppliers.services.orders.supplier_order_service import mark_order_prepared_if_processing
-from domains.suppliers.services.orders.supplier_order_service import resolve_shipment_info
+# TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import get_supplier_order
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import get_supplier_order_for_verify
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import get_supplier_order_items
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import get_supplier_order_items_for_verify
+# TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import get_supplier_profile_by_user_id
+# TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import list_supplier_order_ids
+# TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import list_supplier_orders
+# TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import mark_order_prepared_if_processing
+# TODO: Module not yet created
+# from domains.suppliers.services.orders.supplier_order_service import resolve_shipment_info
 ai_logger = logging.getLogger(__name__)
 logger = logging.getLogger(__name__)
 

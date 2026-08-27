@@ -9,6 +9,5 @@ from domains.governance.services.approval import *
 from domains.governance.services.admin import *
 from domains.governance.services.workflow_engine import *
 from domains.governance.services.operations import *
-from domains.governance.services.features import *
 
 __all__: list[str] = []

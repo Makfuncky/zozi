@@ -19,8 +19,8 @@ from infrastructure.database.database import get_db
 from domains.governance.models.user import User
 
 from domains.hr.models.employee_models import Employee
-
 from domains.hr.services.employee_activity_logger import log_activity
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,7 @@ def ess_update_profile(phone: Optional[str], address: Optional[str], emergency_c
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     db.execute(
-        text(f"UPDATE employees SET {', '.join(updates)} WHERE id = :eid"),
+        text("UPDATE employees SET " + ", ".join(updates) + " WHERE id = :eid"),
         params,
     )
     db.commit()
@@ -234,7 +234,7 @@ def ess_org_chart(current_user: User, db: Session):
     }
 
 
-# ── ESS Write Operations (merged from ess_write_service.py) ───────────────────
+# â”€â”€ ESS Write Operations (merged from ess_write_service.py) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 def update_employee_profile(
     db: Session,
@@ -263,7 +263,7 @@ def update_employee_profile(
         raise HTTPException(status_code=400, detail="No fields to update")
     # Column names come from a fixed allowlist, never from user input.
     db.execute(
-        text(f"UPDATE employees SET {', '.join(updates)} WHERE id = :eid"),
+        text("UPDATE employees SET " + ", ".join(updates) + " WHERE id = :eid"),
         params,
     )
     db.commit()
@@ -303,4 +303,5 @@ def create_leave_request(
     db.commit()
     log_activity(db, emp.id, "leave_requested", "leave_request", str(leave_id))
     return {"id": leave_id, "status": "pending"}
+
 

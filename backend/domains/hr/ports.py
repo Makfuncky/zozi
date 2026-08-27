@@ -38,7 +38,8 @@ def _keyset_page(model, db: Session, cursor: Optional[str] = None,
 
 from domains.hr.models.employee_models import AlumniNetwork, COIReport, DisciplinaryCase, DynamicQRSession, Employee, EmployeeActivityLog, EmployeeAddress, EmployeeAsset, EmployeeAttendance, EmployeeBiometric, EmployeeCertification, EmployeeDependent, EmployeeDocument, EmployeeLeaveLedger, EmployeeLeaveRequest, EmployeeRelation, EmployeeRiskScore, EmployeeRole, EmployeeShiftRoster, EmployeeTraining, EmployeeWorkLog, GeoFenceLog, OffboardingCase, Office, OrgUnit, PayrollRecord, PhysicalIDCard, TrainingModule, TravelRequest
 from domains.hr.models.hr_schema_models import OnboardingPipeline, OnboardingStep, ShiftHandoverTask  # A3: sanctioned ports surface for accounts hub
-from domains.hr.services.payroll_engine import PayrollEngine
+# TODO: payroll_engine not yet created
+# from domains.hr.services.payroll_engine import PayrollEngine
 
 
 def get_office_by_id(db: Session, id_: int) -> Optional[Office]:
@@ -53,23 +54,23 @@ def list_offices_page(db: Session, cursor: Optional[str] = None, page_size: int 
     """Keyset-cursor page of Office rows (scale-ready)."""
     return _keyset_page(Office, db, cursor, page_size)
 
-def get_physical_i_d_card_by_id(db: Session, id_: int) -> Optional[PhysicalIDCard]:
+def get_physical_id_card_by_id(db: Session, id_: int) -> Optional[PhysicalIDCard]:
     """Return PhysicalIDCard by primary key (or None)."""
     return db.get(PhysicalIDCard, id_)
 
-def list_physical_i_d_cards(db: Session, limit: int = 100) -> List[PhysicalIDCard]:
+def list_physical_id_cards(db: Session, limit: int = 100) -> List[PhysicalIDCard]:
     """Return up to ``limit`` PhysicalIDCard rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(PhysicalIDCard, db, limit)
 
-def list_physical_i_d_cards_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_physical_id_cards_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of PhysicalIDCard rows (scale-ready)."""
     return _keyset_page(PhysicalIDCard, db, cursor, page_size)
 
-def get_dynamic_q_r_session_by_id(db: Session, id_: int) -> Optional[DynamicQRSession]:
+def get_dynamic_qr_session_by_id(db: Session, id_: int) -> Optional[DynamicQRSession]:
     """Return DynamicQRSession by primary key (or None)."""
     return db.get(DynamicQRSession, id_)
 
-def list_dynamic_q_r_sessions(db: Session, limit: int = 100) -> List[DynamicQRSession]:
+def list_dynamic_qr_sessions(db: Session, limit: int = 100) -> List[DynamicQRSession]:
     """Return up to ``limit`` DynamicQRSession rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(DynamicQRSession, db, limit)
 
@@ -261,11 +262,11 @@ def get_employee_address_by_id(db: Session, id_: int) -> Optional[EmployeeAddres
     """Return EmployeeAddress by primary key (or None)."""
     return db.get(EmployeeAddress, id_)
 
-def list_employee_addresss(db: Session, limit: int = 100) -> List[EmployeeAddress]:
+def list_employee_addresses(db: Session, limit: int = 100) -> List[EmployeeAddress]:
     """Return up to ``limit`` EmployeeAddress rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(EmployeeAddress, db, limit)
 
-def list_employee_addresss_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_employee_addresses_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of EmployeeAddress rows (scale-ready)."""
     return _keyset_page(EmployeeAddress, db, cursor, page_size)
 
@@ -273,7 +274,7 @@ def get_c_o_i_report_by_id(db: Session, id_: int) -> Optional[COIReport]:
     """Return COIReport by primary key (or None)."""
     return db.get(COIReport, id_)
 
-def list_c_o_i_reports(db: Session, limit: int = 100) -> List[COIReport]:
+def list_coi_reports(db: Session, limit: int = 100) -> List[COIReport]:
     """Return up to ``limit`` COIReport rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(COIReport, db, limit)
 
@@ -292,6 +293,38 @@ def list_travel_requests(db: Session, limit: int = 100) -> List[TravelRequest]:
 def list_travel_requests_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of TravelRequest rows (scale-ready)."""
     return _keyset_page(TravelRequest, db, cursor, page_size)
+
+# --- OnboardingPipeline / OnboardingStep (moved from accounts god-module, A3) ---
+
+def get_onboarding_pipeline_by_id(db: Session, id_: int) -> Optional[OnboardingPipeline]:
+    """Return OnboardingPipeline by primary key (or None)."""
+    return db.get(OnboardingPipeline, id_)
+
+def list_onboarding_pipelines(db: Session, limit: int = 100) -> List[OnboardingPipeline]:
+    """Return up to ``limit`` OnboardingPipeline rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(OnboardingPipeline, db, limit)
+
+def list_onboarding_pipelines_page(
+    db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE
+) -> CursorPage:
+    """Keyset-cursor page of onboarding pipelines (scale-ready)."""
+    return _keyset_page(OnboardingPipeline, db, cursor, page_size)
+
+
+def get_onboarding_step_by_id(db: Session, id_: int) -> Optional[OnboardingStep]:
+    """Return OnboardingStep by primary key (or None)."""
+    return db.get(OnboardingStep, id_)
+
+def list_onboarding_steps(db: Session, limit: int = 100) -> List[OnboardingStep]:
+    """Return up to ``limit`` OnboardingStep rows (keyset-ordered, no OFFSET)."""
+    return _keyset_list(OnboardingStep, db, limit)
+
+def list_onboarding_steps_page(
+    db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE
+) -> CursorPage:
+    """Keyset-cursor page of onboarding steps (scale-ready)."""
+    return _keyset_page(OnboardingStep, db, cursor, page_size)
+
 
 def get_alumni_network_by_id(db: Session, id_: int) -> Optional[AlumniNetwork]:
     """Return AlumniNetwork by primary key (or None)."""
@@ -445,4 +478,93 @@ def list_active_org_units(
 # These were undefined in hierarchy_service (pre-existing bug).
 # from domains.hr.services.hierarchy_service import can_manage
 # from domains.hr.services.hierarchy_service import backfill_authority_levels, reassign_manager
-from domains.hr.services.leave_accrual import LeaveAccrualEngine
+# TODO: Module not yet created
+# from domains.hr.services.leave_accrual import LeaveAccrualEngine
+
+
+# ── ESS service functions (sanctioned cross-domain delegation) ──────────────
+# Thin wrappers so module routers import from hr.ports instead of
+# directly from domains.hr.services.ess_service.
+
+def get_employee_profile(db: Session, employee_id: int) -> dict:
+    """Sanctioned cross-domain read: get employee profile."""
+    from domains.hr.services.ess_service import get_employee_profile as _svc
+    return _svc(db, employee_id)
+
+
+def update_employee_profile(
+    db: Session, employee_id: int,
+    phone: Optional[str] = None, address: Optional[str] = None,
+    emergency_contact_name: Optional[str] = None, emergency_contact_phone: Optional[str] = None,
+) -> dict:
+    """Sanctioned cross-domain write: update employee profile."""
+    from domains.hr.services.ess_service import update_employee_profile as _svc
+    return _svc(db, employee_id, phone=phone, address=address,
+                emergency_contact_name=emergency_contact_name,
+                emergency_contact_phone=emergency_contact_phone)
+
+
+def get_leave_balance(db: Session, employee_id: int) -> List[dict]:
+    """Sanctioned cross-domain read: get leave balance."""
+    from domains.hr.services.ess_service import get_leave_balance as _svc
+    return _svc(db, employee_id)
+
+
+def create_leave_request(db: Session, employee_id: int, leave_type: str, start_date: str, end_date: str, reason: str) -> dict:
+    """Sanctioned cross-domain write: create leave request."""
+    from domains.hr.services.ess_service import create_leave_request as _svc
+    return _svc(db, employee_id, leave_type, start_date, end_date, reason)
+
+
+def get_leave_history(db: Session, employee_id: int) -> List[dict]:
+    """Sanctioned cross-domain read: get leave history."""
+    from domains.hr.services.ess_service import get_leave_history as _svc
+    return _svc(db, employee_id)
+
+
+def get_payslips(db: Session, employee_id: int) -> List[dict]:
+    """Sanctioned cross-domain read: get payslips."""
+    from domains.hr.services.ess_service import get_payslips as _svc
+    return _svc(db, employee_id)
+
+
+def get_attendance(db: Session, employee_id: int) -> List[dict]:
+    """Sanctioned cross-domain read: get attendance."""
+    from domains.hr.services.ess_service import get_attendance as _svc
+    return _svc(db, employee_id)
+
+
+def get_okrs(db: Session, employee_id: int) -> List[dict]:
+    """Sanctioned cross-domain read: get OKRs."""
+    from domains.hr.services.ess_service import get_okrs as _svc
+    return _svc(db, employee_id)
+
+
+def get_org_chart(db: Session, org_unit_id: Optional[int], employee_id: int) -> dict:
+    """Sanctioned cross-domain read: get org chart."""
+    from domains.hr.services.ess_service import get_org_chart as _svc
+    return _svc(db, org_unit_id, employee_id)
+
+
+def get_hr_employee_service(db: Session):
+    """Sanctioned cross-domain factory: get HR employee service."""
+    from domains.hr.services.hr_employee_service import get_hr_employee_service as _svc
+    return _svc(db)
+
+
+def get_travel_service(db: Session = None):
+    """Sanctioned cross-domain factory: get travel service."""
+    from domains.hr.services.travel.travel_service import get_travel_service as _svc
+    return _svc(db)
+
+
+def HREmployeeService(db: Session):
+    """Sanctioned cross-domain factory: get HR employee service instance."""
+    from domains.hr.services.hr_employee_service import HREmployeeService as _Cls
+    return _Cls(db)
+
+
+def PayrollEngine(db: Session = None, *args, **kwargs):
+    """Sanctioned cross-domain factory: get PayrollEngine instance."""
+    from domains.hr.services.payroll.payroll_engine import PayrollEngine as _Cls
+    return _Cls(db, *args, **kwargs)

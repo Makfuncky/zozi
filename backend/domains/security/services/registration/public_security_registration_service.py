@@ -14,7 +14,7 @@ from domains.governance.models.user import User
 from domains.governance.models.user import UserLoginHistory
 from infrastructure.database.schemas import RegisterRequest, TokenResponse, UserOut
 from infrastructure.utils.auth import blacklist_token, create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.utils.config import settings
 from infrastructure.utils.dependencies import get_current_user
 from infrastructure.utils.ip_utils import get_request_ip

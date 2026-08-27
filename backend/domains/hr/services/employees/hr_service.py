@@ -19,9 +19,6 @@ from domains.hr.models.employee_models import EmployeeAddress
 from domains.hr.models.employee_models import EmployeeDependent
 from domains.hr.models.employee_models import EmployeeRiskScore
 from domains.country.utils.country_rls import enforce_country_access
-import structlog
-logger = structlog.get_logger(__name__)
-
 logger = logging.getLogger(__name__)
 
 
@@ -775,3 +772,59 @@ class GhostEmployeeWatchdog:
 
 def get_ghost_watchdog(db: Session) -> GhostEmployeeWatchdog:
     return GhostEmployeeWatchdog(db)
+
+
+def get_leave_balance(employee_id: int, current_user: dict, db: Session) -> list[dict]:
+    rows = db.execute(text("""
+        SELECT leave_type, year, allocated_days, used_days,
+               carried_forward_days, pending_days,
+               (allocated_days + carried_forward_days - used_days - pending_days) as remaining_days
+        FROM employee_leave_ledgers
+        WHERE employee_id = :eid
+        ORDER BY year DESC, leave_type
+    """), {"eid": employee_id}).mappings().all()
+    return [dict(r) for r in rows]
+
+
+def submit_expense(employee_id: int, expense_data: dict, current_user: dict, db: Session) -> dict:
+    db.execute(text("""
+        INSERT INTO expense_claims (employee_id, amount, currency, category, description, status, created_at)
+        VALUES (:eid, :amount, :currency, :category, :description, 'pending', :now)
+    """), {
+        "eid": employee_id,
+        "amount": expense_data.get("amount", 0),
+        "currency": expense_data.get("currency", "USD"),
+        "category": expense_data.get("category", "general"),
+        "description": expense_data.get("description", ""),
+        "now": datetime.now(timezone.utc).replace(tzinfo=None),
+    })
+    db.commit()
+    return {"employee_id": employee_id, "status": "submitted"}
+
+
+def assign_asset(employee_id: int, asset_type: str, asset_tag: str | None, current_user: dict, db: Session) -> dict:
+    db.execute(text("""
+        INSERT INTO employee_assets (employee_id, asset_type, asset_tag, assigned_at, status)
+        VALUES (:eid, :atype, :tag, :now, 'assigned')
+    """), {
+        "eid": employee_id,
+        "atype": asset_type,
+        "tag": asset_tag or "",
+        "now": datetime.now(timezone.utc).replace(tzinfo=None),
+    })
+    db.commit()
+    return {"employee_id": employee_id, "asset_type": asset_type, "status": "assigned"}
+
+
+def list_disciplinary_cases(db: Session, limit: int, cursor: str | None) -> dict:
+    from domains.hr.models.employee_models import DisciplinaryCase
+    from infrastructure.utils.pagination import keyset_paginate
+    query = db.query(DisciplinaryCase)
+    return keyset_paginate(query, sort_keys=[(DisciplinaryCase.id, "asc")], cursor=cursor, page_size=limit)
+
+
+def list_offboarding_cases(db: Session, limit: int, cursor: str | None) -> dict:
+    from domains.hr.models.employee_models import OffboardingCase
+    from infrastructure.utils.pagination import keyset_paginate
+    query = db.query(OffboardingCase)
+    return keyset_paginate(query, sort_keys=[(OffboardingCase.id, "asc")], cursor=cursor, page_size=limit)

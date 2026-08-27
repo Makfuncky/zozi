@@ -3,3 +3,5 @@
 Cross-domain **writes** travel exclusively through ``events.py`` /
 ``subscribers.py``. Placeholder module — events defined in services/events.py.
 """
+
+# TODO: Define catalog-domain events here when cross-domain write needs arise.

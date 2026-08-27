@@ -1,6 +1,16 @@
 """Supplier sub-module — imports shared helpers from supplier_shared."""
 
-from domains.suppliers.services.supplier_shared import *
+from domains.suppliers.services.supplier_shared import (
+    _build_list_page_payload,
+    _build_supplier_product_payload,
+    _normalize_optional_product_text,
+    _normalize_product_video_reference,
+    _normalize_product_visibility_regions,
+    _parse_product_variants_payload,
+    _parse_supplier_return_window_days,
+    _persist_supplier_product,
+    _replace_product_variants,
+)
 
 def get_supplier_products(current_user: dict, db: Session, limit: Optional[int] = None, offset: int = 0) -> dict[str, Any]:
     base_query = db.query(Product).options(selectinload(Product.variants)).filter(
@@ -127,7 +137,7 @@ async def process_product_image(
                 "angles_notice": "..."
       }
     """
-    from providers.media.services.ai import image_ai_service
+    from providers.ai.image_similarity import image_ai_service
     from infrastructure.utils.storage import storage as _storage
 
     raw = image.file.read()

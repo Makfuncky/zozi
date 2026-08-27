@@ -19,7 +19,7 @@ from infrastructure.database.database import get_db
 from infrastructure.database.schemas import PaginatedResponse
 from infrastructure.utils.pagination import paginated_query, safe_page
 from infrastructure.observability.error_handler import ErrorCategory, _build_problem_response
-from infrastructure.utils.logging_config import get_request_id
+from infrastructure.observability.logging_config import get_request_id
 
 logger = logging.getLogger(__name__)
 

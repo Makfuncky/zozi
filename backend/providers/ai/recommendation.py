@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+HAS_RECOMMENDATION = True
+
 __all__ = [
     "get_product_recommendations",
     "get_similar_products",

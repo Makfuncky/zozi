@@ -11,7 +11,6 @@ import logging
 import math
 from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
-import asyncio
 
 from redis.exceptions import ConnectionError, ResponseError
 from sqlalchemy import func, text
@@ -878,7 +877,7 @@ class FraudScoringEngine:
         failed_deliveries = self.db.query(Order).filter(
             Order.user_id == user_id,
             Order.status == "delivered",
-            Order.delivery_proof_url == None
+            Order.delivery_proof_url is None
         ).count()
         
         if failed_deliveries >= 2:

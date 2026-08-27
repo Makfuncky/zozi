@@ -1,17 +1,20 @@
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
+from sqlalchemy.orm import Session
+from datetime import date, datetime
+from typing import Optional
+from rbac import get_current_user
+from rbac.dependencies import require_feature
+from infrastructure.security.dependencies import require_admin
+from infrastructure.database.database import get_db
+from domains.orders.services.trading_service import trading_service as trading
+from infrastructure.utils.background_jobs import get_job
+
+
 """Employee orders router — consolidated from 2 source files."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 
 
 router = APIRouter(prefix="/api/v1/employee/orders", tags=["employee", "orders"])
-
-
-# === From jobs.py ===
-"""Authenticated background job status endpoints."""
-from fastapi import APIRouter, Depends, HTTPException
-
-from modules.admin.routers.auth import get_current_user
-from infrastructure.utils.background_jobs import get_job
 
 
 def _can_view_job(job: dict, current_user: dict) -> bool:
@@ -26,6 +29,7 @@ def get_job_status(
     job_id: str,
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("orders.read")
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -35,18 +39,6 @@ def get_job_status(
 
 
 # === From trading.py ===
-
-from datetime import date, datetime
-from typing import Optional
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from sqlalchemy.orm import Session
-
-from infrastructure.utils.dependencies import require_admin
-from infrastructure.database.database import get_db
-from domains.finance.services._auto_stubs import trading_service as trading
-
 
 # ── Schemas ──
 
@@ -168,6 +160,7 @@ class DispatchInput(BaseModel):
 @router.post("/purchase-orders", summary="Create a purchase order")
 def create_po(payload: POInput, db: Session = Depends(get_db),
               _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         po = trading.create_purchase_order(
             db, supplier_id=payload.supplier_id,
@@ -190,6 +183,7 @@ def create_po(payload: POInput, db: Session = Depends(get_db),
 def list_pos(status: str = None, supplier_id: int = None,
              country_code: str = None, limit: int = 50, offset: int = 0,
              db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("orders.read")
     return trading.list_purchase_orders(db, status=status, supplier_id=supplier_id,
                                          country_code=country_code, limit=limit, offset=offset)
 
@@ -197,9 +191,8 @@ def list_pos(status: str = None, supplier_id: int = None,
 @router.get("/purchase-orders/{po_id}", summary="Get a purchase order")
 def get_po(po_id: int, db: Session = Depends(get_db),
            _admin: dict = Depends(require_admin)):
-    po = db.query(trading.PurchaseOrder).filter(
-        trading.PurchaseOrder.id == po_id
-    ).first()
+    require_feature("orders.read")
+    po = trading.get_purchase_order(db, po_id)
     if not po:
         raise HTTPException(404, "Purchase order not found")
     return po
@@ -208,6 +201,7 @@ def get_po(po_id: int, db: Session = Depends(get_db),
 @router.post("/purchase-orders/{po_id}/confirm", summary="Confirm a purchase order")
 def confirm_po(po_id: int, db: Session = Depends(get_db),
                _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         po = trading.confirm_purchase_order(db, po_id)
     except ValueError as e:
@@ -218,6 +212,7 @@ def confirm_po(po_id: int, db: Session = Depends(get_db),
 @router.post("/purchase-orders/{po_id}/receive", summary="Receive goods against a PO")
 def receive_po(po_id: int, payload: GRNCreate, db: Session = Depends(get_db),
                _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         grn = trading.receive_purchase_order(db, po_id, payload.model_dump())
     except ValueError as e:
@@ -232,6 +227,7 @@ def receive_po(po_id: int, payload: GRNCreate, db: Session = Depends(get_db),
 def list_grns(po_id: int = None, status: str = None,
               country_code: str = None, limit: int = 50, offset: int = 0,
               db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("orders.read")
     return trading.list_goods_receipts(db, po_id=po_id, status=status,
                                         country_code=country_code, limit=limit, offset=offset)
 
@@ -239,9 +235,8 @@ def list_grns(po_id: int = None, status: str = None,
 @router.get("/goods-receipts/{grn_id}", summary="Get a goods receipt note")
 def get_grn(grn_id: int, db: Session = Depends(get_db),
             _admin: dict = Depends(require_admin)):
-    grn = db.query(trading.GoodsReceiptNote).filter(
-        trading.GoodsReceiptNote.id == grn_id
-    ).first()
+    require_feature("orders.read")
+    grn = trading.get_goods_receipt(db, grn_id)
     if not grn:
         raise HTTPException(404, "Goods receipt note not found")
     return grn
@@ -253,6 +248,7 @@ def get_grn(grn_id: int, db: Session = Depends(get_db),
 @router.post("/three-way-match", summary="Run 3-way match (PO vs GRN vs Bill)")
 def three_way_match(payload: ThreeWayMatchInput, db: Session = Depends(get_db),
                     _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         result = trading.three_way_match(
             db, po_id=payload.po_id, grn_id=payload.grn_id, bill_id=payload.bill_id,
@@ -268,6 +264,7 @@ def three_way_match(payload: ThreeWayMatchInput, db: Session = Depends(get_db),
 @router.post("/sales-orders", summary="Create a sales order")
 def create_so(payload: SOInput, db: Session = Depends(get_db),
               _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         so = trading.create_sales_order(
             db, customer_id=payload.customer_id,
@@ -292,6 +289,7 @@ def create_so(payload: SOInput, db: Session = Depends(get_db),
 def list_sos(status: str = None, customer_id: int = None,
              country_code: str = None, limit: int = 50, offset: int = 0,
              db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("orders.read")
     return trading.list_sales_orders(db, status=status, customer_id=customer_id,
                                       country_code=country_code, limit=limit, offset=offset)
 
@@ -299,9 +297,8 @@ def list_sos(status: str = None, customer_id: int = None,
 @router.get("/sales-orders/{so_id}", summary="Get a sales order")
 def get_so(so_id: int, db: Session = Depends(get_db),
            _admin: dict = Depends(require_admin)):
-    so = db.query(trading.SalesOrder).filter(
-        trading.SalesOrder.id == so_id
-    ).first()
+    require_feature("orders.read")
+    so = trading.get_sales_order(db, so_id)
     if not so:
         raise HTTPException(404, "Sales order not found")
     return so
@@ -310,6 +307,7 @@ def get_so(so_id: int, db: Session = Depends(get_db),
 @router.post("/sales-orders/{so_id}/confirm", summary="Confirm a sales order")
 def confirm_so(so_id: int, db: Session = Depends(get_db),
                _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         so = trading.confirm_sales_order(db, so_id)
     except ValueError as e:
@@ -320,6 +318,7 @@ def confirm_so(so_id: int, db: Session = Depends(get_db),
 @router.post("/sales-orders/{so_id}/invoice", summary="Generate AR invoice from sales order")
 def invoice_so(so_id: int, db: Session = Depends(get_db),
                _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         inv = trading.invoice_sales_order(db, so_id, created_by=_admin.get("id"))
     except ValueError as e:
@@ -331,6 +330,7 @@ def invoice_so(so_id: int, db: Session = Depends(get_db),
 def dispatch_so(so_id: int, payload: DispatchInput = DispatchInput(),
                 db: Session = Depends(get_db),
                 _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         so = trading.dispatch_sales_order(db, so_id, payload.model_dump(),
                                            created_by=_admin.get("id"))
@@ -345,6 +345,7 @@ def dispatch_so(so_id: int, payload: DispatchInput = DispatchInput(),
 @router.post("/warehouses", summary="Create a warehouse")
 def create_warehouse(payload: WarehouseInput, db: Session = Depends(get_db),
                      _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     try:
         wh = trading.create_warehouse(
             db, name=payload.name, code=payload.code,
@@ -360,6 +361,7 @@ def create_warehouse(payload: WarehouseInput, db: Session = Depends(get_db),
 def list_warehouses(country_code: str = None,
                     db: Session = Depends(get_db),
                     _admin: dict = Depends(require_admin)):
+    require_feature("orders.read")
     return trading.list_warehouses(db, country_code=country_code)
 
 
@@ -370,6 +372,7 @@ def list_warehouses(country_code: str = None,
 def stock_levels(product_id: int = None, warehouse_id: int = None,
                  db: Session = Depends(get_db),
                  _admin: dict = Depends(require_admin)):
+    require_feature("orders.read")
     return trading.get_stock_level(db, product_id=product_id, warehouse_id=warehouse_id)
 
 
@@ -377,12 +380,8 @@ def stock_levels(product_id: int = None, warehouse_id: int = None,
 def stock_movements(product_id: int = None, limit: int = 100, offset: int = 0,
                     db: Session = Depends(get_db),
                     _admin: dict = Depends(require_admin)):
-    q = db.query(trading.StockMovement)
-    if product_id:
-        q = q.filter(trading.StockMovement.product_id == product_id)
-    total = q.count()
-    rows = q.order_by(trading.StockMovement.id.desc()).offset(offset).limit(limit).all()
-    return {"total": total, "items": rows}
+    require_feature("orders.read")
+    return trading.list_stock_movements(db, product_id=product_id, limit=limit, offset=offset)
 
 
 # ── Dunning ──
@@ -391,4 +390,5 @@ def stock_movements(product_id: int = None, limit: int = 100, offset: int = 0,
 @router.post("/dunning/run", summary="Run dunning engine")
 def run_dunning(as_of: date = None, db: Session = Depends(get_db),
                 _admin: dict = Depends(require_admin)):
+    require_feature("orders.write")
     return trading.run_dunning_engine(db, as_of=as_of)

@@ -31,7 +31,9 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 try:
     from mcp.server.fastmcp import FastMCP
+    HAS_MCP = True
 except ImportError:
+    HAS_MCP = False
     class FastMCP:
         """Minimal stand-in used only when the optional ``mcp`` SDK is absent.
 

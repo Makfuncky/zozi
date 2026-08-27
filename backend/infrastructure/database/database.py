@@ -10,6 +10,19 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.pool import QueuePool, StaticPool
 from sqlalchemy.orm import sessionmaker, Session
 
+try:
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession,
+        async_sessionmaker,
+        create_async_engine,
+    )
+    _HAS_ASYNC_SA = True
+except ImportError:  # pragma: no cover - async support is optional
+    AsyncSession = None  # type: ignore[assignment]
+    async_sessionmaker = None  # type: ignore[assignment]
+    create_async_engine = None  # type: ignore[assignment]
+    _HAS_ASYNC_SA = False
+
 from infrastructure.utils.config import settings, BASE_DIR
 from infrastructure.database.base import Base
 
@@ -72,7 +85,7 @@ else:
 
 search_path = None
 if _IS_POSTGRES:
-    search_path = os.getenv("DB_SEARCH_PATH", "public,analytics,audit,commerce,communication,configuration,core,country,customer,finance,hr,logistics,media,security,supplier,treasury")
+    search_path = os.getenv("DB_SEARCH_PATH", "public,analytics,audit,commerce,configuration,country,customer,finance,hr,logistics,media,security,supplier")
 
 _SCHEMA_TRANSLATE_MAP = None
 if _IS_SQLITE:
@@ -126,6 +139,193 @@ SessionLocal = sessionmaker(
     bind=engine,
     expire_on_commit=False,
 )
+
+
+# --- Async engine (optional, for high-concurrency FastAPI endpoints) ---
+# Created lazily so a project without `asyncpg` installed can still use the
+# fully synchronous stack above. Use `get_async_db()` from async route
+# handlers to share the same connection-pool budget as the sync engine.
+_async_engine = None
+_AsyncSessionLocal = None
+
+
+def _build_async_database_url(sync_url: str) -> str | None:
+    if not sync_url:
+        return None
+    if sync_url.startswith("postgresql+asyncpg://"):
+        return sync_url
+    if sync_url.startswith("postgresql://") or sync_url.startswith("postgres://"):
+        return sync_url.replace("postgresql://", "postgresql+asyncpg://", 1).replace(
+            "postgres://", "postgresql+asyncpg://", 1
+        )
+    if sync_url.startswith("sqlite+aiosqlite://"):
+        return sync_url
+    if sync_url.startswith("sqlite://"):
+        return sync_url.replace("sqlite:///", "sqlite+aiosqlite:///", 1).replace(
+            "sqlite://", "sqlite+aiosqlite://", 1
+        )
+    return None
+
+
+def _get_async_engine():
+    global _async_engine, _AsyncSessionLocal
+    if not _HAS_ASYNC_SA:
+        raise RuntimeError(
+            "SQLAlchemy async support is not available. "
+            "Install 'asyncpg' (PostgreSQL) and/or 'aiosqlite' to enable get_async_db()."
+        )
+    if _async_engine is not None:
+        return _async_engine
+
+    async_url = _build_async_database_url(DATABASE_URL)
+    if async_url is None:
+        raise RuntimeError(
+            f"Cannot derive an async database URL from DATABASE_URL='{DATABASE_URL}'."
+        )
+
+    async_connect_args: dict = {}
+    if async_url.startswith("sqlite"):
+        async_connect_args["check_same_thread"] = False
+    elif async_url.startswith("postgresql+asyncpg"):
+        ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
+        if ssl_mode and ssl_mode != "disable":
+            async_connect_args["ssl"] = ssl_mode
+
+    async_pool_kwargs: dict = {}
+    if not async_url.startswith("sqlite"):
+        async_pool_kwargs = {
+            "pool_size": settings.db_pool_size,
+            "max_overflow": settings.db_max_overflow,
+            "pool_recycle": settings.db_pool_recycle,
+            "pool_pre_ping": True,
+            "pool_timeout": settings.db_connect_timeout,
+        }
+
+    _async_engine = create_async_engine(
+        async_url,
+        connect_args=async_connect_args,
+        echo=getattr(settings, "debug", False),
+        **async_pool_kwargs,
+    )
+    _AsyncSessionLocal = async_sessionmaker(
+        bind=_async_engine,
+        expire_on_commit=False,
+        class_=AsyncSession,
+    )
+    return _async_engine
+
+
+async def get_async_db() -> AsyncGenerator["AsyncSession", None]:
+    """FastAPI dependency that yields an async database session.
+
+    Kept independent from the sync `engine`/`SessionLocal` so a single FastAPI
+    process can mix sync and async handlers without sharing a connection pool.
+    """
+    if not _HAS_ASYNC_SA:
+        raise RuntimeError(
+            "Async database support requires SQLAlchemy 1.4+ with async drivers "
+            "installed (asyncpg for PostgreSQL, aiosqlite for SQLite)."
+        )
+    factory = _AsyncSessionLocal or _get_async_engine() and _AsyncSessionLocal
+    if factory is None:
+        _get_async_engine()
+        factory = _AsyncSessionLocal
+    assert factory is not None
+    session = factory()
+    try:
+        yield session
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+
+
+# --- Read replica ---
+# Used for read-heavy endpoints (catalog browse, search, analytics) so the
+# primary is not starved by writes. Falls back transparently to the primary
+# when DATABASE_REPLICA_URL is not configured.
+_replica_engine = None
+_ReplicaSessionLocal = None
+
+
+def _get_replica_engine():
+    global _replica_engine, _ReplicaSessionLocal
+    if _replica_engine is not None:
+        return _replica_engine
+
+    replica_url = str(getattr(settings, "database_replica_url", "") or "").strip()
+    if not replica_url:
+        replica_url = DATABASE_URL
+
+    replica_connect_args: dict = {}
+    replica_pool_kwargs: dict = {}
+    if replica_url.startswith("sqlite"):
+        replica_connect_args["check_same_thread"] = False
+        replica_poolclass = StaticPool
+    elif replica_url.startswith("postgresql") or replica_url.startswith("postgres"):
+        replica_poolclass = QueuePool
+        replica_connect_args = {}
+        ssl_mode = os.getenv("DB_SSL_MODE", "prefer")
+        if ssl_mode and ssl_mode != "disable":
+            replica_connect_args["sslmode"] = ssl_mode
+        if os.getenv("DB_SSL_CERT"):
+            replica_connect_args["sslcert"] = os.getenv("DB_SSL_CERT")
+        if os.getenv("DB_SSL_KEY"):
+            replica_connect_args["sslkey"] = os.getenv("DB_SSL_KEY")
+        if os.getenv("DB_SSL_ROOT_CERT"):
+            replica_connect_args["sslrootcert"] = os.getenv("DB_SSL_ROOT_CERT")
+        replica_pool_kwargs = {
+            "pool_size": settings.db_pool_size,
+            "max_overflow": settings.db_max_overflow,
+            "pool_recycle": settings.db_pool_recycle,
+            "pool_pre_ping": True,
+            "pool_timeout": settings.db_connect_timeout,
+        }
+    else:
+        replica_poolclass = QueuePool
+        replica_pool_kwargs = {
+            "pool_size": settings.db_pool_size,
+            "max_overflow": settings.db_max_overflow,
+            "pool_recycle": settings.db_pool_recycle,
+            "pool_pre_ping": True,
+            "pool_timeout": settings.db_connect_timeout,
+        }
+
+    replica_engine_kwargs: dict = {
+        "connect_args": replica_connect_args,
+        "poolclass": replica_poolclass,
+        "echo": getattr(settings, "debug", False),
+        **replica_pool_kwargs,
+    }
+
+    _replica_engine = create_engine(replica_url, **replica_engine_kwargs)
+    _ReplicaSessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=_replica_engine,
+        expire_on_commit=False,
+    )
+    return _replica_engine
+
+
+def get_read_db() -> Generator[Session, None, None]:
+    """FastAPI dependency yielding a session bound to the read replica.
+
+    Falls back to the primary database when no replica is configured
+    (`settings.database_replica_url` is empty).
+    """
+    if _ReplicaSessionLocal is None:
+        _get_replica_engine()
+    assert _ReplicaSessionLocal is not None
+    db = _ReplicaSessionLocal()
+    try:
+        yield db
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
 
 def close_db_session(db: Session) -> None:
     """Close a session obtained from get_db_session."""
@@ -286,7 +486,25 @@ def get_pool_metrics() -> dict:
 def dispose_engine() -> None:
     """Dispose the engine and release all connections."""
     engine.dispose()
-    logger.info("Database engine disposed")
+    if _replica_engine is not None:
+        _replica_engine.dispose()
+    if _async_engine is not None:
+        # async_engine.dispose is a coroutine; close synchronously best-effort.
+        try:
+            close_fn = getattr(_async_engine, "close", None)
+            if close_fn is not None:
+                result = close_fn()
+                if hasattr(result, "__await__"):
+                    # Running event loop is the caller's responsibility in
+                    # startup/shutdown hooks; fall through to sync dispose.
+                    pass
+        except Exception:
+            logger.debug("Async engine close() best-effort failed", exc_info=True)
+        try:
+            _async_engine.sync_engine.dispose()
+        except Exception:
+            logger.debug("Async engine sync_engine dispose failed", exc_info=True)
+    logger.info("Database engines disposed")
 
 
 def _guard_dev_only(operation: str) -> None:

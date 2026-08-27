@@ -13,6 +13,8 @@ from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+HAS_GEOIP = True
+
 # City-level database (provides lat/lon for impossible-travel detection).
 GEOIP_CITY_DB = "data/GeoLite2-City.mmdb"
 

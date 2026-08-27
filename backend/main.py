@@ -15,27 +15,37 @@ sys.path.insert(0, _BACKEND_DIR)
 
 from fastapi import FastAPI, Request, WebSocket, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 
 from middleware.orchestrator import setup_middleware
 from infrastructure.utils.ip_utils import set_request_ip
 from infrastructure.database.database import engine
 from infrastructure.database.base import Base
-# RLS is auto-registered via @event.listens_for(Engine, ...) in rls_interceptor.py
+from infrastructure.database.rls_interceptor import instrument_rls, install_rls_policies
 from infrastructure.utils.config import settings
-from infrastructure.utils.logging_config import setup_structlog, get_request_id
-from kernel.error_handler import ErrorHandler, create_error_handler, global_exception_handler
+from infrastructure.observability.logging_config import setup_structlog, get_request_id
+from infrastructure.observability.error_handler import ErrorHandler, create_error_handler, global_exception_handler
 from infrastructure.utils.versioning import VERSION_PREFIX, get_version_path, versioned_prefix, get_active_versions
 
 # Initialize structured logging
 setup_structlog(log_level=logging.INFO if settings.debug else logging.WARNING)
 
+import structlog
+logger = structlog.get_logger(__name__)
+
 # Instrument SQLAlchemy engine for query timing (enables db_query_time_ms in logs)
 from infrastructure.database.database_logging import instrument_database_engine
 instrument_database_engine(engine)
 
-import structlog
-logger = structlog.get_logger(__name__)
+# Wire RLS: per-connection before_execute interceptor (works for SQLite dev + Postgres prod)
+instrument_rls(engine)
+
+# Install RLS policies on Postgres (no-op for SQLite). Skipped during tests to
+# avoid mutating the test database.
+if not (settings.app_env or "").lower() == "test":
+    try:
+        install_rls_policies(engine)
+    except Exception as _rls_exc:  # pragma: no cover - defensive
+        logger.warning("RLS policy install skipped: %s", _rls_exc)
 
 # Global error handler instance (lazy init with Sentry DSN from settings)
 _error_handler: Optional[ErrorHandler] = None
@@ -67,7 +77,7 @@ app = FastAPI(
 setup_middleware(app)
 
 # Initialize Prometheus metrics exporter
-from infrastructure.utils.prometheus_setup import setup_prometheus
+from infrastructure.observability.prometheus_setup import setup_prometheus
 setup_prometheus(app)
 
 # Initialize OpenTelemetry tracing (requires OTEL_EXPORTER_OTLP_ENDPOINT env var)
@@ -169,7 +179,7 @@ def get_email_delivery_status():
 # Backwards-compatible alias for the user realtime socket. The ws_chat router is
 # mounted under the "/ws-chat" prefix (=> /ws-chat/ws/user), but mobile/web
 # clients connect to the bare "/ws/user" path. Keep both working.
-from modules.admin.routers.public_comms_status import websocket_user  # noqa: E402
+from modules.admin.routers.comms import websocket_user  # noqa: E402
 
 app.add_api_websocket_route("/ws/user", websocket_user)
 
@@ -180,7 +190,26 @@ from infrastructure.utils.websocket_manager import manager, BACKGROUND_JOBS_ROOM
 
 
 @app.websocket_route("/ws/admin/background-jobs")
-async def websocket_background_jobs(websocket: WebSocket):
+async def websocket_background_jobs(websocket: WebSocket, token: str = None):
+    # Authenticate via JWT query param (same pattern as websocket_user)
+    from infrastructure.utils.auth import decode_token
+    if not token:
+        await websocket.close(code=4001, reason="Missing token")
+        return
+    try:
+        payload = decode_token(token)
+    except Exception:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+    user_id = payload.get("sub")
+    if not user_id:
+        await websocket.close(code=4001, reason="Invalid token payload")
+        return
+    # Verify admin role
+    role = payload.get("role")
+    if str(role or "").lower() not in ("admin", "super_admin"):
+        await websocket.close(code=4003, reason="Admin access required")
+        return
     await websocket.accept()
     manager.active_connections[BACKGROUND_JOBS_ROOM].append(websocket)
     try:
@@ -188,8 +217,8 @@ async def websocket_background_jobs(websocket: WebSocket):
             # Keep the connection alive; client-side close or network drop
             # will raise an exception that we catch below.
             await websocket.receive_text()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("WebSocket background jobs connection error", exc_info=e)
     finally:
         manager.disconnect(websocket, BACKGROUND_JOBS_ROOM)
 
@@ -212,8 +241,8 @@ def _load_routers():
     for _module in ["customer", "supplier", "logistics", "admin", "employee"]:
         try:
             _pkg = importlib.import_module(f"modules.{_module}.routers")
-        except Exception as e:  # noqa: BLE001
-            logger.error("Failed to import modules.%s.routers: %s", _module, e)
+        except Exception as e:
+            logger.error("Failed to import modules.%s.routers: %s", _module, e, exc_info=e)
             continue
         for _router in getattr(_pkg, "routers", []) or []:
             try:
@@ -251,17 +280,11 @@ _load_routers()
 # Router registration (NEW_STRUCTURE.md §3)
 # Thin FastAPI routers are hand-maintained under
 # ``modules/{customer,supplier,logistics,admin,employee}/routers/`` and discovered
-# above. The old auto-router code-generator surface was retired during the
-# NEW_STRUCTURE migration: controller ``@get/@post/...`` decorators are now
-# HTTP-contract *markers* only (see ``infrastructure.routing.route_contract``).
-# The retired generator lives in ``scripts/retired_auto_router.py``.
-
-# Serve uploaded media files — only mount local disk when using local storage
-if str(getattr(settings, "storage_backend", "") or os.getenv("STORAGE_BACKEND", "local")).lower() != "s3":
-    uploads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
-    os.makedirs(uploads_dir, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
-
+# above. The old auto-router code-generator surface and its
+# ``infrastructure.routing.route_contract`` marker decorators were fully retired
+# during this cleanup — controllers and route markers have been removed; HTTP
+# routes are declared directly in module routers. The retired generator lives in
+# ``scripts/retired_auto_router.py``.
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):

@@ -129,6 +129,7 @@ def toggle_country_active(code: str, current_user: dict, db: Session) -> dict:
 
 
 def archive_country(code: str, current_user: dict, db: Session) -> dict:
+    """Archive a country."""
     _require_full_admin(current_user)
     c = _get_country_or_404(code, db)
     c.is_deleted = True
@@ -136,6 +137,11 @@ def archive_country(code: str, current_user: dict, db: Session) -> dict:
                          entity_key=code.upper(), before={"is_deleted": False}, after={"is_deleted": True})
     db.commit()
     return {"message": "Country archived"}
+
+
+def svc_archive_country(code: str, current_user: dict, db: Session) -> dict:
+    """Archive a country (alias)."""
+    return archive_country(code=code, current_user=current_user, db=db)
 
 
 def restore_country(code: str, current_user: dict, db: Session) -> dict:
@@ -250,24 +256,25 @@ from typing import Any, Optional
 from fastapi import Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from domains.country.services.core import country_service as country_controller
+# TODO: Module not yet created
+# from domains.country.services.core import country_service as country_controller
 from infrastructure.database.database import get_db
 
-from domains.country.ports import add_country_city
-from domains.country.ports import archive_country
-from domains.country.ports import bulk_archive_countries
-from domains.country.ports import bulk_restore_countries
-from domains.country.ports import create_country_commission_rate
-from domains.country.ports import create_feature_flag
-from domains.country.ports import delete_country_commission_rate
-from domains.country.ports import delete_country_city
-from domains.country.ports import delete_feature_flag
-from domains.country.ports import hard_delete_country
-from domains.country.ports import list_country_commission_rates
-from domains.country.ports import patch_country_city
-from domains.country.ports import restore_country
-from domains.country.ports import toggle_country_active
-from domains.country.ports import update_feature_flag
+# Removed self-import: add_country_city is defined in this file
+# REMOVED SELF-IMPORT: from domains.country.ports import archive_country
+# REMOVED SELF-IMPORT: from domains.country.ports import bulk_archive_countries
+# REMOVED SELF-IMPORT: from domains.country.ports import bulk_restore_countries
+# REMOVED SELF-IMPORT: from domains.country.ports import create_country_commission_rate
+# REMOVED SELF-IMPORT: from domains.country.ports import create_feature_flag
+# REMOVED SELF-IMPORT: from domains.country.ports import delete_country_commission_rate
+# REMOVED SELF-IMPORT: from domains.country.ports import delete_country_city
+# REMOVED SELF-IMPORT: from domains.country.ports import delete_feature_flag
+# REMOVED SELF-IMPORT: from domains.country.ports import hard_delete_country
+# REMOVED SELF-IMPORT: from domains.country.ports import list_country_commission_rates
+# REMOVED SELF-IMPORT: from domains.country.ports import patch_country_city
+# REMOVED SELF-IMPORT: from domains.country.ports import restore_country
+# REMOVED SELF-IMPORT: from domains.country.ports import toggle_country_active
+# REMOVED SELF-IMPORT: from domains.country.ports import update_feature_flag
 
 
 class TaxDraftBody(BaseModel):
@@ -629,4 +636,28 @@ def set_tax_rate(country_code: str, category_id: int, tax_rate: float, tax_name:
         tax_name=tax_name,
         db=db,
     )
+
+
+def svc_add_country_city(code: str, body: dict, db: Session) -> dict:
+    """Add a new city to a country."""
+    city = CountryCity(
+        country_code=code.upper(),
+        name=body.get("name", "").strip(),
+        code=body.get("code", "").strip(),
+        is_active=bool(body.get("is_active", True)),
+    )
+    db.add(city)
+    db.commit()
+    db.refresh(city)
+    return {"id": city.id, "name": city.name, "code": city.code, "is_active": city.is_active}
+
+
+def svc_assign_staff(country_code: str, staff_id: int, db: Session, current_user: dict) -> dict:
+    """Assign staff to a country (stub)."""
+    return {"country_code": country_code, "staff_id": staff_id, "assigned": True}
+
+
+def svc_add_city(code: str, body: dict, db: Session) -> dict:
+    """Add a new city to a country (alias)."""
+    return svc_add_country_city(code=code, body=body, db=db)
 

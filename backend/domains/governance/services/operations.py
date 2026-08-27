@@ -14,28 +14,36 @@ from pathlib import Path
 from uuid import uuid4
 from typing import Any, Callable, Generator, Iterable
 
-from fastapi import HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from infrastructure.database.database import SessionLocal
 from domains.governance.models.core import AuditLog
 from domains.governance.models.user import User
 from domains.catalog.models.products import Product
 from domains.orders.models.orders import Order
 from domains.catalog.models.promotions import Coupon
-from infrastructure.utils.export_read import MAX_EXPORT_ROWS
-from infrastructure.utils.export_read import db_auditlog_query_4
-from infrastructure.utils.export_read import db_coupon_all_3
-from infrastructure.utils.export_read import db_order_all_1
-from infrastructure.utils.export_read import db_product_all_2
-from infrastructure.utils.export_read import db_user_all_0
-from domains.finance.services.ledger.finance_transfer_service import build_transfer_export_payload
+from domains.governance.services.export_read_service import MAX_EXPORT_ROWS
+from domains.governance.services.export_read_service import db_auditlog_query_4
+from domains.governance.services.export_read_service import db_coupon_all_3
+from domains.governance.services.export_read_service import db_order_all_1
+from domains.governance.services.export_read_service import db_product_all_2
+from domains.governance.services.export_read_service import db_user_all_0
+# TODO: Module not yet created
+# from domains.finance.services.ledger.finance_transfer_service import build_transfer_export_payload
 from infrastructure.utils.background_jobs import enqueue_job, get_job
 
 logger = logging.getLogger(__name__)
+
+from domains.governance.exceptions import (
+    EntityNotFoundError,
+    ValidationError,
+    TicketAccessDeniedError,
+    InvalidExportParameterError,
+)
+
 
 _ADMIN_ROLES = {"admin", "superadmin"}
 _EXPORTS_DIR = Path(__file__).resolve().parents[2] / "artifacts" / "exports"
@@ -55,7 +63,7 @@ def _to_float(value: Any) -> float:
 
 def _require_admin(current_user: dict) -> None:
     if current_user.get("role") not in _ADMIN_ROLES:
-        raise HTTPException(status_code=403, detail="Admin access required")
+        raise PermissionError("Admin access required")
 
 
 def _csv_streaming_response(generator: Generator, filename: str) -> StreamingResponse:
@@ -292,7 +300,7 @@ def _build_coupons_export(db: Session) -> tuple[list[dict], list[str], str, dict
 
 def _build_audit_logs_export(db: Session, days: int) -> tuple[list[dict], list[str], str, dict[str, Any]]:
     if days < 1 or days > 365:
-        raise HTTPException(status_code=422, detail="days must be between 1 and 365")
+        raise InvalidExportParameterError("days", "days must be between 1 and 365")
 
     from infrastructure.utils.datetime_utils import utcnow
     from datetime import timedelta
@@ -342,7 +350,7 @@ def _build_export_payload(
         return _build_audit_logs_export(db, days)
     if export_type in {"supplier-payout-transfers", "logistics-payout-transfers", "cod-remittance-transfers"}:
         return build_transfer_export_payload(export_type, db=db, provider=provider)
-    raise HTTPException(status_code=404, detail="Unknown export type")
+    raise InvalidExportParameterError("export_type", f"Unknown export type: {export_type}")
 
 
 # â”€â”€ Export functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -426,7 +434,7 @@ def export_coupons_csv(current_user: dict, db: Session) -> StreamingResponse:
 def export_audit_logs_csv(current_user: dict, db: Session, days: int = 30) -> StreamingResponse:
     _require_admin(current_user)
     if days < 1 or days > 365:
-        raise HTTPException(status_code=422, detail="days must be between 1 and 365")
+        raise InvalidExportParameterError("days", "days must be between 1 and 365")
     from infrastructure.utils.datetime_utils import utcnow
     from datetime import timedelta
     since = utcnow() - timedelta(days=days)
@@ -512,34 +520,30 @@ def download_export_job_result(job_id: str, current_user: dict) -> FileResponse:
     _require_admin(current_user)
     job = get_job(job_id)
     if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        raise EntityNotFoundError("Export job", job_id)
     if job.get("status") != "completed":
-        raise HTTPException(status_code=409, detail="Export job is not finished yet")
+        raise ValidationError("job_status", "Export job is not finished yet")
     result = job.get("result") or {}
     file_path = result.get("file_path")
     filename = result.get("filename")
     if not file_path or not filename or not Path(file_path).exists():
-        raise HTTPException(status_code=404, detail="Export artifact not found")
+        raise EntityNotFoundError("Export artifact", job_id)
     return FileResponse(file_path, media_type="text/csv", filename=filename)
 
 
 
 # === Merged from tickets_service.py ===
 
-"""Auto-migrated service logic from routers/tickets.py."""
-from __future__ import annotations
-
-from fastapi import Body, Depends, HTTPException, Query
-
 from sqlalchemy.orm import Session, selectinload
-
-from infrastructure.database.database import get_db
 
 from domains.governance.ports import SupportTicket
 from domains.governance.ports import User
 from domains.comms.models.communication import TicketMessage
-
-from infrastructure.utils.dependencies import get_current_user
+from domains.governance.exceptions import (
+    EntityNotFoundError,
+    ValidationError,
+    TicketAccessDeniedError,
+)
 
 def _ticket_payload(ticket: SupportTicket, replies: list[TicketMessage] | None = None) -> dict:
     msgs = replies if replies is not None else list(getattr(ticket, "messages", []) or [])
@@ -572,11 +576,11 @@ def _validate_ticket_input(payload: dict) -> tuple[str, str, str]:
     priority = str(payload.get("priority") or "normal").strip().lower()
 
     if not subject:
-        raise HTTPException(status_code=422, detail="subject is required")
+        raise ValidationError("subject", "subject is required")
     if len(message) < 10:
-        raise HTTPException(status_code=422, detail="message must be at least 10 characters")
+        raise ValidationError("message", "message must be at least 10 characters")
     if priority not in {"low", "normal", "high"}:
-        raise HTTPException(status_code=422, detail="priority must be one of: low, normal, high")
+        raise ValidationError("priority", "priority must be one of: low, normal, high")
 
     return subject, message, priority
 
@@ -606,21 +610,21 @@ def create_ticket(payload: dict, current_user: User, db: Session):
 def get_ticket(ticket_id: int, current_user: User, db: Session):
     ticket = db.query(SupportTicket).options(selectinload(SupportTicket.messages)).filter(SupportTicket.id == ticket_id).first()
     if not ticket:
-        raise HTTPException(404)
+        raise EntityNotFoundError("Ticket", ticket_id)
     if current_user.role == "customer" and ticket.user_id != current_user.id:
-        raise HTTPException(404)
+        raise TicketAccessDeniedError(ticket_id, current_user.id)
     replies = db.query(TicketMessage).filter(TicketMessage.ticket_id == ticket_id).order_by(TicketMessage.created_at.asc()).all()
     return _ticket_payload(ticket, replies)
 
 def reply_to_ticket(ticket_id: int, payload: dict, current_user: User, db: Session):
     ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
     if not ticket:
-        raise HTTPException(404)
+        raise EntityNotFoundError("Ticket", ticket_id)
     if current_user.role == "customer" and ticket.user_id != current_user.id:
-        raise HTTPException(404)
+        raise TicketAccessDeniedError(ticket_id, current_user.id)
     message = str(payload.get("message") or payload.get("body") or "").strip()
     if len(message) < 1:
-        raise HTTPException(status_code=422, detail="message is required")
+        raise ValidationError("message", "message is required")
     msg = TicketMessage(ticket_id=ticket_id, sender_id=current_user.id, message=message)
     db.add(msg)
     db.commit()
@@ -636,10 +640,10 @@ def reply_to_ticket(ticket_id: int, payload: dict, current_user: User, db: Sessi
 def add_message(ticket_id: int, payload: dict, current_user: User, db: Session):
     ticket = db.query(SupportTicket).filter(SupportTicket.id == ticket_id).first()
     if not ticket:
-        raise HTTPException(404)
+        raise EntityNotFoundError("Ticket", ticket_id)
     message = str(payload.get("message") or payload.get("body") or "").strip()
     if len(message) < 1:
-        raise HTTPException(status_code=422, detail="message is required")
+        raise ValidationError("message", "message is required")
     msg = TicketMessage(ticket_id=ticket_id, sender_id=current_user.id, message=message)
     db.add(msg)
     db.commit()

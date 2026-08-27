@@ -143,10 +143,6 @@ def create_order(
     if metadata:
         payload["purchase_units"][0]["custom_id"] = str(metadata)
     try:
-        request = _paypal_http.OrdersCreateRequest() if False else None
-    except (AttributeError, TypeError):
-        pass
-    try:
         from paypalcheckoutsdk.orders import OrdersCreateRequest  # type: ignore[import-untyped]
         request = OrdersCreateRequest()
         request.prefer("return=representation")

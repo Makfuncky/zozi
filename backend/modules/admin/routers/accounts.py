@@ -1,315 +1,510 @@
 """Admin accounts router — canonical."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
-
-from .identity import router as identity_router
-from .sessions import router as sessions_router
 from __future__ import annotations
-from modules.admin.routers.accounts import delete_bank_account_route, list_pending_bank_accounts_route, verify_bank_account_route
-from domains.accounts.services.users.users_admin_service import get_user_display_name
-from domains.accounts.services.users.users_admin_service import get_user_role
-from domains.comms.services._auto_stubs import mark_messages_read
-from domains.comms.services._auto_stubs import persist_message
-from infrastructure.database.database import get_db
-from infrastructure.database.database import get_db, get_db_session
-from infrastructure.utils.auth import SECRET_KEY, ALGORITHM
-from infrastructure.utils.config import settings
-from infrastructure.utils.dependencies import require_admin
-from jose import JWTError, jwt
+
+from fastapi import APIRouter, Depends, Query, Body, Request, status
 from sqlalchemy.orm import Session
 from typing import Optional
-import json
-import logging
-import logging as _l; _l.getLogger(__name__).warning("skip accounts_router: %s", _e)
-import logging as _l; _l.getLogger(__name__).warning("skip identity_router: %s", _e)
-import logging as _l; _l.getLogger(__name__).warning("skip sessions_router: %s", _e)
 
-router = APIRouter(prefix="/api/v1/admin/accounts", tags=["admin", "accounts"])
+from domains.accounts.services.users.user_management_service import (
+    list_pending_bank_accounts,
+    verify_bank_account,
+    delete_bank_account_record,
+    list_staff_accounts,
+    create_staff_account,
+    update_staff_account,
+    delete_staff_account,
+    update_user_role,
+    toggle_user_active,
+    force_reset_password_admin,
+    bulk_update_users_role,
+    bulk_toggle_users_active,
+    bulk_update_staff_accounts,
+    bulk_delete_users_admin,
+)
+from domains.accounts.services.identity.identity_admin_service import (
+    list_users_by_country,
+    get_user_in_country,
+    update_user_in_country,
+    list_all_users,
+    get_user_by_id_or_404,
+    update_user_by_id,
+    archive_user,
+    restore_user,
+    bulk_archive_users,
+    bulk_toggle_active,
+    bulk_restore_users,
+    hard_delete_user,
+    set_user_role,
+    set_user_active,
+    force_reset_password,
+    delete_user_admin,
+)
+from infrastructure.database.database import get_db
+from infrastructure.security.dependencies import require_admin
+from domains.accounts.services.auth.auth_service import (
+    SocialLoginRequest,
+    sign_in_social,
+    verify_social_identity,
+)
+from infrastructure.database.schemas import (
+    CreateStaffAccount,
+    UpdateStaffAccount,
+    BulkUpdateStaffBody,
+)
+from rbac.dependencies import require_feature
+from infrastructure.security.rate_limiter import limiter, RL_SENSITIVE
 
-@router.get("/bank-accounts/{country_code}/pending", status_code=200, tags=['admin-bank-accounts'])
-def list_pending_bank_accounts_route_route(
+router = APIRouter(tags=["admin", "accounts"])
+
+
+@router.get("/api/v1/admin/accounts/bank-accounts/{country_code}/pending", status_code=200, tags=["admin-bank-accounts"])
+def list_pending_bank_accounts_route(
     country_code: str,
-    kind: str = Query('supplier'),
+    kind: str = Query("supplier"),
     page: int = Query(1),
     page_size: int = Query(50),
     current_user: dict = Depends(require_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+):
+    """List bank accounts awaiting verification."""
+    require_feature("accounts.permissions.manage")
+    return list_pending_bank_accounts(
+        kind=kind,
+        db=db,
+        current_user=current_user,
+        limit=page_size,
+        offset=(page - 1) * page_size,
+    )
 
 
-@router.post("/bank-accounts/{country_code}/{kind}/{account_id}/verify", status_code=201, tags=['admin-bank-accounts'])
-def verify_bank_account_route_route(
+@router.post("/api/v1/admin/accounts/bank-accounts/{country_code}/{kind}/{account_id}/verify", status_code=201, tags=["admin-bank-accounts"])
+def verify_bank_account_route(
     country_code: str,
     kind: str,
     account_id: int,
     current_user: dict = Depends(require_admin),
     db: Session = Depends(get_db),
-    action: str = Body('approve', embed=True),
-    note: Optional[str] = Body(None, embed=True)
+    action: str = Body("approve", embed=True),
+    note: Optional[str] = Body(None, embed=True),
+):
+    """Approve or reject a bank account."""
+    require_feature("accounts.permissions.manage")
+    return verify_bank_account(
+        kind=kind,
+        account_id=account_id,
+        action=action,
+        note=note,
+        current_user=current_user,
+        db=db,
+    )
 
 
-@router.delete("/bank-accounts/{country_code}/{kind}/{account_id}", status_code=200, tags=['admin-bank-accounts'])
-def delete_bank_account_route_route(
+@router.delete("/api/v1/admin/accounts/bank-accounts/{country_code}/{kind}/{account_id}", status_code=200, tags=["admin-bank-accounts"])
+def delete_bank_account_route(
     country_code: str,
     kind: str,
     account_id: int,
     current_user: dict = Depends(require_admin),
-    db: Session = Depends(get_db)
-
-
-@router.websocket("/ws/chat/{room_id}")
-async def websocket_chat(
-    websocket: WebSocket,
-    room_id: str,
-    token: str = Query(...),
+    db: Session = Depends(get_db),
 ):
-    """Real-time chat WebSocket with presence, typing, and read receipts.
-
-    Query params:
-    - token: JWT authentication token
-    """
-    payload = _decode_ws_token(token)
-    if payload is None:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
-
-    user_id = payload.get("user_id") or payload.get("sub")
-    if not user_id:
-        await websocket.close(code=4001, reason="Invalid user")
-        return
-
-    user_id = int(user_id)
-
-    db = get_db_session()
-    try:
-        user_name = _get_user_name(db, user_id)
-    finally:
-        db.close()
-
-    await manager.connect(websocket, room_id, user_id, user_name)
-
-    # Notify others in the room about the new user
-    room_users = manager.get_room_users(room_id)
-    await manager.broadcast(room_id, {
-        "type": "user_joined",
-        "room_id": room_id,
-        "user_id": user_id,
-        "user_name": user_name,
-        "users": room_users,
-    })
-
-    try:
-        while True:
-            data = await websocket.receive_json()
-            event_type = data.get("type", "message")
-
-            if event_type == "message":
-                content = data.get("content", "")
-                msg_type = data.get("message_type", "text")
-                if not content:
-                    continue
-
-                db = get_db_session()
-                try:
-                    msg_id, created_at = _persist_message(db, room_id, user_id, content, msg_type)
-                finally:
-                    db.close()
-
-                await manager.broadcast(room_id, {
-                    "type": "message",
-                    "room_id": room_id,
-                    "sender_id": user_id,
-                    "sender_name": user_name,
-                    "content": content,
-                    "message_type": msg_type,
-                    "message_id": msg_id,
-                    "created_at": created_at,
-                })
-
-            elif event_type == "typing":
-                is_typing = data.get("is_typing", False)
-                manager.set_typing(room_id, user_id, is_typing)
-
-                typing_users = manager.get_typing_users(room_id)
-                typing_names = []
-                for tuid in typing_users:
-                    uinfo = manager._user_info.get(tuid, {})
-                    typing_names.append(uinfo.get("name", f"User {tuid}"))
-
-                await manager.broadcast(room_id, {
-                    "type": "typing",
-                    "room_id": room_id,
-                    "user_id": user_id,
-                    "user_name": user_name,
-                    "is_typing": is_typing,
-                    "typing_user_ids": typing_users,
-                    "typing_user_names": typing_names,
-                }, exclude_user_id=user_id)
-
-            elif event_type == "read_receipt":
-                db = get_db_session()
-                try:
-                    count = _mark_messages_read(db, room_id, user_id)
-                finally:
-                    db.close()
-
-                await manager.broadcast(room_id, {
-                    "type": "read_receipt",
-                    "room_id": room_id,
-                    "user_id": user_id,
-                    "user_name": user_name,
-                    "count": count,
-                }, exclude_user_id=user_id)
-
-            elif event_type == "presence":
-                status = data.get("status", "online")
-                if user_id in manager._user_info:
-                    manager._user_info[user_id]["status"] = status
-                user_rooms = list(manager._user_info.get(user_id, {}).get("rooms", set()))
-                for rid in user_rooms:
-                    await manager.broadcast(rid, {
-                        "type": "presence",
-                        "room_id": rid,
-                        "user_id": user_id,
-                        "user_name": user_name,
-                        "status": status,
-                        "users": manager.get_room_users(rid),
-                    }, exclude_user_id=user_id)
-
-            elif event_type == "ping":
-                await websocket.send_json({"type": "pong"})
-
-    except WebSocketDisconnect:
-        manager.disconnect(websocket, room_id, user_id)
-        room_users = manager.get_room_users(room_id)
-        await manager.broadcast(room_id, {
-            "type": "user_left",
-            "room_id": room_id,
-            "user_id": user_id,
-            "user_name": user_name,
-            "users": room_users,
-        })
-    except Exception as exc:
-        logger.exception("WebSocket error: %s", exc)
-        manager.disconnect(websocket, room_id, user_id)
+    """Delete a bank account record."""
+    require_feature("accounts.permissions.manage")
+    return delete_bank_account_record(
+        kind=kind,
+        account_id=account_id,
+        current_user=current_user,
+        db=db,
+    )
 
 
-class UserConnectionManager:
-    """Manages per-user WebSocket connections for notifications and alerts."""
-
-    def __init__(self):
-        self._user_sockets: dict[int, set[WebSocket]] = {}
-        self._staff_sockets: dict[int, set[WebSocket]] = {}
-
-    async def connect_user(self, websocket: WebSocket, user_id: int):
-        await websocket.accept()
-        self._user_sockets.setdefault(user_id, set()).add(websocket)
-
-    async def connect_staff(self, websocket: WebSocket, staff_id: int):
-        await websocket.accept()
-        self._staff_sockets.setdefault(staff_id, set()).add(websocket)
-
-    def disconnect_user(self, websocket: WebSocket, user_id: int):
-        conns = self._user_sockets.get(user_id, set())
-        conns.discard(websocket)
-        if not conns:
-            self._user_sockets.pop(user_id, None)
-
-    def disconnect_staff(self, websocket: WebSocket, staff_id: int):
-        conns = self._staff_sockets.get(staff_id, set())
-        conns.discard(websocket)
-        if not conns:
-            self._staff_sockets.pop(staff_id, None)
-
-    async def broadcast_to_user(self, user_id: int, message: dict):
-        dead = set()
-        for ws in self._user_sockets.get(user_id, set()):
-            try:
-                await ws.send_json(message)
-            except Exception:
-                dead.add(ws)
-        for ws in dead:
-            self._user_sockets.get(user_id, set()).discard(ws)
-
-    async def broadcast_to_staff(self, staff_id: int, message: dict):
-        dead = set()
-        for ws in self._staff_sockets.get(staff_id, set()):
-            try:
-                await ws.send_json(message)
-            except Exception:
-                dead.add(ws)
-        for ws in dead:
-            self._staff_sockets.get(staff_id, set()).discard(ws)
-
-    async def broadcast_to_all_staff(self, message: dict):
-        for staff_id in list(self._staff_sockets.keys()):
-            await self.broadcast_to_staff(staff_id, message)
+# ── User lifecycle (identity_admin_service) ──
 
 
-
-
-@router.websocket("/ws/user")
-async def websocket_user(
-    websocket: WebSocket,
-    token: str = Query(...),
+@router.get("/api/v1/admin/accounts/users/{country_code}", status_code=200)
+def list_users_by_country_route(
+    country_code: str,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    role: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    include_deleted: bool = Query(False),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-    payload = _decode_ws_token(token)
-    if payload is None:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
+    """List users in a specific country."""
+    require_feature("accounts.user.list")
+    return list_users_by_country(
+        db=db,
+        country_code=country_code,
+        page=page,
+        size=page_size,
+        role=role,
+        search=search,
+        include_deleted=include_deleted,
+    )
 
-    user_id = payload.get("user_id") or payload.get("sub")
-    if not user_id:
-        await websocket.close(code=4001, reason="Invalid user")
-        return
 
-    user_id = int(user_id)
+@router.get("/api/v1/admin/accounts/users/{country_code}/{user_id}", status_code=200)
+def get_user_in_country_route(
+    country_code: str,
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Get a single user within a specific country."""
+    require_feature("accounts.user.read")
+    return get_user_in_country(db, country_code, user_id)
 
-    db = next(get_db())
-    try:
-        role = get_user_role(db, user_id)
-    finally:
-        db.close()
 
-    scope = "staff" if role in ("admin", "support", "country_head", "country_manager") else "user"
-    if scope == "staff":
-        await user_manager.connect_staff(websocket, user_id)
-    else:
-        await user_manager.connect_user(websocket, user_id)
+@router.get("/api/v1/admin/accounts/users", status_code=200)
+def list_all_users_route(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """List users across all countries (admin console, no RLS scoping)."""
+    require_feature("accounts.user.list")
+    return list_all_users(
+        db=db,
+        skip=(page - 1) * page_size,
+        limit=page_size,
+    )
 
-    await websocket.send_json({"type": "connected", "scope": scope, "user_id": user_id})
 
-    try:
-        while True:
-            data = await websocket.receive_json()
-            event_type = data.get("type", "")
-            if event_type == "ping":
-                await websocket.send_json({"type": "pong"})
-    except WebSocketDisconnect:
+@router.get("/api/v1/admin/accounts/users/{user_id}", status_code=200)
+def get_user_by_id_route(
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Fetch a user by primary key."""
+    require_feature("accounts.user.read")
+    return get_user_by_id_or_404(db, user_id)
+
+
+@router.patch("/api/v1/admin/accounts/users/{user_id}", status_code=200)
+def update_user_by_id_route(
+    user_id: int,
+    payload: dict = Body(...),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Update a user's profile fields (no country scoping)."""
+    require_feature("accounts.user.update")
+    return update_user_by_id(db, user_id, payload)
+
+
+@router.post("/api/v1/admin/accounts/users/{country_code}/{user_id}/archive", status_code=200)
+def archive_user_route(
+    country_code: str,
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    reason: Optional[str] = Body(None, embed=True),
+):
+    """Soft-archive (soft-delete) a user within a country."""
+    require_feature("accounts.user.delete")
+    return archive_user(db, country_code, user_id, reason=reason)
+
+
+@router.post("/api/v1/admin/accounts/users/{country_code}/{user_id}/restore", status_code=200)
+def restore_user_route(
+    country_code: str,
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Restore a previously archived user."""
+    require_feature("accounts.user.delete")
+    return restore_user(db, country_code, user_id)
+
+
+@router.post("/api/v1/admin/accounts/users/bulk/archive", status_code=200)
+def bulk_archive_users_route(
+    country_code: str = Query(...),
+    ids: list[int] = Body(..., embed=True),
+    reason: Optional[str] = Body(None, embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk soft-archive users in a country."""
+    require_feature("accounts.user.delete")
+
+    class _Payload:
         pass
-    except Exception:
+
+    payload = _Payload()
+    payload.ids = ids
+    return bulk_archive_users(db, country_code, payload, reason=reason)
+
+
+@router.post("/api/v1/admin/accounts/users/bulk/toggle-active", status_code=200)
+def bulk_toggle_active_route(
+    country_code: str = Query(...),
+    user_ids: list[int] = Body(..., embed=True),
+    is_active: bool = Body(True, embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk enable or disable users in a country."""
+    require_feature("accounts.user.update")
+    return bulk_toggle_active(db, country_code, user_ids, is_active=is_active)
+
+
+@router.post("/api/v1/admin/accounts/users/bulk/restore", status_code=200)
+def bulk_restore_users_route(
+    country_code: str = Query(...),
+    ids: list[int] = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk restore archived users in a country."""
+    require_feature("accounts.user.delete")
+
+    class _Payload:
         pass
-    finally:
-        if scope == "staff":
-            user_manager.disconnect_staff(websocket, user_id)
-        else:
-            user_manager.disconnect_user(websocket, user_id)
+
+    payload = _Payload()
+    payload.ids = ids
+    return bulk_restore_users(db, country_code, payload)
 
 
-@router.get("/ws/room/{room_id}/online")
-def get_online_users(room_id: str):
-    """Get online users in a room with presence info."""
-    return {"room_id": room_id, "online": manager.get_room_size(room_id), "users": manager.get_room_users(room_id)}
+@router.delete("/api/v1/admin/accounts/users/{country_code}/{user_id}", status_code=200)
+def hard_delete_user_route(
+    country_code: str,
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    delete_orders: bool = Query(False),
+):
+    """Hard-delete a user within a country."""
+    require_feature("accounts.user.delete")
+    return hard_delete_user(db, country_code, user_id, current_user, delete_orders=delete_orders)
 
 
+@router.patch("/api/v1/admin/accounts/users/{country_code}/{user_id}/role", status_code=200)
+def set_user_role_route(
+    country_code: str,
+    user_id: int,
+    role: str = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Set a user's role (country-scoped)."""
+    require_feature("accounts.role.assign")
+    return set_user_role(db, country_code, user_id, role, current_user)
 
 
-@router.get("/ws/user/{user_id}/status")
-def get_user_status(user_id: int):
-    """Get presence status for a specific user."""
-    status = manager.get_user_status(user_id)
-    if status:
-        return status
-    return {"user_id": user_id, "status": "offline", "last_seen": None}
+@router.post("/api/v1/admin/accounts/users/{country_code}/{user_id}/toggle-active", status_code=200)
+def set_user_active_route(
+    country_code: str,
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Toggle a user's active status (country-scoped)."""
+    require_feature("accounts.user.update")
+    return set_user_active(db, country_code, user_id, current_user)
 
 
+@router.post("/api/v1/admin/accounts/users/{country_code}/{user_id}/reset-password", status_code=200)
+def force_reset_password_route(
+    country_code: str,
+    user_id: int,
+    new_password: str = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Force-reset a user's password (country-scoped)."""
+    require_feature("accounts.password.reset")
+    return force_reset_password(db, country_code, user_id, new_password, current_user)
 
+
+@router.delete("/api/v1/admin/accounts/users/{country_code}/{user_id}/hard", status_code=200)
+def delete_user_admin_route(
+    country_code: str,
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+    delete_orders: bool = Body(False, embed=True),
+):
+    """Hard-delete a user within a country (admin variant)."""
+    require_feature("accounts.user.delete")
+    return delete_user_admin(db, country_code, user_id, current_user, delete_orders=delete_orders)
+
+
+# ── Staff accounts & user_management_service ──
+
+
+@router.get("/api/v1/admin/accounts/staff", status_code=200)
+def list_staff_accounts_route(
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """List all staff accounts."""
+    require_feature("accounts.user.list")
+    return list_staff_accounts(db)
+
+
+@router.patch("/api/v1/admin/accounts/users/{user_id}/role", status_code=200)
+def update_user_role_route(
+    user_id: int,
+    role: str = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Update a user's role (admin console)."""
+    require_feature("accounts.role.assign")
+    return update_user_role(user_id, role, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/users/{user_id}/toggle-active", status_code=200)
+def toggle_user_active_route(
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Toggle a user's active flag."""
+    require_feature("accounts.user.update")
+    return toggle_user_active(user_id, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/users/{user_id}/reset-password", status_code=200)
+def force_reset_password_admin_route(
+    user_id: int,
+    password_hash: str = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Force-reset a user's password using a pre-hashed password (admin)."""
+    require_feature("accounts.password.reset")
+    return force_reset_password_admin(user_id, password_hash, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/staff", status_code=201)
+def create_staff_account_route(
+    payload: CreateStaffAccount,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Create a new staff account."""
+    require_feature("accounts.user.create")
+    return create_staff_account(payload, current_user, db)
+
+
+@router.put("/api/v1/admin/accounts/staff/{user_id}", status_code=200)
+def update_staff_account_route(
+    user_id: int,
+    payload: UpdateStaffAccount,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Update an existing staff account."""
+    require_feature("accounts.user.update")
+    return update_staff_account(user_id, payload, current_user, db)
+
+
+@router.delete("/api/v1/admin/accounts/staff/{user_id}", status_code=200)
+def delete_staff_account_route(
+    user_id: int,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Delete a staff account."""
+    require_feature("accounts.user.delete")
+    return delete_staff_account(user_id, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/users/bulk/role", status_code=200)
+def bulk_update_users_role_route(
+    user_ids: list[int] = Body(..., embed=True),
+    role: str = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk assign the same role to multiple users."""
+    require_feature("accounts.role.assign")
+    return bulk_update_users_role(user_ids, role, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/users/bulk/toggle-active-global", status_code=200)
+def bulk_toggle_users_active_route(
+    user_ids: list[int] = Body(..., embed=True),
+    is_active: bool = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk enable or disable users (cross-country)."""
+    require_feature("accounts.user.update")
+    return bulk_toggle_users_active(user_ids, is_active, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/staff/bulk", status_code=200)
+def bulk_update_staff_accounts_route(
+    body: BulkUpdateStaffBody,
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk update multiple staff accounts."""
+    require_feature("accounts.user.update")
+    return bulk_update_staff_accounts(body.user_ids, body.updates, current_user, db)
+
+
+@router.post("/api/v1/admin/accounts/users/bulk/delete", status_code=200)
+def bulk_delete_users_admin_route(
+    user_ids: list[int] = Body(..., embed=True),
+    current_user: dict = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Bulk hard-delete multiple users (admin-only)."""
+    require_feature("accounts.user.delete")
+    return bulk_delete_users_admin(user_ids, current_user, db)
+
+
+# ── Social (OAuth/OIDC) sign-in endpoints (moved from modules/admin/routers/auth_social.py) ──
+
+
+@router.post(
+    "/social/login",
+    tags=["auth", "social"],
+    status_code=status.HTTP_200_OK,
+    summary="Sign in with a social identity provider (Google / Apple / etc.)",
+    description=(
+        "Public, unauthenticated endpoint that exchanges a verified social identity "
+        "(ID token, access token, or provider-issued user id) for a ZOZI session. "
+        "Rate-limited per client IP to deter credential-stuffing and token replay; "
+        "the `accounts.session.manage` feature gate is enforced via the dependency "
+        "to keep RBAC checks uniform with the rest of the accounts surface."
+    ),
+    responses={
+        200: {"description": "Signed in; returns session token + user payload."},
+        400: {"description": "Invalid social identity payload."},
+        401: {"description": "Social identity could not be verified."},
+        429: {"description": "Too many social login attempts; slow down."},
+    },
+)
+@limiter.limit(RL_SENSITIVE)
+def social_login(
+    request: Request,
+    payload: SocialLoginRequest,
+    db: Session = Depends(get_db),
+    _feature: None = Depends(require_feature("accounts.session.manage")),
+):
+    require_feature("accounts.session.manage")
+    identity = verify_social_identity(
+        payload.provider,
+        id_token=payload.id_token,
+        access_token=payload.access_token,
+        provider_user_id=payload.provider_user_id,
+        email=payload.email,
+        full_name=payload.full_name,
+    )
+    return sign_in_social(
+        payload.provider,
+        identity["provider_user_id"],
+        email=identity.get("email"),
+        full_name=identity.get("full_name"),
+        db=db,
+    )

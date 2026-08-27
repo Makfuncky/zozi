@@ -19,7 +19,8 @@ from domains.orders.ports import Order
 from domains.orders import ports
 from domains.finance.ports import Payment
 from infrastructure.messaging.events import PaymentConfirmedEvent
-from domains.comms.services.notification.notification_service import NotificationService
+# TODO: Module not yet created
+# from domains.comms.services.notification.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 

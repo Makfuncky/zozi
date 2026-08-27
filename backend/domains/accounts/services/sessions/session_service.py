@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import UserSession
+from domains.accounts.ports import UserSession
 from infrastructure.utils.performance_cache import cache_session, set_session, invalidate_session
 from infrastructure.observability.service_observability import (
     db_query_timer,

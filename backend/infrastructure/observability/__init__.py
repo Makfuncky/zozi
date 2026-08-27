@@ -3,11 +3,14 @@
 Provides structured logging with correlation IDs, Prometheus metrics,
 circuit breakers, retry logic, and connection pool monitoring.
 """
-from infrastructure.observability.circuit_breaker import (
+from infrastructure.utils.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerError,
-    get_circuit_breaker,
-    get_all_breaker_stats,
+    get_breaker as get_circuit_breaker,
+)
+from infrastructure.utils.circuit_breaker import (
+    CircuitBreaker as _CircuitBreaker,
+    CircuitBreakerError as _CircuitBreakerError,
 )
 from infrastructure.observability.retry import RetryExhausted, with_retry
 from infrastructure.observability.service_observability import (
@@ -20,3 +23,9 @@ from infrastructure.observability.service_observability import (
     request_context,
     set_context_user,
 )
+
+
+def get_all_breaker_stats():
+    """Get stats for all circuit breakers for health checks."""
+    from infrastructure.utils.circuit_breaker import CircuitBreakerRegistry
+    return CircuitBreakerRegistry().get_all_stats()

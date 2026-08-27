@@ -73,21 +73,10 @@ except ImportError:
 
 @asynccontextmanager
 async def app_lifespan(server: FastMCP):
-    """Initialise the shared HTTP client and optionally auto-login."""
+    """Initialise the shared HTTP client."""
     global _client, _token
     async with httpx.AsyncClient() as client:
         _client = client
-        if AUTO_USERNAME and AUTO_PASSWORD:
-            try:
-                data = await _request(
-                    "POST",
-                    "auth/login",
-                    json={"username": AUTO_USERNAME, "password": AUTO_PASSWORD},
-                )
-                _token = data.get("access_token")
-            except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as exc:  # pragma: no cover - best-effort startup
-                logger.exception("unhandled exception", error=str(exc))
-                print(f"[zozi_mcp] auto-login failed: {exc}", file=sys.stderr)
         yield
     _client = None
     _token = None
@@ -104,8 +93,6 @@ mcp = FastMCP("zozi_mcp", lifespan=app_lifespan)
 # ---------------------------------------------------------------------------
 
 API_BASE_URL = os.getenv("ZOZI_MCP_API_URL", "http://127.0.0.1:8000/api/v1").rstrip("/")
-AUTO_USERNAME = os.getenv("ZOZI_MCP_USERNAME") or None
-AUTO_PASSWORD = os.getenv("ZOZI_MCP_PASSWORD") or None
 REQUEST_TIMEOUT = 30.0
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100
@@ -156,8 +143,7 @@ def _handle_api_error(e: Exception) -> str:
         msg = str(e)
         if "401" in msg:
             return (
-                "Error: authentication required. Call zozi_login with valid credentials first, "
-                "or set ZOZI_MCP_USERNAME/ZOZI_MCP_PASSWORD."
+                "Error: authentication required. Call zozi_login with valid credentials first."
             )
         if "404" in msg:
             return "Error: resource not found. Check the ID/identifier you passed — it may be wrong or deleted."

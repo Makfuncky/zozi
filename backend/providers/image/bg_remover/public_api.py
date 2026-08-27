@@ -1,9 +1,16 @@
 from typing import List, Optional, Dict, Any
+import logging
 import numpy as np
 # ========================== PUBLIC API ==========================
 from .configuration import ProcessingConfig
 
 from PIL import Image
+
+from .rembg_lazy_load import _ensure_rembg, _HAS_REMBG, remove, new_session
+from .core_i_o import _bytes_to_image, _image_to_bytes, bytes_to_image, create_rembg_session, create_frugal_rembg_session, rembg_remove_bytes
+from .session_management import _SessionManager
+
+logger = logging.getLogger(__name__)
 
 
 

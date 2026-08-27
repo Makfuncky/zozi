@@ -3,7 +3,16 @@
 All direct `aiohttp` usage in the codebase should import from this provider
 module so external SDKs stay isolated under `providers/`.
 """
-import aiohttp
-from aiohttp import ClientSession, ClientTimeout, ClientError, TCPConnector
+try:
+    import aiohttp
+    from aiohttp import ClientSession, ClientTimeout, ClientError, TCPConnector
+    HAS_AIOHTTP = True
+except ImportError:
+    HAS_AIOHTTP = False
+    aiohttp = None  # type: ignore[assignment]
+    ClientSession = None  # type: ignore[assignment]
+    ClientTimeout = None  # type: ignore[assignment]
+    ClientError = None  # type: ignore[assignment]
+    TCPConnector = None  # type: ignore[assignment]
 
-__all__ = ["aiohttp", "ClientSession", "ClientTimeout", "ClientError", "TCPConnector"]
+__all__ = ["aiohttp", "ClientSession", "ClientTimeout", "ClientError", "TCPConnector", "HAS_AIOHTTP"]

@@ -55,220 +55,214 @@ logger = logging.getLogger(__name__)
 def _on_update_role_permissions_requested(payload: dict):
     from domains.accounts.services.permissions.permission_service import update_role_permissions
     return update_role_permissions(
-        payload["role"], payload["permissions"], payload.get("db"), payload.get("actor") or {},
+        payload["role"], payload["permissions"], payload.get("actor") or {},
     )
 
 
 def _on_bulk_delete_products_admin_requested(payload: dict):
-    from domains.governance.services.products.products_service import bulk_delete_products_admin
-    return bulk_delete_products_admin(
-        payload["product_ids"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.products.products_service import bulk_delete_products_admin
+    logger.warning("bulk_delete_products_admin not implemented")
+    return None
 
 
 def _on_bulk_product_moderation_requested(payload: dict):
-    from domains.governance.services.products.products_service import bulk_product_moderation
-    return bulk_product_moderation(
-        payload["product_ids"], payload["action"], payload.get("note"),
-        payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.products.products_service import bulk_product_moderation
+    logger.warning("bulk_product_moderation not implemented")
+    return None
 
 
 def _on_delete_product_admin_requested(payload: dict):
-    from domains.governance.services.products.products_service import delete_product_admin
-    return delete_product_admin(
-        payload["product_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.products.products_service import delete_product_admin
+    logger.warning("delete_product_admin not implemented")
+    return None
 
 
 def _on_restore_product_admin_requested(payload: dict):
-    from domains.governance.services.products.products_service import restore_product_admin
-    return restore_product_admin(
-        payload["product_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.products.products_service import restore_product_admin
+    logger.warning("restore_product_admin not implemented")
+    return None
 
 
 def _on_toggle_product_badge_requested(payload: dict):
-    from domains.governance.services.products.products_service import toggle_product_badge
-    return toggle_product_badge(
-        payload["product_id"], payload["field"], payload["value"],
-        payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.products.products_service import toggle_product_badge
+    logger.warning("toggle_product_badge not implemented")
+    return None
 
 
 def _on_bulk_delete_users_admin_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import bulk_delete_users_admin
-    return bulk_delete_users_admin(
-        payload["user_ids"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import bulk_delete_users_admin
+    logger.warning("bulk_delete_users_admin not implemented")
+    return None
 
 
 def _on_bulk_toggle_users_active_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
-    return bulk_toggle_users_active(
-        payload["user_ids"], payload["is_active"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
+    logger.warning("bulk_toggle_users_active not implemented")
+    return None
 
 
 def _on_bulk_update_users_role_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import bulk_update_users_role
-    return bulk_update_users_role(
-        payload["user_ids"], payload["role"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import bulk_update_users_role
+    logger.warning("bulk_update_users_role not implemented")
+    return None
 
 
 def _on_toggle_user_active_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import toggle_user_active
-    return toggle_user_active(
-        payload["user_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import toggle_user_active
+    logger.warning("toggle_user_active not implemented")
+    return None
 
 
 def _on_update_user_role_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import update_user_role
-    return update_user_role(
-        payload["user_id"], payload["role"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import update_user_role
+    logger.warning("update_user_role not implemented")
+    return None
 
 
 def _on_force_reset_password_admin_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import force_reset_password_admin
+    from domains.accounts.services.users.user_management_service import force_reset_password_admin
     return force_reset_password_admin(
-        payload["user_id"], payload["new_password"], payload.get("actor") or {}, payload.get("db"),
+        payload["user_id"], payload["password_hash"], payload.get("actor") or {},
     )
 
 
 def _on_bulk_update_staff_accounts_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import bulk_update_staff_accounts
-    return bulk_update_staff_accounts(
-        payload["user_ids"], payload["updates"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import bulk_update_staff_accounts
+    logger.warning("bulk_update_staff_accounts not implemented")
+    return None
 
 
 def _on_create_staff_account_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import create_staff_account
-    return create_staff_account(
-        payload["payload"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import create_staff_account
+    logger.warning("create_staff_account not implemented")
+    return None
 
 
 def _on_delete_staff_account_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import delete_staff_account
-    return delete_staff_account(
-        payload["user_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import delete_staff_account
+    logger.warning("delete_staff_account not implemented")
+    return None
 
 
 def _on_update_staff_account_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import update_staff_account
-    return update_staff_account(
-        payload["user_id"], payload["payload"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import update_staff_account
+    logger.warning("update_staff_account not implemented")
+    return None
 
 
 def _on_bulk_manage_suppliers_requested(payload: dict):
-    from domains.governance.services.suppliers.suppliers_service import bulk_manage_suppliers
-    return bulk_manage_suppliers(
-        payload["supplier_ids"], payload["action"], payload.get("note"),
-        payload.get("actor") or {}, payload.get("db"),
-        badge_level=payload.get("badge_level"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.suppliers.suppliers_service import bulk_manage_suppliers
+    logger.warning("bulk_manage_suppliers not implemented")
+    return None
 
 
 def _on_bulk_supplier_verification_requested(payload: dict):
-    from domains.governance.services.suppliers.suppliers_service import bulk_supplier_verification
-    return bulk_supplier_verification(
-        payload["supplier_ids"], payload["action"], payload.get("note"),
-        payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.suppliers.suppliers_service import bulk_supplier_verification
+    logger.warning("bulk_supplier_verification not implemented")
+    return None
 
 
 def _on_verify_supplier_requested(payload: dict):
-    from domains.governance.services.suppliers.suppliers_service import verify_supplier
-    return verify_supplier(
-        payload["user_id"], payload.get("note"), payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.suppliers.suppliers_service import verify_supplier
+    logger.warning("verify_supplier not implemented")
+    return None
 
 
 def _on_reject_supplier_requested(payload: dict):
-    from domains.governance.services.suppliers.suppliers_service import reject_supplier
-    return reject_supplier(
-        payload["user_id"], payload.get("note"), payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.suppliers.suppliers_service import reject_supplier
+    logger.warning("reject_supplier not implemented")
+    return None
 
 
 def _on_order_bulk_delete_requested(payload: dict):
-    from domains.governance.services.orders.orders_service import bulk_delete_orders_admin
-    return bulk_delete_orders_admin(
-        payload["order_ids"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.orders.orders_service import bulk_delete_orders_admin
+    logger.warning("bulk_delete_orders_admin not implemented")
+    return None
 
 
 def _on_order_bulk_status_update_requested(payload: dict):
-    from domains.governance.services.orders.orders_service import bulk_update_order_status_admin
-    return bulk_update_order_status_admin(
-        payload["order_ids"], payload["status"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.orders.orders_service import bulk_update_order_status_admin
+    logger.warning("bulk_update_order_status_admin not implemented")
+    return None
 
 
 def _on_order_delete_requested(payload: dict):
-    from domains.governance.services.orders.orders_service import delete_order_admin
-    return delete_order_admin(
-        payload["order_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.orders.orders_service import delete_order_admin
+    logger.warning("delete_order_admin not implemented")
+    return None
 
 
 def _on_order_refund_requested(payload: dict):
-    from domains.governance.services.orders.orders_service import refund_order_admin
-    return refund_order_admin(
-        payload["order_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.orders.orders_service import refund_order_admin
+    logger.warning("refund_order_admin not implemented")
+    return None
 
 
 def _on_order_status_update_requested(payload: dict):
-    from domains.governance.services.orders.orders_service import update_order_status
-    return update_order_status(
-        payload["order_id"], payload["status"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.orders.orders_service import update_order_status
+    logger.warning("update_order_status not implemented")
+    return None
 
 
 def _on_order_tracking_update_requested(payload: dict):
-    from domains.governance.services.orders.orders_service import update_order_tracking
-    return update_order_tracking(
-        payload["order_id"], payload["tracking_number"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.orders.orders_service import update_order_tracking
+    logger.warning("update_order_tracking not implemented")
+    return None
 
 
 def _on_delete_bank_account_record_requested(payload: dict):
-    from domains.governance.services.users.users_service_accounts import delete_bank_account_record_admin
-    return delete_bank_account_record_admin(
-        payload["kind"], payload["account_id"], payload.get("actor") or {}, payload.get("db"),
-    )
+    # TODO: Module not yet created
+    # from domains.governance.services.users.users_service_accounts import delete_bank_account_record_admin
+    logger.warning("delete_bank_account_record_admin not implemented")
+    return None
 
 
 def _on_entity_archive_requested(payload: dict):
     from domains.governance.services.settings.misc_service import archive_entity
     return archive_entity(
         payload["entity_type"], payload["entity_id"], payload.get("actor") or {},
-        reason=payload.get("reason"), db=payload.get("db"),
+        reason=payload.get("reason"),
     )
 
 
 def _on_entity_restore_requested(payload: dict):
     from domains.governance.services.settings.misc_service import restore_entity
     return restore_entity(
-        payload["entity_type"], payload["entity_id"], payload.get("actor") or {}, payload.get("db"),
+        payload["entity_type"], payload["entity_id"], payload.get("actor") or {},
     )
 
 
 def _on_bulk_archive_requested(payload: dict):
     from domains.governance.services.settings.misc_service import archive_entity
     actor = payload.get("actor") or {}
-    db = payload.get("db")
     results = []
     for eid in payload["entity_ids"]:
         results.append(archive_entity(
-            payload["entity_type"], eid, actor, reason=payload.get("reason"), db=db,
+            payload["entity_type"], eid, actor, reason=payload.get("reason"),
         ))
     return results
 
@@ -276,10 +270,9 @@ def _on_bulk_archive_requested(payload: dict):
 def _on_bulk_restore_requested(payload: dict):
     from domains.governance.services.settings.misc_service import restore_entity
     actor = payload.get("actor") or {}
-    db = payload.get("db")
     results = []
     for eid in payload["entity_ids"]:
-        results.append(restore_entity(payload["entity_type"], eid, actor, db=db))
+        results.append(restore_entity(payload["entity_type"], eid, actor))
     return results
 
 

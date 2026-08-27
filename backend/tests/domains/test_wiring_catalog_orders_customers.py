@@ -17,8 +17,7 @@ from unittest.mock import MagicMock, patch
 class _MockModule(types.ModuleType):
     """Module subclass that returns a MagicMock for any attribute access.
 
-    Used to stub broken legacy modules so that imports like
-    ``from providers.media.ports import AIGenerationLog`` succeed
+    Used to stub broken legacy modules so that imports succeed
     without executing the real (missing/broken) module.
     """
 
@@ -39,14 +38,11 @@ def _ensure_mock_module(name: str) -> _MockModule:
 # because other domain modules (e.g. search_service) need the real SQLAlchemy
 # ``Base`` and ORM model classes to function.
 for _broken_module in (
-    "providers.media.ports",
-    "providers.media.services",
-    "providers.media.services.ai",
     "infrastructure.database.mixins",
     "domains.comms.models",
     "domains.comms.models.communication",
     "domains.governance.services.infrastructure_audit",
-    "infrastructure.utils.audit",
+    "domains.audit.services.logs.audit_service",
     "infrastructure.utils.constants",
     "domains.orders.utils",
     "domains.orders.utils.order_tracking",

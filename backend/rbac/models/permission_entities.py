@@ -3,7 +3,7 @@ from uuid import uuid4
 from sqlalchemy import func, UUID
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
-from .. import Base
+from infrastructure.database.base import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 __all__ = ['PermissionCategory', 'Permission', 'RolePermissionAssignment', 'UserPermissionOverride', 'PermissionAuditLog']
 
@@ -25,8 +25,8 @@ class PermissionCategory(Base):
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     country_code = Column(String(2), nullable=False, server_default='OM')
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     permissions = relationship('Permission', back_populates='category', cascade='all, delete-orphan')
 
 class Permission(Base):
@@ -48,7 +48,7 @@ class Permission(Base):
     scope = Column(String(20), nullable=False, server_default='global')
     is_active = Column(Boolean, default=True)
     country_code = Column(String(2), nullable=False, server_default='OM')
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
     category = relationship('PermissionCategory', back_populates='permissions')
 
 class RolePermissionAssignment(Base):
@@ -67,8 +67,8 @@ class RolePermissionAssignment(Base):
     country_code = Column(String(2), ForeignKey('country.country_configs.code', ondelete='RESTRICT'), nullable=True, index=True)
     granted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     is_granted = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 class UserPermissionOverride(Base):
     __tablename__ = 'user_permission_overrides'
@@ -88,7 +88,7 @@ class UserPermissionOverride(Base):
     is_granted = Column(Boolean, default=True)
     granted_by = Column(Integer, ForeignKey('governance.users.id', ondelete='RESTRICT'), nullable=True, index=True)
     expires_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
 class PermissionAuditLog(Base):
     __tablename__ = 'permission_audit_log'
@@ -109,4 +109,4 @@ class PermissionAuditLog(Base):
     permission_id = Column(Integer, ForeignKey('security.permissions.id', ondelete='RESTRICT'), nullable=True, index=True)
     country_code = Column(String(2), nullable=True)
     details = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)

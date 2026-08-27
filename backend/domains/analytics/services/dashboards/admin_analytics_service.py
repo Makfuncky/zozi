@@ -16,11 +16,9 @@ from typing import Any
 
 from sqlalchemy import func
 
-from domains.governance.models.user import User
-from domains.catalog.models.products import Product
-from domains.governance.models.admin import AdminAnalyticsSnapshot
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
+from domains.governance.ports import AdminAnalyticsSnapshot, User
+from domains.catalog.ports import Product
+from domains.orders.ports import Order, OrderItem
 import structlog
 logger = structlog.get_logger(__name__)
 

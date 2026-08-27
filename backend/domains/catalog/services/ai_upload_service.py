@@ -20,16 +20,17 @@ from sqlalchemy.orm import Session
 
 from domains.catalog.ports import Product
 from domains.catalog.ports import ProductVariant
-from providers.media.ports import AIGenerationLog
-from providers.media.ports import AIStagingProduct
-from providers.media.ports import AIStagingVariant
-from providers.media.ports import AIUploadJob
-from providers.storage.storage_backend import get_storage
+from domains.catalog.models.ai_upload import AIGenerationLog
+from domains.catalog.models.ai_upload import AIStagingProduct
+from domains.catalog.models.ai_upload import AIStagingVariant
+from domains.catalog.models.ai_upload import AIUploadJob
+from infrastructure.storage.storage import get_storage
 from providers.image.free_image_tools import (
     magic_erase, smart_crop, auto_rotate, auto_lighting,
 )
 from providers.image import HAS_CV2
 from providers.ai.image_similarity import compute_image_embedding, find_similar_images
+from providers.bg_removal import remove_background as bg_remove
 from infrastructure.utils.variant_key import compute_variant_key
 import structlog
 logger = structlog.get_logger(__name__)
@@ -45,6 +46,10 @@ def _preprocess_for_ai(img_bytes: bytes) -> bytes:
     img_bytes = auto_lighting(img_bytes)
     img_bytes = smart_crop(img_bytes, target_ratio=1.0)
     img_bytes = magic_erase(img_bytes, max_dim=1024)
+    try:
+        img_bytes = bg_remove(img_bytes, fast_mode=True)
+    except Exception as exc:
+        logger.warning("Background removal failed, using original: %s", exc)
     return img_bytes
 
 
@@ -74,7 +79,7 @@ def _enrich_one(
     job: AIUploadJob,
     image_url: str,
 ) -> tuple[AIStagingProduct, list[AIStagingVariant], list[AIGenerationLog]]:
-    from providers.media.services.ai import ai_service
+    from providers.ai.ai_variant_config import ai_service
 
     img_bytes = _preprocess_for_ai(img_bytes)
     name = ai_service.infer_product_name(image_bytes=img_bytes) or f"Untitled Product {idx + 1}"
@@ -283,7 +288,8 @@ def run_ai_upload_job(db: Session, job_id: int) -> None:
     media_list = []
     try:
         parsed = json.loads(job.source_media_json or "[]")
-    except (json.JSONDecodeError, TypeError):
+    except (json.JSONDecodeError, TypeError) as exc:
+        logger.warning("Failed to parse source_media_json for job %s: %s", job.id, exc)
         parsed = []
 
     staging_products: list[AIStagingProduct] = []
@@ -383,3 +389,12 @@ def cancel_ai_upload_job(db: Session, job_id: int) -> dict[str, Any]:
     job.status = "cancelled"
     db.commit()
     return {"job_id": job.id, "status": "cancelled"}
+
+
+def _check_duplicate_image(img_bytes: bytes, existing_products: list[dict]) -> list[dict]:
+    """Find visually similar products."""
+    try:
+        return find_similar_images(img_bytes, existing_products, limit=5)
+    except Exception as exc:
+        logger.warning("Duplicate image check failed: %s", exc)
+        return []

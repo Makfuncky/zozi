@@ -23,6 +23,8 @@ import io
 
 logger = logging.getLogger(__name__)
 
+HAS_OCR_PARSER = True
+
 _AMOUNT_RE = re.compile(r"(?:(?:OMR|USD|AED|SAR|QAR|KWD|BHD|EUR|GBP)\s*)?([0-9][0-9,]*\.?[0-9]{0,2})", re.IGNORECASE)
 _VAT_RE = re.compile(r"(?:vat|tax|t\.?a\.?x)\s*[:\-]?\s*([0-9][0-9,]*\.?[0-9]{0,2})", re.IGNORECASE)
 _DATE_RE = re.compile(r"(?:\b(?:date|issued|dated)\b[:\-]?\s*)?(\d{1,4}[/\-.\s](?:\d{1,2}[/\-.\s])?\d{1,4})", re.IGNORECASE)

@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, Path, Query
 
 from sqlalchemy.orm import Session
 
-from modules.admin.routers.admin_controller import (
+from domains.governance.services.settings.misc_service import (
     archive_entity,
     bulk_archive_entities,
     bulk_restore_entities,
@@ -37,7 +37,7 @@ from domains.country.utils.country_rls import get_country_or_404
 
 from infrastructure.utils.dependencies import require_admin
 
-from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
+from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 def list_categories(country_code: str, include_deleted: bool, page: int, page_size: int, _: User, db: Session):
     get_country_or_404(country_code.upper(), db)
@@ -158,7 +158,7 @@ from domains.comms.models.marketing import EmailCampaign
 from domains.comms.models.marketing import NewsletterSubscriber
 
 from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
+from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 
 def list_all_campaigns(db: Session) -> list:

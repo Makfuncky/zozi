@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from sqlalchemy.orm import Session
 
 from domains.comms.models.communication import ChatAttachment
+from domains.comms.models.chat import EntityChatThread, DirectChatRoom, DirectChatMessage, GroupChatRoom, GroupChatMessage
 from infrastructure.utils.storage import storage as _storage
 from infrastructure.database.database import get_db
 
@@ -39,7 +40,6 @@ class ChatSystem:
         is_external: bool = False,
         country_code: Optional[str] = None,
     ) -> dict:
-        from domains.governance.models.core import EntityChatThread
         thread = EntityChatThread(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -292,8 +292,6 @@ class ChatSystem:
                 message=content or f"{len(files)} file(s)",
             )
         elif chat_type == "dm" or chat_type == "direct":
-            from domains.governance.models.core import DirectChatRoom
-            from domains.governance.models.core import DirectChatMessage
             room = self.db.query(DirectChatRoom).filter(
                 DirectChatRoom.chat_id == chat_id,
                 DirectChatRoom.is_active == True,
@@ -307,8 +305,6 @@ class ChatSystem:
                 message_type=message_type,
             )
         elif chat_type == "group":
-            from domains.governance.models.core import GroupChatRoom
-            from domains.governance.models.core import GroupChatMessage
             room = self.db.query(GroupChatRoom).filter(
                 GroupChatRoom.chat_id == chat_id,
                 GroupChatRoom.is_active == True,

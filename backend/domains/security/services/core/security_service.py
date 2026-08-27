@@ -15,12 +15,12 @@ from fastapi import Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from infrastructure.database.database import get_db
-from domains.governance.models.fraud import DeviceFingerprint
-from domains.governance.models.fraud import FraudBlacklist
-from domains.governance.models.fraud import FraudEvent
-from domains.governance.models.fraud import FraudRule
-from domains.governance.models.fraud import IPReputation
-from domains.governance.models.fraud import ManualReviewQueue
+from domains.security.models.fraud import DeviceFingerprint
+from domains.security.models.fraud import FraudBlacklist
+from domains.security.models.fraud import FraudEvent
+from domains.security.models.fraud import FraudRule
+from domains.security.models.fraud import IPReputation
+from domains.security.models.fraud import ManualReviewQueue
 from infrastructure.database.schemas import (
     FraudBlacklistCreate,
     FraudBlacklistOut,

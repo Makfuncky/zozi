@@ -7,18 +7,18 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 
 from domains.governance.models.user import UserLoginHistory
-from domains.governance.models.fraud import FraudEvent
-from domains.governance.models.fraud import FraudBlacklist
-from domains.governance.models.fraud import FraudRule
-from domains.governance.models.fraud import ManualReviewQueue
-from domains.governance.models.fraud import IPReputation
-from domains.governance.models.fraud import DeviceFingerprint
-from domains.governance.models.fraud import CreditCardBin
-from domains.governance.models.fraud import ReturnAbusePattern
-from domains.governance.models.fraud import SupplierFraudIndicator
-from domains.governance.models.fraud import LogisticsFraudIndicator
-from domains.governance.models.fraud import FraudAlert
-from domains.governance.models.fraud import IPAccountLinkage
+from domains.security.models.fraud import FraudEvent
+from domains.security.models.fraud import FraudBlacklist
+from domains.security.models.fraud import FraudRule
+from domains.security.models.fraud import ManualReviewQueue
+from domains.security.models.fraud import IPReputation
+from domains.security.models.fraud import DeviceFingerprint
+from domains.security.models.fraud import CreditCardBin
+from domains.security.models.fraud import ReturnAbusePattern
+from domains.security.models.fraud import SupplierFraudIndicator
+from domains.security.models.fraud import LogisticsFraudIndicator
+from domains.security.models.fraud import FraudAlert
+from domains.security.models.fraud import IPAccountLinkage
 
 
 class FraudService:
@@ -176,4 +176,93 @@ class FraudService:
 
 def create_fraud_service(db: Session) -> FraudService:
     return FraudService(db)
+
+
+def list_fraud_events(
+    db: Session,
+    page: int,
+    size: int,
+    user_id: int | None,
+    ip_address: str | None,
+    min_score: int,
+) -> list:
+    from domains.security.models.fraud import FraudEvent
+    query = db.query(FraudEvent)
+    if user_id:
+        query = query.filter(FraudEvent.user_id == user_id)
+    if ip_address:
+        query = query.filter(FraudEvent.ip_address == ip_address)
+    if min_score:
+        query = query.filter(FraudEvent.score >= min_score)
+    return query.order_by(FraudEvent.created_at.desc()).offset((page - 1) * size).limit(size).all()
+
+
+def list_blacklist(db: Session, entity_type: str | None, status: str) -> list:
+    from domains.security.models.fraud import FraudBlacklist
+    query = db.query(FraudBlacklist)
+    if entity_type:
+        query = query.filter(FraudBlacklist.entity_type == entity_type)
+    if status:
+        query = query.filter(FraudBlacklist.status == status)
+    return query.all()
+
+
+def add_to_blacklist(db: Session, payload: dict):
+    import hashlib
+    from fastapi import HTTPException
+    from domains.security.models.fraud import FraudBlacklist
+    value_hash = hashlib.sha256(payload["entity_value"].encode()).hexdigest()
+    existing = db.query(FraudBlacklist).filter(
+        FraudBlacklist.entity_type == payload["entity_type"],
+        FraudBlacklist.entity_value_hash == value_hash,
+    ).first()
+    if existing:
+        raise HTTPException(400, "Entity already blacklisted")
+    entry = FraudBlacklist(
+        entity_type=payload["entity_type"],
+        entity_value_hash=value_hash,
+        reason=payload.get("reason"),
+        expires_at=payload.get("expires_at"),
+    )
+    db.add(entry)
+    db.commit()
+    return entry
+
+
+def remove_from_blacklist(db: Session, entry_id: int):
+    from fastapi import HTTPException
+    from domains.security.models.fraud import FraudBlacklist
+    entry = db.query(FraudBlacklist).filter(FraudBlacklist.id == entry_id).first()
+    if not entry:
+        raise HTTPException(404, "Entry not found")
+    entry.status = "whitelisted"
+    db.commit()
+    return {"message": "Entity whitelisted"}
+
+
+def list_rules(db: Session, is_active: bool) -> list:
+    from domains.security.models.fraud import FraudRule
+    return db.query(FraudRule).filter(FraudRule.is_active == is_active).all()
+
+
+def list_review_queue(db: Session, status: str, priority: str | None) -> list:
+    from domains.security.models.fraud import ManualReviewQueue
+    query = db.query(ManualReviewQueue)
+    if status:
+        query = query.filter(ManualReviewQueue.status == status)
+    if priority:
+        query = query.filter(ManualReviewQueue.priority == priority)
+    return query.all()
+
+
+def get_threat_feed_status(db: Session) -> dict:
+    from domains.security.models.fraud import IPReputation
+    tor_count = db.query(IPReputation).filter(IPReputation.is_tor == True).count()
+    proxy_count = db.query(IPReputation).filter(IPReputation.is_proxy == True).count()
+    hosting_count = db.query(IPReputation).filter(IPReputation.is_hosting == True).count()
+    return {
+        "tor_count": tor_count,
+        "proxy_count": proxy_count,
+        "hosting_asn_count": hosting_count,
+    }
 

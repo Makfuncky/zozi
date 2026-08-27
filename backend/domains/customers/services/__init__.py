@@ -9,10 +9,8 @@ from domains.customers.services.cart_service import *
 from domains.customers.services.reviews_service import *
 from domains.customers.services.search_service import *
 from domains.customers.services.user_read_service import *
-from domains.customers.services.referrals import *
 from domains.customers.services.coins import *
 from domains.customers.services.recommendations import *
 from domains.customers.services.events import *
-from domains.customers.services.features import *
 
 __all__: list[str] = []

@@ -10,7 +10,12 @@ through these helpers instead of performing third-party HTTP requests directly.
 import logging
 from typing import Any, Dict, Optional
 
-import requests
+try:
+    import requests
+    HAS_BANK_API = True
+except ImportError:
+    HAS_BANK_API = False
+    requests = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -113,4 +118,4 @@ def dispatch_batch(
     return {"status_code": response.status_code, "body": body}
 
 
-__all__ = ["BankApiError", "test_connection", "dispatch_batch"]
+__all__ = ["BankApiError", "test_connection", "dispatch_batch", "HAS_BANK_API"]

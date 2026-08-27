@@ -17,9 +17,12 @@ import numpy as np
 from providers.image import Image
 from fastapi import Depends, File, Form, HTTPException, UploadFile
 from domains.security.services.iam.security_dependencies import require_roles
-from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
-from domains.finance.services.shared.bg_removal_service import remove_background
-from domains.finance.services.shared.bg_removal_service import _HAS_CV2
+# TODO: Module not yet created
+# from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
+# TODO: Module not yet created
+# from domains.finance.services.shared.bg_removal_service import remove_background
+# TODO: Module not yet created
+# from domains.finance.services.shared.bg_removal_service import _HAS_CV2
 from providers.image.bg_remover import _bytes_to_image
 logger = logging.getLogger(__name__)
 AB_TEST_STRATEGIES = ['clean_commercial', 'precision_geometry', 'birefnet_production', 'ultimate_gaps', 'marketing_variants', 'lite_variants']
@@ -44,8 +47,10 @@ async def ab_test_bg_strategies(image: UploadFile=File(...), strategies: Optiona
     _storage.save(image_key, raw, content_type=image.content_type or 'image/jpeg')
 
     def _run_ab_test() -> dict:
-        from domains.finance.services.shared.bg_removal_service import remove_background
-        from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
+        # TODO: Module not yet created
+# from domains.finance.services.shared.bg_removal_service import remove_background
+        # TODO: Module not yet created
+# from domains.finance.services.shared.bg_removal_service import VALID_STRATEGIES
         from providers.image.bg_remover import _bytes_to_image
         from providers.image import Image
         import base64, time, gc

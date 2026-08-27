@@ -16,6 +16,7 @@ import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/useAuth";
 import { useCurrencyStore } from "@/lib/currencyStore";
 import type { Order } from "@/lib/types";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const STATUS_CONFIG: Record<string, { chip: string; icon: typeof Package; label: string }> = {
   pending: { chip: "theme-chip-warning", icon: Clock, label: "Pending" },
@@ -93,95 +94,97 @@ export default function OrdersPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-text">My Orders</h1>
-          <button
-            onClick={() => router.push("/products")}
-            className="text-xs text-primary hover:underline font-semibold"
-          >
-            Continue Shopping
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-sm">
-            {error}
+    <ErrorBoundary>
+      <main className="min-h-screen px-4 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-text">My Orders</h1>
+            <button
+              onClick={() => router.push("/products")}
+              className="text-xs text-primary hover:underline font-semibold"
+            >
+              Continue Shopping
+            </button>
           </div>
-        )}
 
-        <div className="space-y-4">
-          {orders.map((order, i) => {
-            const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
-            const Icon = cfg.icon;
-            const total = order.total_amount ?? order.total ?? 0;
-            const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-sm">
+              {error}
+            </div>
+          )}
 
-            return (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                onClick={() => router.push(`/orders/${order.id}`)}
-                className="p-5 rounded-2xl border border-border bg-surface-1 hover:border-primary/40 cursor-pointer transition-colors"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center shrink-0">
-                      <Icon className="w-5 h-5 text-text-muted" />
+          <div className="space-y-4">
+            {orders.map((order, i) => {
+              const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+              const Icon = cfg.icon;
+              const total = order.total_amount ?? order.total ?? 0;
+              const itemCount = order.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+
+              return (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  className="p-5 rounded-2xl border border-border bg-surface-1 hover:border-primary/40 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center shrink-0">
+                        <Icon className="w-5 h-5 text-text-muted" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-text text-sm">Order #{order.id}</p>
+                        <p className="text-text-faint text-xs mt-0.5">
+                          {order.created_at ? new Date(order.created_at).toLocaleDateString() : ""}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold text-text text-sm">Order #{order.id}</p>
-                      <p className="text-text-faint text-xs mt-0.5">
-                        {order.created_at ? new Date(order.created_at).toLocaleDateString() : ""}
-                      </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cfg.chip}`}>
+                        {cfg.label}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${cfg.chip}`}>
-                      {cfg.label}
+
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+                    <span className="rounded-full bg-surface-2 px-2.5 py-1 font-semibold text-text">
+                      {itemCount} item{itemCount === 1 ? "" : "s"}
+                    </span>
+                    {order.payment_method && (
+                      <span className="rounded-full bg-surface-2 px-2.5 py-1 text-text-muted capitalize">
+                        {order.payment_method.replaceAll("_", " ")}
+                      </span>
+                    )}
+                    {order.tracking_number && (
+                      <span className="rounded-full bg-surface-2 px-2.5 py-1 text-text-muted font-mono text-[10px]">
+                        {order.tracking_number}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3">
+                    {order.tracking_number && (
+                      <span className="text-text-faint text-xs font-mono">
+                        {order.tracking_number}
+                      </span>
+                    )}
+                    {!order.tracking_number && (
+                      <span className="text-text-faint text-xs">
+                        {order.shipping_address ? "Delivery pending" : ""}
+                      </span>
+                    )}
+                    <span className="text-text font-bold text-sm">
+                      {formatPrice(total)}
                     </span>
                   </div>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-                  <span className="rounded-full bg-surface-2 px-2.5 py-1 font-semibold text-text">
-                    {itemCount} item{itemCount === 1 ? "" : "s"}
-                  </span>
-                  {order.payment_method && (
-                    <span className="rounded-full bg-surface-2 px-2.5 py-1 text-text-muted capitalize">
-                      {order.payment_method.replaceAll("_", " ")}
-                    </span>
-                  )}
-                  {order.tracking_number && (
-                    <span className="rounded-full bg-surface-2 px-2.5 py-1 text-text-muted font-mono text-[10px]">
-                      {order.tracking_number}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between mt-3">
-                  {order.tracking_number && (
-                    <span className="text-text-faint text-xs font-mono">
-                      {order.tracking_number}
-                    </span>
-                  )}
-                  {!order.tracking_number && (
-                    <span className="text-text-faint text-xs">
-                      {order.shipping_address ? "Delivery pending" : ""}
-                    </span>
-                  )}
-                  <span className="text-text font-bold text-sm">
-                    {formatPrice(total)}
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </ErrorBoundary>
   );
 }

@@ -3,7 +3,14 @@
 Isolated here so ``storage_backend.py`` can import it without a circular
 dependency through ``providers.storage.__init__``.
 """
-from typing import Any
+from typing import Any, Optional
+
+try:
+    import boto3
+    HAS_S3 = True
+except ImportError:
+    HAS_S3 = False
+    boto3 = None  # type: ignore[assignment]
 
 
 def create_s3_client(

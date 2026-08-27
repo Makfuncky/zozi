@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+HAS_PRICE_INTELLIGENCE = True
+
 __all__ = [
     "get_category_price_benchmarks",
     "analyze_price",

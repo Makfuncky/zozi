@@ -201,13 +201,6 @@ def get_incident_service(db: Session = None) -> IncidentService:
 
 # === Merged from incident_admin_read_service.py ===
 
-"""Incident war-room read service (W1).
-
-Owns the read behind ``incident_admin_controller.get_war_room`` so the
-controller stays free of direct ORM queries.
-"""
-from __future__ import annotations
-
 from sqlalchemy.orm import Session
 
 from domains.governance.models.incident import IncidentWarRoom

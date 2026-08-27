@@ -11,7 +11,12 @@ directly. Caching (Redis) remains the service's responsibility.
 import logging
 from typing import Any, Dict, List
 
-import aiohttp
+try:
+    import aiohttp
+    HAS_EXTERNAL_DATA = True
+except ImportError:
+    HAS_EXTERNAL_DATA = False
+    aiohttp = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

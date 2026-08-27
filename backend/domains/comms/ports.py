@@ -427,11 +427,11 @@ def get_user_points_by_id(db: Session, id_: int) -> Optional[UserPoints]:
     """Return UserPoints by primary key (or None)."""
     return db.get(UserPoints, id_)
 
-def list_user_pointss(db: Session, limit: int = 100) -> List[UserPoints]:
+def list_user_points(db: Session, limit: int = 100) -> List[UserPoints]:
     """Return up to ``limit`` UserPoints rows (keyset-ordered, no OFFSET)."""
     return _keyset_list(UserPoints, db, limit)
 
-def list_user_pointss_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
+def list_user_points_page(db: Session, cursor: Optional[str] = None, page_size: int = MAX_PAGE_SIZE) -> CursorPage:
     """Keyset-cursor page of UserPoints rows (scale-ready)."""
     return _keyset_page(UserPoints, db, cursor, page_size)
 
@@ -585,3 +585,59 @@ def __getattr__(name: str):
         globals()[name] = value
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+# ── Campaign functions (sanctioned cross-domain delegation) ─────────────────
+# Thin wrappers so module routers import from comms.ports instead of
+# directly from domains.comms.services.email.email_management.
+
+def create_campaign(db: Session, payload: dict, country_code: str) -> dict:
+    """Sanctioned cross-domain write: create an email campaign."""
+    from domains.comms.services.email.email_management import create_campaign as _svc
+    return _svc(db, payload, country_code)
+
+
+def delete_campaign(db: Session, campaign_id: int, country_code: str) -> dict:
+    """Sanctioned cross-domain write: delete an email campaign."""
+    from domains.comms.services.email.email_management import delete_campaign as _svc
+    return _svc(db, campaign_id, country_code)
+
+
+def list_campaigns(db: Session, country_code: str, page: int, page_size: int) -> dict:
+    """Sanctioned cross-domain read: list email campaigns by country."""
+    from domains.comms.services.email.email_management import list_campaigns as _svc
+    return _svc(db, country_code, page, page_size)
+
+
+def list_all_campaigns(db: Session) -> list:
+    """Sanctioned cross-domain read: list all email campaigns."""
+    from domains.comms.services.email.email_management import list_all_campaigns as _svc
+    return _svc(db)
+
+
+# ── Notification enums and support-ticket helpers (module-router use only) ─
+# Re-exported here so module routers import from comms.ports instead of
+# reaching into ``domains.comms.services.comms_service`` directly.
+
+_LAZY_COMMS_EXPORTS: dict[str, tuple[str, str]] = {
+    "NotificationChannel": ("domains.comms.services.comms_service", "NotificationChannel"),
+    "NotificationPriority": ("domains.comms.services.comms_service", "NotificationPriority"),
+    "list_support_tickets": ("domains.comms.services.comms_service", "list_support_tickets"),
+    "create_support_ticket": ("domains.comms.services.comms_service", "create_support_ticket"),
+    "get_support_ticket": ("domains.comms.services.comms_service", "get_support_ticket"),
+    "reply_to_support_ticket": ("domains.comms.services.comms_service", "reply_to_support_ticket"),
+}
+
+
+_orig_comms_getattr = __getattr__
+
+
+def __getattr__(name: str):  # type: ignore[no-redef]
+    if name in _LAZY_COMMS_EXPORTS:
+        import importlib as _il
+        module_path, symbol = _LAZY_COMMS_EXPORTS[name]
+        mod = _il.import_module(module_path)
+        value = getattr(mod, symbol)
+        globals()[name] = value
+        return value
+    return _orig_comms_getattr(name)

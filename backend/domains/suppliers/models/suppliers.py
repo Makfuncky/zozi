@@ -27,7 +27,7 @@ __all__ = ['SupplierProfile', 'SupplierDocument', 'SupplierNotificationPreferenc
 
 class SupplierProfile(Base, TenantMixin):
     __tablename__ = 'supplier_profiles'
-    __table_args__ = ({'schema': 'supplier'},)
+    __table_args__ = ({'schema': 'suppliers'},)
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -55,7 +55,7 @@ class SupplierProfile(Base, TenantMixin):
 
 class SupplierDocument(Base, TenantMixin):
     __tablename__ = 'supplier_documents'
-    __table_args__ = ({'schema': 'supplier'},)
+    __table_args__ = ({'schema': 'suppliers'},)
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -64,7 +64,7 @@ class SupplierDocument(Base, TenantMixin):
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey('supplier.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
     doc_type = Column(String(50), nullable=False)
     document_name = Column(String(255), nullable=True)
     file_url = Column(String(500), nullable=False)
@@ -79,12 +79,12 @@ class SupplierDocument(Base, TenantMixin):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     supplier = relationship('SupplierProfile', foreign_keys=[supplier_id])
 
-    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'expired', 'revoked')", name='chk_supplier_documents_status_valid'), {'schema': 'supplier'})
+    __table_args__ = (CheckConstraint("status IN ('pending', 'approved', 'rejected', 'expired', 'revoked')", name='chk_supplier_documents_status_valid'), {'schema': 'suppliers'})
 
 
 class SupplierNotificationPreference(Base, TenantMixin):
     __tablename__ = 'supplier_notification_preferences'
-    __table_args__ = (Index('ix_supplier_notification_preferences_country_created', 'country_code', 'created_at'), {'schema': 'supplier'})
+    __table_args__ = (Index('ix_supplier_notification_preferences_country_created', 'country_code', 'created_at'), {'schema': 'suppliers'})
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
     is_deleted = Column(Boolean, default=False, server_default='false', nullable=False, index=True)
@@ -93,7 +93,7 @@ class SupplierNotificationPreference(Base, TenantMixin):
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey('supplier.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
     notify_new_order = Column(Boolean, default=True)
     notify_low_stock = Column(Boolean, default=True)
     notify_payout_processed = Column(Boolean, default=True)
@@ -114,7 +114,7 @@ class SupplierBadgeCatalog(Base):
     __table_args__ = (
         Index('ix_supplier_badge_catalog_country_created', 'country_code', 'created_at'),
         Index('ix_supplier_badge_catalog_benefits_gin', 'benefits'),
-        {'schema': 'supplier'},
+        {'schema': 'suppliers'},
     )
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
@@ -145,7 +145,7 @@ class SupplierBadge(Base):
     __table_args__ = (
         UniqueConstraint('supplier_id', 'catalog_id', name='uq_supplier_badge'),
         Index('ix_supplier_badges_country_created', 'country_code', 'created_at'),
-        {'schema': 'supplier'},
+        {'schema': 'suppliers'},
     )
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
@@ -155,8 +155,8 @@ class SupplierBadge(Base):
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey('supplier.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
-    catalog_id = Column(Integer, ForeignKey('supplier.supplier_badge_catalog.id', ondelete='RESTRICT'), nullable=True, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalog.id', ondelete='RESTRICT'), nullable=True, index=True)
     badge_name = Column(String(100), nullable=False)
     badge_level = Column(String(30), nullable=False, default='bronze')
     status = Column(String(20), nullable=False, default='active')
@@ -175,7 +175,7 @@ class SupplierBadge(Base):
         UniqueConstraint('supplier_id', 'catalog_id', name='uq_supplier_badge'),
         Index('ix_supplier_badges_country_created', 'country_code', 'created_at'),
         CheckConstraint("status IN ('active', 'inactive', 'suspended', 'expired', 'revoked')", name='chk_supplier_badges_status_valid'),
-        {'schema': 'supplier'},
+        {'schema': 'suppliers'},
     )
 
 
@@ -185,7 +185,7 @@ class SupplierBadgeBillingHistory(Base):
     __tablename__ = 'supplier_badge_billing_history'
     __table_args__ = (
         Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
-        {'schema': 'supplier'},
+        {'schema': 'suppliers'},
     )
     uuid = Column(UUID(as_uuid=True), default=uuid4, unique=True, nullable=True)
     version = Column(Integer, nullable=False, default=1)
@@ -195,9 +195,9 @@ class SupplierBadgeBillingHistory(Base):
     created_by = Column(Integer, nullable=True, index=True)
     updated_by = Column(Integer, nullable=True, index=True)
     id = Column(Integer, primary_key=True, index=True)
-    supplier_id = Column(Integer, ForeignKey('supplier.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
-    badge_id = Column(Integer, ForeignKey('supplier.supplier_badges.id', ondelete='RESTRICT'), nullable=True, index=True)
-    catalog_id = Column(Integer, ForeignKey('supplier.supplier_badge_catalog.id', ondelete='RESTRICT'), nullable=True, index=True)
+    supplier_id = Column(Integer, ForeignKey('suppliers.supplier_profiles.id', ondelete='RESTRICT'), nullable=False, index=True)
+    badge_id = Column(Integer, ForeignKey('suppliers.supplier_badges.id', ondelete='RESTRICT'), nullable=True, index=True)
+    catalog_id = Column(Integer, ForeignKey('suppliers.supplier_badge_catalog.id', ondelete='RESTRICT'), nullable=True, index=True)
     billing_reference = Column(String(120), unique=True, nullable=True)
     charge_type = Column(String(30), nullable=True)
     amount = Column(Numeric(12, 2), nullable=False, default=Decimal('0'))
@@ -218,6 +218,6 @@ class SupplierBadgeBillingHistory(Base):
     __table_args__ = (
         Index('ix_supplier_badge_billing_country_created', 'country_code', 'created_at'),
         CheckConstraint("status IN ('pending', 'completed', 'failed', 'refunded', 'cancelled')", name='chk_supplier_badge_billing_history_status_valid'),
-        {'schema': 'supplier'},
+        {'schema': 'suppliers'},
     )
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import desc, func as sqlfunc, case as sql_case
+from sqlalchemy import desc, func as sqlfunc, case as sql_case, text
 from sqlalchemy.orm import Session
 
 from domains.comms.models.marketing import EmailCampaign
@@ -168,24 +168,6 @@ class EmailManagementService:
             "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
         }
 
-    def create_campaign(
-        self, payload: Dict[str, Any], country_code: str, user_id: Optional[int] = None
-    ) -> dict:
-        """Create a campaign scoped to a country (RLS-aware)."""
-        allowed = {"name", "subject", "status", "send_at", "created_by", "country_code"}
-        data = {k: v for k, v in payload.items() if k in allowed and v is not None}
-        data["country_code"] = country_code.upper()
-        campaign = EmailCampaign(**data)
-        add_and_flush(self.db, campaign)
-        commit_and_refresh(self.db, campaign)
-        return {
-            "id": campaign.id,
-            "name": campaign.name,
-            "subject": campaign.subject,
-            "status": campaign.status,
-            "created_at": campaign.created_at.isoformat() if campaign.created_at else None,
-        }
-
     def create_template(
         self, payload: Dict[str, Any], user_id: Optional[int] = None
     ) -> dict:
@@ -279,6 +261,17 @@ class EmailManagementService:
             .filter(EmailCampaign.country_code == country_code.upper())
             .order_by(desc(EmailCampaign.created_at))
         )
+
+    def get_campaigns_by_country(self, country_code: str, limit: int = 50) -> List[dict]:
+        """List campaigns filtered by country with limit applied."""
+        campaigns = (
+            self.db.query(EmailCampaign)
+            .filter(EmailCampaign.country_code == country_code.upper())
+            .order_by(desc(EmailCampaign.created_at))
+            .limit(limit)
+            .all()
+        )
+        return [_campaign_to_dict(c) for c in campaigns]
 
     def find_campaign_for_deletion(self, campaign_id: int, country_code: str) -> EmailCampaign:
         """Look up a campaign for deletion within a specific country scope."""
@@ -420,3 +413,195 @@ def _email_runtime_to_dict(cfg: EmailRuntimeConfig) -> dict:
 
 def get_email_management_service(db: Session = None) -> EmailManagementService:
     return EmailManagementService(db or get_service_session())
+
+
+class UnifiedInboxService:
+    """Service for unified inbox operations across all communication channels."""
+
+    def __init__(self, db: Session = None):
+        self.db = db or get_service_session()
+
+    def get_unified_inbox(
+        self,
+        user_id: int,
+        lens: str = "all",
+        cursor: str | None = None,
+        limit: int = 50,
+        transport: str | None = None,
+    ) -> dict:
+        """Return a cursor-paginated, server-sorted merge of all conversation types."""
+        import base64
+
+        conditions = ["1=1"]
+        params: dict = {"limit": limit + 1}
+
+        if transport:
+            conditions.append("transport = :transport")
+            params["transport"] = transport
+
+        if lens == "unread":
+            conditions.append("unread > 0")
+        elif lens == "mentions":
+            conditions.append("channel_type = 'mention'")
+
+        if cursor:
+            try:
+                decoded = base64.urlsafe_b64decode(cursor).decode()
+                ts, cid = decoded.split("::", 1)
+                conditions.append("(updated_at, id) < (:cursor_ts, :cursor_id)")
+                params["cursor_ts"] = ts
+                params["cursor_id"] = int(cid) if cid.isdigit() else cid
+            except Exception:
+                pass
+
+        where_clause = " AND ".join(conditions)
+
+        sql = """
+            SELECT * FROM (
+                -- Direct messages
+                SELECT
+                    'dm_' || dcr.id AS id,
+                    dcr.id AS local_id,
+                    'chat' AS transport,
+                    u.full_name AS title,
+                    SUBSTR(dcm.message, 1, 120) AS preview,
+                    CASE WHEN dcm.read_at IS NULL AND dcm.sender_id != :user_id THEN 1 ELSE 0 END AS unread,
+                    dcm.created_at AS updated_at,
+                    'direct' AS channel_type,
+                    0 AS participants,
+                    NULL AS peer_avatar,
+                    NULL AS folder
+                FROM direct_chat_messages dcm
+                JOIN direct_chat_rooms dcr ON dcr.id = dcm.room_id
+                JOIN users u ON u.id = CASE WHEN dcr.participant_one = :user_id THEN dcr.participant_two ELSE dcr.participant_one END
+                WHERE :user_id IN (dcr.participant_one, dcr.participant_two)
+
+                UNION ALL
+
+                -- Group messages
+                SELECT
+                    'grp_' || gcm.id,
+                    gcm.id,
+                    'group',
+                    gcr.name,
+                    SUBSTR(gcm.message, 1, 120),
+                    CASE WHEN gcm.read_at IS NULL AND gcm.sender_id != :user_id THEN 1 ELSE 0 END,
+                    gcm.created_at,
+                    'group',
+                    (SELECT COUNT(*) FROM group_chat_members WHERE room_id = gcr.id),
+                    NULL,
+                    NULL AS folder
+                FROM group_chat_messages gcm
+                JOIN group_chat_rooms gcr ON gcr.id = gcm.room_id
+                JOIN group_chat_members gcmem ON gcmem.room_id = gcr.id AND gcmem.user_id = :user_id
+
+                UNION ALL
+
+                -- Internal channels
+                SELECT
+                    'ch_' || im.id,
+                    im.id,
+                    'group',
+                    ic.name,
+                    SUBSTR(im.message, 1, 120),
+                    CASE WHEN im.read_at IS NULL AND im.user_id != :user_id THEN 1 ELSE 0 END,
+                    im.created_at,
+                    'channel',
+                    (SELECT COUNT(*) FROM internal_channel_members WHERE channel_id = ic.id),
+                    NULL,
+                    NULL AS folder
+                FROM internal_messages im
+                JOIN internal_channels ic ON ic.id = im.channel_id
+                JOIN internal_channel_members icm ON icm.channel_id = ic.id AND icm.user_id = :user_id
+
+                UNION ALL
+
+                -- Internal emails
+                SELECT
+                    'eml_' || ie.id,
+                    ie.id,
+                    'email',
+                    ie.subject,
+                    SUBSTR(ie.body_text, 1, 120),
+                    CASE WHEN ef.name = 'inbox' THEN 1 ELSE 0 END,
+                    ie.created_at,
+                    'email',
+                    0,
+                    NULL,
+                    ef.name
+                FROM internal_emails ie
+                JOIN email_folders ef ON ef.id = ie.folder_id
+                JOIN employees e ON e.id = ef.employee_id AND e.user_id = :user_id
+
+            ) AS inbox
+            WHERE """ + where_clause + """
+            ORDER BY updated_at DESC, id DESC
+            LIMIT :limit
+        """
+
+        params["user_id"] = user_id
+
+        rows = self.db.execute(text(sql), params).mappings().all()
+
+        has_more = len(rows) > limit
+        if has_more:
+            rows = rows[:limit]
+
+        items = []
+        next_cursor = None
+        for r in rows:
+            ts = r["updated_at"]
+            if hasattr(ts, "isoformat"):
+                ts = ts.isoformat()
+            items.append({
+                "id": str(r["id"]),
+                "transport": r["transport"],
+                "title": r["title"],
+                "preview": r["preview"],
+                "unread": r["unread"],
+                "updatedAt": ts,
+                "channelType": r["channel_type"],
+                "participants": r["participants"] or 0,
+                "peerAvatar": r["peer_avatar"],
+                "folder": r["folder"],
+            })
+
+        if has_more and rows:
+            last = rows[-1]
+            ts = last["updated_at"]
+            if hasattr(ts, "isoformat"):
+                ts = ts.isoformat()
+            raw = f"{ts}::{last['local_id']}"
+            next_cursor = base64.urlsafe_b64encode(raw.encode()).decode()
+
+        return {"items": items, "nextCursor": next_cursor, "hasMore": has_more}
+
+
+def get_unified_inbox_service(db: Session = None) -> UnifiedInboxService:
+    return UnifiedInboxService(db or get_service_session())
+
+
+# ── Campaign functions (sanctioned cross-domain delegation) ─────────────────
+
+def create_campaign(db: Session, payload: dict, country_code: str) -> dict:
+    """Sanctioned cross-domain write: create an email campaign."""
+    from domains.orders.services.core.admin_extra import create_campaign as _svc
+    return _svc(country_code, payload, db)
+
+
+def delete_campaign(db: Session, campaign_id: int, country_code: str) -> dict:
+    """Sanctioned cross-domain write: delete an email campaign."""
+    from domains.orders.services.core.admin_extra import delete_campaign as _svc
+    return _svc(country_code, campaign_id, db)
+
+
+def list_campaigns(db: Session, country_code: str, page: int, page_size: int) -> dict:
+    """Sanctioned cross-domain read: list email campaigns by country."""
+    from domains.orders.services.core.admin_extra import list_campaigns as _svc
+    return _svc(country_code, page, page_size, db)
+
+
+def list_all_campaigns(db: Session) -> list:
+    """Sanctioned cross-domain read: list all email campaigns."""
+    from domains.orders.services.core.admin_extra import list_all_campaigns as _svc
+    return _svc(db)

@@ -2,6 +2,9 @@
 
 Prevents cascading failures by opening the circuit after a threshold of failures
 and periodically testing recovery with a half-open probe.
+
+This module provides a decorator-focused circuit breaker and re-exports
+common symbols from ``infrastructure.utils.circuit_breaker`` for convenience.
 """
 from __future__ import annotations
 
@@ -12,28 +15,25 @@ from enum import Enum
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar
 
+from infrastructure.utils.circuit_breaker import (
+    CircuitBreakerError,
+    CircuitBreaker as _UtilsCircuitBreaker,
+    CircuitState,
+    get_breaker,
+)
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
-
-class CircuitState(str, Enum):
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
-
-
-class CircuitBreakerError(Exception):
-    """Raised when the circuit is open and calls are rejected."""
-
-    def __init__(self, service_name: str, state: CircuitState, retry_after: float):
-        self.service_name = service_name
-        self.state = state
-        self.retry_after = retry_after
-        super().__init__(
-            f"Circuit breaker '{service_name}' is {state.value}. "
-            f"Retry after {retry_after:.1f}s"
-        )
+# Re-export common symbols from the canonical utils location
+__all__ = [
+    "CircuitBreaker",
+    "CircuitBreakerError",
+    "CircuitState",
+    "get_circuit_breaker",
+    "get_all_breaker_stats",
+]
 
 
 class CircuitBreaker:

@@ -16,6 +16,8 @@ before it in the request path (outermost runs first).
 ├───────────────────────────────────────────────────────────────┤
 │ 3. RATE LIMITING  Sliding-window per-path limiter  │
 ├───────────────────────────────────────────────────────────────┤
+│ 3.5 WEBHOOKS      IP whitelist + HMAC verification │
+├───────────────────────────────────────────────────────────────┤
 │ 4. GEO & COUNTRY  Country resolution              │
 ├───────────────────────────────────────────────────────────────┤
 │ 5. COMPLIANCE     PCI-DSS audit (production only) │
@@ -56,6 +58,8 @@ from middleware.csrf_middleware import CSRFMiddleware
 from middleware.logging_middleware import RequestLoggingMiddleware
 from middleware.api_version_middleware import ApiVersionMiddleware
 from middleware.authentication_middleware import AuthenticationMiddleware
+from middleware.webhook_verification import WebhookVerificationMiddleware
+from middleware.webhook_ip_whitelist import WebhookIPWhitelistMiddleware
 
 from infrastructure.utils.config import settings
 
@@ -90,6 +94,19 @@ _AUTHENTICATION: list[type] = [
 
 _RATE_LIMITING: list[type] = [
     RateLimitMiddleware,  # Sliding-window per-path limiter
+]
+
+# ──────────────────────────────────────────────
+# Layer 3.5: Webhook Guards — IP whitelist + HMAC verification
+# MUST run AFTER Rate Limiting (avoid spending crypto verification
+# cycles on rate-limited callers) and BEFORE Geo & Country (so
+# unverified, non-whitelisted webhook traffic is rejected before
+# country/RLS lookups).
+# ──────────────────────────────────────────────
+
+_WEBHOOKS: list[type] = [
+    WebhookIPWhitelistMiddleware,   # Reject non-whitelisted source IPs
+    WebhookVerificationMiddleware,  # HMAC signature verification
 ]
 
 # ──────────────────────────────────────────────
@@ -146,8 +163,9 @@ def setup_middleware(app: FastAPI) -> None:
     pipeline is therefore registered in **reverse**.
 
     Documented execution order (outermost first, i.e. closest to the client):
-        FOUNDATION → AUTHENTICATION → RATE LIMITING → GEO & COUNTRY
-        → SECURITY → OBSERVABILITY → COMPLIANCE (production only)
+        FOUNDATION → AUTHENTICATION → RATE LIMITING → WEBHOOKS
+        → GEO & COUNTRY → SECURITY → OBSERVABILITY
+        → COMPLIANCE (production only)
 
     Authentication MUST run before Geo & Country so that CountryContextMiddleware
     can read request.state.user (populated by AuthenticationMiddleware) to
@@ -157,6 +175,7 @@ def setup_middleware(app: FastAPI) -> None:
         *_FOUNDATION,
         *_AUTHENTICATION,
         *_RATE_LIMITING,
+        *_WEBHOOKS,
         *_GEO_COUNTRY,
         *_SECURITY,
         *_OBSERVABILITY,
@@ -217,15 +236,15 @@ def _resolve_kwargs(mw_class: type) -> dict:
 
 def _layer_count() -> int:
     """Number of non-empty layers."""
-    layers = [_FOUNDATION, _AUTHENTICATION, _RATE_LIMITING, _GEO_COUNTRY,
-              _SECURITY, _OBSERVABILITY, _COMPLIANCE]
+    layers = [_FOUNDATION, _AUTHENTICATION, _RATE_LIMITING, _WEBHOOKS,
+              _GEO_COUNTRY, _SECURITY, _OBSERVABILITY, _COMPLIANCE]
     return sum(1 for layer in layers if layer)
 
 
 def _total_middleware() -> int:
     """Total middleware classes across all layers."""
-    layers = [_FOUNDATION, _AUTHENTICATION, _RATE_LIMITING, _GEO_COUNTRY,
-              _SECURITY, _OBSERVABILITY, _COMPLIANCE]
+    layers = [_FOUNDATION, _AUTHENTICATION, _RATE_LIMITING, _WEBHOOKS,
+              _GEO_COUNTRY, _SECURITY, _OBSERVABILITY, _COMPLIANCE]
     return sum(len(layer) for layer in layers)
 
 
@@ -258,8 +277,8 @@ def _total_middleware() -> int:
 # ║  database_security.py      │  DatabaseSecurityMgr  │  UTILITY  ║
 # ║  services/security/        │  SIEMEngine          │  UTILITY  ║
 # ║    siem_engine.py          │  (relocated)          │          ║
-# ║  webhook_verification.py   │  WebhookVerification  │  PER-ROUTE║
-# ║  webhook_ip_whitelist.py  │  WebhookIPWhitelist   │  PER-ROUTE║
+# ║  webhook_verification.py   │  WebhookVerification  │  ACTIVE   ║
+# ║  webhook_ip_whitelist.py  │  WebhookIPWhitelist   │  ACTIVE   ║
 # ║  device_binding_middleware │  DeviceBindingMw     │  ALIAS    ║
 # ╚═══════════════════════════════════════════════════════════════╝
 

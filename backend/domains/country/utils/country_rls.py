@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from domains.country.models.countries import CountryConfig
 from domains.country.models.country_enhancements import CountryStaffAssignment
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
 logger = logging.getLogger(__name__)
 

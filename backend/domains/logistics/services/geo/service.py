@@ -573,8 +573,10 @@ message so the UI can fall back to the browser Geolocation API.
 from fastapi import Header, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from domains.country.services.geo.geo_resolver import resolve_ip_location
-from domains.country.services.geo.geo_resolver import reverse_geocode
+# TODO: Module not yet created
+# from domains.country.services.geo.geo_resolver import resolve_ip_location
+# TODO: Module not yet created
+# from domains.country.services.geo.geo_resolver import reverse_geocode
 
 class ReverseRequest(BaseModel):
     lat: float

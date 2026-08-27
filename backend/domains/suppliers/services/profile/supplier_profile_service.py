@@ -37,3 +37,9 @@ def update_supplier_profile(payload: SupplierProfileUpdate, current_user: User, 
     return profile
 
 
+def get_supplier_profile(db: Session, user_id: int):
+    """Sanctioned cross-domain read: fetch supplier profile by user id."""
+    from domains.catalog.services.products.products_service import get_supplier_profile as _svc
+    return _svc(db, user_id)
+
+

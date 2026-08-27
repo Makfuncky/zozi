@@ -16,8 +16,6 @@ from uuid import uuid4
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from domains.governance.models.core import Address
-from domains.governance.models.user import User
 from domains.hr.models.employee_models import DynamicQRSession
 from domains.hr.models.employee_models import Employee
 from domains.hr.models.employee_models import EmployeeDependent

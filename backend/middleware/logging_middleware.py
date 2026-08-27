@@ -1,11 +1,29 @@
 from __future__ import annotations
 
+import contextvars
 import time
 from typing import Awaitable, Callable
 
 import structlog
 from fastapi import Request, Response
+from prometheus_client import Counter, Histogram
 from starlette.middleware.base import BaseHTTPMiddleware
+
+request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+user_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("user_id", default="")
+country_code_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("country_code", default="")
+db_query_time_ctx: contextvars.ContextVar[float] = contextvars.ContextVar("db_query_time", default=0.0)
+
+http_request_duration_seconds = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "endpoint"],
+)
+http_requests_total = Counter(
+    "http_requests_total",
+    "Total HTTP requests",
+    ["method", "endpoint", "status"],
+)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):

@@ -17,10 +17,10 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 class NewsArticle(Base):
     __tablename__ = "news_articles"
-    __table_args__ = (Index("ix_news_articles_published", "published_at"), {"schema": "customer"})
+    __table_args__ = (Index("ix_news_articles_published", "published_at"), {"schema": "comms"})
 
     id = Column(Integer, primary_key=True, index=True)
-    source_id = Column(Integer, ForeignKey("comms.news_sources.id"), nullable=True)
+    source_id = Column(Integer, ForeignKey("comms.news_sources.id", ondelete="SET NULL"), nullable=True)
     external_id = Column(String(255), nullable=True)
     content_hash = Column(String(64), nullable=True, index=True)
     title = Column(String(300), nullable=False)

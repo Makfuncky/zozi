@@ -356,6 +356,36 @@ RULE_MEANING: dict[str, str] = {
     "FE12":  "web_app has no source that consumes the backend /rbac/catalog endpoint — UI gating does not share one source with the backend",
     "FE13":  "no shared permission map derived from backend /rbac/catalog is wired into the workspaces — each workspace hand-rolls gating and drifts from the backend",
     "FE14":  "employee/* route group missing in web_app (module actor 'employee' has no UI shell — diagram §3 route tree)",  # NEW
+    # ── Backend-Frontend Connection (BF series) ──
+    "BF01":  "API proxy /api/* rewrites strip /api prefix — frontend calls to /api/v1/* would 404",
+    "BF02":  "API proxy /admin/* missing /api/v1 prefix — frontend /admin/* calls have no backend route",
+    "BF03":  "API proxy /auth/* misconfigured — auth flow broken",
+    "BF04":  "API proxy /hr/* misconfigured — HR endpoints unreachable",
+    "BF05":  "Proxy target NEXT_PUBLIC_API_URL does not point to backend",
+    "BF06":  "Missing /auth/login endpoint — frontend login flow broken",
+    "BF07":  "Missing /auth/refresh endpoint — token refresh broken",
+    "BF08":  "Missing /auth/me endpoint — current user profile broken",
+    "BF09":  "Missing /auth/logout endpoint — logout flow broken",
+    "BF10":  "Missing /rbac/catalog endpoint — permission sync broken",
+    "BF11":  "Missing /notifications endpoint — notifications broken",
+    "BF12":  "Missing /admin/hierarchy/permissions endpoint — admin permissions broken",
+    "BF13":  "Missing /auth/resend-verification/public endpoint — email verification broken",
+    "BF14":  "Missing /auth/oauth/providers endpoint — OAuth login broken",
+    "BF15":  "Missing /admin/config/checkout endpoint — checkout config broken",
+    "BF16":  "Missing websocket_user handler — WebSocket connection crashes backend startup",
+    "BF17":  "WebSocket route /ws/user not registered — realtime updates broken",
+    "BF18":  "WebSocket handler lacks JWT authentication — security risk",
+    "BF19":  "Login endpoint does not return access/refresh tokens",
+    "BF20":  "Refresh endpoint does not return new access token",
+    "BF21":  "Me endpoint does not return user profile",
+    "BF22":  "Logout endpoint does not clear tokens",
+    "BF23":  "Token passed in URL query parameter — credential leak",
+    "BF24":  "/rbac/catalog endpoint does not return feature catalog JSON",
+    "BF25":  "permissions.ts is hardcoded, not generated from /rbac/catalog",
+    "BF26":  "Feature naming convention mismatch (backend dots vs frontend colons)",
+    "BF27":  "Social auth callback passes token in URL — credential leak",
+    "BF28":  "Admin permissions stored in localStorage — XSS/privilege escalation risk",
+    "BF29":  "Permission overrides stored in localStorage — XSS/privilege escalation risk",
     # ── Architecture Metrics ──
     "MET2":  "module instability exceeds threshold",
     "MET3":  "abstractness below threshold (no interfaces)",
@@ -365,10 +395,10 @@ RULE_MEANING: dict[str, str] = {
     "BC1":   "cross-domain import bypasses ports.py/events.py boundary (Law 3)",  # FIXED
     "BC2":   "domain event not properly defined (must be typed @dataclass/model with id + serialization)",
     "BC3":   "bounded context leakage detected (direct cross-domain model access)",
-    # ── Architecture Registry ──
-    "REG1":  "domain missing from architecture registry",
-    "REG2":  "registry dependency not reflected in code",
-    "REG3":  "public API not documented in registry",
+    # ── Architecture Registry (DEPRECATED: registry.py deleted per Rule 29) ──
+    # REG1/REG2/REG3 retired: registry.py was migration scaffolding, not architecture.
+    # Architecture enforcement is now handled by tests/architecture/test_import_laws.py
+    # and the NS-series compliance gates in this audit.
     # ═══════════════════════════════════════════════════════════
     # ARCHITECTURE_DIAGRAM.md COMPLIANCE GATE (NS prefix)
     # ═══════════════════════════════════════════════════════════
@@ -421,10 +451,10 @@ RULE_MEANING: dict[str, str] = {
     "DBA01": "model declares a forbidden (core/platform/identity) PostgreSQL schema= argument",
     "DBA02": "Base.metadata.create_all not safely dev-gated",
     "DBA03": "mandatory column set / mixin missing",
-    "DBA04": "country_code width mismatch",
+    "DBA04": "country_code width mismatch (must be String(2) per Rule 20)",
     "DBA05": "RLS coverage missing or weak (ONE canonical enforcer: infrastructure/database/security.py)",  # FIXED
     "DBA06": "forbidden schema-prefixed FK (core/platform/identity); use a domain schema e.g. customer.user.id",
-    "DBA07": "unsafe or missing FK cascade rule",
+    "DBA07": "unsafe or missing FK cascade rule (must have ondelete per Rule 22)",
     "DBA08": "FK column missing index",
     "DBA09": "JSONB column missing GIN index signal",
     "DBA10": "file bytes stored in database",
@@ -456,6 +486,11 @@ RULE_MEANING: dict[str, str] = {
     "DBA36": "archive/retention signal missing",
     "DBA37": "data dictionary generator missing ERD/Mermaid output",
     "DBA38": "country_staff_assignments table missing (Law 5: country is the orthogonal scope axis — RLS session context + country_staff_assignments)",  # NEW
+    "DBA39": "missing updated_at column (Rule 23: all models must have created_at/updated_at)",
+    "DBA40": "timestamp inconsistency (must use server_default=func.now(), not Python-side defaults)",
+    "DBA41": "float used for monetary values (Rule 19: use Decimal from kernel/money.py)",
+    "DBA42": "_auto_stubs.py file present (Rule 28: NOT architecture, must be deleted)",
+    "DBA43": "registry.py or auto_wire.py present (Rule 29: NOT architecture, must be deleted)",
     # ═══════════════════════════════════════════════════════════
     # DESIGN AUDIT RULES
     # ═══════════════════════════════════════════════════════════
@@ -581,10 +616,14 @@ HOTLIST_RULES: set[str] = {
     "SEC5", "SEC6", "SEC7", "SEC8", "SEC9", "SEC10",
     "SEC11", "SC1", "SC2", "SC3",
     "PERF3", "PERF4", "PERF5", "PERF6",
-    "FE7", "FE8", "FE9", "FE10", "FE11", "FE12", "FE13",
+    "FE7", "FE8", "FE9", "FE10", "FE11", "FE12", "FE13", "FE14",
+    # Backend-Frontend connection hotlist
+    "BF01", "BF02", "BF03", "BF04", "BF05", "BF06", "BF07", "BF08", "BF09",
+    "BF10", "BF11", "BF12", "BF13", "BF14", "BF15", "BF16", "BF17", "BF18",
+    "BF19", "BF20", "BF21", "BF22", "BF23", "BF24", "BF25", "BF26", "BF27", "BF28", "BF29",
     "MET2", "MET3", "MET4", "MET5",
     "BC1", "BC2", "BC3",
-    "REG1", "REG2", "REG3",
+    # REG1/REG2/REG3 retired (Rule 29: registry.py deleted)
     "SCF1",
 
     # Database hotlist
@@ -758,9 +797,9 @@ DEFAULT_FORBIDDEN_EDGES = {
 
     # PROVIDERS are leaf adapters (3rd-party/AI). Used ONLY by services + jobs.
     # May import infrastructure + kernel primitives (per ARCHITECTURE_DIAGRAM.md),
-    # so those are NOT forbidden. May NOT import modules, rbac, middleware, jobs.
+    # so those are NOT forbidden. May NOT import modules, domains, rbac, middleware, jobs.
     "providers": [
-        "modules", "rbac", "middleware", "jobs",
+        "modules", "domains", "rbac", "middleware", "jobs",
     ],
 
     # JOBS -> domains -> infrastructure/kernel only. May import domains,
@@ -1026,15 +1065,6 @@ PLACEMENT_DOMAIN_KEYWORDS: dict[str, set[str]] = {
         "customer", "customers", "address", "addresses", "point",
         "points", "profile", "preferences", "customer_health",
         "segment",
-    },
-    "payments": {
-        # Payment gateways + billing (folded from former "gateway"/"billing")
-        "payments", "payment", "payment_gateway", "payment_provider",
-        "payment_adapter", "payment_processor", "gateway", "checkout_gateway",
-        "stripe", "paypal", "tap", "thawani", "paytabs",
-        "supplier_payments", "logistic_payments",
-        "billing", "subscription", "subscriptions", "billing_cycle",
-        "billing_cycles", "receipt", "receipts", "charge", "charges",
     },
     "logistics": {
         # folded from former "shipping" domain
@@ -1541,6 +1571,13 @@ def _get_rule_priority(code: str) -> str:
         "NS38": "P1", "NS39": "P0", "NS40": "P1", "NS41": "P1",
         "NS42": "P2", "NS43": "P2",
         "FE14": "P2", "DBA38": "P2",
+        # Backend-Frontend connection priorities
+        "BF01": "P0", "BF02": "P0", "BF03": "P1", "BF04": "P1", "BF05": "P1",
+        "BF06": "P0", "BF07": "P0", "BF08": "P0", "BF09": "P0", "BF10": "P0",
+        "BF11": "P1", "BF12": "P1", "BF13": "P1", "BF14": "P1", "BF15": "P1",
+        "BF16": "P0", "BF17": "P0", "BF18": "P1", "BF19": "P0", "BF20": "P0",
+        "BF21": "P0", "BF22": "P0", "BF23": "P0", "BF24": "P0", "BF25": "P1",
+        "BF26": "P1", "BF27": "P0", "BF28": "P0", "BF29": "P0",
         # ── P3: Hygiene / style ──
         "HL201": "P3", "HL203": "P3", "HL204": "P3",
         "HL301": "P3", "HL302": "P3", "HL303": "P3",
@@ -1550,6 +1587,7 @@ def _get_rule_priority(code: str) -> str:
         "FEH802": "P3", "DP102": "P3", "DP105": "P3",
         "DS08": "P3", "DS16": "P3", "DS17": "P3", "DS18": "P3",
         "DBA04": "P3", "DBA17": "P3", "DBA18": "P3", "DBA19": "P3",
+        "DBA39": "P2", "DBA40": "P2", "DBA41": "P1", "DBA42": "P0", "DBA43": "P0",
         "DBA21": "P3", "DBA22": "P3", "DBA23": "P3",
         "F1": "P3", "F2": "P3", "F3": "P3", "F4": "P3",
         "F6": "P3", "F7": "P3", "F8": "P3", "F9": "P3", "G0": "P3",
@@ -1558,7 +1596,7 @@ def _get_rule_priority(code: str) -> str:
         "A2": "P3", "FE2": "P3", "FE6": "P3",
         "SYM1": "P3", "API1": "P3",
         "AS3": "P3", "MET3": "P3", "MET4": "P3",
-        "REG1": "P3", "REG2": "P3", "REG3": "P3",
+        # REG1/REG2/REG3 retired (Rule 29: registry.py deleted)
         "CFG5": "P3",
         "HL110": "P3", "HL801": "P3",
         "MR101": "P3",
@@ -2371,7 +2409,7 @@ def load_rules(repo: Path, rules_dir: Path | None) -> dict:
         "rule_sources": [],
         "known_layers": set(),
         "router_layout": "modules",
-        "router_pattern": "backend/modules/{surface}/routers/{domain}_{operation}_router.py",
+        "router_pattern": "backend/modules/{surface}/routers/{domain}.py",
         "forbidden_contract_folders": [],
         # configurable policy defaults
         "feature_stop_names": set(FEATURE_STOP_NAMES),
@@ -6331,7 +6369,7 @@ def check_split_file_candidates(repo: Path, rep: Report, eff: dict, graph: Modul
     # Orchestration service names that legitimately span domains
     ORCHESTRATION_EXEMPT = {
         "cash_management", "payment_orchestrator", "order_orchestrator",
-        "async_workers", "config", "registry", "base", "common",
+        "async_workers", "config", "base", "common",
     }
 
     for module, f in graph.modules.items():
@@ -6618,6 +6656,20 @@ REQUIRED_MIDDLEWARE = [
     "cors",
     "rate_limit",
     "request_id",
+    "api_version",
+    "country_context",
+    "csrf",
+    "database_security",
+    "device_binding",
+    "impossible_travel",
+    "ip_extraction",
+    "logging",
+    "pci_dss_compliance",
+    "rls_dependency",
+    "security_headers",
+    "webhook_ip_whitelist",
+    "webhook_verification",
+    "zero_trust_auth",
 ]
 
 
@@ -8061,7 +8113,58 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
         detail = "; ".join(f"{k}: {len(v)} tables" for k, v in sorted(lengths.items()))
         rep.add(YEL, "DBA04", "database", "backend/domains/",
                 f"country_code width mismatch ({detail})",
-                intended="unify country_code width in one migration")
+                intended="unify all country_code columns to String(2) per Rule 20 (ISO 3166-1 alpha-2)")
+
+    # DBA39: Missing updated_at (Rule 23)
+    reported = 0
+    for m in models:
+        if not m.table:
+            continue
+        if m.has_created_at and not m.has_updated_at:
+            rep.add(YEL, "DBA39", "models", m.rel_path,
+                    f"model '{m.name}' table '{m.table}' has created_at but missing updated_at",
+                    intended="add updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())",
+                    line=m.line)
+            reported += 1
+        if reported >= 100:
+            break
+
+    # DBA41: Float used for monetary values (Rule 19)
+    reported = 0
+    money_keywords = {"price", "amount", "cost", "balance", "fee", "rate", "total", "subtotal", "tax", "discount"}
+    for m in models:
+        if not m.table:
+            continue
+        for c in m.columns:
+            if any(kw in c.name.lower() for kw in money_keywords):
+                if c.type_name and "FLOAT" in c.type_name.upper():
+                    rep.add(RED, "DBA41", "models", m.rel_path,
+                            f"model '{m.name}' column '{c.name}' uses FLOAT for monetary value",
+                            intended="use Decimal from kernel/money.py — never float for money (Rule 19)",
+                            line=m.line)
+                    reported += 1
+        if reported >= 100:
+            break
+
+    # DBA42: _auto_stubs.py present (Rule 28)
+    for root, dirs, files in os.walk(str(backend)):
+        for f in files:
+            if f == "_auto_stubs.py":
+                p = Path(root) / f
+                stub_path = p.relative_to(backend)
+                rep.add(RED, "DBA42", "structure", str(stub_path),
+                        f"_auto_stubs.py present — NOT architecture",
+                        intended="delete _auto_stubs.py and implement real services (Rule 28)",
+                        priority="P0")
+
+    # DBA43: registry.py or auto_wire.py present (Rule 29)
+    for fname in ["registry.py", "auto_wire.py"]:
+        p = backend / fname
+        if p.exists():
+            rep.add(RED, "DBA43", "structure", fname,
+                    f"{fname} present — NOT architecture (migration scaffolding)",
+                    intended=f"delete {fname} — use tests/architecture/test_import_laws.py for enforcement (Rule 29)",
+                    priority="P0")
 
     # DBA11: Naming conventions (advisory). Only flag genuinely non-conventional
     # names; widely-used conventions (active/enabled/details/config/period_start)
@@ -8131,10 +8234,8 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
 
     # ══════════════════════════════════════════════════════════════
     # DBA07 / DBA08 — FK hygiene only.
-    # DBA06 RETIRED: ARCHITECTURE_DIAGRAM §3 / §10.3 states
-    # cross-domain FKs are CORRECT and allowed across domain schemas (e.g. order → customer.user.id)
-    # PostgreSQL design.  The old parser bug (treating "table.column"
-    # as schema.table) is fixed by dba_parse_fk_target().
+    # DBA06 ACTIVE: Checks for forbidden schema-prefixed FKs (core/platform/identity).
+    # Cross-domain FKs are CORRECT per ARCHITECTURE_DIAGRAM §3 / §9.
     # Domain-actor isolation is handled by check_domain_actor_isolation().
     # ══════════════════════════════════════════════════════════════
     reported = 0
@@ -8276,11 +8377,11 @@ def dba_run_all_checks(repo: Path, rep: Report) -> tuple[list[DBAModelInfo], DBA
                 if create_re.search(line):
                     gated = bool(gate_re.search(text))
                     if gated:
-                        rep.add(YEL, "DBA02", "dev", rel(f, repo),
+                        rep.add(YEL, "DBA02", "dev", str(f.relative_to(repo)),
                                 "create_all present but appears dev-gated",
                                 intended="ensure impossible in production", line=i)
                     else:
-                        rep.add(RED, "DBA02", "dev", rel(f, repo),
+                        rep.add(RED, "DBA02", "dev", str(f.relative_to(repo)),
                                 "create_all present without visible dev gate",
                                 intended="gate behind APP_ENV=development", line=i)
                     break
@@ -11016,12 +11117,13 @@ def check_middleware_pipeline_order(repo: Path, rep: Report, eff: dict) -> None:
 
     text = read_text(orchestrator) or ""
 
-    # Expected middleware in order (§2.2)
+    # Expected middleware in order (ARCHITECTURE_DIAGRAM.md §6)
     expected_order = [
         ("GZip", "foundation"),
         ("CORS", "foundation"),
         ("IP", "foundation"),
         ("RequestID", "foundation"),
+        ("ApiVersion", "foundation"),
         ("SecurityHeaders", "security"),
         ("ImpossibleTravel", "security"),
         ("CSRF", "security"),
@@ -11536,7 +11638,7 @@ ARCH_NON_CANONICAL_ROOT_LAYERS = {
 # Prescribed ARCHITECTURE_DIAGRAM backend layers (documents/ARCHITECTURE_DIAGRAM.md).
 ARCH_CANONICAL_BACKEND_LAYERS = {
     "modules", "domains", "rbac", "infrastructure", "kernel",
-    "providers", "jobs", "middleware",
+    "providers", "jobs", "middleware", "alembic", "scripts", "tests",
 }
 # Abolished flat root layers — included in scan sets ONLY so the transitional
 # codebase is still scanned and reported (NS1-NS4). They are violation targets,
@@ -11550,8 +11652,9 @@ BACKEND_SCAN_LAYERS = ARCH_CANONICAL_BACKEND_LAYERS | ABOLISHED_BACKEND_LAYERS
 
 ARCH_MODULE_ACTORS = {"customer", "supplier", "logistics", "admin", "employee"}
 ARCH_DOMAIN_FOLDERS = {
-    "finance", "accounts", "catalog", "orders", "payments", "logistics",
-    "suppliers", "customers", "hr", "comms", "media", "country", "governance",
+    "finance", "accounts", "catalog", "orders", "logistics",
+    "suppliers", "customers", "hr", "comms", "analytics",
+    "audit", "country", "governance", "security", "promotions", "media",
 }
 
 # Sub-package names that represent a domain's *internal* business logic. Importing
@@ -12205,8 +12308,7 @@ def check_architecture_diagram_compliance(repo: Path, rep: "Report", eff) -> Non
                     | set(ARCH_NON_CANONICAL_ROOT_LAYERS)
                     | set(ARCH_AXIS_REQUIRED_PACKAGES)
                     | set(ARCH_AXIS_ADVISORY_PACKAGES))
-    ALLOWED_ROOT_FILES = {"main.py", "config.py", "DOMAIN_ALLOWLIST.yaml",
-                          "__init__.py", "lifespan.py"}
+    ALLOWED_ROOT_FILES = {"main.py", "config.py", "DOMAIN_ALLOWLIST.yaml"}
     for full in sorted(backend.iterdir()):
         entry = full.name
         if entry.startswith("."):
@@ -12228,9 +12330,6 @@ def check_architecture_diagram_compliance(repo: Path, rep: "Report", eff) -> Non
             if entry not in ALLOWED_ROOT_FILES:
                 # Exclude utility files (starting with _)
                 if entry.startswith("_"):
-                    continue
-                # run_server.py is a legitimate entry point
-                if entry == "run_server.py":
                     continue
                 rep.add(RED, "NS38", "backend", "backend/" + entry,
                         f"backend/{entry} is a stray root-level file outside the closed set "
@@ -12359,8 +12458,9 @@ def check_architecture_diagram_compliance(repo: Path, rep: "Report", eff) -> Non
 
     # --- NS7: infrastructure imports above it ---
     # Exclude infrastructure/lifespan.py (startup hooks), seed files (seeding needs
-    # domain models), and registry files (side-effect-only imports for handler registration).
-    _ns7_exclude_files = {"lifespan.py", "seed.py", "_registry.py"}
+    # domain models), and service registry files (side-effect-only imports for handler registration).
+    # Note: _registry.py was deleted (Rule 29: registry.py is NOT architecture).
+    _ns7_exclude_files = {"lifespan.py", "seed.py"}
     if (backend / "infrastructure").is_dir():
         for p, tree in _ns_iter_py(backend, "infrastructure"):
             # Exclude startup/seeding/registry files that legitimately import domains
@@ -13329,6 +13429,9 @@ def main() -> int:
     check_csrf_pci_prod_only(repo, rep, eff)
     check_async_workers_off_request(repo, rep, eff)
 
+    # PHASE 1.5: BACKEND-FRONTEND CONNECTION
+    check_backend_frontend_connection(repo, rep, eff)
+
     # PHASE 2: DATABASE
     print("  [2/4] Database audit...")
     db_models, db_minfo, db_rls = dba_run_all_checks(repo, rep)
@@ -13382,6 +13485,337 @@ def main() -> int:
     print(f"  Report: {out}")
     print(f"{'=' * 76}")
     return 1 if n_red else 0
+
+# ============================================================================
+# BACKEND-FRONTEND CONNECTION CHECKS (BF01-BF29)
+# ============================================================================
+
+
+def check_backend_frontend_connection(repo: Path, rep: Report, eff: dict) -> None:
+    """
+    BF01-BF29: Validate backend-frontend wiring per ARCHITECTURE_DIAGRAM.md §11.
+    Checks API proxy, endpoint existence, WebSocket, auth flow, permissions, security.
+    """
+    backend = repo / "backend"
+    frontend = repo / "frontend"
+    web_app = frontend / "web_app"
+
+    if not web_app.exists():
+        return
+
+    # ── BF01-BF05: API Proxy Validation ──
+    _check_api_proxy(web_app, backend, rep)
+
+    # ── BF06-BF15: Endpoint Existence ──
+    _check_endpoint_existence(web_app, backend, rep)
+
+    # ── BF16-BF18: WebSocket Handler ──
+    _check_websocket_handler(backend, rep)
+
+    # ── BF19-BF22: Auth Flow Wiring ──
+    _check_auth_flow(backend, rep)
+
+    # ── BF23-BF26: Permission Sync ──
+    _check_permission_sync(web_app, backend, rep)
+
+    # ── BF27-BF29: Frontend Security ──
+    _check_frontend_security(web_app, rep)
+
+
+def _check_api_proxy(web_app: Path, backend: Path, rep: Report) -> None:
+    """BF01-BF05: Validate Next.js API proxy rewrites."""
+    next_config = web_app / "next.config.ts"
+    if not next_config.exists():
+        next_config = web_app / "next.config.js"
+    if not next_config.exists():
+        return
+
+    text = read_text(next_config) or ""
+
+    # BF01: /api/:path* must NOT strip /api prefix
+    if re.search(r"source:\s*['\"]/api/:path\*['\"]", text):
+        dest_match = re.search(r"destination:\s*['\"]([^'\"]+)['\"]", text)
+        if dest_match:
+            dest = dest_match.group(1)
+            if "/api/" not in dest and "apiUrl" in dest:
+                rep.add(RED, "BF01", "frontend", "frontend/web_app/next.config.ts",
+                        f"/api/:path* rewrites to '{dest}' which strips /api prefix",
+                        intended="change to destination: ${apiUrl}/api/:path*",
+                        priority="P0")
+
+    # BF02: /admin/:path* must include /api/v1
+    if re.search(r"source:\s*['\"]/admin/:path\*['\"]", text):
+        dest_match = re.search(r"destination:\s*['\"]([^'\"]*api[^'\"]*)['\"]", text)
+        if not dest_match or "/api/v1" not in dest_match.group(1):
+            rep.add(RED, "BF02", "frontend", "frontend/web_app/next.config.ts",
+                    "/admin/:path* rewrite missing /api/v1 prefix",
+                    intended="add rewrite: source: '/admin/:path*', destination: ${apiUrl}/api/v1/admin/:path*",
+                    priority="P0")
+
+    # BF03: /auth/:path* check
+    if re.search(r"source:\s*['\"]/auth/:path\*['\"]", text):
+        dest_match = re.search(r"destination:\s*['\"]([^'\"]+)['\"]", text)
+        if dest_match:
+            dest = dest_match.group(1)
+            if "/api/" in dest:
+                rep.add(YEL, "BF03", "frontend", "frontend/web_app/next.config.ts",
+                        f"/auth/:path* rewrites to '{dest}' — auth routes should not be under /api/",
+                        intended="use destination: ${apiUrl}/auth/:path*",
+                        priority="P1")
+
+    # BF04: /hr/:path* check
+    if re.search(r"source:\s*['\"]/hr/:path\*['\"]", text):
+        dest_match = re.search(r"destination:\s*['\"]([^'\"]+)['\"]", text)
+        if dest_match:
+            dest = dest_match.group(1)
+            if "/api/" not in dest:
+                rep.add(YEL, "BF04", "frontend", "frontend/web_app/next.config.ts",
+                        f"/hr/:path* rewrites to '{dest}' — should include /api/",
+                        intended="add /api/ prefix to destination",
+                        priority="P1")
+
+
+def _check_endpoint_existence(web_app: Path, backend: Path, rep: Report) -> None:
+    """BF06-BF15: Verify frontend-called endpoints exist on backend."""
+    # Extract frontend API calls - multiple patterns
+    frontend_endpoints: set[str] = set()
+    
+    # Scan web_app (limit to src directory for performance)
+    src_dir = web_app / "src"
+    if src_dir.exists():
+        for f in src_dir.rglob("*.{ts,tsx,js,jsx}"):
+            if "__pycache__" in str(f) or "node_modules" in str(f) or ".next" in str(f):
+                continue
+            text = read_text(f)
+            if not text:
+                continue
+            # Match apiFetch("..."), fetch("..."), and variable-based calls
+            for m in re.finditer(r'(?:apiFetch|fetch)\s*\(\s*["\']([^"\']+)["\']', text):
+                path = m.group(1)
+                if path.startswith("/") and not path.startswith("//"):
+                    frontend_endpoints.add(path.split("?")[0])
+            # Also match string literals that look like API paths
+            for m in re.finditer(r'["\'](\/(?:auth|admin|api|hr|rbac|notifications|supplier|customer)[^"\']*)["\']', text):
+                path = m.group(1)
+                if not path.startswith("//") and " " not in path and len(path) > 3:
+                    frontend_endpoints.add(path.split("?")[0])
+
+    # Also scan shared package
+    shared = web_app.parent / "shared"
+    if shared.exists():
+        for f in shared.rglob("*.{ts,tsx}"):
+            if "__pycache__" in str(f) or "node_modules" in str(f):
+                continue
+            text = read_text(f)
+            if not text:
+                continue
+            for m in re.finditer(r'["\'](\/(?:auth|admin|api|hr|rbac|notifications|supplier|customer)[^"\']*)["\']', text):
+                path = m.group(1)
+                if not path.startswith("//") and " " not in path and len(path) > 3:
+                    frontend_endpoints.add(path.split("?")[0])
+
+    # Extract backend routes
+    backend_routes: set[str] = set()
+    for f in backend.rglob("*.py"):
+        if "__pycache__" in str(f):
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+        for m in re.finditer(r'@router\.(?:get|post|put|delete|patch)\s*\(\s*["\']([^"\']+)["\']', text):
+            backend_routes.add(m.group(1).split("?")[0])
+
+    # Critical endpoints that must exist
+    critical_endpoints = {
+        "/auth/login": "BF06",
+        "/auth/refresh": "BF07",
+        "/auth/me": "BF08",
+        "/auth/logout": "BF09",
+        "/rbac/catalog": "BF10",
+    }
+    for endpoint, code in critical_endpoints.items():
+        if endpoint in frontend_endpoints or f"/api/v1{endpoint}" in frontend_endpoints:
+            # Check if backend has it (with or without /api prefix, and with or without leading /)
+            endpoint_variants = [
+                endpoint,
+                endpoint.lstrip("/"),
+                endpoint.replace("/auth/", "/").replace("/rbac/", "/api/rbac/"),
+                endpoint.split("/")[-1],
+                f"/api/v1{endpoint}",
+            ]
+            backend_has = any(
+                any(v in r or r.endswith(v) or r == v for v in endpoint_variants)
+                for r in backend_routes
+            )
+            if not backend_has:
+                rep.add(RED, code, "backend", "backend/",
+                        f"Frontend calls {endpoint} but backend has no matching route",
+                        intended=f"create {endpoint} endpoint on backend",
+                        priority="P0")
+
+    # BF11-BF15: Other endpoints
+    other_endpoints = {
+        "/notifications": "BF11",
+        "/admin/hierarchy/permissions": "BF12",
+        "/auth/resend-verification/public": "BF13",
+        "/auth/oauth/providers": "BF14",
+        "/admin/config/checkout": "BF15",
+    }
+    for endpoint, code in other_endpoints.items():
+        if endpoint in frontend_endpoints:
+            backend_has = any(endpoint in r or r.endswith(endpoint) for r in backend_routes)
+            if not backend_has:
+                rep.add(YEL, code, "backend", "backend/",
+                        f"Frontend calls {endpoint} but backend route not found",
+                        intended=f"create {endpoint} endpoint or update frontend to use correct path",
+                        priority="P1")
+
+
+def _check_websocket_handler(backend: Path, rep: Report) -> None:
+    """BF16-BF18: Validate WebSocket handler exists."""
+    # BF16: Check websocket_user handler exists
+    ws_handler_found = False
+    ws_handler_file = None
+    for f in backend.rglob("*.py"):
+        if "__pycache__" in str(f):
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+        if re.search(r'async\s+def\s+websocket_user|def\s+websocket_user', text):
+            ws_handler_found = True
+            ws_handler_file = str(f.relative_to(backend))
+            break
+
+    if not ws_handler_found:
+        rep.add(RED, "BF16", "backend", "backend/modules/admin/routers/",
+                "websocket_user handler not found — WebSocket connection will crash backend startup",
+                intended="create websocket_user handler in modules/admin/routers/",
+                priority="P0")
+
+    # BF17: Check WebSocket route registered
+    ws_route_found = False
+    for f in backend.rglob("*.py"):
+        if "__pycache__" in str(f):
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+        if re.search(r'@router\.websocket\s*\(\s*["\']', text):
+            ws_route_found = True
+            break
+
+    if not ws_route_found:
+        rep.add(RED, "BF17", "backend", "backend/",
+                "No WebSocket route (@router.websocket) registered",
+                intended="register /ws/user WebSocket route",
+                priority="P0")
+
+    # BF18: Check if main.py imports websocket_user (broken import check)
+    main_py = backend / "main.py"
+    if main_py.exists():
+        main_text = read_text(main_py) or ""
+        if "websocket_user" in main_text and not ws_handler_found:
+            rep.add(RED, "BF18", "backend", "backend/main.py",
+                    "main.py imports websocket_user but handler does not exist",
+                    intended="create websocket_user handler or remove broken import",
+                    priority="P0")
+
+
+def _check_auth_flow(backend: Path, rep: Report) -> None:
+    """BF19-BF22: Validate auth flow endpoints."""
+    auth_endpoints = {
+        "BF19": (r"POST.*?/auth/login", "login"),
+        "BF20": (r"POST.*?/auth/refresh", "refresh"),
+        "BF21": (r"GET.*?/auth/me", "me"),
+        "BF22": (r"POST.*?/auth/logout", "logout"),
+    }
+
+    for code, (pattern, name) in auth_endpoints.items():
+        found = False
+        for f in backend.rglob("*.py"):
+            if "__pycache__" in str(f):
+                continue
+            text = read_text(f)
+            if not text:
+                continue
+            if re.search(pattern, text, re.IGNORECASE):
+                found = True
+                break
+        if not found:
+            rep.add(RED, code, "backend", "backend/",
+                    f"Auth endpoint {name} not found",
+                    intended=f"create {name} endpoint",
+                    priority="P0")
+
+
+def _check_permission_sync(web_app: Path, backend: Path, rep: Report) -> None:
+    """BF23-BF26: Validate permission sync between backend and frontend."""
+    # BF24: Check /rbac/catalog endpoint exists
+    catalog_endpoint = False
+    for f in backend.rglob("*.py"):
+        if "__pycache__" in str(f):
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+        if re.search(r'@router\.get\s*\(\s*["\']/rbac/catalog["\']', text):
+            catalog_endpoint = True
+            break
+
+    if not catalog_endpoint:
+        rep.add(RED, "BF24", "backend", "backend/rbac/",
+                "GET /rbac/catalog endpoint not found — permission sync broken",
+                intended="add @router.get('/rbac/catalog') endpoint returning FEATURE_CATALOG",
+                priority="P0")
+
+    # BF25: Check if permissions.ts is hardcoded
+    permissions_file = web_app / "src/lib/permissions.ts"
+    if not permissions_file.exists():
+        permissions_file = web_app / "src/shared/permissions.ts"
+    if permissions_file.exists():
+        text = read_text(permissions_file) or ""
+        if "GENERATED" not in text and "auto-generated" not in text.lower():
+            rep.add(YEL, "BF25", "frontend", "frontend/web_app/src/",
+                    "permissions.ts appears to be hardcoded, not generated from /rbac/catalog",
+                    intended="create code generator that fetches /rbac/catalog and generates permissions.ts",
+                    priority="P1")
+
+
+def _check_frontend_security(web_app: Path, rep: Report) -> None:
+    """BF27-BF29: Check frontend security issues."""
+    # BF27: Token in URL (social auth callback)
+    for f in web_app.rglob("*.{ts,tsx}"):
+        if "__pycache__" in str(f) or "node_modules" in str(f):
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+        if re.search(r'params\.get\s*\(\s*["\']token["\']', text):
+            rep.add(RED, "BF27", "security", str(f.relative_to(web_app.parent.parent)),
+                    "Access token read from URL query parameter — credential leak",
+                    intended="exchange token for server-set httpOnly cookie",
+                    priority="P0")
+
+    # BF28-BF29: Admin permissions in localStorage
+    for f in web_app.rglob("*.{ts,tsx}"):
+        if "__pycache__" in str(f) or "node_modules" in str(f):
+            continue
+        text = read_text(f)
+        if not text:
+            continue
+        if "localStorage" in text and "permission" in text.lower():
+            if "zozi_admin_permission" in text:
+                rep.add(RED, "BF28", "security", str(f.relative_to(web_app.parent.parent)),
+                        "Admin permissions stored in localStorage — XSS/privilege escalation risk",
+                        intended="fetch permissions from server or validate JWT claims",
+                        priority="P0")
+            if "zozi_current_admin_permissions" in text:
+                rep.add(RED, "BF29", "security", str(f.relative_to(web_app.parent.parent)),
+                        "Permission overrides stored in localStorage — XSS/privilege escalation risk",
+                        intended="fetch from server on every session",
+                        priority="P0")
+
 
 # ============================================================================
 # ENTRY POINT

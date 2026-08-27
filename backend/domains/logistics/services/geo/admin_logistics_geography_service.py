@@ -15,7 +15,7 @@ from infrastructure.utils.dependencies import require_admin, require_super_admin
 
 from domains.country.utils.country_rls import get_country_or_404
 
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
 from domains.governance.services.settings.misc_service import archive_entity, restore_entity, hard_delete_entity
 from domains.governance.services.admin.bulk_ops_service import bulk_archive_entities, bulk_restore_entities

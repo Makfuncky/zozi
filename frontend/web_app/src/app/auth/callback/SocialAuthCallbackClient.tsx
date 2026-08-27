@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
-import { setAccessToken } from "@/lib/api";
 import { useLocaleStore } from "@/lib/localeStore";
 
 function mapSocialError(error: string, tr: (key: string) => string): string {
@@ -39,12 +38,28 @@ export default function SocialAuthCallbackClient() {
       }
 
       try {
-        setAccessToken(token);
-        localStorage.setItem("zozi_has_session", "1");
+        // Exchange the URL token for httpOnly cookies via server endpoint.
+        // This avoids storing the token in localStorage or keeping it in the URL.
+        const res = await fetch("/api/auth/social-callback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          throw new Error("Token exchange failed");
+        }
+
+        // Clean the URL immediately so the token is not visible in browser history
+        window.history.replaceState({}, "", window.location.pathname);
+
+        // Refresh user state — the httpOnly cookie will be sent automatically
         const user = await refresh();
         if (!user) {
           throw new Error("refresh failed");
         }
+
         if (user.role === "supplier") {
           router.replace("/supplier/dashboard");
         } else if (

@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_COUNTRY_ADDED = "country.added"
@@ -71,8 +74,8 @@ def publish_country_added(country_code: str, country_name: str, currency_code: s
         from infrastructure.messaging.events.event_bus import publish
         event = CountryAdded(country_code=country_code, country_name=country_name, currency_code=currency_code, added_by=added_by)
         publish(EVENT_COUNTRY_ADDED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish CountryAdded event: %s", exc)
 
 def publish_country_updated(country_code: str, changed_fields: str, updated_by: Optional[int] = None) -> None:
     """Publish a CountryUpdated event."""
@@ -80,8 +83,8 @@ def publish_country_updated(country_code: str, changed_fields: str, updated_by: 
         from infrastructure.messaging.events.event_bus import publish
         event = CountryUpdated(country_code=country_code, changed_fields=changed_fields, updated_by=updated_by)
         publish(EVENT_COUNTRY_UPDATED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish CountryUpdated event: %s", exc)
 
 def publish_cross_border_detected(user_id: int, from_country: str, to_country: str, session_id: str) -> None:
     """Publish a CrossBorderDetected event."""
@@ -89,8 +92,8 @@ def publish_cross_border_detected(user_id: int, from_country: str, to_country: s
         from infrastructure.messaging.events.event_bus import publish
         event = CrossBorderDetected(user_id=user_id, from_country=from_country, to_country=to_country, session_id=session_id)
         publish(EVENT_CROSS_BORDER_DETECTED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish CrossBorderDetected event: %s", exc)
 
 __all__ = [
     # Event type constants

@@ -19,6 +19,8 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
+HAS_EMAIL = True
+
 
 def _send_via_resend(
     to: str,

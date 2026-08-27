@@ -11,7 +11,7 @@ from infrastructure.observability.error_handler import (
     ErrorCategory,
     AppError,
 )
-from infrastructure.utils.logging_config import setup_structlog, get_request_id
+from infrastructure.observability.logging_config import setup_structlog, get_request_id
 
 
 @pytest.fixture

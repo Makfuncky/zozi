@@ -4994,8 +4994,66 @@ Instructions which must have add,
 - Run atlesst 5 agents which are working under 4 layers to complete the architecture, wring with (modules, provider, infrastructure, utils, rbac, kernal, middleware, database/table and etc), correction, completion of code, error handling, testing and etc.
 
 
-<!-- - read the repot of `_migration_log\correction_plan.md`, `_migration_log/deep_audit.md.` and `backend/domains/_migration_log/verifier_final.md` which is also highlighting a range of not completion task. but some are complete and these audit are not providing complete picture of the codebase. -->
+
 ------------------------------------------------------------
+
+Here are the **project rules and decisions** we've established:
+
+---
+
+## Project Rules & Decisions
+
+### Architecture Rules (The Seven Laws)
+
+1. **Arrows point down only** — `modules → domains → infrastructure`. Domains never import modules. `infrastructure`/`kernel` import nothing above them.
+2. **Module routers stay thin** — auth context + `require_feature(...)` + ONE domain-service call. No DB writes, no business rules.
+3. **Cross-domain writes only via events** (`events.py`/`subscribers.py`); cross-domain reads only via `ports.py`/`read_models/`.
+4. **Features single-sourced** in `domains/*/features.py`; aggregated by `rbac/catalog.py`.
+5. **Country is the orthogonal scope axis** — RLS session context + `country_staff_assignments`.
+6. **Schema discipline** — one Postgres schema per domain; Alembic is the only schema source; `snake_case`, plural tables, `<thing>_id` FKs.
+7. **Allowlist rule** — `DOMAIN_ALLOWLIST.yaml` tracks temporary cross-domain imports; may only shrink.
+
+### Structural Decisions
+
+8. **Router structure** — `modules/{m}/routers/{d}.py` with 19 router files (one per domain per module).
+9. **Media code belongs in providers** — `domains/media` should not exist; all media code goes to `providers/media`.
+10. **Kernel is pure** — `kernel/` contains only business primitives (money/Decimal, currency, numbering, country, period). Must not import domains/modules/rbac/providers.
+11. **Providers wrap SDKs only** — No business logic, no domain imports. Each exposes `HAS_<SDK>` flags.
+12. **16 domains** — accounts, analytics, audit, catalog, comms, country, customers, finance, governance, hr, logistics, orders, promotions, security, suppliers.
+13. **5 modules** — admin, customer, employee, logistics, supplier.
+
+### File Placement Rules
+
+14. **Business logic → `domains/{domain}/services/`**
+15. **API endpoints → `modules/{module}/routers/{domain}.py`**
+16. **External SDK wrappers → `providers/{category}/`**
+17. **Cross-domain communication → `events.py` (writes) or `ports.py` (reads) only**
+18. **Root-level `utils/`, `routers/`, `controllers/`, `services/`, `models/`, `db/` are FORBIDDEN**
+
+### Code Quality Rules
+
+19. **No float for money** — Use `Decimal` from `kernel/money.py`.
+20. **country_code width** — Standardized to `String(2)` (ISO 3166-1 alpha-2).
+21. **Timestamps** — `server_default=func.now()` (DB-side), not Python-side defaults.
+22. **Foreign keys** — Must have explicit `ondelete` constraint.
+23. **Audit columns** — `created_at`/`updated_at` on all models via canonical mixin.
+24. **No forbidden schemas** — `core`, `platform`, `identity` are banned as Postgres schema names.
+
+### Migration Decisions
+
+25. **Shift files to correct domains first** before beginning domain-specific reorganization.
+26. **Use backward-compat shims** in `infrastructure/utils/` for relocated files (re-export from canonical location).
+27. **Delete temporary scripts** — Root-level `fix_*.py`, `debug_*.py`, `migrate_*.py` should be removed after use.
+28. **`_auto_stubs.py` are NOT architecture** — They are migration scaffolding to be deleted when real implementations exist.
+
+### Provider Rules
+
+29. **Graceful degradation** — Domains must handle missing provider SDKs (check `HAS_<SDK>` flags).
+30. **Providers never import domains** — Data flows through parameters and return values only.
+
+
+
+
 
 
 ------------------------------------------------------------
@@ -5008,12 +5066,238 @@ Instructions which must have add,
 
 ---------------------------------------------------------------
 
-proceed carefully on `WIRING_ALIGNMENT_PLAN.md` becasue backend 80% aligned with the `ARCHITECTURE_DIAGRAM.md`.
-remaining missing services will be created later after understanding the current 
+---------------------------------------------------------------
+> COMPLETE SYSTEM PROBLEM INVESTIGATION PROMPT: 
+---------------------------------------------------------------
+**Objective**: 
+- Do the complete investigation and inspection of `backend` and `frontend` of the problems.
+**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
+**Target**: 
+- find out what are broken, need enhancement, improvement, wriing problem, architecture problem, logic problem, security problem, domain structure, infrastructure, rbac, providers, modules, backend and frontend wiring, violation of the architecture, errors, wrong imports, wrong logic to be correct, any duplication problems, enhancement of the logic, database problem, database connection problem, table problem and alignment issues and head of the table, security issues, concurrent handling, error handling, 100Ks user handling at a time and etc.
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
+- Use maximum sub-agent to identify the problem accurately and give them clear instructions to identify problem.
+
+---------------------------------------------------------------
+> COMPLETE DOMAIN & SERVICES INVESTIGATION PROMPT: 
+---------------------------------------------------------------
+
+**Objective**: 
+- Do the complete investigation and inspection of `backend/domains/**` and find problems.
+**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
+**Target**: 
+- find out what are `broken`, `need enhancement`, `improvement`, `logical improvement`, `wriing problem`, `cross domain import problem`, `architecture problem`, `logic problem`, `security problem`, `domain structure`, `infrastructure connection`, `rbac connection`, `providers tools using connection`, `models problems`, `modules connection problem`,`violation of the architecture`, `code errors`, `wrong imports`, `wrong logic to be correct`, `logics to be improve and enhance`, `any duplication problems`, `database problem`, `database connection problem`, `table problem and alignment issues and head of the table`, `security issues`, `concurrent handling`, `error handling`, `100Ks user handling at a time` and etc.
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.
+- Use maximum sub-agent to identify the problem accurately and give them clear instructions to identify problem.
+
+---------------------------------------------------------------
+> COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
+---------------------------------------------------------------
+
+**Objective**: 
+- Resolve all the problems mentioned into `docs\action\ACCOUNTS_DOMAIN_DIAGNOSIS.md`.
+
+**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
+
+**Process**: 
+- let's proceed to reslove all the problem mentioned into  `docs\action\ACCOUNTS_DOMAIN_DIAGNOSIS.md` after verifcation of correctness.
+- Read Backend completely while resolving the problems.
+- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
+- You are not allowed to make any mistake and ensure problem is resolved completely.
+- Run Maximum number of sub-agent to resolve the problem accurately and give them clear instructions to resolve particular problem becasue we can't afford any new error.
+- Run agents for Verification and check the status and if any problem still remaining.
+- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
+- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
+
+---------------------------------------------------------------
+> COMPLETE FULL CODEBASE `SOLVER` PROMPT: 
+---------------------------------------------------------------
+
+**Objective**: 
+- Resolve all the problems mentioned into `BACKEND_ARCHITECTURE_DIAGNOSIS.md`.
+
+**Rule file**: architecture file `ARCHITECTURE_DIAGRAM.md`
+
+**Process**: 
+- let's proceed to reslove all the problem mentioned into  `BACKEND_ARCHITECTURE_DIAGNOSIS.md` after verifcation of correctness.
+- Read Backend completely while resolving the problems.
+- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
+- You are not allowed to make any mistake and ensure problem is resolved completely.
+- Run Maximum number of sub-agent to resolve the problem accurately and give them clear and precise instructions to resolve particular problem becasue we can't afford any new error.
+- Run agents for Verification and check the status and if any problem still remaining.
+- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
+- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
+
+
+---------------------------------------------------------------
+> COMPLETE MODULES & ROUTERS INVESTIGATION PROMPT: 
+---------------------------------------------------------------
+- Perform the complete investigation and inspection of `backend\domains\**`, `backend\modules\{m}\router{d}`
+- Perform the complete investigation and inspection of `backend\domains\**`, `backend\modules\**`, `backend\infrastructure\**`, `backend\modules\{m}\router{d}`.
+
+- Perform the complete investigation and inspection of `backend`.
+- Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md`.  
+- Benchmark against `ARCHITECTURE_DIAGRAM.md` (must be read top to bottom).  
+- Do the detail investigation and findout the problems of the `backend` according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
+- list down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.  
+- Use maximum sub-agent to identify the problem accurately and give them clear instructions to identify problem.
+
+**Categories of Problems to Investigate**
+- **Architecture & Wiring** : Violations of `ARCHITECTURE_DIAGRAM.md`, Cross‑domain imports breaking modular boundaries, Wrong layering (domain vs infrastructure vs modules), Misplaced files or functions
+- **Code Quality & Logic** : Broken functions, Wrong or outdated logic, Duplication of code, Hardcoding values, Poor error handling, Missing concurrency handling, Inefficient algorithms for scale (100k+ users)
+- **Domain & Module Structure**: Incorrect domain boundaries, Module connection problems, Models not aligned with domains, Providers/tools miswired, RBAC misconfigured or missing
+- **Database & Data Layer** : Database connection problems, Table misalignment with architecture, Wrong schema design,  Head of table issues, Missing migrations or broken ORM logic, Security gaps in queries
+- **Security**: RBAC violations, Hardcoded secrets, Insecure imports or dependencies, Missing validation/sanitization, Improper error exposure, Weak authentication/authorization flows
+- **Infrastructure & Connections**: Broken infrastructure wiring, Wrong provider connections, Misconfigured external tools, API gateway or service mesh misalignment, Faulty dependency injection
+- **Performance & Scalability**: Inefficient handling of concurrent requests,  Poor caching strategy, Memory leaks, Slow database queries, No load balancing or failover logic
+- **Error & Exception Handling** : Missing try/catch or fallback logic, Improper logging, Silent failures, Wrong error propagation
+- **Testing & Validation** : Missing unit/integration tests, Broken test coverage, No validation against architecture rules, Outdated mocks/stubs
+
+------------------------------------------------------------------------------------------
+> comms domain is architecturally clean but not production-ready. do a deep investigation of database alignment, security, scalability, and missing functionality.
+------------------------------------------------------------------------------------------
+
+
+**Objective**  
+- Perform a complete investigation and inspection of `backend` and `frontend`.  
+- Identify all problems, violations, and risks compared to `ARCHITECTURE_DIAGRAM.md`.  
+
+**Rule File**  
+- Benchmark against `ARCHITECTURE_DIAGRAM.md` (must be read top to bottom).  
+
+**Target Scope**  
+- Audit `backend\domains\**`, `backend\modules\**`, `backend\infrastructure\**`, and all frontend layers.  
+- Detect problems across architecture, logic, wiring, and performance.  
+
+------------------------------------------------------------------------------------------
+
+- Do the detail investigation and findout the problems of the "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\{DOMAIN}" according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
+
+- Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. and all the relevant code of the `{DOMAIN}` domain is not correctly placed and logically broken. not proper files names and not right plaement also. Now your turn to list down all the problem in detail. a range of architectural and logical violation and also logics are completely broken which must be accoding to a professional codes and for professional virtual market place and e-commerce. 
+
+- table, schema, port, events, database connection, infrastructure connection, router connection, provider tools proper connection, proper foldering, proper filing, proper coding and correct and complete and code all are missing 
+
+- List down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document in `docs\action\{DOMAIN}_INVESTIGATION.md` and list down each dignosed problem properly.
+------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------
 
-read `WIRING_ALIGNMENT_PLAN.md` accoding to it we have some missing services into the domain. can you check and list down which services we don't have.
+
+
+
+
+- Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. and all the relevant code of the catalog domain is not correctly placed and logically broken. not proper files names and not right plaement also. Now your turn to list down all the problem in detail. a range of architectural and logical violation and also logics are completely broken which must be accoding to a professional codes and for professional virtual market place and e-commerce. 
+- Handling of the database, table, security, wiring with other backend folders, using of `providers-tools` 
+- List down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document in `docs\action\**` and list down each dignosed problem properly.
+
 
 ---------------------------------------------------------------
+
+- Do the detail investigation and findout the problems of the "D:\Projects\10- E-COMMERCE WEBSITE\zozi\backend\domains\accounts" according the `ARCHITECTURE_DIAGRAM.md` and otherwise also.
+- Some problem, I dignose which are services are not proper aligned and code & files of services are in worst shape. all the accounts means admin, employees, suppliers, logistics, customers are not correctly placed and all the relevant code of the accounts domain is not correctly placed and logically broken. Now your turn to list down all the problem in detail.
+- List down detail of the problem with detailed solution poperly with complete referance of file, function, code and problem and make a document and list down each dignosed problem properly.
+
+---------------------------------------------------------------
+modules/{m}/routers/{d}:
+modules:
+domains/{d}/services/{sub-domain}:
+domains:
+database: 
+security:
+middleware:
+jobs:
+poviders:
+kernal:
+infrastructure:
+rbac:
+frontend/web_app:
+frontned/mobile_app:
+
+---------------------------------------------------------------
+
+
+Objective: 
+Reference_file:
+Target: 
+Instruction:
+let's proceed to reslove all the problem mentioned into  `docs\COMPLETE_INVESTIGATION_REPORT.md`, 
+- Read Backend completely while resolving the problems.
+- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
+- You are not allowed to make any mistake and ensure problem is resolved completely.
+- Use Multiples 10 to 12 sub-agent to resolve the problem accurately and give them clear instructions to resolve particular problem becasue we can't afford any new error.
+- Run agents for Verification and check the status and if any problem still remaining.
+- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
+- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
+
+---
+
+
+let's proceed to reslove all the problem mentioned into  `docs\COMPLETE_INVESTIGATION_REPORT.md`, 
+- Read Backend completely while resolving the problems.
+- Keep in mind the `ARCHITECTURE_DIAGRAM.md` is the architecture.
+- You are not allowed to make any mistake and ensure problem is resolved completely.
+- Use Multiples 10 to 12 sub-agent to resolve the problem accurately and give them clear instructions to resolve particular problem becasue we can't afford any new error.
+- Run agents for Verification and check the status and if any problem still remaining.
+- if any problem is still remaining, then run the agent with clear and particular instruction to resolve remaining problems .
+- then Run agents for Verification and check the status and if any problem still remaining and ensure everything done 100% correctly.
+
+
+
+
+start to resolve all the `domain`, and other backend folders except `routers` and `provider` because another agent is handling `routers` and `provider`
+
+
+Resolve above all problems separately because i don't want these problem again to see, without creating new problem. ensure these all the problems resolve so run agents which are resloving the problem, then agent who will investigate problems are properly resolved or not and do correction and again run agent if any problem still remaining.
+
+
+----
+
+You are the router manager and you didn't resolve yet below important problems.
+
+run agents which are resloving the problem, then agent who will investigate problems are properly resolved or not and do correction and again run agent if any problem still remaining.
+
+i don't have problem with the files size but business logic in the router is not acceptable, run agent to check the business logics kept inside the router then extract into domain. routers are not allowed to keep busienss logics 
+
+Resolve below problems correctly. and ensure there is no more problems inside the router any more.
+
+read the `ROUTER_SHIFT_PLAN.md` which is investigated report that have to be verify and have to make thin and business logic must be shifted into `backend\domains\{d}\service\**`. and please when you are shifting the code you  must have shift carefully inside the relevant file and check first that business logic is already inside or not.
+
+---
+
+Do a complete investigation of `backend` and find out what are broken, need enhancement, improvement, wriing problem, architecture problem, logic problem, security problem.
+Just investigate and make a detail report. and use multiples 6 or 7 sub-agents at each level for better and detailed investigation.
+The architecture files is `ARCHITECTURE_DIAGRAM.md`
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------
+> __pycache__ clean command
+-------------------------------------------------------------
+Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE WEBSITE\zozi" -Directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "Done"
+
+(Get-ChildItem -Recurse -Filter "__pycache__" -Path "D:\Projects\10- E-COMMERCE WEBSITE\zozi" -Directory -ErrorAction SilentlyContinue | Measure-Object).Count
+
+(Get-ChildItem -Recurse -Filter "*.pyc" -Path "D:\Projects\10- E-COMMERCE WEBSITE\zozi" -File -ErrorAction SilentlyContinue | Measure-Object).Count	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

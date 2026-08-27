@@ -7,11 +7,12 @@ ORM access lives in the service layer, matching the rest of the codebase.
 """
 from __future__ import annotations
 
-from typing import Optional, Set
+from typing import Set
 
 from sqlalchemy.orm import Session
 
 from domains.country.models.country_enhancements import CountryStaffAssignment
+from domains.accounts.ports import get_user_by_id
 
 
 def resolve_user_country_scope(user, db: Session) -> Set[str]:
@@ -30,8 +31,3 @@ def resolve_user_country_scope(user, db: Session) -> Set[str]:
 
     codes = {str(row[0]).upper().strip() for row in assignments if row[0]}
     return codes
-
-
-def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
-    """Fetch a user by primary key."""
-    return db.query(User).filter(User.id == user_id).first()

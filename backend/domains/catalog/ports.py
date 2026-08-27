@@ -24,7 +24,7 @@ from infrastructure.utils.pagination import (
 )
 
 from domains.catalog.models.products import Category, Product, ProductFilterMetadata, ProductFilterOption, ProductVariant, ProductVideo, Review, VideoAnalytics, Wishlist, WishlistItem
-from domains.catalog.models.promotions import BOGOPromotion
+from domains.catalog.models.promotions import BOGOPromotion, Banner
 
 
 # --- Keyset (cursor) pagination helpers (diagram §6: NEVER OFFSET on hot lists) ---

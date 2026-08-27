@@ -37,7 +37,7 @@ class SupportTicket(Base):
     __tablename__ = "support_tickets"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     subject = Column(String, nullable=False)
     priority = Column(String, default="medium")
     status = Column(String, default="open")
@@ -53,8 +53,8 @@ class SupportTicketReply(Base):
     __tablename__ = "support_ticket_replies"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("accounts.users.id"), nullable=False)
+    ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id", ondelete="SET NULL"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("accounts.users.id", ondelete="SET NULL"), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
@@ -66,8 +66,8 @@ class TicketAttachment(Base):
     __tablename__ = "ticket_attachments"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    ticket_reply_id = Column(Integer, ForeignKey("comms.support_ticket_replies.id"), nullable=True)
-    ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id"), nullable=True)
+    ticket_reply_id = Column(Integer, ForeignKey("comms.support_ticket_replies.id", ondelete="SET NULL"), nullable=True)
+    ticket_id = Column(Integer, ForeignKey("comms.support_tickets.id", ondelete="SET NULL"), nullable=True)
     file_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=_utcnow)
     country_code = Column(String(2), nullable=True, index=True)
@@ -105,7 +105,7 @@ class EscalationSLARule(Base):
     __tablename__ = "escalation_sla_rules"
     __table_args__ = ({"schema": "comms"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True)
     priority = Column(String(20), nullable=False)
     escalate_after_minutes = Column(Integer, nullable=False)
     escalate_to_role = Column(String(40), nullable=False)

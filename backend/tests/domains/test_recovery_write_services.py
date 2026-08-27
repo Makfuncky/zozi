@@ -52,7 +52,7 @@ import domains.hr.services.hr_write_service as hr
 import domains.governance.services.iam_write_service as iam
 import domains.catalog.services.banners.banner_service as banner
 import domains.orders.services.disputes_write_service as disputes
-import providers.media.services.misc_write_service as misc
+import domains.governance.services.misc_write_service as misc
 import domains.governance.services.permissions_write_service as perms
 import domains.catalog.services.promotions.promotion_service as promo
 import domains.orders.services.returns_write_service as ret

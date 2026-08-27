@@ -10,74 +10,128 @@ from sqlalchemy.orm import Session
 from infrastructure.utils.constants import MAX_BULK_ITEMS
 from infrastructure.database.database import get_db, Base
 from infrastructure.database.schemas import User as UserSchema, Product as ProductSchema, Order as OrderSchema, CouponSchema, ListPage, AuditLogSchema, AuditLogPage, CreateStaffAccount, UpdateStaffAccount, BulkUpdateStaffBody
-from domains.governance.services.settings.admin_controller import get_current_admin
+# TODO: Module not yet created
+# from domains.governance.services.settings.admin_controller import get_current_admin
 from domains.accounts.services.auth.auth_service import get_current_user
 from infrastructure.utils.dependencies import require_admin
-from domains.governance.services.settings.admin_controller import require_admin_2fa_enabled
-from domains.governance.services.settings.admin_controller import require_admin_2fa_verified
-from domains.governance.services.permissions.effective_permissions import require_permission
-from domains.governance.services.users.users_service_accounts import get_all_users
-from domains.governance.services.users.users_service_accounts import update_user_role
-from domains.governance.services.users.users_service_accounts import toggle_user_active
+# TODO: Module not yet created
+# from domains.governance.services.settings.admin_controller import require_admin_2fa_enabled
+# TODO: Module not yet created
+# from domains.governance.services.settings.admin_controller import require_admin_2fa_verified
+# TODO: Module not yet created
+# from domains.governance.services.permissions.effective_permissions import require_permission
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import get_all_users
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import update_user_role
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import toggle_user_active
 from domains.governance.ports import delete_user_admin
-from domains.governance.services.users.admin_users import bulk_delete_users_admin
-from domains.governance.services.users.admin_users import force_reset_password_admin
-from domains.governance.services.users.users_service_accounts import create_staff_account
-from domains.governance.services.users.users_service_accounts import update_staff_account
-from domains.governance.services.users.users_service_accounts import bulk_update_staff_accounts
-from domains.governance.services.users.users_service_accounts import delete_staff_account
-from domains.governance.services.orders.orders_service import get_all_orders
-from domains.governance.services.orders.orders_service import delete_order_admin
-from domains.governance.services.orders.orders_service import update_order_status
-from domains.governance.services.orders.orders_service import refund_order
-from domains.governance.services.orders.orders_service import update_order_tracking
-from domains.governance.services.products.products_service import get_all_products
-from domains.governance.services.products.products_service import delete_product_admin
-from domains.governance.services.products.products_service import restore_product_admin
-from domains.governance.services.analytics.analytics_service import get_analytics
-from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
-from domains.governance.services.analytics.analytics_service import get_customer_insights
+# TODO: Module not yet created
+# from domains.governance.services.users.admin_users import bulk_delete_users_admin
+# TODO: Module not yet created
+# from domains.governance.services.users.admin_users import force_reset_password_admin
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import create_staff_account
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import update_staff_account
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import bulk_update_staff_accounts
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import delete_staff_account
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import get_all_orders
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import delete_order_admin
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import update_order_status
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import refund_order
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import update_order_tracking
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import get_all_products
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import delete_product_admin
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import restore_product_admin
+# TODO: Module not yet created
+# from domains.governance.services.analytics.analytics_service import get_analytics
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import get_supplier_comparison
+# TODO: Module not yet created
+# from domains.governance.services.analytics.analytics_service import get_customer_insights
 from domains.governance.services.settings.misc_service import get_audit_log_page
 from domains.governance.services.settings.misc_service import get_available_audit_actions
-from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
-from domains.governance.services.suppliers.suppliers_service import verify_supplier
-from domains.governance.services.suppliers.suppliers_service import reject_supplier
-from domains.governance.services.products.products_service import get_pending_products
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import get_pending_suppliers
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import verify_supplier
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import reject_supplier
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import get_pending_products
 from domains.governance.ports import approve_product
 from domains.governance.ports import reject_product
-from domains.governance.services.products.products_service import toggle_product_badge
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import toggle_product_badge
 from domains.governance.ports import list_coupons
 from domains.governance.ports import create_coupon
 from domains.orders.ports import update_coupon
 from domains.governance.ports import delete_coupon
-from domains.comms.services.ticket.tickets_service import list_tickets
-from domains.governance.services.settings.admin_controller import get_ticket_detail
-from domains.comms.services.ticket.tickets_service import reply_to_ticket
-from domains.comms.services.ticket.tickets_write_service import update_ticket_status
+# TODO: Module not yet created
+# from domains.comms.services.ticket.tickets_service import list_tickets
+# TODO: Module not yet created
+# from domains.governance.services.settings.admin_controller import get_ticket_detail
+# TODO: Module not yet created
+# from domains.comms.services.ticket.tickets_service import reply_to_ticket
+# TODO: Module not yet created
+# from domains.comms.services.ticket.tickets_write_service import update_ticket_status
 from domains.finance.ports import list_pending_payouts
 from domains.governance.ports import verify_payout
 from domains.accounts.services.permissions.permission_service import get_hierarchy_permissions
 from domains.accounts.services.permissions.permission_service import update_role_permissions
-from domains.governance.services.analytics.analytics_service import get_analytics_timeseries
-from domains.governance.services.analytics.analytics_service import get_top_products_analytics
-from domains.governance.services.analytics.analytics_service import get_user_growth_analytics
-from domains.governance.services.analytics.analytics_service import get_chatbot_analytics
-from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
-from domains.governance.services.orders.orders_service import bulk_update_order_status_admin
-from domains.governance.services.orders.orders_service import bulk_delete_orders_admin
-from domains.governance.services.products.products_service import bulk_delete_products_admin
-from domains.governance.services.products.products_service import bulk_product_moderation
-from domains.governance.services.suppliers.suppliers_service import bulk_supplier_verification
-from domains.governance.services.suppliers.suppliers_service import bulk_manage_suppliers
-from domains.governance.services.users.users_service_accounts import bulk_update_users_role
-from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
-from domains.governance.services.users.users_service_accounts import list_staff_accounts
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.governance.services.analytics.analytics_service import get_analytics_timeseries
+# TODO: Module not yet created
+# from domains.governance.services.analytics.analytics_service import get_top_products_analytics
+# TODO: Module not yet created
+# from domains.governance.services.analytics.analytics_service import get_user_growth_analytics
+# TODO: Module not yet created
+# from domains.governance.services.analytics.analytics_service import get_chatbot_analytics
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import get_all_suppliers
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import bulk_update_order_status_admin
+# TODO: Module not yet created
+# from domains.governance.services.orders.orders_service import bulk_delete_orders_admin
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import bulk_delete_products_admin
+# TODO: Module not yet created
+# from domains.governance.services.products.products_service import bulk_product_moderation
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import bulk_supplier_verification
+# TODO: Module not yet created
+# from domains.governance.services.suppliers.suppliers_service import bulk_manage_suppliers
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import bulk_update_users_role
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import bulk_toggle_users_active
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import list_staff_accounts
 from domains.accounts.services.permissions.permission_service import get_staff_permission_catalog
-from domains.governance.services.users.users_service_accounts import update_staff_account
-from domains.governance.services.users.users_service_accounts import list_pending_bank_accounts
-from domains.governance.services.users.users_service_accounts import delete_bank_account_record
+# TODO: Module not yet created
+# # TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import update_staff_account
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import list_pending_bank_accounts
+# TODO: Module not yet created
+# from domains.governance.services.users.users_service_accounts import delete_bank_account_record
 from domains.governance.ports import verify_bank_account
-from domains.governance.services.settings.database_service import get_database_overview
+# TODO: Module not yet created
+# from domains.governance.services.settings.database_service import get_database_overview
 from domains.governance.ports import get_authority_level
 from domains.governance.ports import get_user_chain
 from domains.governance.ports import get_all_subordinates
@@ -96,7 +150,8 @@ from domains.catalog.ports import update_banner
 from domains.catalog.ports import delete_banner
 from domains.catalog.ports import BannerCreate
 from domains.catalog.ports import BannerUpdate
-from domains.governance.services.admin.export_service import export_users_csv, export_orders_csv, export_products_csv, export_coupons_csv, export_audit_logs_csv, export_transfer_csv, queue_export_job, download_export_job_result
+# TODO: Module not yet created
+# from domains.governance.services.admin.export_service import export_users_csv, export_orders_csv, export_products_csv, export_coupons_csv, export_audit_logs_csv, export_transfer_csv, queue_export_job, download_export_job_result
 from domains.orders.ports import get_promotion_config
 from domains.orders.ports import update_promotion_config
 from domains.orders.ports import list_promotion_tiers

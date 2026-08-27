@@ -8,8 +8,6 @@ from uuid import uuid4
 from providers.finance import bank_api
 from typing import Any
 from sqlalchemy.orm import Session
-from domains.country.models.countries import CountryConfig
-from domains.logistics.services.partners.service import normalize_country_code
 from infrastructure.utils.config import settings
 from kernel.money import round_money, to_decimal
 import logging
@@ -18,7 +16,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
-from domains.catalog.ports import Product
+# Product model imported lazily to avoid cross-domain import (Law 3 compliance)
 from domains.finance.models.erp import LandedCostAllocation
 from domains.finance.models.erp import CustomsEntry
 from domains.finance.models.erp import ImportCostTemplate
@@ -34,34 +32,18 @@ from domains.finance.models.erp import ImportShipmentLine
 from domains.finance.models.erp import PurchaseOrder
 from domains.finance.models.erp import PurchaseOrderLine
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance import general_ledger_service as gl
+# Removed circular self-import
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from infrastructure.utils.pagination import keyset_offset_window
 from datetime import datetime
 from typing import Optional, List
-# AuditLog imported lazily to avoid circular import
-"""General Ledger — double-entry accounting core."""
 
-import uuid
-from datetime import datetime
-from decimal import Decimal
-from typing import Optional
 
-from sqlalchemy.orm import Session, joinedload
-
-from domains.governance.models.user import User
 from domains.finance.models.commission import CommissionLedgerEntry
-from domains.finance.models.finance import Account
-from domains.finance.models.finance import AccountBalance
-from domains.finance.models.finance import AccountGroup
-from domains.finance.models.finance import JournalEntry
-from domains.finance.models.finance import JournalEntryLine
 from domains.finance.models.finance import TransactionLedger
 from domains.finance.models.finance import RefundLedger
 from domains.finance.models.finance import VATRemittance
 from domains.finance.models.finance import TreasuryAccount
-from domains.orders.models.orders import Order
-from domains.orders.models.orders import OrderItem
 from domains.finance.models.payments import Payout
 from infrastructure.database.schemas import (
     AccountBalanceOut,
@@ -602,6 +584,7 @@ def post_order_payment_journal(db: Session, order_id: int, total_amount: Decimal
     Dr. Gateway Settlement Receivable | Customer payment captured
     Cr.  Deferred Revenue (GCC)         | Obligation to deliver order
     """
+    from domains.orders.models.orders import Order
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise ValueError(f"Order {order_id} not found")
@@ -650,6 +633,7 @@ def post_delivery_revenue_journal(db: Session, transaction_ledger: TransactionLe
     
     Uses TransactionLedger for computed revenue/splits
     """
+    from domains.orders.models.orders import Order
     order = db.query(Order).filter(Order.id == transaction_ledger.order_id).first()
     if not order:
         raise ValueError(f"Order {transaction_ledger.order_id} not found")
@@ -728,6 +712,7 @@ def post_refund_journal(db: Session, refund_ledger: RefundLedger) -> JournalEntr
     Handle ORDER REFUND event for GCC marketplace.
     Reverses all revenue entries created on delivery.
     """
+    from domains.orders.models.orders import Order
     order = db.query(Order).filter(Order.id == refund_ledger.order_id).first()
     if not order:
         raise ValueError(f"Order {refund_ledger.order_id} not found")
@@ -847,6 +832,7 @@ def post_gateway_fee_journal(db: Session, order_id: int, fee_amount: Decimal, ga
     Dr.  Payment Gateway Fees (GCC)
     Cr.  Gateway Settlement Receivable
     """
+    from domains.orders.models.orders import Order
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         raise ValueError(f"Order {order_id} not found")
@@ -928,6 +914,7 @@ def post_badge_fee_journal(db: Session, user_id: int, badge_fee_amount: Decimal,
     Dr.  Accounts Receivable (Customer)
     Cr.  Badge Fee Revenue (GCC)
     """
+    from domains.governance.models.user import User
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise ValueError(f"User {user_id} not found")
@@ -1138,107 +1125,6 @@ def validate_entry_balanced(lines: list[JournalLineInput]) -> bool:
     total_credits = sum(round_money(line.amount) for line in lines if line.side == "credit")
 
     return total_debits == total_credits
-
-# === MERGED from je_reversal_service.py ===
-
-"""Journal Entry Reversal Service — formal reversal/correction of posted JEs.
-
-Allows reversing a journal entry by creating a mirror entry with opposite
-sides, referencing the original via `reversal_of_id`.
-"""
-from infrastructure.utils.datetime_utils import utcnow
-
-import logging
-from datetime import datetime
-from typing import Optional
-
-from sqlalchemy.orm import Session
-
-from domains.finance.models.finance import JournalEntry
-from domains.finance.models.finance import JournalEntryLine
-from domains.finance.services.ledger.general_ledger_service import create_journal_entry
-from domains.finance.services.ledger.general_ledger_service import get_journal_entry
-from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-
-logger = logging.getLogger(__name__)
-
-
-def reverse_journal_entry(
-    db: Session,
-    original_entry_id: int,
-    reason: str,
-    user_id: int,
-    reversal_date: Optional[datetime] = None,
-) -> dict:
-    """Reverse a journal entry by creating a mirror entry.
-
-    1. Validates the original entry exists and is not already reversed
-    2. Creates a new entry with opposite debit/credit sides
-    3. Links via reversal_of_id
-    """
-    original = db.query(JournalEntry).filter(JournalEntry.id == original_entry_id).first()
-    if not original:
-        raise ValueError(f"Journal entry #{original_entry_id} not found")
-    if original.is_deleted:
-        raise ValueError(f"Journal entry #{original_entry_id} is deleted")
-    if original.reversal_of_id:
-        raise ValueError(f"Journal entry #{original_entry_id} is itself a reversal — cannot reverse a reversal")
-    # Check if already reversed
-    existing_reversal = db.query(JournalEntry).filter(
-        JournalEntry.reversal_of_id == original_entry_id,
-        JournalEntry.is_deleted == False,
-    ).first()
-    if existing_reversal:
-        raise ValueError(
-            f"Journal entry #{original_entry_id} already reversed by entry #{existing_reversal.id}"
-        )
-
-    lines = (
-        db.query(JournalEntryLine)
-        .filter(JournalEntryLine.entry_id == original_entry_id)
-        .all()
-    )
-    if not lines:
-        raise ValueError(f"Journal entry #{original_entry_id} has no lines")
-
-    reversed_lines = []
-    for line in lines:
-        acct = line.account
-        reversed_lines.append(JournalLineInput(
-            account_code=acct.code,
-            side="credit" if line.side == "debit" else "debit",
-            amount=line.amount,
-            description=f"REVERSAL: {line.description or ''}",
-            entity_type=line.entity_type,
-            entity_id=line.entity_id,
-        ))
-
-    ref = f"REV-{original.reference_number or original_entry_id}"
-    entry_data = JournalEntryCreate(
-        entry_date=reversal_date or utcnow(),
-        reference_type="reversal",
-        reference_id=original_entry_id,
-        reference_number=ref,
-        description=f"Reversal of JE #{original_entry_id}: {reason}",
-        currency=original.currency,
-        lines=reversed_lines,
-    )
-
-    new_entry = create_journal_entry(db, entry_data, user_id=user_id)
-
-    # Link reversal
-    new_entry_obj = db.query(JournalEntry).filter(JournalEntry.id == new_entry.id).first()
-    new_entry_obj.reversal_of_id = original_entry_id
-    db.commit()
-
-    return {
-        "original_entry_id": original_entry_id,
-        "reversal_entry_id": new_entry.id,
-        "reference_number": ref,
-        "reason": reason,
-        "reversal_date": (reversal_date or utcnow()).isoformat(),
-        "lines_reversed": len(reversed_lines),
-    }
 
 # === MERGED from period_close_service.py ===
 
@@ -2677,23 +2563,22 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from infrastructure.database.database import get_db
 from infrastructure.utils.dependencies import require_admin
-from domains.finance.ports import accounting_controller
-from finance.ports import FinancialReportingService
-from finance.ports import get_or_create_fiscal_period
-from finance.ports import get_current_fiscal_period
-from domains.finance.ports import close_period
-from finance.ports import list_periods
-from domains.finance.ports import reverse_journal_entry
-from domains.finance.ports import generate_forecast
-from finance.ports import controller_get_ar_summary
-from finance.ports import controller_get_ap_summary
-from finance.ports import controller_post_ar_invoice
-from finance.ports import controller_post_ar_payment
-from finance.ports import controller_post_ap_payable
-from finance.ports import controller_post_ap_payment
-from infrastructure.utils.audit import AuditAction, audit_log
+# Lazy imports to avoid circular dependency
+def _get_finance_ports():
+    from domains.finance.ports import accounting_controller, FinancialReportingService, get_or_create_fiscal_period, get_current_fiscal_period, close_period
+    return accounting_controller, FinancialReportingService, get_or_create_fiscal_period, get_current_fiscal_period, close_period
+# Lazy import: list_periods
+# Lazy import: reverse_journal_entry
+# Lazy import: generate_forecast
+# Lazy import: controller_get_ar_summary
+# Lazy import: controller_get_ap_summary
+# Lazy import: controller_post_ar_invoice
+# Lazy import: controller_post_ar_payment
+# Lazy import: controller_post_ap_payable
+# Lazy import: controller_post_ap_payment
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
 class ReportPeriod(BaseModel):
     period_start: datetime
@@ -3126,8 +3011,13 @@ from domains.finance.models.commission import CommissionLedgerEntry
 from domains.finance.models.commission import ProductCommissionOverride
 from domains.governance.models.admin import CommissionBadgeTier
 from domains.governance.models.admin import CommissionGlobalConfig
-from infrastructure.utils.audit import AuditAction, audit_log
-from domains.finance.services.finance import commission_engine
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
+
+
+def _get_commission_engine():
+    """Lazy import to break circular dependency."""
+    from domains.finance.services.finance_service import commission_engine
+    return commission_engine
 
 
 def _build_list_page_payload(items: list[Any], total: int, *, offset: int = 0, page_size: Optional[int] = None) -> dict[str, Any]:
@@ -3155,8 +3045,8 @@ def _category_to_slug(raw_value: Any) -> Optional[str]:
     return raw.replace(" & ", "-").replace(" ", "-")
 
 
-def _supplier_rate_snapshot(supplier_id: int, db: Session) -> commission_engine.RateResult:
-    return commission_engine.get_effective_rate(
+def _supplier_rate_snapshot(supplier_id: int, db: Session):
+    return _get_commission_engine().get_effective_rate(
         supplier_id=supplier_id,
         product_id=None,
         category_slug=None,
@@ -3172,12 +3062,13 @@ def get_effective_rate(
     db: Session,
 ) -> Decimal:
     """Return the effective commission rate for a supplier/product combo."""
+    from domains.catalog.ports import Product
     category_slug: Optional[str] = None
     if product_id:
         product = db.query(Product).filter(Product.id == product_id).first()
         category_slug = _category_to_slug(getattr(product, "category", None) if product else None)
 
-    return commission_engine.get_effective_rate(
+    return _get_commission_engine().get_effective_rate(
         supplier_id=supplier_id,
         product_id=product_id,
         category_slug=category_slug,
@@ -3352,6 +3243,7 @@ def set_product_commission_override(
     Create or update the product-level commission override.
     Rate must be in 0.0–1.0 range.
     """
+    from domains.catalog.ports import Product
     _require_admin(acting_user)
     if not (0.0 <= rate <= 1.0):
         raise HTTPException(status_code=422, detail="Rate must be between 0.0 and 1.0")
@@ -3445,6 +3337,7 @@ def list_product_commission_overrides(
     limit: int = 100,
 ) -> list[dict]:
     """Return product-level overrides with product and supplier context for admin operations."""
+    from domains.catalog.ports import Product
     q = (
         db.query(ProductCommissionOverride, Product, User)
         .join(Product, Product.id == ProductCommissionOverride.product_id)
@@ -3572,7 +3465,7 @@ def _serialize_override(o: ProductCommissionOverride | None) -> Optional[dict]:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def get_global_config(db: Session) -> dict:
-    config = commission_engine.get_global_config(db)
+    config = _get_commission_engine().get_global_config(db)
     return _serialize_global_config(config)
 
 
@@ -3665,7 +3558,7 @@ def get_supplier_policy_snapshot(current_user: dict, db: Session) -> dict:
 
 def update_global_config(payload: dict, acting_user: dict, db: Session) -> dict:
     _require_admin(acting_user)
-    config = commission_engine.get_global_config(db)
+    config = _get_commission_engine().get_global_config(db)
 
     allowed = {
         "default_rate", "low_value_threshold", "fixed_cap_amount",
@@ -3734,7 +3627,7 @@ def list_category_rates(
         )
     rows = query.order_by(CommissionCategoryRate.category_display_name, CommissionCategoryRate.id).all()
     if not rows:
-        commission_engine.seed_defaults(db)
+        _get_commission_engine().seed_defaults(db)
         query = db.query(CommissionCategoryRate)
         if search and search.strip():
             term = f"%{search.strip()}%"
@@ -3818,7 +3711,7 @@ def list_badge_tiers(
         query = query.filter(CommissionBadgeTier.badge_level.ilike(f"%{search.strip()}%"))
     rows = query.order_by(CommissionBadgeTier.sort_order, CommissionBadgeTier.id).all()
     if not rows:
-        commission_engine.seed_defaults(db)
+        _get_commission_engine().seed_defaults(db)
         query = db.query(CommissionBadgeTier)
         if search and search.strip():
             query = query.filter(CommissionBadgeTier.badge_level.ilike(f"%{search.strip()}%"))
@@ -3996,7 +3889,7 @@ def preview_commission(
     category_slug: Optional[str],
     db: Session,
 ) -> dict:
-    return commission_engine.preview_commission(
+    return _get_commission_engine().preview_commission(
         supplier_id=supplier_id,
         order_value=order_value,
         category_slug=category_slug,
@@ -4130,7 +4023,8 @@ from sqlalchemy.orm import Session
 
 from domains.finance.models.commission import CommissionCategoryRate
 from domains.governance.models.admin import CommissionBadgeTier
-from domains.finance.services.commission.commission_write_service import apply_changes
+# TODO: commission_write_service not yet created`n# # TODO: Module not yet created
+# from domains.finance.services.commission.commission_write_service import apply_changes
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -4489,8 +4383,10 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.finance.models.payments import Payout
 from infrastructure.utils.pagination import cursor_paginate_desc
-from domains.comms.services.utility.write_helpers import add_and_flush
-from domains.comms.services.utility.write_helpers import commit_and_refresh
+# TODO: comms utility not yet created`n# # TODO: Module not yet created
+# from domains.comms.services.utility.write_helpers import add_and_flush
+# TODO: Module not yet created
+# from domains.comms.services.utility.write_helpers import commit_and_refresh
 import structlog
 logger = structlog.get_logger(__name__)
 
@@ -5238,14 +5134,14 @@ from infrastructure.utils.dependencies import require_admin
 
 from domains.country.utils.country_rls import get_country_or_404
 
-from infrastructure.utils.rls_interceptor import set_rls_context, clear_rls_context
+from infrastructure.database.rls_interceptor import set_rls_context, clear_rls_context
 
-from domains.finance.ports import create_badge_tier
-from domains.finance.ports import create_category_rate
-from finance.ports import list_badge_tiers
-from finance.ports import list_category_rates
-from domains.finance.ports import update_badge_tier
-from domains.finance.ports import update_category_rate
+# Lazy import: create_badge_tier
+# Lazy import: create_category_rate
+# Lazy import: list_badge_tiers
+# Lazy import: list_category_rates
+# Lazy import: update_badge_tier
+# Lazy import: update_category_rate
 
 def list_rates(country_code: str, _: User, db: Session, page: int, page_size: int):
     get_country_or_404(country_code.upper(), db)
@@ -5287,7 +5183,7 @@ def update_badge_tier_route(country_code: str, tier_id: int, payload: Commission
     get_country_or_404(country_code.upper(), db)
     return update_badge_tier(db, tier_id, country_code, payload)
 
-# === MERGED from commission_engine.py ===
+# === MERGED from _get_commission_engine().py ===
 
 """
 Commission Engine — deterministic hybrid commission calculation.
@@ -5571,7 +5467,7 @@ def get_effective_rate(
         cat_row = (
             db.query(CommissionCategoryRate)
             .filter(
-                CommissionCategoryRate.country_code == None,
+                CommissionCategoryRate.country_code is None,
                 CommissionCategoryRate.category_slug == category_slug,
                 CommissionCategoryRate.is_active == True,
             )
@@ -6033,7 +5929,7 @@ from domains.finance.models.finance import Budget
 from domains.finance.models.finance import FinanceAuditLog
 from domains.finance.models.finance import BankMappingRule
 from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
-from domains.finance.services.finance import general_ledger_service as gl
+# Removed circular self-import
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 logger = logging.getLogger(__name__)
@@ -6367,8 +6263,10 @@ acyclic and ``import main`` succeeds.
 
 from typing import Any, List, Optional
 
-from domains.comms.services.utility.db_read import first
-from domains.comms.services.utility.db_read import all_rows
+# TODO: Module not yet created
+# from domains.comms.services.utility.db_read import first
+# TODO: Module not yet created
+# from domains.comms.services.utility.db_read import all_rows
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -6913,6 +6811,7 @@ def record_customs_entry(db: Session, shipment_id: int, *,
 
 def finalize_landed_cost(db: Session, shipment_id: int, warehouse_id: int = None,
                           created_by: int = None) -> ImportShipment:
+    from domains.catalog.ports import Product
     shipment = db.query(ImportShipment).options(
         joinedload(ImportShipment.lines)
     ).filter(ImportShipment.id == shipment_id).first()
@@ -7377,7 +7276,7 @@ from domains.finance.models.finance import InvoiceItem
 from domains.logistics.models.logistics import Shipment
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 
 logger = logging.getLogger(__name__)
 _utcnow = lambda: datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: E731
@@ -7858,7 +7757,7 @@ from infrastructure.database.schemas import JournalEntryCreate, JournalLineInput
 
 from kernel.money import round_money
 
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 
 
 
@@ -8636,7 +8535,7 @@ def _post_gl(
 
 ) -> JournalEntry:
 
-    from domains.finance.services.finance import general_ledger_service as gl
+    # Removed circular self-import
 
 
 
@@ -8730,7 +8629,8 @@ def import_bank_statement_csv(
 
     """Parse an uploaded CSV server-side (robust) and import + auto-map lines."""
 
-    from domains.finance.services.shared.ocr_parser import parse_statement_csv
+    # TODO: Module not yet created
+# from domains.finance.services.shared.ocr_parser import parse_statement_csv
 
 
 
@@ -8804,7 +8704,8 @@ def run_daily_automation(
 
     # 3. Orphan detection (uses corrected reference_type values)
 
-    from domains.finance.services.treasury.treasury_engine import TreasuryEngine
+    # TODO: Module not yet created
+# from domains.finance.services.treasury.treasury_engine import TreasuryEngine
 
 
 
@@ -8920,7 +8821,7 @@ from domains.finance.models.finance import Account
 from domains.finance.models.finance import AccountBalance
 from domains.finance.models.finance import AccountGroup
 from domains.finance.models.finance import FixedAsset
-from domains.finance.services.finance import general_ledger_service as gl
+# Removed circular self-import
 import structlog
 logger = structlog.get_logger(__name__)
 

@@ -13,7 +13,7 @@ promotion/catalog concepts, not finance concepts.
 """
 from __future__ import annotations
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Numeric, ForeignKey, UniqueConstraint, Index, JSON, CheckConstraint, func
 from sqlalchemy.orm import relationship
 from . import Base
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
@@ -45,15 +45,15 @@ class Payment(Base):
         Index("ix_payments_provider_status", "provider", "status"),
         {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete='CASCADE'), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     payment_method = Column(String(50), nullable=False)
     provider = Column(String(50), nullable=True)
     status = Column(String(30), default="pending")
     intent_id = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, onupdate=_utcnow)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='SET NULL'), nullable=True, index=True)
     layout_json = Column(Text, nullable=True)
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
@@ -74,8 +74,8 @@ class PaymentReconciliationRun(Base):
     completed_at = Column(DateTime, nullable=True)
     status = Column(String(30), default="pending")
     country_code = Column(String(2), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, onupdate=_utcnow)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 
 class PaymentGatewayConnection(Base):
@@ -91,8 +91,6 @@ class PaymentGatewayConnection(Base):
     fee_config = Column(JSON, nullable=True)
     supported_methods = Column(JSON, nullable=True)
     last_sync_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
     provider_kind = Column(String(20), nullable=False, default="custom")
     display_name = Column(String(120), nullable=False)
     is_enabled = Column(Boolean, nullable=True, default=True)
@@ -118,8 +116,10 @@ class PaymentGatewayConnection(Base):
     test_status = Column(String(20), nullable=False, default="untested")
     test_message = Column(String(500), nullable=True)
     last_tested_at = Column(DateTime, nullable=True)
-    updated_by = Column(Integer, ForeignKey("governance.users.id"), nullable=True)
+    updated_by = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=True)
     adapter_supported = Column(Boolean, default=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
 
 
 class Payout(Base):
@@ -127,8 +127,8 @@ class Payout(Base):
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), nullable=True)
-    order_id = Column(Integer, ForeignKey("commerce.orders.id"), nullable=True)
-    supplier_id = Column(Integer, ForeignKey("governance.users.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("commerce.orders.id", ondelete='SET NULL'), nullable=True)
+    supplier_id = Column(Integer, ForeignKey("governance.users.id", ondelete='RESTRICT'), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")
     method = Column(String(50), nullable=False)
@@ -141,9 +141,9 @@ class Payout(Base):
     provider_status = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, default=_utcnow, onupdate=_utcnow)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='SET NULL'), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     supplier = relationship("User", foreign_keys=[supplier_id])
     country = relationship("CountryConfig", foreign_keys=[country_code])
 
@@ -152,7 +152,7 @@ class LogisticsPartnerPayout(Base):
     __tablename__ = "logistics_partner_payouts"
     __table_args__ = ({"schema": "finance"},)
     id = Column(Integer, primary_key=True, index=True)
-    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id"), nullable=False)
+    partner_id = Column(Integer, ForeignKey("logistics.logistics_partners.id", ondelete='CASCADE'), nullable=False)
     amount = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), default="USD")
     period_start = Column(DateTime, nullable=True)
@@ -160,9 +160,9 @@ class LogisticsPartnerPayout(Base):
     status = Column(String(30), default="pending")
     reference_id = Column(String(100), nullable=True)
     processed_at = Column(DateTime, nullable=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
-    created_at = Column(DateTime, default=_utcnow)
-    updated_at = Column(DateTime, onupdate=_utcnow)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete='SET NULL'), nullable=True, index=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
     method = Column(String(50), nullable=True)
     notes = Column(Text, nullable=True)
     partner = relationship("LogisticsPartner", back_populates="payouts")

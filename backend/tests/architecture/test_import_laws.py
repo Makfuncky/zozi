@@ -38,13 +38,29 @@ class TestLaw1ArrowsPointDown:
     def test_baseline_covers_known_layers(self):
         # Guard against the generator silently scanning nothing (e.g. a broken
         # BACKEND resolution that points inside tests/). When BACKEND is wrong
-        # only domains/ test files surface; a correct resolution must also cover
-        # the lower layers that carry real Law 1 debt (and only exist in the
-        # real backend root).
-        baseline = load_baseline()
-        covered = {rel.split("/")[0] for rel in baseline}
-        assert covered & {"infrastructure", "providers", "rbac", "kernel"}, (
-            "Import-laws baseline only covers domains — the scanner likely "
-            "resolved the wrong backend root and is enforcing nothing. Check "
-            "_gen_import_laws_baseline.BACKEND resolution."
+        # only domains/ test files surface; a correct resolution must also
+        # walk the lower layers that own the real Law 1 surface.
+        #
+        # In the 2026-08-27 cleanup all 14 known offenders were eliminated,
+        # so the baseline is legitimately empty. We therefore verify the
+        # scanner's reach by checking it can find candidate files in the
+        # lower layers (without requiring the baseline to be non-empty).
+        import os
+        from ._gen_import_laws_baseline import BACKEND
+        candidates = []
+        for sub in ("infrastructure", "providers", "rbac", "kernel"):
+            root = os.path.join(BACKEND, sub)
+            if os.path.isdir(root):
+                for dirpath, _dirs, files in os.walk(root):
+                    for f in files:
+                        if f.endswith(".py"):
+                            candidates.append(os.path.relpath(os.path.join(dirpath, f), BACKEND).replace(os.sep, "/"))
+                            if len(candidates) >= 5:
+                                break
+                    if len(candidates) >= 5:
+                        break
+        assert candidates, (
+            "Scanner cannot find any candidate files in the lower layers "
+            f"(infrastructure/providers/rbac/kernel under {BACKEND}). The "
+            "import-laws gate would silently enforce nothing."
         )

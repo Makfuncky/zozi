@@ -52,33 +52,42 @@ __all__ = [
 
 class Address(Base):
     __tablename__ = "addresses"
-    __table_args__ = ({"schema": "customer"},)
+    __table_args__ = ({"schema": "accounts"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    label = Column(String, nullable=True)
-    full_name = Column(String, nullable=False)
-    phone = Column(String, nullable=True)
-    address_line1 = Column(String, nullable=False)
-    address_line2 = Column(String, nullable=True)
-    city = Column(String, nullable=False)
-    state = Column(String, nullable=True)
-    postal_code = Column(String, nullable=True)
-    country = Column(String, default="US")
+    # TODO(migration): governance.users is a cross-domain FK (Law 3: cross-domain writes
+    # via events; cross-domain reads via ports). After the User model is migrated into
+    # the accounts domain, this FK must become ``accounts.users.id``.
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    label = Column(String(255), nullable=True)
+    full_name = Column(String(255), nullable=False)
+    phone = Column(String(50), nullable=True)
+    address_line1 = Column(String(255), nullable=False)
+    address_line2 = Column(String(255), nullable=True)
+    city = Column(String(255), nullable=False)
+    state = Column(String(50), nullable=True)
+    postal_code = Column(String(50), nullable=True)
+    country = Column(String(255), default="US")
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    # Law #5: country is the orthogonal scope axis — must be non-null on every row.
+    country_code = Column(String(2), nullable=False, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     user = relationship("User", back_populates="addresses")
 
 
 class Cart(Base):
     __tablename__ = "carts"
-    __table_args__ = ({"schema": "commerce"},)
+    __table_args__ = ({"schema": "accounts"},)
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(2), nullable=True, index=True)
+    # TODO(migration): governance.users is a cross-domain FK — see Address.user_id.
+    # After User migration, this must become ``accounts.users.id``.
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    # Law #5: country is the orthogonal scope axis — must be non-null on every row.
+    country_code = Column(String(2), nullable=False, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     user = relationship("User", back_populates="cart")
 
 
@@ -87,18 +96,25 @@ class CartItem(Base):
     __table_args__ = (
         Index("ix_cart_items_user_product", "user_id", "product_id"),
         Index("ix_cart_items_created", "created_at"),
-        {"schema": "commerce"},
+        {"schema": "accounts"},
     )
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False)
-    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False)
+    # TODO(migration): governance.users is a cross-domain FK — see Address.user_id.
+    # After User migration, this must become ``accounts.users.id``.
+    user_id = Column(Integer, ForeignKey("governance.users.id", ondelete='SET NULL'), nullable=False, index=True)
+    # TODO(migration): ``commerce.products`` is a cross-domain FK. The catalog domain
+    # owns products; this FK should become ``catalog.products.id`` once catalog owns
+    # the canonical products table. Law 3: cross-domain writes go through events.
+    product_id = Column(Integer, ForeignKey("commerce.products.id", ondelete='CASCADE'), nullable=False, index=True)
     quantity = Column(Integer, default=1)
     selected_size = Column(String(50), default="", nullable=False)
     selected_color = Column(String(50), default="", nullable=False)
     variant_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=True)
-    country_code = Column(String(10), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+    # Law #5: country is the orthogonal scope axis — must be non-null on every row.
+    country_code = Column(String(2), nullable=False, index=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
     user = relationship("User", back_populates="cart_items")
     product = relationship("Product", back_populates="cart_items")
 
@@ -151,6 +167,11 @@ _USER_RE_EXPORTS = {
     # governance domain (SystemHealthEvent, UserSession defined in governance/core.py)
     "SystemHealthEvent": ("domains.governance.models.core", "SystemHealthEvent"),
     "UserSession": ("domains.governance.models.core", "UserSession"),
+    "UserBrowsingHistory": ("domains.governance.models.core", "UserBrowsingHistory"),
+    # Referral / ReferralPointEvent: canonical home is customers (Law 3 cross-domain
+    # read surface). accounts.ports re-exports them via lazy __getattr__.
+    "Referral": ("domains.customers.models.customer_schema_models", "Referral"),
+    "ReferralPointEvent": ("domains.customers.models.customer_schema_models", "ReferralPointEvent"),
 }
 
 _USER_CACHE: dict[str, object] = {}

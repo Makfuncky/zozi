@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_INVOICE_ISSUED = "finance.invoice.issued"
@@ -88,8 +91,8 @@ def publish_invoice_issued(invoice_id: int, amount: str, currency: str, order_id
         from infrastructure.messaging.events.event_bus import publish
         event = InvoiceIssued(invoice_id=invoice_id, order_id=order_id, amount=amount, currency=currency)
         publish(EVENT_INVOICE_ISSUED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish InvoiceIssued event: %s", exc)
 
 def publish_payment_processed(payment_id: int, amount: str, currency: str, gateway: str, order_id: Optional[int] = None) -> None:
     """Publish a PaymentProcessed event."""
@@ -97,8 +100,8 @@ def publish_payment_processed(payment_id: int, amount: str, currency: str, gatew
         from infrastructure.messaging.events.event_bus import publish
         event = PaymentProcessed(payment_id=payment_id, order_id=order_id, amount=amount, currency=currency, gateway=gateway)
         publish(EVENT_PAYMENT_PROCESSED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish PaymentProcessed event: %s", exc)
 
 def publish_payout_completed(payout_id: int, recipient_type: str, amount: str, currency: str, recipient_id: Optional[int] = None) -> None:
     """Publish a PayoutCompleted event."""
@@ -106,8 +109,8 @@ def publish_payout_completed(payout_id: int, recipient_type: str, amount: str, c
         from infrastructure.messaging.events.event_bus import publish
         event = PayoutCompleted(payout_id=payout_id, recipient_type=recipient_type, recipient_id=recipient_id, amount=amount, currency=currency)
         publish(EVENT_PAYOUT_COMPLETED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish PayoutCompleted event: %s", exc)
 
 def publish_commission_calculated(commission_id: int, amount: str, currency: str, order_id: Optional[int] = None, supplier_id: Optional[int] = None) -> None:
     """Publish a CommissionCalculated event."""
@@ -115,8 +118,8 @@ def publish_commission_calculated(commission_id: int, amount: str, currency: str
         from infrastructure.messaging.events.event_bus import publish
         event = CommissionCalculated(commission_id=commission_id, order_id=order_id, supplier_id=supplier_id, amount=amount, currency=currency)
         publish(EVENT_COMMISSION_CALCULATED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish CommissionCalculated event: %s", exc)
 
 __all__ = [
     # Event type constants

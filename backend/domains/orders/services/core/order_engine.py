@@ -1,6 +1,6 @@
 """Order lifecycle engine — creation, retrieval, preview, cancellation."""
 
-﻿"""
+"""
 Orders Controller — order creation, retrieval, and cancellation business logic.
 
 Totals are computed entirely server-side:
@@ -46,18 +46,20 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import ReturnRequest
 from infrastructure.database.schemas import OrderCreate
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from domains.logistics.services.partners.service import normalize_country_code
 from domains.logistics.services.partners.service import normalize_pricing_breakdown_payload
 from domains.logistics.services.partners.service import parse_dimensions_to_volume_cm3
 from domains.logistics.services.partners.service import quote_shipping_for_destination
-from domains.finance.services.tax.tax_service import calculate_tax
-from domains.finance.services.tax.tax_service import get_country_config
+# TODO: Module not yet created
+# from domains.finance.services.tax.tax_service import calculate_tax
+# TODO: Module not yet created
+# from domains.finance.services.tax.tax_service import get_country_config
 from infrastructure.utils.config import settings
 from infrastructure.utils.constants import STAFF_ROLES
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from kernel.money import round_money, to_decimal
-from domains.orders.utils.order_tracking import build_order_tracking_payload, derive_order_financials, normalize_shipment_event_type, order_status_label, reconcile_order_status, shipment_scan_codes
+from domains.orders.services.tracking.service import build_order_tracking_payload, derive_order_financials, normalize_shipment_event_type, order_status_label, reconcile_order_status, shipment_scan_codes
 from infrastructure.utils.redis_client import get_redis
 from infrastructure.utils.ip_utils import get_request_ip
 
@@ -830,7 +832,7 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
                 shipping_postal_code=(order.zip or "").strip() or None,
                 customer_phone=(order.customer_phone or "").strip() or None,
                 delivery_location=(order.delivery_location or "").strip() or None,
-        delivery_note=(order.delivery_note or "").strip() or None,
+                delivery_note=(order.delivery_note or "").strip() or None,
                 selected_partner_id=selected_partner_id,
                 selected_service_area_id=selected_service_area_id,
                 estimated_delivery_min=estimated_delivery_min,
@@ -845,28 +847,28 @@ def create_order(order: OrderCreate, current_user: dict, db: Session, request: A
             order_id = cast(int | None, db_order.id)
             order_number = db_order.order_number
 
-    for item in order.items:
-        product = products[item.product_id]
-        variant = resolve_product_variant(product, item.selected_size, item.selected_color)
-        unit_price = round_money(getattr(variant, "price", None) or cast(Any, product).price)
-        # Stock is decremented later during payment confirmation
-        # (via _finalize_inventory_for_paid_order), not at order creation time.
-        # For COD orders this happens immediately via confirm_cash_on_delivery_order.
-        db_item = OrderItem(
-            order_id=db_order.id,
-            product_id=item.product_id,
-            variant_id=cast(int | None, getattr(variant, "id", None)) if variant is not None else None,
-            supplier_id=cast(Any, product).supplier_id,
-            product_name=cast(Any, product).name,
-            product_image=cast(Any, getattr(product, "image_url", None)),
-            quantity=item.quantity,
-            unit_price=unit_price,
-            total_price=round_money(unit_price * item.quantity),
-            price=unit_price,
-            selected_size=(item.selected_size or "").strip(),
-            selected_color=(item.selected_color or "").strip(),
-        )
-        db.add(db_item)
+            for item in order.items:
+                product = products[item.product_id]
+                variant = resolve_product_variant(product, item.selected_size, item.selected_color)
+                unit_price = round_money(getattr(variant, "price", None) or cast(Any, product).price)
+                # Stock is decremented later during payment confirmation
+                # (via _finalize_inventory_for_paid_order), not at order creation time.
+                # For COD orders this happens immediately via confirm_cash_on_delivery_order.
+                db_item = OrderItem(
+                    order_id=db_order.id,
+                    product_id=item.product_id,
+                    variant_id=cast(int | None, getattr(variant, "id", None)) if variant is not None else None,
+                    supplier_id=cast(Any, product).supplier_id,
+                    product_name=cast(Any, product).name,
+                    product_image=cast(Any, getattr(product, "image_url", None)),
+                    quantity=item.quantity,
+                    unit_price=unit_price,
+                    total_price=round_money(unit_price * item.quantity),
+                    price=unit_price,
+                    selected_size=(item.selected_size or "").strip(),
+                    selected_color=(item.selected_color or "").strip(),
+                )
+                db.add(db_item)
 
     db.flush()
 

@@ -13,7 +13,12 @@ import logging
 from typing import Any, Dict
 from urllib.parse import urlencode
 
-import requests
+try:
+    import requests
+    HAS_OAUTH = True
+except ImportError:
+    HAS_OAUTH = False
+    requests = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -169,4 +174,5 @@ __all__ = [
     "get_facebook_profile",
     "build_google_authorization_url",
     "build_facebook_authorization_url",
+    "HAS_OAUTH",
 ]

@@ -1,30 +1,30 @@
-"""Object-storage abstraction for media (Phase 1 of the scaling plan).
+"""Object-storage abstraction (Phase 1 of the scaling plan).
 
 Defines a :class:`StorageBackend` interface so the rest of the application can
-save / read / delete media without caring whether bytes live on local disk
+save / read / delete objects without caring whether bytes live on local disk
 (development & tests) or in an S3-compatible bucket behind a CDN (production).
 
 The active backend is selected by the ``STORAGE_BACKEND`` config value, mirroring
 the SQLite/Postgres switch in ``db/database.py``:
 
 - ``local`` -> :class:`LocalStorage` (writes under ``uploads/``, returns
-  ``/uploads/...`` URLs served by the StaticFiles mount in ``main.py``).
+  ``/uploads/...`` URLs).
 - ``s3``    -> :class:`S3Storage` (writes to an S3-compatible bucket, returns CDN
   URLs; large files can be pushed directly by the client via a presigned PUT so
   the API never touches the bytes).
-
-Nothing in the recovered codebase imports this module yet; it is the
-infrastructure the media/P0-A refactor is meant to route through.
 """
 from __future__ import annotations
 
 import abc
+import logging
 import os
 from typing import Optional
 
 from infrastructure.utils.config import settings
 
 from providers.storage import create_s3_client
+
+logger = logging.getLogger(__name__)
 
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "uploads")
 
@@ -204,7 +204,8 @@ class S3Storage(StorageBackend):
                 Params=params,
                 ExpiresIn=int(ttl or self.presign_ttl),
             )
-        except Exception:
+        except Exception as exc:
+            logger.warning("Failed to generate presigned PUT URL for key=%s: %s", key, exc)
             return None
 
 

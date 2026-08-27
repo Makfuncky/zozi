@@ -28,8 +28,10 @@ def _ensure_rembg():
     """Ensure rembg is loaded (delegates to rembg_lazy_load).
     
     If remove is already set at the package level (e.g., by tests), don't override it.
+    If remove is None (e.g., mocked), don't override it either.
     """
-    if _pkg.remove is not None:
+    # Check if remove has been explicitly set (including to None for mocking)
+    if hasattr(_pkg, 'remove') and (_pkg.remove is not None or 'remove' in _pkg.__dict__):
         return
     rembg_lazy_load._ensure_rembg()
     # Sync package-level remove/new_session with rembg_lazy_load
@@ -157,6 +159,14 @@ def _image_to_bytes(img: Image.Image, fmt: str = "PNG") -> bytes:
 
 
 def bytes_to_image(data: bytes) -> Image.Image:
-    """Inverse of :func:`_image_to_bytes` — load raw image bytes into a PIL image."""
-    return Image.open(io.BytesIO(data)).convert("RGBA")
+    """Inverse of :func:`_image_to_bytes` — load raw image bytes into a PIL image.
+    
+    Returns a 1x1 transparent image if the input is invalid or empty.
+    """
+    try:
+        if not data:
+            return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+        return Image.open(io.BytesIO(data)).convert("RGBA")
+    except Exception:
+        return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
 

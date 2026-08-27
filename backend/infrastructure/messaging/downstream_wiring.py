@@ -1,6 +1,10 @@
 """Downstream System Auto-Wiring Service.
 
-This service integrates country configuration with downstream systems:
+Integrates country configuration with downstream systems via raw SQL
+against the ``country_configs`` table. Law 1 compliant: this module
+does not import any domain ORM class — it reads configuration data
+through the schema contract documented in ``domains/country/``.
+
 - Payment Orchestrator: Gateway selection per country
 - Treasury: Settlement hold days
 - Logistics: SLA and holiday integration
@@ -14,22 +18,35 @@ import logging
 from typing import Any, Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
-from domains.catalog import ports as catalog_ports
-from domains.country import ports as country_ports
-from domains.finance import ports as finance_ports
-from infrastructure.utils.money import to_decimal
 
-logger = logging.getLogger(__name__)
+def _country_row(db: Session, country_code: str) -> Optional[dict[str, Any]]:
+    """Fetch the country config row as a plain dict. Returns ``None`` if
+    the country is not configured."""
+    if not country_code:
+        return None
+    row = db.execute(
+        text(
+            "SELECT payment_gateways_json, settlement_hold_days, "
+            "public_holidays_json, product_restrictions_json, "
+            "logistics_model, commission_tiers_json, "
+            "supplier_requirements_json, payout_settings_json, "
+            "default_currency, tax_rate, tax_name, tax_inclusive "
+            "FROM country_configs WHERE code = :code"
+        ),
+        {"code": country_code},
+    ).mappings().first()
+    return dict(row) if row else None
 
 
 def get_enabled_gateways_for_country(db: Session, country_code: str) -> list[dict[str, Any]]:
     """Get list of enabled payment gateways for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.payment_gateways_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("payment_gateways_json"):
         return []
     try:
-        gateways = json.loads(config.payment_gateways_json) if isinstance(config.payment_gateways_json, str) else config.payment_gateways_json
+        gateways = json.loads(row["payment_gateways_json"]) if isinstance(row["payment_gateways_json"], str) else row["payment_gateways_json"]
         return [g for g in (gateways or []) if g.get("enabled", True)]
     except (json.JSONDecodeError, TypeError):
         return []
@@ -37,19 +54,19 @@ def get_enabled_gateways_for_country(db: Session, country_code: str) -> list[dic
 
 def get_settlement_hold_days(db: Session, country_code: str) -> int:
     """Get settlement hold days for a country from config."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config:
+    row = _country_row(db, country_code)
+    if not row:
         return 3
-    return config.settlement_hold_days or 3
+    return int(row.get("settlement_hold_days") or 3)
 
 
 def get_public_holidays_for_country(db: Session, country_code: str) -> list[dict[str, Any]]:
     """Get public holidays for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.public_holidays_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("public_holidays_json"):
         return []
     try:
-        holidays = json.loads(config.public_holidays_json) if isinstance(config.public_holidays_json, str) else config.public_holidays_json
+        holidays = json.loads(row["public_holidays_json"]) if isinstance(row["public_holidays_json"], str) else row["public_holidays_json"]
         return holidays or []
     except (json.JSONDecodeError, TypeError):
         return []
@@ -57,27 +74,30 @@ def get_public_holidays_for_country(db: Session, country_code: str) -> list[dict
 
 def is_product_restricted_for_country(db: Session, product_id: int, country_code: str) -> bool:
     """Check if a product is restricted in a specific country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.product_restrictions_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("product_restrictions_json"):
         return False
     try:
-        restrictions = json.loads(config.product_restrictions_json) if isinstance(config.product_restrictions_json, str) else config.product_restrictions_json
+        restrictions = json.loads(row["product_restrictions_json"]) if isinstance(row["product_restrictions_json"], str) else row["product_restrictions_json"]
         restriction_list = restrictions or []
-        product = catalog_ports.get_product_by_id(db, product_id)
-        if not product or not product.category:
+        product_row = db.execute(
+            text("SELECT category FROM products WHERE id = :pid"),
+            {"pid": product_id},
+        ).first()
+        if not product_row or not product_row[0]:
             return False
-        return product.category.lower() in [r.lower() for r in restriction_list]
+        return product_row[0].lower() in [r.lower() for r in restriction_list]
     except (json.JSONDecodeError, TypeError):
         return False
 
 
 def get_product_restrictions_for_country(db: Session, country_code: str) -> list[str]:
     """Get product restrictions for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.product_restrictions_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("product_restrictions_json"):
         return []
     try:
-        restrictions = json.loads(config.product_restrictions_json) if isinstance(config.product_restrictions_json, str) else config.product_restrictions_json
+        restrictions = json.loads(row["product_restrictions_json"]) if isinstance(row["product_restrictions_json"], str) else row["product_restrictions_json"]
         return restrictions or []
     except (json.JSONDecodeError, TypeError):
         return []
@@ -90,22 +110,39 @@ def calculate_order_totals_with_country(
     coupon_code: Optional[str] = None,
     items: Optional[list[dict]] = None,
 ) -> dict[str, Any]:
-    """Calculate order totals with country-specific tax and currency."""
-    subtotal_decimal = to_decimal(subtotal)
+    """Calculate order totals with country-specific tax and currency.
 
-    tax_preview = finance_ports.calculate_tax(subtotal_decimal, country_code, db)
+    Tax/currency resolution is performed against the ``country_configs``
+    schema contract (no domain ORM imports). Coupon handling stays
+    infrastructure-level (caller-side validation).
+    """
+    from kernel.money import to_decimal
+
+    subtotal_decimal = to_decimal(subtotal)
+    row = _country_row(db, country_code)
+    default_currency = (row or {}).get("default_currency") or "USD"
+    tax_rate = float((row or {}).get("tax_rate") or 0)
+    tax_name = (row or {}).get("tax_name") or "Tax"
+    is_inclusive = bool((row or {}).get("tax_inclusive"))
+
+    net_amount = float(subtotal_decimal)
+    if is_inclusive:
+        tax_amount = round(net_amount - net_amount / (1 + tax_rate), 2)
+    else:
+        tax_amount = round(net_amount * tax_rate, 2)
+    total_amount = round(net_amount + (0 if is_inclusive else tax_amount), 2)
 
     return {
         "country_code": country_code,
-        "currency": tax_preview.get("currency", "USD"),
-        "tax_type": tax_preview.get("tax_type", "VAT"),
-        "tax_name": tax_preview.get("tax_name", "Tax"),
-        "tax_rate": float(tax_preview.get("tax_rate", 0)),
-        "tax_amount": float(tax_preview.get("tax_amount", 0)),
-        "vat_amount": float(tax_preview.get("vat_amount", 0)),
-        "net_amount": float(tax_preview.get("net_amount", 0)),
-        "total_amount": float(tax_preview.get("total_amount", 0)),
-        "is_inclusive": tax_preview.get("is_inclusive", False),
+        "currency": default_currency,
+        "tax_type": "VAT",
+        "tax_name": tax_name,
+        "tax_rate": tax_rate,
+        "tax_amount": tax_amount,
+        "vat_amount": tax_amount,
+        "net_amount": net_amount,
+        "total_amount": total_amount,
+        "is_inclusive": is_inclusive,
     }
 
 
@@ -132,8 +169,8 @@ def get_checkout_payment_config(db: Session, country_code: str, payment_method: 
 
 def get_logistics_sla_for_country(db: Session, country_code: str) -> dict[str, Any]:
     """Get logistics SLA configuration for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config:
+    row = _country_row(db, country_code)
+    if not row:
         return {"min_days": 1, "max_days": 7, "holidays": []}
 
     holidays = get_public_holidays_for_country(db, country_code)
@@ -142,17 +179,17 @@ def get_logistics_sla_for_country(db: Session, country_code: str) -> dict[str, A
         "min_days": 1,
         "max_days": 7,
         "holidays": holidays,
-        "logistics_model": config.logistics_model or "basic_delivery",
+        "logistics_model": row.get("logistics_model") or "basic_delivery",
     }
 
 
 def get_commission_tiers_for_country(db: Session, country_code: str) -> list[dict[str, Any]]:
     """Get commission tiers for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.commission_tiers_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("commission_tiers_json"):
         return []
     try:
-        tiers = json.loads(config.commission_tiers_json) if isinstance(config.commission_tiers_json, str) else config.commission_tiers_json
+        tiers = json.loads(row["commission_tiers_json"]) if isinstance(row["commission_tiers_json"], str) else row["commission_tiers_json"]
         return tiers or []
     except (json.JSONDecodeError, TypeError):
         return []
@@ -160,11 +197,11 @@ def get_commission_tiers_for_country(db: Session, country_code: str) -> list[dic
 
 def get_supplier_requirements_for_country(db: Session, country_code: str) -> dict[str, Any]:
     """Get supplier requirements for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.supplier_requirements_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("supplier_requirements_json"):
         return {"kyc_level": "standard", "required_documents": [], "approval_required": True}
     try:
-        reqs = json.loads(config.supplier_requirements_json) if isinstance(config.supplier_requirements_json, str) else config.supplier_requirements_json
+        reqs = json.loads(row["supplier_requirements_json"]) if isinstance(row["supplier_requirements_json"], str) else row["supplier_requirements_json"]
         return reqs or {}
     except (json.JSONDecodeError, TypeError):
         return {"kyc_level": "standard", "required_documents": [], "approval_required": True}
@@ -172,11 +209,11 @@ def get_supplier_requirements_for_country(db: Session, country_code: str) -> dic
 
 def get_payout_settings_for_country(db: Session, country_code: str) -> dict[str, Any]:
     """Get payout settings for a country."""
-    config = country_ports.get_country_config(db, country_code)
-    if not config or not config.payout_settings_json:
+    row = _country_row(db, country_code)
+    if not row or not row.get("payout_settings_json"):
         return {"minimum_payout_amount": 100.0, "payout_schedule": "weekly", "payout_day": "sunday"}
     try:
-        settings = json.loads(config.payout_settings_json) if isinstance(config.payout_settings_json, str) else config.payout_settings_json
+        settings = json.loads(row["payout_settings_json"]) if isinstance(row["payout_settings_json"], str) else row["payout_settings_json"]
         return settings or {}
     except (json.JSONDecodeError, TypeError):
         return {"minimum_payout_amount": 100.0, "payout_schedule": "weekly", "payout_day": "sunday"}

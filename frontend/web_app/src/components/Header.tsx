@@ -319,7 +319,7 @@ const interactiveMutedClass =
 const menuItemClass =
   "text-text-muted hover:bg-surface-1/90 hover:text-text";
 
-export default function Header() {
+export default React.memo(function Header() {
   const { user, isLoggedIn, logout } = useAuth();
   const router = useRouter();
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
@@ -964,4 +964,4 @@ export default function Header() {
       />
     </>
   );
-}
+});

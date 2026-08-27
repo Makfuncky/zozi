@@ -220,3 +220,10 @@ def delete_coupon_by_id(db: Session, coupon_id: str) -> dict:
     db.delete(coupon)
     db.commit()
     return {"message": "Deleted"}
+
+
+def validate_coupon_safe(db: Session, code: str, order_total: object) -> dict:
+    """Validate a coupon code, returning a dict with valid=False on any failure."""
+    if not code or order_total is None:
+        return {"valid": False, "discount_amount": 0.0, "new_total": 0.0, "coupon": None}
+    return validate_coupon(db, code, order_total)

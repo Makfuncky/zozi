@@ -18,6 +18,18 @@ FEATURES: dict[str, dict] = {
         "actions": ["read", "create", "update", "delete"],
         "description": "Register new suppliers and manage onboarding pipeline state.",
     },
+    "suppliers.onboarding.read": {
+        "label": "View Supplier Onboarding",
+        "risk": "medium",
+        "actions": ["read"],
+        "description": "View supplier onboarding status and pipeline progress.",
+    },
+    "suppliers.onboarding.write": {
+        "label": "Manage Supplier Onboarding",
+        "risk": "high",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Manage supplier onboarding steps, complete stages, and upload documents.",
+    },
     "suppliers.verification.manage": {
         "label": "Manage Supplier Verification",
         "risk": "high",
@@ -26,6 +38,18 @@ FEATURES: dict[str, dict] = {
     },
     "suppliers.profile.manage": {
         "label": "Manage Supplier Profile",
+        "risk": "medium",
+        "actions": ["read", "create", "update"],
+        "description": "Create and update supplier business profiles and storefront settings.",
+    },
+    "suppliers.profile.read": {
+        "label": "View Supplier Profile",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View supplier business profile and storefront settings.",
+    },
+    "suppliers.profile.write": {
+        "label": "Write Supplier Profile",
         "risk": "medium",
         "actions": ["read", "create", "update"],
         "description": "Create and update supplier business profiles and storefront settings.",
@@ -47,6 +71,18 @@ FEATURES: dict[str, dict] = {
         "risk": "medium",
         "actions": ["read", "create", "update", "delete"],
         "description": "Upload, list, and review supplier verification documents.",
+    },
+    "suppliers.documents.read": {
+        "label": "View Supplier Documents",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View and list supplier verification documents.",
+    },
+    "suppliers.documents.write": {
+        "label": "Write Supplier Documents",
+        "risk": "medium",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Upload, review, and update supplier verification documents.",
     },
     "suppliers.badges.manage": {
         "label": "Manage Supplier Badges",
@@ -72,6 +108,12 @@ FEATURES: dict[str, dict] = {
         "actions": ["read"],
         "description": "View supplier health scores and trust indicators.",
     },
+    "suppliers.health.read": {
+        "label": "View Supplier Health",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View supplier health scores and trust indicators.",
+    },
     "suppliers.contracts.manage": {
         "label": "Manage Supplier Legal Contracts",
         "risk": "high",
@@ -83,6 +125,43 @@ FEATURES: dict[str, dict] = {
         "risk": "high",
         "actions": ["create", "update", "delete"],
         "description": "Execute bulk verify, reject, badge, and lifecycle operations on suppliers.",
+    },
+    # ── Legacy / plural-form atoms (from services/features.py) ────────────────
+    "suppliers.profiles.read": {
+        "label": "View Supplier Profiles",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View supplier profiles, company information, and verification status.",
+    },
+    "suppliers.profiles.manage": {
+        "label": "Manage Supplier Profiles",
+        "risk": "medium",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Manage supplier profiles, documentation, and verification processes.",
+    },
+    "suppliers.verification": {
+        "label": "Verify Suppliers",
+        "risk": "high",
+        "actions": ["read", "update"],
+        "description": "Approve, reject, or suspend supplier verification and onboarding.",
+    },
+    "suppliers.catalog.read": {
+        "label": "View Supplier Catalog",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View supplier product catalogs and inventory.",
+    },
+    "suppliers.catalog.manage": {
+        "label": "Manage Supplier Catalog",
+        "risk": "medium",
+        "actions": ["read", "create", "update", "delete"],
+        "description": "Manage supplier product listings, pricing, and inventory allocation.",
+    },
+    "suppliers.analytics": {
+        "label": "Supplier Analytics",
+        "risk": "low",
+        "actions": ["read"],
+        "description": "View supplier performance analytics, sales reports, and metrics.",
     },
 }
 

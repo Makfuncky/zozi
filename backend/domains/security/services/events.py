@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_FRAUD_DETECTED = "security.fraud.detected"
@@ -76,8 +79,8 @@ def publish_fraud_detected(alert_id: int, risk_score: float, reason: str, order_
         from infrastructure.messaging.events.event_bus import publish
         event = FraudDetected(alert_id=alert_id, order_id=order_id, user_id=user_id, risk_score=risk_score, reason=reason)
         publish(EVENT_FRAUD_DETECTED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish FraudDetected event: %s", exc)
 
 def publish_threat_identified(threat_type: str, severity: str, source_ip: str, actor_id: Optional[int] = None) -> None:
     """Publish a ThreatIdentified event."""
@@ -85,8 +88,8 @@ def publish_threat_identified(threat_type: str, severity: str, source_ip: str, a
         from infrastructure.messaging.events.event_bus import publish
         event = ThreatIdentified(threat_type=threat_type, severity=severity, source_ip=source_ip, actor_id=actor_id)
         publish(EVENT_THREAT_IDENTIFIED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish ThreatIdentified event: %s", exc)
 
 def publish_security_alert(alert_type: str, severity: str, message: str, target_domain: str = "", target_id: Optional[int] = None) -> None:
     """Publish a SecurityAlert event."""
@@ -94,8 +97,8 @@ def publish_security_alert(alert_type: str, severity: str, message: str, target_
         from infrastructure.messaging.events.event_bus import publish
         event = SecurityAlert(alert_type=alert_type, severity=severity, message=message, target_domain=target_domain, target_id=target_id)
         publish(EVENT_SECURITY_ALERT, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish SecurityAlert event: %s", exc)
 
 __all__ = [
     # Event type constants

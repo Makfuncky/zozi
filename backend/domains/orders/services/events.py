@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_ORDER_CREATED = "orders.order.created"
@@ -84,8 +87,8 @@ def publish_order_created(order_id: int, total_amount: str, currency: str, count
         from infrastructure.messaging.events.event_bus import publish
         event = OrderCreated(order_id=order_id, user_id=user_id, total_amount=total_amount, currency=currency, country_code=country_code)
         publish(EVENT_ORDER_CREATED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish OrderCreated event: %s", exc)
 
 def publish_order_confirmed(order_id: int, confirmed_by: Optional[int] = None) -> None:
     """Publish an OrderConfirmed event."""
@@ -93,8 +96,8 @@ def publish_order_confirmed(order_id: int, confirmed_by: Optional[int] = None) -
         from infrastructure.messaging.events.event_bus import publish
         event = OrderConfirmed(order_id=order_id, confirmed_by=confirmed_by)
         publish(EVENT_ORDER_CONFIRMED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish OrderConfirmed event: %s", exc)
 
 def publish_order_shipped(order_id: int, carrier: str, tracking_number: str, shipment_id: Optional[int] = None) -> None:
     """Publish an OrderShipped event."""
@@ -102,8 +105,8 @@ def publish_order_shipped(order_id: int, carrier: str, tracking_number: str, shi
         from infrastructure.messaging.events.event_bus import publish
         event = OrderShipped(order_id=order_id, shipment_id=shipment_id, carrier=carrier, tracking_number=tracking_number)
         publish(EVENT_ORDER_SHIPPED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish OrderShipped event: %s", exc)
 
 def publish_order_delivered(order_id: int, delivered_at: str) -> None:
     """Publish an OrderDelivered event."""
@@ -111,8 +114,8 @@ def publish_order_delivered(order_id: int, delivered_at: str) -> None:
         from infrastructure.messaging.events.event_bus import publish
         event = OrderDelivered(order_id=order_id, delivered_at=delivered_at)
         publish(EVENT_ORDER_DELIVERED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish OrderDelivered event: %s", exc)
 
 def publish_order_cancelled(order_id: int, reason: str, cancelled_by: Optional[int] = None) -> None:
     """Publish an OrderCancelled event."""
@@ -120,8 +123,8 @@ def publish_order_cancelled(order_id: int, reason: str, cancelled_by: Optional[i
         from infrastructure.messaging.events.event_bus import publish
         event = OrderCancelled(order_id=order_id, reason=reason, cancelled_by=cancelled_by)
         publish(EVENT_ORDER_CANCELLED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish OrderCancelled event: %s", exc)
 
 __all__ = [
     # Event type constants

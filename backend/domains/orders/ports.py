@@ -31,6 +31,19 @@ from domains.orders.models.orders import (
     OrderLogisticsAllocation,
     ReturnRequest,
 )
+
+# Re-exports of logistics-facing tracking service functions (Law 3 sanctioned
+# cross-domain surface). Modules (e.g. modules/logistics) import these from
+# ``domains.orders.ports`` instead of reaching into the services tree.
+from domains.orders.services.tracking.service import (  # noqa: E402, F401
+    get_available_orders_for_logistics,
+    get_order_shipment_label,
+    logistics_cancel_pickup,
+    logistics_confirm_pickup,
+    logistics_deliver_order,
+    logistics_scan_and_receive,
+    logistics_update_transit_status,
+)
 from domains.orders.models.order_entities import OrderNotification
 from infrastructure.utils.pagination import (
     MAX_PAGE_SIZE,
@@ -1161,16 +1174,6 @@ def user_collaborative_category_boosts(
 # ---------------------------------------------------------------------------
 
 
-def order_item_query(db: Session) -> object:
-    """Return a base ``OrderItem`` query (delegation target for controllers)."""
-    return db.query(OrderItem)
-
-
-def return_request_query(db: Session) -> object:
-    """Return a base ``ReturnRequest`` query (delegation target for controllers)."""
-    return db.query(ReturnRequest)
-
-
 def count_all_orders(db: Session) -> int:
     """Count every Order (export / analytics summaries)."""
     return db.query(func.count(Order.id)).scalar() or 0
@@ -1518,18 +1521,3 @@ def sum_supplier_total_revenue(db: Session) -> float:
     .scalar()
     or 0
 )
-
-# --- P11.5 re-exports (country cross-domain repointing) ---
-from domains.country.services.cross_border.cross_border_detection import (
-    CrossBorderDetectionMiddleware,
-    LocalizationService,
-)
-
-
-# --- COMMS-IMPORT: sanctioned model/utils surface consumed by comms (Law 3) ---
-from domains.orders.utils.order_tracking import order_status_label, shipment_status_label
-from domains.orders.services.promotion_service import get_promotion_config, list_promotion_tiers, preview_order_tier_discount
-from domains.orders.services.flash_sale_controller_service import get_all_flash_sales
-from domains.orders.services.coupons_write_service import update_coupon
-from domains.orders.services.flash_sale_controller_service import create_flash_sale, delete_flash_sale, update_flash_sale
-from domains.orders.services.promotion_service import create_promotion_tier, delete_promotion_tier, update_promotion_config, update_promotion_tier

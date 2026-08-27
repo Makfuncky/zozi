@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_COUPON_APPLIED = "promotions.coupon.applied"
@@ -71,8 +74,8 @@ def publish_coupon_applied(coupon_id: int, code: str, discount_amount: str, orde
         from infrastructure.messaging.events.event_bus import publish
         event = CouponApplied(coupon_id=coupon_id, code=code, order_id=order_id, user_id=user_id, discount_amount=discount_amount)
         publish(EVENT_COUPON_APPLIED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish CouponApplied event: %s", exc)
 
 def publish_promotion_activated(promotion_id: int, name: str, country_code: str) -> None:
     """Publish a PromotionActivated event."""
@@ -80,8 +83,8 @@ def publish_promotion_activated(promotion_id: int, name: str, country_code: str)
         from infrastructure.messaging.events.event_bus import publish
         event = PromotionActivated(promotion_id=promotion_id, name=name, country_code=country_code)
         publish(EVENT_PROMOTION_ACTIVATED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish PromotionActivated event: %s", exc)
 
 def publish_promotion_expired(promotion_id: int, name: str, country_code: str) -> None:
     """Publish a PromotionExpired event."""
@@ -89,8 +92,8 @@ def publish_promotion_expired(promotion_id: int, name: str, country_code: str) -
         from infrastructure.messaging.events.event_bus import publish
         event = PromotionExpired(promotion_id=promotion_id, name=name, country_code=country_code)
         publish(EVENT_PROMOTION_EXPIRED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish PromotionExpired event: %s", exc)
 
 __all__ = [
     # Event type constants

@@ -655,7 +655,7 @@ class PayoutBatch(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     deleted_by = Column(Integer, nullable=True)
     updated_by = Column(Integer, nullable=True, index=True)
-    __table_args__ = (Index('ix_payout_batches_country_created', 'country_code', 'created_at'), {"schema": "treasury"})
+    __table_args__ = (Index('ix_payout_batches_country_created', 'country_code', 'created_at'), {"schema": "finance"})
     id = Column(Integer, primary_key=True, index=True)
     batch_number = Column(String(50), unique=True, nullable=False)
     country_code = Column(String(2), nullable=False, index=True)

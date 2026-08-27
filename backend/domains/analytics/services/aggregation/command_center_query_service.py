@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 import logging
 import structlog
@@ -27,7 +28,6 @@ def _validate_table_name(table_name: str) -> str:
 
 
 def _validate_where_clause(where: str) -> str:
-    """Validate WHERE clause contains only safe SQL patterns."""
     allowed_chars = set(
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ =<>!()',:/.%+-*"
     )
@@ -36,33 +36,20 @@ def _validate_where_clause(where: str) -> str:
     return where
 
 
-def safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
-    try:
-        return db.execute(text(sql), params or {}).scalar() or 0
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("Handled Exception in command_center_query_service.py:40")
-        return 0
-
-
 def safe_fetch(db: Session, sql: str, params: dict | None = None, scalar: bool = False) -> Any:
     try:
         result = db.execute(text(sql), params or {})
         return result.scalar() if scalar else result.fetchall()
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("Handled Exception in command_center_query_service.py:48")
-        return 0 if scalar else []
+    except SQLAlchemyError:
+        logger.exception("Database error in safe_fetch")
+        raise
 
 
-def safe_count(db: Session, table: str, where: str = "1=1", params: dict | None = None) -> Any:
+def safe_count(db: Session, table: str, where: Optional[str] = None, params: dict | None = None) -> Any:
     validated_table = _validate_table_name(table)
-    validated_where = _validate_where_clause(where)
-    sql = "SELECT COUNT(*) FROM " + validated_table + " WHERE " + validated_where
+    if where is None:
+        sql = f"SELECT COUNT(*) FROM {validated_table}"
+        return safe_fetch(db, sql, params, scalar=True)
+    _validate_where_clause(where)
+    sql = f"SELECT COUNT(*) FROM {validated_table} WHERE {where}"
     return safe_fetch(db, sql, params, scalar=True)
-
-
-def safe_scalar(db: Session, sql: str, params: dict | None = None) -> Any:
-    try:
-        return db.execute(text(sql), params or {}).scalar() or 0
-    except (ValueError, TypeError, KeyError, IndexError, AttributeError, RuntimeError, OSError, IOError, EOFError, ImportError, NameError, StopIteration, ArithmeticError, AssertionError, UnicodeError, NotImplementedError, RecursionError, ReferenceError, SystemError, BufferError, LookupError) as e:
-        logger.exception("Handled Exception in command_center_query_service.py:62")
-        return 0

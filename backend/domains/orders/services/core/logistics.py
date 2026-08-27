@@ -17,7 +17,8 @@ from sqlalchemy.orm import Session
 from domains.orders.models.orders import Order
 from domains.finance.models.payments import Payment
 from infrastructure.messaging.events import PaymentConfirmedEvent
-from domains.comms.services.notification.notification_service import NotificationService
+# TODO: Module not yet created
+# from domains.comms.services.notification.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +216,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import desc, func
 
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from domains.governance.models.core import CityDistanceMatrix
 from domains.governance.models.user import User
 from domains.comms.models.communication import Notification
@@ -242,7 +243,8 @@ from domains.finance.services.treasury.cash_management_service import deserializ
 from domains.finance.services.treasury.cash_management_service import effective_allocation_delivery_amounts
 from domains.finance.services.treasury.cash_management_service import list_cod_remittance_receipts
 from domains.finance.services.treasury.cash_management_service import serialize_cod_remittance_receipt
-from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
+# TODO: Module not yet created
+# from domains.finance.services.ledger.finance_transfer_service import build_transfer_reference
 from domains.logistics.services.partners.service import normalize_city_name
 from domains.logistics.services.partners.service import normalize_country_code
 from domains.logistics.services.partners.service import partner_can_service_order
@@ -252,7 +254,7 @@ from domains.logistics.services.partners.service import serialize_category_prici
 from domains.logistics.services.partners.service import serialize_pricing_profile
 from domains.logistics.services.partners.service import serialize_service_area
 from domains.logistics.services.partners.service import serialize_vehicle_rule
-from domains.orders.utils.order_tracking import (
+from domains.orders.services.tracking.service import (
     canonical_scan_code,
     derive_order_financials,
     reconcile_order_status,
@@ -4074,7 +4076,7 @@ from typing import Any, Optional, cast
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.services.logs.audit_service import AuditAction, audit_log
 from domains.catalog.models.products import Product
 from domains.comms.models.communication import Notification
 from domains.comms.models.suppliers import SupplierProfile
@@ -4085,8 +4087,8 @@ from domains.logistics.models.logistics import Shipment
 from domains.logistics.models.logistics import ShipmentEvent
 from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
-from domains.orders.utils.order_tracking import canonical_scan_code, ensure_shipment_identifiers, reconcile_order_status, shipment_scan_codes
-from domains.orders.utils.order_tracking import shipment_event_label, shipment_status_label
+from domains.orders.services.tracking.service import canonical_scan_code, ensure_shipment_identifiers, reconcile_order_status, shipment_scan_codes
+from domains.orders.services.tracking.service import shipment_event_label, shipment_status_label
 from infrastructure.utils.datetime_utils import utcnow as _utcnow
 from infrastructure.utils.realtime import logistics_realtime_hub
 

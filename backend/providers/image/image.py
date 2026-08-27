@@ -10,8 +10,14 @@ import io
 import logging
 from typing import List, Dict, Any, Optional
 
-import numpy as np
-from PIL import Image
+try:
+    import numpy as np
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+    np = None  # type: ignore[assignment]
+    Image = None  # type: ignore[assignment]
 
 from .bg_remover import remove_background as _bg_remover_remove_background, ProcessingConfig, _resize_image, _bytes_to_image, _image_to_bytes
 from infrastructure.utils.config import settings

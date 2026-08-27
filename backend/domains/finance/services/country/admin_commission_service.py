@@ -11,7 +11,7 @@ from domains.finance.models.commission import CommissionCategoryRate
 from domains.governance.models.admin import CommissionBadgeTier
 
 from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
+from infrastructure.database.rls_interceptor import clear_rls_context, set_rls_context
 
 
 def _build_category_rate(payload: CommissionCategoryRateCreate, country_code: str) -> CommissionCategoryRate:

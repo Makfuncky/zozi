@@ -133,3 +133,28 @@ def get_currency_symbol(currency_code: str, language_code: str) -> str:
     }
     
     return symbols.get(currency_code, {}).get(language_code, currency_code)
+
+
+def translate_text(text: str, source_lang: str = "en", target_lang: str = "ar") -> dict:
+    """Translate a single text string from source to target language."""
+    if not text or not text.strip():
+        return {"translated": text, "source_lang": source_lang, "target_lang": target_lang}
+    if source_lang == target_lang:
+        return {"translated": text, "source_lang": source_lang, "target_lang": target_lang}
+    try:
+        from deep_translator import GoogleTranslator
+        translator = GoogleTranslator(source=source_lang, target=target_lang)
+        translated = translator.translate(text)
+        return {"translated": translated or text, "source_lang": source_lang, "target_lang": target_lang}
+    except ImportError:
+        return {"translated": text, "source_lang": source_lang, "target_lang": target_lang}
+    except Exception:
+        return {"translated": text, "source_lang": source_lang, "target_lang": target_lang}
+
+
+def format_currency(amount: float, currency_code: str = "USD", locale: str = "en") -> dict:
+    """Format a currency amount for the given locale."""
+    symbol = get_currency_symbol(currency_code, locale)
+    fmt = get_number_format(locale)
+    formatted = f"{symbol}{amount:,.2f}"
+    return {"formatted": formatted, "amount": amount, "currency_code": currency_code, "locale": locale}

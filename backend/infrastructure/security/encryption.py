@@ -15,12 +15,23 @@ from infrastructure.utils.config import settings
 
 logger = logging.getLogger(__name__)
 
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
 _ENCRYPTED_PREFIX = "enc::"
+_KDF_SALT = b"zozi-field-encryption-salt-v1"
+_KDF_ITERATIONS = 600_000
 
 
 def _derive_fernet_key(raw_key: str) -> bytes:
-    digest = hashlib.sha256(raw_key.encode("utf-8")).digest()
-    return base64.urlsafe_b64encode(digest)
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=_KDF_SALT,
+        iterations=_KDF_ITERATIONS,
+    )
+    derived = kdf.derive(raw_key.encode("utf-8"))
+    return base64.urlsafe_b64encode(derived)
 
 
 class FieldEncryptor:

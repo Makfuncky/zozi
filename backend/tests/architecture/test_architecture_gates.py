@@ -6,10 +6,11 @@ that was never committed; this file is the source of truth.
 
 W1 rules enforced here:
   * A ``service`` must NOT own a FastAPI router or route decorator (DB logic only).
-  * A ``controller`` must be routing-metadata only (import ``get``/``post``/... from
-    ``infrastructure.routing.route_contract``); it must not instantiate ``APIRouter`` and
-    must not own the DB transaction boundary (``db.add``/``db.commit``/etc. — those
-    belong in ``services``).
+  * A ``controller`` must be routing-metadata only (declare ``get``/``post``/... markers
+    or live in ``modules/``); it must not instantiate ``APIRouter`` and must not own
+    the DB transaction boundary (``db.add``/``db.commit``/etc. — those belong in
+    ``services``). The historical ``infrastructure.routing.route_contract`` marker
+    module was retired; HTTP routes are declared directly in module routers.
   * A ``router`` must be thin: it must not import ``models`` or own the DB
     transaction boundary (those belong in ``services``); routing is declared by
     controllers and the auto-generator. Legacy offenders are frozen in
@@ -192,7 +193,7 @@ class TestControllersUseNoFastAPIRouters:
             msg = "\n".join(f"  {k}: {v}" for k, v in violations.items())
             raise AssertionError(
                 "Controllers must be routing-metadata only "
-                "(import from infrastructure.routing.route_contract). Violations:\n" + msg
+                "(declare HTTP markers or live in modules/). Violations:\n" + msg
             )
 
 

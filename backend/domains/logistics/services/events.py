@@ -8,10 +8,13 @@ method so the event bus can emit them to subscribers.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 from uuid import uuid4
+
+logger = logging.getLogger(__name__)
 
 # Canonical event type constants (shared contract)
 EVENT_SHIPMENT_CREATED = "logistics.shipment.created"
@@ -73,8 +76,8 @@ def publish_shipment_created(shipment_id: int, order_id: int, carrier: str, trac
         from infrastructure.messaging.events.event_bus import publish
         event = ShipmentCreated(shipment_id=shipment_id, order_id=order_id, carrier=carrier, tracking_number=tracking_number, origin_country=origin_country, destination_country=destination_country)
         publish(EVENT_SHIPMENT_CREATED, event.serialize())
-    except Exception:
-        pass  # Event publishing is best-effort
+    except Exception as exc:
+        logger.warning("Failed to publish ShipmentCreated event: %s", exc)
 
 def publish_shipment_in_transit(shipment_id: int, order_id: int, current_location: str, status: str, estimated_delivery: Optional[str] = None) -> None:
     """Publish a ShipmentInTransit event."""
@@ -82,8 +85,8 @@ def publish_shipment_in_transit(shipment_id: int, order_id: int, current_locatio
         from infrastructure.messaging.events.event_bus import publish
         event = ShipmentInTransit(shipment_id=shipment_id, order_id=order_id, current_location=current_location, status=status, estimated_delivery=estimated_delivery)
         publish(EVENT_SHIPMENT_IN_TRANSIT, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish ShipmentInTransit event: %s", exc)
 
 def publish_shipment_delivered(shipment_id: int, order_id: int, delivered_at: str, signed_by: str = "") -> None:
     """Publish a ShipmentDelivered event."""
@@ -91,8 +94,8 @@ def publish_shipment_delivered(shipment_id: int, order_id: int, delivered_at: st
         from infrastructure.messaging.events.event_bus import publish
         event = ShipmentDelivered(shipment_id=shipment_id, order_id=order_id, delivered_at=delivered_at, signed_by=signed_by)
         publish(EVENT_SHIPMENT_DELIVERED, event.serialize())
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("Failed to publish ShipmentDelivered event: %s", exc)
 
 __all__ = [
     # Event type constants

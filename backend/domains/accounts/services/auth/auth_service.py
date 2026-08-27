@@ -15,6 +15,7 @@ activity ledger.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -31,6 +32,7 @@ import jwt
 import requests
 
 from providers.auth import totp as totp_provider
+from providers.comms.email import deliver_email
 from fastapi import HTTPException, Request, status
 
 from infrastructure.utils.auth import (
@@ -39,18 +41,15 @@ from infrastructure.utils.auth import (
     verify_password,
     get_password_hash,
     blacklist_token,
-    is_token_blacklisted,
 )
 from infrastructure.database.database import SessionLocal
 from domains.governance.models.user import User
 from domains.governance.models.user import UserDevice
-from domains.hr.models.employee_models import Employee
-from domains.hr.models.employee_models import EmployeeBiometric
-from domains.hr.models.employee_models import DynamicQRSession
-from domains.hr.models.employee_models import GeoFenceLog
-from domains.hr.models.employee_models import EmployeeAttendance
+from domains.accounts.ports import get_user_by_id
+from domains.hr.ports import Employee, EmployeeBiometric, DynamicQRSession, GeoFenceLog, EmployeeAttendance
 from infrastructure.utils.config import settings
 from infrastructure.utils.geo import haversine_distance
+from infrastructure.utils.performance_cache import invalidate_user_cache
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +61,10 @@ KIOSK_SESSION_HOURS = 8
 MOBILE_SESSION_DAYS = 30
 MAX_OTP_ATTEMPTS = 5
 RISK_HIGH_THRESHOLD = 75  # out of 100
+
+# Login rate limiting (ARCHITECTURE_DIAGRAM.md §4 Security)
+LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5
+LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60
 
 _SSO_JWKS_URLS = {
     "google": "https://www.googleapis.com/oauth2/v3/certs",
@@ -86,6 +89,103 @@ def _get_redis():
     except Exception:
         return None
     return client
+
+
+def _check_login_rate_limit(identifier: str, request: Optional[Request] = None) -> None:
+    """Enforce per-IP/per-identifier login rate limit (5 attempts / 60s).
+
+    Per ARCHITECTURE_DIAGRAM.md §4 (Security) — the Security layer of the
+    6-layer middleware pipeline. Key shape:
+        rate_limit:login:{ip_address}:{user_id_or_email}
+
+    Raises HTTPException(429) when the limit is exceeded. On Redis failure
+    we fail-open (do not block legitimate logins) but log the event.
+    """
+    ip_address = "unknown"
+    if request is not None and getattr(request, "client", None) is not None:
+        ip_address = request.client.host or "unknown"
+    elif request is not None:
+        ip_address = request.headers.get("x-forwarded-for", "unknown").split(",")[0].strip()
+
+    key = f"rate_limit:login:{ip_address}:{identifier}"
+    r = _get_redis()
+    if r is None:
+        return
+
+    try:
+        pipe = r.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, LOGIN_RATE_LIMIT_WINDOW_SECONDS)
+        count, _ = pipe.execute()
+        count = int(count) if count is not None else 0
+        if count > LOGIN_RATE_LIMIT_MAX_ATTEMPTS:
+            logger.warning(
+                "Login rate limit exceeded for %s on %s (count=%s)",
+                identifier, ip_address, count,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many login attempts. Please try again later.",
+            )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("Login rate limit check failed (fail-open): %s", exc)
+
+
+def _record_registration_consents(persisted_user: User, registration_payload, db: Session) -> None:
+    """Record GDPR consents collected at registration.
+
+    Terms-of-service and privacy-policy consent is assumed whenever
+    ``terms_accepted`` was set on the registration payload. Marketing
+    consent is recorded when the payload opts in (the existing
+    ``UserCreate`` schema does not expose it, so we use ``getattr`` to
+    stay forward-compatible).
+    """
+    try:
+        from domains.accounts.services.gdpr_service import (
+            CONSENT_MARKETING,
+            CONSENT_PRIVACY,
+            CONSENT_TERMS,
+            record_consent,
+        )
+    except Exception as exc:  # pragma: no cover — defensive
+        logger.warning("Could not import gdpr_service for consent recording: %s", exc)
+        return
+
+    terms_accepted = bool(getattr(registration_payload, "terms_accepted", False))
+    marketing_opt_in = bool(getattr(registration_payload, "marketing_consent", False))
+    ip = "registration"
+    user_agent = "registration"
+
+    if terms_accepted:
+        for consent_type in (CONSENT_TERMS, CONSENT_PRIVACY):
+            try:
+                record_consent(
+                    user_id=persisted_user.id,
+                    consent_type=consent_type,
+                    granted=True,
+                    ip_address=ip,
+                    user_agent=user_agent,
+                    db=db,
+                    country_code=getattr(persisted_user, "country_code", None),
+                )
+            except Exception as exc:
+                logger.warning("Failed to record %s consent: %s", consent_type, exc)
+
+    if marketing_opt_in:
+        try:
+            record_consent(
+                user_id=persisted_user.id,
+                consent_type=CONSENT_MARKETING,
+                granted=True,
+                ip_address=ip,
+                user_agent=user_agent,
+                db=db,
+                country_code=getattr(persisted_user, "country_code", None),
+            )
+        except Exception as exc:
+            logger.warning("Failed to record marketing consent: %s", exc)
 
 
 def _generate_jti() -> str:
@@ -161,7 +261,7 @@ def _log_activity(
 ) -> None:
     """Append-only activity log entry."""
     try:
-        from domains.hr.models.employee_models import EmployeeActivityLog
+        from domains.hr.ports import EmployeeActivityLog
 
         log_entry = EmployeeActivityLog(
             actor_employee_id=actor_employee_id,
@@ -295,6 +395,8 @@ def authenticate_password(
     else:
         close_db = False
     try:
+        _check_login_rate_limit(email, request)
+
         user = db.query(User).filter(User.email == email).first()
         if not user or not verify_password(password, user.hashed_password or ""):
             raise HTTPException(
@@ -389,7 +491,7 @@ def request_otp(phone: str) -> dict:
     In production, this sends via SMS provider (Twilio, etc.) or WhatsApp.
     For development, logs to console.
     """
-    otp = "".join([str(secrets.randbelow(10)) for _ in range(OTP_LENGTH)])
+    otp = f"{secrets.SystemRandom().randbelow(10**6):06d}"
     _store_otp(phone, otp)
 
     # TODO: Integrate with SMS/WhatsApp provider
@@ -416,11 +518,13 @@ def authenticate_phone_otp(
     else:
         close_db = False
     try:
+        _check_login_rate_limit(phone, request)
+
         user = db.query(User).filter(User.phone == phone).first()
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No account found with this phone number",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid phone number or OTP",
             )
 
         if not _verify_stored_otp(phone, otp):
@@ -530,6 +634,8 @@ def authenticate_biometric(
     else:
         close_db = False
     try:
+        _check_login_rate_limit(str(user_id), request)
+
         user = db.query(User).filter(User.id == user_id).first()
         if not user or not user.is_active:
             raise HTTPException(status_code=403, detail="Account not active")
@@ -695,6 +801,8 @@ def authenticate_kiosk_qr(
     else:
         close_db = False
     try:
+        _check_login_rate_limit(ip_address or "kiosk", request)
+
         session = (
             db.query(DynamicQRSession)
             .filter(DynamicQRSession.qr_token == qr_token)
@@ -896,9 +1004,10 @@ def _verify_sso_token(provider: str, id_token: str) -> dict:
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("SSO token verification failed", extra={"provider": provider, "error": str(e)})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"SSO token verification failed: {e}",
+            detail="SSO token verification failed",
         )
 
 
@@ -927,6 +1036,8 @@ def authenticate_sso(
 
         if not email:
             raise HTTPException(status_code=400, detail="Email not provided by SSO provider")
+
+        _check_login_rate_limit(email or sso_sub, request)
 
         user = db.query(User).filter(User.email == email).first()
 
@@ -1058,9 +1169,12 @@ def _issue_session(
     elif login_method == "qr_kiosk":
         access_ttl = timedelta(hours=KIOSK_SESSION_HOURS)
     elif login_method in ("biometric", "phone_otp"):
-        access_ttl = timedelta(days=MOBILE_SESSION_DAYS)
+        access_ttl = timedelta(minutes=15)
     else:
         access_ttl = timedelta(minutes=settings.access_token_expire_minutes)
+
+    if risk_score >= RISK_HIGH_THRESHOLD:
+        access_ttl = timedelta(minutes=5)
 
     access_token = create_access_token(data=payload, expires_delta=access_ttl)
     refresh_token = create_refresh_token(data=payload)
@@ -1195,19 +1309,16 @@ in dev, so SMS only logs). Codes are bcrypt-hashed at rest; plaintext is never
 persisted.
 """
 
-import logging
-import random
-import string
+import secrets
 from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
-from infrastructure.security.auth import get_password_hash, verify_password
+from infrastructure.utils.auth import get_password_hash, verify_password
 from infrastructure.utils.datetime_utils import utcnow
 from infrastructure.utils.config import settings
-# TODO: OtpCode model not yet defined — add to accounts/models/ when needed
+from domains.accounts.models.otp import OtpCode
 
-logger = logging.getLogger(__name__)
 
 def _as_int(value, default: int) -> int:
     try:
@@ -1221,7 +1332,7 @@ OTP_MAX_ATTEMPTS = _as_int(getattr(settings, "otp_max_attempts", 5), 5)
 
 
 def _generate_code() -> str:
-    return "".join(random.choices(string.digits, k=6))
+    return f"{secrets.SystemRandom().randbelow(10**6):06d}"
 
 
 def start_otp(user, purpose: str, channel: str = "email", destination: str | None = None, db: Session | None = None) -> OtpCode:
@@ -1275,10 +1386,10 @@ def _deliver(user, channel: str, destination: str | None, code: str) -> None:
     dest = destination or getattr(user, "email", None) or getattr(user, "phone", None)
     if channel == "email" and dest:
         # Email delivery: routes via comms.email_service when configured; logs for dev.
-        logger.info("OTP(email) user=%s destination=%s code=%s", user.id, dest, code)
+        logger.info("OTP(email) user=%s destination=%s", user.id, dest)
     elif channel == "sms" and dest:
         # SMS delivery: integrates via providers.sms.twilio when configured; logs for dev.
-        logger.info("OTP(sms) user=%s destination=%s code=%s [delivery stub]", user.id, dest, code)
+        logger.info("OTP(sms) user=%s destination=%s", user.id, dest)
     else:
         logger.warning("OTP delivery skipped: no destination for user=%s", user.id)
 
@@ -1286,7 +1397,6 @@ def _deliver(user, channel: str, destination: str | None, code: str) -> None:
 # === MERGED FROM auth_router_service.py ===
 """Auth router service — DB helpers for routers/auth.py."""
 
-import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -1297,7 +1407,6 @@ from domains.governance.models.user import UserLoginHistory
 from infrastructure.utils.auth import verify_password
 from infrastructure.utils.ip_utils import get_request_ip
 
-logger = logging.getLogger(__name__)
 
 
 def find_user(db: Session, email: str | None, username: str | None) -> User | None:
@@ -1336,10 +1445,6 @@ def record_login_history(db: Session, user: User, request=None, success: bool = 
             db.rollback()
         except Exception:
             pass
-
-
-def get_user_by_id(db: Session, user_id: int) -> User | None:
-    return db.query(User).filter(User.id == user_id).first()
 
 
 def check_email_exists(db: Session, email: str) -> bool:
@@ -1381,7 +1486,6 @@ imports continue to work unchanged.
 """
 import os
 import secrets
-import logging
 import re
 from providers.auth import totp as totp_provider
 from datetime import datetime, timedelta, timezone
@@ -1442,7 +1546,7 @@ from infrastructure.utils.auth import (
 from infrastructure.utils.ip_utils import get_request_ip
 from infrastructure.utils.config import settings
 from infrastructure.utils.constants import STAFF_ROLES
-from infrastructure.utils.currency import KNOWN_CURRENCY_META
+from infrastructure.utils.currency_service import KNOWN_CURRENCY_META
 from infrastructure.utils.email_service import (
     EmailDeliveryDisabledError,
     get_email_delivery_status,
@@ -1450,10 +1554,8 @@ from infrastructure.utils.email_service import (
     send_password_reset_email,
     send_verification_email,
 )
-from infrastructure.utils.staff_permissions import default_permissions_for_role, sanitize_staff_permissions
-from domains.governance.services.infrastructure_audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 
-logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=False)
@@ -1594,16 +1696,29 @@ def _user_profile_image(user: User | UserSchema) -> str | None:
 
 
 
+def _sanitize_staff_permissions(permissions):
+    if not permissions:
+        return []
+    normalized: list = []
+    seen: set = set()
+    for permission in permissions:
+        candidate = str(permission).strip()
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        normalized.append(candidate)
+    return normalized
+
+
 def _user_effective_permissions(user: User) -> list[str]:
     role = _user_role(user)
     if role not in STAFF_ROLES:
         return []
-    assigned_permissions = sanitize_staff_permissions(getattr(user, "staff_permissions", None))
+    assigned_permissions = _sanitize_staff_permissions(getattr(user, "staff_permissions", None))
     if assigned_permissions:
         return assigned_permissions
-    from infrastructure.utils.staff_permissions import ROLE_PERMISSION_MAP
-
-    return sorted(ROLE_PERMISSION_MAP.get(role, set()))
+    from rbac.dependencies import _ROLE_FEATURES
+    return sorted(_ROLE_FEATURES.get(role, []))
 
 
 def _user_staff_payload(user: User) -> dict[str, Any]:
@@ -2408,6 +2523,8 @@ def register_user(user: UserCreate, db: Session) -> UserSchema:
     if persisted_user is None:
         raise HTTPException(status_code=500, detail="Registration succeeded but the user could not be reloaded")
 
+    _record_registration_consents(persisted_user, user, db)
+
     return UserSchema.model_validate(persisted_user)
 
 
@@ -2963,6 +3080,7 @@ def update_profile(body: ProfileUpdate, current_user: dict, db: Session) -> User
     db.commit()
     db.refresh(user)
     cache_delete(f"auth:user:{_user_id(user)}")
+    invalidate_user_cache(_user_id(user))
     audit_log(
         db=db,
         action=AuditAction.PROFILE_UPDATED,
@@ -3014,6 +3132,7 @@ def change_password(body: ChangePasswordRequest, current_user: dict, db: Session
     
     setattr(user, "hashed_password", get_password_hash(body.new_password))
     db.commit()
+    invalidate_user_cache(_user_id(user))
     return {"detail": "Password changed successfully."}
 
 
@@ -3189,6 +3308,7 @@ def enable_totp(current_user: dict, db: Session, code: str) -> dict:
     setattr(user, "totp_enabled", True)
     setattr(user, "totp_recovery_codes", recovery_codes)
     db.commit()
+    invalidate_user_cache(_user_id(user))
     return {
         "detail": "TOTP 2FA enabled successfully.",
         "recovery_codes": recovery_codes,
@@ -3211,6 +3331,7 @@ def disable_totp(current_user: dict, db: Session, password: str) -> dict:
     setattr(user, "totp_enabled", False)
     setattr(user, "totp_recovery_codes", None)
     db.commit()
+    invalidate_user_cache(_user_id(user))
     return {"detail": "TOTP 2FA disabled successfully."}
 
 
@@ -3305,10 +3426,8 @@ def admin_verify_totp(
 
 # === MERGED FROM biometric_auth.py ===
 
-import logging
 from typing import Optional, Dict, Any
 
-logger = logging.getLogger(__name__)
 
 
 class BiometricAuthService:
@@ -3350,16 +3469,40 @@ class BiometricAuthService:
         return False
     
     def _validate_faceid(self, token: str) -> bool:
+        # TODO: Replace with real FaceID validation (e.g., server-side
+        # verification of a signed assertion from Secure Enclave). Current
+        # implementation is a stub that only checks format.
         """Validate Apple FaceID token."""
-        return len(token) > 10
-    
+        return self._is_plausible_biometric_token(token)
+
     def _validate_fingerprint(self, token: str) -> bool:
+        # TODO: Replace with real fingerprint validation (e.g., verify a
+        # signed payload from the device's TEE/StrongBox). Current
+        # implementation is a stub that only checks format.
         """Validate Android/iOS fingerprint token."""
-        return len(token) > 10
-    
+        return self._is_plausible_biometric_token(token)
+
     def _validate_webauthn(self, assertion: str) -> bool:
+        # TODO: Replace with real WebAuthn assertion verification using
+        # `python-fido2` or equivalent (challenge, origin, counter, signature).
+        # Current implementation is a stub that only checks format.
         """Validate WebAuthn assertion."""
-        return len(assertion) > 10
+        return self._is_plausible_biometric_token(assertion)
+
+    @staticmethod
+    def _is_plausible_biometric_token(token: str) -> bool:
+        """Basic format check used as a placeholder for real biometric
+        verification. Ensures the token looks like a base64url-ish string
+        of reasonable length before downstream (currently stub) processing."""
+        if not isinstance(token, str):
+            return False
+        if len(token) < 20 or len(token) > 4096:
+            return False
+        allowed = set(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+            "0123456789-_=+/."
+        )
+        return all(ch in allowed for ch in token)
     
     def register_biometric(
         self,
@@ -3388,10 +3531,28 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from domains.governance.models.social import SocialIdentity
+from domains.accounts.models.social import SocialIdentity
 from domains.governance.models.user import User
-from domains.governance.services.auth_service import issue_auth_response
-from infrastructure.security.auth import get_password_hash
+# TODO: Module not yet created
+# from domains.governance.services.auth_service import issue_auth_response
+from infrastructure.utils.auth import get_password_hash
+
+
+def issue_auth_response(user: User) -> dict:
+    """Local stub: build a minimal auth response payload for a User.
+
+    The canonical implementation lives in domains.governance.services.auth_service
+    (not yet created). Until it is wired, this local helper produces a
+    minimal response so callers in this module do not NameError.
+    """
+    return {
+        "user_id": getattr(user, "id", None),
+        "email": getattr(user, "email", None),
+        "role": getattr(user, "role", None),
+        "access_token": None,
+        "refresh_token": None,
+        "token_type": "bearer",
+    }
 
 
 def verify_social_identity(
@@ -3407,8 +3568,21 @@ def verify_social_identity(
     TODO(zozi): replace the dev path with real OIDC/id_token verification
     (google/apple) so the provider asserts ``provider_user_id``/``email``.
     Until then, callers may pass the claims directly (dev/test only).
+
+    SECURITY: Real OIDC token verification (JWKS fetch, signature check,
+    ``iss``/``aud``/``exp`` validation, nonce) must be implemented before
+    this endpoint is exposed in production. The current dev shortcut does
+    not verify tokens against the provider and must not silently accept
+    caller-supplied claims in any non-development environment.
     """
     if provider_user_id:
+        # Dev-only path: caller is trusted to assert claims. This branch
+        # MUST be removed once real OIDC verification is wired in.
+        import logging
+        logging.getLogger(__name__).warning(
+            "verify_social_identity accepting caller-supplied claims "
+            "(provider=%s) — OIDC verification NOT performed", provider,
+        )
         return {
             "provider_user_id": provider_user_id,
             "email": email,
@@ -3484,7 +3658,6 @@ def sign_in_social(
 Triple-Match Authentication Service
 Features: QR + Biometric + Geo-fence validation for Zero-Trust access
 """
-import logging
 import secrets
 import hashlib
 import hmac
@@ -3493,7 +3666,7 @@ from typing import Optional, Dict, Any, Tuple
 
 from sqlalchemy.orm import Session
 
-from domains.hr.models.employee_models import Employee, GeoFenceLog, EmployeeBiometric
+from domains.hr.ports import Employee, GeoFenceLog, EmployeeBiometric
 from infrastructure.database.database import get_service_session
 
 logger = logging.getLogger("zozi.triple_auth")
@@ -3691,7 +3864,6 @@ All functions take an active SQLAlchemy `Session` as their first argument and ar
 responsible for flushing/committing their own writes.
 """
 
-import logging
 from typing import Any, Callable, Optional
 
 from sqlalchemy.orm import Session
@@ -3709,7 +3881,6 @@ from infrastructure.utils.datetime_utils import utcnow
 import structlog
 logger = structlog.get_logger(__name__)
 
-logger = logging.getLogger(__name__)
 
 
 # â”€â”€ User creation / update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -4130,11 +4301,6 @@ def find_user_by_identifier(
     return None
 
 
-def get_user_by_id(db: Session, user_id: int) -> Optional["User"]:
-    """Fetch a user by primary key."""
-    return db.query(User).filter(User.id == user_id).first()
-
-
 def create_registration_user(
     db: Session,
     *,
@@ -4248,6 +4414,42 @@ def disable_user_totp(db: Session, user: User, password: str, verify_password) -
     return user
 
 
+def send_welcome_email(to_email: str, user_name: str):
+    """Send a welcome email via the comms email provider."""
+    try:
+        deliver_email(
+            to_email,
+            f"Welcome to ZOZI, {user_name}!",
+            f"<h1>Welcome {user_name}</h1><p>Your account is ready.</p>",
+            from_address=getattr(settings, "email_from", "noreply@zozi.com"),
+            provider=getattr(settings, "email_provider", "console"),
+        )
+        return {"sent": True}
+    except Exception:
+        return {"sent": False}
+
+
+def send_sms_verification(phone_number: str, code: str):
+    """Send an SMS verification code via the Twilio provider."""
+    if not HAS_TWILIO:
+        return {"sent": False, "reason": "twilio_not_available"}
+    try:
+        client = create_twilio_client(
+            account_sid=getattr(settings, "twilio_account_sid", ""),
+            auth_token=getattr(settings, "twilio_auth_token", ""),
+        )
+        if client is None:
+            return {"sent": False, "reason": "twilio_client_failed"}
+        client.messages.create(
+            body=f"Your ZOZI code: {code}",
+            from_=getattr(settings, "twilio_phone_number", ""),
+            to=phone_number,
+        )
+        return {"sent": True}
+    except Exception:
+        return {"sent": False}
+
+
 __all__ = [
     "create_user",
     "create_user_persist",
@@ -4282,6 +4484,8 @@ __all__ = [
     "add_user_device",
     "update_user_totp",
     "disable_user_totp",
+    "send_welcome_email",
+    "send_sms_verification",
 ]
 
 

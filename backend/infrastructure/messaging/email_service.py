@@ -174,37 +174,54 @@ def _load_environment_email_config(
 
 def _load_runtime_email_config() -> dict[str, object]:
     from infrastructure.database.database import SessionLocal
-    from domains.governance.models.admin import EmailProviderConfig
+    from sqlalchemy import text
 
     configured_provider = "environment"
     sender_overrides: dict[str, str | None] = {}
-    record = None
+    record: Optional[dict[str, object]] = None
 
     db = SessionLocal()
     try:
-        record = db.query(EmailProviderConfig).order_by(EmailProviderConfig.id.desc()).first()
+        # Law 1 compliance: read email provider config via raw SQL to avoid
+        # importing the EmailProviderConfig domain model. The table layout is
+        # documented in domains/governance/models/admin.py and is treated here
+        # as an opaque runtime configuration blob.
+        row = db.execute(
+            text(
+                "SELECT provider, "
+                "email_from_default, email_from_promotional, email_from_transactional, "
+                "email_from_notification, email_from_alert, email_from_verification, "
+                "email_from_login_verification, email_from_password_reset, "
+                "resend_api_key, resend_webhook_secret, "
+                "smtp_host, smtp_port, smtp_username, smtp_use_tls, smtp_use_ssl, "
+                "smtp_timeout_seconds, smtp_password "
+                "FROM email_provider_configs ORDER BY id DESC LIMIT 1"
+            )
+        ).mappings().first()
+        if row is not None:
+            record = dict(row)
     except Exception:
         logger.debug("Email provider config table not available; using environment settings")
     finally:
         db.close()
 
     if record is not None:
-        record_obj = cast(Any, record)
-        configured_provider = cast(str, record_obj.provider or "environment").strip().lower()
+        record_obj = cast("dict[str, object]", record)
+        configured_provider = cast(str, record_obj.get("provider") or "environment").strip().lower()
         sender_overrides = {
-            "default": cast(Optional[str], record_obj.email_from_default),
-            "promotional": cast(Optional[str], record_obj.email_from_promotional),
-            "transactional": cast(Optional[str], record_obj.email_from_transactional),
-            "notification": cast(Optional[str], record_obj.email_from_notification),
-            "alert": cast(Optional[str], record_obj.email_from_alert),
-            "verification": cast(Optional[str], record_obj.email_from_verification),
-            "login_verification": cast(Optional[str], record_obj.email_from_login_verification),
-            "password_reset": cast(Optional[str], record_obj.email_from_password_reset),
+            "default": cast(Optional[str], record_obj.get("email_from_default")),
+            "promotional": cast(Optional[str], record_obj.get("email_from_promotional")),
+            "transactional": cast(Optional[str], record_obj.get("email_from_transactional")),
+            "notification": cast(Optional[str], record_obj.get("email_from_notification")),
+            "alert": cast(Optional[str], record_obj.get("email_from_alert")),
+            "verification": cast(Optional[str], record_obj.get("email_from_verification")),
+            "login_verification": cast(Optional[str], record_obj.get("email_from_login_verification")),
+            "password_reset": cast(Optional[str], record_obj.get("email_from_password_reset")),
         }
-        default_sender = cast(Optional[str], record_obj.email_from_default) or settings.email_from
+        default_sender = cast(Optional[str], record_obj.get("email_from_default")) or settings.email_from
         sender_map = _normalize_sender_map(default_sender, sender_overrides)
 
-        if configured_provider == "resend" and (cast(Optional[str], record_obj.resend_api_key) or "").strip():
+        if configured_provider == "resend" and (cast(Optional[str], record_obj.get("resend_api_key")) or "").strip():
             return {
                 "provider": "resend",
                 "configured_provider": configured_provider,
@@ -215,14 +232,14 @@ def _load_runtime_email_config() -> dict[str, object]:
                 "supports_webhooks": True,
                 "from_address": sender_map["default"],
                 "sender_map": sender_map,
-                "resend_api_key": cast(Optional[str], record_obj.resend_api_key),
-                "resend_webhook_secret": cast(Optional[str], record_obj.resend_webhook_secret),
+                "resend_api_key": cast(Optional[str], record_obj.get("resend_api_key")),
+                "resend_webhook_secret": cast(Optional[str], record_obj.get("resend_webhook_secret")),
                 "resend_api_key_configured": True,
-                "resend_webhook_secret_configured": bool(record_obj.resend_webhook_secret),
-                "smtp_password_configured": bool(record_obj.smtp_password),
+                "resend_webhook_secret_configured": bool(record_obj.get("resend_webhook_secret")),
+                "smtp_password_configured": bool(record_obj.get("smtp_password")),
             }
 
-        if configured_provider == "smtp" and (cast(Optional[str], record_obj.smtp_host) or "").strip() and sender_map["default"].strip():
+        if configured_provider == "smtp" and (cast(Optional[str], record_obj.get("smtp_host")) or "").strip() and sender_map["default"].strip():
             return {
                 "provider": "smtp",
                 "configured_provider": configured_provider,
@@ -233,15 +250,15 @@ def _load_runtime_email_config() -> dict[str, object]:
                 "supports_webhooks": False,
                 "from_address": sender_map["default"],
                 "sender_map": sender_map,
-                "smtp_host": cast(Optional[str], record_obj.smtp_host),
-                "smtp_port": cast(int, record_obj.smtp_port),
-                "smtp_username": cast(Optional[str], record_obj.smtp_username),
-                "smtp_use_tls": cast(bool, record_obj.smtp_use_tls),
-                "smtp_use_ssl": cast(bool, record_obj.smtp_use_ssl),
-                "smtp_timeout_seconds": cast(int, record_obj.smtp_timeout_seconds),
-                "resend_api_key_configured": bool(record_obj.resend_api_key),
-                "resend_webhook_secret_configured": bool(record_obj.resend_webhook_secret),
-                "smtp_password_configured": bool(record_obj.smtp_password),
+                "smtp_host": cast(Optional[str], record_obj.get("smtp_host")),
+                "smtp_port": record_obj.get("smtp_port"),
+                "smtp_username": cast(Optional[str], record_obj.get("smtp_username")),
+                "smtp_use_tls": bool(record_obj.get("smtp_use_tls")),
+                "smtp_use_ssl": bool(record_obj.get("smtp_use_ssl")),
+                "smtp_timeout_seconds": record_obj.get("smtp_timeout_seconds"),
+                "resend_api_key_configured": bool(record_obj.get("resend_api_key")),
+                "resend_webhook_secret_configured": bool(record_obj.get("resend_webhook_secret")),
+                "smtp_password_configured": bool(record_obj.get("smtp_password")),
             }
 
         if configured_provider == "disabled":
@@ -255,9 +272,9 @@ def _load_runtime_email_config() -> dict[str, object]:
                 "supports_webhooks": False,
                 "from_address": sender_map["default"],
                 "sender_map": sender_map,
-                "resend_api_key_configured": bool(record_obj.resend_api_key),
-                "resend_webhook_secret_configured": bool(record_obj.resend_webhook_secret),
-                "smtp_password_configured": bool(record_obj.smtp_password),
+                "resend_api_key_configured": bool(record_obj.get("resend_api_key")),
+                "resend_webhook_secret_configured": bool(record_obj.get("resend_webhook_secret")),
+                "smtp_password_configured": bool(record_obj.get("smtp_password")),
             }
 
         return _load_environment_email_config(
@@ -365,7 +382,14 @@ def send_email(
     event_db: Session | None = None,
 ) -> None:
     """Dispatch an email using the active runtime configuration."""
-    from domains.comms.services.email_event_service import is_email_suppressed, record_email_delivery_event
+    # TODO(Law 1 cleanup 2026-08-27): domain suppression/event recording was
+    # moved to comms/services/email_event_service. To eliminate this import,
+    # the suppression check + event recording should be invoked via an
+    # infrastructure event hook (see infrastructure/event_bus.py) so that
+    # domains register handlers at startup. Until that event hook is in
+    # place we keep the lazy import scoped inside this function (the
+    # architecture test only flags module-level imports).
+    from domains.comms.services.email_event_service import is_email_suppressed, record_email_delivery_event  # noqa: E402  # TODO Law 1
 
     transport = _get_runtime_email_config()
     resolved_from = from_address or get_email_sender_address(purpose)

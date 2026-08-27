@@ -17,6 +17,8 @@ from ..config import settings
 
 logger = logging.getLogger(__name__)
 
+HAS_AI_TEXT = True
+
 __all__ = [
     "_ollama_chat",
     "_ollama_vision_chat",

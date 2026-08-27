@@ -1,63 +1,167 @@
-# ARCHIVED MODULE - DO NOT IMPORT FROM `domains/_parked`.
-# Historical leftover from the ORD-SLICE god-domain decomposition.
-# Resolution / live owner documented in RESOLVER.md PART 5 (Sec 37) and _parked_report.txt.
-# Retained for reference only; this file is NOT part of the running application.
-"""Canonical shared address service -- single source of truth (Law 7 dedupe of accounts/customers/country triplicate)."""
+"""Canonical address service — single source of truth for address operations."""
 from __future__ import annotations
 
-from fastapi import Depends, HTTPException, status
+from typing import Optional
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from infrastructure.security.dependencies import get_current_user
-
-from infrastructure.database.database import get_db
-
-from domains.governance.ports import Address
-
-# Lazy-loaded cross-domain services (Law 3: avoid direct cross-domain imports at module level)
-# TODO: This module is archived. When reactivating, move these calls through ports/events.
-_LAZY_CROSS_DOMAIN_SERVICES: dict[str, tuple[str, str]] = {
-    "_serialize_address": ("domains.orders.services.customer_router_service", "_serialize_address"),
-    "_normalize_address_payload": ("domains.orders.services.customer_router_service", "_normalize_address_payload"),
-    "create_address": ("domains.orders.services.commerce_write_service", "create_address"),
-    "update_address": ("domains.orders.services.commerce_write_service", "update_address"),
-    "delete_address": ("domains.orders.services.commerce_write_service", "delete_address"),
-    "set_default_address": ("domains.orders.services.commerce_write_service", "set_default_address"),
-    "unset_other_default_addresses": ("domains.orders.services.commerce_write_service", "unset_other_default_addresses"),
-    "list_user_addresses": ("domains.orders.services.commerce_read_service", "list_user_addresses"),
-    "get_user_address": ("domains.orders.services.commerce_read_service", "get_user_address"),
-}
-_IMPORTED_CROSS_DOMAIN_SERVICES: dict[str, object] = {}
+from domains.accounts.models.core import Address
+from infrastructure.utils.pagination import SAFE_QUERY_LIMIT
 
 
-def _get_cross_domain_service(name: str):
-    """Lazily import a cross-domain service function to avoid import-time coupling."""
-    if name in _IMPORTED_CROSS_DOMAIN_SERVICES:
-        return _IMPORTED_CROSS_DOMAIN_SERVICES[name]
-    if name in _LAZY_CROSS_DOMAIN_SERVICES:
-        module_path, symbol = _LAZY_CROSS_DOMAIN_SERVICES[name]
-        import importlib
-        mod = importlib.import_module(module_path)
-        func = getattr(mod, name)
-        _IMPORTED_CROSS_DOMAIN_SERVICES[name] = func
-        return func
-    raise AttributeError(f"Cross-domain service {name!r} not registered")
+def _normalize_address_payload(payload: dict, *, partial: bool = False) -> dict:
+    street = payload.get("street", payload.get("address_line1"))
+    state = payload.get("state", payload.get("region"))
+    postal_code = payload.get("postal_code", payload.get("zip"))
+    normalized = {
+        "label": payload.get("label"),
+        "street": street,
+        "city": payload.get("city"),
+        "state": state,
+        "postal_code": postal_code,
+        "country": payload.get("country"),
+        "is_default": payload.get("is_default"),
+    }
+    if partial:
+        return {key: value for key, value in normalized.items() if value is not None}
+    required = {"street": street, "city": payload.get("city"), "country": payload.get("country")}
+    missing = [key for key, value in required.items() if not value]
+    if missing:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Missing required fields: {', '.join(missing)}")
+    return normalized
 
 
+def _serialize_address(address: Address) -> dict:
+    return {
+        "id": address.id,
+        "user_id": address.user_id,
+        "label": getattr(address, "label", None),
+        "street": address.address_line1,
+        "address_line1": address.address_line1,
+        "address_line2": address.address_line2,
+        "city": address.city,
+        "state": address.state,
+        "postal_code": address.postal_code,
+        "country": address.country,
+        "is_default": address.is_default,
+        "full_name": address.full_name,
+        "phone": address.phone,
+        "created_at": address.created_at,
+    }
 
-def _get_user_address(address_id: int, user_id: int, db: Session) -> Address:
-    return _get_cross_domain_service("get_user_address")(db, address_id, user_id)
 
-def list_addresses(limit: int, offset: int, current_user: dict, db: Session):
-    rows = _get_cross_domain_service("list_user_addresses")(db, current_user["id"], limit, offset)
-    return [_get_cross_domain_service("_serialize_address")(row) for row in rows]
+def list_user_addresses(db: Session, user_id: int, limit: int = SAFE_QUERY_LIMIT, cursor: int | None = None) -> list:
+    query = (
+        db.query(Address)
+        .filter(Address.user_id == int(user_id))
+        .order_by(Address.is_default.desc(), Address.created_at.asc())
+    )
+    if cursor is not None:
+        query = query.filter(Address.id < int(cursor))
+    return query.limit(min(max(1, limit), SAFE_QUERY_LIMIT)).all()
 
-def create_address(payload: dict, current_user: dict, db: Session):
-    normalized = _get_cross_domain_service("_normalize_address_payload")(payload)
-    user_id = int(current_user["id"])
+
+def get_user_address(db: Session, address_id: int, user_id: int) -> Address:
+    address = (
+        db.query(Address)
+        .filter(Address.id == address_id, Address.user_id == user_id)
+        .first()
+    )
+    if address is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Address not found.")
+    return address
+
+
+def unset_other_default_addresses(
+    db: Session, user_id: int, address_id: Optional[int] = None
+) -> int:
+    query = db.query(Address).filter(
+        Address.user_id == user_id,
+        Address.is_default.is_(True),
+    )
+    if address_id is not None:
+        query = query.filter(Address.id != address_id)
+    updated = query.update(
+        {Address.is_default: False}, synchronize_session=False
+    )
+    db.commit()
+    return updated
+
+
+def create_address(
+    db: Session,
+    *,
+    user_id: int,
+    full_name: str,
+    address_line1: str,
+    city: str,
+    state: Optional[str] = None,
+    postal_code: Optional[str] = None,
+    country: str = "US",
+    is_default: bool = False,
+    label: Optional[str] = None,
+    phone: Optional[str] = None,
+) -> Address:
+    country_code = (country or "US").upper()
+    address = Address(
+        user_id=user_id,
+        full_name=full_name,
+        address_line1=address_line1,
+        city=city,
+        state=state,
+        postal_code=postal_code,
+        country=country,
+        country_code=country_code,
+        is_default=bool(is_default),
+        label=label,
+        phone=phone,
+    )
+    db.add(address)
+    db.commit()
+    db.refresh(address)
+    return address
+
+
+def update_address(db: Session, address: Address, updates: dict) -> Address:
+    allowed_fields = {"full_name", "address_line1", "address_line2", "city", "state", "postal_code", "country", "country_code", "is_default", "label", "phone"}
+    for key, value in (updates or {}).items():
+        if key == "street":
+            key = "address_line1"
+        if key == "country":
+            setattr(address, "country", value)
+            setattr(address, "country_code", (value or "US").upper())
+            continue
+        if key in allowed_fields:
+            setattr(address, key, value)
+    db.commit()
+    db.refresh(address)
+    return address
+
+
+def delete_address(db: Session, address: Address) -> None:
+    db.delete(address)
+    db.commit()
+
+
+def set_default_address(db: Session, address: Address) -> Address:
+    address.is_default = True
+    db.commit()
+    db.refresh(address)
+    return address
+
+
+# ── Composite operations for thin routers ──────────────────────────────────
+
+def list_addresses(db: Session, user_id: int, limit: int = 100, offset: int = 0) -> list:
+    rows = list_user_addresses(db, user_id, limit, offset)
+    return [_serialize_address(row) for row in rows]
+
+
+def create_address_from_payload(db: Session, payload: dict, user_id: int) -> dict:
+    normalized = _normalize_address_payload(payload)
     if normalized.get("is_default"):
-        _get_cross_domain_service("unset_other_default_addresses")(db, user_id)
+        unset_other_default_addresses(db, user_id)
     address_data = {
         "user_id": user_id,
         "full_name": "Customer",
@@ -72,29 +176,29 @@ def create_address(payload: dict, current_user: dict, db: Session):
         address_data["label"] = normalized["label"]
     if normalized.get("phone"):
         address_data["phone"] = normalized["phone"]
-    address = _get_cross_domain_service("create_address")(db, **address_data)
-    return _get_cross_domain_service("_serialize_address")(address)
+    address = create_address(db, **address_data)
+    return _serialize_address(address)
 
-def update_address(address_id: int, payload: dict, current_user: dict, db: Session):
-    address = _get_user_address(address_id, int(current_user["id"]), db)
-    updates = _get_cross_domain_service("_normalize_address_payload")(payload, partial=True)
+
+def update_address_from_payload(db: Session, address_id: int, payload: dict, user_id: int) -> dict:
+    address = get_user_address(db, address_id, user_id)
+    updates = _normalize_address_payload(payload, partial=True)
     if updates.get("is_default") is True:
-        _get_cross_domain_service("unset_other_default_addresses")(db, int(current_user["id"]), address_id)
+        unset_other_default_addresses(db, user_id, address_id)
     if "street" in updates:
         updates.pop("street")
-    address = _get_cross_domain_service("update_address")(db, address, updates)
-    return _get_cross_domain_service("_serialize_address")(address)
+    address = update_address(db, address, updates)
+    return _serialize_address(address)
 
-def delete_address(address_id: int, current_user: dict, db: Session):
-    address = _get_user_address(address_id, int(current_user["id"]), db)
-    _get_cross_domain_service("delete_address")(db, address)
+
+def delete_address_by_id(db: Session, address_id: int, user_id: int) -> dict:
+    address = get_user_address(db, address_id, user_id)
+    delete_address(db, address)
     return {"detail": "Deleted"}
 
-def set_default_address(address_id: int, current_user: dict, db: Session):
-    user_id = int(current_user["id"])
-    _get_cross_domain_service("unset_other_default_addresses")(db, user_id, address_id)
-    address = _get_user_address(address_id, user_id, db)
-    address = _get_cross_domain_service("set_default_address")(db, address)
-    return _get_cross_domain_service("_serialize_address")(address)
 
-
+def set_default_address_by_id(db: Session, address_id: int, user_id: int) -> dict:
+    unset_other_default_addresses(db, user_id, address_id)
+    address = get_user_address(db, address_id, user_id)
+    address = set_default_address(db, address)
+    return _serialize_address(address)

@@ -2,9 +2,8 @@
 from __future__ import annotations
 
 import uuid
-from sqlalchemy import Column, DateTime, Integer, JSON, String, Text, Boolean, Index, func
+from sqlalchemy import Column, DateTime, Integer, String, Text, Boolean, Index, func
 from infrastructure.database.base import Base  # noqa: A003  (DG2: import Base directly to break the models-package cycle)
-from infrastructure.utils.datetime_utils import utcnow as _utcnow
 
 # Canonical home for the ``analytics`` and ``ai`` schemas (A3 / S26 ACC-01).
 # Both are cross-cutting "intelligence" capabilities, grouped per-capability.
@@ -15,26 +14,11 @@ from infrastructure.utils.datetime_utils import utcnow as _utcnow
 # AuditMixin/TenantMixin, which would redeclare those columns and raise
 # "column already defined" at mapper configuration time (DBA03).
 
-__all__ = ["ExecutiveNews", "PredictiveSimulation", "FinancialReport"]
+__all__ = ["ExecutiveNews", "PredictiveSimulation"]
 
-class FinancialReport(Base):
-    """Financial report (income statement / balance sheet / cash flow).
-
-    Declared in the analytics domain because the table lives in the
-    ``analytics`` schema (Law 6: schema = owning domain). Cross-domain
-    consumers read it through ``domains.analytics.ports``.
-    """
-    __tablename__ = "financial_reports"
-    __table_args__ = ({"extend_existing": True, "schema": "analytics"},)
-    id = Column(Integer, primary_key=True, index=True)
-    report_type = Column(String, nullable=False)
-    period_start = Column(DateTime, nullable=False)
-    period_end = Column(DateTime, nullable=False)
-    country_code = Column(String(2), nullable=True, index=True)
-    data = Column(JSON, nullable=True)
-    generated_at = Column(DateTime, default=_utcnow)
-    is_deleted = Column(Boolean, default=False, index=True)
-    deleted_at = Column(DateTime, nullable=True)
+# NOTE: ``FinancialReport`` was removed from this module. The canonical model
+# lives in ``domains/finance/models/general_ledger.py`` (Law 6: schema = owning
+# domain, and financial reports are owned by the finance domain).
 
 
 def _new_uuid() -> str:
@@ -75,7 +59,7 @@ class PredictiveSimulation(Base):
     __tablename__ = "predictive_simulations"
     __table_args__ = (
         Index("ix_predictive_simulations_country_created", "country_code", "created_at"),  # DBA31
-        {"extend_existing": True, "schema": "ai"},
+        {"extend_existing": True, "schema": "analytics"},
     )
     id = Column(Integer, primary_key=True, index=True)
     simulation_type = Column(String(50), nullable=False)

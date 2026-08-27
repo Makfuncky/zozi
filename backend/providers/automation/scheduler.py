@@ -9,12 +9,20 @@ from __future__ import annotations
 
 from typing import Any, Callable, List, Optional
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
+try:
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from apscheduler.triggers.interval import IntervalTrigger
+    HAS_APSCHEDULER = True
+except ImportError:
+    HAS_APSCHEDULER = False
+    AsyncIOScheduler = None  # type: ignore[assignment]
+    IntervalTrigger = None  # type: ignore[assignment]
 
 
 def create_scheduler(timezone: str = "UTC") -> AsyncIOScheduler:
     """Create the application background scheduler."""
+    if not HAS_APSCHEDULER:
+        raise RuntimeError("APScheduler is not installed")
     return AsyncIOScheduler(timezone=timezone)
 
 
@@ -28,6 +36,8 @@ def add_interval_job(
     **kwargs: Any,
 ) -> None:
     """Register ``func`` to run every ``seconds`` on the given scheduler."""
+    if not HAS_APSCHEDULER:
+        raise RuntimeError("APScheduler is not installed")
     scheduler.add_job(
         func,
         trigger=IntervalTrigger(seconds=seconds),
@@ -37,4 +47,4 @@ def add_interval_job(
     )
 
 
-__all__ = ["AsyncIOScheduler", "IntervalTrigger", "create_scheduler", "add_interval_job"]
+__all__ = ["AsyncIOScheduler", "IntervalTrigger", "create_scheduler", "add_interval_job", "HAS_APSCHEDULER"]

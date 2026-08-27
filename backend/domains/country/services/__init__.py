@@ -11,6 +11,5 @@ from domains.country.services.payout import *
 from domains.country.services.restriction import *
 from domains.country.services.research import *
 from domains.country.services.events import *
-from domains.country.services.features import *
 
 __all__: list[str] = []

@@ -344,6 +344,24 @@ def invalidate_role_permissions_cache(role_name: str) -> None:
         logger.debug("Cache invalidation failed for role permissions: %s", e)
 
 
+def invalidate_user_cache(user_id: int) -> None:
+    """Invalidate all cached entries associated with a user.
+
+    Convenience helper that invalidates the user profile cache, the user
+    permissions cache, and any other per-user cache keys. Use this whenever
+    a user's state changes (role update, active toggle, password reset,
+    profile change, 2FA toggle, deletion, etc.).
+    """
+    try:
+        invalidate_user_profile(user_id)
+    except Exception as e:
+        logger.debug("Cache invalidation failed for user profile: %s", e)
+    try:
+        invalidate_user_permissions_cache(user_id)
+    except Exception as e:
+        logger.debug("Cache invalidation failed for user permissions: %s", e)
+
+
 def invalidate_user_permissions_cache(user_id: int) -> None:
     """Invalidate cached user permission checks."""
     try:

@@ -53,7 +53,6 @@ modules/{who}/  →  domains/{what}/  →  infrastructure/  ←  providers/
 - **~22 provider packages**: ai, auth, payments, geography, comms, image, storage, shipping, etc.
 - **kernel/** — pure business primitives (money/Decimal, currency, numbering, country, period). Must not import domains/modules/rbac/providers.
 - **rbac/** — catalog, roles, resolution (actor×role×country→features, Redis-cached), dependencies (`require_feature`, `require_module`).
-- **registry.py** + **service_index.json** + **migrate_imports.py** — auto-discovers domain services, fixes broken router imports.
 - **@zozi/shared** (`frontend/shared`) — cross-platform TS. `permissions.ts` is **generated** from `GET /rbac/catalog`.
 
 ## Commands
@@ -64,8 +63,6 @@ cd backend
 python -m pytest -x -q --timeout=30          # run tests (transaction-rollback isolation)
 python -m pytest tests/architecture/         # architecture law checks
 ruff check .                                  # lint
-python registry.py                            # rebuild service index
-python migrate_imports.py --apply             # fix stale router imports
 
 # Frontend
 cd frontend/web_app
@@ -118,5 +115,4 @@ make test-backend && make test-frontend && make lint-backend && make typecheck
 
 1. `ruff check .` passes
 2. `python -m pytest tests/architecture/` passes (import laws intact)
-3. `python migrate_imports.py` reports 0 issues (or run `--apply`)
-4. `npx tsc --noEmit --skipLibCheck` passes (frontend)
+3. `npx tsc --noEmit --skipLibCheck` passes (frontend)

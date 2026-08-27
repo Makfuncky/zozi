@@ -197,3 +197,17 @@ def get_partner_locations(db: Session, country_code: str) -> list[dict]:
         }
         for loc in locations
     ]
+
+
+def get_logistics_partner_by_user_id(db: Session, user_id: int):
+    """Look up a logistics partner by their user_id."""
+    return db.query(LogisticsPartner).filter(LogisticsPartner.user_id == user_id).first()
+
+
+# --- Service re-exports (Law 3 sanctioned cross-domain surface) ---
+# Cross-domain consumers (modules/*/routers) import partner profile helpers
+# from ``domains.logistics.ports`` instead of reaching into services directly.
+from domains.logistics.services.partners.logistics_partner_service import (  # noqa: E402, F401
+    get_partner_profile,
+    update_partner_profile,
+)

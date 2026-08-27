@@ -8,32 +8,21 @@ from collections import defaultdict
 from typing import Any
 
 from fastapi import WebSocket
-from sqlalchemy import and_, event, inspect as sa_inspect
+from sqlalchemy import event, inspect as sa_inspect
 from sqlalchemy.orm import Session as OrmSession
 
 from infrastructure.utils.config import settings
 
 
-# --- Lazy domain model resolution (Law 1 compliance) ---
-# Infrastructure must not import domain models at module level. Instead we
-# resolve them lazily on first use via the sanctioned ports surface. The
-# SQLAlchemy event listeners below only run at flush/commit time (well after
-# all modules are imported), so runtime resolution is safe and side-effect-free.
-_governance_ports = None
-_comms_ports = None
-_catalog_ports = None
-_finance_ports = None
-
-
-def _resolve_models():
-    """Resolve domain models lazily to avoid circular imports at module load."""
-    global _governance_ports, _comms_ports, _catalog_ports, _finance_ports
-    if _governance_ports is None:
-        from domains.governance import ports as _governance_ports
-        from domains.comms import ports as _comms_ports
-        from domains.catalog import ports as _catalog_ports
-        from domains.finance import ports as _finance_ports
-    return _governance_ports, _comms_ports, _catalog_ports, _finance_ports
+# Law 1 compliance: domain models are NOT imported at module scope nor at
+# runtime from this infrastructure module. Realtime notification fan-out is
+# implemented as a generic SQLAlchemy event-listener that walks flushed
+# objects, inspects their table name + attribute names, and emits payloads
+# without depending on any domain ORM class. The legacy port-based dispatch
+# (which lazily resolved domains.governance / comms / catalog / finance
+# ports) was removed in the Law 1 cleanup on 2026-08-27; call sites that
+# need rich typed payloads must subscribe via infrastructure/event_bus.py
+# from a domain module that DOES have permission to import those models.
 
 
 _REALTIME_EVENTS_KEY = "_zozi_realtime_events"
@@ -322,10 +311,10 @@ def _iso_timestamp(value: Any) -> str | None:
         return None
 
 
-def _notification_payload(notification: Notification, event_type: str) -> dict[str, Any]:
+def _notification_payload(notification: object, event_type: str) -> dict[str, Any]:
     return {
         "type": event_type,
-        "notification_id": notification.id,
+        "notification_id": getattr(notification, "id", None),
         "notification_type": getattr(notification, "type", None),
         "title": getattr(notification, "title", None),
         "message": getattr(notification, "message", None),
@@ -342,32 +331,33 @@ def _ticket_link(ticket_id: int | None) -> str | None:
     return f"/tickets/{ticket_id}"
 
 
-def _ticket_reply_payload(reply: TicketReply) -> dict[str, Any]:
+def _ticket_reply_payload(reply: object) -> dict[str, Any]:
     is_admin = bool(getattr(reply, "is_admin", False))
     title = "Support replied" if is_admin else "New ticket reply"
     message = getattr(reply, "message", None) or "There is a new update on your support ticket."
     return {
         "type": "ticket.reply_created",
-        "ticket_id": reply.ticket_id,
-        "reply_id": reply.id,
+        "ticket_id": getattr(reply, "ticket_id", None),
+        "reply_id": getattr(reply, "id", None),
         "is_admin": is_admin,
         "title": title,
         "message": message,
-        "link": _ticket_link(reply.ticket_id),
+        "link": _ticket_link(getattr(reply, "ticket_id", None)),
         "level": "info",
     }
 
 
-def _ticket_status_payload(ticket: SupportTicket) -> dict[str, Any]:
+def _ticket_status_payload(ticket: object) -> dict[str, Any]:
     status = getattr(ticket, "status", None)
     status_label = str(status).replace("_", " ").title() if status else "Updated"
+    ticket_id = getattr(ticket, "id", None)
     return {
         "type": "ticket.updated",
-        "ticket_id": ticket.id,
+        "ticket_id": ticket_id,
         "status": status,
         "title": f"Ticket {status_label}",
         "message": f"Your support ticket is now {status_label.lower()}.",
-        "link": _ticket_link(ticket.id),
+        "link": _ticket_link(ticket_id),
         "level": "info",
     }
 
@@ -459,6 +449,38 @@ def _queue_user_events(session: OrmSession, user_ids: list[object], payload: dic
         _queue_user_event(session, user_id, payload)
 
 
+# Table names that the realtime hub routes. Mapping is intentionally kept
+# here as a plain string table → handler registry. The actual SQL lookups
+# (e.g. resolving staff user ids) use raw SQL on the well-known column
+# names documented in the canonical domain models — infrastructure does
+# not depend on those ORM classes, only on the schema contract.
+_REALTIME_ROUTING = {
+    # table_name           -> ("kind", handler_key)
+    "notifications":       ("user_event", "notification"),
+    "support_tickets":     ("ticket", None),
+    "ticket_replies":      ("ticket_reply", None),
+    "products":            ("product", None),
+    "payouts":             ("payout", None),
+    "internal_emails":     ("internal_email", None),
+    "supplier_profiles":   ("supplier_profile", None),
+    "audit_logs":          ("audit_log", None),
+    "supplier_disputes":   ("supplier_dispute", None),
+}
+
+# Columns used for staff lookups. Names are part of the SQL contract; the
+# domain models must keep these column names stable.
+_STAFF_LOOKUP_SQL = (
+    "SELECT id FROM users WHERE role IN :roles AND is_active = 1"
+)
+
+
+def _table_name(obj: object) -> str | None:
+    mapper = sa_inspect(obj).mapper
+    if mapper is None:
+        return None
+    return mapper.local_table.name if mapper.local_table is not None else None
+
+
 def _staff_user_ids_for_permission(session: OrmSession, permission: str) -> list[object]:
     cache = session.info.setdefault(_REALTIME_STAFF_CACHE_KEY, {})
     if permission in cache:
@@ -469,130 +491,204 @@ def _staff_user_ids_for_permission(session: OrmSession, permission: str) -> list
         cache[permission] = []
         return []
 
-    governance_ports, _, _, _ = _resolve_models()
-    User = getattr(governance_ports, "User")
-    rows = (
-        session.query(User.id)
-        .filter(and_(User.role.in_(tuple(roles)), User.is_active == 1))
-        .all()
-    )
+    from sqlalchemy import text
+
+    rows = session.execute(
+        text(_STAFF_LOOKUP_SQL).bindparams(
+            roles=tuple(roles),
+        )
+    ).all()
     user_ids = [user_id for (user_id,) in rows if _user_connection_key(user_id) is not None]
     cache[permission] = user_ids
     return user_ids
 
 
-def _ticket_user_id(reply: TicketReply) -> object:
-    ticket = reply.ticket
+def _ticket_user_id(reply: object) -> object:
+    ticket = getattr(reply, "ticket", None)
     if ticket is not None and getattr(ticket, "user_id", None) is not None:
         return getattr(ticket, "user_id")
     return None
 
 
-@event.listens_for(OrmSession, "after_flush")
-def _collect_realtime_events(session: OrmSession, flush_context) -> None:  # pragma: no cover - exercised via commit tests
-    # Resolve domain models lazily (Law 1: no module-level domain imports)
-    governance_ports, comms_ports, catalog_ports, finance_ports = _resolve_models()
-    Notification = getattr(comms_ports, "Notification")
-    InternalEmail = getattr(comms_ports, "InternalEmail")
-    SupplierProfile = getattr(comms_ports, "SupplierProfile")
-    SupportTicket = getattr(governance_ports, "SupportTicket")
-    TicketReply = getattr(governance_ports, "TicketReply")
-    SupplierDispute = getattr(governance_ports, "SupplierDispute")
-    AuditLog = getattr(governance_ports, "AuditLog")
-    Product = catalog_ports.Product
-    Payout = finance_ports.Payout
-    for obj in session.new:
-        if isinstance(obj, Notification):
-            _queue_user_event(
-                session,
-                getattr(obj, "user_id", None),
-                _notification_payload(obj, "notification.created"),
-            )
-        elif isinstance(obj, SupportTicket):
-            _queue_user_event(
-                session,
-                getattr(obj, "user_id", None),
-                {
-                    "type": "ticket.created",
-                    "ticket_id": obj.id,
-                    "status": getattr(obj, "status", None),
-                    "title": "Ticket received",
-                    "message": "Your support ticket has been created.",
-                    "link": _ticket_link(obj.id),
-                    "level": "info",
-                },
-            )
-            _queue_user_events(
-                session,
-                _staff_user_ids_for_permission(session, "tickets.manage"),
-                _admin_alert_payload(
-                    "admin.alert.ticket",
-                    ticket_id=obj.id,
-                    status=getattr(obj, "status", None),
-                ),
-            )
-        elif isinstance(obj, TicketReply):
-            _queue_user_event(
-                session,
-                _ticket_user_id(obj),
-                _ticket_reply_payload(obj),
-            )
-            _queue_user_events(
-                session,
-                _staff_user_ids_for_permission(session, "tickets.manage"),
-                _admin_alert_payload(
-                    "admin.alert.ticket",
-                    ticket_id=obj.ticket_id,
-                    reply_id=obj.id,
-                    is_admin=bool(getattr(obj, "is_admin", False)),
-                ),
-            )
-        elif isinstance(obj, Product) and bool(getattr(obj, "is_approved", True)) is False:
+def _handle_new_obj(session: OrmSession, obj: object) -> None:
+    """Dispatch a freshly flushed object to its realtime handler.
+
+    This is a tablename-driven switch — it never imports domain ORM classes,
+    so infrastructure can stay Law 1 compliant. The handler functions only
+    read attributes that the domain models have committed to in their
+    schema; new attribute lookups should be added to the table above.
+    """
+    table = _table_name(obj)
+    route = _REALTIME_ROUTING.get(table or "")
+    if route is None:
+        return
+    kind, _handler_key = route
+
+    if kind == "user_event":
+        _queue_user_event(
+            session,
+            getattr(obj, "user_id", None),
+            _notification_payload(obj, "notification.created"),
+        )
+    elif kind == "ticket":
+        ticket_id = getattr(obj, "id", None)
+        _queue_user_event(
+            session,
+            getattr(obj, "user_id", None),
+            {
+                "type": "ticket.created",
+                "ticket_id": ticket_id,
+                "status": getattr(obj, "status", None),
+                "title": "Ticket received",
+                "message": "Your support ticket has been created.",
+                "link": _ticket_link(ticket_id),
+                "level": "info",
+            },
+        )
+        _queue_user_events(
+            session,
+            _staff_user_ids_for_permission(session, "tickets.manage"),
+            _admin_alert_payload(
+                "admin.alert.ticket",
+                ticket_id=ticket_id,
+                status=getattr(obj, "status", None),
+            ),
+        )
+    elif kind == "ticket_reply":
+        _queue_user_event(
+            session,
+            _ticket_user_id(obj),
+            _ticket_reply_payload(obj),
+        )
+        _queue_user_events(
+            session,
+            _staff_user_ids_for_permission(session, "tickets.manage"),
+            _admin_alert_payload(
+                "admin.alert.ticket",
+                ticket_id=getattr(obj, "ticket_id", None),
+                reply_id=getattr(obj, "id", None),
+                is_admin=bool(getattr(obj, "is_admin", False)),
+            ),
+        )
+    elif kind == "product":
+        is_approved = getattr(obj, "is_approved", True)
+        if is_approved is False:
             _queue_user_events(
                 session,
                 _staff_user_ids_for_permission(session, "moderation.products"),
                 _admin_alert_payload(
                     "admin.alert.product",
-                    product_id=obj.id,
+                    product_id=getattr(obj, "id", None),
                     supplier_id=getattr(obj, "supplier_id", None),
                 ),
             )
-        elif isinstance(obj, Payout):
+    elif kind == "payout":
+        _queue_user_events(
+            session,
+            _staff_user_ids_for_permission(session, "payouts.verify"),
+            _admin_alert_payload(
+                "admin.alert.payout",
+                payout_id=getattr(obj, "id", None),
+                status=getattr(obj, "status", None),
+            ),
+        )
+    elif kind == "internal_email":
+        recipients = getattr(obj, "recipients", None)
+        if isinstance(recipients, str):
+            import json
+            try:
+                recipients = json.loads(recipients)
+            except Exception:
+                recipients = None
+        if isinstance(recipients, list):
+            for entry in recipients:
+                if isinstance(entry, dict):
+                    uid = entry.get("user_id")
+                    if uid is not None:
+                        _queue_user_event(
+                            session,
+                            uid,
+                            {
+                                "type": "email.received",
+                                "email_id": getattr(obj, "id", None),
+                                "thread_id": getattr(obj, "thread_id", None),
+                                "subject": getattr(obj, "subject", None),
+                                "sender_id": getattr(obj, "sender_id", None),
+                                "folder_id": getattr(obj, "folder_id", None),
+                                "unread": True,
+                            },
+                        )
+    elif kind == "supplier_profile":
+        verification_status = getattr(obj, "verification_status", None)
+        if verification_status in {None, "pending", "under_review"}:
             _queue_user_events(
                 session,
-                _staff_user_ids_for_permission(session, "payouts.verify"),
+                _staff_user_ids_for_permission(session, "moderation.suppliers"),
                 _admin_alert_payload(
-                    "admin.alert.payout",
-                    payout_id=obj.id,
+                    "admin.alert.supplier",
+                    supplier_id=getattr(obj, "user_id", None),
+                    status=verification_status,
+                ),
+            )
+    elif kind == "audit_log":
+        _queue_user_events(
+            session,
+            _staff_user_ids_for_permission(session, "audit.read"),
+            _admin_alert_payload(
+                "admin.alert.audit",
+                audit_id=getattr(obj, "id", None),
+                action=getattr(obj, "action", None),
+                status=getattr(obj, "status", None),
+            ),
+        )
+    elif kind == "supplier_dispute":
+        _queue_user_events(
+            session,
+            _staff_user_ids_for_permission(session, "moderation.suppliers"),
+            _admin_alert_payload(
+                "admin.alert.dispute",
+                dispute_id=getattr(obj, "id", None),
+                supplier_id=getattr(obj, "supplier_id", None),
+                status=getattr(obj, "status", None),
+            ),
+        )
+
+
+def _handle_dirty_obj(session: OrmSession, obj: object) -> None:
+    table = _table_name(obj)
+    route = _REALTIME_ROUTING.get(table or "")
+    if route is None:
+        return
+    kind, _handler_key = route
+
+    if kind == "user_event":
+        state = sa_inspect(obj)
+        if state.attrs.read.history.has_changes():
+            _queue_user_event(
+                session,
+                getattr(obj, "user_id", None),
+                _notification_payload(obj, "notification.updated"),
+            )
+    elif kind == "ticket":
+        state = sa_inspect(obj)
+        if state.attrs.status.history.has_changes():
+            _queue_user_event(
+                session,
+                getattr(obj, "user_id", None),
+                _ticket_status_payload(obj),
+            )
+            _queue_user_events(
+                session,
+                _staff_user_ids_for_permission(session, "tickets.manage"),
+                _admin_alert_payload(
+                    "admin.alert.ticket",
+                    ticket_id=getattr(obj, "id", None),
                     status=getattr(obj, "status", None),
                 ),
             )
-        elif isinstance(obj, InternalEmail):
-            # New internal email — notify all recipients so their
-            # inbox badge and folder tree unread count update live.
-            recipients = obj.recipients
-            if isinstance(recipients, str):
-                import json
-                recipients = json.loads(recipients)
-            if isinstance(recipients, list):
-                for entry in recipients:
-                    if isinstance(entry, dict):
-                        uid = entry.get("user_id")
-                        if uid is not None:
-                            _queue_user_event(
-                                session,
-                                uid,
-                                {
-                                    "type": "email.received",
-                                    "email_id": obj.id,
-                                    "thread_id": obj.thread_id,
-                                    "subject": obj.subject,
-                                    "sender_id": obj.sender_id,
-                                    "folder_id": obj.folder_id,
-                                    "unread": True,
-                                },
-                            )
-        elif isinstance(obj, SupplierProfile):
+    elif kind == "supplier_profile":
+        state = sa_inspect(obj)
+        if state.attrs.verification_status.history.has_changes():
             verification_status = getattr(obj, "verification_status", None)
             if verification_status in {None, "pending", "under_review"}:
                 _queue_user_events(
@@ -604,90 +700,39 @@ def _collect_realtime_events(session: OrmSession, flush_context) -> None:  # pra
                         status=verification_status,
                     ),
                 )
-        elif isinstance(obj, AuditLog):
-            _queue_user_events(
-                session,
-                _staff_user_ids_for_permission(session, "audit.read"),
-                _admin_alert_payload(
-                    "admin.alert.audit",
-                    audit_id=obj.id,
-                    action=getattr(obj, "action", None),
-                    status=getattr(obj, "status", None),
-                ),
-            )
-        elif isinstance(obj, SupplierDispute):
+    elif kind == "supplier_dispute":
+        state = sa_inspect(obj)
+        if state.attrs.status.history.has_changes():
             _queue_user_events(
                 session,
                 _staff_user_ids_for_permission(session, "moderation.suppliers"),
                 _admin_alert_payload(
                     "admin.alert.dispute",
-                    dispute_id=obj.id,
+                    dispute_id=getattr(obj, "id", None),
                     supplier_id=getattr(obj, "supplier_id", None),
                     status=getattr(obj, "status", None),
                 ),
             )
 
-    for obj in session.dirty:
-        if isinstance(obj, Notification):
-            state = sa_inspect(obj)
-            if state.attrs.read.history.has_changes():
-                _queue_user_event(
-                    session,
-                    getattr(obj, "user_id", None),
-                    _notification_payload(obj, "notification.updated"),
-                )
-        elif isinstance(obj, SupportTicket):
-            state = sa_inspect(obj)
-            if state.attrs.status.history.has_changes():
-                _queue_user_event(
-                    session,
-                    getattr(obj, "user_id", None),
-                    _ticket_status_payload(obj),
-                )
-                _queue_user_events(
-                    session,
-                    _staff_user_ids_for_permission(session, "tickets.manage"),
-                    _admin_alert_payload(
-                        "admin.alert.ticket",
-                        ticket_id=obj.id,
-                        status=getattr(obj, "status", None),
-                    ),
-                )
-        elif isinstance(obj, SupplierProfile):
-            state = sa_inspect(obj)
-            if state.attrs.verification_status.history.has_changes():
-                verification_status = getattr(obj, "verification_status", None)
-                if verification_status in {None, "pending", "under_review"}:
-                    _queue_user_events(
-                        session,
-                        _staff_user_ids_for_permission(session, "moderation.suppliers"),
-                        _admin_alert_payload(
-                            "admin.alert.supplier",
-                            supplier_id=getattr(obj, "user_id", None),
-                            status=verification_status,
-                        ),
-                    )
-        elif isinstance(obj, SupplierDispute):
-            state = sa_inspect(obj)
-            if state.attrs.status.history.has_changes():
-                _queue_user_events(
-                    session,
-                    _staff_user_ids_for_permission(session, "moderation.suppliers"),
-                    _admin_alert_payload(
-                        "admin.alert.dispute",
-                        dispute_id=obj.id,
-                        supplier_id=getattr(obj, "supplier_id", None),
-                        status=getattr(obj, "status", None),
-                    ),
-                )
 
+def _handle_deleted_obj(session: OrmSession, obj: object) -> None:
+    table = _table_name(obj)
+    if table == "notifications":
+        _queue_user_event(
+            session,
+            getattr(obj, "user_id", None),
+            _notification_payload(obj, "notification.deleted"),
+        )
+
+
+@event.listens_for(OrmSession, "after_flush")
+def _collect_realtime_events(session: OrmSession, flush_context) -> None:  # pragma: no cover - exercised via commit tests
+    for obj in session.new:
+        _handle_new_obj(session, obj)
+    for obj in session.dirty:
+        _handle_dirty_obj(session, obj)
     for obj in session.deleted:
-        if isinstance(obj, Notification):
-            _queue_user_event(
-                session,
-                getattr(obj, "user_id", None),
-                _notification_payload(obj, "notification.deleted"),
-            )
+        _handle_deleted_obj(session, obj)
 
 
 @event.listens_for(OrmSession, "after_commit")

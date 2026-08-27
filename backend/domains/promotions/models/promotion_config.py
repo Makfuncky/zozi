@@ -13,7 +13,7 @@ class PromotionEngineConfig(Base):
     __tablename__ = "promotion_engine_configs"
     __table_args__ = ({"schema": "promotions"},)
     id = Column(Integer, primary_key=True, index=True)
-    country_code = Column(String(2), ForeignKey("country.country_configs.code"), nullable=True, index=True)
+    country_code = Column(String(2), ForeignKey("country.country_configs.code", ondelete="SET NULL"), nullable=True, index=True)
     engine_enabled = Column(Boolean, default=False)
     allow_product_coupons = Column(Boolean, default=True)
     allow_category_coupons = Column(Boolean, default=True)

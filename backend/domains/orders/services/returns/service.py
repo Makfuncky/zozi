@@ -25,7 +25,7 @@ from domains.orders.models.orders import Order
 from domains.orders.models.orders import OrderItem
 from domains.orders.models.orders import ReturnRequest
 from infrastructure.database.schemas import ReturnRequestCreate, ReturnRequestUpdate, SupplierReturnReviewUpdate
-from infrastructure.utils.audit import audit_log, AuditAction
+from domains.audit.services.logs.audit_service import audit_log, AuditAction
 from domains.finance.services.payments.payments import _order_holds_inventory
 from domains.finance.services.payments.payments import apply_order_status_change
 from infrastructure.utils.config import settings
@@ -542,6 +542,21 @@ def update_return_request_status(
         r.resolution_notes = notes
     db.commit()
     return {"message": "Updated"}
+
+
+def build_return_request_update(
+    status: str,
+    resolution_notes: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> ReturnRequestUpdate:
+    """Build a ReturnRequestUpdate from raw request fields.
+
+    Falls back to ``notes`` when ``resolution_notes`` is not provided.
+    """
+    return ReturnRequestUpdate(
+        status=status,
+        notes=resolution_notes if resolution_notes is not None else notes,
+    )
 
 
 def bulk_update_return_requests(

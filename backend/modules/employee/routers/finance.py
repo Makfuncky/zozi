@@ -1,6 +1,7 @@
 """Employee finance router — consolidated from 11 source files."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
+from rbac.dependencies import require_feature
 
 
 router = APIRouter(prefix="/api/v1/employee/finance", tags=["employee", "finance"])
@@ -12,29 +13,36 @@ router = APIRouter(prefix="/api/v1/employee/finance", tags=["employee", "finance
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from domains.finance.services._auto_stubs import accounting_controller
-from infrastructure.utils.dependencies import require_admin
-from domains.finance.services._auto_stubs import controller_get_ap_summary
-from domains.finance.services._auto_stubs import controller_get_ar_summary
-from domains.finance.services._auto_stubs import controller_post_ap_payable
-from domains.finance.services._auto_stubs import controller_post_ap_payment
-from domains.finance.services._auto_stubs import controller_post_ar_invoice
-from domains.finance.services._auto_stubs import controller_post_ar_payment
+from domains.finance.ports import (
+    accounting_controller,
+    controller_get_ap_summary,
+    controller_get_ar_summary,
+    controller_post_ap_payable,
+    controller_post_ap_payment,
+    controller_post_ar_invoice,
+    controller_post_ar_payment,
+    FinancialReportingService,
+)
+from infrastructure.security.dependencies import require_admin
 from infrastructure.database.database import get_db
-from infrastructure.utils.audit import AuditAction, audit_log
-from domains.finance.services.treasury.cash_management_service import generate_forecast as generate_cash_forecast
-from domains.finance.services._auto_stubs import FinancialReportingService
-from domains.finance.services.ledger.general_ledger_service import reverse_journal_entry
-from domains.finance.services.ledger.general_ledger_service import close_period
-from domains.finance.services.ledger.general_ledger_service import get_current_fiscal_period
-from domains.finance.services.ledger.general_ledger_service import get_or_create_fiscal_period
-from domains.finance.services.ledger.general_ledger_service import list_periods
-from domains.country.utils.country_rls import get_country_or_404
-from infrastructure.utils.rls_interceptor import clear_rls_context, set_rls_context
+from domains.audit.ports import AuditAction, audit_log
+from domains.finance.services.treasury.cash_management_service import (
+    generate_forecast as generate_cash_forecast,
+    commit_db,
+    set_rls_context_service,
+)
+from domains.finance.services.ledger.general_ledger_service import (
+    reverse_journal_entry,
+    close_period,
+    get_current_fiscal_period,
+    get_or_create_fiscal_period,
+    list_periods,
+)
+from domains.logistics.ports import get_logistics_partner_by_user_id
 
 
 class ReportPeriod(BaseModel):
@@ -47,13 +55,7 @@ class ReportPeriod(BaseModel):
 
 def _with_rls(country_code: Optional[str], db: Session):
     """Set RLS context if country_code is provided. Returns cleanup function."""
-    if country_code:
-        get_country_or_404(country_code.upper(), db)
-        set_rls_context({country_code.upper()}, is_restricted=True)
-    def cleanup():
-        if country_code:
-            clear_rls_context()
-    return cleanup
+    return set_rls_context_service(db, country_code)
 
 
 @router.post("/seed", summary="Seed chart of accounts (idempotent)")
@@ -61,6 +63,7 @@ def seed_chart_of_accounts(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     return accounting_controller.seed_chart_of_accounts(
         db,
         audit_user_id=_admin.get("id"),
@@ -75,6 +78,7 @@ def list_accounts(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.list_accounts(db)
@@ -89,6 +93,7 @@ def get_account(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_account(db, code)
@@ -102,6 +107,7 @@ def create_journal_entry(
     db: Session = Depends(get_db),
     current_user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.write")
     return accounting_controller.create_journal_entry(db, body, current_user)
 
 
@@ -114,6 +120,7 @@ def list_journal_entries(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.list_journal_entries(
@@ -130,6 +137,7 @@ def get_journal_entry(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_journal_entry(db, entry_id)
@@ -145,6 +153,7 @@ def get_balance(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_account_balance(db, account_code, currency)
@@ -160,6 +169,7 @@ def trial_balance(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return accounting_controller.get_trial_balance(
@@ -178,6 +188,7 @@ def income_statement(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.reporting.generate")
     cleanup = _with_rls(body.country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -207,6 +218,7 @@ def balance_sheet(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.reporting.generate")
     cleanup = _with_rls(country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -231,6 +243,7 @@ def cash_flow(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.reporting.generate")
     cleanup = _with_rls(body.country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -259,6 +272,7 @@ def list_reports(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.reporting.read")
     cleanup = _with_rls(country_code, db)
     try:
         svc = FinancialReportingService(db)
@@ -284,6 +298,7 @@ def get_or_create(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.period.manage")
     cleanup = _with_rls(country_code, db)
     try:
         period = get_or_create_fiscal_period(db, country_code, year, month)
@@ -305,6 +320,7 @@ def current_period(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.period.manage")
     cleanup = _with_rls(country_code, db)
     try:
         period = get_current_fiscal_period(db, country_code)
@@ -329,6 +345,7 @@ def close_fiscal_period(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.period.manage")
     result = close_period(
         db,
         period_id=body.period_id,
@@ -357,6 +374,7 @@ def list_fiscal_periods(
     db: Session = Depends(get_db),
     _user=Depends(require_admin),
 ):
+    require_feature("finance.period.manage")
     cleanup = _with_rls(country_code, db)
     try:
         periods = list_periods(db, country_code=country_code, status=status, limit=limit)
@@ -391,6 +409,7 @@ def reverse_entry(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.ledger.reverse")
     result = reverse_journal_entry(
         db,
         original_entry_id=body.entry_id,
@@ -421,6 +440,7 @@ def cash_flow_forecast(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.forecast")
     cleanup = _with_rls(country_code, db)
     try:
         result = generate_cash_forecast(db, days=days, currency=currency, country_code=country_code)
@@ -450,6 +470,7 @@ def get_ar(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.subledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return controller_get_ar_summary(db, customer_id=customer_id, status=status, country_code=country_code, limit=limit)
@@ -470,6 +491,7 @@ class ARInvoiceBody(BaseModel):
 
 @router.post("/ar-ledger/invoice", summary="Post AR invoice")
 def post_ar_invoice_route(body: ARInvoiceBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("finance.subledger.post")
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ar_invoice(db, **body.model_dump(), admin_user=_admin)
@@ -489,6 +511,7 @@ class ARPaymentBody(BaseModel):
 
 @router.post("/ar-ledger/payment", summary="Post AR payment")
 def post_ar_payment_route(body: ARPaymentBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("finance.subledger.post")
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ar_payment(db, **body.model_dump(), admin_user=_admin)
@@ -505,6 +528,7 @@ def get_ap_alias(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.subledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return controller_get_ap_summary(db, supplier_id=supplier_id, status=status, country_code=country_code, limit=limit)
@@ -521,6 +545,7 @@ def get_ap(
     db: Session = Depends(get_db),
     _admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.subledger.read")
     cleanup = _with_rls(country_code, db)
     try:
         return controller_get_ap_summary(db, supplier_id=supplier_id, status=status, country_code=country_code, limit=limit)
@@ -541,6 +566,7 @@ class APPayableBody(BaseModel):
 
 @router.post("/ap-ledger/payable", summary="Post AP payable")
 def post_ap_payable_route(body: APPayableBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("finance.subledger.post")
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ap_payable(db, **body.model_dump(), admin_user=_admin)
@@ -559,6 +585,7 @@ class APPaymentBody(BaseModel):
 
 @router.post("/ap-ledger/payment", summary="Post AP payment")
 def post_ap_payment_route(body: APPaymentBody, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+    require_feature("finance.subledger.post")
     cleanup = _with_rls(body.country_code, db)
     try:
         return controller_post_ap_payment(db, **body.model_dump(), admin_user=_admin)
@@ -582,7 +609,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import domains.finance.services.treasury.cash_management_controller as ctrl
-from infrastructure.utils.dependencies import require_admin
+from infrastructure.security.dependencies import require_admin
 from infrastructure.security.auth import require_permission
 from infrastructure.database.database import get_db
 from infrastructure.database.schemas import (
@@ -606,7 +633,7 @@ from infrastructure.database.schemas import (
     VATRemittanceCreate,
     VATRemittanceOut,
 )
-from modules.admin.routers.auth import get_current_user
+from rbac import get_current_user
 
 
 # ── Pydantic request bodies ──────────────────────────────────────────────────
@@ -646,6 +673,7 @@ def admin_financial_summary(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_get_financial_summary(db)
 
@@ -659,6 +687,7 @@ def admin_reconciliation_summary(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_get_reconciliation_summary(db)
 
@@ -677,6 +706,7 @@ def admin_list_ledger(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.ledger.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_ledger_entries(
         db, skip=skip, limit=limit,
@@ -697,6 +727,7 @@ def admin_list_badge_billings(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.commission.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_badge_billing_records(
         db,
@@ -716,6 +747,7 @@ def admin_record_badge_billing_payment(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.commission.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_badge_billing_payment(
         billing_id=billing_id,
@@ -725,7 +757,7 @@ def admin_record_badge_billing_payment(
         transaction_ref=body.transaction_ref,
         notes=body.notes,
     )
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -738,6 +770,7 @@ def admin_list_supplier_settlements(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.payout.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_supplier_settlements(db, skip=skip, limit=limit, supplier_id=supplier_id, status=status)
 
@@ -751,6 +784,7 @@ def admin_list_logistics_settlements(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.payout.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_logistics_settlements(db, skip=skip, limit=limit, partner_id=partner_id, status=status)
 
@@ -766,6 +800,7 @@ def admin_list_bank_transactions(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_bank_transactions(
         db, skip=skip, limit=limit,
@@ -782,6 +817,7 @@ def admin_list_refunds(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_refunds(db, skip=skip, limit=limit, status=status)
 
@@ -793,6 +829,7 @@ def admin_list_vat_remittances(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_vat_remittance_records(db, skip=skip, limit=limit)
 
@@ -802,6 +839,7 @@ def admin_get_bank_settings(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_get_finance_bank_settings(db)
 
@@ -811,6 +849,7 @@ def admin_list_transfer_providers(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_transfer_providers(db)
 
@@ -820,6 +859,7 @@ def admin_test_bank_settings_connection(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_test_finance_bank_connection(db)
 
@@ -830,9 +870,10 @@ def admin_upsert_bank_settings(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_upsert_finance_bank_settings(body.model_dump(), current_admin, db)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -842,9 +883,10 @@ def admin_record_vat_remittance(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_vat_remittance(body.model_dump(), current_admin, db)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -854,9 +896,10 @@ def admin_create_bank_transaction(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_create_bank_transaction(data.model_dump(), db)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -867,6 +910,7 @@ def admin_import_bank_transactions(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_import_bank_transactions(
         [item.model_dump() for item in items],
@@ -874,7 +918,7 @@ def admin_import_bank_transactions(
         db,
         auto_reconcile=auto_reconcile,
     )
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -884,9 +928,10 @@ def admin_reconcile_transaction(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_reconcile_transaction(txn_id, current_admin, db)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -897,9 +942,10 @@ def admin_flag_transaction(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_flag_transaction(txn_id, body.reason, db)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -910,9 +956,10 @@ def admin_resolve_transaction(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_resolve_transaction_exception(txn_id, body.model_dump(), current_admin, db)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -924,6 +971,7 @@ def admin_auto_reconcile_transactions(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.bank.read")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_auto_reconcile_transactions(
         current_admin,
@@ -932,7 +980,7 @@ def admin_auto_reconcile_transactions(
         source=source,
         category=category,
     )
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -942,9 +990,10 @@ def admin_trigger_supplier_payouts(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.payout.write")
     require_permission("payouts.verify", current_admin)
     results = ctrl.admin_trigger_supplier_payouts(db, settlement_ids=(body.settlement_ids if body else None))
-    db.commit()
+    commit_db(db)
     return {"processed": len(results), "payouts": results}
 
 
@@ -954,9 +1003,10 @@ def admin_trigger_logistics_payouts(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.payout.write")
     require_permission("payouts.verify", current_admin)
     results = ctrl.admin_trigger_logistics_payouts(db, settlement_ids=(body.settlement_ids if body else None))
-    db.commit()
+    commit_db(db)
     return {"processed": len(results), "payouts": results}
 
 
@@ -969,6 +1019,7 @@ def admin_dispatch_payouts(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.payout.write")
     require_permission("payouts.verify", current_admin)
     if background:
         return ctrl.admin_queue_dispatch_transfer_batch(
@@ -985,7 +1036,7 @@ def admin_dispatch_payouts(
         provider=provider,
         dry_run=dry_run,
     )
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -996,9 +1047,10 @@ def admin_record_cod_remittance(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_record_cod_remittance(settlement_id, body.amount, current_admin, db)
-    db.commit()
+    commit_db(db)
     return {"status": "ok", "settlement_id": result.id, "cod_remittance_status": result.cod_remittance_status}
 
 
@@ -1011,6 +1063,7 @@ def admin_list_cod_remittance_receipts(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     return ctrl.admin_list_cod_remittance_receipts(db, skip=skip, limit=limit, partner_id=partner_id, status=status)
 
@@ -1022,9 +1075,10 @@ def admin_verify_cod_remittance_receipt(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_verify_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note if body else None)
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -1035,9 +1089,10 @@ def admin_reject_cod_remittance_receipt(
     db: Session = Depends(get_db),
     current_admin: dict = Depends(require_admin),
 ):
+    require_feature("finance.treasury.manage")
     require_permission("payouts.verify", current_admin)
     result = ctrl.admin_reject_cod_remittance_receipt(receipt_id, current_admin, db, note=body.note or "")
-    db.commit()
+    commit_db(db)
     return result
 
 
@@ -1050,6 +1105,7 @@ def supplier_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.treasury.read")
     if current_user.get("role") not in ("supplier", "admin"):
         return {"error": "Supplier access required"}, 403
     return ctrl.supplier_get_financial_summary(current_user["id"], db)
@@ -1063,6 +1119,7 @@ def supplier_list_settlements(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.treasury.read")
     if current_user.get("role") not in ("supplier", "admin"):
         return []
     return ctrl.supplier_list_settlements(current_user["id"], db, skip=skip, limit=limit, status=status)
@@ -1075,6 +1132,7 @@ def supplier_list_ledger(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.treasury.read")
     if current_user.get("role") not in ("supplier", "admin"):
         return []
     return ctrl.supplier_list_ledger_entries(current_user["id"], db, skip=skip, limit=limit)
@@ -1089,8 +1147,8 @@ def logistics_financial_summary(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from domains.logistics.models.logistics_entities import LogisticsPartner
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
+    require_feature("finance.treasury.read")
+    partner = get_logistics_partner_by_user_id(db, current_user["id"])
     if not partner:
         return {"error": "Logistics partner not found"}, 404
     return ctrl.logistics_get_financial_summary(partner.id, db)
@@ -1104,8 +1162,8 @@ def logistics_list_settlements(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from domains.logistics.models.logistics_entities import LogisticsPartner
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
+    require_feature("finance.treasury.read")
+    partner = get_logistics_partner_by_user_id(db, current_user["id"])
     if not partner:
         return []
     return ctrl.logistics_list_settlements(partner.id, db, skip=skip, limit=limit, status=status)
@@ -1118,80 +1176,12 @@ def logistics_list_ledger(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    from domains.logistics.models.logistics_entities import LogisticsPartner
-    partner = db.query(LogisticsPartner).filter(LogisticsPartner.user_id == current_user["id"]).first()
+    require_feature("finance.treasury.read")
+    partner = get_logistics_partner_by_user_id(db, current_user["id"])
     if not partner:
         return []
     return ctrl.logistics_list_ledger_entries(partner.id, db, skip=skip, limit=limit)
 
-
-# === From cash_management_controller.py ===
-"""treasury.cash_management controller.
-
-Business logic is delegated to services.treasury.cash_management_service (routers -> services)."""
-
-from modules.employee.routers.cash_management_controller import _commission_metadata_for_entry
-from modules.employee.routers.cash_management_controller import _decorate_badge_billing
-from modules.employee.routers.cash_management_controller import _decorate_ledger_entry
-from modules.employee.routers.cash_management_controller import _decorate_logistics_settlement
-from modules.employee.routers.cash_management_controller import _decorate_refund
-from modules.employee.routers.cash_management_controller import _decorate_supplier_settlement
-from modules.employee.routers.cash_management_controller import _dispatch_transfer_batch_with_audit
-from modules.employee.routers.cash_management_controller import _latest_refund_for_order
-from modules.employee.routers.cash_management_controller import _model_columns_dict
-from modules.employee.routers.cash_management_controller import _normalize_dispatch_kind
-from modules.employee.routers.cash_management_controller import _serialize_allocation
-from modules.employee.routers.cash_management_controller import _serialize_finance_bank_settings
-from modules.employee.routers.cash_management_controller import _serialize_finance_order_summary
-from modules.employee.routers.cash_management_controller import _serialize_finance_supplier_summary
-from modules.employee.routers.cash_management_controller import admin_auto_reconcile_transactions
-from modules.employee.routers.cash_management_controller import admin_create_bank_transaction
-from modules.employee.routers.cash_management_controller import admin_dispatch_transfer_batch
-from modules.employee.routers.cash_management_controller import admin_flag_transaction
-from modules.employee.routers.cash_management_controller import admin_get_finance_bank_settings
-from modules.employee.routers.cash_management_controller import admin_get_financial_summary
-from modules.employee.routers.cash_management_controller import admin_get_reconciliation_summary
-from modules.employee.routers.cash_management_controller import admin_import_bank_transactions
-from modules.employee.routers.cash_management_controller import admin_list_badge_billing_records
-from modules.employee.routers.cash_management_controller import admin_list_bank_transactions
-from modules.employee.routers.cash_management_controller import admin_list_cod_remittance_receipts
-from modules.employee.routers.cash_management_controller import admin_list_ledger_entries
-from modules.employee.routers.cash_management_controller import admin_list_logistics_settlements
-from modules.employee.routers.cash_management_controller import admin_list_refunds
-from modules.employee.routers.cash_management_controller import admin_list_supplier_settlements
-from modules.employee.routers.cash_management_controller import admin_list_transfer_providers
-from modules.employee.routers.cash_management_controller import admin_list_vat_remittance_records
-from modules.employee.routers.cash_management_controller import admin_queue_dispatch_transfer_batch
-from modules.employee.routers.cash_management_controller import admin_reconcile_transaction
-from modules.employee.routers.cash_management_controller import admin_record_badge_billing_payment
-from modules.employee.routers.cash_management_controller import admin_record_cod_remittance
-from modules.employee.routers.cash_management_controller import admin_record_vat_remittance
-from modules.employee.routers.cash_management_controller import admin_reject_cod_remittance_receipt
-from modules.employee.routers.cash_management_controller import admin_resolve_transaction_exception
-from modules.employee.routers.cash_management_controller import admin_test_finance_bank_connection
-from modules.employee.routers.cash_management_controller import admin_trigger_logistics_payouts
-from modules.employee.routers.cash_management_controller import admin_trigger_supplier_payouts
-from modules.employee.routers.cash_management_controller import admin_upsert_finance_bank_settings
-from modules.employee.routers.cash_management_controller import admin_verify_cod_remittance_receipt
-from modules.employee.routers.cash_management_controller import logger
-from modules.employee.routers.cash_management_controller import logistics_get_financial_summary
-from modules.employee.routers.cash_management_controller import logistics_list_ledger_entries
-from modules.employee.routers.cash_management_controller import logistics_list_settlements
-from modules.employee.routers.cash_management_controller import supplier_get_financial_summary
-from modules.employee.routers.cash_management_controller import supplier_list_ledger_entries
-from modules.employee.routers.cash_management_controller import supplier_list_settlements
-
-__all__ = [
-    "_commission_metadata_for_entry", "_decorate_badge_billing", "_decorate_ledger_entry", "_decorate_logistics_settlement", "_decorate_refund", "_decorate_supplier_settlement",
-    "_dispatch_transfer_batch_with_audit", "_latest_refund_for_order", "_model_columns_dict", "_normalize_dispatch_kind", "_serialize_allocation", "_serialize_finance_bank_settings",
-    "_serialize_finance_order_summary", "_serialize_finance_supplier_summary", "admin_auto_reconcile_transactions", "admin_create_bank_transaction", "admin_dispatch_transfer_batch", "admin_flag_transaction",
-    "admin_get_finance_bank_settings", "admin_get_financial_summary", "admin_get_reconciliation_summary", "admin_import_bank_transactions", "admin_list_badge_billing_records", "admin_list_bank_transactions",
-    "admin_list_cod_remittance_receipts", "admin_list_ledger_entries", "admin_list_logistics_settlements", "admin_list_refunds", "admin_list_supplier_settlements", "admin_list_transfer_providers",
-    "admin_list_vat_remittance_records", "admin_queue_dispatch_transfer_batch", "admin_reconcile_transaction", "admin_record_badge_billing_payment", "admin_record_cod_remittance", "admin_record_vat_remittance",
-    "admin_reject_cod_remittance_receipt", "admin_resolve_transaction_exception", "admin_test_finance_bank_connection", "admin_trigger_logistics_payouts", "admin_trigger_supplier_payouts", "admin_upsert_finance_bank_settings",
-    "admin_verify_cod_remittance_receipt", "logger", "logistics_get_financial_summary", "logistics_list_ledger_entries", "logistics_list_settlements", "supplier_get_financial_summary",
-    "supplier_list_ledger_entries", "supplier_list_settlements"
-]
 
 
 # === From expenses.py ===
@@ -1210,9 +1200,7 @@ empty ``APIRouter`` so the app boots. Implement
 """
 from fastapi import APIRouter
 
-__router_prefix__ = "/api/v1"
-
-__all__ = ["router"]
+router = APIRouter(prefix="/api/v1", tags=["employee", "finance", "expense-stub"])
 
 
 # === From invoices.py ===
@@ -1228,7 +1216,7 @@ from sqlalchemy.orm import Session
 
 import domains.finance.services.ledger.invoice_controller as ctrl
 from infrastructure.database.database import get_db
-from modules.admin.routers.auth import get_current_user
+from infrastructure.security.dependencies import get_current_user
 from infrastructure.utils.invoice_html import generate_invoice_html, generate_invoice_pdf_bytes
 
 
@@ -1241,6 +1229,7 @@ def list_invoices(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.read")
     """List invoices — filtered by role (supplier sees own, admin sees all)."""
     return ctrl.list_invoices(current_user, db, page=page, page_size=page_size, status=status, order_id=order_id)
 
@@ -1250,6 +1239,7 @@ def invoice_overview(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.read")
     """Admin overview — totals and recent invoices."""
     if current_user.get("role") not in ("admin", "sub_admin", "moderator"):
         from fastapi import HTTPException
@@ -1263,6 +1253,7 @@ def get_invoice_html(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.read")
     """Render invoice as printable HTML (browser print-to-PDF)."""
     inv_data = ctrl.get_invoice(invoice_id, current_user, db)
     return HTMLResponse(content=generate_invoice_html(inv_data))
@@ -1274,6 +1265,7 @@ def get_invoice_pdf(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.read")
     """Render invoice as downloadable PDF."""
     inv_data = ctrl.get_invoice(invoice_id, current_user, db)
     pdf_bytes = generate_invoice_pdf_bytes(inv_data)
@@ -1291,6 +1283,7 @@ def get_invoice(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.read")
     return ctrl.get_invoice(invoice_id, current_user, db)
 
 
@@ -1300,6 +1293,7 @@ def create_invoice(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.create")
     """Create an invoice from an existing order."""
     return ctrl.create_invoice_from_order(data, current_user, db)
 
@@ -1311,6 +1305,7 @@ def update_status(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    require_feature("finance.invoice.create")
     """Advance invoice status through supply chain stages."""
     return ctrl.update_invoice_status(invoice_id, data, current_user, db)
 
@@ -1326,23 +1321,9 @@ from fastapi import APIRouter
 
 @router.get("/finance_automation/health")
 def health():
+    require_feature("finance.audit.read")
     """Liveness probe for this router."""
     return {"status": "ok", "router": "finance_automation", "prefix": "/api/v1/accounting"}
-
-
-# === From finance_erp.py ===
-"""finance erp router.
-
-Functional router placeholder. Implement domain endpoints here,
-delegating to the appropriate controller/service.
-"""
-from fastapi import APIRouter
-
-
-@router.get("/finance_erp/health")
-def health():
-    """Liveness probe for this router."""
-    return {"status": "ok", "router": "finance_erp", "prefix": "/api/v1/accounting"}
 
 
 # === From finance_package.py ===
@@ -1363,15 +1344,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from infrastructure.utils.audit import AuditAction, audit_log
+from domains.audit.ports import AuditAction, audit_log
 from rbac import get_current_user
 from infrastructure.database.database import get_db
 from domains.finance.services.treasury.cash_management_service import list_contractor_milestones
-from domains.finance.services.ledger.general_ledger_service import ExpenseRoutingEngine
-from domains.finance.services.ledger.general_ledger_service import get_expense_router
-from domains.finance.services._auto_stubs import FinancialReportingService
-from domains.hr.services.payroll.payroll_engine import PayrollEngine
-from domains.finance.services._auto_stubs import TreasuryAdapter
+from domains.finance.services.ledger.general_ledger_service import (
+    ExpenseRoutingEngine,
+    get_expense_router,
+)
+from domains.hr.ports import PayrollEngine
 
 logger = logging.getLogger(__name__)
 
@@ -1402,6 +1383,7 @@ def process_payroll(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("hr.payroll.manage")
     engine = PayrollEngine(db)
     result = engine.process_payroll_batch(request.month)
     audit_log(
@@ -1416,48 +1398,13 @@ def process_payroll(
     return result
 
 
-@router.post("/treasury/journal-entry")
-def create_journal_entry(
-    request: TreasuryEntryRequest,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    adapter = TreasuryAdapter(db)
-    entry = adapter.post_journal_entry(
-        entry_type=request.entry_type,
-        amount=Decimal(str(request.amount)),
-        currency=request.currency,
-        debit_account_id=request.debit_account_id,
-        credit_account_id=request.credit_account_id,
-        description=request.description,
-        reference_id=request.reference_id,
-    )
-    audit_log(
-        db=db,
-        action=AuditAction.JOURNAL_ENTRY_CREATED,
-        user_id=current_user.get("id"),
-        username=current_user.get("username"),
-        user_role=current_user.get("role"),
-        resource_type="journal_entry",
-        resource_id=entry.id,
-        details={
-            "entry_type": request.entry_type,
-            "amount": request.amount,
-            "currency": request.currency,
-            "debit_account_id": request.debit_account_id,
-            "credit_account_id": request.credit_account_id,
-            "description": request.description,
-        },
-    )
-    return {"id": entry.id, "status": "created"}
-
-
 @router.get("/financial/cash-flow")
 def get_cash_flow(
     days: int = 30,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("finance.audit.read")
     service = FinancialReportingService(db)
     result = service.get_cash_flow_forecast(days)
     audit_log(
@@ -1477,6 +1424,7 @@ def get_profitability(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("finance.audit.read")
     service = FinancialReportingService(db)
     result = service.get_profitability_by_country()
     audit_log(
@@ -1497,6 +1445,7 @@ def get_profitability(
 @router.post("/expense/route")
 def route_claim(employee_id: int, amount: float, category: str, description: str,
                 db: Session = Depends(get_db)):
+    require_feature("finance.ledger.write")
     router = get_expense_router(db)
     return router.route_expense_claim(
         employee_id=employee_id,
@@ -1509,6 +1458,7 @@ def route_claim(employee_id: int, amount: float, category: str, description: str
 @router.get("/expense/deadline")
 def get_deadline(employee_id: int, submission_date: str, priority: str = "normal",
                  db: Session = Depends(get_db)):
+    require_feature("finance.ledger.write")
     router = get_expense_router(db)
     dt = datetime.fromisoformat(submission_date)
     return {"deadline": router.calculate_reimbursement_deadline(dt, priority).isoformat()}
@@ -1516,12 +1466,14 @@ def get_deadline(employee_id: int, submission_date: str, priority: str = "normal
 
 @router.get("/expense/chain/{employee_id}")
 def get_chain(employee_id: int, amount: float, db: Session = Depends(get_db)):
+    require_feature("finance.ledger.write")
     router = get_expense_router(db)
     return {"approval_chain": router.get_approval_chain(employee_id, Decimal(str(amount)))}
 
 
 @router.get("/contractor-milestones")
 def list_contractor_milestones_route(db: Session = Depends(get_db)):
+    require_feature("finance.subledger.read")
     """Return contractor payment/delivery milestones."""
     return list_contractor_milestones(db)
 
@@ -1532,13 +1484,7 @@ from sqlalchemy.orm import Session
 
 from rbac import get_current_user
 from infrastructure.database.database import get_db
-from infrastructure.utils.audit import AuditAction, audit_log
-from modules.employee.routers.treasury_api import (
-    get_cash_position,
-    get_supplier_payables,
-    get_treasury_metrics,
-    get_vat_liability,
-)
+from domains.audit.ports import AuditAction, audit_log
 
 
 @router.get("/metrics")
@@ -1546,6 +1492,7 @@ def treasury_metrics(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("finance.treasury.read")
     result = get_treasury_metrics(db)
     audit_log(
         db=db,
@@ -1563,6 +1510,7 @@ def cash_position(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("finance.treasury.read")
     result = get_cash_position(db)
     audit_log(
         db=db,
@@ -1581,6 +1529,7 @@ def vat_liability(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("finance.treasury.read")
     result = get_vat_liability(db, country_code)
     audit_log(
         db=db,
@@ -1600,6 +1549,7 @@ def supplier_payables(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    require_feature("finance.treasury.read")
     result = get_supplier_payables(db, country_code)
     audit_log(
         db=db,
@@ -1611,125 +1561,3 @@ def supplier_payables(
         details={"country_code": country_code},
     )
     return result
-
-
-# === From treasury_api.py ===
-"""Treasury API sub-router.
-
-PLACEHOLDER: the original ``routers.treasury_api`` module is missing. This stub exposes
-the symbols imported by ``routers.treasury.py`` so the app boots. Implement the real
-endpoints and replace this file.
-"""
-from typing import Any
-
-
-def get_cash_position(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-def get_supplier_payables(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-def get_treasury_metrics(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-def get_vat_liability(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-
-# === MERGED FROM cash_management_controller.py ===
-"""treasury.cash_management controller.
-
-Business logic is delegated to services.treasury.cash_management_service (routers -> services)."""
-
-from modules.employee.routers.cash_management_controller import _commission_metadata_for_entry
-from modules.employee.routers.cash_management_controller import _decorate_badge_billing
-from modules.employee.routers.cash_management_controller import _decorate_ledger_entry
-from modules.employee.routers.cash_management_controller import _decorate_logistics_settlement
-from modules.employee.routers.cash_management_controller import _decorate_refund
-from modules.employee.routers.cash_management_controller import _decorate_supplier_settlement
-from modules.employee.routers.cash_management_controller import _dispatch_transfer_batch_with_audit
-from modules.employee.routers.cash_management_controller import _latest_refund_for_order
-from modules.employee.routers.cash_management_controller import _model_columns_dict
-from modules.employee.routers.cash_management_controller import _normalize_dispatch_kind
-from modules.employee.routers.cash_management_controller import _serialize_allocation
-from modules.employee.routers.cash_management_controller import _serialize_finance_bank_settings
-from modules.employee.routers.cash_management_controller import _serialize_finance_order_summary
-from modules.employee.routers.cash_management_controller import _serialize_finance_supplier_summary
-from modules.employee.routers.cash_management_controller import admin_auto_reconcile_transactions
-from modules.employee.routers.cash_management_controller import admin_create_bank_transaction
-from modules.employee.routers.cash_management_controller import admin_dispatch_transfer_batch
-from modules.employee.routers.cash_management_controller import admin_flag_transaction
-from modules.employee.routers.cash_management_controller import admin_get_finance_bank_settings
-from modules.employee.routers.cash_management_controller import admin_get_financial_summary
-from modules.employee.routers.cash_management_controller import admin_get_reconciliation_summary
-from modules.employee.routers.cash_management_controller import admin_import_bank_transactions
-from modules.employee.routers.cash_management_controller import admin_list_badge_billing_records
-from modules.employee.routers.cash_management_controller import admin_list_bank_transactions
-from modules.employee.routers.cash_management_controller import admin_list_cod_remittance_receipts
-from modules.employee.routers.cash_management_controller import admin_list_ledger_entries
-from modules.employee.routers.cash_management_controller import admin_list_logistics_settlements
-from modules.employee.routers.cash_management_controller import admin_list_refunds
-from modules.employee.routers.cash_management_controller import admin_list_supplier_settlements
-from modules.employee.routers.cash_management_controller import admin_list_transfer_providers
-from modules.employee.routers.cash_management_controller import admin_list_vat_remittance_records
-from modules.employee.routers.cash_management_controller import admin_queue_dispatch_transfer_batch
-from modules.employee.routers.cash_management_controller import admin_reconcile_transaction
-from modules.employee.routers.cash_management_controller import admin_record_badge_billing_payment
-from modules.employee.routers.cash_management_controller import admin_record_cod_remittance
-from modules.employee.routers.cash_management_controller import admin_record_vat_remittance
-from modules.employee.routers.cash_management_controller import admin_reject_cod_remittance_receipt
-from modules.employee.routers.cash_management_controller import admin_resolve_transaction_exception
-from modules.employee.routers.cash_management_controller import admin_test_finance_bank_connection
-from modules.employee.routers.cash_management_controller import admin_trigger_logistics_payouts
-from modules.employee.routers.cash_management_controller import admin_trigger_supplier_payouts
-from modules.employee.routers.cash_management_controller import admin_upsert_finance_bank_settings
-from modules.employee.routers.cash_management_controller import admin_verify_cod_remittance_receipt
-from modules.employee.routers.cash_management_controller import logger
-from modules.employee.routers.cash_management_controller import logistics_get_financial_summary
-from modules.employee.routers.cash_management_controller import logistics_list_ledger_entries
-from modules.employee.routers.cash_management_controller import logistics_list_settlements
-from modules.employee.routers.cash_management_controller import supplier_get_financial_summary
-from modules.employee.routers.cash_management_controller import supplier_list_ledger_entries
-from modules.employee.routers.cash_management_controller import supplier_list_settlements
-
-__all__ = [
-    "_commission_metadata_for_entry", "_decorate_badge_billing", "_decorate_ledger_entry", "_decorate_logistics_settlement", "_decorate_refund", "_decorate_supplier_settlement",
-    "_dispatch_transfer_batch_with_audit", "_latest_refund_for_order", "_model_columns_dict", "_normalize_dispatch_kind", "_serialize_allocation", "_serialize_finance_bank_settings",
-    "_serialize_finance_order_summary", "_serialize_finance_supplier_summary", "admin_auto_reconcile_transactions", "admin_create_bank_transaction", "admin_dispatch_transfer_batch", "admin_flag_transaction",
-    "admin_get_finance_bank_settings", "admin_get_financial_summary", "admin_get_reconciliation_summary", "admin_import_bank_transactions", "admin_list_badge_billing_records", "admin_list_bank_transactions",
-    "admin_list_cod_remittance_receipts", "admin_list_ledger_entries", "admin_list_logistics_settlements", "admin_list_refunds", "admin_list_supplier_settlements", "admin_list_transfer_providers",
-    "admin_list_vat_remittance_records", "admin_queue_dispatch_transfer_batch", "admin_reconcile_transaction", "admin_record_badge_billing_payment", "admin_record_cod_remittance", "admin_record_vat_remittance",
-    "admin_reject_cod_remittance_receipt", "admin_resolve_transaction_exception", "admin_test_finance_bank_connection", "admin_trigger_logistics_payouts", "admin_trigger_supplier_payouts", "admin_upsert_finance_bank_settings",
-    "admin_verify_cod_remittance_receipt", "logger", "logistics_get_financial_summary", "logistics_list_ledger_entries", "logistics_list_settlements", "supplier_get_financial_summary",
-    "supplier_list_ledger_entries", "supplier_list_settlements"
-]
-
-
-# === MERGED FROM treasury_api.py ===
-"""Treasury API sub-router.
-
-PLACEHOLDER: the original ``routers.treasury_api`` module is missing. This stub exposes
-the symbols imported by ``routers.treasury.py`` so the app boots. Implement the real
-endpoints and replace this file.
-"""
-from typing import Any
-
-
-def get_cash_position(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-def get_supplier_payables(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-def get_treasury_metrics(*args: Any, **kwargs: Any) -> dict:
-    return {}
-
-
-def get_vat_liability(*args: Any, **kwargs: Any) -> dict:
-    return {}

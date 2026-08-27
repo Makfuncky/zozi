@@ -1,28 +1,4 @@
 # Static upward imports (Law 1: arrows point down only).
 # Baseline frozen by the architecture gate; the count must only DECREASE.
 # Regenerate with tests/_gen_import_laws_baseline.py after an intentional move.
-infrastructure/database/models.py
-infrastructure/database/seed.py
-infrastructure/database/treasury_seeder.py
-infrastructure/observability/audit.py
-infrastructure/search/routers/search_controller.py
-infrastructure/security/qr_service.py
-infrastructure/security/security_audit.py
-providers/payments/_common.py
-providers/payments/_order.py
-providers/payments/config.py
-providers/payments/gateway_auto_enable.py
-providers/payments/gateway_reconciliation_service.py
-providers/payments/gateways_gateway_reconciliation_service.py
-providers/payments/generic.py
-providers/payments/payment_event_handlers.py
-providers/payments/payment_persistence.py
-providers/payments/payments.py
-providers/payments/payments_write_service.py
-providers/payments/paypal.py
-providers/payments/paytabs.py
-providers/payments/stripe.py
-providers/payments/tap.py
-providers/payments/thawani.py
-providers/payments/webhook_processor.py
-providers/payments/webhooks.py
+

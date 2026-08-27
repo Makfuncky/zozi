@@ -3,7 +3,7 @@ Key Rotation Utility — re-encrypts all EncryptedString fields with a new
 FIELD_ENCRYPTION_KEY without exposing plaintext values to application logs.
 
 Usage:
-    from infrastructure.utils.key_rotation import rotate_encryption_key
+    from infrastructure.security.key_rotation import rotate_encryption_key
     result = rotate_encryption_key(old_key, new_key, db)
 
 The function:
@@ -17,12 +17,16 @@ After a successful rotation the caller must update the FIELD_ENCRYPTION_KEY
 environment variable / secret-store entry so that the running singleton
 ``field_encryptor`` in utils/encryption.py is also refreshed (typically
 requires an app restart or a hot-reload of the config).
+
+Law 1 compliance: this module declares its encrypted-column registry as a
+plain ``(table_name, [column_names])`` list — no domain ORM imports.
 """
 from __future__ import annotations
 
 import logging
 from typing import Any
 
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from infrastructure.utils.encryption import FieldEncryptor
@@ -31,32 +35,19 @@ logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 200
 
-# Registry: (Model, [encrypted_column_attribute_names])
-# Keep this in sync with db/models.py EncryptedString usages.
-_ENCRYPTED_COLUMNS: list[tuple[Any, list[str]]] = []
-
-
-def _build_registry():
-    """Lazy import so that circular imports are avoided."""
-    if _ENCRYPTED_COLUMNS:
-        return
-    from domains.governance.models.user import User
-    from domains.comms.models.suppliers import SupplierProfile
-    from domains.logistics.models.logistics import Shipment
-    from domains.logistics.models.logistics import ShipmentEvent
-    from domains.logistics.models.logistics import LogisticsPartner
-    from domains.orders.models.orders import Order
-    _ENCRYPTED_COLUMNS.extend([
-        (User, ["phone", "address_book"]),
-        (Order, ["shipping_address", "customer_phone"]),
-        (Shipment, ["shipping_address"]),
-        (ShipmentEvent, ["location"]),
-        (SupplierProfile, [
-            "bank_account_number", "bank_routing_number",
-            "national_id", "tax_id",
-        ]),
-        (LogisticsPartner, ["contact_email", "contact_phone"]),
-    ])
+# Schema-contract registry: (table_name, [encrypted_column_names]).
+# Keep in sync with the EncryptedString usages across the domain models.
+_ENCRYPTED_TABLES: list[tuple[str, list[str]]] = [
+    ("users", ["phone", "address_book"]),
+    ("orders", ["shipping_address", "customer_phone"]),
+    ("shipments", ["shipping_address"]),
+    ("shipment_events", ["location"]),
+    ("supplier_profiles", [
+        "bank_account_number", "bank_routing_number",
+        "national_id", "tax_id",
+    ]),
+    ("logistics_partners", ["contact_email", "contact_phone"]),
+]
 
 
 def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> dict:
@@ -74,7 +65,6 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
             "total_errors": 2,
         }
     """
-    _build_registry()
     old_enc = FieldEncryptor(old_raw_key)
     new_enc = FieldEncryptor(new_raw_key)
 
@@ -82,43 +72,58 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
     total_updated = 0
     total_errors = 0
 
-    for Model, columns in _ENCRYPTED_COLUMNS:
-        table_name = Model.__tablename__
+    for table_name, columns in _ENCRYPTED_TABLES:
         rows_processed = 0
         rows_updated = 0
         errors = 0
 
         try:
             offset = 0
+            # Determine the primary key column once (default to ``id``).
+            pk_col = "id"
+            select_cols_sql = ", ".join([pk_col] + list(columns))
+            update_cols_sql = ", ".join([f"{col} = :{col}" for col in columns])
+
             while True:
-                batch = db.query(Model).offset(offset).limit(BATCH_SIZE).all()
-                if not batch:
+                rows = db.execute(
+                    text(
+                        f"SELECT {select_cols_sql} FROM {table_name} "
+                        f"ORDER BY {pk_col} LIMIT :lim OFFSET :off"
+                    ),
+                    {"lim": BATCH_SIZE, "off": offset},
+                ).mappings().all()
+                if not rows:
                     break
-                for row in batch:
+
+                for row in rows:
                     rows_processed += 1
                     changed = False
+                    updates: dict[str, Any] = {}
                     for col in columns:
-                        raw = getattr(row, col, None)
+                        raw = row.get(col)
                         if raw is None:
                             continue
                         try:
-                            # Decrypt with old key; will return raw value if not encrypted
                             plaintext = old_enc.decrypt(raw)
                             if plaintext is None:
                                 continue
-                            # Re-encrypt with new key only when the value was actually
-                            # encrypted (i.e. decryption changed it).
                             if plaintext != raw or old_enc.is_encrypted(raw):
                                 new_val = new_enc.encrypt(plaintext)
-                                setattr(row, col, new_val)
+                                updates[col] = new_val
                                 changed = True
                         except Exception as col_err:
                             logger.warning(
                                 "key_rotation: failed column %s.%s id=%s: %s",
-                                table_name, col, getattr(row, "id", "?"), col_err,
+                                table_name, col, row.get(pk_col), col_err,
                             )
                             errors += 1
                     if changed:
+                        updates[pk_col] = row.get(pk_col)
+                        set_clause = ", ".join([f"{c} = :{c}" for c in updates.keys() if c != pk_col])
+                        db.execute(
+                            text(f"UPDATE {table_name} SET {set_clause} WHERE {pk_col} = :{pk_col}"),
+                            updates,
+                        )
                         rows_updated += 1
                 db.commit()
                 offset += BATCH_SIZE
@@ -142,5 +147,3 @@ def rotate_encryption_key(old_raw_key: str, new_raw_key: str, db: Session) -> di
         "total_updated": total_updated,
         "total_errors": total_errors,
     }
-
-

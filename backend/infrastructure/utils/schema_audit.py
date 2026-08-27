@@ -207,11 +207,17 @@ class AuditReport:
 
         For production databases (PostgreSQL), use Alembic instead.
         """
+        from infrastructure.database.base import Base
         statements: list[str] = []
         for issue in self.issues:
             if issue.kind == IssueKind.COLUMN_MISSING_IN_DB and issue.column and issue.orm_value:
+                orm_table = Base.metadata.tables.get(issue.table)
+                if orm_table is None or issue.column not in orm_table.columns:
+                    continue
+                qualified_table = orm_table.name
+                qualified_column = orm_table.columns[issue.column].name
                 # orm_value looks like "VARCHAR(100)" or "INTEGER"
-                stmt = f"ALTER TABLE {issue.table} ADD COLUMN {issue.column} {issue.orm_value};"
+                stmt = f"ALTER TABLE {qualified_table} ADD COLUMN {qualified_column} {issue.orm_value};"
                 statements.append(stmt)
             elif issue.kind == IssueKind.INDEX_MISSING_IN_DB and issue.detail:
                 statements.append(issue.detail)

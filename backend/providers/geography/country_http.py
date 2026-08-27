@@ -13,7 +13,12 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-import httpx
+try:
+    import httpx
+    HAS_COUNTRY_HTTP = True
+except ImportError:
+    HAS_COUNTRY_HTTP = False
+    httpx = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 

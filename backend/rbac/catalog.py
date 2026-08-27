@@ -11,6 +11,8 @@ import domains
 
 FEATURE_CATALOG: dict = {}
 
+VALID_USER_ROLES = {"customer", "supplier", "admin", "sub_admin", "moderator", "support"}
+
 # Sanctioned namespace-wildcard prefixes (B4/R5 change-control). A module router may
 # only gate on ``require_feature("X.*")`` if ``X`` is declared here, AND the
 # namespace has backing atoms (Law 4) — checked by

@@ -279,7 +279,7 @@ class EmailGateway:
                         sender_id: int, template_id: Optional[str] = None) -> dict:
         """Send bulk emails with DLP protection."""
         dlp_result = self.dlp_scanner.scan_content(body)
-        
+
         if not dlp_result["is_safe"]:
             logger.warning(f"Bulk email blocked. Findings: {dlp_result['findings']}")
             self._log_dlp_violation(sender_id, ",".join(to_emails[:5]), dlp_result, subject)
@@ -287,13 +287,13 @@ class EmailGateway:
                 "status": "blocked",
                 "reason": "DLP violation detected",
                 "dlp_findings": dlp_result["findings"],
-                "sent_count": 0
+                "sent_count": 0,
             }
-        
+
         sent_count = 0
         failed_count = 0
         failed_emails = []
-        
+
         for email in to_emails:
             try:
                 send_email(email, subject, body, purpose="bulk", from_address=get_email_sender_address("bulk"))
@@ -302,7 +302,7 @@ class EmailGateway:
                 logger.exception("Handled Exception in email_gateway.py:300")
                 failed_count += 1
                 failed_emails.append({"email": email, "error": str(e)})
-        
+
         return {
             "email_id": f"bulk_{datetime.now(timezone.utc).timestamp()}",
             "to_count": len(to_emails),
@@ -313,7 +313,17 @@ class EmailGateway:
             "status": "sent" if failed_count == 0 else "partial",
             "sent_count": sent_count,
             "failed_count": failed_count,
-            "failed_emails": failed_emails[:10]
+            "failed_emails": failed_emails[:10],
+        }
+
+    def send_bulk_with_stats(self, to_emails: List[str], subject: str, body: str) -> dict:
+        """Send bulk emails and return aggregated stats."""
+        result = self.send_bulk_email(to_emails, subject, body, sender_id=0)
+        return {
+            "total": len(to_emails),
+            "sent": result.get("sent_count", 0),
+            "failed": result.get("failed_count", 0),
+            "results": result,
         }
     
     def get_suppression_list(self) -> List[str]:
